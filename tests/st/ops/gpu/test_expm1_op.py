@@ -35,7 +35,7 @@ class NetExpm1(nn.Cell):
         return self.expm1(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_expm1_fp32():
     expm1 = NetExpm1()
     x = np.random.rand(3, 8).astype(np.float32)
@@ -45,7 +45,7 @@ def test_expm1_fp32():
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_expm1_fp16():
     expm1 = NetExpm1()
     x = np.random.rand(3, 8).astype(np.float16)
@@ -67,7 +67,7 @@ def test_expm1_tensor_api():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_expm1_tensor_modes():
     """
     Feature: test expm1 tensor API in PyNative and Graph modes.

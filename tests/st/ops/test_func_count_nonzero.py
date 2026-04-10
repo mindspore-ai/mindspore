@@ -44,11 +44,9 @@ def set_mode(mode):
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 @pytest.mark.parametrize("context_mode", ["PYNATIVE_MODE", "GRAPH_MODE"])
 def test_mint_count_nonzero_normal(context_mode):
@@ -67,11 +65,9 @@ def test_mint_count_nonzero_normal(context_mode):
     assert backward_output.asnumpy().shape == (2, 3, 4)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 def test_mint_count_nonzero_forward_dynamic_shape():
     """

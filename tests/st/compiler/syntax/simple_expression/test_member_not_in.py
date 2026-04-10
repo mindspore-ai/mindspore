@@ -46,8 +46,7 @@ class MemberNotInSpec(nn.Cell):
         return not_in_v
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_syntax_operator_int_not_in_int():
     """
     Feature: simple expression
@@ -60,8 +59,7 @@ def test_ms_syntax_operator_int_not_in_int():
         print(ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_int_not_in_list_int():
     """
     Feature: simple expression
@@ -73,8 +71,7 @@ def test_ms_syntax_operator_int_not_in_list_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_int_not_in_list_str():
     """
     Feature: simple expression
@@ -86,8 +83,7 @@ def test_ms_syntax_operator_int_not_in_list_str():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_int_not_in_list_combine():
     """
     Feature: simple expression
@@ -99,8 +95,7 @@ def test_ms_syntax_operator_int_not_in_list_combine():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_int_not_in_tuple_int():
     """
     Feature: simple expression
@@ -112,8 +107,7 @@ def test_ms_syntax_operator_int_not_in_tuple_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_int_not_in_tuple_str():
     """
     Feature: simple expression
@@ -125,8 +119,7 @@ def test_ms_syntax_operator_int_not_in_tuple_str():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_int_not_in_dict_int():
     """
     Feature: simple expression
@@ -139,8 +132,7 @@ def test_ms_syntax_operator_int_not_in_dict_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_int_not_in_dict_str():
     """
     Feature: simple expression
@@ -153,8 +145,7 @@ def test_ms_syntax_operator_int_not_in_dict_str():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_str_not_in_dict_str():
     """
     Feature: simple expression
@@ -167,8 +158,7 @@ def test_ms_syntax_operator_str_not_in_dict_str():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_str_not_in_dict_combine():
     """
     Feature: simple expression
@@ -181,8 +171,7 @@ def test_ms_syntax_operator_str_not_in_dict_combine():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_ms_syntax_operator_tensor_not_in_list_tensor():
     """
     Feature: simple expression
@@ -196,8 +185,7 @@ def test_ms_syntax_operator_tensor_not_in_list_tensor():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_tensor_not_in_list_combine():
     """
     Feature: simple expression
@@ -211,8 +199,7 @@ def test_ms_syntax_operator_tensor_not_in_list_combine():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_tensor_not_in_tuple_tensor():
     """
     Feature: simple expression
@@ -226,8 +213,7 @@ def test_ms_syntax_operator_tensor_not_in_tuple_tensor():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_tensor_not_in_tuple_combine():
     """
     Feature: simple expression

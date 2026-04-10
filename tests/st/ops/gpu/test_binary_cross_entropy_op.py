@@ -36,7 +36,7 @@ class Net(nn.Cell):
         return self.bce(x, y, weight)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_binary_cross_entropy_loss():
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
@@ -73,7 +73,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_binary_cross_entropy_loss_grad():
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
@@ -106,7 +106,7 @@ def test_binary_cross_entropy_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_binary_cross_entropy_forward_float32_functional():
     """
     Feature: test binary_cross_entropy forward.

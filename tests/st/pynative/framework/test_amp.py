@@ -18,8 +18,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_amp_with_tuple_input1():
     """
     Feature: Pynative AMP
@@ -49,8 +48,7 @@ def test_pynative_amp_with_tuple_input1():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_amp_with_tuple_input2():
     """
     Feature: Pynative AMP

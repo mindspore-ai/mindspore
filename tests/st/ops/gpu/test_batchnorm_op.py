@@ -49,7 +49,7 @@ class Grad(Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_train_forward():
     x = np.array([[
         [[1, 3, 3, 5], [2, 4, 6, 8], [3, 6, 7, 7], [4, 3, 8, 2]],
@@ -101,7 +101,7 @@ def test_train_forward():
     output = bn_net(Tensor(x))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_train_backward():
     x = np.array([[
         [[1, 3, 3, 5], [2, 4, 6, 8], [3, 6, 7, 7], [4, 3, 8, 2]],
@@ -135,7 +135,7 @@ def test_train_backward():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_train_stats_false_forward():
     x = np.array([[
         [[1, 3, 3, 5], [2, 4, 6, 8], [3, 6, 7, 7], [4, 3, 8, 2]],
@@ -177,7 +177,7 @@ def test_train_stats_false_forward():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_infer_backward():
     expect_output = np.array([[[[-0.3224156, -0.3840524], [1.1337637, -1.0998858]],
                                [[-0.1724273, -0.877854], [0.0422135, 0.5828123]],
@@ -224,7 +224,7 @@ class GradByListNet(Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_1d_train():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     bn_net = BatchNorm1DNet(use_batch_statistics=None)
@@ -291,7 +291,7 @@ def test_1d_train():
         assert np.allclose(bn_net.bn1.moving_variance.asnumpy(), data[6], atol=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_1d_eval():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gamma_init = Tensor(np.array([0.93700373, 0.96870345]).astype(np.float32))
@@ -347,7 +347,7 @@ def batch_norm_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batch_norm_forward_float32_functional():
     """
     Feature: test batch_norm forward.

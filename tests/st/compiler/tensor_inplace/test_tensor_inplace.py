@@ -29,8 +29,7 @@ from tests.mark_utils import arg_mark
 
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add():
     """
     Feature: Support tensor inplace.
@@ -51,8 +50,7 @@ def test_tensor_inplace_add():
     assert out == 5
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_input_parameter():
     """
     Feature: Support tensor inplace.
@@ -74,8 +72,7 @@ def test_tensor_inplace_add_input_parameter():
     assert out == 5
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_sub_inplace_add():
     """
     Feature: Support tensor inplace.
@@ -98,8 +95,7 @@ def test_tensor_inplace_sub_inplace_add():
     assert out[1] == -1
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_sub_inplace_add_add():
     """
     Feature: Support tensor inplace.
@@ -122,8 +118,7 @@ def test_tensor_inplace_sub_inplace_add_add():
     assert out == 5
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_sub_inplace_add_add_twice():
     """
     Feature: Support tensor inplace.
@@ -148,8 +143,7 @@ def test_tensor_inplace_sub_inplace_add_add_twice():
     assert out[1] == -1
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_sub_inplace_add_inplace_sub():
     """
     Feature: Support tensor inplace.
@@ -174,8 +168,7 @@ def test_tensor_sub_inplace_add_inplace_sub():
     assert out[1] == 0
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_func_sub():
     """
     Feature: Support tensor inplace.
@@ -204,8 +197,7 @@ def test_tensor_inplace_add_func_sub():
     assert out[1] == -2
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_func_sub_control_flow():
     """
     Feature: Support tensor inplace.
@@ -237,8 +229,7 @@ def test_tensor_inplace_add_func_sub_control_flow():
     assert out[1] == 2
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_func_sub_control_flow_2():
     """
     Feature: Support tensor inplace.
@@ -271,8 +262,7 @@ def test_tensor_inplace_add_func_sub_control_flow_2():
     assert out == 1
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_sub_func_3():
     """
     Feature: Support tensor inplace.
@@ -299,8 +289,7 @@ def test_tensor_inplace_add_sub_func_3():
     assert out == -2
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_multi_inplace_ops():
     """
     Feature: Support tensor inplace.
@@ -326,8 +315,7 @@ def test_tensor_inplace_multi_inplace_ops():
     assert out[1] == 1
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_parameter():
     """
     Feature: Support tensor inplace.
@@ -355,8 +343,7 @@ def test_tensor_inplace_add_parameter():
     assert out[1] == 2
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_control_flow_multi():
     """
     Feature: Support tensor inplace.
@@ -384,8 +371,7 @@ def test_tensor_inplace_add_control_flow_multi():
     assert out == -4
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_add_control_flow_multi_2():
     """
     Feature: Support tensor inplace.
@@ -415,8 +401,7 @@ def test_tensor_inplace_add_control_flow_multi_2():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_index_add():
     """
     Feature: Support tensor inplace.
@@ -442,8 +427,7 @@ def test_tensor_inplace_index_add():
     assert (out.asnumpy() == [[2, 4], [10, 12], [5, 6]]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_inplace_order_list():
     """
     Feature: Support tensor inplace with right order.
@@ -487,8 +471,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tensor_augassign():
     """
     Feature: Support tensor inplace.
@@ -521,8 +504,7 @@ def test_tensor_augassign():
     os.environ["MS_DEV_TENSOR_INDEX_BOOST"] = '0'
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_zerolike_fill_zero():
     """
     Feature: Support tensor inplace in ZeroLikeFillZero.
@@ -548,8 +530,7 @@ def test_zerolike_fill_zero():
     assert output == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_inplace_isolated_node():
     """
     Feature: Support tensor inplace isolated node.
@@ -574,8 +555,7 @@ def test_inplace_isolated_node():
     assert output_expect == output_jit
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_getattr_inplace():
     """
     Feature: Support tensor inplace isolated node in getattr scenario.
@@ -630,8 +610,7 @@ def check_inplace_ref_key_unchanged(save_graphs_path):
             shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_inplace_ref_key_unchanged_1():
     """
     Feature: Inplace tensor ref key unchanged.
@@ -656,8 +635,7 @@ def test_inplace_ref_key_unchanged_1():
     check_inplace_ref_key_unchanged(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_inplace_ref_key_unchanged_2():
     """
     Feature: Inplace tensor ref key unchanged.
@@ -680,7 +658,7 @@ def test_inplace_ref_key_unchanged_2():
     check_inplace_ref_key_unchanged(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_independent_func_with_inplace_op():
     """
     Feature: Independent func with inplace op

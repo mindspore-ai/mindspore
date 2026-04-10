@@ -88,7 +88,7 @@ def run_tracker_command(cmd, log_path, tracker_ir_pash, memory_block_csv_path):
         os.remove(memory_block_csv_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_simple_tracker():
     """
     Feature: simple tracker
@@ -100,7 +100,7 @@ def test_simple_tracker():
                                f"{sh_path}/rank_1/tracker_graph.ir", f"{sh_path}/rank_1/memory_block.csv")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_tracker():
     """
     Feature: tracker
@@ -111,7 +111,7 @@ def test_tracker():
     run_tracker_command(f"bash {sh_path}/dryrun_tracker.sh tracker_pynative.py tracker1.log", f"{sh_path}/tracker1.log",
                         f"{sh_path}/rank_0/tracker_graph.ir", f"{sh_path}/rank_0/memory_block.csv")
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_resize_storage_tracker():
     """
     Feature: tracker

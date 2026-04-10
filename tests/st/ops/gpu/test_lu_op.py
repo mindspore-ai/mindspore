@@ -33,7 +33,7 @@ class LuNet(nn.Cell):
         return self.lu(a)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lu_dtype_float32():
     """
     Feature: Lu gpu TEST.
@@ -51,7 +51,7 @@ def test_lu_dtype_float32():
     assert np.allclose(expect, lu.asnumpy(), rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lu_dtype_float64():
     """
     Feature: Lu gpu TEST.

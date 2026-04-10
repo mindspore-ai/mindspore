@@ -41,8 +41,7 @@ def check_output(vlog_v, expect_output, is_expect=True):
         assert not matched, '`VLOG_v={vlog_v}` unexpected `{expect_output}` fail'
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_op_proto_warnings():
     """
     Feature: test mindspore vlog interface
@@ -69,7 +68,7 @@ def test_op_proto_warnings():
     check_output('50', ': log level for printing vlog tags already been used', False)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_vlog_to_file():
     """
     Feature: test mindspore vlog interface

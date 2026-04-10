@@ -41,7 +41,7 @@ class LeftShiftNet(ms.nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'],
-          level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=64.0)
+          level_mark='level0', card_mark='onecard', mem_peak=64.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', ALL_INT_DTYPES)
 def test_leftshift_broadcast_multi_backend_multi_mode(mode, dtype):

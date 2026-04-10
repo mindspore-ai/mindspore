@@ -103,7 +103,7 @@ def grad_wrap_with_msfunction(x, y, z):
     return output
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_single_input_single_output_cell_pynative():
     """
     Features: Function grad.
@@ -117,7 +117,7 @@ def test_grad_single_input_single_output_cell_pynative():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_single_input_multiple_outputs_cell_pynative():
     """
     Features: Function grad.
@@ -131,7 +131,7 @@ def test_grad_single_input_multiple_outputs_cell_pynative():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_multiple_inputs_single_output_cell_pynative():
     """
     Features: Function grad.
@@ -151,7 +151,7 @@ def test_grad_multiple_inputs_single_output_cell_pynative():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_multiple_inputs_multiple_outputs_cell_pynative():
     """
     Features: Function grad.
@@ -171,7 +171,7 @@ def test_grad_multiple_inputs_multiple_outputs_cell_pynative():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_iteration_function_pynative():
     """
     Features: Function grad.
@@ -190,7 +190,7 @@ def test_grad_iteration_function_pynative():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_wrap_with_msfunction_pynative():
     """
     Features: Function grad.
@@ -205,7 +205,7 @@ def test_grad_wrap_with_msfunction_pynative():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_vmap_pynative():
     """
     Features: Function grad.
@@ -232,7 +232,7 @@ def test_grad_vmap_pynative():
     assert np.allclose(outputs.asnumpy(), expect_value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_with_grad_position_twice_pynative():
     """
     Features: Function grad.
@@ -249,7 +249,7 @@ def test_grad_with_grad_position_twice_pynative():
     assert isinstance(out2, tuple)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_with_weights_twice_pynative():
     """
     Features: GradOperation and grad.
@@ -269,7 +269,7 @@ def test_grad_with_weights_twice_pynative():
     assert np.allclose(out2[0].asnumpy(), expect2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_with_weights_has_aux_pynative():
     """
     Features: Function grad.
@@ -303,7 +303,7 @@ def test_grad_with_weights_has_aux_pynative():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_if_with_weights_has_aux_pynative():
     """
     Features: Function grad.
@@ -340,8 +340,7 @@ def test_grad_if_with_weights_has_aux_pynative():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_grad_nest_with_weights_has_aux_pynative():
     """
     Features: Function value_and_grad.
@@ -380,7 +379,7 @@ def test_grad_nest_with_weights_has_aux_pynative():
     assert np.allclose(aux[0].asnumpy(), expect_aux)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_with_weights_has_aux_pynative():
     """
     Features: Function value_and_grad.
@@ -416,7 +415,7 @@ def test_value_and_grad_with_weights_has_aux_pynative():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_pynative():
     """
     Features: Function value_and_grad.
@@ -457,8 +456,7 @@ def test_value_and_grad_nest_with_weights_pynative():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_has_aux_pynative():
     """
     Features: Function value_and_grad.
@@ -499,7 +497,7 @@ def test_value_and_grad_nest_with_weights_has_aux_pynative():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_single_input_single_output_cell_graph_with_return_ids_pynative():
     """
     Features: Function grad_with_ids.
@@ -514,7 +512,7 @@ def test_grad_single_input_single_output_cell_graph_with_return_ids_pynative():
     assert np.allclose(real_grad[0], expect_grad[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_single_input_multiple_outputs_cell_graph_with_return_ids_pynative():
     """
     Features: Function grad_with_ids.
@@ -529,7 +527,7 @@ def test_grad_single_input_multiple_outputs_cell_graph_with_return_ids_pynative(
     assert np.allclose(real_grad[0], expect_grad[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_multiple_inputs_single_output_cell_graph_with_return_ids_pynative():
     """
     Features: Function grad_with_ids.
@@ -551,7 +549,7 @@ def test_grad_multiple_inputs_single_output_cell_graph_with_return_ids_pynative(
     assert np.allclose(real_grad[1][0], expect_grad2[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_multiple_inputs_multiple_outputs_cell_graph_with_return_ids_pynative():
     """
     Features: Function grad_with_ids.
@@ -574,7 +572,7 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph_with_return_ids_pynati
     assert np.allclose(real_grad[1][0], expect_grad2[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_iteration_function_graph_with_return_ids_pynative():
     """
     Features: Function grad_with_ids.
@@ -598,7 +596,7 @@ def test_grad_iteration_function_graph_with_return_ids_pynative():
     assert np.allclose(real_grad[1][0], expect_grad2[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_with_weights_with_return_ids_pynative():
     """
     Features: Function grad_with_ids.
@@ -631,7 +629,7 @@ def test_grad_with_weights_with_return_ids_pynative():
     assert res[1][1][0] == weights[1].name
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_function_grad_with_weights_return_ids():
     """
     Features: Function grad_with_ids.
@@ -667,7 +665,7 @@ def test_jit_function_grad_with_weights_return_ids():
     assert res[1][0][0] == weights[0].name
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_construct_grad_with_weights_with_return_ids():
     """
     Features: Function grad_with_ids.
@@ -707,7 +705,7 @@ def test_construct_grad_with_weights_with_return_ids():
     assert res[1][0][0] == weights[0].name
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_get_grad_by_position_pynative():
     """
     Features: Function get_grad.
@@ -734,7 +732,7 @@ def test_get_grad_by_position_pynative():
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_get_grad_with_parameter_pynative():
     """
     Features: Function get_grad.
@@ -761,7 +759,7 @@ def test_get_grad_with_parameter_pynative():
     assert np.allclose(grad_out.asnumpy(), expect_grad_weight1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_get_grad_not_found_pynative():
     """
     Features: Function get_grad.
@@ -788,7 +786,7 @@ def test_get_grad_not_found_pynative():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_outer_list_weight():
     """
     Features: Function get_grad.
@@ -829,7 +827,7 @@ def test_grad_outer_list_weight():
     assert np.allclose(out[0].asnumpy(), expect_value.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_with_only_input():
     """
     Feature: Test grad special case
@@ -846,7 +844,7 @@ def test_grad_with_only_input():
     np.testing.assert_almost_equal(gradients[0].asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_with_only_parameter():
     """
     Feature: Test grad special case
@@ -863,7 +861,7 @@ def test_grad_with_only_parameter():
     np.testing.assert_almost_equal(gradients[0].asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_squence_out():
     """
     Feature: Test grad special case
@@ -881,7 +879,7 @@ def test_grad_squence_out():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_graph_return_ids():
     """
     Features: Function value_and_grad.
@@ -936,7 +934,7 @@ def test_value_and_grad_nest_with_weights_graph_return_ids():
     assert gradient[1][1][0] == net.z.name
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_and_grad_nest_with_weights_graph_get_grad():
     """
     Features: Function value_and_grad.

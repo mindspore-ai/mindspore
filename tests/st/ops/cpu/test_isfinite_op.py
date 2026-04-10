@@ -35,8 +35,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net():
     x0 = Tensor(np.array([np.log(-1), 0.4, np.log(0)]).astype(np.float16))
     x1 = Tensor(np.array([np.log(-1), 0.4, np.log(0)]).astype(np.float32))
@@ -101,8 +100,7 @@ def test_net():
     assert np.all(out == expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_is_finite_cpu_dynamic_shape():
     """
     Feature: test FloatStatus op on CPU.

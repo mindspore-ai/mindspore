@@ -38,8 +38,7 @@ def test_net():
     print(output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_reshape_bfloat16(mode):
     """
@@ -55,7 +54,7 @@ def test_reshape_bfloat16(mode):
     assert output.shape == shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_reshape_tensor_tensor(mode):
     """

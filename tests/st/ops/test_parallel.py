@@ -126,9 +126,7 @@ def run_parallel_tests(
 @mark_utils.arg_mark(
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
-    card_mark='allcards',
-    essential_mark='essential',
-)
+    card_mark='allcards')
 def test_all_gather_matmul_binary_case() -> None:
     """
     Feature: mindspore.ops.all_gather_matmul
@@ -147,9 +145,7 @@ def test_all_gather_matmul_binary_case() -> None:
 @mark_utils.arg_mark(
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
-    card_mark='allcards',
-    essential_mark='essential',
-)
+    card_mark='allcards')
 def test_all_gather_matmul_dynamic_shape() -> None:
     """
     Feature: mindspore.ops.all_gather_matmul
@@ -168,9 +164,7 @@ def test_all_gather_matmul_dynamic_shape() -> None:
 @mark_utils.arg_mark(
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
-    card_mark='allcards',
-    essential_mark='essential',
-)
+    card_mark='allcards')
 def test_all_gather_matmul_precision_with_ms_small_ops() -> None:
     """
     Feature: mindspore.ops.all_gather_matmul
@@ -189,9 +183,7 @@ def test_all_gather_matmul_precision_with_ms_small_ops() -> None:
 @mark_utils.arg_mark(
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
-    card_mark='allcards',
-    essential_mark='essential',
-)
+    card_mark='allcards')
 def test_matmul_reduce_scatter_binary_case() -> None:
     """
     Feature: mindspore.ops.matmul_reduce_scatter
@@ -210,9 +202,7 @@ def test_matmul_reduce_scatter_binary_case() -> None:
 @mark_utils.arg_mark(
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
-    card_mark='allcards',
-    essential_mark='essential',
-)
+    card_mark='allcards')
 def test_matmul_reduce_scatter_dynamic_shape() -> None:
     """
     Feature: mindspore.ops.matmul_reduce_scatter
@@ -231,9 +221,7 @@ def test_matmul_reduce_scatter_dynamic_shape() -> None:
 @mark_utils.arg_mark(
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
-    card_mark='allcards',
-    essential_mark='essential',
-)
+    card_mark='allcards')
 def test_matmul_reduce_scatter_precision_with_ms_small_ops() -> None:
     """
     Feature: mindspore.ops.matmul_reduce_scatter

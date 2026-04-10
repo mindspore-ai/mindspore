@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data_shape', [(10, 10), (3, 4, 5)])
 @pytest.mark.parametrize('data_type',
                          [np.int8, np.int16, np.int32, np.int64, np.float16,
@@ -67,7 +67,7 @@ class DynamicShapeNet(nn.Cell):
         return real_x, self.nonzero(real_x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dyn_net():
     """
     Feature: NonZero

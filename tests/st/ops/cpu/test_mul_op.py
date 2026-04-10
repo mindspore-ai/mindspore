@@ -35,8 +35,7 @@ class Net(nn.Cell):
         return self.mul(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_mul():
     x0 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
     y0 = Tensor(np.random.uniform(-2, 2, (1, 1, 1, 1)).astype(np.float32))
@@ -85,8 +84,7 @@ def test_mul():
     assert out.shape == exp.shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_mul_int32():
     x0 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.int32))
     y0 = Tensor(np.random.uniform(-2, 2, (1, 1, 1, 1)).astype(np.int32))
@@ -135,8 +133,7 @@ def test_mul_int32():
     assert out.shape == exp.shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mul_tensor_api_modes(mode):
     """

@@ -43,8 +43,7 @@ class FmaxGrad(nn.Cell):
         return self.grad(self.forward)(x1, x2)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.int64, np.float32, np.float64])
 @pytest.mark.parametrize("context_mode", [mindspore.GRAPH_MODE, mindspore.PYNATIVE_MODE])
 def test_fmax_cpu_broadcast_shape(dtype, context_mode):

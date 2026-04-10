@@ -37,7 +37,7 @@ class NetSoftmax(nn.Cell):
         return self.softmax1(x), self.softmax2(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax():
     x = Tensor(np.array([[0.1, 0.3, 0.6, -0.3],
                          [0.2, -0.6, 0.8, 0.6],
@@ -88,7 +88,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax_4d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.array([[[[2.7866030e-01, 8.5578346e-01, -2.7546784e-01, -8.5833269e-01, 1.5753637e-01],
@@ -199,7 +199,7 @@ def test_softmax_4d():
     assert np.allclose(dx[0].asnumpy(), expect_dx)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax_functional():
     """
     Feature: softmax function
@@ -237,7 +237,7 @@ def test_softmax_functional():
     assert np.all(diff2 < error2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax_dynamic_shape():
     """
     Feature: test softmax in gpu.

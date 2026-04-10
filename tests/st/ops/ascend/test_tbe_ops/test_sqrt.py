@@ -69,8 +69,7 @@ def sqrt_backward_test(ms_type, np_type):
         np.testing.assert_array_almost_equal(output_np, expected, decimal=6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sqrt_forward_fp32(mode):
     """
@@ -82,8 +81,7 @@ def test_sqrt_forward_fp32(mode):
     sqrt_forward_test(mindspore.float32, np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sqrt_forward_bf16(mode):
     """
@@ -95,8 +93,7 @@ def test_sqrt_forward_bf16(mode):
     sqrt_forward_test(mindspore.bfloat16, np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sqrt_backward_fp32(mode):
     """
@@ -108,8 +105,7 @@ def test_sqrt_backward_fp32(mode):
     sqrt_backward_test(mindspore.float32, np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sqrt_backward_bf16(mode):
     """

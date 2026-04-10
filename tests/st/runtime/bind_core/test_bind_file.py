@@ -53,7 +53,7 @@ def _generate_bind_file_json(output_path, config):
         raise
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_0():
     """
     Feature: Pass bind_file to msrun --bind_numa and mindspore.runtime.set_cpu_affinity.
@@ -127,7 +127,7 @@ def test_bind_file_0():
     assert re.search(r"This module: 2 is assigned a bind core list: .*?\{10, 11, 12, 13, 14\}", worker_0_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_1():
     """
     Feature: Pass bind_file to msrun --bind_numa only (bind_cpu_mode=numa, bind_memory_mode=numa).
@@ -181,7 +181,7 @@ def test_bind_file_1():
     assert "Module bind core policy generated" not in worker_1_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_2():
     """
     Feature: Pass bind_file with cpu-mode binding cores and no memory binding.
@@ -240,7 +240,7 @@ def test_bind_file_2():
     assert re.search(r"This module: 2 is assigned a bind core list: .*?\{10, 11, 12, 13, 14\}", worker_0_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_3():
     """
     Feature: Pass bind_file with cpu-mode binding cores only for main.
@@ -292,7 +292,7 @@ def test_bind_file_3():
            "conditions for binding core." in worker_1_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_4():
     """
     Feature: Pass bind_file with numa CPU binding only.
@@ -343,7 +343,7 @@ def test_bind_file_4():
     assert "Module bind core policy generated" not in worker_1_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_5():
     """
     Feature: Pass bind_file with memory-only binding.
@@ -388,7 +388,7 @@ def test_bind_file_5():
     assert "Module bind core policy generated" not in worker_1_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_bind_file_6():
     """
     Feature: Pass bind_file with cpu-mode modules only (no main).
@@ -442,7 +442,7 @@ def test_bind_file_6():
     assert re.search(r"This module: 2 is assigned a bind core list: .*?\{10, 11, 12, 13, 14\}", worker_0_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_bind_file_not_exist():
     """
     Feature: Validate bind_numa json file path.
@@ -470,7 +470,7 @@ def test_except_bind_file_not_exist():
     assert f"bind_numa json file '{bind_file_path}' does not exist." in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_invalid_bind_cpu():
     """
     Feature: Validate bind_cpu in bind file.
@@ -527,7 +527,7 @@ def test_except_invalid_bind_cpu():
            "but got <class 'str'>. Skip enabling set_cpu_affinity." in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_invalid_bind_cpu_mode():
     """
     Feature: Validate bind_cpu_mode in bind file.
@@ -577,7 +577,7 @@ def test_except_invalid_bind_cpu_mode():
     assert "'bind_cpu_mode' only supports 'cpu'/'numa'/'none'" in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_invalid_bind_memory_mode():
     """
     Feature: Validate bind_memory_mode in bind file.
@@ -627,7 +627,7 @@ def test_except_invalid_bind_memory_mode():
     assert "'bind_memory_mode' only supports 'numa'/'none'" in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_invalid_actor_thread_fix_bind():
     """
     Feature: Validate actor_thread_fix_bind in bind file.
@@ -680,7 +680,7 @@ def test_except_invalid_actor_thread_fix_bind():
     assert "'actor_thread_fix_bind' only supports bool type True/False" in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_bind_file_hash_mismatch():
     """
     Feature: Validate bind file hash consistency between msrun and set_cpu_affinity.
@@ -722,7 +722,7 @@ def test_except_bind_file_hash_mismatch():
            "Please keep the file consistent." in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_exceed_cpu():
     """
     Feature: Validate available CPU in bind file.
@@ -761,7 +761,7 @@ def test_except_exceed_cpu():
     assert "CPU id 1000 in {\'main\': \'1000-1004\'} for device1 is not available." in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_exceed_numa():
     """
     Feature: Validate available NUMA in bind file.
@@ -800,7 +800,7 @@ def test_except_exceed_numa():
     assert "NUMA id 100 in 100-101 for device1 is not available." in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_main_when_no_msrun():
     """
     Feature: Pass only the "bind_file" to set_cpu_affinity; it holds the highest priority and binds the main thread.
@@ -840,7 +840,7 @@ def test_main_when_no_msrun():
            "'minddata': [15, 16, 17, 18, 19], 'main': [0, 1, 2, 3, 4]}" in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_device_underscore_format():
     """
     Feature: Support device_X format in bind file.
@@ -908,7 +908,7 @@ def test_device_underscore_format():
            "'minddata': [35, 36, 37, 38, 39]}" in worker_1_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_invalid_device_key():
     """
     Feature: Validate device keys in bind file.
@@ -948,7 +948,7 @@ def test_except_invalid_device_key():
     assert "and 'scheduler' are supported" in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_except_device_id_exceeds_available():
     """
     Feature: Validate device ID doesn't exceed available device count.

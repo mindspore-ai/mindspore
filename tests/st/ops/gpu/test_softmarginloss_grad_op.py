@@ -72,7 +72,7 @@ def softmarginlossgrad_testset():
                     expect_mean, expect_sum, epsilons[i])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmarginlossgrad_graph():
     """
     Feature: SoftMarginLossGrad
@@ -83,7 +83,7 @@ def test_softmarginlossgrad_graph():
     softmarginlossgrad_testset()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_soft_margin_loss_pynative():
     """
     Feature: SoftMarginLossGrad

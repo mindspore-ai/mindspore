@@ -55,7 +55,7 @@ def easy_fuse():
     assert np.allclose(expect1_np, output1_np, rtol=1.e-4, atol=1.e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_easy_fuse_cpu():
     """
     Feature: easy test case for graph_kernel in cpu.

@@ -140,7 +140,7 @@ def grad_return_ids_pos_weight(class_name):
     return jit_grad, pijit_grad
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [grad_return_ids_pos0])
 def test_grad_return_ids_pos0_pynative(func):
     """
@@ -165,7 +165,7 @@ def test_grad_return_ids_pos0_pynative(func):
     match_array(jit_grad2, pijit_grad2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [grad_return_ids_pos01])
 def test_grad_return_ids_pos01_pynative(func):
     """
@@ -189,7 +189,7 @@ def test_grad_return_ids_pos01_pynative(func):
     jit_grad2, pijit_grad2 = func(Grad)
     match_array(jit_grad2, pijit_grad2)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [grad_return_ids_weight_w])
 def test_grad_return_ids_weight_w_pynative(func):
     """
@@ -213,7 +213,7 @@ def test_grad_return_ids_weight_w_pynative(func):
     jit_grad2, pijit_grad2 = func(Grad)
     match_array(jit_grad2, pijit_grad2)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [grad_return_ids_weight_wb])
 def test_grad_return_ids_weight_wb_pynative(func):
     """
@@ -237,7 +237,7 @@ def test_grad_return_ids_weight_wb_pynative(func):
     jit_grad2, pijit_grad2 = func(Grad)
     match_array(jit_grad2, pijit_grad2)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [grad_return_ids_pos_weight])
 def test_grad_return_ids_pos_weight_pynative(func):
     """

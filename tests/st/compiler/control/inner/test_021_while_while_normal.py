@@ -55,8 +55,7 @@ class BackwardNet(nn.Cell):
         return grads
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_forward():
     """
     Feature: Control flow
@@ -72,8 +71,7 @@ def test_forward():
     assert graph_out == Tensor(np.array(27), mstype.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_backward():
     """
     Feature: Control flow

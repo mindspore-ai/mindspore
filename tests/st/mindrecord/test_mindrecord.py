@@ -21,7 +21,7 @@ from mindspore.mindrecord import FileWriter
 
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_windows'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level0', card_mark='onecard')
 def test_mindrecord_parallel_write_on_windows():
     """
     Feature: Test write mindrecord on windows

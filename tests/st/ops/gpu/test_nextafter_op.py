@@ -32,7 +32,7 @@ def nextafter_pynative(x1, x2):
     return out_msp
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nextafter_float64_graph():
     """
     Feature: ALL To ALL
@@ -46,7 +46,7 @@ def test_nextafter_float64_graph():
     assert out_msp.asnumpy() == out_tf
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nextafter_float32_graph():
     """
     Feature: ALL To ALL
@@ -60,7 +60,7 @@ def test_nextafter_float32_graph():
     assert (out_msp.asnumpy() == out_tf).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nextafter_float64_pynative():
     """
     Feature: ALL To ALL
@@ -74,7 +74,7 @@ def test_nextafter_float64_pynative():
     assert out_msp.asnumpy() == out_tf
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nextafter_float32_pynative():
     """
     Feature: ALL To ALL

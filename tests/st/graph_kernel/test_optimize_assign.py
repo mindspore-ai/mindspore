@@ -52,7 +52,7 @@ class TestOptAssignNet_2(Cell):
         return add_res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_opt_assign_output_1():
     """
     Feature: todo
@@ -74,7 +74,7 @@ def test_opt_assign_output_1():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_opt_assign_output_2():
     """
     Feature: todo

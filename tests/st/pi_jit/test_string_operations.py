@@ -32,7 +32,7 @@ def assert_graph_break_count(func, break_count: int):
     assert jcr['break_count_'] == break_count
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_build_fstring_case_1():
     """
     Feature: String operation.
@@ -51,7 +51,7 @@ def test_build_fstring_case_1():
     assert s1 == s2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_build_fstring_case_2():
     """
     Feature: String operation.
@@ -70,7 +70,7 @@ def test_build_fstring_case_2():
     assert s1 == s2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_build_fstring_case_3():
     """
     Feature: Test build f-string.
@@ -90,7 +90,7 @@ def test_build_fstring_case_3():
     assert_graph_break_count(fn, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_build_fstring_case_4():
     """
     Feature: Test build f-string.
@@ -114,7 +114,7 @@ def test_build_fstring_case_4():
     match_array(o1, o2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_string_add_string():
     """
     Feature: String operation.

@@ -65,8 +65,7 @@ def fold_infer(mixed_precision, crop_size, is_ge_only=False):
     return confidence, time_list
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=25122.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=25122.0)
 def test_910B_Ascend_fold():
     """
     Feature: 910B Megaflod

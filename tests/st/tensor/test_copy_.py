@@ -41,8 +41,7 @@ def copy_backward_func(x, y):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_copy_std(mode):
     """
@@ -80,8 +79,7 @@ def test_copy_std(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_copy_cpu_inplace_feature():
     """
     Feature: inplace features.
@@ -107,8 +105,7 @@ def test_copy_cpu_inplace_feature():
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 def test_copy_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -128,8 +125,7 @@ def test_copy_dynamic_shape():
             case_config={'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_copy_bfloat16():
     """
     Feature: test copy functional API.
@@ -264,8 +260,7 @@ def copy_h2d_d2h_h2h_empty(non_blocking):
     assert np.all(a.asnumpy() == b.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('non_blocking', [False, True])
 def test_copy_h2d_d2h_h2h(non_blocking):
     """
@@ -279,8 +274,7 @@ def test_copy_h2d_d2h_h2h(non_blocking):
     copy_h2d_d2h_h2h_empty(non_blocking)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard')
 def test_copy_large_tensor():
     """
     Feature: test copy tensor API.

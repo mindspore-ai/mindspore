@@ -52,8 +52,7 @@ def run_basic(shape1, shape2, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_basic_ascend_f16():
     """
     Feature: test graph kernel mint.matmul
@@ -64,8 +63,7 @@ def test_basic_ascend_f16():
     run_basic((256, 128), (128, 256), mindspore.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_basic_ascend_f32():
     """
     Feature: test graph kernel mint.matmul
@@ -76,8 +74,7 @@ def test_basic_ascend_f32():
     run_basic((256, 128), (128, 256), mindspore.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_basic_ascend_f32_1D():
     """
     Feature: test graph kernel mint.matmul

@@ -49,8 +49,7 @@ class NetGatherDGrad(nn.Cell):
         return self.grad(self.network)(inputx, index)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gatherd_grad_fp32():
     """
     Feature: Test GatherDGrad with float32.
@@ -70,8 +69,7 @@ def test_gatherd_grad_fp32():
     print(output_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gatherd_grad_fp16():
     """
     Feature: Test GatherDGrad with float16.
@@ -91,8 +89,7 @@ def test_gatherd_grad_fp16():
     print(output_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gatherd_grad_int32():
     """
     Feature: Test GatherDGrad with int32.
@@ -112,8 +109,7 @@ def test_gatherd_grad_int32():
     print(output_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gatherd_grad_checkresult():
     """
     Feature: Test GatherDGrad with checkresult.
@@ -136,8 +132,7 @@ def test_gatherd_grad_checkresult():
     assert np.all(np.abs(output.asnumpy() - expect) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gatherd_grad_dynamic_shape():
     """
     Feature: dynamic shape support of GatherDGrad.

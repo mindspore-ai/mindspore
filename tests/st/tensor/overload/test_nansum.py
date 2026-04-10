@@ -45,8 +45,7 @@ class Net2(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nansum_pyboost(mode):
     """
@@ -69,8 +68,7 @@ def test_nansum_pyboost(mode):
     'platform_ascend910b'
 ],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nansum_python(mode):
     """

@@ -22,8 +22,7 @@ from mindspore.common.tensor import Tensor
 import mindspore.ops as ops
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cross_entropy_ops_input_float64():
     """
     Feature: Test abnormal input dtype of CrossEntropyLoss.
@@ -36,8 +35,7 @@ def test_cross_entropy_ops_input_float64():
     ops.cross_entropy(input_data, target_data, weight_data)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cross_entropy_ops_weight_float64():
     """
     Feature: Test abnormal weight dtype of CrossEntropyLoss.
@@ -50,8 +48,7 @@ def test_cross_entropy_ops_weight_float64():
     ops.cross_entropy(input_data, target_data, weight_data)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cross_entropy_ops_target_int64():
     """
     Feature: Test abnormal target dtype of CrossEntropyLoss.

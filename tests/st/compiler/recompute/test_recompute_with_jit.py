@@ -58,8 +58,7 @@ def run_testcase(testcase_name, expect_memory_usage):
     os.remove(log_filename)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_recompute_cell_recompute_with_jit1():
     """
     Feature: Recompute cell with jit.
@@ -69,8 +68,7 @@ def test_recompute_cell_recompute_with_jit1():
     run_testcase("test_recompute_block_recompute_with_jit1", 46)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2048.00)
 def test_recompute_cell_recompute_with_jit_with_output_recompute():
     """
     Feature: Recompute cell with jit.
@@ -80,8 +78,7 @@ def test_recompute_cell_recompute_with_jit_with_output_recompute():
     run_testcase("test_recompute_block_recompute_with_jit_with_output_recompute", 88)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_recompute_block_recompute_func_api_with_jit1():
     """
     Feature: Recompute cell with jit.
@@ -91,8 +88,7 @@ def test_recompute_block_recompute_func_api_with_jit1():
     run_testcase("test_recompute_block_recompute_func_api_with_jit1", 46)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_recompute_cell_recompute_with_jit2():
     """
     Feature: Recompute cell with jit.
@@ -160,7 +156,7 @@ class Conv2dAddReluMean(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+          level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_recompute_set_net_cell_true_primitive_attr_false():
     """
     Feature: Net recomputation and Primitive recompuation.
@@ -206,7 +202,7 @@ def test_recompute_set_net_cell_true_primitive_attr_false():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_recompute_set_net_cell_true_primitive_attr_true():
     """
     Feature: Net recomputation and Primitive recompuation.
@@ -249,7 +245,7 @@ def test_recompute_set_net_cell_true_primitive_attr_true():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_recompute_set_cell_conv_recompute_true_pynative():
     """
     Feature: Net recomputation and Primitive recompuation.

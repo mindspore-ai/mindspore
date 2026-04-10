@@ -62,8 +62,7 @@ def threshold_backward_func(x, threshold, value, inplace=False):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_threshold_normal(mode):
     """
@@ -95,11 +94,9 @@ def test_threshold_normal(mode):
                        rtol=0.0001)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 def test_f_threshold_dynamic_shape():
     """

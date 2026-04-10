@@ -16,7 +16,7 @@ class Net(nn.Cell):
         return self.logit(x, eps)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_logit_graph():
     """
      Feature: Logit gpu TEST.
@@ -34,7 +34,7 @@ def test_logit_graph():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_logit_pynative():
     """
      Feature: Logit gpu TEST.

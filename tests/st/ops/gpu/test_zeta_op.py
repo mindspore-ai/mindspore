@@ -32,7 +32,7 @@ class NetZeta(nn.Cell):
         return self.zeta(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeta_1d_input_float32_output_float32():
     """
     Feature: Zeta gpu TEST.
@@ -50,7 +50,7 @@ def test_zeta_1d_input_float32_output_float32():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float32), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_zeta_1d_input_float64_output_float64():
     """
     Feature: Zeta gpu TEST.

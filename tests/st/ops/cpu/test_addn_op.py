@@ -46,8 +46,7 @@ class Net2InputsDynRank(nn.Cell):
         return res
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_two_tensors_add():
     """
     Feature: ALL To ALL
@@ -95,8 +94,7 @@ class Net4Inputs(nn.Cell):
         return self.addn((x, y, m, n))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_four_tensors_add():
     """
     Feature: ALL To ALL
@@ -117,8 +115,7 @@ def test_four_tensors_add():
         assert np.array_equal(output.asnumpy(), expect_result)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_addn_support_type():
     """
     Feature: test ops.addn.

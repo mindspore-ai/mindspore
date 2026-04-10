@@ -26,8 +26,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_1_1(mode):
     """
@@ -55,8 +54,7 @@ def test_parameter_1_1(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_1_2(mode):
     """
@@ -85,8 +83,7 @@ def test_parameter_1_2(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_3(mode):
     """
@@ -114,8 +111,7 @@ def test_parameter_3(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_5_2(mode):
     """
@@ -146,8 +142,7 @@ def test_parameter_5_2(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_list_tuple_no_name(mode):
     """
@@ -183,8 +178,7 @@ def test_parameter_list_tuple_no_name(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_in_tuple(mode):
     """
@@ -215,8 +209,7 @@ def test_parameter_in_tuple(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_parameter_tuple_2(mode):
     """
@@ -246,8 +239,7 @@ def test_parameter_parameter_tuple_2(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter(mode):
     """
@@ -300,8 +292,7 @@ def test_parameter(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_parameter_argument_and_fv(mode):
     """
@@ -328,8 +319,7 @@ def test_parameter_argument_and_fv(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_parameter_argument_grad():
     """
     Feature: Parameter argmument in top func graph.
@@ -386,8 +376,7 @@ def test_parameter_argument_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_parameter_set_in_class_attributes_between_iterations_name_diff():
     """
     Feature: Return Parameter argmument itself.

@@ -94,7 +94,7 @@ def tril_triu_pynative(nptype, diagonal):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_tril_triu_graph_float32():
     """
     Feature: ALL To ALL
@@ -104,7 +104,7 @@ def test_tril_triu_graph_float32():
     tril_triu(np.float32, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_dyn():
     """
     Feature: test Tril op in gpu.
@@ -126,7 +126,7 @@ def test_tril_dyn():
         assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_triu_dyn():
     """
     Feature: test Triu op in gpu.
@@ -148,7 +148,7 @@ def test_triu_dyn():
         assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_uint8():
     """
     Feature: ALL To ALL
@@ -158,7 +158,7 @@ def test_tril_triu_graph_uint8():
     tril_triu(np.uint8, -5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_uint16():
     """
     Feature: ALL To ALL
@@ -168,7 +168,7 @@ def test_tril_triu_graph_uint16():
     tril_triu(np.uint16, -4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_uint32():
     """
     Feature: ALL To ALL
@@ -178,7 +178,7 @@ def test_tril_triu_graph_uint32():
     tril_triu(np.uint32, -3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_uint64():
     """
     Feature: ALL To ALL
@@ -188,7 +188,7 @@ def test_tril_triu_graph_uint64():
     tril_triu(np.uint64, -2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_int8():
     """
     Feature: ALL To ALL
@@ -198,7 +198,7 @@ def test_tril_triu_graph_int8():
     tril_triu(np.int8, -1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_int16():
     """
     Feature: ALL To ALL
@@ -208,7 +208,7 @@ def test_tril_triu_graph_int16():
     tril_triu(np.int16, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_int32():
     """
     Feature: ALL To ALL
@@ -218,7 +218,7 @@ def test_tril_triu_graph_int32():
     tril_triu(np.int32, 1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_int64():
     """
     Feature: ALL To ALL
@@ -228,7 +228,7 @@ def test_tril_triu_graph_int64():
     tril_triu(np.int64, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_float16():
     """
     Feature: ALL To ALL
@@ -238,7 +238,7 @@ def test_tril_triu_graph_float16():
     tril_triu(np.float16, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_float64():
     """
     Feature: ALL To ALL
@@ -248,7 +248,7 @@ def test_tril_triu_graph_float64():
     tril_triu(np.float64, 5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_graph_bool():
     """
     Feature: ALL To ALL
@@ -258,7 +258,7 @@ def test_tril_triu_graph_bool():
     tril_triu(np.bool_, 6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_uint8():
     """
     Feature: ALL To ALL
@@ -268,7 +268,7 @@ def test_tril_triu_pynative_uint8():
     tril_triu_pynative(np.uint8, -5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_uint16():
     """
     Feature: ALL To ALL
@@ -278,7 +278,7 @@ def test_tril_triu_pynative_uint16():
     tril_triu_pynative(np.uint16, -4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_uint32():
     """
     Feature: ALL To ALL
@@ -288,7 +288,7 @@ def test_tril_triu_pynative_uint32():
     tril_triu_pynative(np.uint32, -3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_uint64():
     """
     Feature: ALL To ALL
@@ -298,7 +298,7 @@ def test_tril_triu_pynative_uint64():
     tril_triu_pynative(np.uint64, -2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_int8():
     """
     Feature: ALL To ALL
@@ -308,7 +308,7 @@ def test_tril_triu_pynative_int8():
     tril_triu_pynative(np.int8, -1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_int16():
     """
     Feature: ALL To ALL
@@ -318,7 +318,7 @@ def test_tril_triu_pynative_int16():
     tril_triu_pynative(np.int16, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_int32():
     """
     Feature: ALL To ALL
@@ -328,7 +328,7 @@ def test_tril_triu_pynative_int32():
     tril_triu_pynative(np.int32, 1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_int64():
     """
     Feature: ALL To ALL
@@ -338,7 +338,7 @@ def test_tril_triu_pynative_int64():
     tril_triu_pynative(np.int64, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_float16():
     """
     Feature: ALL To ALL
@@ -348,7 +348,7 @@ def test_tril_triu_pynative_float16():
     tril_triu_pynative(np.float16, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_float32():
     """
     Feature: ALL To ALL
@@ -358,7 +358,7 @@ def test_tril_triu_pynative_float32():
     tril_triu_pynative(np.float32, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_float64():
     """
     Feature: ALL To ALL
@@ -368,7 +368,7 @@ def test_tril_triu_pynative_float64():
     tril_triu_pynative(np.float64, 5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tril_triu_pynative_bool():
     """
     Feature: ALL To ALL

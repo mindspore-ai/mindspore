@@ -20,7 +20,7 @@ from ..share.utils import match_array, assert_executed_by_graph_mode
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_tensor():
     """
     Feature: One stage basic operation.
@@ -39,7 +39,7 @@ def test_create_tensor():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_tensor_list():
     """
     Feature: One stage basic operation.
@@ -62,7 +62,7 @@ def test_create_tensor_list():
     match_array(actual[1].asnumpy(), expect[1].asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_tensor_by_ms_api():
     """
     Feature: One stage basic operation.

@@ -42,11 +42,9 @@ def normal_backward_func(x):
     return grad(Net())(x)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=2.00
 )
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -66,11 +64,9 @@ def test_normal_backward(mode):
     np.allclose(output_x_grad[0].asnumpy(), expect_x_grad)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=2.00
 )
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

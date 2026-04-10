@@ -33,8 +33,7 @@ class NetAtan2(nn.Cell):
         return self.atan2(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_atan2(dtype):
     """

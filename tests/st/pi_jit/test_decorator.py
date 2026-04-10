@@ -29,7 +29,7 @@ context.set_context(mode=context.PYNATIVE_MODE)
 jit_cfg = {'compile_with_try': False}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_decorator_and_context_manager():
     """
     Feature: decorator.
@@ -76,7 +76,7 @@ def test_decorator_and_context_manager():
     assert_equal(o1, o2)
     assert_executed_by_graph_mode(compiled_fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_decorator_with_expand_input():
     """
     Feature: decorator.

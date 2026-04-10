@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.cholesky_solve(x1, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cholesky_solve():
     """
     Feature: CholeskySolve gpu TEST.

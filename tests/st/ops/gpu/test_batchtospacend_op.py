@@ -48,7 +48,7 @@ def batch_to_space_nd_test_case(nptype, block_shape=2, input_shape=(4, 1, 1, 1))
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batch_to_space_nd_graph():
     """
     Feature: test BatchToSpaceND function interface.
@@ -59,7 +59,7 @@ def test_batch_to_space_nd_graph():
     batch_to_space_nd_test_case(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batch_to_space_nd_pynative():
     """
     Feature: test BatchToSpaceND function interface.

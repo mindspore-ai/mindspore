@@ -737,8 +737,7 @@ def test_pynative_forward_hook_prepend_with_kwargs():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_cell_forward_hook_test_suite():
     """
     Feature: PyNative forward hook.
@@ -761,8 +760,7 @@ def test_pynative_cell_forward_hook_test_suite():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_forward_pre_hook_with_kwargs_return_error():
     """
     Feature: PyNative forward pre hook with kwargs.

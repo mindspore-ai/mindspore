@@ -25,8 +25,7 @@ from tests.st.pynative.utils import GradOfAllInputs, GradOfFirstInput, GradOfAll
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_autograd_saved_tensor_version_check():
     """
     Features: Saved Tensor Version check.
@@ -67,8 +66,7 @@ def test_autograd_saved_tensor_version_check():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_autograd_custom_function_saved_tensor_version_check():
     """
     Features: Saved Tensor Version check.
@@ -114,8 +112,7 @@ def test_autograd_custom_function_saved_tensor_version_check():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_autograd_custom_bprop_cell_saved_tensor_version_check():
     """
     Features: Saved Tensor Version check.
@@ -163,8 +160,7 @@ def test_autograd_custom_bprop_cell_saved_tensor_version_check():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 def test_autograd_saved_tensor_inplace_detach():
     """
     Features: Saved Tensor.
@@ -207,8 +203,7 @@ class DelRecordHook:
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_op_output_no_cycle():
     """
     Features: Saved Tensor.
@@ -265,8 +260,7 @@ def test_autograd_saved_tensor_op_output_no_cycle():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_output_unpack_no_cycle():
     """
     Features: Saved Tensor.
@@ -290,8 +284,7 @@ def test_autograd_saved_tensor_output_unpack_no_cycle():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_autograd_saved_tensor_view_inplace_no_cycle():
     """
     Features: Saved Tensor.
@@ -357,8 +350,7 @@ class WrapRecordHook:
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_hook_op_input():
     """
     Features: Saved Tensor Hook.
@@ -397,8 +389,7 @@ def test_autograd_saved_tensor_hook_op_input():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_hook_op_output():
     """
     Features: Saved Tensor Hook.
@@ -437,8 +428,7 @@ def pack_hook_stop_gradient(x):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_hook_op_input_and_output():
     """
     Features: Saved Tensor Hook.
@@ -472,8 +462,7 @@ def test_autograd_saved_tensor_hook_op_input_and_output():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_hook_custom_function():
     """
     Features: Saved Tensor Hook.
@@ -521,8 +510,7 @@ def test_autograd_saved_tensor_hook_custom_function():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_hook_custom_bprop_cell():
     """
     Features: Saved Tensor Hook.
@@ -567,8 +555,7 @@ def test_autograd_saved_tensor_hook_custom_bprop_cell():
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 def test_autograd_saved_tensor_hook_custom_cpp_function():
     """
     Features: Saved Tensor Hook.
@@ -609,8 +596,7 @@ def err_hook(x):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_autograd_saved_tensor_hook_no_grad():
     """
     Features: Saved Tensor Hook.
@@ -626,8 +612,7 @@ def test_autograd_saved_tensor_hook_no_grad():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_autograd_saved_tensor_hook_pack_hook_with_inplace_modification_error():
     """
     Features: Saved Tensor Hook.
@@ -662,8 +647,7 @@ def unpack_to_ascend(x):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=22.00)
+          card_mark='onecard', mem_peak=22.00)
 def test_saved_tensor_hook_offload():
     """
     Features: Saved Tensor Hook.
@@ -702,8 +686,7 @@ def test_saved_tensor_hook_offload():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=22.0)
+          card_mark='onecard', mem_peak=22.0)
 def test_saved_tensor_custom_function_hook_offload():
     """
     Features: Saved Tensor Hook.
@@ -752,8 +735,7 @@ def test_saved_tensor_custom_function_hook_offload():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_saved_tensors_hooks_nested_apply_innermost():
     """
     Features: Saved Tensor Hook.
@@ -782,8 +764,7 @@ def test_saved_tensors_hooks_nested_apply_innermost():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_saved_tensors_hooks_cell_with_forward_hook():
     """
     Features: Saved Tensor Hook.
@@ -818,8 +799,7 @@ def test_saved_tensors_hooks_cell_with_forward_hook():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_saved_tensors_hooks_with_recompute():
     """
     Features: Saved Tensor Hook.
@@ -873,8 +853,7 @@ def test_saved_tensors_hooks_with_recompute():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_saved_tensors_hooks_with_high_grad():
     """
     Features: Saved Tensor Hook.
@@ -893,8 +872,7 @@ def test_saved_tensors_hooks_with_high_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_saved_tensors_hooks_ignore_wrapped_number():
     """
     Features: Saved Tensor Hook.
@@ -913,8 +891,7 @@ def test_saved_tensors_hooks_ignore_wrapped_number():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_saved_tensors_hooks_pre_disable_async():
     """
     Features: Saved Tensor Hook.
@@ -941,8 +918,7 @@ def test_saved_tensors_hooks_pre_disable_async():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_disable_saved_tensor_hook():
     """
     Features: Disable Saved Tensor Hook.
@@ -974,8 +950,7 @@ def test_disable_saved_tensor_hook():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_disable_saved_tensor_hook_nested():
     """
     Features: Disable Saved Tensor Hook.

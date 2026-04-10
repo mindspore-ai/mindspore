@@ -21,8 +21,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_generated_from_list():
     """
     Feature: dict comp.
@@ -39,8 +38,7 @@ def test_dict_generated_from_list():
     assert out == {'b': 2, 'c': 3}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_dict_generated_from_dict():
     """
     Feature: dict comp.
@@ -57,8 +55,7 @@ def test_dict_generated_from_dict():
     assert out == {'b': 2, 'c': 3}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dictcomp_with_multiple_generator():
     """
     Feature: dict comp.
@@ -77,7 +74,7 @@ def test_dictcomp_with_multiple_generator():
         ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dictcomp_with_pyexecute_input():
     """
     Feature: dict comp.
@@ -94,7 +91,7 @@ def test_dictcomp_with_pyexecute_input():
     assert out == {'a': 5, 'b': 7, 'c': 3, 'd': 6}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_iterator_input():
     """
     Feature: Graph syntax list comp.

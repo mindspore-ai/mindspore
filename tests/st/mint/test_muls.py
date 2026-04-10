@@ -41,7 +41,7 @@ def mint_muls_backward_func(x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_muls_std():
     """
     Feature: standard forward, backward features.
@@ -59,7 +59,7 @@ def test_muls_std():
     np.allclose(output_z.asnumpy(), expect_z, rtol=1e-5, equal_nan=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_muls_grad_std():
     """
     Feature: standard forward, backward features.
@@ -77,7 +77,7 @@ def test_muls_grad_std():
     np.allclose(output_x_grad[0].asnumpy(), expect_grad_x, rtol=1e-5, equal_nan=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_muls_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -93,8 +93,7 @@ def test_muls_dynamic_shape():
             disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_muls_bfloat16():
     """
     Feature: test copy functional API.

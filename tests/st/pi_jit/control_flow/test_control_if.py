@@ -23,7 +23,7 @@ class ControlOneIfOneAddnOneAddn(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_addn_addn_true():
     """
     Feature: PIJit
@@ -52,7 +52,7 @@ def test_ctrl_if_addn_addn_true():
     match_array(ps_grad[3], pi_grad[3])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_addn_addn_false():
     """
     Feature: PIJit
@@ -95,7 +95,7 @@ class ControlOneIfOneAddnOneAddnOneAddn(Cell):
         return out_me
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_addn_addn_addn_true():
     """
     Feature: PIJit
@@ -124,7 +124,7 @@ def test_ctrl_if_addn_addn_addn_true():
     match_array(ps_grad[3], pi_grad[3])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_addn_addn_addn_false():
     """
     Feature: PIJit
@@ -152,7 +152,7 @@ def test_ctrl_if_addn_addn_addn_false():
     match_array(ps_grad[2], pi_grad[2])
     match_array(ps_grad[3], pi_grad[3])
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jump_forward_if_not_none():
     """
     Feature: PIJit
@@ -174,7 +174,7 @@ def test_jump_forward_if_not_none():
     assert jcr["stat"] == "GRAPH_CALLABLE"
     assert jcr["break_count_"] == 0
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jump_forward_if_none():
     """
     Feature: PIJit
@@ -196,7 +196,7 @@ def test_jump_forward_if_none():
     assert jcr["stat"] == "GRAPH_CALLABLE"
     assert jcr["break_count_"] == 0
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jump_backward_if_not_none():
     """
     Feature: PIJit
@@ -217,7 +217,7 @@ def test_jump_backward_if_not_none():
     assert jcr["stat"] == "GRAPH_CALLABLE"
     assert jcr["break_count_"] == 0
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jump_backward_if_none():
     """
     Feature: PIJit
@@ -239,7 +239,7 @@ def test_jump_backward_if_none():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_at_if_statement():
     """
     Feature: test graph break at if statement.

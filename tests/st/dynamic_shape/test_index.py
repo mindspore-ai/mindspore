@@ -413,7 +413,7 @@ input_data = Tensor(np.arange(4 * 5).reshape((4, 5)))
 input_data_4d = Tensor(np.arange(4 * 3 * 4 * 4).reshape((4, 3, 4, 4)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_tensor_index_st():
     """
     Feature: Tensor index
@@ -433,7 +433,7 @@ class NetWorkFancyIndex(nn.Cell):
     def construct(self, tensor):
         return tensor[self.index]
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_fancy_index_integer_list_negative(mode):
     """
@@ -457,7 +457,7 @@ class EllipsisIndexNet(nn.Cell):
     def construct(self, x):
         return x[..., 0]
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_index_with_ellipsis(mode):
     """

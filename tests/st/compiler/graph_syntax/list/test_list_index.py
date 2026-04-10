@@ -26,7 +26,7 @@ from tests.st.compiler.utils import assert_equal, allclose_nparray
 from tests.st.pi_jit.share.grad import compute_grad_of_net_inputs
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_2_levels():
     """
     Feature: List multi-level index assignment.
@@ -47,7 +47,7 @@ def test_list_mul_index_2_levels():
     assert out == [[1], [2, 3], [4, 5, 9]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_2_levels_graph_mode():
     """
     Feature: List multi-level index assignment in graph mode.
@@ -68,7 +68,7 @@ def test_list_mul_index_2_levels_graph_mode():
     assert out == [[1], [2, 3], [4, 5, 9]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_3_levels():
     """
     Feature: List multi-level index assignment.
@@ -89,7 +89,7 @@ def test_list_mul_index_3_levels():
     assert out[2] == [4, [5, 9]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_4_levels():
     """
     Feature: List multi-level index assignment.
@@ -110,7 +110,7 @@ def test_list_mul_index_4_levels():
     assert out[2] == [4, [[5, 6, 7, 9]]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_5_levels():
     """
     Feature: List multi-level index assignment.
@@ -131,7 +131,7 @@ def test_list_mul_index_5_levels():
     assert out[2] == [4, [[5, [9, 7, 8]]]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_6_levels():
     """
     Feature: List multi-level index assignment.
@@ -153,7 +153,7 @@ def test_list_mul_index_6_levels():
 
 
 @pytest.mark.skip(reason='graph mode does not support list index nesting above 6 levels')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_7_levels_pynative():
     """
     Feature: List multi-level index assignment in pynative mode.
@@ -174,7 +174,7 @@ def test_list_mul_index_7_levels_pynative():
     assert out == [[1], [2, 3], [4, [[5, [6, [7, [9]]]]]]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_7_levels_graph_mode_error():
     """
     Feature: List multi-level index assignment error in graph mode.
@@ -196,7 +196,7 @@ def test_list_mul_index_7_levels_graph_mode_error():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_from_init_multiple_types():
     """
     Feature: List multi-level index assignment with multiple types.
@@ -234,7 +234,7 @@ def test_list_mul_index_from_init_multiple_types():
     assert out5[2] == [3, True, 3]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_from_init_multiple_assignments():
     """
     Feature: List multi-level index multiple assignments.
@@ -266,7 +266,7 @@ def test_list_mul_index_from_init_multiple_assignments():
     assert out[2] == [4, [[5, [6, [7, 8]]]]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_append_and_assign():
     """
     Feature: List append and multi-level index assignment.
@@ -294,7 +294,7 @@ def test_list_mul_index_append_and_assign():
     assert out[3] == [2, 4]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_negative_index():
     """
     Feature: List multi-level index assignment with negative index.
@@ -320,7 +320,7 @@ def test_list_mul_index_negative_index():
     assert out[2] == [[3, 3], [4, 3]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_mul_index_2_levels():
     """
     Feature: Tensor multi-level index assignment.
@@ -346,7 +346,7 @@ def test_tensor_mul_index_2_levels():
     allclose_nparray(out, tensor_y, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_mul_index_3_levels():
     """
     Feature: Tensor multi-level index assignment.
@@ -372,7 +372,7 @@ def test_tensor_mul_index_3_levels():
     allclose_nparray(out, tensor_y, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_out_of_range():
     """
     Feature: List multi-level index assignment out of range.
@@ -399,7 +399,7 @@ def test_list_mul_index_out_of_range():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_with_relu_forward_backward():
     """
     Feature: List multi-level index assignment with ReLU operator.
@@ -444,7 +444,7 @@ def test_list_mul_index_with_relu_forward_backward():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_mul_index_for_loop_with_relu_forward_backward():
     """
     Feature: List multi-level index with for loop and ReLU operator.
@@ -489,7 +489,7 @@ def test_list_mul_index_for_loop_with_relu_forward_backward():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_from_init_multiple_types():
     """
     Feature: List negative index assignment with multiple types.
@@ -526,7 +526,7 @@ def test_list_minus_index_from_init_multiple_types():
     assert list(out) == [Tensor([10]), [2, 'a'], [[4, 4, True], [[3, 5, 5]]], [6, (8, 9)]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_in_construct_multiple_types():
     """
     Feature: List negative index assignment with multiple types in construct.
@@ -563,7 +563,7 @@ def test_list_minus_index_in_construct_multiple_types():
     assert list(out) == [Tensor([10]), [2, 'a'], [[4, 4, True], [[3, 5, 5]]], [6, (8, 9)]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_from_construct_input_multiple_types():
     """
     Feature: List negative index assignment with multiple types from construct input.
@@ -599,7 +599,7 @@ def test_list_minus_index_from_construct_input_multiple_types():
     assert list(out) == [Tensor([10]), [2, 'a'], [[4, 4, True], [[3, 5, 5]]], [6, (8, 9)]]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_from_init_with_control_flow_forward_backward():
     """
     Feature: List negative index with control flow.
@@ -651,7 +651,7 @@ def test_list_minus_index_from_init_with_control_flow_forward_backward():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_in_construct_with_control_flow_forward_backward():
     """
     Feature: List negative index with control flow in construct.
@@ -701,7 +701,7 @@ def test_list_minus_index_in_construct_with_control_flow_forward_backward():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_from_construct_input_with_control_flow_forward_backward():
     """
     Feature: List negative index with control flow from construct input.
@@ -751,7 +751,7 @@ def test_list_minus_index_from_construct_input_with_control_flow_forward_backwar
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_minus_index_out_of_range():
     """
     Feature: List negative index out of range.

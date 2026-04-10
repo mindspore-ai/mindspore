@@ -50,8 +50,7 @@ def scatter_add_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_small_float32():
     """
     Feature: Test scatter
@@ -67,8 +66,7 @@ def test_scatter_add_small_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_input_updated():
     """
     Feature: Test ScatterAdd
@@ -86,8 +84,7 @@ def test_scatter_add_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_large_shape_float32():
     """
     Feature: Test scatter with large shape
@@ -125,8 +122,7 @@ def test_scatter_add_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_small_float32_use_locking_false():
     """
     Feature: Test scatter with large shape
@@ -142,8 +138,7 @@ def test_scatter_add_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_input_less_than_1_float32():
     """
     Feature: Test scatter with large shape
@@ -165,8 +160,7 @@ def test_scatter_add_input_less_than_1_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_float16():
     """
     Feature: Test scatter with large shape
@@ -182,8 +176,7 @@ def test_scatter_add_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_large_float16():
     """
     Feature: Test scatter with large shape
@@ -203,8 +196,7 @@ def test_scatter_add_large_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_disordered_float16():
     """
     Feature: Test scatter with large shape
@@ -224,8 +216,7 @@ def test_scatter_add_disordered_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_large_int32():
     """
     Feature: Test scatter with large shape
@@ -245,8 +236,7 @@ def test_scatter_add_large_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_disordered_int32():
     """
     Feature: Test scatter with large shape
@@ -266,8 +256,7 @@ def test_scatter_add_disordered_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_function():
     """
     Feature: test_scatter_add_function.
@@ -312,8 +301,7 @@ def scatter_sub_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_sub_input_updated():
     """
     Feature: Test scatter
@@ -331,8 +319,7 @@ def test_scatter_sub_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_sub_large_shape_float32():
     """
     Feature: Test scatter
@@ -371,8 +358,7 @@ def test_scatter_sub_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_sub_small_float32_use_locking_false():
     """
     Feature: Test scatter
@@ -413,8 +399,7 @@ def scatter_mul_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_mul_input_updated():
     """
     Feature: Test scatter
@@ -432,8 +417,7 @@ def test_scatter_mul_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_mul_output_updated_float32():
     """
     Feature: Test scatter
@@ -449,8 +433,7 @@ def test_scatter_mul_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_mul_small_float32_use_locking_false():
     """
     Feature: Test scatter
@@ -491,8 +474,7 @@ def scatter_div_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_div_input_updated():
     """
     Feature: Test scatter
@@ -510,8 +492,7 @@ def test_scatter_div_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_div_output_updated_float32():
     """
     Feature: Test scatter
@@ -527,8 +508,7 @@ def test_scatter_div_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_div_small_float32_use_locking_false():
     """
     Feature: Test scatter
@@ -544,8 +524,7 @@ def test_scatter_div_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_div_output_int16():
     """
     Feature: test ScatterDiv output and input_x same value.
@@ -559,8 +538,7 @@ def test_scatter_div_output_int16():
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_div_output_float64():
     """
     Feature: test ScatterDiv output and input_x same value.
@@ -599,8 +577,7 @@ def scatter_max_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_max_input_updated():
     """
     Feature: Test scatter
@@ -618,8 +595,7 @@ def test_scatter_max_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_max_output_updated_float32():
     """
     Feature: Test scatter
@@ -635,8 +611,7 @@ def test_scatter_max_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_max_small_float32_use_locking_false():
     """
     Feature: Test scatter
@@ -677,8 +652,7 @@ def scatter_min_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_min_input_updated():
     """
     Feature: Test scatter
@@ -696,8 +670,7 @@ def test_scatter_min_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_min_output_updated_float32():
     """
     Feature: Test scatter
@@ -713,8 +686,7 @@ def test_scatter_min_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_min_small_float32_use_locking_false():
     """
     Feature: Test scatter
@@ -755,8 +727,7 @@ def scatter_update_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_update_input_updated():
     """
     Feature: Test scatter
@@ -774,8 +745,7 @@ def test_scatter_update_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_update_output_updated_float32():
     """
     Feature: Test scatter
@@ -791,8 +761,7 @@ def test_scatter_update_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_update_output_updated_huge_tensor_float32():
     """
     Feature: Test huge input tensor case of cpu kernel ScatterUpdate.
@@ -810,8 +779,7 @@ def test_scatter_update_output_updated_huge_tensor_float32():
     np.testing.assert_array_almost_equal(output.asnumpy()[0:2], expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_update_small_float32_use_locking_false():
     """
     Feature: Test scatter
@@ -837,8 +805,7 @@ class TestScatterAddNetDynamic(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_add_dynamic_shape():
     """
     Feature: op dynamic shape
@@ -867,8 +834,7 @@ class TestScatterSubNetDynamic(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_sub_dynamic_shape():
     """
     Feature: op dynamic shape
@@ -898,8 +864,7 @@ class TestScatterUpdateNetDynamic(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_update_dynamic_shape():
     """
     Feature: op dynamic shape

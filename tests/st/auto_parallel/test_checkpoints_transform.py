@@ -15,7 +15,7 @@
 import os
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_checkpoints_transform_by_layout():
     """
     Feature: Test checkpoints transformation with layout.
@@ -32,7 +32,7 @@ def test_checkpoints_transform_by_layout():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_checkpoints_transform_by_layout_with_opt_shard():
     """
     Feature: Test checkpoints transformation by layout with optimizer shard.
@@ -49,7 +49,7 @@ def test_checkpoints_transform_by_layout_with_opt_shard():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_checkpoints_transform_by_layout_with_opt_shard_safetensor():
     """
     Feature: Test the accuracy of TND query when cutting out.

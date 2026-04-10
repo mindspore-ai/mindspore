@@ -21,7 +21,7 @@ from mindspore import Tensor, mint, nn, context, ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_flatten_mint():
     """
     Feature: test flatten mint api.
@@ -52,7 +52,7 @@ def test_flatten_mint():
     os.remove(log_file_name)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_imag_mint():
     """
     Feature: test imag mint api.
@@ -73,7 +73,7 @@ def test_imag_mint():
     assert "RealViewFuncImpl::InferType is not implemented,because it is not supported in Graph mode" in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_real_mint():
     """
     Feature: test real mint api.
@@ -95,7 +95,7 @@ def test_real_mint():
     assert "RealViewFuncImpl::InferType is not implemented,because it is not supported in Graph mode" in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_reshape_mint():
     """
     Feature: test reshape mint api.
@@ -126,7 +126,7 @@ def test_reshape_mint():
     os.remove(log_file_name)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_squeeze_mint():
     """
     Feature: test squeeze mint api.
@@ -158,7 +158,7 @@ def test_squeeze_mint():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_t_mint():
     """
     Feature: test t mint api.

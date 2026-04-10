@@ -26,8 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_real_make_tuple():
     """
     Feature: test real_make_tuple op
@@ -54,8 +53,7 @@ def test_real_make_tuple():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_real_make_tuple_dy():
     """
     Feature: test real_make_tuple op
@@ -81,8 +79,7 @@ def test_real_make_tuple_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_real_make_tuple_tensor_dy():
     """
     Feature: test real_make_tuple op
@@ -104,8 +101,7 @@ def test_real_make_tuple_tensor_dy():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_real_make_tuple_grad():
     """
     Feature: test real_make_tuple grad op

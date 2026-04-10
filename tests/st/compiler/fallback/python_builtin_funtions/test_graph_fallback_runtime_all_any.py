@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_all_dict():
     """
     Feature: JIT Fallback
@@ -44,8 +43,7 @@ def test_fallback_all_dict():
     assert out[0] and out[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_any_dict():
     """
     Feature: JIT Fallback
@@ -66,8 +64,7 @@ def test_fallback_any_dict():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_all_asnumpy():
     """
     Feature: JIT Fallback
@@ -87,8 +84,7 @@ def test_fallback_all_asnumpy():
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_any_asnumpy():
     """
     Feature: JIT Fallback
@@ -107,8 +103,7 @@ def test_fallback_any_asnumpy():
     assert out[0] and out[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_all_dict_get():
     """
     Feature: JIT Fallback
@@ -127,7 +122,7 @@ def test_fallback_all_dict_get():
     assert not out[0] and out[1]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_all_with_free_variables():
     """
     Feature: JIT Fallback
@@ -151,7 +146,7 @@ def test_fallback_all_with_free_variables():
     assert out is None
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_all_tuple():
     """
     Feature: JIT Fallback
@@ -169,7 +164,7 @@ def test_fallback_all_tuple():
     assert (not x) and y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_any_numpy():
     """
     Feature: JIT Fallback
@@ -186,7 +181,7 @@ def test_fallback_any_numpy():
     assert (not x) and y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_any_tensor():
     """
     Feature: JIT Fallback

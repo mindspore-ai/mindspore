@@ -24,8 +24,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance():
     """
     Feature: JIT Fallback
@@ -48,8 +47,7 @@ def test_fallback_isinstance():
     assert not out[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_numpy():
     """
     Feature: JIT Fallback
@@ -67,8 +65,7 @@ def test_fallback_isinstance_numpy():
     assert out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_numpy_type():
     """
     Feature: JIT Fallback
@@ -87,8 +84,7 @@ def test_fallback_isinstance_numpy_type():
     assert out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_parameter():
     """
     Feature: JIT Fallback
@@ -109,8 +105,7 @@ def test_fallback_isinstance_parameter():
     assert out[0], out[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_tuple():
     """
     Feature: JIT Fallback
@@ -150,8 +145,7 @@ class NetIsinstanceClass2:
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_jit_class_type():
     """
     Feature: JIT Fallback
@@ -176,8 +170,7 @@ def test_fallback_isinstance_jit_class_type():
     assert not res[0], res[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_jit_class_type_tuple():
     """
     Feature: JIT Fallback
@@ -200,8 +193,7 @@ def test_fallback_isinstance_jit_class_type_tuple():
     assert not res[0] and not res[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_tensor():
     """
     Feature: JIT Fallback
@@ -225,8 +217,7 @@ def test_fallback_isinstance_tensor():
     assert not res
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_cootensor():
     """
     Feature: JIT Fallback
@@ -252,8 +243,7 @@ def test_fallback_isinstance_cootensor():
     assert not res[0] and res[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_csrtensor():
     """
     Feature: JIT Fallback
@@ -280,8 +270,7 @@ def test_fallback_isinstance_csrtensor():
     assert not res[0] and res[1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_rowtensor():
     """
     Feature: JIT Fallback
@@ -304,8 +293,7 @@ def test_fallback_isinstance_rowtensor():
     assert not res
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_isinstance_rowtensor_cootenosr_csrtensor_np():
     """
     Feature: JIT Fallback

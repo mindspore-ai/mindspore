@@ -37,8 +37,7 @@ class CustomBpropNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_auto_grad_bprop_net():
     """
     Feature: Test auto grad stop gradient.
@@ -53,8 +52,7 @@ def test_auto_grad_bprop_net():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 class NoneCustomNet(nn.Cell):
     def construct(self, x, y):
         y = x * x
@@ -78,8 +76,7 @@ class NoneAddNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_auto_grad_none_add_net():
     """
     Feature: Test auto grad none add
@@ -103,8 +100,7 @@ class CustomFunctionAutoReduceNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_auto_reduce():
     """
     Feature: Custom bprop function.
@@ -133,8 +129,7 @@ class CustomFunctionAutoCastNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_auto_cast():
     """
     Feature: Custom bprop function.
@@ -165,8 +160,7 @@ class CustomFunctionBroadcastExecptionNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_reduce_exception():
     """
     Feature: Custom bprop function.
@@ -192,8 +186,7 @@ class CustomFunctionReturnSelfNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_return_self_net():
     """
     Feature: Custom bprop function.
@@ -229,8 +222,7 @@ class CustomFunctionReturnSelfWithUsedMapNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_return_self_with_used_map_net():
     """
     Feature: Custom bprop function.
@@ -259,8 +251,7 @@ class CustomFunctionMultiOutputReturnSelfNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_output_return_self_net():
     """
     Feature: Custom bprop function.
@@ -436,8 +427,7 @@ class TestNoneNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_compare_with_pytorch():
     """
     Feature: Test custom bprop nested grad feature
@@ -469,8 +459,7 @@ def test_custom_function_compare_with_pytorch():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_bprop_with_weight():
     """
     Feature: Test custom bprop with weight feature
@@ -553,8 +542,7 @@ class TestTupleScalarBpropNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_bprop_used_map():
     """
     Feature: Test custom bprop with used map
@@ -571,8 +559,7 @@ def test_bprop_used_map():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_bprop_nested():
     """
     Feature: Test custom bprop with used map
@@ -589,8 +576,7 @@ def test_bprop_nested():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_bprop_with_none():
     """
     Feature: Test custom bprop with none
@@ -607,8 +593,7 @@ def test_bprop_with_none():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_bprop_with_tuple_scalar():
     """
     Feature: Test custom bprop with tuple scalar
@@ -670,8 +655,7 @@ grad_all = C.GradOperation(get_all=True)
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_custom_bprop_and_Cell_MulAdd():
     """
     Feature: Custom bprop
@@ -688,8 +672,7 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_custom_bprop_and_Cell_Ms_Cell():
     """
     Feature: Custom bprop
@@ -704,8 +687,7 @@ def test_pynative_custom_bprop_and_Cell_Ms_Cell():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_bprop_dynamic_shape():
     """
     Feature: Custom bprop function.
@@ -761,8 +743,7 @@ def test_custom_bprop_dynamic_shape():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_bprop_with_default_args():
     """
     Feature: Custom bprop function.

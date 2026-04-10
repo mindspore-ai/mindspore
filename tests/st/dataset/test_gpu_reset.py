@@ -73,7 +73,7 @@ class MyCallback(Callback):
             dataset._reset(self.reset_point * self.dataset_size, self.dataset_size)  # pylint: disable=W0212
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("fast_recovery", (False, True))
 @pytest.mark.parametrize("num_parallel_workers", (1, 4))
 @pytest.mark.parametrize("python_multiprocessing", (False, True))

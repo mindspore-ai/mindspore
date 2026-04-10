@@ -36,8 +36,7 @@ class UpdateCacheNet(nn.Cell):
         return self.ops(self.x, indices, update, self.max_num)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_update_cache():
     x_np = np.array([[2, 3, 4, 5],
                      [6, 7, 8, 9],

@@ -67,8 +67,7 @@ class Net(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_host_bound_for_parallel_dispatch():
     """
     Feature: Graph parallel dispatch kernel.

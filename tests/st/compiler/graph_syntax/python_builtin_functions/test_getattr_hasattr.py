@@ -21,8 +21,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_tensor():
     """
     Feature: Syntax getattr.
@@ -39,8 +38,7 @@ def test_getattr_tensor():
     assert np.all(out.asnumpy() == np.array([1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_tensor_with_concate_string():
     """
     Feature: Syntax getattr.
@@ -68,8 +66,7 @@ class MSClass1:
         self.none = None
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_ms_class_with_default():
     """
     Feature: Syntax getattr.
@@ -99,8 +96,7 @@ class Net(nn.Cell):
         return self.a0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_cell_obj_2():
     """
     Feature: Syntax getattr.
@@ -117,8 +113,7 @@ def test_getattr_cell_obj_2():
     assert out is None
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_for_classtype_object():
     """
     Feature: Syntax getattr.
@@ -140,8 +135,7 @@ def test_getattr_for_classtype_object():
     assert out2 == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_for_other_cell_method():
     """
     Feature: Syntax getattr.

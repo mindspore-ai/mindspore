@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_and_1():
     """
     Feature: bitwise and operator
@@ -43,8 +42,7 @@ def test_bitwise_and_1():
     assert np.allclose(result.asnumpy(), np.array([1, 0, -8]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_and_2():
     """
     Feature: bitwise and operator
@@ -63,8 +61,7 @@ def test_bitwise_and_2():
     assert np.allclose(result.asnumpy(), np.array([1, 0, 0]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_and_3():
     """
     Feature: bitwise and operator
@@ -83,8 +80,7 @@ def test_bitwise_and_3():
     assert np.allclose(result.asnumpy(), np.array([1, 0, 0]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_or_1():
     """
     Feature: bitwise or operator
@@ -103,8 +99,7 @@ def test_bitwise_or_1():
     assert np.allclose(result.asnumpy(), np.array([3, 6, -1]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_or_2():
     """
     Feature: bitwise or operator
@@ -123,8 +118,7 @@ def test_bitwise_or_2():
     assert np.allclose(result.asnumpy(), np.array([1, 3, -3]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_or_3():
     """
     Feature: bitwise or operator
@@ -143,8 +137,7 @@ def test_bitwise_or_3():
     assert np.allclose(result.asnumpy(), np.array([1, 3, -3]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bitwise_xor_1():
     """
     Feature: bitwise xor operator
@@ -163,8 +156,7 @@ def test_bitwise_xor_1():
     assert np.allclose(result.asnumpy(), np.array([2, 6, 7]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_xor_2():
     """
     Feature: bitwise xor operator
@@ -183,8 +175,7 @@ def test_bitwise_xor_2():
     assert np.allclose(result.asnumpy(), np.array([0, 3, -3]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_xor_3():
     """
     Feature: bitwise xor operator
@@ -203,8 +194,7 @@ def test_bitwise_xor_3():
     assert np.allclose(result.asnumpy(), np.array([0, 3, -3]))
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_bitwise_operator_error_list_input():
     """
     Feature: bitwise operator

@@ -2,7 +2,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_sync_batch_norm_forward_world_size_2_channel_2_dim_4_msrun():
     """
     Feature: Ops.
@@ -15,7 +15,7 @@ def test_sync_batch_norm_forward_world_size_2_channel_2_dim_4_msrun():
     assert ret == 0
 
 
-#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_sync_batch_norm_forward_world_size_2_channel_2_dim_4_diff_process_group_msrun():
     """
     Feature: Ops.
@@ -28,7 +28,7 @@ def test_sync_batch_norm_forward_world_size_2_channel_2_dim_4_diff_process_group
     assert ret == 0
 
 
-#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_sync_batch_norm_forward_world_size_3_channel_3_dim_4_msrun():
     """
     Feature: Ops.
@@ -41,7 +41,7 @@ def test_sync_batch_norm_forward_world_size_3_channel_3_dim_4_msrun():
     assert ret == 0
 
 
-#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_sync_batch_norm_forward_world_size_3_channel_3_dim_4_affine_False_msrun():
     """
     Feature: Ops.
@@ -54,7 +54,7 @@ def test_sync_batch_norm_forward_world_size_3_channel_3_dim_4_affine_False_msrun
     assert ret == 0
 
 
-#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+#@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_sync_batch_norm_forward_world_size_3_channel_3_dim_4_track_running_stats_False_msrun():
     """
     Feature: Ops.
@@ -67,7 +67,7 @@ def test_sync_batch_norm_forward_world_size_3_channel_3_dim_4_track_running_stat
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_sync_batch_norm_forward_world_size_2_channel_3_dim_4_diff_nhw_msrun():
     """
     Feature: Ops.
@@ -80,7 +80,7 @@ def test_sync_batch_norm_forward_world_size_2_channel_3_dim_4_diff_nhw_msrun():
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_sync_batch_norm_backward_world_size_2_channel_3_dim_4_msrun():
     """
     Feature: Ops.

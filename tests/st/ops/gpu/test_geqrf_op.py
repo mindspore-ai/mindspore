@@ -36,7 +36,7 @@ class GeqrfNet(nn.Cell):
         return self.geqrf(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_geqrf_rank2_double_fp():
     """
     Feature: Geqrf operator.
@@ -59,7 +59,7 @@ def test_geqrf_rank2_double_fp():
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_geqrf_rank3_float_fp():
     """
     Feature: Geqrf operator.
@@ -93,7 +93,7 @@ def test_geqrf_rank3_float_fp():
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
         mem_peak=1024.00)
 def test_geqrf_acl():
     """

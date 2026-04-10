@@ -36,7 +36,7 @@ def tan(nptype):
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_float16():
     """
     Feature: test_tan_float16
@@ -46,7 +46,7 @@ def test_tan_float16():
     tan(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_float32():
     """
     Feature: test_tan_float32
@@ -56,7 +56,7 @@ def test_tan_float32():
     tan(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_float64():
     """
     Feature: test_tan_float64
@@ -66,7 +66,7 @@ def test_tan_float64():
     tan(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_tensor_func_check():
     """
     Feature: test_tan_tensor_func_check.
@@ -84,7 +84,7 @@ def test_tan_tensor_func_check():
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_functional_func_check():
     """
     Feature: test_tan_functional_func_check.
@@ -113,7 +113,7 @@ class DynamicShapeTanNet(nn.Cell):
         return self.tan_func(data)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_dy_shape():
     """
     Feature: test_tan_dy_shape.
@@ -138,7 +138,7 @@ def tan_graph(x):
     return P.Tan()(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tan_vmap():
     """
     Feature: test tan vmap.

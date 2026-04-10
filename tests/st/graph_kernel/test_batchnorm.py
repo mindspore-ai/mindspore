@@ -41,7 +41,7 @@ def get_output(x, weight, bias, moving_mean, moving_var, is_training, enable_gra
     return output, net.mean, net.variance
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bn_train():
     """
     Feature: todo
@@ -65,7 +65,7 @@ def test_bn_train():
     assert np.allclose(train_expect[2].data.asnumpy(), train_output[2].data.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bn_infer():
     """
     Feature: todo

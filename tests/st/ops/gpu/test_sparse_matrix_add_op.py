@@ -70,7 +70,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == exepct_shapes[i]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_sparse_matrix_add_dyn():
     """
     Feature: test SparseMatrixAdd in gpu.

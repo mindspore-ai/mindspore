@@ -57,7 +57,7 @@ def compare_stridedslice_result(shape, dtype, axis_mask, mask_type):
         raise ValueError('mask_type must be "new_axis_mask" or "shrink_axis_mask"')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_stridedslice_to_reshape_gpu():
     """
     Feature: Test stridedslice replacement in arithmetic_simplify pass.

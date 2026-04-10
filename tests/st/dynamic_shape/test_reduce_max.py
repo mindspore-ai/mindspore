@@ -33,8 +33,7 @@ def reduce_max_backward_func(x):
     return ops.grad(reduce_max_forward_func, (0,))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
 def test_reduce_max(mode):
@@ -59,8 +58,7 @@ def test_reduce_max(mode):
     assert (grad.asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
 def test_reduce_max_vmap(mode):

@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.stitch(indices, data)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_int32():
     """
     Feature: ALL TO ALL
@@ -57,7 +57,7 @@ def test_net_int32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_1():
     """
     Feature: Test dynamicstitch op.
@@ -77,7 +77,7 @@ def test_net_1():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_2():
     """
     Feature: Test dynamicstitch op.

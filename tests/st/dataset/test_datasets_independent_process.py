@@ -107,7 +107,7 @@ def check_processes_until(processes, timeout=60):
     raise RuntimeError("All processes did not completely exit within " + str(timeout) + " seconds.")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dataset_two_stage_pipeline_with_big_data():
     """
     Feature: Dataset With Independent Process
@@ -182,7 +182,7 @@ def test_dataset_two_stage_pipeline_with_big_data():
     os.environ['MS_INDEPENDENT_DATASET'] = 'False'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dfx_independent_generator_dataset_kill_main_process():
     """
     Feature: Dataset With Independent Process
@@ -260,7 +260,7 @@ def test_dfx_independent_generator_dataset_kill_main_process():
     os.environ.pop('GLOG_v')
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dfx_independent_generator_dataset_kill_independent_dataset_process():
     """
     Feature: Dataset With Independent Process
@@ -339,7 +339,7 @@ def test_dfx_independent_generator_dataset_kill_independent_dataset_process():
     os.environ.pop('GLOG_v')
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dfx_independent_generator_dataset_kill_worker_process():
     """
     Feature: Dataset With Independent Process

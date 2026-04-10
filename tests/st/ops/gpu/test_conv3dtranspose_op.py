@@ -44,7 +44,7 @@ class NetConv3dTranspose(nn.Cell):
         return self.conv_trans(x, w)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('algo', ["normal", "performance"])
 @pytest.mark.parametrize('conv_allow_tf32', [True, False])
 def test_conv3dtranspose_dshape_1(algo, conv_allow_tf32):
@@ -68,7 +68,7 @@ def test_conv3dtranspose_dshape_1(algo, conv_allow_tf32):
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3dtranspose_dshape_2():
     """
     Feature: Test conv3dtranspose dynamic shape.
@@ -87,7 +87,7 @@ def test_conv3dtranspose_dshape_2():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3d_transpose():
     x = Tensor(np.arange(1 * 2 * 3 * 3 * 3).reshape(1, 2, 3, 3, 3).astype(np.float32))
     w = Tensor(np.ones((2, 2, 2, 2, 2)).astype(np.float32))
@@ -110,7 +110,7 @@ def test_conv3d_transpose():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3d_transpose_vmap():
     """
     Feature: Conv3DTranspose op

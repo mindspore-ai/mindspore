@@ -21,7 +21,7 @@ import subprocess
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_true():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -61,7 +61,7 @@ def test_msrun_bind_numa_true():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_false():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -101,7 +101,7 @@ def test_msrun_bind_numa_false():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_manual_only_worker():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -142,7 +142,7 @@ def test_msrun_bind_numa_manual_only_worker():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_manual_single_worker():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -182,7 +182,7 @@ def test_msrun_bind_numa_manual_single_worker():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_manual_only_worker_wrong_sequence():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -215,7 +215,7 @@ def test_msrun_bind_numa_manual_only_worker_wrong_sequence():
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*numactl).*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_manual_only_scheduler():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -259,7 +259,7 @@ def test_msrun_bind_numa_manual_only_scheduler():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_msrun_bind_numa_manual_scheduler_and_worker():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -301,7 +301,7 @@ def test_msrun_bind_numa_manual_scheduler_and_worker():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_manual_empty_list():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -342,7 +342,7 @@ def test_msrun_bind_numa_manual_empty_list():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_manual_wrong_key_value():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -388,7 +388,7 @@ def test_msrun_bind_numa_manual_wrong_key_value():
     assert "NUMA id 50 in '--bind_numa' is not available." in err_info.value.stderr
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_msrun_bind_numa_true_bind_core_true():
     """
     Feature: Runtime msrun --bind_numa and --bind_core arg.
@@ -428,7 +428,7 @@ def test_msrun_bind_numa_true_bind_core_true():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_msrun_bind_numa_manual_bind_core_manual():
     """
     Feature: Runtime msrun --bind_numa and --bind_core arg.

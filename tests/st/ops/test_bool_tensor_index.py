@@ -37,7 +37,7 @@ class BoolTensorIndexSetItem(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_5_index_5(mode):
     """
@@ -62,7 +62,7 @@ def test_bool_tensor_index_get_item_x_5_index_5(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448x448(mode):
     """
@@ -87,7 +87,7 @@ def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448x448(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448(mode):
     """
@@ -112,7 +112,7 @@ def test_bool_tensor_index_get_item_x_2x1x448x448_index_2x1x448(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_set_item_x_5_index_5_value_1(mode):
     """
@@ -138,7 +138,7 @@ def test_bool_tensor_index_set_item_x_5_index_5_value_1(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_set_item_x_3x3_index_3_value_1(mode):
     """
@@ -164,7 +164,7 @@ def test_bool_tensor_index_set_item_x_3x3_index_3_value_1(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
+        level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
     """
@@ -188,7 +188,7 @@ def test_bool_tensor_index_get_item_x_2x3_index_bool2_int1(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
     """
@@ -212,7 +212,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_1(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
     """
@@ -236,7 +236,7 @@ def test_bool_tensor_index_set_item_x_2x3_index_bool2_int1_value_list_1(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard')
 # reason="Scaternd not support bool in ascend acl"
 def test_bool_tensor_input_set_item_x_3_index_bool3_bool_value():
     """
@@ -252,7 +252,7 @@ def test_bool_tensor_input_set_item_x_3_index_bool3_bool_value():
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_tuple_index_exception(mode):
     """
@@ -272,7 +272,7 @@ def test_bool_tensor_index_get_tuple_index_exception(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_bool_tensor_index_get_shape_false(mode):
     """

@@ -47,7 +47,7 @@ def erf_vmap_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048.25)
+          card_mark='onecard', mem_peak=2048.25)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @pytest.mark.parametrize('shape', [(2, 3, 4, 5), (1, 256, 2048), (1, 256, 5120)])
@@ -67,8 +67,7 @@ def test_ops_erf_forward(context_mode, shape, dtype, tol):
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_erf_bf16(context_mode):
     """
@@ -84,7 +83,7 @@ def test_ops_erf_bf16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @test_utils.run_test_with_On
@@ -102,7 +101,7 @@ def test_ops_erf_backward(context_mode, dtype, tol):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @pytest.mark.parametrize('shape', [(2, 3, 4, 5), (1, 256, 2048), (1, 256, 5120)])
@@ -123,7 +122,7 @@ def test_ops_erf_vmap(context_mode, shape, dtype, tol):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=3072.01)
+          card_mark='onecard', mem_peak=3072.01)
 def test_erf_dynamic_shape():
     """
     Feature: Test dynamic shape.

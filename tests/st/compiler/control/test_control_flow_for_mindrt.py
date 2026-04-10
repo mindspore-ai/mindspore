@@ -49,8 +49,7 @@ class Net(nn.Cell):
         return self.param_b
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_repeat_control_arrow_for_stack_actor():
     """
     Feature: Runtime.
@@ -72,8 +71,7 @@ def switch_op(x, y):
     return F.switch(x, z1, z2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_switch_op():
     """
     Feature: Runtime.
@@ -92,8 +90,7 @@ def switch_single_op(x, y, z):
     return F.switch(x, y, z)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_switch_single_op():
     """
     Feature: Runtime.
@@ -116,8 +113,7 @@ class TupleNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_tuple_parameter():
     """
     Feature: Runtime.
@@ -143,8 +139,7 @@ class CSRNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_csr_parameter():
     """
     Feature: Runtime.

@@ -52,7 +52,7 @@ class CategoricalProb(nn.Cell):
         return out1, out2, out3, out4, out5, out6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_probability_categorical_prob_cdf_probs_none():
     probs = None
     probs1 = generate_probs(3, shape=(2, 2, 1, 64))

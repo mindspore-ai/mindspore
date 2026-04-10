@@ -26,8 +26,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_in_with_irregular_sequence():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -43,8 +42,7 @@ def test_sequence_in_with_irregular_sequence():
     assert foo()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_in_with_irregular_sequence_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -60,8 +58,7 @@ def test_sequence_in_with_irregular_sequence_2():
     assert not foo()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_sequence_in_with_irregular_sequence_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -77,8 +74,7 @@ def test_sequence_in_with_irregular_sequence_3():
     assert not foo(Tensor([1, 1, 1]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_in_with_nested_sequence():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -94,8 +90,7 @@ def test_sequence_in_with_nested_sequence():
     assert foo()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_in_with_nested_sequence_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -110,8 +105,7 @@ def test_sequence_in_with_nested_sequence_2():
     assert not foo(Tensor([1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_in_with_nested_sequence_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -126,8 +120,7 @@ def test_sequence_in_with_nested_sequence_3():
     assert foo(Tensor([1, 2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_mul_with_irregular_sequence():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -144,8 +137,7 @@ def test_sequence_mul_with_irregular_sequence():
     assert ret == ((1, 1), 1, ["m", "n"], (1, 1), 1, ["m", "n"])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_mul_with_irregular_sequence_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -162,8 +154,7 @@ def test_sequence_mul_with_irregular_sequence_2():
     assert ret == [(1, 1), 1, ["m", "n"], (1, 1), 1, ["m", "n"]]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_mul_with_irregular_sequence_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -186,8 +177,7 @@ def test_sequence_mul_with_irregular_sequence_3():
 
 
 @pytest.mark.skip(reason="dynamic length sequence output format failed")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_mul_with_nested_sequence():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -205,8 +195,7 @@ def test_sequence_mul_with_nested_sequence():
 
 
 @pytest.mark.skip(reason="dynamic length sequence output format failed")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_mul_with_nested_sequence_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -224,8 +213,7 @@ def test_sequence_mul_with_nested_sequence_2():
 
 
 @pytest.mark.skip(reason="Tuple output with AbstractSequence can not be used in operator")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_mul_used_in_operator():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -243,8 +231,7 @@ def test_sequence_mul_used_in_operator():
     assert ret == Tensor([5])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_ops_with_sequence_of_any_input():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -266,8 +253,7 @@ def test_ops_with_sequence_of_any_input():
     assert ret == Tensor([1])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_ops_with_sequence_of_any_input_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -289,8 +275,7 @@ def test_ops_with_sequence_of_any_input_2():
     assert ret == Tensor([1])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_sequence_compare_with_operation():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -311,8 +296,7 @@ def test_sequence_compare_with_operation():
     assert not a4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_compare_with_operation_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -332,8 +316,7 @@ def test_sequence_compare_with_operation_2():
     assert not a4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_sequence_compare_with_operation_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -353,8 +336,7 @@ def test_sequence_compare_with_operation_3():
     assert not a4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_compare_with_operation_4():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -376,8 +358,7 @@ def test_sequence_compare_with_operation_4():
     assert not a4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_compare_with_operation_5():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -397,7 +378,7 @@ def test_sequence_compare_with_operation_5():
     assert "not supported between instances of" in str(execinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sequence_compare_with_operation_6():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -418,7 +399,7 @@ def test_sequence_compare_with_operation_6():
     assert "the input element must be scalar" in str(execinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sequence_compare_with_operation_7():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -439,7 +420,7 @@ def test_sequence_compare_with_operation_7():
     assert "For op 'tuple_lt' input must be" in str(execinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_8():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -462,8 +443,7 @@ def test_sequence_compare_with_operation_8():
 
 
 @pytest.mark.skip(reason="dynamic length sequence output format failed")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_len_with_operation():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -479,8 +459,7 @@ def test_sequence_len_with_operation():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_sequence_count_with_operation():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -497,8 +476,7 @@ def test_sequence_count_with_operation():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_count_with_operation_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -515,8 +493,7 @@ def test_sequence_count_with_operation_2():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_sequence_count_with_operation_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -533,8 +510,7 @@ def test_sequence_count_with_operation_3():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_sequence_count_with_operation_4():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -551,8 +527,7 @@ def test_sequence_count_with_operation_4():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_count_with_operation_5():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -568,8 +543,7 @@ def test_sequence_count_with_operation_5():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_count_with_operation_6():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -585,8 +559,7 @@ def test_sequence_count_with_operation_6():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_index_with_operation():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -602,8 +575,7 @@ def test_sequence_index_with_operation():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_index_with_operation_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -619,8 +591,7 @@ def test_sequence_index_with_operation_2():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_sequence_index_with_operation_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -637,8 +608,7 @@ def test_sequence_index_with_operation_3():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_index_with_operation_4():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -656,8 +626,7 @@ def test_sequence_index_with_operation_4():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_index_with_operation_5():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -674,8 +643,7 @@ def test_sequence_index_with_operation_5():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_index_with_operation_6():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -694,8 +662,7 @@ def test_sequence_index_with_operation_6():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_getitem_with_tensor_index():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -712,8 +679,7 @@ def test_sequence_getitem_with_tensor_index():
     assert ret2 == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_getitem_with_tensor_index_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -730,8 +696,7 @@ def test_sequence_getitem_with_tensor_index_2():
     assert np.all(ret2 == np.array([1, 2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_getitem_with_tensor_index_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -748,8 +713,7 @@ def test_sequence_getitem_with_tensor_index_3():
     assert ret2 == Tensor([2])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_sequence_getitem_with_index():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -775,8 +739,7 @@ def test_sequence_getitem_with_index():
     assert ret[3] == np.array([0])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_getitem_with_index_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -802,8 +765,7 @@ def test_sequence_getitem_with_index_2():
     assert np.all(ret[3] == np.array([1, 2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_sequence_getitem_with_slice():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -824,8 +786,7 @@ def test_sequence_getitem_with_slice():
     assert np.all(ret[1].asnumpy() == np.array([5, 4, 3, 2]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_sequence_getitem_with_slice_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -849,8 +810,7 @@ def test_sequence_getitem_with_slice_2():
     assert np.all(ret[1][1].asnumpy() == np.array([5, 4, 3, 2]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_sequence_ops_with_grad():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -867,8 +827,7 @@ def test_sequence_ops_with_grad():
     assert grad == Tensor([0])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sequence_ops_with_grad_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -885,8 +844,7 @@ def test_sequence_ops_with_grad_2():
     assert grad == Tensor([0])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_sequence_ops_with_grad_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -904,8 +862,7 @@ def test_sequence_ops_with_grad_3():
 
 
 @pytest.mark.skip(reason="PyExecuteGradient with AbstractAny extra input")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_sequence_ops_with_grad_4():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -925,8 +882,7 @@ def test_sequence_ops_with_grad_4():
     assert grad1 == grad2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_sequence_getitem_with_abstract_any_input():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -945,7 +901,7 @@ def test_sequence_getitem_with_abstract_any_input():
     assert ret == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_tuple_construct():
     """
     Feature: Support tuple update.
@@ -980,7 +936,7 @@ def test_parser_fallback_set_tuple_construct():
     assert ret4[:3] == (1, "abcd", 3) and (ret4[-1] == [1, 2, 3, 4]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_tuple_from_numpy():
     """
     Feature: Support set tuple from numpy.
@@ -996,7 +952,7 @@ def test_parser_fallback_set_tuple_from_numpy():
     assert out == ((0, 1), (1, 2))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_tuple_python_func():
     """
     Feature: Support tuple compare.

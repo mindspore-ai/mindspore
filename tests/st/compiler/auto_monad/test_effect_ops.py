@@ -47,8 +47,7 @@ class AssignAddNet(nn.Cell):
         return self.para
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_add():
     """
     Feature: Auto monad feature.
@@ -74,8 +73,7 @@ class AssignSubNet(nn.Cell):
         return self.para
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_assign_sub():
     """
     Feature: Auto monad feature.
@@ -101,8 +99,7 @@ class ScatterAddNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_add():
     """
     Feature: Auto monad feature.
@@ -129,8 +126,7 @@ class ScatterSubNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_sub():
     """
     Feature: Auto monad feature.
@@ -157,8 +153,7 @@ class ScatterMulNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_scatter_mul():
     """
     Feature: Auto monad feature.
@@ -185,8 +180,7 @@ class ScatterDivNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_div():
     """
     Feature: Auto monad feature.
@@ -213,8 +207,7 @@ class ScatterMaxNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_max():
     """
     Feature: Auto monad feature.
@@ -241,8 +234,7 @@ class ScatterMinNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_min():
     """
     Feature: Auto monad feature.
@@ -270,7 +262,7 @@ class ScatterUpdateNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_scatter_update():
     """
     Feature: Auto monad feature.
@@ -298,8 +290,7 @@ class ScatterNdAddNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_nd_add():
     """
     Feature: Auto monad feature.
@@ -326,8 +317,7 @@ class ScatterNdSubNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_scatter_nd_sub():
     """
     Feature: Auto monad feature.
@@ -354,8 +344,7 @@ class ScatterNdUpdateNet(nn.Cell):
         return self.input_x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_scatter_nd_update():
     """
     Feature: Auto monad feature.
@@ -382,7 +371,7 @@ class ScatterNonAliasingAddNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_scatter_non_aliasing_add():
     """
     Feature: Auto monad feature.
@@ -429,8 +418,7 @@ def train_summary_record(test_writer, steps):
     return out_me_dict
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @security_off_wrap
 def test_summary():
     """
@@ -451,8 +439,7 @@ def test_summary():
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_igamma():
     """
     Feature: Auto monad feature.
@@ -476,8 +463,7 @@ def test_igamma():
     assert np.allclose(out.asnumpy(), expect, rtol=1e-5, atol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_side_effect_scalarsummary_in_bprop():
     """
     Feature: Auto monad feature.
@@ -584,8 +570,7 @@ class SideEffectOneInputBprop(nn.Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_side_effect_bprop_oneinputbprop():
     """
     Feature: Auto monad feature.

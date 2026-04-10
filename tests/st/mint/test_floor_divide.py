@@ -29,8 +29,7 @@ def floor_divide_forward_func(x, other):
     return y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_floor_divide_normal0(mode):
     """
@@ -52,7 +51,7 @@ def test_floor_divide_normal0(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_floor_divide_normal1(mode):
     """
@@ -73,8 +72,7 @@ def test_floor_divide_normal1(mode):
     np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_floor_divide_normal2(mode):
     """
@@ -96,7 +94,7 @@ def test_floor_divide_normal2(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
+        card_mark='onecard', mem_peak=3072.00)
 def test_floor_divide_dynamic_shape():
     """
     Feature: Test floor_divide with dynamic shape in graph mode.

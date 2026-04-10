@@ -96,7 +96,7 @@ class MySampler:
         raise StopIteration
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_mapdataset_single_process():
     """
     Feature: Test DataLoader with MapDataset.
@@ -113,7 +113,7 @@ def test_dataloader_mapdataset_single_process():
     assert list(dataloader) == [ms.Tensor(i) for i in range(5)]
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_iterdataset_single_process():
     """
     Feature: Test DataLoader with IterableDataset.
@@ -131,7 +131,7 @@ def compare_tensor_list(list1, list2):
         assert (v1 == v2).all()
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_mapdataset_batch():
     """
     Feature: Test DataLoader with map style dataset.
@@ -154,7 +154,7 @@ def test_mapdataset_batch():
     compare_tensor_list(result, expect)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_iterdataset_batch():
     """
     Feature: Test DataLoader with IterableDataset.
@@ -176,7 +176,7 @@ def test_iterdataset_batch():
     compare_tensor_list(result, expect)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_mapdataset_batch_shuffle():
     """
     Feature: Test DataLoader with map style dataset.
@@ -193,7 +193,7 @@ def test_mapdataset_batch_shuffle():
     compare_tensor_list([t.asnumpy() for t in list(dataloader)], [[8, 4, 7], [0, 1, 2], [5, 9, 6]])
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_mapdataset_multi_process():
     """
     Feature: Test DataLoader with MapDataset.
@@ -220,7 +220,7 @@ def test_dataloader_mapdataset_multi_process():
         print(data)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_mapdataset_multi_process_exception():
     """
     Feature: Test DataLoader with MapDataset.
@@ -254,7 +254,7 @@ def test_dataloader_mapdataset_multi_process_exception():
             pass
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_iterdataset_multi_process():
     """
     Feature: Test DataLoader with IterableDataset.
@@ -268,7 +268,7 @@ def test_dataloader_iterdataset_multi_process():
         print(data)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_tensordataset():
     """
     Feature: Test TensorDataset.
@@ -281,7 +281,7 @@ def test_tensordataset():
         print(data)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_iterdataset_multi_process_with_start_method():
     """
     Feature: Test DataLoader with IterableDataset.
@@ -373,7 +373,7 @@ class TestDataLoaderParamCheck:
         for _ in loader:
             pass
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("dataset", (NotInheritIterableDataset(), NotImplementGetitemDataset()))
     def test_invalid_dataset(self, dataset):
         """
@@ -387,7 +387,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(dataset=dataset)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "batch_size_case",
         (
@@ -406,7 +406,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(batch_size=batch_size)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("shuffle", (0.5, []))
     def test_invalid_shuffle(self, shuffle):
         """
@@ -417,7 +417,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(TypeError, match="shuffle must be <class 'bool'>"):
             self.run_data_loader(shuffle=shuffle)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_invalid_shuffle_with_iterable_dataset(self):
         """
         Feature: Test DataLoader with shuffle when dataset is iterable style.
@@ -433,7 +433,7 @@ class TestDataLoaderParamCheck:
                 shuffle=True,
             )
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "sampler_case",
         (
@@ -455,7 +455,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(sampler=sampler)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_invalid_sampler_with_iterable_dataset(self):
         """
         Feature: Test DataLoader with sampler when dataset is iterable style.
@@ -468,7 +468,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(dataset_type="iter_style", sampler=MySampler(10))
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_invalid_sampler_with_shuffle(self):
         """
         Feature: Test DataLoader with sampler when shuffle is True.
@@ -481,7 +481,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(shuffle=True, sampler=MySampler(10))
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "batch_sampler_case",
         (
@@ -499,7 +499,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(batch_sampler=batch_sampler)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_invalid_batch_sampler_with_iterable_dataset(self):
         """
         Feature: Test DataLoader with batch sampler when dataset is iterable style.
@@ -515,7 +515,7 @@ class TestDataLoaderParamCheck:
                 batch_sampler=BatchSampler(MySampler(10), batch_size=2, drop_last=False),
             )
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "batch_params_case",
         (
@@ -541,7 +541,7 @@ class TestDataLoaderParamCheck:
                 **kwargs,
             )
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "num_workers_case",
         (
@@ -560,7 +560,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(num_workers=num_workers)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "collate_fn_case",
         (
@@ -587,7 +587,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(collate_fn=collate_fn)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("pin_memory", (-1.0, 10, (0,)))
     def test_invalid_pin_memory(self, pin_memory):
         """
@@ -598,7 +598,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(TypeError, match="pin_memory must be <class 'bool'>"):
             self.run_data_loader(pin_memory=pin_memory)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("drop_last", (0.5, 0, []))
     def test_invalid_drop_last(self, drop_last):
         """
@@ -609,7 +609,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(TypeError, match="drop_last must be <class 'bool'>"):
             self.run_data_loader(drop_last=drop_last)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "timeout_case",
         (
@@ -628,7 +628,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(timeout=timeout)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "worker_init_fn_case",
         (
@@ -655,7 +655,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(collate_fn=worker_init_fn)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "multiprocessing_context_context",
         (
@@ -683,7 +683,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(multiprocessing_context=multiprocessing_context, num_workers=1)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_multiprocessing_context_with_invalid_num_workers(self):
         """
         Feature: Test DataLoader with invalid num_workers.
@@ -696,7 +696,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(multiprocessing_context="fork", num_workers=0)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "multiprocessing_context",
         (
@@ -713,7 +713,7 @@ class TestDataLoaderParamCheck:
         """
         self.run_data_loader(multiprocessing_context=multiprocessing_context, num_workers=1)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("generator", (0.5, False))
     def test_invalid_generator(self, generator):
         """
@@ -727,7 +727,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(generator=generator)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "prefetch_factor_case",
         (
@@ -746,7 +746,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(exception, match=msg):
             self.run_data_loader(prefetch_factor=prefetch_factor, num_workers=1)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_prefetch_factor_with_invalid_num_workers(self):
         """
         Feature: Test DataLoader with prefetch_factor when num_workers is 0.
@@ -759,7 +759,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(num_workers=0, prefetch_factor=2)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("persistent_workers", (0.3, -1, []))
     def test_invalid_persistent_workers(self, persistent_workers):
         """
@@ -770,7 +770,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(TypeError, match="persistent_workers must be <class 'bool'>"):
             self.run_data_loader(persistent_workers=persistent_workers)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_persistent_workers_without_multiprocessing(self):
         """
         Feature: Test DataLoader with persistent_workers without multiprocessing.
@@ -783,7 +783,7 @@ class TestDataLoaderParamCheck:
         ):
             self.run_data_loader(persistent_workers=True)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("pin_memory_device", ("cuda", "npu"))
     def test_invalid_pin_memory_device(self, pin_memory_device):
         """
@@ -794,7 +794,7 @@ class TestDataLoaderParamCheck:
         with pytest.raises(TypeError, match="got an unexpected keyword argument 'pin_memory_device'"):
             self.run_data_loader(pin_memory_device=pin_memory_device, pin_memory=True)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("in_order", (-10, 3.5, ()))
     def test_invalid_in_order(self, in_order):
         """
@@ -811,7 +811,7 @@ class TestSingleProcessDataLoader:
     Test DataLoader.
     """
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_import(self):
         """
         Feature: Test import DataLoader.
@@ -820,7 +820,7 @@ class TestSingleProcessDataLoader:
         """
         assert DataLoader == ms.dataset.dataloader.DataLoader
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("drop_last", (False, True))
     @pytest.mark.parametrize("batch_size", (1, 5))
     def test_map_style_dataloader_len_with_batch_size(self, batch_size, drop_last):
@@ -839,7 +839,7 @@ class TestSingleProcessDataLoader:
             assert len(dataloader) == expected_len
             assert sum(1 for _ in dataloader) == expected_len
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("persistent_workers", (True, False))
     def test_iterable_style_dataloader(self, persistent_workers):
         """
@@ -852,7 +852,7 @@ class TestSingleProcessDataLoader:
             for index, data in enumerate(dataloader):
                 assert data == ms.tensor([index])
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_batch_sampler(self):
         """
         Feature: Test DataLoader with batch sampler.
@@ -878,8 +878,7 @@ class TestMultiProcessDataLoader:
         """
         self.dataloader = DataLoader(MyDataset(10), num_workers=2)
 
-    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
-            essential_mark="essential", mem_peak=1.00)
+    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", mem_peak=1.00)
     @pytest.mark.parametrize("pin_memory", (False, True))
     def test_pin_memory(self, monkeypatch, pin_memory):
         """
@@ -891,7 +890,7 @@ class TestMultiProcessDataLoader:
         for data in self.dataloader:
             assert data.is_pinned() == pin_memory
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("persistent_workers", (False, True))
     def test_persistent_workers(self, monkeypatch, persistent_workers):
         """
@@ -911,7 +910,7 @@ class TestMultiProcessDataLoader:
                 worker_ids.append(data)
         assert (worker_ids[0] == worker_ids[1]) == persistent_workers
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_data_iteration(self):
         """
         Feature: Test DataLoader with multiprocessing.
@@ -924,7 +923,7 @@ class TestMultiProcessDataLoader:
                 result.append(data)
             assert result == [ms.tensor([i], dtype=ms.uint8) for i in range(10)]
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_worker_raise_exception(self, monkeypatch):
         """
         Feature: Test DataLoader with worker raise exception.
@@ -942,7 +941,7 @@ class TestMultiProcessDataLoader:
             for _ in self.dataloader:
                 pass
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_timeout(self, monkeypatch):
         """
         Feature: Test DataLoader with timeout.
@@ -961,7 +960,7 @@ class TestMultiProcessDataLoader:
             for _ in self.dataloader:
                 pass
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("in_order", (False, True))
     def test_in_order(self, monkeypatch, in_order):
         """
@@ -982,7 +981,7 @@ class TestMultiProcessDataLoader:
             result.append(data)
         assert (result == [ms.tensor([i], dtype=ms.uint8) for i in range(10)]) == in_order
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         ("num_workers", "multiprocessing_context"),
         (
@@ -1018,7 +1017,7 @@ class TestMultiProcessDataLoader:
         end_time = time.time()
         return end_time - begin_time
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_shared_memory_performance(self):
         """
         Feature: Test the performance of DataLoader IPC.
@@ -1068,7 +1067,7 @@ class TestMultiProcessDataLoader:
 
         assert numpy_time > 1.2 * tensor_time, "The IPC time of tensor type data should be less than numpy."
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "multiprocessing_context",
         (
@@ -1113,7 +1112,7 @@ class TestMultiProcessDataLoader:
             f"  final_fd_count:    {final_fd_count}"
         )
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_dataloader_cleanup_when_exception_raised(self):
         """
         Feature: Test DataLoader cleanup.
@@ -1158,8 +1157,7 @@ class TestMultiProcessDataLoader:
 
         assert result.returncode == 1, "The subprocess should raise RuntimeError."
 
-    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
-            essential_mark="essential", mem_peak=1.00)
+    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", mem_peak=1.00)
     def test_pin_memory_thread_exit(self, monkeypatch):
         """
         Feature: Test DataLoader with pin memory thread exit.
@@ -1175,7 +1173,7 @@ class TestMultiProcessDataLoader:
                 if not pin_memory_done.is_set():
                     pin_memory_done.set()
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "sig_case",
         (
@@ -1219,7 +1217,7 @@ class TestMultiProcessDataLoader:
             if index + 1 == num_workers:
                 worker_ready.set()
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("sig", (signal.SIGKILL, signal.SIGTERM, signal.SIGINT))
     def test_kill_main_process(self, sig):
         """

@@ -37,8 +37,7 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "gif.gif")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=112.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=112.0)
 def test_dvpp_perspective_operation_01():
     """
     Feature: Perspective operation on device
@@ -125,8 +124,7 @@ def test_dvpp_perspective_operation_01():
     assert out.shape == (128, 128, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 def test_dvpp_perspective_operation_02():
     """
     Feature: Perspective operation on device
@@ -172,8 +170,7 @@ def test_dvpp_perspective_operation_02():
     assert (out == perspective_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_perspective_exception_01():
     """
     Feature: Perspective operation on device
@@ -277,8 +274,7 @@ def test_dvpp_perspective_exception_01():
         assert "The current InterpolationMode is not supported by DVPP" in str(e_log.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_perspective_exception_02():
     """
     Feature: Perspective operation on device
@@ -382,8 +378,7 @@ def test_dvpp_perspective_exception_02():
         perspective_op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_perspective_exception_03():
     """
     Feature: Perspective operation on device
@@ -489,8 +484,7 @@ def test_dvpp_perspective_exception_03():
         perspective_op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_perspective_exception_04():
     """
     Feature: Perspective operation on device
@@ -591,8 +585,7 @@ def test_dvpp_perspective_exception_04():
         perspective_op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_dvpp_perspective_exception_05():
     """
     Feature: Perspective operation on device

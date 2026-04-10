@@ -28,8 +28,7 @@ from mindspore.graph.api import _pynative_executor
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op1(dtype):
     """
@@ -59,8 +58,7 @@ def test_op1(dtype):
                        np.array(expect, dtype=dtype))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_op2(dtype):
     """
@@ -90,8 +88,7 @@ def test_op2(dtype):
                        np.array(expect, dtype=dtype))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_op3(dtype):
     """
@@ -125,8 +122,7 @@ def test_op3(dtype):
     assert np.allclose(output.asnumpy(), np.array(expect, dtype=dtype))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op4(dtype):
     """
@@ -154,8 +150,7 @@ def test_op4(dtype):
     assert np.allclose(out.asnumpy(), np.array(expect, dtype=dtype))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op5(dtype):
     """
@@ -182,8 +177,7 @@ def test_op5(dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_scatter_nd_update_dyn_shape():
     """
     Feature: op dynamic shape

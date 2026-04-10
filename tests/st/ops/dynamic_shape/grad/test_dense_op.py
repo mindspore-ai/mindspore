@@ -35,7 +35,7 @@ class Dense(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_dense_op():
     """
     Feature: Dynamic Dense gpu kernel

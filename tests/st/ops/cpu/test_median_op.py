@@ -39,8 +39,7 @@ def median_global_fn(x: Tensor, ignore_nan: bool = False) -> Tensor:
     out, _ = op(x)  # Only return median value for gradient computation
     return out
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard')
 def test_median_op():
     """
     Feature: Median CPU ops.
@@ -52,8 +51,7 @@ def test_median_op():
     _test_median_axis_with_nan(np.float32)
     #_test_median_global_grad(np.float32)
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_median_op_types():
     """
     Feature: Median CPU ops.
@@ -202,8 +200,7 @@ class GradientChecker(nn.Cell):
         gradient_function = self.grad_op(self.network)
         return gradient_function(x)[0]
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_median_grad_global():
     """
     Feature: Global Median gradient CPU ops.

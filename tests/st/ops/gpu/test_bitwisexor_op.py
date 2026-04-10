@@ -31,7 +31,7 @@ class NetBitwiseXor(nn.Cell):
         return self.bitwisexor(x1, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bitwisexor_graph():
     """
     Description: What input in what scene
@@ -50,7 +50,7 @@ def test_bitwisexor_graph():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bitwisexor_graph1():
     """
     Description: What input in what scene
@@ -69,7 +69,7 @@ def test_bitwisexor_graph1():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bitwisexor_graph2():
     """
     Description: What input in what scene

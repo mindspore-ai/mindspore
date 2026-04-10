@@ -36,7 +36,7 @@ def hof(x):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 def test_fun_fun():
     """
     Feature: Control flow

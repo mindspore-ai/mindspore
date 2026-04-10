@@ -29,8 +29,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_with_single_prim():
     """
     Feature: SwitchLayer
@@ -57,7 +56,7 @@ def test_switch_layer_with_single_prim():
     grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_with_index_out_of_range():
     """
     Feature: SwitchLayer

@@ -87,11 +87,9 @@ def test_conv_transpose2d_hf32(mode):
     assert np.allclose(db.asnumpy(), expect_db, loss, loss)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 def test_conv_transpose2d_dynamic():
     """

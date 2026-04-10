@@ -39,11 +39,9 @@ def expect_forward_func(x_np, other_np):
     return np.broadcast_to(x_np, other_np.shape)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_expand_as_forward(mode):
@@ -75,11 +73,9 @@ def test_expand_as_forward(mode):
     assert np.allclose(out.asnumpy(), expect, atol=1e-4, rtol=1e-4)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_expand_as_dtype(mode):
@@ -101,11 +97,9 @@ def test_expand_as_dtype(mode):
         assert np.allclose(out.asnumpy(), expect, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 def test_expand_as_dynamic_shape():
     """

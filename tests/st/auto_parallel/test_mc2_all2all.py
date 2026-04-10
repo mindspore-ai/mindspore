@@ -17,7 +17,7 @@ import os
 from tests.mark_utils import arg_mark
 import pytest
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 @pytest.mark.skip(reason="mc2 alltoall is only supported on A3 platform.")
 def test_mc2_alltoall_allgather_batchmatmul_withoutsilu():
     '''
@@ -33,7 +33,7 @@ def test_mc2_alltoall_allgather_batchmatmul_withoutsilu():
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 @pytest.mark.skip(reason="mc2 alltoall is only supported on A3 platform.")
 def test_mc2_alltoall_allgather_batchmatmul_withsilu():
     '''

@@ -129,7 +129,7 @@ def onp_transpose(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_transpose():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -156,7 +156,7 @@ def onp_expand_dims(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_expand_dims():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -187,7 +187,7 @@ def onp_squeeze(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_squeeze():
     onp_array = onp.random.random((1, 3, 1, 4, 2)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -224,7 +224,7 @@ def onp_rollaxis(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_rollaxis():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -255,7 +255,7 @@ def onp_swapaxes(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_swapaxes():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -294,7 +294,7 @@ def onp_reshape(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_reshape():
     onp_array = onp.random.random((2, 3, 4)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -315,7 +315,7 @@ def onp_ravel(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_ravel():
     onp_array = onp.random.random((2, 3, 4)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -342,7 +342,7 @@ def onp_concatenate(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_concatenate():
     onp_array = onp.random.random((5, 4, 3, 2)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -366,7 +366,7 @@ def onp_append(arr1, arr2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_append():
     onp_array = onp.random.random((4, 3, 2)).astype('float32')
     onp_value = onp.random.random((4, 3, 2)).astype('float32')
@@ -421,7 +421,7 @@ def onp_column_stack(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_column_stack():
     onp_seq_lst, mnp_seq_lst = prepare_array_sequences(
         n_lst=[1, 5], ndim_lst=[1, 2, 3, 4], axis=1)
@@ -442,7 +442,7 @@ def onp_hstack(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_hstack():
     onp_seq_lst0, mnp_seq_lst0 = prepare_array_sequences(
         n_lst=[1, 5], ndim_lst=[2, 3, 4], axis=1)
@@ -466,7 +466,7 @@ def onp_dstack(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dstack():
     onp_seq_lst, mnp_seq_lst = prepare_array_sequences(
         n_lst=[1, 5], ndim_lst=[1, 2, 3, 4], axis=2)
@@ -486,7 +486,7 @@ def onp_vstack(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_vstack():
     onp_seq_lst, mnp_seq_lst = prepare_array_sequences(
         n_lst=[1], ndim_lst=[2], axis=0)
@@ -525,19 +525,19 @@ def onp_atleast3d(*arys):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_atleast1d():
     run_non_kw_test(mnp_atleast1d, onp_atleast1d, Cases())
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_atleast2d():
     run_non_kw_test(mnp_atleast2d, onp_atleast2d, Cases())
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_atleast3d():
     run_non_kw_test(mnp_atleast3d, onp_atleast3d, Cases())
 
@@ -552,7 +552,7 @@ def onp_where(condition, x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_where():
     test_case = Cases()
     for condition1 in test_case.bool_broadcastables[:2]:
@@ -579,7 +579,7 @@ def onp_ndarray_flatten(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_ndarray_flatten():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -606,7 +606,7 @@ def onp_ndarray_transpose(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_ndarray_transpose():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -631,7 +631,7 @@ def onp_ndarray_astype(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_ndarray_astype():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -658,7 +658,7 @@ def mnp_concatenate_type_promotion(mnp_array1, mnp_array2, mnp_array3, mnp_array
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_concatenate_type_promotion():
     onp_array = onp.random.random((5, 1)).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -697,7 +697,7 @@ def onp_stack(*arrs):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_stack():
     arr = rand_int(3, 4, 5, 6)
     match_res(mnp.stack, onp.stack, arr)
@@ -729,7 +729,7 @@ def onp_roll(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_roll():
     """
     Feature: template
@@ -759,7 +759,7 @@ def onp_moveaxis(a):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_moveaxis():
     a = rand_int(2, 4, 5, 9, 6)
     match_res(mnp_moveaxis, onp_moveaxis, a)
@@ -782,7 +782,7 @@ def onp_tile(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tile():
     a = rand_int(2, 3, 4)
     match_res(mnp_tile, onp_tile, a)
@@ -801,7 +801,7 @@ def onp_broadcast_to(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_broadcast_to():
     x = rand_int()
     match_res(mnp_broadcast_to, onp_broadcast_to, x)
@@ -820,7 +820,7 @@ def onp_broadcast_arrays(*args):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_broadcast_arrays():
     test_case = Cases()
     broadcastables = test_case.broadcastables
@@ -846,7 +846,7 @@ def onp_flip(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+          card_mark='onecard', mem_peak=2048.00)
 def test_flip():
     x = rand_int(2, 3, 4)
     run_multi_test(mnp_flip, onp_flip, (x,))
@@ -861,7 +861,7 @@ def onp_flipud(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+          card_mark='onecard', mem_peak=2048.00)
 def test_flipud():
     x = rand_int(2, 3, 4)
     run_multi_test(mnp_flipud, onp_flipud, (x,))
@@ -876,7 +876,7 @@ def onp_fliplr(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
+          card_mark='onecard', mem_peak=2048.0)
 def test_fliplr():
     x = rand_int(2, 3, 4)
     run_multi_test(mnp_fliplr, onp_fliplr, (x,))
@@ -895,7 +895,7 @@ def onp_split(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_split():
     onp_arrs = [
         onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32')
@@ -924,7 +924,7 @@ def onp_array_split(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_array_split():
     onp_arr = onp.random.randint(1, 5, size=(9, 7, 13)).astype('float32')
     mnp_arr = to_tensor(onp_arr)
@@ -946,7 +946,7 @@ def onp_vsplit(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_vsplit():
     onp_arrs = [
         onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32')
@@ -971,7 +971,7 @@ def onp_hsplit(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_hsplit():
     onp_arrs = [
         onp.random.randint(1, 5, size=(4, 9, 5)).astype('float32')
@@ -996,7 +996,7 @@ def onp_dsplit(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dsplit():
     onp_arrs = [
         onp.random.randint(1, 5, size=(5, 4, 9)).astype('float32')
@@ -1029,7 +1029,7 @@ def onp_take_along_axis(*arrs):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_take_along_axis():
     x = rand_int(6, 7, 8, 9)
     indices1 = rand_int(2).astype(onp.int32)
@@ -1070,7 +1070,7 @@ def onp_take(x, indices):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_take():
     x = rand_int(2, 3, 4, 5)
     indices = rand_int(2, 3).astype(onp.int32)
@@ -1096,14 +1096,14 @@ def onp_repeat(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_repeat():
     x = rand_int(2, 3, 4, 5)
     run_multi_test(mnp_repeat, onp_repeat, (x,))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_select():
     choicelist = rand_int(2, 3, 4, 5)
     condlist = choicelist > 2
@@ -1122,7 +1122,7 @@ def test_select():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_choose():
     x = rand_int(2, 1, 4).astype(onp.int32)
     y = rand_int(3, 2, 5, 4).astype(onp.int32)
@@ -1177,7 +1177,7 @@ class RollSwap(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_expand_dims_exception():
     with pytest.raises(TypeError):
         mnp.expand_dims(mnp.ones((3, 3)), 1.2)
@@ -1185,7 +1185,7 @@ def test_expand_dims_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_swapaxes_exception():
     with pytest.raises(ValueError):
         mnp.swapaxes(mnp.ones((3, 3)), 1, 10)
@@ -1193,7 +1193,7 @@ def test_swapaxes_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_flatten():
     lst = [[1.0, 2.0], [3.0, 4.0]]
     tensor_list = to_tensor(lst)
@@ -1203,7 +1203,7 @@ def test_tensor_flatten():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_reshape():
     lst = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
     tensor_list = to_tensor(lst)
@@ -1218,7 +1218,7 @@ def test_tensor_reshape():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_tensor_squeeze():
     rt.launch_blocking()
     lst = [[[1.0], [2.0], [3.0]]]
@@ -1233,7 +1233,7 @@ def test_tensor_squeeze():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_ravel():
     lst = [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]
     tensor_list = to_tensor(lst)
@@ -1267,7 +1267,7 @@ def onp_rot90(input_array):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
+          card_mark='onecard', mem_peak=2048.0)
 def test_rot90():
     onp_array = rand_int(3, 4, 5).astype('float32')
     mnp_array = to_tensor(onp_array)
@@ -1289,7 +1289,7 @@ def onp_size(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_size():
     onp_arr = onp.random.rand(2, 3, 4).astype('float32')
     mnp_arr = to_tensor(onp_arr)
@@ -1306,7 +1306,7 @@ def onp_array_str(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_array_str():
     onp_arr = onp.random.rand(2, 3, 4).astype('float32')
     mnp_arr = to_tensor(onp_arr)
@@ -1315,7 +1315,7 @@ def test_array_str():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_apply_along_axis():
     onp_arr = rand_int(5, 3, 7)
     mnp_arr = to_tensor(onp_arr)
@@ -1332,7 +1332,7 @@ def test_apply_along_axis():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_resize():
     x = rand_int(3, 5)
     mnp_x = to_tensor(x)
@@ -1351,7 +1351,7 @@ def test_tensor_resize():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_piecewise():
     x = rand_int(2, 4)
     mnp_x = to_tensor(x)
@@ -1384,7 +1384,7 @@ def test_piecewise():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_unravel_index():
     shapes = [(2, 6, 3)]
     dims = [(5, 4, 7), 5 * 4 * 7]
@@ -1414,7 +1414,7 @@ def onp_apply_over_axes(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_apply_over_axes():
     arrs = [
         onp.random.rand(2, 2).astype('float32'),
@@ -1428,7 +1428,7 @@ def test_apply_over_axes():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_argwhere():
     """
     Feature: test argwhere.
@@ -1446,7 +1446,7 @@ def test_argwhere():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 def test_intersect1d():
     """
     Feature: test intersect1d.
@@ -1469,7 +1469,7 @@ def test_intersect1d():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_choose():
     x = rand_int(2, 1, 4).astype(onp.int32)
     mnp_x = to_tensor(x)

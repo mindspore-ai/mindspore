@@ -20,8 +20,7 @@ from mindspore.nn import Cell
 from mindspore.common import dtype as mstype
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_tensor_slice_by_bool_broadcast():
     """
     Feature: Tensor-setitem-by-bool support broadcast.
@@ -40,8 +39,7 @@ def test_tensor_slice_by_bool_broadcast():
     assert np.allclose(data_tensor.asnumpy(), data_np)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_tensor_slice_by_bool_nan():
     """
     Feature: Tensor-setitem-by-bool support nan.
@@ -54,8 +52,7 @@ def test_tensor_slice_by_bool_nan():
     assert np.allclose(data.asnumpy(), np.ones([2, 3, 4], np.float32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=1024.01)
 def test_tensor_setitem_empty_tuple():
     """
     Feature: Tensor setitem which index is empty tuple.

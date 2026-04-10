@@ -25,8 +25,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_for_after_for_in_while_01():
     """
     Feature: Control flow
@@ -92,8 +91,7 @@ def test_for_after_for_in_while_01():
     assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([0], mstype.int32))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_for_after_for_in_while_02():
     """
     Feature: Control flow

@@ -27,7 +27,7 @@ def angle_forward_func(x):
     return P.Angle()(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.complex64, np.complex128])
 def test_Angle_op_cpu(data_type):
     """

@@ -22,7 +22,7 @@ from mindspore.dataset.dataloader import Dataset, IterableDataset, TensorDataset
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_iterate_dataset():
     """
     Feature: Test Dataset.
@@ -36,7 +36,7 @@ def test_iterate_dataset():
             pass
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_len_dataset():
     """
     Feature: Test Dataset.
@@ -49,7 +49,7 @@ def test_len_dataset():
         _ = len(dataset)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_iterate_iterable_dataset():
     """
     Feature: Test IterableDataset.
@@ -63,7 +63,7 @@ def test_iterate_iterable_dataset():
             pass
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_len_iterable_dataset():
     """
     Feature: Test IterableDataset.
@@ -79,7 +79,7 @@ def test_len_iterable_dataset():
 class TestTensorDataset:
     """Class for testing TensorDataset."""
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_getitem(self):
         """
         Feature: Test TensorDataset.
@@ -93,7 +93,7 @@ class TestTensorDataset:
             np.testing.assert_array_equal(sample[0].asnumpy(), images[i])
             np.testing.assert_array_equal(sample[1].asnumpy(), labels[i])
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_len(self):
         """
         Feature: Test TensorDataset.
@@ -103,7 +103,7 @@ class TestTensorDataset:
         dataset = TensorDataset(ms.Tensor([0, 1, 2]), ms.Tensor([3, 4, 5]))
         assert len(dataset) == 3
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_invalid_tensors(self):
         """
         Feature: Test TensorDataset.

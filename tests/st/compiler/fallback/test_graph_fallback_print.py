@@ -69,8 +69,7 @@ def check_output(output, patterns):
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01
         )
 def test_np_print_1():
     """
@@ -97,8 +96,7 @@ def test_np_print_1():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_print_2():
     """
     Feature: JIT Fallback
@@ -125,8 +123,7 @@ def test_np_print_2():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_tensor_print_1():
     """
     Feature: JIT Fallback
@@ -152,8 +149,7 @@ def test_tensor_print_1():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_print_cnode_1():
     """
     Feature: JIT Fallback
@@ -182,7 +178,7 @@ def test_print_cnode_1():
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_print_cnode_2():
     """
     Feature: JIT Fallback
@@ -210,8 +206,7 @@ def test_print_cnode_2():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_print_cnode_3():
     """
     Feature: JIT Fallback
@@ -239,8 +234,7 @@ def test_print_cnode_3():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_print_validate_tuple():
     """
     Feature: JIT Fallback
@@ -265,8 +259,7 @@ def test_print_validate_tuple():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_print_validate():
     """
     Feature: JIT Fallback
@@ -287,8 +280,7 @@ def test_print_validate():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_print_format_np():
     """
     Feature: JIT Fallback
@@ -316,8 +308,7 @@ def test_print_format_np():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_format_tensor():
     """
     Feature: JIT Fallback
@@ -346,7 +337,7 @@ def test_print_format_tensor():
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_print_string_format():
     """
     Feature: JIT Fallback
@@ -371,8 +362,7 @@ def test_print_string_format():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_print_string_add_string():
     """
     Feature: JIT Fallback
@@ -401,7 +391,7 @@ def test_print_string_add_string():
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_print_list():
     """
     Feature: JIT Fallback
@@ -426,8 +416,7 @@ def test_print_list():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_print_list_2():
     """
     Feature: Graph print.
@@ -451,7 +440,7 @@ def test_print_list_2():
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_print_dict():
     """
     Feature: JIT Fallback
@@ -480,8 +469,7 @@ def test_print_dict():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_print_exception():
     """
     Feature: graph print.
@@ -506,8 +494,7 @@ def test_print_exception():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_joinedstr():
     """
     Feature: graph print joinedstr.
@@ -537,7 +524,7 @@ def test_print_joinedstr():
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_print_param_value():
     """
     Feature: graph print parameter value.
@@ -590,8 +577,7 @@ def judge_tuple_index_dim_lambda(data, tuple_index):
     print_double_func(data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_in_lambda_func_graph_with_isolate_node():
     """
     Feature: graph raise.
@@ -619,7 +605,7 @@ def test_print_in_lambda_func_graph_with_isolate_node():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_dict_all_print():
     """
     Feature: graph print dict.
@@ -646,8 +632,7 @@ def test_dict_all_print():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_kwargs_net():
     """
     Feature: graph print kwargs.
@@ -674,8 +659,7 @@ def test_kwargs_net():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_bool_int_float_str_tuple_print():
     """
     Feature: JIT Fallback
@@ -711,7 +695,7 @@ def test_bool_int_float_str_tuple_print():
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_kwargs_print():
     """
     Feature: JIT Fallback

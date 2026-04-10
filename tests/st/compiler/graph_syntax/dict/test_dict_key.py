@@ -19,7 +19,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_key_is_type():
     """
     Feature: dict key.
@@ -34,7 +34,7 @@ def test_dict_key_is_type():
     assert str(out) == "<class 'numpy.float32'>"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_key_is_none():
     """
     Feature: dict key.

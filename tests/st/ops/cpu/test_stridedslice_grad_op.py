@@ -40,8 +40,7 @@ class StridedSliceGrad(nn.Cell):
         return self.ssg(dy, self.shape(x), (2, 0, 0), (3, 2, 3), (1, 1, 1))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice():
     x = Tensor(np.array([[[1., 1., 1.], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 7, 8]]]).astype(np.float32))
     dy = Tensor(np.array([[[5., 1., 5.], [6., 1., 8.]]]).astype(np.float32))
@@ -62,8 +61,7 @@ class StridedSliceGrad2(nn.Cell):
         return self.ssg(dy, self.shape(x), (0, 0, 0), (1, 4, 2), (1, 1, 1))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice2():
     x = Tensor(np.arange(2 * 4 * 2).reshape(2, 4, 2), mstype.float32)
     dy = Tensor(np.arange(4 * 2).reshape(4, 2), mstype.float32)
@@ -73,8 +71,7 @@ def test_slice2():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_vmap():
     """
     Feature: Test stridedslicegrad CPU vmap.

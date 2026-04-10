@@ -90,7 +90,7 @@ def test_silent_detect_config_parser_sub():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_silent_detect_v4():
     """
     Feature: Test silent detect with MS_NPU_ASD_CONFIG.
@@ -122,7 +122,7 @@ def exec_command(cmd):
         return out
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_silent_detect_strikeout():
     '''
     Feature: silent detect with strikeout
@@ -155,7 +155,7 @@ def test_silent_detect_strikeout():
     del os.environ['VLOG_v']
     os.system('rm -rf test_silent_detect_strikeout_log')
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_silent_detect_without_parallel_pass():
     '''
     Feature: silent detect only supports auto_parallel or semi_auto_parallel mode

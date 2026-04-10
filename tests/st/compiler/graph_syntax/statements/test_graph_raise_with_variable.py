@@ -28,7 +28,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_1():
     """
     Feature: graph raise.
@@ -50,7 +50,7 @@ def test_raise_with_variable_1():
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_2():
     """
     Feature: graph raise.
@@ -69,7 +69,7 @@ def test_raise_with_variable_2():
     assert "The input can not be 11." in str(raise_info_10.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_3():
     """
     Feature: graph raise.
@@ -90,7 +90,7 @@ def test_raise_with_variable_3():
             raise_info_11.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_list():
     """
     Feature: graph raise.
@@ -113,7 +113,7 @@ def test_raise_with_variable_list():
             raise_info_list.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_tuple_1():
     """
     Feature: graph raise.
@@ -136,7 +136,7 @@ def test_raise_with_variable_tuple_1():
             raise_info_tuple.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_tuple_2():
     """
     Feature: graph raise.
@@ -159,7 +159,7 @@ def test_raise_with_variable_tuple_2():
             raise_info_string_tuple.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_joinedstr_tensor():
     """
     Feature: graph raise.
@@ -181,7 +181,7 @@ def test_raise_with_variable_joinedstr_tensor():
 
 
 @pytest.mark.skip(reason='Not support dict yet')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_raise_with_variable_dic():
     """
     Feature: graph raise.
@@ -206,7 +206,7 @@ def test_raise_with_variable_dic():
             raise_info_list.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_control_flow1():
     """
     Feature: graph raise.
@@ -228,7 +228,7 @@ def test_raise_with_variable_control_flow1():
         raise_info_joinedstr_tensor.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_variable_control_flow2():
     """
     Feature: graph raise.
@@ -275,7 +275,7 @@ class CheckNet(ms.nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_isolated_raise():
     """
     Feature: Isolated raise.
@@ -290,7 +290,7 @@ def test_isolated_raise():
     assert "Check failed. Wrong shape," in str(err.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_in_control_flow():
     """
     Feature: graph raise.
@@ -310,7 +310,7 @@ def test_list_in_control_flow():
     assert "The input maybe [" in str(raise_info_list.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_none_join():
     """
     Feature: graph raise.
@@ -333,7 +333,7 @@ def test_raise_with_none_join():
         raise_info_joinedstr_tensor.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_raise_join():
     """
     Feature: graph raise.
@@ -358,7 +358,7 @@ def test_raise_with_raise_join():
         raise_info_joinedstr_tensor.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_parse_with_interpret():
     """
     Feature: graph raise.
@@ -380,7 +380,7 @@ def test_raise_parse_with_interpret():
     assert "x:" in str(raise_info_joinedstr_tensor.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_parse_with_interpret_2():
     """
     Feature: graph raise.
@@ -401,7 +401,7 @@ def test_raise_parse_with_interpret_2():
 
 
 @pytest.mark.skip(reason='No support')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_input_error_type_1():
     """
     Feature: graph raise.
@@ -422,7 +422,7 @@ def test_raise_with_input_error_type_1():
 
 
 @pytest.mark.skip(reason='No support')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_raise_with_input_error_type_2():
     """
     Feature: graph raise.
@@ -443,8 +443,7 @@ def test_raise_with_input_error_type_2():
     assert "The input can not be 11." in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_raise_join_in_control_flow():
     """
     Feature: graph raise.
@@ -463,8 +462,7 @@ def test_raise_join_in_control_flow():
     assert res == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_raise_join_in_control_flow_2():
     """
     Feature: graph raise.
@@ -508,8 +506,7 @@ class CellInList(nn.Cell):
         return self.cell_list[index](x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_cell_in_list():
     """
     Feature: graph raise.
@@ -527,8 +524,7 @@ def test_cell_in_list():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_raise_constant_folding():
     """
     Feature: graph raise.
@@ -548,8 +544,7 @@ def test_raise_constant_folding():
     assert "The input can not be 11." in str(raise_info_constant.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_raise_constant_folding_int64():
     """
     Feature: graph raise.
@@ -569,7 +564,7 @@ def test_raise_constant_folding_int64():
     assert "The input can not be 11." in str(raise_info_constant_int64.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_assert_tensor_join_assert():
     """
     Feature: graph raise.
@@ -611,8 +606,7 @@ def judge_tuple_index_dim(data, tuple_index, x):
     judge_tuple_index_dim_check_error(index_dim, data_dim, x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_raise_in_sub_func_graph_with_isolate_node():
     """
     Feature: graph raise.
@@ -633,7 +627,7 @@ def test_raise_in_sub_func_graph_with_isolate_node():
     assert "The dim of index cannot be greater than indexed data" in str(err)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_in_method():
     """
     Feature: graph raise.

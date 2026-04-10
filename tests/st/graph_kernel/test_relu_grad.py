@@ -48,7 +48,7 @@ def run_relu_grad(shape1, shape2, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_relu_grad_gpu():
     """
     Feature: Test the precision of ReluGrad on GPU
@@ -61,8 +61,7 @@ def test_relu_grad_gpu():
     run_relu_grad((12, 1), (12, 1), np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_relu_grad_ascend():
     """
     Feature: Test the precision of ReluGrad on Ascend
@@ -75,8 +74,7 @@ def test_relu_grad_ascend():
     run_relu_grad((12, 1), (12, 1), np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_relu_grad_corner_case_ascend():
     """
     Feature: Test the behavor of ReluGrad with NAN input

@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_split_single_op():
     """
     Feature: split
@@ -54,8 +53,7 @@ def test_split_single_op():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.95)
+          card_mark='onecard', mem_peak=1024.95)
 def test_split_multiple_op():
     """
     Feature: split

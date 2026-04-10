@@ -12,7 +12,7 @@ def greater_equal_backward_func(x, y):
     return ops.grad(greater_equal_forward_func, (0,))(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_greater_equal_forward():
     """
     Feature: Ops.
@@ -27,7 +27,7 @@ def test_greater_equal_forward():
     assert np.allclose(out.asnumpy(), expect_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_greater_equal_backward():
     """
     Feature: Auto grad.

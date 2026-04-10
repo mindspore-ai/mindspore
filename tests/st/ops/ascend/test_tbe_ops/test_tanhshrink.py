@@ -28,8 +28,7 @@ class Net(nn.Cell):
         return self.tanhshrink(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_tanhshrink_normal():
     """
     Feature: Tanhshrink
@@ -43,8 +42,7 @@ def test_tanhshrink_normal():
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_tanhshrink_negative():
     """
     Feature: Tanhshrink
@@ -58,8 +56,7 @@ def test_tanhshrink_negative():
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_tanhshrink_zeros():
     """
     Feature: Tanhshrink

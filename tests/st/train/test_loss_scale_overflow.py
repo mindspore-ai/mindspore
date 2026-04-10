@@ -37,8 +37,7 @@ class Net(nn.Cell):
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.02)
+          card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_train_one_step_with_loss_scale_cell_overflow(mode):
     """
@@ -76,8 +75,7 @@ def test_train_one_step_with_loss_scale_cell_overflow(mode):
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+          card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_boost_train_one_step_with_loss_scale_cell_overflow(mode):
     """

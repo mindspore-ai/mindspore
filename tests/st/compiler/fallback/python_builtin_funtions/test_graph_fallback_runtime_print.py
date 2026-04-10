@@ -63,8 +63,7 @@ def check_output(output, patterns):
         assert output.find(pattern) != -1, "Unexpected output:\n" + output + "\n--- pattern ---\n" + pattern
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_fallback_print_asnumpy():
     """
     Feature: JIT Fallback
@@ -88,8 +87,7 @@ def test_fallback_print_asnumpy():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_fallback_print_asnumpy_custom_class_ascend():
     """
     Feature: JIT Fallback
@@ -124,8 +122,7 @@ def test_fallback_print_asnumpy_custom_class_ascend():
 
 
 @pytest.mark.skip(reason="print mutalble is not supported")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_print_mutable():
     """
     Feature: JIT Fallback
@@ -150,8 +147,7 @@ def test_fallback_print_mutable():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_fallback_print_pyinterpret():
     """
     Feature: JIT Fallback
@@ -181,8 +177,7 @@ def test_fallback_print_pyinterpret():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_init():
     """
     Feature: JIT Fallback
@@ -211,8 +206,7 @@ def test_np_init():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_str_format():
     """
     Feature: JIT Fallback

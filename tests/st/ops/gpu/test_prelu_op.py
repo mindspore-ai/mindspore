@@ -68,7 +68,7 @@ context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
 dtypes = [mstype.float16, mstype.float32]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight():
     x = np.arange(-10, 26).reshape((2, 3, 2, 3)) * 0.7
     weight = np.array([0.6])
@@ -85,7 +85,7 @@ def test_prelu_single_weight():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_prelu_multiple_weight():
     x = np.arange(-10, 26).reshape((2, 3, 2, 3)) * 0.6
     weight = np.array([0.2, 0.3, 0.4])
@@ -124,7 +124,7 @@ def test_prelu_multiple_weight():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight_0_D():
     x = np.array(-0.8)
     weight = np.array([0.6])
@@ -141,7 +141,7 @@ def test_prelu_single_weight_0_D():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight_1_D():
     x = np.arange(-10, 26).reshape((36,)) * 0.7
     weight = np.array([0.6])
@@ -158,7 +158,7 @@ def test_prelu_single_weight_1_D():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight_2_D():
     x = np.arange(-10, 26).reshape((4, 9)) * 0.7
     weight = np.array([0.6])
@@ -175,7 +175,7 @@ def test_prelu_single_weight_2_D():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_prelu_multiple_weight_2_D():
     x = np.arange(-6, 6).reshape((3, 4)) * 0.6
     weight = np.array([0.2, 0.4, 0.7, 0.9])

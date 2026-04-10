@@ -48,7 +48,7 @@ class NetConv3d(nn.Cell):
         return self.conv(x, w)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('algo', ["normal", "performance"])
 @pytest.mark.parametrize('conv_allow_tf32', [True, False])
 def test_conv3d_dshape_1(algo, conv_allow_tf32):
@@ -72,7 +72,7 @@ def test_conv3d_dshape_1(algo, conv_allow_tf32):
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3d_dshape_2():
     """
     Feature: Test conv3d dynamic shape.
@@ -91,7 +91,7 @@ def test_conv3d_dshape_2():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3d():
     x = Tensor(np.arange(1 * 3 * 3 * 3 * 3).reshape(1, 3, 3, 3, 3).astype(np.float32))
     w = Tensor(np.arange(4 * 3 * 2 * 2 * 2).reshape(4, 3, 2, 2, 2).astype(np.float32))
@@ -156,7 +156,7 @@ class MSGradNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3d_grad():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     dtype = np.float32
@@ -204,7 +204,7 @@ def test_conv3d_grad():
     assert np.allclose(net.cv1.weight.asnumpy(), w_exp, atol=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv3d_vmap():
     """
     Feature: Conv3D op

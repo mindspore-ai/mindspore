@@ -48,11 +48,9 @@ class ComplexNet(nn.Cell):
         return self.sub_net(x) + self.buffer_0 - self.buffer_1 - self.param_0
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=4.0)
+    card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_buffer_basic(mode):
     """
@@ -84,11 +82,9 @@ def test_buffer_basic(mode):
     assert np.allclose(my_output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=4.0)
+    card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_complex_net_buffer(mode):
     """
@@ -125,11 +121,9 @@ def test_complex_net_buffer(mode):
     assert np.allclose(sub_net_buffer.asnumpy(), tensor5.asnumpy())
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=0.01)
+    card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_buffer_exception(mode):
     """
@@ -192,11 +186,9 @@ class NetTorch(nn_torch.Module):
         return x + self.buffer2
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=0.01)
+    card_mark='onecard', mem_peak=0.01)
 def test_named_buffers_with_one_cell():
     """
     Feature: test named_buffers with parameters
@@ -253,11 +245,9 @@ def modify_buffer_based_on_name2(cell, name, buffer):  # pylint: disable=unused-
     return buffer
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=2.00)
+    card_mark='onecard', mem_peak=2.00)
 def test_register_buffer_hook():
     """
     Feature: test register_buffer hook with one cell

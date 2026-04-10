@@ -55,8 +55,7 @@ def test_mode_none_and_dtype_with_static_input(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_mean_and_dtype_with_static_input(dtype):
     """
@@ -74,8 +73,7 @@ def test_mode_mean_and_dtype_with_static_input(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_sum_and_dtype_with_static_input(dtype):
     """
@@ -93,8 +91,7 @@ def test_mode_sum_and_dtype_with_static_input(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_batchmean_and_dtype_with_static_input(dtype):
     """
@@ -112,8 +109,7 @@ def test_mode_batchmean_and_dtype_with_static_input(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_reduction_default(dtype):
     """
@@ -131,8 +127,7 @@ def test_reduction_default(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_reduction_error(dtype):
     """
@@ -149,8 +144,7 @@ def test_reduction_error(dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float16])
 def test_reduction_not_str(dtype):
     """
@@ -167,8 +161,7 @@ def test_reduction_not_str(dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_input_dtype_str():
     """
     Feature: KLDivLossGrad with default reduction mode.
@@ -184,8 +177,7 @@ def test_input_dtype_str():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_input_0d(dtype):
     """
@@ -201,8 +193,7 @@ def test_input_0d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_input_1d(dtype):
     """
@@ -218,8 +209,7 @@ def test_input_1d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_input_3d(dtype):
     """
@@ -235,8 +225,7 @@ def test_input_3d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float16])
 def test_input_4d(dtype):
     """
@@ -252,8 +241,7 @@ def test_input_4d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float16])
 def test_input_5d(dtype):
     """
@@ -269,8 +257,7 @@ def test_input_5d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float64])
 def test_input_6d(dtype):
     """
@@ -286,8 +273,7 @@ def test_input_6d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float64])
 def test_input_7d(dtype):
     """
@@ -303,8 +289,7 @@ def test_input_7d(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_vmap_case():
     """
     Feature: KLDivLossGrad with vmap mode.

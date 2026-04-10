@@ -41,7 +41,7 @@ suport_type_list = [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, n
 mode_list = [context.PYNATIVE_MODE, context.GRAPH_MODE]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 @pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', mode_list)
@@ -66,7 +66,7 @@ def test_bitwise_and(shape, dtype, mode):
     assert np.allclose(outputs_func.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 @pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', mode_list)
@@ -91,7 +91,7 @@ def test_bitwise_or(shape, dtype, mode):
     assert np.allclose(outputs_func.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 @pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', mode_list)
@@ -127,7 +127,7 @@ class NetBitwiseGPU(nn.Cell):
         return out_and, out_or, out_xor
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', mode_list)
 def test_bitwise_bool(mode):
     """

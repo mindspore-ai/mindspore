@@ -66,7 +66,7 @@ class RankDynamicNet(nn.Cell):
         return out, in_x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_rank_dynamic():
     """
     Feature: test rank dynamic shape.
@@ -84,7 +84,7 @@ def test_rank_dynamic():
     assert (dyn_output[1].asnumpy() == output[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_4d():
     """
     Feature: test 4d input shape.
@@ -99,7 +99,7 @@ def test_net_4d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_5d():
     """
     Feature: test 5d input shape.
@@ -114,7 +114,7 @@ def test_net_5d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_dynamic_shape():
     """
     Feature: test dyname shape.
@@ -130,7 +130,7 @@ def test_net_dynamic_shape():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_vmap():
     """
     Feature: test vmap function.

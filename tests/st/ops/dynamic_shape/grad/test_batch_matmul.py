@@ -30,7 +30,7 @@ class NetBatchMatMul(nn.Cell):
         return self.batchmatmul(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batch_matmul_dynamic_shape():
     """
     Feature: BatchMatMul Grad DynamicShape.
@@ -45,7 +45,7 @@ def test_batch_matmul_dynamic_shape():
     test_dynamic.test_dynamic_grad_net(inputs, False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batch_matmul_dynamic_rank():
     """
     Feature: BatchMatMul Grad DynamicShape.

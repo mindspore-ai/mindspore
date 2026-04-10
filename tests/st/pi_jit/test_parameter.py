@@ -27,7 +27,7 @@ from tests.st.pi_jit.share.utils import assert_no_graph_break, assert_equal, ass
 SKIP_PY37 = pytest.mark.skipif(sys.version_info[:2] == (3, 7), reason="Not support py37 setup loop bytecode")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Parameter_in_nested_tuple_list_or_dict():
     """
     Feature: Parameter parsing.
@@ -73,7 +73,7 @@ def test_Parameter_in_nested_tuple_list_or_dict():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Parameter_for_loop():
     """
     Feature: Parameter parsing.
@@ -108,7 +108,7 @@ def test_Parameter_for_loop():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Parameter_zip_for_loop():
     """
     Feature: Parameter parsing.
@@ -144,7 +144,7 @@ def test_Parameter_zip_for_loop():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Parameter_enumerate_for_loop():
     """
     Feature: Parameter parsing.

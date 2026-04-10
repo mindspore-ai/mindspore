@@ -37,13 +37,10 @@ def condition_branch_func(x, y):
     return output, copied_device
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=1.00,
-)
+    mem_peak=1.00)
 def test_condition_branch_true():
     """
     Feature: Condition Switch Control Flow
@@ -58,13 +55,10 @@ def test_condition_branch_true():
     assert np.allclose(copied.asnumpy(), np.array([3.0]))
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=1.00,
-)
+    mem_peak=1.00)
 def test_device_sync_guard_feature():
     """
     Feature: Device Synchronization Guard

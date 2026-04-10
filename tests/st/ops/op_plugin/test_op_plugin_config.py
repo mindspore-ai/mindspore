@@ -79,8 +79,7 @@ def _reset_plugin_config_state(lib_path):
         pass  # Ignore errors in reset
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_op_plugin_config_with_threads_num():
     """
     Feature: op_plugin configuration mechanism

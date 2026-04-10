@@ -139,8 +139,7 @@ def dynamic_rank_impl(input_x, input_n, axis):
     return res
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack_dynamic_shape_float32():
     """
     Feature: test sequence unstack op
@@ -158,8 +157,7 @@ def test_seq_tensor_unstack_dynamic_shape_float32():
     allclose_nparray_sequence(res, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack_dynamic_shape_float64():
     """
     Feature: test sequence unstack op
@@ -177,8 +175,7 @@ def test_seq_tensor_unstack_dynamic_shape_float64():
     allclose_nparray_sequence(res, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack_dynamic_shape_int32():
     """
     Feature: test sequence unstack op
@@ -196,8 +193,7 @@ def test_seq_tensor_unstack_dynamic_shape_int32():
     allclose_nparray_sequence(res, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack_dynamic_rank_int32():
     """
     Feature: test sequence unstack op
@@ -218,8 +214,7 @@ def test_seq_tensor_unstack_dynamic_rank_int32():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack_dynamic_rank_float32():
     """
     Feature: test sequence unstack op
@@ -240,8 +235,7 @@ def test_seq_tensor_unstack_dynamic_rank_float32():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack_dynamic_rank_float64():
     """
     Feature: test sequence unstack op
@@ -262,8 +256,7 @@ def test_seq_tensor_unstack_dynamic_rank_float64():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack0():
     """
     Feature: test sequence unstack op
@@ -282,8 +275,7 @@ def test_seq_tensor_unstack0():
     allclose_nparray_sequence(res, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_seq_tensor_unstack1():
     """
     Feature: test sequence unstack op
@@ -302,8 +294,7 @@ def test_seq_tensor_unstack1():
     allclose_nparray_sequence(res, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_in_seq_grad_other():
     """
     Feature: test sequence unstack grad op

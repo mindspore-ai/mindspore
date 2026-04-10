@@ -39,7 +39,7 @@ jit_cfg = {'compile_with_try': False, 'subgraph_break_opt': True}
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_two_layers_v1():
     """
     Feature: test graph break in call_function.
@@ -70,7 +70,7 @@ def test_call_function_graph_break_two_layers_v1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_two_layers_v2():
     """
     Feature: test graph break in call_function.
@@ -102,7 +102,7 @@ def test_call_function_graph_break_two_layers_v2():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_two_layers_v3():
     """
     Feature: test graph break in call_function.
@@ -135,7 +135,7 @@ def test_call_function_graph_break_two_layers_v3():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_two_layers_v4():
     """
     Feature: test graph break in call_function.
@@ -170,7 +170,7 @@ def test_call_function_graph_break_two_layers_v4():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_two_layers_v5():
     """
     Feature: test graph break in call_function.
@@ -201,7 +201,7 @@ def test_call_function_graph_break_two_layers_v5():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_three_layers_v1():
     """
     Feature: test graph break in call_function.
@@ -241,7 +241,7 @@ def test_call_function_graph_break_three_layers_v1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_three_layers_v2():
     """
     Feature: test graph break in call_function.
@@ -283,7 +283,7 @@ def test_call_function_graph_break_three_layers_v2():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_four_layers_v1():
     """
     Feature: test graph break in call_function.
@@ -325,7 +325,7 @@ def test_call_function_graph_break_four_layers_v1():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v1():
     """
     Feature: test graph break in call_function.
@@ -358,7 +358,7 @@ def test_call_function_graph_break_in_loop_v1():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v2():
     """
     Feature: test graph break in call_function.
@@ -393,7 +393,7 @@ def test_call_function_graph_break_in_loop_v2():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v3():
     """
     Feature: test graph break in call_function.
@@ -433,7 +433,7 @@ def test_call_function_graph_break_in_loop_v3():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v4():
     """
     Feature: test graph break in call_function.
@@ -481,7 +481,7 @@ def test_call_function_graph_break_in_loop_v4():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v5():
     """
     Feature: test graph break in call_function.
@@ -523,7 +523,7 @@ def test_call_function_graph_break_in_loop_v5():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v6():
     """
     Feature: test graph break in call_function.
@@ -564,7 +564,7 @@ def test_call_function_graph_break_in_loop_v6():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v7():
     """
     Feature: test graph break in call_function.
@@ -599,7 +599,7 @@ def test_call_function_graph_break_in_loop_v7():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v8():
     """
     Feature: test graph break in call_function.
@@ -636,7 +636,7 @@ def test_call_function_graph_break_in_loop_v8():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v9():
     """
     Feature: test graph break in call_function.
@@ -674,7 +674,7 @@ def test_call_function_graph_break_in_loop_v9():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v10():
     """
     Feature: test graph break in call_function.
@@ -713,7 +713,7 @@ def test_call_function_graph_break_in_loop_v10():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v11():
     """
     Feature: test graph break in call_function.
@@ -748,7 +748,7 @@ def test_call_function_graph_break_in_loop_v11():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v12():
     """
     Feature: test graph break in call_function.
@@ -781,7 +781,7 @@ def test_call_function_graph_break_in_loop_v12():
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v13():
     """
     Feature: test graph break in call_function.
@@ -817,7 +817,7 @@ def test_call_function_graph_break_in_loop_v13():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_loop_v14():
     """
     Feature: test graph break in call_function.
@@ -850,7 +850,7 @@ def test_call_function_graph_break_in_loop_v14():
     check_ir_num('graph_before_compile', 3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_graph_break_in_recursion():
     """
     Feature: test graph break in call_function.
@@ -882,7 +882,7 @@ def test_call_function_graph_break_in_recursion():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_break_at_first_statement():
     """
     Feature: test graph break in call_function.
@@ -916,7 +916,7 @@ def test_break_at_first_statement():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_param_is_dict_and_is_alive_local_v1():
     """
     Feature: test graph break in call_function.
@@ -948,7 +948,7 @@ def test_param_is_dict_and_is_alive_local_v1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_param_is_dict_and_is_alive_local_v2():
     """
     Feature: test graph break in call_function.
@@ -980,7 +980,7 @@ def test_param_is_dict_and_is_alive_local_v2():
     check_ir_num('graph_before_compile', 2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_output_type_unsupported_v1():
     """
     Feature: test graph break in call_function.
@@ -1021,7 +1021,7 @@ def test_function_output_type_unsupported_v1():
     assert_has_graph_break(compiled_f1, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_output_type_unsupported_v2():
     """
     Feature: test graph break in call_function.
@@ -1061,7 +1061,7 @@ def test_function_output_type_unsupported_v2():
     assert_has_graph_break(compiled_f1, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_output_type_unsupported_v3():
     """
     Feature: test graph break in call_function.
@@ -1100,7 +1100,7 @@ def test_function_output_type_unsupported_v3():
     assert_has_graph_break(compiled_f1, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_output_type_unsupported_v4():
     """
     Feature: test graph break in call_function.
@@ -1189,7 +1189,7 @@ def f1(x: Tensor, y: Tensor, batch_size: int, shape: tuple, config: dict, tensor
 
 
 @SKIP_PY37
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_many_params_and_many_alive_locals_and_free_vars():
     """
     Feature: test graph break in call_function.
@@ -1251,7 +1251,7 @@ class SetattrNetV1(nn.Cell):
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_setattr_side_effect_v1():
     """
     Feature: test graph break in call_function.
@@ -1278,7 +1278,7 @@ def test_setattr_side_effect_v1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_in_if_block_v1():
     """
     Feature: test graph break in call_function.
@@ -1312,7 +1312,7 @@ def test_subgraph_break_in_if_block_v1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_in_if_block_v2():
     """
     Feature: test graph break in call_function.
@@ -1350,7 +1350,7 @@ def test_subgraph_break_in_if_block_v2():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_if_statement():
     """
     Feature: test graph break in call_function.
@@ -1385,7 +1385,7 @@ def test_subgraph_break_at_if_statement():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_if_elif_else_statement():
     """
     Feature: test graph break in call_function.
@@ -1422,7 +1422,7 @@ def test_subgraph_break_at_if_elif_else_statement():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_nested_if_else_statement():
     """
     Feature: test graph break in call_function.
@@ -1463,7 +1463,7 @@ def test_subgraph_break_at_nested_if_else_statement():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_if_or_condition():
     """
     Feature: test graph break in call_function.
@@ -1498,7 +1498,7 @@ def test_subgraph_break_at_if_or_condition():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_if_and_condition():
     """
     Feature: test graph break in call_function.
@@ -1533,7 +1533,7 @@ def test_subgraph_break_at_if_and_condition():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_if_call_function_return_scalar_tensor():
     """
     Feature: test graph break in call_function.
@@ -1572,7 +1572,7 @@ def test_subgraph_break_at_if_call_function_return_scalar_tensor():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_if_condition_in_nested_call():
     """
     Feature: test graph break in call_function.
@@ -1611,7 +1611,7 @@ def test_subgraph_break_at_if_condition_in_nested_call():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_return_and_condition():
     """
     Feature: test graph break in call_function.
@@ -1642,7 +1642,7 @@ def test_subgraph_break_at_return_and_condition():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_at_return_and_condition_v2():
     """
     Feature: Subgraph break at return with logical and-condition.
@@ -1670,7 +1670,7 @@ def test_subgraph_break_at_return_and_condition_v2():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_return_or_condition():
     """
     Feature: test graph break in call_function.
@@ -1701,7 +1701,7 @@ def test_subgraph_break_at_return_or_condition():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_return_complex_and_or_condition():
     """
     Feature: test graph break in call_function.
@@ -1733,7 +1733,7 @@ def test_subgraph_break_at_return_complex_and_or_condition():
     check_ir_num('graph_before_compile', 4)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_while_condition():
     """
     Feature: test graph break in call_function.
@@ -1765,7 +1765,7 @@ def test_subgraph_break_at_while_condition():
     assert_has_graph_break(f1, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_while_condition_with_if_continue():
     """
     Feature: test graph break in call_function.
@@ -1801,7 +1801,7 @@ def test_subgraph_break_at_while_condition_with_if_continue():
     assert_has_graph_break(f1, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_while_condition_with_if_break():
     """
     Feature: test graph break in call_function.
@@ -1837,7 +1837,7 @@ def test_subgraph_break_at_while_condition_with_if_break():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_break_at_calling_nested_Cell():
     """
     Feature: test graph break in call_function.
@@ -1896,7 +1896,7 @@ def test_subgraph_break_at_calling_nested_Cell():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_if_condition_asnumpy():
     """
     Feature: Subgraph break at if condition using Tensor.asnumpy().
@@ -1930,7 +1930,7 @@ def test_subgraph_break_if_condition_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_if_elif_condition_asnumpy():
     """
     Feature: Subgraph breaks at if/elif conditions using Tensor.asnumpy().
@@ -1966,7 +1966,7 @@ def test_subgraph_break_if_elif_condition_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_elif_condition_asnumpy():
     """
     Feature: Subgraph break at elif condition using Tensor.asnumpy().
@@ -2002,7 +2002,7 @@ def test_subgraph_break_elif_condition_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_two_separate_if_conditions_asnumpy():
     """
     Feature: Subgraph breaks at two separate if conditions using Tensor.asnumpy().
@@ -2041,7 +2041,7 @@ def test_subgraph_break_two_separate_if_conditions_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_nested_if_multiple_breaks_asnumpy():
     """
     Feature: Subgraph breaks in nested-if structure (multiple potential breaks).
@@ -2084,7 +2084,7 @@ def test_subgraph_break_nested_if_multiple_breaks_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_two_layer_tensor_asnumpy():
     """
     Feature: Subgraph break triggered by Tensor.asnumpy conversion.
@@ -2115,7 +2115,7 @@ def test_subgraph_break_two_layer_tensor_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_cell_multiple_tensor_asnumpy():
     """
     Feature: Subgraph break in Cell method with multiple Tensor.asnumpy calls.
@@ -2155,7 +2155,7 @@ def test_subgraph_break_cell_multiple_tensor_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_three_layers_negative_chain():
     """
     Feature: Subgraph break in three-layer function chain.
@@ -2189,7 +2189,7 @@ def test_subgraph_break_three_layers_negative_chain():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_three_layers_multiple_asnumpy():
     """
     Feature: Subgraph break in three-layer function chain with multiple asnumpy calls.
@@ -2224,7 +2224,7 @@ def test_subgraph_break_three_layers_multiple_asnumpy():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_chained_calls_three_graphs():
     """
     Feature: Subgraph break across sequential helper calls.
@@ -2260,7 +2260,7 @@ def test_subgraph_break_chained_calls_three_graphs():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_four_layers_tensor_merge():
     """
     Feature: Subgraph break in four-layer helper chain.
@@ -2298,7 +2298,7 @@ def test_subgraph_break_four_layers_tensor_merge():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_recursion_tensor_conversion():
     """
     Feature: Subgraph break inside recursive function.
@@ -2329,7 +2329,7 @@ def test_subgraph_break_recursion_tensor_conversion():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_entry_tensor_conversion():
     """
     Feature: Subgraph break at callee entry.
@@ -2364,7 +2364,7 @@ def test_subgraph_break_entry_tensor_conversion():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_if_branch_with_prints():
     """
     Feature: Subgraph break inside conditional branches with side effects.
@@ -2407,7 +2407,7 @@ def test_subgraph_break_if_branch_with_prints():
     check_ir_num('graph_before_compile', 3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subgraph_break_if_condition_tensor_comparison():
     """
     Feature: Subgraph break in if condition using Tensor conversion.

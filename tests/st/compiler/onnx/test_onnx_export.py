@@ -39,8 +39,7 @@ class NetGeLU(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_ms_onnx_export_gelu():
     """
     Feature: Onnx
@@ -82,7 +81,7 @@ class SiLUNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_001():
     """
     Feature: Onnx
@@ -104,7 +103,7 @@ def test_export_onnx_001():
             os.remove(onnx_file)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_002():
     """
     Feature: Onnx
@@ -126,7 +125,7 @@ def test_export_onnx_002():
             os.remove(onnx_file)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_003():
     """
     Feature: Onnx
@@ -148,7 +147,7 @@ def test_export_onnx_003():
             os.remove(onnx_file)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_004():
     """
     Feature: Onnx
@@ -179,7 +178,7 @@ class SoftmaxNet(nn.Cell):
         return self.softmax(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_005():
     """
     Feature: Onnx
@@ -201,7 +200,7 @@ def test_export_onnx_005():
             os.remove(onnx_file)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_006():
     """
     Feature: Onnx
@@ -233,7 +232,7 @@ class MulsNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_007():
     """
     Feature: Onnx
@@ -258,7 +257,7 @@ def test_export_onnx_007():
             os.remove(onnx_file)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_008():
     """
     Feature: Onnx
@@ -283,7 +282,7 @@ def test_export_onnx_008():
             os.remove(onnx_file)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_export_onnx_009():
     """
     Feature: Onnx
@@ -315,8 +314,7 @@ class DivsNet(nn.Cell):
         z = x / self.y
         return z
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.0)
 def test_export_onnx_010():
     """
     Feature: Onnx
@@ -339,8 +337,7 @@ def test_export_onnx_010():
         if os.path.exists(onnx_file):
             os.remove(onnx_file)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.0)
 def test_export_onnx_011():
     """
     Feature: Onnx
@@ -372,8 +369,7 @@ class LessScalarNet(nn.Cell):
         z = x < self.y
         return z
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.0)
 def test_export_onnx_012():
     """
     Feature: Onnx
@@ -396,8 +392,7 @@ def test_export_onnx_012():
         if os.path.exists(onnx_file):
             os.remove(onnx_file)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.0)
 def test_export_onnx_013():
     """
     Feature: Onnx

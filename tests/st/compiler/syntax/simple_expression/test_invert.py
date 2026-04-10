@@ -23,7 +23,7 @@ from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_invert_operation_int():
     """
     Feature: simple expression
@@ -40,7 +40,7 @@ def test_invert_operation_int():
     assert jit_x == -2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_invert_operation_bool():
     """
     Feature: simple expression
@@ -59,7 +59,7 @@ def test_invert_operation_bool():
     assert jit_x == -2
     assert jit_y == -1
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_invert_operation_tensor():
     """
     Feature: simple expression
@@ -77,7 +77,7 @@ def test_invert_operation_tensor():
     ret = ret == jit_x
     assert ms.ops.all(ret).item()
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_invert_operation_tensor_bool():
     """
     Feature: simple expression
@@ -96,7 +96,7 @@ def test_invert_operation_tensor_bool():
     assert ms.ops.all(ret).item()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_invert_operation_float():
     """
     Feature: simple expression

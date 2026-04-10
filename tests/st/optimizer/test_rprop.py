@@ -33,11 +33,9 @@ from tests.st.optimizer.optimizer_utils import (
 )
 
 
-@arg_mark(
-    plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -54,11 +52,9 @@ def test_default_rprop(mode):
     assert np.allclose(cells.prev[1].asnumpy(), default_fc1_bias_rprop, atol=1.e-2)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=2048.04
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -75,11 +71,9 @@ def test_no_default_rprop(mode):
     assert np.allclose(cells.prev[1].asnumpy(), no_default_fc1_bias_rprop, atol=1.e-2)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -96,11 +90,9 @@ def test_default_rprop_group(mode):
     assert np.allclose(cells.prev[1].asnumpy(), default_group_fc1_bias_rprop, atol=1.e-2)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

@@ -33,7 +33,7 @@ class Quantile(Cell):
         return self.quantile(x, q)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="I6NEX6, I6NEJF")
 def test_quantile_fp32():
     """
@@ -56,7 +56,7 @@ def test_quantile_fp32():
     assert np.allclose(output, expect_output, ertol_loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.skip(reason="I6NEX6, I6NEJF")
 def test_quantile_fp64():
     """

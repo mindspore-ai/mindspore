@@ -17,7 +17,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_all_gather_matmul_enable_all_kbk_mode():
     '''
     Feature: MC2 fusion.
@@ -29,7 +29,7 @@ def test_all_gather_matmul_enable_all_kbk_mode():
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_matmul_reduce_scatter_enable_all_kbk_mode():
     '''
     Feature: MC2 fusion.
@@ -41,7 +41,7 @@ def test_matmul_reduce_scatter_enable_all_kbk_mode():
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_matmul_all_reduce_enable_all_kbk_mode():
     '''
     Feature: MC2 fusion.

@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from tests.mark_utils import arg_mark
 
         
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hypermap_specialize_param():
     """
     Feature: Hypermap specialize

@@ -37,7 +37,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.13)
+        card_mark='onecard', mem_peak=1024.13)
 def test_net():
     """
     Feature: Assert BiDense output shape
@@ -52,8 +52,7 @@ def test_net():
     assert output.shape == (128, 40)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.2)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.2)
 def test_net_nd():
     """
     Feature: Assert BiDense output shape for n-dimensional input
@@ -68,8 +67,7 @@ def test_net_nd():
     assert output.shape == (128, 4, 40)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_net_1d():
     """
     Feature: Assert BiDense output shape for 1-dimensional input
@@ -106,8 +104,7 @@ def _count_unequal_element(data_expected, data_me, rtol, atol):
             format(data_expected[greater], data_me[greater], error[greater])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=14.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=14.0)
 def test_pynative_precision():
     """
     Feature: Test bidense ops precision

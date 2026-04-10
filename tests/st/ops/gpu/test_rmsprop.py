@@ -82,7 +82,7 @@ def rmspropcented_numpy(variable, gradients, mean_gradients, mean_square, moment
     return variable, gradients, mean_gradients, mean_square, moment
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_rmsprop():
     learning_rate, decay, momentum, epsilon, centered = [0.5, 0.8, 0.9, 1e-3, True]
 
@@ -141,7 +141,7 @@ def test_rmsprop():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_rmspropcenter():
     learning_rate, decay, momentum, epsilon, centered = [0.1, 0.3, 0.9, 1.0, False]
 

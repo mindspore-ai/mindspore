@@ -34,7 +34,7 @@ def run_command(cmd, log_path, has_error=False):
         os.remove(log_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_race_check_ok():
     """
     Feature: race check
@@ -46,7 +46,7 @@ def test_race_check_ok():
                 f"{sh_path}/race_check_ok.log", has_error=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_race_check_error():
     """
     Feature: race check
@@ -58,7 +58,7 @@ def test_race_check_error():
                 f"{sh_path}/race_check_error.log", has_error=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_race_check_assign():
     """
     Feature: race check

@@ -122,8 +122,7 @@ class ControlGraphSupportNotEqual(Cell):
         return out, out2, out3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_ctrl_if_while_graph_support_not_equal_true():
     """
     Feature: Auto monad feature.
@@ -145,8 +144,7 @@ def test_ctrl_if_while_graph_support_not_equal_true():
     allclose_nparray(out3, out_me[2].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_ctrl_if_while_graph_support_not_equal_false():
     """
     Feature: Auto monad feature.
@@ -189,8 +187,7 @@ class ControlBprop(Cell):
         return x * 2, y * 3, z, input_data * 5.1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ctrl_if_while_bprop_true():
     """
     Feature: Auto monad feature.
@@ -243,8 +240,7 @@ class InlineBpropTwoInput1(Cell):
         return grads[0] * 2, grads[1] * 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ctrl_if_while_bprop_inlinebprop_twoinput():
     """
     Feature: Auto monad feature.
@@ -280,8 +276,7 @@ class ControlOneIfOneParaOneAddn(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ctrl_if_para_addn_true():
     """
     Feature: Auto monad feature.
@@ -328,8 +323,7 @@ class SideEffectMemoryCellAddnNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_grad_memory_addn():
     """
     Feature: Auto monad feature.
@@ -370,8 +364,7 @@ class SideEffectIOCellAddnNet(Cell):
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_grad_io_addn():
     """
     Feature: Auto monad feature.
@@ -411,8 +404,7 @@ class SideEffectReturnParameterNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_grad_read_dependency_return_parameter():
     """
     Feature: Auto monad feature.
@@ -461,8 +453,7 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_side_effect_high_order_print_in_high_order_net():
     """
     Feature: Auto monad feature.
@@ -511,8 +502,7 @@ class SideEffectControlFlowAssignDependTwoIfNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_side_effect_grad_control_flow_assign_depend_of_two_if():
     """
     Feature: Auto monad feature.
@@ -555,8 +545,7 @@ class SideEffectTwoAddnSwitchNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_side_effect_grad_two_addn_switch():
     """
     Feature: Auto monad feature.
@@ -599,8 +588,7 @@ class SideEffectGradIfNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_side_effect_grad_if():
     """
     Feature: Auto monad feature.
@@ -645,8 +633,7 @@ class HighGrad(Cell):
         return self.final_grad(*inputs)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_highgrad_one_input_sec_grad():
     """
     Feature: Auto monad feature.
@@ -660,8 +647,7 @@ def test_highgrad_one_input_sec_grad():
     assert (dxdx.asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_highgrad_one_input_third_grad():
     """
     Feature: Auto monad feature.
@@ -702,8 +688,7 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_side_effect_grad_control_flow_assign_depend_while_net():
     """
     Feature: Auto monad feature.
@@ -749,8 +734,7 @@ class AssignInZipLoop(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_in_zip_loop():
     """
     Feature: Auto-monad load grouping and merge.

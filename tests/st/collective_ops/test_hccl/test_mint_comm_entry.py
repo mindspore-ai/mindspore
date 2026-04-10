@@ -18,7 +18,7 @@ The tests of mindspore, used to test communication for mint.distributed.
 """
 import os
 from tests.mark_utils import arg_mark
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_ops():
     """
     Feature: mpi run 8P case
@@ -32,7 +32,7 @@ def test_hccl_mint_ops():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_test_gather_scatter_tensor():
     """
     Feature: mpi run 8P case
@@ -46,7 +46,7 @@ def test_hccl_test_gather_scatter_tensor():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_infer_error():
     """
     Feature: msrun 8P case
@@ -60,7 +60,7 @@ def test_hccl_mint_infer_error():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_test_gather_scatter_tensor_except():
     """
     Feature: msrun 8P case
@@ -74,7 +74,7 @@ def test_hccl_test_gather_scatter_tensor_except():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_object_ops():
     """
     Feature: mpi run 8P case
@@ -88,7 +88,7 @@ def test_hccl_mint_object_ops():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_init_ops():
     """
     Feature: mpi run 8P case
@@ -102,7 +102,7 @@ def test_hccl_mint_init_ops():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_comm_func_ops1():
     """
     Feature: mpi run 8P case
@@ -118,7 +118,7 @@ def test_hccl_comm_func_ops1():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_object_ops1():
     """
     Feature: mpi run 8P case
@@ -134,7 +134,7 @@ def test_hccl_mint_object_ops1():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_init_ops1():
     """
     Feature: mpi run 8P case
@@ -150,7 +150,7 @@ def test_hccl_mint_init_ops1():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_init_ops2():
     """
     Feature: mpi run 8P case
@@ -163,7 +163,7 @@ def test_hccl_mint_init_ops2():
     )
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_comm_handle_destroy_before_wait():
     """
     Feature: test comm handle destroy before wait

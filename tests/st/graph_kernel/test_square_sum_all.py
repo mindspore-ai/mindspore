@@ -50,7 +50,7 @@ def run_basic(datatype):
     assert np.allclose(expect_np1, output_np1, 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_1():
     """
     Feature: todo
@@ -61,7 +61,7 @@ def test_gpu_1():
     run_basic(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_2():
     """
     Feature: todo

@@ -23,8 +23,7 @@ from mindspore._c_expression import UMonad
 from tests.st.backend.ms_backend.common.backend_graph import BackendGraph
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_base():
     """
     Feature: Support python ir interface.
@@ -73,8 +72,7 @@ def test_base():
     assert np.allclose(out[1].asnumpy(), np.ones(shape).astype(np.float32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cse_internal_value():
     """
     Feature: Test graph partition and graph compile.
@@ -105,8 +103,7 @@ def test_cse_internal_value():
     assert out == 2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_lazy_inline():
     """
     Feature: Test lazy inline.
@@ -148,8 +145,7 @@ def test_lazy_inline():
     assert np.allclose(out.asnumpy(), np.zeros(shape).astype(np.float32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_lazy_inline_with_control_flow():
     """
     Feature: Test lazy inline.
@@ -216,8 +212,7 @@ def test_lazy_inline_with_control_flow():
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_internal_valuetuple():
     """
     Feature: Support python ir interface.
@@ -241,8 +236,7 @@ def test_internal_valuetuple():
     assert out.shape == (2,)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_internal_parameter_in_same_group():
     """
     Feature: Test internal parameter in same graph group.
@@ -282,8 +276,7 @@ def test_internal_parameter_in_same_group():
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 6)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_output_control_flow():
     """
     Feature: Test print output of kernel graph.
@@ -316,8 +309,7 @@ def test_print_output_control_flow():
     print(out)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_output():
     """
     Feature: Test print output of kernel graph.
@@ -348,8 +340,7 @@ def test_print_output():
     print(out)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cse_with_ref():
     """
     Feature: Test cse with ref.
@@ -373,7 +364,7 @@ def test_cse_with_ref():
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_for_cpu_diff_type():
     """
     Feature: Support type trans for graph output.
@@ -411,7 +402,7 @@ def test_dynamic_shape_for_cpu_diff_type():
     assert np.allclose(out2[1].asnumpy(), res3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_any_type_ref_node():
     """
     Feature: Support ref node for any type graph.

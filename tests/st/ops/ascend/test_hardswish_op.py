@@ -46,8 +46,7 @@ class Net(nn.Cell):
         return self.hswish(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_net():
     """
     Feature: Monitor the accuracy of hswish operator.
@@ -103,8 +102,7 @@ def generate_test_cases(np_type, mode):
     judge_result_correct(output[0].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_hardswish_forward_and_backward():
     """
     Feature: Monitor the accuracy of hswish operator.
@@ -124,7 +122,7 @@ def np_all_close_with_loss(out, expect):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.02)
+        card_mark='onecard', mem_peak=2048.02)
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_hswish_vmap(dtype, shape=(100, 2)):
     """
@@ -155,8 +153,7 @@ def test_hswish_vmap(dtype, shape=(100, 2)):
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_hswish_grad_vmap(dtype, shape=(100, 2)):
     """

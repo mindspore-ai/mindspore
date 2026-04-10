@@ -27,8 +27,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_list_append1():
     """
     Feature: test sequence getitem op
@@ -48,8 +47,7 @@ def test_list_append1():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_append2():
     """
     Feature: test sequence getitem op
@@ -70,8 +68,7 @@ def test_list_append2():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_list_append3():
     """
     Feature: test sequence getitem op
@@ -92,8 +89,7 @@ def test_list_append3():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_list_append_grad():
     """
     Feature: test sequence getitem grad op

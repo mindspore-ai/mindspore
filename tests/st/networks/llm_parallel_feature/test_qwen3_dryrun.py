@@ -25,7 +25,7 @@ from tests.st.networks.llm_parallel_feature.utils import prepare_testcase_env, c
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_qwen3_dp2mp4pp1_recompute():
     """
     Feature: test qwen3 dp2mp4pp1 full_recompute
@@ -54,8 +54,7 @@ def test_qwen3_dp2mp4pp1_recompute():
         check_compile_time(log_path, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_qwen3_dp4mp4pp1op_recompute():
     """
     Feature: test qwen3 dp4mp4pp1op full_recompute
@@ -87,8 +86,7 @@ def test_qwen3_dp4mp4pp1op_recompute():
         check_compile_time(log_path, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', mem_peak=4.00)
 def test_qwen3_cell_dp2mp4pp1op_grad_accu():
     """
     Feature: test qwen3 cell_dp2mp4pp1op_grad_accu
@@ -123,7 +121,7 @@ def test_qwen3_cell_dp2mp4pp1op_grad_accu():
         check_compile_time(log_path, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_qwen3_cell_dp2mp4pp2vpp4op_1f1b():
     """
     Feature: test qwen3_cell_dp2mp4pp2vpp4op_1f1b
@@ -167,7 +165,7 @@ def test_qwen3_cell_dp2mp4pp2vpp4op_1f1b():
     check_param_shape(graph_path[0], validate_name, 100, param_opt_shape_check_pairs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_qwen3_cell_dp2mp1pp2vpp2cp4_1f1b_select_recompute():
     """
     Feature: test qwen3_cell_dp2mp1pp2vpp2cp4_1f1b_select_recompute
@@ -206,8 +204,7 @@ def test_qwen3_cell_dp2mp1pp2vpp2cp4_1f1b_select_recompute():
     check_peak_memory(real_log_path[1], "60558")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_qwen3_dp4mp4pp1op_recompute_2():
     """
     Feature: test qwen3 dp4mp4pp1op_recompute_2
@@ -251,7 +248,7 @@ def test_qwen3_dp4mp4pp1op_recompute_2():
     check_compile_time(log_path, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
 def test_qwen3_dp8mp1pp1op():
     """
     Feature: test qwen3 dp8mp1pp1op

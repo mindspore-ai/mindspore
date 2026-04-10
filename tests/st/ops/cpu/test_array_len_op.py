@@ -26,8 +26,7 @@ class ArrayLen1(ms.nn.Cell):
         return len(a)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_arraylen_2d():
     """
     Feature: test_arraylen_2d op in cpu.

@@ -57,8 +57,7 @@ def get_max_relative_error(test_value, target_value):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='allcards',
-          essential_mark='essential')
+          card_mark='allcards')
 @security_off_wrap
 def test_interfaces_used_in_mstt():
     """

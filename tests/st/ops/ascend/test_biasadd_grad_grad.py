@@ -45,8 +45,7 @@ class NetGradGrad(nn.Cell):
         return backward_net(dy, dout)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_biasadd_high_grad_dim2_float32():
     """
     Feature: Biasadd Grad Grad operation
@@ -68,7 +67,7 @@ def test_biasadd_high_grad_dim2_float32():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 def test_biasadd_high_grad_dim4_float16():
     """
     Feature: Biasadd Grad Grad operation

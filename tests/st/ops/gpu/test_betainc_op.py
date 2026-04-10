@@ -32,7 +32,7 @@ class NetBetainc(nn.Cell):
         return self.betainc(a, b, x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_betainc_graph():
     """
     Feature: Betainc
@@ -52,7 +52,7 @@ def test_betainc_graph():
     assert np.allclose(output_ms.asnumpy(), expect, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_betainc_pynative():
     """
     Feature: Betainc

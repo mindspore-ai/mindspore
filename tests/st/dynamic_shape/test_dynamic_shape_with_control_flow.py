@@ -55,7 +55,7 @@ class UniqueWhile(nn.Cell):
         return self.shape(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_if():
     """
     Feature: Dynamic shape for control flow.
@@ -70,7 +70,7 @@ def test_unique_if():
     assert x_shape == 5
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unique_while():
     """
     Feature: Dynamic shape for control flow.

@@ -35,8 +35,7 @@ def run_testcase(testcase_name, expect_sub_str):
     os.remove(log_filename)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=108.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=108.00)
 def test_return_tuple():
     """
     Feature: lazy inline return tuple
@@ -46,8 +45,7 @@ def test_return_tuple():
     run_testcase("test_return_tuple", "can be lazyinlined")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=138.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=138.00)
 def test_return_tuple_nest():
     """
     Feature: lazy inline return tuple

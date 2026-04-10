@@ -22,8 +22,7 @@ from mindspore.ops import CustomOpBuilder
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_pyboost_atb_swiglu():
     """
     Feature: CustomOpBuilder.
@@ -48,8 +47,7 @@ def test_pyboost_atb_swiglu():
     output = my_ops.npu_swiglu(ms.Tensor(x), -1)
     assert np.allclose(output.asnumpy(), expect, 1e-3, 1e-3)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=20.00)
 def test_pyboost_aclnn_quant_batch_matmul_nz_format():
     """
     Feature: CustomOpBuilder.
@@ -79,8 +77,7 @@ def test_pyboost_aclnn_quant_batch_matmul_nz_format():
     output = my_ops.quant_batch_matmul(ms_x1, ms_x2, ms_scale, None, None, None, False, False, "FRACTAL_NZ", 45)
     assert np.allclose(expected, output.astype(ms.float32).asnumpy(), 0.01)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=18.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=18.0)
 def test_pyboost_atb_rope():
     """
     Feature: CustomOpBuilder.
@@ -143,8 +140,7 @@ def test_pyboost_atb_rope():
     assert np.allclose(run_key.asnumpy(), benchmark_key.asnumpy(), 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_pyboost_asdsip_fft():
     """
     Feature: CustomOpBuilder.
@@ -174,8 +170,7 @@ def test_pyboost_asdsip_fft():
     assert np.allclose(output_tensor.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_pyboost_aclnn():
     """
     Feature: CustomOpBuilder.
@@ -192,8 +187,7 @@ def test_pyboost_aclnn():
     assert np.allclose(output.asnumpy(), expect, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_pyboost_aclnn_arg_min():
     """
     Feature: CustomOpBuilder.
@@ -211,8 +205,7 @@ def test_pyboost_aclnn_arg_min():
     assert np.allclose(output.asnumpy(), expect, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_pyboost_aclnn_batch_norm():
     """
     Feature: CustomOpBuilder.
@@ -236,8 +229,7 @@ def test_pyboost_aclnn_batch_norm():
     assert np.allclose(output.asnumpy(), expect, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=10.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=10.0)
 def test_pyboost_aclnn_cast():
     """
     Feature: CustomOpBuilder.
@@ -256,8 +248,7 @@ def test_pyboost_aclnn_cast():
     assert output.asnumpy().shape == (1280, 1280)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_pyboost_aclnn_avg_pool_2d():
     """
     Feature: CustomOpBuilder.
@@ -282,8 +273,7 @@ def test_pyboost_aclnn_avg_pool_2d():
     assert np.allclose(output.asnumpy(), expected, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_pyboost_tensor_api():
     """
     Feature: CustomOpBuilder.
@@ -308,7 +298,7 @@ def test_pyboost_tensor_api():
     assert np.allclose(my_ops.zeros([3, 4], "float32").asnumpy(), np.zeros([3, 4], np.float32), 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level2', card_mark='onecard')
 def test_pyboost_asdsip_fft_wrong():
     """
     Feature: CustomOpBuilder.

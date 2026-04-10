@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.map_uniform(x, self.per_group_size, self.group_num)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_uniform():
     """
     Feature: Dynamic shape.

@@ -23,7 +23,7 @@ class CtrlForReturnRange1(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_1_10_3_return():
     """
     Feature: PIJit
@@ -56,7 +56,7 @@ class CtrlForReturnRange2(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_4_n8_n4_return():
     """
     Feature: PIJit
@@ -89,7 +89,7 @@ class CtrlForReturnRange3(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_n5_5_2_return():
     """
     Feature: PIJit
@@ -122,7 +122,7 @@ class CtrlForReturnRange4(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_n2_n8_n2_return():
     """
     Feature: PIJit
@@ -164,7 +164,7 @@ class CtrlForReturnElifElse(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_return_in_elif_else():
     """
     Feature: PIJit
@@ -205,7 +205,7 @@ class CtrlFor2ElifReturnInIf(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_2elif_return_in_if():
     """
     Feature: PIJit
@@ -237,7 +237,7 @@ class CtrlForReturnAll(Cell):
         return res
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_return_fib():
     """
     Feature: PIJit

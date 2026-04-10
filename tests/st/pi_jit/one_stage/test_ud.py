@@ -33,7 +33,7 @@ cfg = {
 }
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_return_dict():
     """
     Feature: One stage basic operation.
@@ -54,7 +54,7 @@ def test_return_dict():
     assert ret == {"1": Tensor([2]), "2": Tensor([3])}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_return_dict_2():
     """
     Feature: One stage basic operation.
@@ -74,7 +74,7 @@ def test_return_dict_2():
     assert ret == {"1": Tensor([2])}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_break_in_subgraph():
     """
     Feature: One stage basic operation.
@@ -104,7 +104,7 @@ def test_break_in_subgraph():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_break_in_subgraph_2():
     """
     Feature: One stage basic operation.
@@ -127,7 +127,7 @@ def test_break_in_subgraph_2():
     assert np.allclose(ret.asnumpy(), 5.5524473)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_break_in_subgraph_3():
     """
     Feature: One stage basic operation.
@@ -150,7 +150,7 @@ def test_break_in_subgraph_3():
     assert np.allclose(ret.asnumpy(), 5.5524473)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_break_with_control_flow():
     """
     Feature: One stage basic operation.
@@ -169,7 +169,7 @@ def test_break_with_control_flow():
     assert np.all(ret == np.array([6, 5]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_break_with_control_flow_2():
     """
     Feature: One stage basic operation.
@@ -191,7 +191,7 @@ def test_break_with_control_flow_2():
     assert np.all(ret[1].asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_break_with_same_value():
     """
     Feature: One stage basic operation.
@@ -214,7 +214,7 @@ def test_break_with_same_value():
 
 
 @pytest.mark.skip(reason='fix it later')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ud_collect_capture_output():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -235,7 +235,7 @@ def test_ud_collect_capture_output():
     assert not a4
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_while_after_for_in_if_4():
     """
     Feature: PIJit

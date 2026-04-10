@@ -20,7 +20,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_error_on_dynamic_shape_input_is_dynamic():
     """
     Feature: Test dynamic shape input exception.
@@ -57,7 +57,7 @@ def test_error_on_dynamic_shape_input_is_dynamic():
     assert "Input is dynamically shaped" in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_error_on_dynamic_shape_input_not_dynamic():
     """
     Feature: Test dynamic shape input exception.

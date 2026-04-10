@@ -35,7 +35,7 @@ class AdSaturation(nn.Cell):
         return self.adjustsaturation(input_images, saturation_scale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adjustsaturation_float32():
     """
     Feature: None
@@ -51,7 +51,7 @@ def test_adjustsaturation_float32():
     np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adjustsaturation_float64():
     """
     Feature: None
@@ -67,7 +67,7 @@ def test_adjustsaturation_float64():
     np.allclose(out.asnumpy(), expect_out, 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adjustsaturation_float16():
     """
     Feature: None

@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.grad(dy, x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_logit_grad_graph_float32():
     """
      Feature: LogitGrad gpu TEST.
@@ -50,7 +50,7 @@ def test_logit_grad_graph_float32():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_logit_grad_pynative_float32():
     """
      Feature: LogitGrad gpu TEST.

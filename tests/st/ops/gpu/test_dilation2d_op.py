@@ -31,7 +31,7 @@ class NetDilation2D(nn.Cell):
         return self.dilation2d(x, fil)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dilation2d_graph():
     """
     Feature: dilation2d
@@ -54,7 +54,7 @@ def test_dilation2d_graph():
         assert output.shape == expect_output.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dilation2d_pynative():
     """
     Feature: dilation2d

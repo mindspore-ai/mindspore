@@ -42,7 +42,7 @@ def get_castup_output(x0, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_castup():
     """
     Feature: todo
@@ -79,7 +79,7 @@ def get_castdown_output(x0, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_castdown():
     """
     Feature: todo

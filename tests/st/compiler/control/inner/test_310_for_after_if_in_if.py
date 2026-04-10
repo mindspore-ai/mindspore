@@ -24,8 +24,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['platform_gpu',], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu',], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_for_after_if_in_if():
     """
     Feature: Control flow

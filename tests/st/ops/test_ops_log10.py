@@ -59,7 +59,7 @@ def log10_backward_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
 def test_ops_log10_normal(context_mode):
     """
@@ -85,7 +85,7 @@ def test_ops_log10_normal(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
 def test_ops_log10_complex(context_mode):
     """
@@ -111,7 +111,7 @@ def test_ops_log10_complex(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_mint_log10_dynamic():
     """
     Feature: pyboost function.

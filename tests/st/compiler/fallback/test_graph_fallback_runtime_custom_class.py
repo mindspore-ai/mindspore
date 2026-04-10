@@ -28,8 +28,7 @@ from tests.st.compiler.utils import match_array
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_cust_class():
     """
     Feature: getattr for custom class.
@@ -93,8 +92,7 @@ class SelfObjectGetattrNet(ms.nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_call_other_object_method_runtime():
     """
     Feature: getattr for custom class.
@@ -136,8 +134,7 @@ class GlobalObjectGetattrNet(ms.nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_call_no_self_other_object_method_runtime():
     """
     Feature: getattr for custom class.
@@ -154,8 +151,7 @@ def test_call_no_self_other_object_method_runtime():
     assert np.all(result == z)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parser_fallback_nested_class_outer():
     """
     Feature: Syntax getattr.
@@ -215,8 +211,7 @@ class UNet(ms.nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_resolve_cust_class():
     """
     Feature: Syntax resolve.
@@ -229,8 +224,7 @@ def test_resolve_cust_class():
     assert output == 200
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_resolve_cust_ms_function_call_class():
     """
     Feature: Syntax resolve.
@@ -261,8 +255,7 @@ class UserDefinedTupleNet:
         return self.value * x, 100
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_pyexecute_with_stub_tensor():
     """
     Feature: Fallback runtime.
@@ -287,8 +280,7 @@ class UserDefinedListNet:
         return [self.value * x, 100]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_pyexecute_with_stub_tensor_2():
     """
     Feature: Fallback runtime.
@@ -313,8 +305,7 @@ class UserDefinedDictNet:
         return {"100": self.value * x}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_pyexecute_with_stub_tensor_3():
     """
     Feature: Fallback runtime.
@@ -329,8 +320,7 @@ def test_pyexecute_with_stub_tensor_3():
     assert output["100"] == 100
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parser_fallback_nested_class_outer_grad():
     """
     Feature: Syntax getattr.
@@ -364,8 +354,7 @@ def test_parser_fallback_nested_class_outer_grad():
     assert output == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_create_custom_class_default():
     """
     Feature: Create custom class instance.
@@ -392,8 +381,7 @@ def test_create_custom_class_default():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_create_custom_class_args():
     """
     Feature: Create custom class instance.
@@ -420,7 +408,7 @@ def test_create_custom_class_args():
     assert out == 12
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_cust_class_const():
     """
     Feature: getattr for custom class.
@@ -449,7 +437,7 @@ def test_getattr_cust_class_const():
     assert out == 198
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_custom_class_jit():
     """
     Feature: Syntax resolve.
@@ -490,8 +478,7 @@ def test_custom_class_jit():
     assert out == 14
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_kwargs_is_custom_class_attr():
     """
     Feature: Support the kwargs is any.
@@ -522,7 +509,7 @@ def test_kwargs_is_custom_class_attr():
     assert output == 6
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_class_getattr_and_custom_class_may_raise_exception():
     """
     Feature: attr is a custom-type object.
@@ -563,7 +550,7 @@ class GradNet(nn.Cell):
         return self.grad_net(*x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_parse_node_conver_bit():
     """
     Feature: subclass is custom class.
@@ -610,7 +597,7 @@ def test_fallback_parse_node_conver_bit():
     assert ms_grad == ()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_parse_node_conver_enhance_arithmetic():
     """
     Feature: subclass is custom class.
@@ -657,7 +644,7 @@ def test_fallback_parse_node_conver_enhance_arithmetic():
     grad_net(Tensor(x), Tensor(y))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_class_abnormal_variable_input():
     """
     Feature: subclass is custom class.
@@ -681,7 +668,7 @@ def test_parser_fallback_class_abnormal_variable_input():
         net(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_class_abnormal_call_magic_method():
     """
     Feature: subclass is custom class.

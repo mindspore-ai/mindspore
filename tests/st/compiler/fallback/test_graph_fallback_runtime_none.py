@@ -65,7 +65,7 @@ def check_output(output, patterns):
         assert output.find(pattern) != -1, "Unexpected output:\n" + output + "\n--- pattern ---\n" + pattern
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_none_compare():
     """
     Feature: Support None.
@@ -96,8 +96,7 @@ def test_none_compare():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_none_is_sequence_input():
     """
     Feature: Support None.
@@ -126,7 +125,7 @@ def test_none_is_sequence_input():
     assert res == 7
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inner_function_has_not_return():
     """
     Feature: Support None.
@@ -150,8 +149,7 @@ def test_inner_function_has_not_return():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_inner_function_has_not_return_2():
     """
     Feature: Support None.
@@ -183,7 +181,7 @@ def test_inner_function_has_not_return_2():
     assert res == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_none_is_default_value_of_parameter():
     """
     Feature: Support None.
@@ -213,7 +211,7 @@ def test_none_is_default_value_of_parameter():
 
 
 @pytest.mark.skip(reason="print pyexecute list will change the print format")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_none_is_default_value_of_parameter_2():
     """
     Feature: Support None.
@@ -243,7 +241,7 @@ def test_none_is_default_value_of_parameter_2():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_none_assign_print():
     """
     Feature: Support None.
@@ -269,8 +267,7 @@ def test_none_assign_print():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_none_is_input():
     """
     Feature: Support None.
@@ -287,8 +284,7 @@ def test_none_is_input():
     assert res is None
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_condition():
     """
     Feature: Support None.
@@ -316,8 +312,7 @@ def test_none_is_condition():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_inner_function_output():
     """
     Feature: Support None.
@@ -351,8 +346,7 @@ def test_none_is_inner_function_output():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_output_of_function_with_side_effect_is():
     """
     Feature: Support None.
@@ -383,8 +377,7 @@ def test_none_is_output_of_function_with_side_effect_is():
     assert res == 4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_output_of_function_with_side_effect_equal():
     """
     Feature: Support None.
@@ -415,8 +408,7 @@ def test_none_is_output_of_function_with_side_effect_equal():
     assert res == 4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_none_is_input_of_dict_return():
     """
     Feature: Support None.
@@ -435,8 +427,7 @@ def test_none_is_input_of_dict_return():
     assert out == {'y': 'a', 'u': 9, 'v': False, 'w': None}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_none_nested_input_of_dict_return():
     """
     Feature: Support None.
@@ -455,8 +446,7 @@ def test_none_nested_input_of_dict_return():
     assert out == {'y': 'a', 'u': 9, 'v': False, 'w': (None, None), 'q': [1, (2, None), None]}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_none_is_input_of_tuple_return():
     """
     Feature: Support None.
@@ -472,8 +462,7 @@ def test_none_is_input_of_tuple_return():
     assert out == (1, "a", None)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_input_of_tuple_return_2():
     """
     Feature: Support None.
@@ -510,8 +499,7 @@ def test_none_is_input_of_tuple_return_2():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_return_of_sub_graph_control_flow():
     """
     Feature: Support None.
@@ -542,8 +530,7 @@ def test_none_is_return_of_sub_graph_control_flow():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_none_is_return_of_sub_graph_control_flow_raise():
     """
     Feature: Support None.
@@ -566,8 +553,7 @@ def test_none_is_return_of_sub_graph_control_flow_raise():
     assert res.asnumpy() == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_none_is_return_raise():
     """
     Feature: Support None.
@@ -601,7 +587,7 @@ def test_none_is_return_raise():
         assert out == data
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_raise_none_with_variable_control_flow3():
     """
     Feature: graph raise none by JIT Fallback.
@@ -643,7 +629,7 @@ def test_raise_none_with_variable_control_flow3():
     assert "ddddd, [" in str(control.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_none_in_value_list_tuple_dict():
     """
     Feature: Support None.
@@ -659,7 +645,7 @@ def test_none_in_value_list_tuple_dict():
     assert out == [1, "a", None, [1, "a", None], {"y": 1, "u": None}]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_none_in_nest_tuple():
     """
     Feature: Support None.
@@ -675,8 +661,7 @@ def test_none_in_nest_tuple():
     assert out == (None, ("a", None))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parser_fallback_none_control_flow():
     """
     Feature: Support None.
@@ -710,8 +695,7 @@ def test_parser_fallback_none_control_flow():
 
 
 @pytest.mark.skip("PyExecute condition is wrong.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parser_fallback_none_control_flow_is_not():
     """
     Feature: Support None.
@@ -744,7 +728,7 @@ def test_parser_fallback_none_control_flow_is_not():
     assert res == 11
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_return_tuple_none_control_flow():
     """
     Feature: Support None.
@@ -763,7 +747,7 @@ def test_return_tuple_none_control_flow():
     assert out == (None, 10, {"1": 10})
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_none_in_nest_tuple_list_control_flow():
     """
     Feature: Support None.
@@ -782,7 +766,7 @@ def test_none_in_nest_tuple_list_control_flow():
     assert out == (None, (None, [x, None]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_grad_with_return_none():
     """
     Feature: Support None.
@@ -799,7 +783,7 @@ def test_grad_with_return_none():
     assert out == Tensor([0])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_grad_with_return_none_2():
     """
     Feature: Support None.
@@ -816,7 +800,7 @@ def test_grad_with_return_none_2():
     assert out == Tensor([0])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_none_as_index():
     """
     Feature: Support None.
@@ -891,7 +875,7 @@ def test_none_as_index():
     assert check_fn_output(fn15, ms.Tensor(np.random.randint(5, size=(3, 4))))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_none_is_slice_in_list():
     """
     Feature: Support None.
@@ -919,7 +903,7 @@ def test_none_is_slice_in_list():
     assert res == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_none_set_001():
     """
     Feature: Support None.
@@ -940,7 +924,7 @@ def test_parser_fallback_none_set_001():
     assert out[2] is None
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_none_get_001():
     """
     Feature: Support None.
@@ -963,7 +947,7 @@ def test_parser_fallback_none_get_001():
 
 
 @pytest.mark.skip(reason='Not supported')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_none_get_002():
     """
      Feature: Support None.

@@ -61,7 +61,7 @@ class NetMaxUnpool2DGradFourDNHWC(nn.Cell):
         return self.maxunpool2d_grad(x, grad, indices)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxunpool2d_4dinput_graph():
     """
     Feature: MaxUnpool2d 4dinput graph

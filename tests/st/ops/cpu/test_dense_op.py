@@ -43,8 +43,7 @@ class DenseGrad(nn.Cell):
         return self.grad(self.network, self.params)(*inputs)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_1d_forward():
     """
     Feature: Test dense 1d.
@@ -83,8 +82,7 @@ def test_1d_forward():
     assert np.abs(out_ms - out_np).mean() < error
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_3d_forward():
     """
     Feature: Test dense 3d forward.
@@ -123,8 +121,7 @@ def test_3d_forward():
     assert np.abs(out_ms - out_np).mean() < error
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_1d_backward():
     """
     Feature: Test dense 1d backward.
@@ -182,8 +179,7 @@ def test_1d_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_3d_backward():
     """
     Feature: Test dense 3d backward.
@@ -241,8 +237,7 @@ def test_3d_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_1d_complex64_backward():
     """
     Feature: Test dense 1d complex64 backward.
@@ -277,8 +272,7 @@ def test_1d_complex64_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_2d_complex128_backward():
     """
     Feature: Test dense 2d complex128 backward.
@@ -313,8 +307,7 @@ def test_2d_complex128_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_2d_dtypes_forward():
     """
     Feature: Test dense 2d dtypes forward.

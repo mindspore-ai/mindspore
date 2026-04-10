@@ -73,8 +73,7 @@ def get_dy_shape(real_shape):
     return part_shape_list
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_bce_with_logits_loss(reduction, data_type):
@@ -100,8 +99,7 @@ def test_bce_with_logits_loss(reduction, data_type):
     np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=loss, atol=loss)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_bce_with_logits_loss_vmap_cpu(reduction, data_type):
@@ -138,8 +136,7 @@ def test_bce_with_logits_loss_vmap_cpu(reduction, data_type):
     np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=loss, atol=loss)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_bce_with_logits_loss_dy_shape(reduction, data_type):

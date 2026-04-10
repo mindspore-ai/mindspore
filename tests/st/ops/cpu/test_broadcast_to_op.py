@@ -24,8 +24,7 @@ from mindspore.nn import Cell
 from mindspore.graph.api import _pynative_executor
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -88,7 +87,7 @@ def broadcast_to_dtype(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_to_dtype():
     """
     Feature: Test supported data types of BroadCastTo.
@@ -101,8 +100,7 @@ def test_broadcast_to_dtype():
         broadcast_to_dtype(dtype=dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_broadcast_dyn_init():
     """
     Test running the op with -1's in the init shape to support varied inputs.
@@ -129,8 +127,7 @@ def test_broadcast_dyn_init():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_broadcast_dyn_invalid_init():
     """
     Test running the op with -1's in the init shape in incorrect positions.
@@ -157,8 +154,7 @@ class BroadcastToNet(Cell):
         return self.broadcastto(input_x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_broadcast_to_dynamic_shape():
     """
     Feature: Test dynamic shape of BroadcastTo operator
@@ -176,8 +172,7 @@ def test_broadcast_to_dynamic_shape():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_broadcast_exception():
     """
     Feature: Test invalid input and target shape in of BroadcastTo.

@@ -37,7 +37,7 @@ def extract_image_patches_test(is_dyn_rank):
     tester.test_dynamic_grad_net([input_tensor], is_dyn_rank)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extract_image_patches_dyn_shape():
     """
     Feature: ExtractImagePatches Grad DynamicShape.
@@ -48,7 +48,7 @@ def test_extract_image_patches_dyn_shape():
     extract_image_patches_test(False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extract_image_patches_dyn_rank():
     """
     Feature: ExtractImagePatches Grad DynamicShape.

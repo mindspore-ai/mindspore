@@ -37,8 +37,7 @@ class TestCellListInsertNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_celllist_insert_method_boundary_cond(mode):
     """
@@ -70,8 +69,7 @@ class EmbeddedCellDictNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_celllist_embed_celldict_case(mode):
     """
@@ -85,8 +83,7 @@ def test_celllist_embed_celldict_case(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_parse_cell_list():
     """
     Feature: Parse CellList.
@@ -109,8 +106,7 @@ def test_parse_cell_list():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_iter_for_in_cell_list():
     """
     Feature: Parse CellList.

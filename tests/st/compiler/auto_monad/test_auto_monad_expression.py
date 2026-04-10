@@ -68,8 +68,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert True
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_auto_monad_addn_adam():
     """
     Feature: Auto monad feature.
@@ -126,8 +125,7 @@ class AutoMonadTwoAssignTwoAddnDependencyBenchmarkNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_auto_monad_read_dependency_two_assign_two_addn():
     """
     Feature: Auto monad feature.
@@ -190,7 +188,7 @@ def read_file(save_path):
     return content
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_load_convert_tensormove():
     """
     Feature: Auto monad feature: record the value of load.
@@ -234,7 +232,7 @@ class ForwardNet2(Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_load_convert_tensormove_2():
     """
     Feature: Auto monad feature: record the value of load.
@@ -254,8 +252,7 @@ def test_load_convert_tensormove_2():
         assert len(tensormove_set) == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_load_eliminate():
     """
     Feature: Auto monad feature: test load eliminate.
@@ -283,8 +280,7 @@ def test_load_eliminate():
     assert out == 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parameter_tuple_assign():
     """
     Feature: Auto monad feature.
@@ -311,8 +307,7 @@ def test_parameter_tuple_assign():
     assert out[1] == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parameter_tuple_assign_addn():
     """
     Feature: Auto monad feature.
@@ -345,8 +340,7 @@ def test_parameter_tuple_assign_addn():
     assert out == (3, 5, 9, 9)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parameter_tuple_assign_addn_inner_net():
     """
     Feature: Auto monad feature.
@@ -393,8 +387,7 @@ def test_parameter_tuple_assign_addn_inner_net():
     assert out == (12, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_parameter_tuple_assign_addn_inner_net_control_flow():
     """
     Feature: Auto monad feature.
@@ -436,8 +429,7 @@ def test_parameter_tuple_assign_addn_inner_net_control_flow():
     assert out == (9, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parameter_value_control_flow_ascend():
     """
     Feature: param.value() feature.
@@ -480,8 +472,7 @@ def test_parameter_value_control_flow_ascend():
     assert graph_out == (9, 4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_control_while_for_if_break_parameter():
     """
     Feature: UpdateState grad in pynative mode.
@@ -519,8 +510,7 @@ def test_control_while_for_if_break_parameter():
     ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_parameter_shape_in_auto_monad():
     """
     Feature: Auto monad feature.
@@ -620,8 +610,7 @@ class ControlMixedWhileIf(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_mixed_while_if():
     """
     Feature: Auto monad feature: record the value of load.
@@ -669,8 +658,7 @@ class SideEffectSoftmaxGradExt1(Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_side_effect_softmaxgradext1():
     """
     Feature: Auto monad feature: record the value of load.

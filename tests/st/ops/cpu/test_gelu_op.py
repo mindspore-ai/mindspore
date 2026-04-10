@@ -38,8 +38,7 @@ def gelu_compute(x):
     return 0.5 * x * (1.0 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x * x * x)))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gelu_1d():
     x_np = np.random.random((50,)).astype(np.float32)
     y_np = gelu_compute(x_np)
@@ -51,8 +50,7 @@ def test_gelu_1d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gelu_2d():
     x_np = np.random.random((50, 40)).astype(np.float32)
     y_np = gelu_compute(x_np)
@@ -64,8 +62,7 @@ def test_gelu_2d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gelu_4d():
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float32)
     y_np = gelu_compute(x_np)
@@ -77,8 +74,7 @@ def test_gelu_4d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gelu_neg():
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float32) * -1
     y_np = gelu_compute(x_np)
@@ -102,8 +98,7 @@ def test_gelu_functional_api():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gelu_functional_api_modes():
     """
     Feature: test gelu functional API for different modes.

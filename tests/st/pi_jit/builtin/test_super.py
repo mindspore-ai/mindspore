@@ -31,7 +31,7 @@ class IdentityFuncOp(IdentityOp):
         return super().construct
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_super_v1():
     """
     Feature: Calling super().

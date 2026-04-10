@@ -10,7 +10,7 @@ from ..share.utils import allclose_nparray
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_25x51():
     """
     Feature: Ops.
@@ -23,7 +23,7 @@ def test_p_pow_input_25x51():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_nx512():
     """
     Feature: Ops.
@@ -37,7 +37,7 @@ def test_p_pow_input_nx512():
         fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_256_512():
     """
     Feature: Ops.
@@ -50,7 +50,7 @@ def test_p_pow_input_256_512():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_512_256():
     """
     Feature: Ops.
@@ -63,7 +63,7 @@ def test_p_pow_input_512_256():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_scalar_exp_scalar_invalid():
     """
     Feature: Ops.
@@ -76,7 +76,7 @@ def test_p_pow_input_scalar_exp_scalar_invalid():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_3x5x2x2_exp_tensor():
     """
     Feature: Ops.
@@ -89,7 +89,7 @@ def test_p_pow_input_3x5x2x2_exp_tensor():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_3x5x2x2x12_exp_2():
     """
     Feature: Ops.
@@ -101,7 +101,7 @@ def test_p_pow_input_3x5x2x2x12_exp_2():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_3x5x2x2x1x1_exp_bool():
     """
     Feature: Ops.
@@ -113,7 +113,7 @@ def test_p_pow_input_3x5x2x2x1x1_exp_bool():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_3x5x2x2x12x2x32_exp_tensor():
     """
     Feature: Ops.
@@ -128,7 +128,7 @@ def test_p_pow_input_3x5x2x2x12x2x32_exp_tensor():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_exp_not_broadcastable():
     """
     Feature: Ops.
@@ -141,7 +141,7 @@ def test_p_pow_input_exp_not_broadcastable():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_1_scalar():
     """
     Feature: Ops.
@@ -156,7 +156,7 @@ def test_p_pow_input_1_scalar():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_1_1():
     """
     Feature: Ops.
@@ -171,7 +171,7 @@ def test_p_pow_input_1_1():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_scalar_negative_exp_scalar_positive_2():
     """
     Feature: Ops.
@@ -184,7 +184,7 @@ def test_p_pow_input_scalar_negative_exp_scalar_positive_2():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_scalar_negative_exp_scalar_positive():
     """
     Feature: Ops.
@@ -197,7 +197,7 @@ def test_p_pow_input_scalar_negative_exp_scalar_positive():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_exp_broadcastable_2d():
     """
     Feature: Ops.
@@ -212,7 +212,7 @@ def test_p_pow_input_exp_broadcastable_2d():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_num_exp_tensor():
     """
     Feature: Ops.
@@ -244,7 +244,7 @@ def test_p_pow_input_num_exp_tensor():
     allclose_nparray(pijit_out.asnumpy(), psjit_out.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_float_exp_tensor():
     """
     Feature: Ops.
@@ -275,7 +275,7 @@ def test_p_pow_input_float_exp_tensor():
     allclose_nparray(pijit_out.asnumpy(), psjit_out.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_bool_exp_tensor():
     """
     Feature: Ops.
@@ -305,7 +305,7 @@ def test_p_pow_input_bool_exp_tensor():
     allclose_nparray(pijit_out.asnumpy(), psjit_out.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_exp_tensor_bool():
     """
     Feature: Ops.
@@ -321,7 +321,7 @@ def test_p_pow_input_exp_tensor_bool():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_pow_input_exp_bool():
     """
     Feature: Ops.

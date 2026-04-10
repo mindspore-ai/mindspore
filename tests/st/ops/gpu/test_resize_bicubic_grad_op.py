@@ -21,7 +21,7 @@ from mindspore.ops.operations._grad_ops import ResizeBicubicGrad
 import pytest
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bicubic_grad_graph():
     """
     Feature: test operations in result and output type
@@ -47,7 +47,7 @@ def test_resize_bicubic_grad_graph():
         assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bicubic_grad_pynative():
     """
     Feature: test operations in result and output type

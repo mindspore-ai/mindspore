@@ -42,7 +42,7 @@ class NetInplaceSub(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_sub_fp16():
     """
     Feature: ALL To ALL

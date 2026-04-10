@@ -75,7 +75,7 @@ def read_file(save_path):
     return content
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_load_not_convert_tensormove():
     """
     Feature: Auto monad feature: record the value of load.

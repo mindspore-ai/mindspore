@@ -35,7 +35,7 @@ class TraceNet(nn.Cell):
         return self.trace(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_dyn():
     """
     Feature: test Trace ops in gpu.
@@ -55,7 +55,7 @@ def test_trace_dyn():
     assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_trace_2d_int32():
     """
     Feature: Returns the sum along diagonals of the int32 array
@@ -72,7 +72,7 @@ def test_trace_2d_int32():
         assert (y.asnumpy() == trace_expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_trace_2d_double():
     """
     Feature: Returns the sum along diagonals of the double array

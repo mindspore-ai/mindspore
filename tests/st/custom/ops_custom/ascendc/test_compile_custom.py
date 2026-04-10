@@ -18,7 +18,7 @@ import tempfile
 from compile_utils import compile_custom_run
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 def test_custom_compile():
     """
     Feature: Custom op testcase

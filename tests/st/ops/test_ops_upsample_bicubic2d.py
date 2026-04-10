@@ -29,8 +29,7 @@ def upsample_bicubic2d_forward_func(x, size=None, scale_factor=None, align_corne
     return ops.function.nn_func.interpolate_ext(x, size, scale_factor, "bicubic", align_corners)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_upsample_bicubic_2d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.

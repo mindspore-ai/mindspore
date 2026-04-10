@@ -109,7 +109,7 @@ def einsum_test_cases_dynamic(nptype, loss):
         print(ms_dx)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_einsum_graph_float16():
     """
     Feature: test transpose/ reduce_sum/dot/mul/transpose_with_ell/batchmatmul
@@ -119,7 +119,7 @@ def test_einsum_graph_float16():
     einsum_test_cases(np.float16, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_einsum_graph_float32():
     """
     Feature: test transpose/ reduce_sum/dot/mul/transpose_with_ell/batchmatmul
@@ -129,7 +129,7 @@ def test_einsum_graph_float32():
     einsum_test_cases(np.float32, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_einsum_graph_float64():
     """
     Feature: test transpose/ reduce_sum/dot/mul/transpose_with_ell/batchmatmul
@@ -139,7 +139,7 @@ def test_einsum_graph_float64():
     einsum_test_cases(np.float64, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_einsum_graph_float64_dynamic():
     """
     Feature: test transpose/ reduce_sum/dot/mul/transpose_with_ell/batchmatmul
@@ -149,7 +149,7 @@ def test_einsum_graph_float64_dynamic():
     einsum_test_cases_dynamic(np.float64, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_einsum_exception():
     """
     Feature: test einsum exception case

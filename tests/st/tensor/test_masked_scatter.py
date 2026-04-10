@@ -37,8 +37,7 @@ def generate_random_input(shape, dtype):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_masked_scatter(mode):
     """
@@ -56,7 +55,7 @@ def test_tensor_masked_scatter(mode):
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
+          level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_tensor_masked_scatter_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

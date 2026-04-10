@@ -25,7 +25,6 @@ from tests.mark_utils import arg_mark
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=24.00)
 def test_pynative_multi_stream():
     """
@@ -88,8 +87,7 @@ def test_pynative_aclop_multi_stream():
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='allcards',
-          essential_mark='essential')
+          card_mark='allcards')
 def test_pynative_communication_multi_stream_memory():
     '''
     Feature: Memory with multi-stream.

@@ -19,7 +19,7 @@ class NetTripletMarginLoss(nn.Cell):
         return self.triplet_margin_loss(anchor, positive, negative, margin)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_triplet_margin_loss_float64():
     """
     Feature: Input type of float64
@@ -63,7 +63,7 @@ def test_triplet_margin_loss_float64():
                            equal_nan=False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_triplet_margin_loss_float32():
     """
     Feature: Input type of float32

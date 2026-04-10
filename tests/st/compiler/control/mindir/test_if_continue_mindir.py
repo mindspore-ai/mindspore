@@ -34,8 +34,7 @@ class Conv_for_if_continue_net(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_if_continue_mindir():
     """
     Feature: export complex if-continue mindir and run.

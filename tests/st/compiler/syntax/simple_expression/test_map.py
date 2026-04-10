@@ -24,8 +24,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_args_size():
     """
     Feature: Check the size of inputs of map.
@@ -53,8 +52,7 @@ def test_map_args_size():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_map_args_type():
     """
     Feature: Check the type of inputs of Map().
@@ -82,8 +80,7 @@ def test_map_args_type():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_args_full_make_list():
     """
     Feature: Check the types of all inputs in Map.
@@ -108,8 +105,7 @@ def test_map_args_full_make_list():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_map_args_full_make_list_same_length():
     """
     Feature: Check the length of list input Map.
@@ -134,8 +130,7 @@ def test_map_args_full_make_list_same_length():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_map_args_full_make_tuple_same_length():
     """
     Feature: Check the length of tuple input Map.
@@ -160,8 +155,7 @@ def test_map_args_full_make_tuple_same_length():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_map_param_cast():
     """
     Feature: Check the ref type when insert auto cast.
@@ -186,7 +180,7 @@ def test_map_param_cast():
         print("ret:", ret)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_map_with_numpy():
     """
     Feature: JIT Fallback
@@ -204,7 +198,7 @@ def test_fallback_map_with_numpy():
     assert operator.eq(out, (2, 3, 4, 5))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fallback_map_with_numpy_and_tensor():
     """
     Feature: JIT Fallback
@@ -226,7 +220,7 @@ def map_fn(x, y):
     return x + y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_map_with_numpy_2():
     """
     Feature: JIT Fallback
@@ -245,7 +239,7 @@ def test_fallback_map_with_numpy_2():
     assert operator.eq(out, (2, 3, 4, 5))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_map_with_numpy_and_tensor_2():
     """
     Feature: JIT Fallback

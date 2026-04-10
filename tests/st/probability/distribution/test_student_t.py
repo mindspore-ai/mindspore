@@ -51,8 +51,7 @@ class LogProb2(nn.Cell):
         return self.n.log_prob(x_, df, loc, scale)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_log_likelihood():
     """
     Feature: StudentT distribution

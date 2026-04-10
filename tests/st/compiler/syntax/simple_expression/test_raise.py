@@ -24,7 +24,7 @@ from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_single_string_control_flow():
     """
     Feature: Test raise syntax in strict mode.
@@ -47,7 +47,7 @@ def test_raise_single_string_control_flow():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_not_raise_single_string_control_flow():
     """
     Feature: Test raise syntax in strict mode.
@@ -68,7 +68,7 @@ def test_not_raise_single_string_control_flow():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_single_string_control_flow_grad_in_graph():
     """
     Feature: Test raise syntax in strict mode.
@@ -96,7 +96,7 @@ def test_raise_single_string_control_flow_grad_in_graph():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_single_string_control_flow_grad_in_pynative():
     """
     Feature: Test raise syntax in strict mode.
@@ -125,7 +125,7 @@ def test_raise_single_string_control_flow_grad_in_pynative():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_not_raise_single_string_control_flow_grad_in_graph():
     """
     Feature: Test raise syntax in strict mode.
@@ -151,7 +151,7 @@ def test_not_raise_single_string_control_flow_grad_in_graph():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_not_raise_single_string_control_flow_grad_in_pynative():
     """
     Feature: Test raise syntax in strict mode.
@@ -176,7 +176,7 @@ def test_not_raise_single_string_control_flow_grad_in_pynative():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_empty_input_control_flow():
     """
     Feature: Test raise syntax in strict mode.
@@ -199,7 +199,7 @@ def test_raise_empty_input_control_flow():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_not_raise_empty_input_control_flow():
     """
     Feature: Test raise syntax in strict mode.
@@ -220,7 +220,7 @@ def test_not_raise_empty_input_control_flow():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_multi_input_control_flow():
     """
     Feature: Test raise syntax in strict mode.
@@ -243,7 +243,7 @@ def test_raise_multi_input_control_flow():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_not_raise_multi_input_control_flow():
     """
     Feature: Test raise syntax in strict mode.
@@ -264,7 +264,7 @@ def test_not_raise_multi_input_control_flow():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_raise_format_in_lax():
     """
     Feature: Test raise and format syntax in lax mode.
@@ -286,7 +286,7 @@ def test_raise_format_in_lax():
     assert str(raise_info.value) == "The out is [6], y is [3]."
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_not_raise_format_in_lax():
     """
     Feature: Test raise and format syntax in lax mode.

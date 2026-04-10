@@ -37,8 +37,7 @@ class GatherNdNet(nn.Cell):
         return self.gather_nd(input_x, indices)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_tensor_graph_mode():
     """
     Feature: gather_nd tensor test on graph mode.
@@ -56,7 +55,7 @@ def test_tensor_graph_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_tensor_pynative_mode():
     """
     Feature: gather_nd tensor test on pynative mode.
@@ -73,7 +72,7 @@ def test_tensor_pynative_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_functional_pynative_mode():
     """
     Feature: gather_nd functional test on pynative mode.
@@ -90,7 +89,7 @@ def test_functional_pynative_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
         mem_peak=1024.00)
 def test_gather_nd_static_pynative_mode():
     """
@@ -109,8 +108,7 @@ def test_gather_nd_static_pynative_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_gather_nd_static_graph_mode():
     """
     Feature: gather_nd static shape test on graph mode.

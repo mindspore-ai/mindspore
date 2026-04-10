@@ -36,7 +36,7 @@ def test_to_tensor_api(dtype):
     assert dtype_op(output) == dtype
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_to_tensor_api_modes():
     """
     Feature: test to tensor API for different modes.

@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_add_tensor():
     """
     Feature: Test MindIR Export jit with decorator.

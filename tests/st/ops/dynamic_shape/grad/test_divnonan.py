@@ -36,8 +36,7 @@ def divnonan_test(is_dyn_rank):
     tester.test_dynamic_grad_net([x, y], is_dyn_rank)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_divnonan_dyn_shape():
     """
     Feature: DivNoNan Grad DynamicShape.
@@ -48,8 +47,7 @@ def test_divnonan_dyn_shape():
     divnonan_test(False)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_divnonan_dyn_rank():
     """
     Feature: DivNoNan Grad DynamicShape.

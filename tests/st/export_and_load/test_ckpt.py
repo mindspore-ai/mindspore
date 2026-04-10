@@ -128,7 +128,7 @@ class ErrorCallback(Callback):
             raise RuntimeError("Exec runtime error.")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ckpt_append_info():
     """
     Feature: Save append info during save ckpt.
@@ -156,7 +156,7 @@ def test_ckpt_append_info():
             os.remove(file_name)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ckpt_error():
     """
     Feature: Save ckpt when error in train.
@@ -204,7 +204,7 @@ def create_dataset_lenet(num_data=32, batch_size=32, repeat_size=1):
     return input_data
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_checkpointconfig_append_info_and_load_checkpoint():
     """
     Feature: Save checkpoint for CheckpointConfig's append_info and load checkpoint.

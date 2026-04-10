@@ -30,7 +30,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean(mode):
     """
@@ -47,7 +47,7 @@ def test_ops_nanmean(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_int_error(mode):
     """
@@ -64,7 +64,7 @@ def test_ops_nanmean_int_error(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.02)
+          level_mark='level0', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_grad_all_nan(mode):
     """
@@ -87,8 +87,7 @@ def test_ops_nanmean_grad_all_nan(mode):
     assert np.isnan(dx.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.02)
 def test_ops_nanmean_grad_all_nan_graph_o2():
     """
     Feature: ops.nanmean backward
@@ -108,7 +107,7 @@ def test_ops_nanmean_grad_all_nan_graph_o2():
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.02)
+          level_mark='level0', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_grad_axis_none_scalar_dout(mode):
     """
@@ -131,7 +130,7 @@ def test_ops_nanmean_grad_axis_none_scalar_dout(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.02)
+          level_mark='level0', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_grad_axis_non_sorted(mode):
     """
@@ -157,7 +156,7 @@ def test_ops_nanmean_grad_axis_non_sorted(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.02)
+          level_mark='level0', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_grad_keepdims_true(mode):
     """
@@ -183,7 +182,7 @@ def test_ops_nanmean_grad_keepdims_true(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.02)
+          level_mark='level0', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_grad_axis_non_sorted_with_nan(mode):
     """
@@ -219,7 +218,7 @@ def test_ops_nanmean_grad_axis_non_sorted_with_nan(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.02)
+          level_mark='level0', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_nanmean_forward_backward_dynamic_shape(mode):
     """

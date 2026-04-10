@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reflection_pad1d_input3d(mode):
     """
@@ -52,8 +51,7 @@ def test_reflection_pad1d_input3d(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reflection_pad1d_input2d(mode):
     """
@@ -80,8 +78,7 @@ def test_reflection_pad1d_input2d(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reflection_pad2d_input4d(mode):
     r"""
@@ -109,8 +106,7 @@ def test_reflection_pad2d_input4d(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reflection_pad2d_input3d(mode):
     r"""
@@ -138,8 +134,7 @@ def test_reflection_pad2d_input3d(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reflection_pad_3d(mode):
     """

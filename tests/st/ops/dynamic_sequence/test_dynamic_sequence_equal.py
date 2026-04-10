@@ -35,8 +35,7 @@ class NetTupleEqual(nn.Cell):
         return self.seq_equal(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_dyn_equal():
     """
     Feature: test sequence equal op
@@ -51,8 +50,7 @@ def test_seq_dyn_equal():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_dyn_equal1():
     """
     Feature: test sequence equal op
@@ -67,8 +65,7 @@ def test_seq_dyn_equal1():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_equal():
     """
     Feature: test sequence equal op
@@ -83,8 +80,7 @@ def test_seq_equal():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_equal_grad():
     """
     Feature: test sequence equal grad op

@@ -74,7 +74,7 @@ def test_sspaddmm_dyn():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sspaddmm_input_int32():
     """
     Feature: Sspaddmm gpu TEST.
@@ -110,7 +110,7 @@ def test_sspaddmm_input_int32():
                        0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sspaddmm_input_int64():
     """
     Feature: Sspaddmm gpu TEST.

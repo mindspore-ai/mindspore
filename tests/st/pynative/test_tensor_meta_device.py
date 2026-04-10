@@ -588,8 +588,7 @@ def test_meta_tensor_contiguous(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_all(mode):
     """

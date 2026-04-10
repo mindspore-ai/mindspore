@@ -192,7 +192,7 @@ add_gpu_info_attr_only = CustomRegOp("add_with_attr_kernel_gpu_2") \
     .get_op_info()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_aot_single_output_gpu():
     """
     Feature: custom aot operator, multiple inputs, single output, GPU
@@ -234,7 +234,7 @@ add_cpu_info_attr_only = CustomRegOp("add_with_attr_kernel_cpu_2") \
     .get_op_info()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_aot_single_output_cpu():
     """
     Feature: custom aot operator, multiple inputs, single output, CPU, GRAPH_MODE
@@ -252,7 +252,7 @@ def test_aot_single_output_cpu():
         aot_single_output_dyn_shape("add.cc", add_cpu_info)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reorganize():
     """
     Feature: custom aot operator, multiple inputs(dtypes:float32,int64_t), single output, GPU
@@ -278,7 +278,7 @@ def test_reorganize():
     assert np.allclose(expect, output.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_hetero_square_mul():
     """
     Feature: custom aot operator, multiple inputs(dtypes:float32,float16), single output(dtype:float16), GPU
@@ -314,7 +314,7 @@ class SquareGradNet(Cell):
         return res2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_square_py_bprop():
     """
     Feature: custom aot operator, bprop(pyfunc), GPU
@@ -345,7 +345,7 @@ def test_square_py_bprop():
     assert np.allclose(expect, dx_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_square_aot_bprop():
     """
     Feature: custom aot operator, bprop(Cell), GPU
@@ -469,7 +469,7 @@ def add_mul_div_bprop(source, execf, source_prop, execf_prop):
     assert np.allclose(expect_dy, dy_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_mul_div_bprop_graph():
     """
     Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, GRAPH_MODE
@@ -480,7 +480,7 @@ def test_add_mul_div_bprop_graph():
     add_mul_div_bprop("add_mul_div.cu", "add_mul_div.so", "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_mul_div_bprop_pynative():
     """
     Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, PYNATIVE_MODE

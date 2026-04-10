@@ -26,7 +26,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_oneslike_fallback_with_tensor():
     """
     Features: Multitype Funcgraph oneslike by jit fallback.
@@ -77,7 +77,7 @@ class GradNet1(nn.Cell):
         return self.grad_net(*x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_oneslike_fallback_with_empty_grad():
     """
     Features: Multitype Funcgraph oneslike by jit fallback.

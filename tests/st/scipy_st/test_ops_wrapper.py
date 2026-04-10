@@ -276,8 +276,7 @@ def fat_matrix(alignment=None, data_type=None):
     return mat, pack_diagonals_in_matrix(tests, num_rows, num_cols, alignment)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data_type', [onp.int32, onp.int64, onp.float32, onp.float64])
 def test_matrix_set_diag(data_type):
     """

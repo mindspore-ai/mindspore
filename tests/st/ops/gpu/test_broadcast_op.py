@@ -22,7 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nobroadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -91,7 +91,7 @@ def test_nobroadcast():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nobroadcast_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -152,7 +152,7 @@ def test_nobroadcast_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -221,7 +221,7 @@ def test_broadcast():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_diff_dims():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -290,7 +290,7 @@ def test_broadcast_diff_dims():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_diff_dims_float64():
     """
     Feature: ALL To ALL
@@ -348,7 +348,7 @@ def test_broadcast_diff_dims_float64():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -409,7 +409,7 @@ def test_broadcast_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_divnonan_int8():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -427,7 +427,7 @@ def test_divnonan_int8():
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_divnonan_uint8():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 

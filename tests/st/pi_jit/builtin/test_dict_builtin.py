@@ -36,7 +36,7 @@ context.set_context(mode=context.PYNATIVE_MODE)
 jit_cfg = {'compile_with_try': False}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_empty_dict():
     """
     Feature: builtin dict.
@@ -58,7 +58,7 @@ def test_create_empty_dict():
     assert_no_graph_break(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_dict_from_list():
     """
     Feature: builtin dict.
@@ -80,7 +80,7 @@ def test_create_dict_from_list():
     assert_executed_by_graph_mode(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_dict_from_tuple():
     """
     Feature: builtin dict.
@@ -102,7 +102,7 @@ def test_create_dict_from_tuple():
     assert_executed_by_graph_mode(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="Need Fixed")
 def test_create_dict_from_duplicate_keys():
     """
@@ -132,7 +132,7 @@ def test_create_dict_from_duplicate_keys():
     assert_executed_by_graph_mode(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_dict_from_dict():
     """
     Feature: builtin dict.
@@ -154,7 +154,7 @@ def test_create_dict_from_dict():
     assert_executed_by_graph_mode(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_dict_from_zip():
     """
     Feature: builtin dict.
@@ -177,7 +177,7 @@ def test_create_dict_from_zip():
     assert_has_graph_break(compiled_fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_dict_from_kwargs():
     """
     Feature: builtin dict.
@@ -199,7 +199,7 @@ def test_create_dict_from_kwargs():
     assert_has_graph_break(compiled_fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dict_getitem_by_user_defined_class_object():
     """
     Feature: dict getitem.
@@ -230,7 +230,7 @@ def test_dict_getitem_by_user_defined_class_object():
     assert_executed_by_graph_mode(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_getitem_in_cell_attribute_branch():
     """
     Feature: dict getitem.
@@ -273,7 +273,7 @@ def test_dict_getitem_in_cell_attribute_branch():
     assert_executed_by_graph_mode(jit_net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_setitem_on_cell_attribute():
     """
     Feature: dict setitem.
@@ -315,7 +315,7 @@ def test_dict_setitem_on_cell_attribute():
     assert_executed_by_graph_mode(jit_net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dict_setitem_with_dict_argument():
     """
     Feature: dict setitem.

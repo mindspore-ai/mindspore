@@ -31,7 +31,7 @@ def scatter_backward_func(x, dim, index, src):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.05)
+        card_mark='onecard', mem_peak=1024.05)
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
 def test_scatter_forward_backward(mode):
     """
@@ -130,7 +130,7 @@ def test_scatter_forward_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=3072.00)
+        card_mark='onecard', mem_peak=3072.00)
 def test_f_scatter_dynamic():
     """
     Feature: test dynamicscatter.
@@ -157,8 +157,7 @@ def test_f_scatter_dynamic():
                           'ScalarTensor'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=3072.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=3072.01)
 def test_f_scatter_scalar_value_dynamic():
     """
     Feature: test dynamicscatter.

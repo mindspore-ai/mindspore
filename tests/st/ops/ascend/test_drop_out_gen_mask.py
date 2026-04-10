@@ -42,8 +42,7 @@ class Net(nn.Cell):
 y = np.array([1.0]).astype(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_net():
     x = np.ones([2, 4, 2, 2]).astype(np.int32)
     tx = Tensor(x)
@@ -73,8 +72,7 @@ def train(net, data):
     return res_list
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_drop():
     """
     Feature: test dropout gen mask diff in diff step.
@@ -139,7 +137,7 @@ class Net2(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.75)
+        card_mark='onecard', mem_peak=1024.75)
 def test_diff_seed():
     """
     Feature: test dropout gen mask diff by diff seed.
@@ -162,8 +160,7 @@ def test_diff_seed():
            (np.allclose(net0_out1.asnumpy(), net2_out1.asnumpy(), 0, 0) is False)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fuzz():
     """
     Feature: test dropout gen mask fuzz input.

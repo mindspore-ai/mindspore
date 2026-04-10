@@ -45,7 +45,7 @@ def verify_forward(reduction, loss, expect):
         np.testing.assert_array_almost_equal(loss, expect_mean)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("reduction", ['none', 'mean', 'sum'])
 def test_smoothl1loss(reduction):
     """
@@ -95,7 +95,7 @@ def smoothl1loss_grad(beta):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_smoothl1loss_grad_no_reduce():
     """
     Feature: SmoothL1LossGrad cpu kernel.
@@ -144,7 +144,7 @@ def smoothl1loss_grad_2(beta, reduction):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("reduction", ['mean', 'sum'])
 def test_smoothl1loss_grad_sum(reduction):
     """

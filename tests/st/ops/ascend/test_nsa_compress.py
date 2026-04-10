@@ -144,11 +144,9 @@ def _gen_zero_token_case(N, D, block, stride, num_samples=8, seed=7,
     return x_np, w_np, tuple(int(v) for v in actual_seq)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_cv_metric_against_torch_cpu(context_mode):
@@ -189,11 +187,9 @@ def test_nsa_compress_cv_metric_against_torch_cpu(context_mode):
     assert single_golden_compare(golden_gw, actual_gw, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=366.00
+    card_mark="onecard", mem_peak=366.00
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize(
@@ -257,11 +253,9 @@ def test_nsa_compress_functional_general(context_mode, case_conf):
     assert single_golden_compare(th_gw_fp32, ms_gw, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_zero_token_outputs(context_mode):
@@ -289,11 +283,9 @@ def test_nsa_compress_zero_token_outputs(context_mode):
     assert single_golden_compare(th_gw_fp32, ms_gw, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_stride_eq_block_and_min_dims(context_mode):
@@ -320,11 +312,9 @@ def test_nsa_compress_stride_eq_block_and_min_dims(context_mode):
     assert single_golden_compare(th_gw_fp32, ms_gw, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=24.01
+    card_mark="onecard", mem_peak=24.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_bfloat16_large_dims(context_mode):
@@ -353,11 +343,9 @@ def test_nsa_compress_bfloat16_large_dims(context_mode):
     assert single_golden_compare(th_gw_fp32, ms_gw, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_seq_len_list_and_window_alignment(context_mode):
@@ -387,11 +375,9 @@ def test_nsa_compress_seq_len_list_and_window_alignment(context_mode):
     assert single_golden_compare(th_gw_fp32, ms_gw, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=0.01
+    card_mark="onecard", mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_none_seq_len(context_mode):
@@ -413,11 +399,9 @@ def test_nsa_compress_exception_none_seq_len(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2.01
+    card_mark="onecard", mem_peak=2.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_weight_n_mismatch(context_mode):
@@ -442,11 +426,9 @@ def test_nsa_compress_exception_weight_n_mismatch(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2.01
+    card_mark="onecard", mem_peak=2.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_block_stride_invalid(context_mode):
@@ -470,11 +452,9 @@ def test_nsa_compress_exception_block_stride_invalid(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2.01
+    card_mark="onecard", mem_peak=2.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_stride_gt_block(context_mode):
@@ -498,11 +478,9 @@ def test_nsa_compress_exception_stride_gt_block(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_d_not_multiple_16(context_mode):
@@ -526,11 +504,9 @@ def test_nsa_compress_exception_d_not_multiple_16(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=0.01
+    card_mark="onecard", mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_dtype_mismatch(context_mode):
@@ -554,11 +530,9 @@ def test_nsa_compress_exception_dtype_mismatch(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_seq_len_type(context_mode):
@@ -582,11 +556,9 @@ def test_nsa_compress_exception_seq_len_type(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_seq_len_not_match_T(context_mode):
@@ -612,7 +584,7 @@ def test_nsa_compress_exception_seq_len_not_match_T(context_mode):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-          card_mark="onecard", essential_mark="essential", mem_peak=24.00)
+          card_mark="onecard", mem_peak=24.00)
 def test_nsa_compress_dynamic_shape_TEST_OP():
     """
     Feature: Dynamic-shape verification via TEST_OP
@@ -647,11 +619,9 @@ def test_nsa_compress_dynamic_shape_TEST_OP():
     )
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=0.01
+    card_mark="onecard", mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_empty_input_tensor(context_mode):
@@ -672,11 +642,9 @@ def test_nsa_compress_exception_empty_input_tensor(context_mode):
         y.asnumpy()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_exception_empty_weight_tensor(context_mode):
@@ -711,11 +679,9 @@ def _calc_tokens(seq, block, stride):
     return tokens
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=18.01
+    card_mark="onecard", mem_peak=18.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_inf_inputs_forward_only(context_mode):
@@ -741,11 +707,9 @@ def test_nsa_compress_inf_inputs_forward_only(context_mode):
     assert tuple(y.shape) == (expect_t, N, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=18.01
+    card_mark="onecard", mem_peak=18.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_nan_inputs_forward_only(context_mode):
@@ -770,11 +734,9 @@ def test_nsa_compress_nan_inputs_forward_only(context_mode):
     assert tuple(y.shape) == (expect_t, N, D)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=22.01
+    card_mark="onecard", mem_peak=22.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_non_contiguous_inputs(context_mode):

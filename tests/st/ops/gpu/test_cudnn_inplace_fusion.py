@@ -48,7 +48,7 @@ class Conv2dBpropInputInplace(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_fusion1():
     np.random.seed(42)
     w1_np = np.random.randn(64, 64, 1, 1)

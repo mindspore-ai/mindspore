@@ -75,7 +75,7 @@ def run_msrun_command(test_case: str, log_dir: str, worker_num: int = 8, timeout
     return result.returncode
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
 def test_parallel_comm_switch_nic_01():
     '''
     Feature: Fabric Switchback (Single-Node)
@@ -94,7 +94,7 @@ def test_parallel_comm_switch_nic_01():
     run_msrun_command(test_case, log_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_parallel_comm_switch_nic_02():
     '''
     Feature: Fabric Switchback (Single-Node)
@@ -114,7 +114,7 @@ def test_parallel_comm_switch_nic_02():
     run_msrun_command(test_case, log_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_parallel_comm_switch_nic_03():
     '''
     Feature: Fabric Switchback (Single-Node Specific Devices)
@@ -133,7 +133,7 @@ def test_parallel_comm_switch_nic_03():
     run_msrun_command(test_case, log_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_parallel_comm_switch_nic_04():
     '''
     Feature: Fabric Switchback (Single-Node Specific Devices)
@@ -153,7 +153,7 @@ def test_parallel_comm_switch_nic_04():
     run_msrun_command(test_case, log_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_parallel_comm_switch_nic_05():
     '''
     Feature: Fabric Switchback (Checkpoint Step Operation)

@@ -38,7 +38,7 @@ def check_keyword_in_ir(ir_path, kernel, keyword):
     return result.find(keyword) != -1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_lccl_allreduce():
     """
     Feature: lccl operator test.
@@ -69,7 +69,7 @@ def test_lccl_allreduce():
     assert not check_keyword_in_ir(graph_path, kernel_allreduce, keyword_hccl)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_lccl_allgather():
     """
     Feature: lccl operator test.
@@ -100,7 +100,7 @@ def test_lccl_allgather():
     assert not check_keyword_in_ir(graph_path, kernel_allgather, keyword_hccl)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_lccl_reducescatter():
     """
     Feature: lccl operator test.
@@ -131,7 +131,7 @@ def test_lccl_reducescatter():
     assert not check_keyword_in_ir(graph_path, kernel_reducescatter, keyword_hccl)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_lccl_broadcast():
     """
     Feature: lccl operator test.
@@ -162,7 +162,7 @@ def test_lccl_broadcast():
     assert not check_keyword_in_ir(graph_path, kernel_broadcast, keyword_hccl)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_lccl_barrier():
     """
     Feature: lccl operator test.
@@ -193,7 +193,7 @@ def test_lccl_barrier():
     assert not check_keyword_in_ir(graph_path, kernel_barrier, keyword_hccl)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_lccl_matmul_allreduce():
     """
     Feature: lccl MatMulAllReduce fustion operator test.

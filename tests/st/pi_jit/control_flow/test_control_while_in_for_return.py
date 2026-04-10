@@ -23,7 +23,7 @@ class CtrlWhileInForReturnX(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_return_in_for_x():
     '''
     TEST_SUMMARY:
@@ -59,7 +59,7 @@ class CtrlWhileInForReturn(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_return_in_for():
     '''
     TEST_SUMMARY:
@@ -93,7 +93,7 @@ class CtrlWhileInForReturnOne(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_in_while_param_return_in_for():
     '''
     TEST_SUMMARY:
@@ -129,7 +129,7 @@ class CtrlWhileInForReturnAdd(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_return_in_while_no_param():
     '''
     TEST_SUMMARY:
@@ -165,7 +165,7 @@ class CtrlWhileReturnInForX(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_return_in_while_x():
     '''
     TEST_SUMMARY:
@@ -202,7 +202,7 @@ class CtrlWhileReturnInFor(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_return_in_for_nochange():
     '''
     TEST_SUMMARY:
@@ -237,7 +237,7 @@ class CtrlWhileReturnInForN(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_return_in_while_no():
     '''
     TEST_SUMMARY:

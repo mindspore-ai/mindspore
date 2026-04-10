@@ -85,7 +85,7 @@ def remove_ckpt(file_name):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_save_checkpoint(mode):
     """
@@ -128,8 +128,7 @@ def test_ops_save_checkpoint(mode):
     assert "lr" in output_empty_list
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_load_checkpoint_async(mode):
     """
@@ -150,8 +149,7 @@ def test_load_checkpoint_async(mode):
     assert 'fc1.bias' not in output_param_dict
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_save_checkpoint_async(mode):
     """
@@ -182,7 +180,7 @@ def test_save_checkpoint_async(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_load_checkpoint_async_support_sf(mode):
     """
@@ -204,7 +202,7 @@ def test_load_checkpoint_async_support_sf(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_save_checkpoint_sf_with_remove_redundancy(mode):
     """
@@ -227,7 +225,7 @@ def test_save_checkpoint_sf_with_remove_redundancy(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_load_checkpoint_sf_warnings(mode):
     """

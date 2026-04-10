@@ -21,7 +21,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import assert_executed_by_graph_mode, assert_equal
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_nn_module():
     """
     Feature: PIJIT
@@ -43,7 +43,7 @@ def test_nn_module():
     assert func(1) == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_nn_module_call_super_method():
     """
     Feature: pijit + msadapter

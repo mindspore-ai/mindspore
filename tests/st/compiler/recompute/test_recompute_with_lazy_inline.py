@@ -55,7 +55,7 @@ def run_testcase(testcase_name, expect_memory_usage):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_recompute_cell_recompute():
     """
     Feature: Recompute with lazy inline.
@@ -65,8 +65,7 @@ def test_recompute_cell_recompute():
     run_testcase("test_recompute_block_recompute", 43)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2048)
 def test_recompute_cell_recompute_with_output_recompute():
     """
     Feature: Recompute with lazy inline.
@@ -76,8 +75,7 @@ def test_recompute_cell_recompute_with_output_recompute():
     run_testcase("test_recompute_block_recompute_with_output_recompute", 88)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_recompute_cell_recompute_func_api():
     """
     Feature: Recompute with lazy inline.
@@ -87,8 +85,7 @@ def test_recompute_cell_recompute_func_api():
     run_testcase("test_recompute_block_recompute_func_api", 43)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2048.00)
 def test_recompute_cell_recompute_func_api_with_output_recompute():
     """
     Feature: Recompute with lazy inline.
@@ -98,8 +95,7 @@ def test_recompute_cell_recompute_func_api_with_output_recompute():
     run_testcase("test_recompute_block_recompute_func_api_with_output_recompute", 88)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_recompute_cell_recompute_func_api_with_kwargs():
     """
     Feature: Recompute with lazy inline.
@@ -109,8 +105,7 @@ def test_recompute_cell_recompute_func_api_with_kwargs():
     run_testcase("test_recompute_block_recompute_func_api_with_kwargs", 42)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 @test_utils.run_test_with_On
 def test_recompute_op_recompute1():
     """
@@ -122,7 +117,7 @@ def test_recompute_op_recompute1():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_recompute_op_recompute2():
     """
     Feature: Recompute with lazy inline.
@@ -132,8 +127,7 @@ def test_recompute_op_recompute2():
     run_testcase("test_recompute_op_recompute2", 50)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_recompute_op_recompute3():
     """
     Feature: Recompute with lazy inline.
@@ -144,7 +138,7 @@ def test_recompute_op_recompute3():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_recompute_cell_and_op_recompute1():
     """
     Feature: Recompute with lazy inline.
@@ -154,8 +148,7 @@ def test_recompute_cell_and_op_recompute1():
     run_testcase("test_recompute_cell_and_op_recompute1", 63)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2048.00)
 def test_recompute_cell_and_op_recompute_with_output_recompute():
     """
     Feature: Recompute with lazy inline.
@@ -165,8 +158,7 @@ def test_recompute_cell_and_op_recompute_with_output_recompute():
     run_testcase("test_recompute_cell_and_op_recompute_with_output_recompute", 61)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_recompute_cell_and_op_recompute_with_func_api():
     """
     Feature: Recompute with lazy inline.
@@ -177,7 +169,7 @@ def test_recompute_cell_and_op_recompute_with_func_api():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_recompute_cell_and_op_recompute2():
     """
     Feature: Recompute with lazy inline.
@@ -188,7 +180,7 @@ def test_recompute_cell_and_op_recompute2():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 @test_utils.run_test_with_On
 def test_recompute_cell_and_op_recompute_with_tuple_outputs1():
     """
@@ -200,7 +192,7 @@ def test_recompute_cell_and_op_recompute_with_tuple_outputs1():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_recompute_cell_and_op_recompute_with_tuple_outputs2():
     """
     Feature: Recompute with lazy inline.
@@ -211,7 +203,7 @@ def test_recompute_cell_and_op_recompute_with_tuple_outputs2():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_recompute_origin_inputs_umonad_fv():
     """
     Feature: Recompute with lazy inline.

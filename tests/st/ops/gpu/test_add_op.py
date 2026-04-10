@@ -131,31 +131,31 @@ def add(nptype):
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_float64():
     add(np.float64)
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_float32():
     add(np.float32)
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_float16():
     add(np.float16)
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_int64():
     add(np.int64)
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_int32():
     add(np.int32)
 
@@ -218,27 +218,27 @@ def add_dynamic(nptype):
     assert (output2.asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_dynamic_float64():
     add_dynamic(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_add_dynamic_float32():
     add_dynamic(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_add_dynamic_float16():
     add_dynamic(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_add_dynamic_int64():
     add_dynamic(np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_add_dynamic_int32():
     add_dynamic(np.int32)
 
@@ -256,7 +256,7 @@ def test_add_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_add_float32_tensor_api():
     """
     Feature: test add tensor api.

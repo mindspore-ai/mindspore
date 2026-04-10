@@ -28,8 +28,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_tuple():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -51,8 +50,7 @@ def test_jit_grad_with_grad_tensor_in_tuple():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_tuple_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -74,8 +72,7 @@ def test_jit_grad_with_grad_tensor_in_tuple_2():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_list():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -97,8 +94,7 @@ def test_jit_grad_with_grad_tensor_in_list():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_list_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -120,8 +116,7 @@ def test_jit_grad_with_grad_tensor_in_list_2():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_dict():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -143,8 +138,7 @@ def test_jit_grad_with_grad_tensor_in_dict():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_dict_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -166,8 +160,7 @@ def test_jit_grad_with_grad_tensor_in_dict_2():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_sequence_with_vargs():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -189,8 +182,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs():
     assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_grad_tensor_in_sequence_with_vargs_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -213,7 +205,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs_2():
 
 
 @pytest.mark.skip(reason="Jit handle kwargs with mutable error, fix later")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -236,8 +228,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs():
 
 
 @pytest.mark.skip(reason="Jit handle kwargs with mutable error, fix later")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -260,8 +251,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_2():
 
 
 @pytest.mark.skip(reason="Jit handle kwargs with mutable error, fix later")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_3():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -282,7 +272,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_3():
     assert np.all(ret.asnumpy() == np.array([2, 2, 2]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pyboost_series_highgrad():
     """
     Feature: Test grad scene for highgrad with out jit
@@ -327,8 +317,7 @@ def test_pyboost_series_highgrad():
     assert np.all(grad[0].asnumpy() == 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_invalid_input():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -352,8 +341,7 @@ def test_jit_grad_with_invalid_input():
     assert "contains tensor with gradient but can not mutable" in str(error_info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_grad_with_invalid_input_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -377,7 +365,7 @@ def test_jit_grad_with_invalid_input_2():
     assert "contains tensor with gradient but can not mutable" in str(error_info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_dynamic_shape_change_param():
     """
     Feature: Test grad jit scene for dynamic shape change param.
@@ -428,7 +416,7 @@ def test_jit_grad_with_dynamic_shape_change_param():
     compare_result(grad2, grad2_jit)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_out_cell_custom_bprop():
     """
     Feature: Custom cell bprop.
@@ -454,7 +442,7 @@ def test_jit_grad_with_out_cell_custom_bprop():
     assert output == result
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_custom_bprop():
     """
     Feature: Custom cell bprop.
@@ -507,7 +495,7 @@ def test_jit_grad_with_custom_bprop():
     assert np.allclose(output[1].asnumpy(), expect_dy)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_out_cell_custom_bprop_node_reuse():
     """
     Feature: Custom cell bprop.
@@ -551,7 +539,7 @@ def test_jit_grad_with_out_cell_custom_bprop_node_reuse():
         shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_jit_output_list():
     """
     Feature: Gradjit with list output.
@@ -577,8 +565,7 @@ def test_grad_jit_output_list():
     assert isinstance(value_grads[0][1], list)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_grad_jit_primal_graph():
     """
     Feature: Gradjit using unchanged primal graph generate bprop.
@@ -600,7 +587,7 @@ def test_grad_jit_primal_graph():
     jit(ops.grad(net), backend="ms_backend")(input_params, input_indices)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_jit_highgrad():
     """
     Feature: Test grad jit scene for highgrad

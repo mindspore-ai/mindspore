@@ -34,7 +34,7 @@ class SparseToDenseNet(nn.Cell):
         return self.sparsetodense(indices, output_shape, values, default_value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparsetodense_2d_int32():
     """
     Feature: Converts a sparse representation into a dense tensor.
@@ -54,7 +54,7 @@ def test_sparsetodense_2d_int32():
         assert (output.asnumpy() == sparse_expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparsetodense_2d_double():
     """
     Feature: Converts a sparse representation into a dense tensor.

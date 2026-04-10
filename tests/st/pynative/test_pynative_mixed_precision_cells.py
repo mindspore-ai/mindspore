@@ -149,8 +149,7 @@ def mixed_precision_multiples_cell_03():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.25)
+          card_mark='onecard', mem_peak=1024.25)
 def test_mixed_precision_multiples_cell_ascend_01():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_01()
@@ -158,8 +157,7 @@ def test_mixed_precision_multiples_cell_ascend_01():
 
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_mixed_precision_multiples_cell_gpu_01():
     context.set_context(device_target="GPU")
     mixed_precision_multiples_cell_01()
@@ -167,8 +165,7 @@ def test_mixed_precision_multiples_cell_gpu_01():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1.00)
+          card_mark='onecard', mem_peak=1.00)
 def test_mixed_precision_multiples_cell_ascend_02():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_02()
@@ -176,8 +173,7 @@ def test_mixed_precision_multiples_cell_ascend_02():
 
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_mixed_precision_multiples_cell_gpu_02():
     context.set_context(device_target="GPU")
     mixed_precision_multiples_cell_02()
@@ -185,8 +181,7 @@ def test_mixed_precision_multiples_cell_gpu_02():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.05)
+          card_mark='onecard', mem_peak=1024.05)
 def test_mixed_precision_multiples_cell_ascend_03():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_03()
@@ -194,8 +189,7 @@ def test_mixed_precision_multiples_cell_ascend_03():
 
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_mixed_precision_multiples_cell_gpu_03():
     context.set_context(device_target="GPU")
     mixed_precision_multiples_cell_03()

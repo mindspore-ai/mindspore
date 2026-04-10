@@ -60,7 +60,7 @@ def dyn_case():
     assert output.shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_col2im_dyn():
     """
     Feature: Col2Im function.
@@ -73,7 +73,7 @@ def test_col2im_dyn():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode, input_type",
                          [(context.GRAPH_MODE, np.float32),
                           (context.PYNATIVE_MODE, np.float32),

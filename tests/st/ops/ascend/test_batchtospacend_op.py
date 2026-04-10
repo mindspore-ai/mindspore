@@ -22,7 +22,7 @@ from mindspore import Tensor
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_batch_to_space_nd_function():
     """
     Feature: test BatchToSpaceND function interface.
@@ -54,8 +54,7 @@ class BatchToSpaceNDDynamicShapeNetMS(nn.Cell):
         return self.batch_to_space_nd(x, block_shape, crops)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_batch_to_space_nd_dynamic():
     """
     Feature: test BatchToSpaceND dynamic shape.

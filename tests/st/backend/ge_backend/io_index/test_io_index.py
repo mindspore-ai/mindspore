@@ -16,11 +16,9 @@ from tests.st.backend.ge_backend.ge_test_utils import run_testcase
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=0.01
+    card_mark="onecard", mem_peak=0.01
 )
 def test_io_index():
     """

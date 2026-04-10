@@ -34,8 +34,7 @@ class Net(nn.Cell):
         return self.bias_add(x, b)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add4d():
     x_shape = [2, 3, 4, 5]
     x = np.ones(x_shape).astype(np.float32)
@@ -50,8 +49,7 @@ def test_bias_add4d():
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add2d():
     x_shape = [2, 3]
     x = np.ones(x_shape).astype(np.float32)
@@ -66,8 +64,7 @@ def test_bias_add2d():
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add3d():
     x_shape = [2, 3, 4]
     x = np.ones(x_shape).astype(np.float32)
@@ -82,8 +79,7 @@ def test_bias_add3d():
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add5d():
     x_shape = [2, 5, 2, 3, 4]
     x = np.ones(x_shape).astype(np.float32)
@@ -114,8 +110,7 @@ class Net2(nn.Cell):
         return self.add(temp, x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net2():
     x_shape = [2, 3, 4]
     x = np.ones(x_shape).astype(np.float32)
@@ -133,8 +128,7 @@ def test_net2():
     assert np.allclose(output.asnumpy(), expect_out)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_biasadd_vmap():
     """
     Feature: biasadd vmap test on cpu.
@@ -174,8 +168,7 @@ def test_bias_add_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add_forward_float32_functional():
     """
     Feature: test bias_add forward.
@@ -195,8 +188,7 @@ def run_bias_add(dtype):
     net(x, b)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add_cpu_valid_type():
     """
     Feature: test bias_add.

@@ -44,7 +44,7 @@ def add_list(a, b):
     return add(*c)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [add_list, add_tuple])
 def test_call_ex_param(jit_func):
     """
@@ -59,7 +59,7 @@ def test_call_ex_param(jit_func):
     assert get_code_extra(jit_func.__wrapped__)['break_count_'] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_ex_vargs_infer():
     """
     Feature: CALL_FUNCTION_EX.
@@ -89,7 +89,7 @@ def test_call_function_ex_vargs_infer():
 
 
 @run_in_subprocess({'MS_SUBMODULE_LOG_v': '{PI:1}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_ex_with_params_dict_merge_v1():
     """
     Feature: CALL_FUNCTION_EX.
@@ -119,7 +119,7 @@ def test_call_function_ex_with_params_dict_merge_v1():
 
 
 @run_in_subprocess({'MS_SUBMODULE_LOG_v': '{PI:1}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_function_ex_with_params_dict_merge_v2():
     """
     Feature: CALL_FUNCTION_EX.

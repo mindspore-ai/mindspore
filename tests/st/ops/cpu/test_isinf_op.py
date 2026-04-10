@@ -40,8 +40,7 @@ x2 = Tensor(np.array([np.log(0), 1, np.log(0), 3]), mstype.float32)
 x3 = Tensor(np.array([[np.log(0), 2], [np.log(0), np.log(0)]]), mstype.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nan():
     ms_isinf = NetIsInf()
     output1 = ms_isinf(Tensor(x1))
@@ -57,8 +56,7 @@ def test_nan():
     assert (output3.asnumpy() == expect3).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_is_nan_cpu_dynamic_shape():
     """
     Feature: test FloatStatus op on CPU.
@@ -75,8 +73,7 @@ def test_is_nan_cpu_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_isinf_functional_api_modes(mode):
     """
@@ -91,8 +88,7 @@ def test_isinf_functional_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_isinf_tensor_api_modes(mode):
     """

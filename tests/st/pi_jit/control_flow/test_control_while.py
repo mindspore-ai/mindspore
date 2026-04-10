@@ -26,7 +26,7 @@ class ControlOneWhileOneAddn(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_while_addn_true():
     """
     Feature: PIJit
@@ -54,7 +54,7 @@ def test_ctrl_while_addn_true():
     match_array(ps_grad[2], pi_grad[2])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_while_addn_false():
     """
     Feature: PIJit
@@ -96,7 +96,7 @@ class ControlOneWhileOneAddnOneAddn(Cell):
         return out_me
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_while_addn_addn_true():
     """
     Feature: PIJit
@@ -124,7 +124,7 @@ def test_ctrl_while_addn_addn_true():
     match_array(ps_grad[2], pi_grad[2])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_while_addn_addn_false():
     """
     Feature: PIJit
@@ -167,7 +167,7 @@ class ControlOneWhileOnePara(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_while_para_true():
     """
     Feature: PIJit
@@ -189,7 +189,7 @@ def test_ctrl_while_para_true():
     match_array(out_pi.asnumpy(), out_ps.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_while_para_false():
     """
     Feature: PIJit
@@ -224,7 +224,7 @@ class ControlOneBoolWhileOneAddn(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_bool_while_addn_true():
     """
     Feature: PIJit

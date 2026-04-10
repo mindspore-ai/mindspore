@@ -26,11 +26,9 @@ class Net(nn.Cell):
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=2048.0)
+    card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_t(mode):
     """

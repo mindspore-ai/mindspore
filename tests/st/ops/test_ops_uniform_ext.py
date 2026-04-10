@@ -36,8 +36,7 @@ class UniformExtCell(Cell):
         return self.uniform(x, from_, to, seed, offset)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [
     mindspore.PYNATIVE_MODE,
     mindspore.GRAPH_MODE
@@ -98,8 +97,7 @@ def test_basic(context_mode):
     assert not np.allclose(expect1, expect2, rtol=rtol)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_op():
     """
     Feature: TEST_OP

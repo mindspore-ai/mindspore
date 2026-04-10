@@ -31,7 +31,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_eliminate_nopnode():
     """
     Feature: eliminate nopnode.
@@ -58,7 +58,7 @@ class NetWithNopNodeOutput(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_nopnode_output():
     """
     Feature: eliminate nopnode.
@@ -74,7 +74,7 @@ def test_nopnode_output():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_nopnode_dynamic_shape():
     """
     Feature: eliminate nopnode.
@@ -108,7 +108,7 @@ class AscendNet(nn.Cell):
         return a
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_ascend_nopnode_eliminate():
     """
     Feature: eliminate nopnode.

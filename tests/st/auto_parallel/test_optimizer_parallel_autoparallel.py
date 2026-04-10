@@ -15,7 +15,7 @@
 import os
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_data_parallel_model_programming():
     """
     Feature: AutoParallel(cell) in data parallel dimension
@@ -28,7 +28,7 @@ def test_msrun_data_parallel_model_programming():
                     "optimizer_parallel_autoparallel.py::test_optimizer_parallel_model_programming")
     assert ret == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_data_parallel_functional_programming():
     """
     Feature: AutoParallel(cell) in data parallel dimension

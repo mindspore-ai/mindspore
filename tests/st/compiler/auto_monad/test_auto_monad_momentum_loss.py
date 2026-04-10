@@ -62,8 +62,7 @@ class MSELoss(Cell):
         return self.reduce_mean(self.square(diff), get_axis(diff))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_momentum_loss():
     """
     Feature: Auto monad feature.

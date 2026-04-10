@@ -71,8 +71,7 @@ def dyn_case_beta():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_uss_dyn_cpu():
     """
     Feature: test UnsortedSegmentSum dynamic shape on CPU, all inputs are tensor.
@@ -85,7 +84,7 @@ def test_uss_dyn_cpu():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_uss_dyn_gpu():
     """
     Feature: test UnsortedSegmentSum dynamic shape on GPU, all inputs are tensor.
@@ -98,8 +97,7 @@ def test_uss_dyn_gpu():
     dyn_case()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_uss_dyn_cpu_beta():
     """
     Feature: test UnsortedSegmentSum dynamic shape on CPU, num_segments is a var.
@@ -112,7 +110,7 @@ def test_uss_dyn_cpu_beta():
     dyn_case_beta()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_uss_dyn_gpu_beta():
     """
     Feature: test UnsortedSegmentSum dynamic shape on GPU, num_segments is a var.

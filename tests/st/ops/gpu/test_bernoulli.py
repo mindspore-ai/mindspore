@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.bernoulli(x, p)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bernoulli():
     """
     Feature: bernoulli function
@@ -66,7 +66,7 @@ class BernoulliDynamic(nn.Cell):
         return self.bernoulli(x, p)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bernoulli_dynamic():
     """
     Feature: bernoulli function
@@ -84,7 +84,7 @@ def test_bernoulli_dynamic():
     assert elem_count * 0.4 < nonzero_count < elem_count * 0.6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bernoulli_dynamic_x_type_error():
     """
     Feature: Bernoulli function
@@ -101,7 +101,7 @@ def test_bernoulli_dynamic_x_type_error():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bernoulli_run_twice():
     """
     Feature: Bernoulli function

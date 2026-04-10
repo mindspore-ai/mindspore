@@ -79,7 +79,7 @@ class Net1(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_ellipsis():
     '''
     Description:
@@ -108,7 +108,7 @@ class Net4(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_none():
     '''
     Description:
@@ -137,7 +137,7 @@ class Net6(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_int():
     '''
     Description:
@@ -167,7 +167,7 @@ class Net7(Cell):
         return out * self.n
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_shape():
     '''
     Description:
@@ -198,7 +198,7 @@ class Net8(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_tensor_int():
     '''
     Description:
@@ -219,7 +219,7 @@ def test_dynamic_rank_getitem_tensor_int():
     fact.compare_forward_grad(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_tensor_bool():
     '''
     Description:
@@ -251,7 +251,7 @@ class Net9(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_slice_int():
     '''
     Description:
@@ -281,7 +281,7 @@ class Net10(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_slice_shape():
     '''
     Description:
@@ -312,7 +312,7 @@ class Net13(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_list_int():
     '''
     Description:
@@ -341,7 +341,7 @@ class Net14(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_list_bool():
     '''
     Description:
@@ -370,7 +370,7 @@ class Net15(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_list_mutable():
     '''
     Description:
@@ -399,7 +399,7 @@ class Net16(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_empty_tuple():
     '''
     Description:
@@ -428,7 +428,7 @@ class Net17(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_tuple_basic():
     '''
     Description:
@@ -457,7 +457,7 @@ class Net19(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_tuple_complex():
     '''
     Description:
@@ -488,7 +488,7 @@ class Net20(Cell):
         return out * self.n
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_rank_getitem_tuple_tensor():
     '''
     Description:

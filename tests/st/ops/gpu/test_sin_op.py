@@ -37,7 +37,7 @@ def sin(nptype, loss=1e-5):
     assert np.allclose(output_ms.asnumpy(), output_np, rtol=loss, atol=loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sin_float16():
     """
     Feature: sin kernel
@@ -47,7 +47,7 @@ def test_sin_float16():
     sin(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sin_float32():
     """
     Feature: sin kernel
@@ -57,7 +57,7 @@ def test_sin_float32():
     sin(np.float32, loss=1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sin_float64():
     """
     Feature: sin kernel
@@ -67,7 +67,7 @@ def test_sin_float64():
     sin(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sin_complex64():
     """
     Feature: sin kernel
@@ -77,7 +77,7 @@ def test_sin_complex64():
     sin(np.complex64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sin_complex128():
     """
     Feature: sin kernel

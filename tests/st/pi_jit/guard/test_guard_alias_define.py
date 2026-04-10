@@ -22,7 +22,7 @@ from tests.st.pi_jit.share.utils import assert_graph_compile_status, pi_jit_with
 from tests.st.pi_jit.conftest import run_in_subprocess
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_alias_define_1():
     """
     Feature: Test guard for alias define.
@@ -47,7 +47,7 @@ def test_alias_define_1():
 
 
 @pytest.mark.skip(reason="side-effect infer is incorrect, can't build graph, fix later")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_alias_define_2():
     """
     Feature: Test guard for alias define.
@@ -73,7 +73,7 @@ def test_alias_define_2():
     assert_graph_compile_status(func, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_alias_define_3():
     """
     Feature: Test guard for alias define.
@@ -93,7 +93,7 @@ def test_alias_define_3():
     assert result == 3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_alias_define_4():
     """
     Feature: Test guard for alias define.
@@ -115,7 +115,7 @@ def test_alias_define_4():
     assert_graph_compile_status(func, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_alias_define_5():
     """
     Feature: Test guard for alias define.
@@ -160,7 +160,7 @@ def test_alias_define_5():
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_argument_of_function_type_v1():
     """
     Feature: Test guard for argument of function type.
@@ -197,7 +197,7 @@ def test_guard_for_argument_of_function_type_v1():
     assert_graph_compile_status(func, 0, 2, 2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_argument_of_function_type_v2():
     """
     Feature: Test guard for argument of function type.

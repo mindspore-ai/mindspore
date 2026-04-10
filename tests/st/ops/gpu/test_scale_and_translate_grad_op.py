@@ -31,7 +31,7 @@ class NetScaleAndTranslateGrad(nn.Cell):
         return self.sclae_and_translate_grad_fun(grads, original_image, scale, translation)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scale_and_translate_grad_graph():
     """
     Feature: test operations in result and output type
@@ -59,7 +59,7 @@ def test_scale_and_translate_grad_graph():
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scale_and_translate_grad_pynative():
     """
     Feature: test operations in result and output type

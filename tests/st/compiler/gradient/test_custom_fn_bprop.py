@@ -34,7 +34,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.75)
+        card_mark='onecard', mem_peak=1024.75)
 def test_custom_vjp_mul_add():
     """
     Features: Custom function bprop
@@ -61,7 +61,7 @@ def test_custom_vjp_mul_add():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.75)
+        card_mark='onecard', mem_peak=1024.75)
 def test_custom_vjp_inline_mul_add():
     """
     Features: Custom function bprop
@@ -93,7 +93,7 @@ def test_custom_vjp_inline_mul_add():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 def test_custom_vjp_with_no_bprop():
     """
     Features: Custom function bprop
@@ -114,7 +114,7 @@ def test_custom_vjp_with_no_bprop():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.25)
+        card_mark='onecard', mem_peak=1024.25)
 def test_custom_vjp_bprop_in_fn_2():
     """
     Features: Custom function bprop
@@ -151,8 +151,7 @@ def test_custom_vjp_bprop_in_fn_2():
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_custom_vjp_bprop_in_fn3():
     """
     Features: Custom function bprop
@@ -193,8 +192,7 @@ def test_custom_vjp_bprop_in_fn3():
     assert (grads[1].asnumpy() == np.array([[5, 5], [5, 5]]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_custom_vjp_one_input_bprop():
     """
     Features: Custom function bprop
@@ -218,8 +216,7 @@ def test_custom_vjp_one_input_bprop():
     assert (grads[0].asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_custom_vjp_inline_bprop_two_input():
     """
     Features: Custom function bprop
@@ -252,7 +249,7 @@ def test_custom_vjp_inline_bprop_two_input():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
+        card_mark='onecard', mem_peak=1024.02)
 def test_custom_vjp_inline_bprop_multi_input():
     """
     Features: Custom function bprop
@@ -308,7 +305,7 @@ def test_custom_vjp_inline_bprop_multi_input():
     assert len(grads) == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_vjp_fn_with_net():
     """
     Features: Custom function bprop
@@ -356,7 +353,7 @@ def test_custom_vjp_fn_with_net():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_vjp_forward_net_call_fn():
     """
     Feature: Custom function bprop

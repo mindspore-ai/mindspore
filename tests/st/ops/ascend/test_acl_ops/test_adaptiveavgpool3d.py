@@ -35,8 +35,7 @@ class Net(nn.Cell):
         return self.adaptive_avg_pool3d(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_adaptiveavgpool3d_acl():
     '''
     Feature: Test adaptive_avg_pool3d on ACL
@@ -53,7 +52,7 @@ def test_adaptiveavgpool3d_acl():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.5)
+        card_mark='onecard', mem_peak=1024.5)
 def test_adaptiveavgpool3d_acl_fp16():
     '''
     Feature: Test adaptive_avg_pool3d on ACL

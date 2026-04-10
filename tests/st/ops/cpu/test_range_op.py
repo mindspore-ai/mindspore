@@ -31,8 +31,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_int():
     op = nn.Range(0, 100, 10)
     op_wrapper = OpNetWrapper(op)
@@ -43,8 +42,7 @@ def test_int():
     assert np.allclose(outputs.asnumpy(), range(0, 100, 10))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_float():
     op = nn.Range(10., 100., 20.)
     op_wrapper = OpNetWrapper(op)
@@ -55,8 +53,7 @@ def test_float():
     assert np.allclose(outputs.asnumpy(), [10., 30., 50., 70., 90.])
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_range_op_int():
     """
     Feature: test Range op on CPU.
@@ -69,8 +66,7 @@ def test_range_op_int():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_range_op_float():
     """
     Feature: test Range op on CPU.
@@ -83,8 +79,7 @@ def test_range_op_float():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_range_op_int64():
     """
     Feature: test Range op on CPU.
@@ -97,8 +92,7 @@ def test_range_op_int64():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_range_op_float64():
     """
     Feature: test Range op on CPU.
@@ -111,8 +105,7 @@ def test_range_op_float64():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_range_op_int_reserve():
     """
     Feature: test Range op on CPU.
@@ -125,8 +118,7 @@ def test_range_op_int_reserve():
     assert np.array_equal(result.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_range_op_float_reserve():
     """
     Feature: test Range op on CPU.

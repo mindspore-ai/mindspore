@@ -108,7 +108,7 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_side_effect_control_flow_assign_depend_while_net():
     """
     Feature: Auto monad feature.
@@ -185,7 +185,7 @@ def read_file():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_updatestate_between_assigns():
     """
     Feature: Auto monad feature.
@@ -217,7 +217,7 @@ def test_updatestate_between_assigns():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_updatestate_between_maketuple_assign():
     """
     Feature: Auto monad feature.
@@ -251,7 +251,7 @@ def test_updatestate_between_maketuple_assign():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_updatestate_between_assign_maketuple():
     """
     Feature: Auto monad feature.
@@ -284,7 +284,7 @@ def test_updatestate_between_assign_maketuple():
         assert len(updatestate_num) == 1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cycle_parameter_binding():
     """
     Feature: Auto-monad side-effect finder.

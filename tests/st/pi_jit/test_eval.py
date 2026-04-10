@@ -20,14 +20,11 @@ from tests.mark_utils import arg_mark
 def func2(x):
     return x + x
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_catch_func():
     """
     Feature: Test eval global func

@@ -59,7 +59,7 @@ def choleskyinverse_pynative(upper, loss):
     assert np.allclose(choleskyinverse_output.asnumpy(), choleskyinverse_expect.numpy(), loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_choleskyinverse_graph_float():
     """
     Feature: ALL To ALL
@@ -69,7 +69,7 @@ def test_choleskyinverse_graph_float():
     choleskyinverse(True, loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_choleskyinverse_pynative_double():
     """
     Feature: ALL To ALL

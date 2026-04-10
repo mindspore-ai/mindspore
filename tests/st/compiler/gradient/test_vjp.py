@@ -34,7 +34,7 @@ class MultipleInputsOutputNet(nn.Cell):
         return 2*x, y**3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_single_input_graph(mode):
     """
@@ -54,7 +54,7 @@ def test_vjp_single_input_graph(mode):
 
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_multiple_inputs_default_v_graph(mode):
     """
@@ -82,8 +82,7 @@ def test_vjp_multiple_inputs_default_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_vjp_in2_out2_param():
     """
     Feature: vjp
@@ -152,7 +151,7 @@ def test_vjp_in2_out2_param():
         assert np.allclose(ms_grad.asnumpy(), tc_grad[0].detach().numpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_0d_no_sens(mode):
     """
@@ -174,7 +173,7 @@ def test_vjp_0d_no_sens(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_in2_out1_less_sens(mode):
     """
@@ -194,7 +193,7 @@ def test_vjp_in2_out1_less_sens(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_highgrad_in1_out1(mode):
     """
@@ -226,7 +225,7 @@ def test_vjp_highgrad_in1_out1(mode):
     assert (g == x * 6).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_highgrad_in2_out2(mode):
     """
@@ -261,7 +260,7 @@ def test_vjp_highgrad_in2_out2(mode):
     assert (g[1] == 6 * x).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_bprop_in1_out1(mode):
     """
@@ -285,7 +284,7 @@ def test_vjp_bprop_in1_out1(mode):
     assert (grad == x * 5).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_bprop_in2_out2(mode):
     """

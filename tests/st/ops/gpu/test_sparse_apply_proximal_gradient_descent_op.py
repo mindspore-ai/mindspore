@@ -33,7 +33,7 @@ class SparseApplyProximalGradientDescentNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_proximal_gradient_descent_float32():
     """
     Feature: test float32
@@ -53,7 +53,7 @@ def test_apply_proximal_gradient_descent_float32():
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_proximal_gradient_descent_float64():
     """
     Feature: test float64

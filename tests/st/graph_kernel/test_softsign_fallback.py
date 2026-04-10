@@ -52,7 +52,7 @@ def softsign_compare(shape, dtype):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_sofsign_pynative_mode():
     """
     Feature: softsign op expand fallback
@@ -64,7 +64,7 @@ def test_sofsign_pynative_mode():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_sofsign_graph_mode():
     """
     Feature: softsign op expand fallback

@@ -74,8 +74,7 @@ def test_eager_decode_dvpp():
     assert (img_resize == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=38.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=38.0)
 def test_eager_decode_dvpp_exception():
     """
     Feature: Decode op when Ascend910B with exception
@@ -208,8 +207,7 @@ def test_eager_resize_dvpp():
     assert img_resize_float_hw3.dtype == np.float32
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_resize_dvpp_exception():
     """
     Feature: Resize op when Ascend910B
@@ -304,7 +302,7 @@ def test_eager_resize_dvpp_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_eager_resize_dvpp_exception_with_910A():
     """
     Feature: Resize op when Ascend910A
@@ -473,8 +471,7 @@ def test_eager_normalize_dvpp():
     assert (check_result == img_normalize).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_normalize_dvpp_exception():
     """
     Feature: Normalize op when Ascend910B with exception
@@ -681,8 +678,7 @@ def test_eager_horizontal_flip_dvpp():
     assert (img_horizontal_flip == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_horizontal_flip_dvpp_exception():
     """
     Feature: Horizontal Flip op when Ascend910B
@@ -784,8 +780,7 @@ def test_eager_vertical_flip_dvpp():
     assert (img_vertical_flip == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_vertical_flip_dvpp_exception():
     """
     Feature: Vertical Flip op when Ascend910B
@@ -887,8 +882,7 @@ def test_eager_resize_crop_dvpp():
     assert (img_resize_crop == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_eager_resize_crop_dvpp_exception():
     """
     Feature: Resize crop op when Ascend910B
@@ -987,8 +981,7 @@ def test_eager_perspective_dvpp():
     assert (img_perspective == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_perspective_dvpp_exception():
     """
     Feature: Perspective op when Ascend910B
@@ -1147,8 +1140,7 @@ def test_eager_crop_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_crop_dvpp_exception():
     """
     Feature: Crop op on Ascend910B
@@ -1226,8 +1218,7 @@ def test_eager_pad_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_pad_dvpp_exception():
     """
     Feature: Pad op on Ascend910B
@@ -1299,8 +1290,7 @@ def test_eager_gaussian_blur_dvpp():
     assert img_transformed.shape == (300, 400)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_gaussian_blur_dvpp_exception():
     """
     Feature: Gaussian blur op on Ascend910B
@@ -1374,8 +1364,7 @@ def test_eager_affine_dvpp():
     assert img_transformed.shape == (300, 400)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_affine_dvpp_exception():
     """
     Feature: Affine op on Ascend910B
@@ -1446,8 +1435,7 @@ def test_eager_equalize_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_equalize_dvpp_exception():
     """
     Feature: Equalize op on Ascend910B
@@ -1526,8 +1514,7 @@ def test_eager_auto_contrast_dvpp():
     np.testing.assert_allclose(img_transformed, check_img, 0.005, 0.005)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_auto_contrast_dvpp_exception():
     """
     Feature: Equalize op on Ascend910B
@@ -1598,8 +1585,7 @@ def test_eager_adjust_sharpness_dvpp():
     assert img_transformed.shape == (2268, 4032, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_adjust_sharpness_dvpp_exception():
     """
     Feature: AdjustSharpness op on Ascend910B
@@ -1675,8 +1661,7 @@ def test_eager_convert_color_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_convert_color_dvpp_exception():
     """
     Feature: ConvertColor op on Ascend910B
@@ -1760,8 +1745,7 @@ def test_eager_erase_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_erase_dvpp_exception():
     """
     Feature: Erase op on Ascend910B
@@ -1837,8 +1821,7 @@ def test_eager_rotate_dvpp():
     assert img_transformed.shape == (2268, 4032, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_rotate_dvpp_exception():
     """
     Feature: Rotate op on Ascend910B
@@ -1912,8 +1895,7 @@ def test_eager_posterize_dvpp():
     assert (img_transformed == img_transformed2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_posterize_dvpp_exception():
     """
     Feature: Posterize op on Ascend910B
@@ -1977,8 +1959,7 @@ def test_eager_solarize_dvpp():
     assert (img_transformed == img_transformed2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_solarize_dvpp_exception():
     """
     Feature: Solarize op on Ascend910B
@@ -2042,8 +2023,7 @@ def test_eager_invert_dvpp():
     assert (img_transformed == img_transformed2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_eager_invert_dvpp_exception():
     """
     Feature: Invert op on Ascend910B
@@ -2109,8 +2089,7 @@ def test_resize_performance():
     assert (time.time() - s) < 5.0  # Probably around 4.43 seconds
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=124.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=124.0)
 def test_basic_transforms_dvpp():
     """
     Feature: Test DVPP basic transforms
@@ -2140,8 +2119,7 @@ def test_basic_transforms_dvpp():
     test_eager_invert_dvpp()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=54.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=54.0)
 def test_basic_transforms_dvpp_mix_cpu():
     """
     Feature: Mix DVPP & CPU basic transforms

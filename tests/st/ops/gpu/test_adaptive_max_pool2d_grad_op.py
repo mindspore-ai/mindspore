@@ -32,7 +32,7 @@ class NetAdaptiveMaxPool2DGrad(nn.Cell):
         return self.adaptive_max_pool2d_grad_fun(dy, x, argmax)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adaptive_max_pool2d_grad_fp32():
     """
     Feature: test adaptivemaxpool2dgrad op.
@@ -71,7 +71,7 @@ def test_adaptive_max_pool2d_grad_fp32():
     assert np.allclose(expect_result, output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adaptive_max_pool2d_grad_fp16():
     """
     Feature: test adaptivemaxpool2dgrad op.

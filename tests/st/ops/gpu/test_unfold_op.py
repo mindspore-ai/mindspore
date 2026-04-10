@@ -28,7 +28,7 @@ class UnfoldFuncNet(nn.Cell):
         return F.unfold(x, kernel_size=3, dilation=1, stride=1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_unfold_functional_api_modes(mode):
     """

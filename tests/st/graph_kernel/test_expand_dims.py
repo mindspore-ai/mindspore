@@ -43,7 +43,7 @@ def run_expand_dims(shape, dtype, axis):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_expand_dims_gpu():
     """
     Feature: todo

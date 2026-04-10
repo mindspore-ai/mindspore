@@ -153,8 +153,7 @@ class FusedAdamWeightDecayWithGlobalNorm(Optimizer):
         return optim_result
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="onecard",
-          essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="onecard")
 def test_fused_cast_adam_weight_decay():
     '''
     Feature: FusedCastAdamWeightDecay
@@ -180,8 +179,7 @@ def test_fused_cast_adam_weight_decay():
     assert np.all(loss[-1] < 0.1)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="onecard",
-          essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="onecard")
 def test_fused_cast_adam_weight_decay_with_memory_optimize():
     '''
     Feature: Integration of dynamic and static memory in the heterogeneous scene

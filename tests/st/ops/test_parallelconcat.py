@@ -33,8 +33,7 @@ class NetParallelConcat(nn.Cell):
         return self.parallelconcat(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_parallelconcat_1d():
     """
     Feature: ParallelConcat TEST.
@@ -54,8 +53,7 @@ def test_parallelconcat_1d():
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_parallelconcat_2d():
     """
     Feature: ParallelConcat TEST.

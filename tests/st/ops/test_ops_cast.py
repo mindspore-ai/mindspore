@@ -41,7 +41,7 @@ def cast_vmap_func(x, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=1036.95)
+          card_mark='onecard', mem_peak=1036.95)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_normal(context_mode):
     """
@@ -63,8 +63,7 @@ def test_ops_cast_normal(context_mode):
     assert output.asnumpy().shape == (1280,)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_bf16(context_mode):
     """
@@ -83,7 +82,7 @@ def test_ops_cast_bf16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1025.58)
+          card_mark='onecard', mem_peak=1025.58)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_vmap(context_mode):
     """
@@ -100,7 +99,7 @@ def test_ops_cast_vmap(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_forward_dynamic_shape(context_mode):
     """
@@ -124,7 +123,7 @@ def test_ops_cast_forward_dynamic_shape(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=337.55)
+          card_mark='onecard', mem_peak=337.55)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_forward_dynamic_rank(context_mode):
     """
@@ -148,7 +147,7 @@ def test_ops_cast_forward_dynamic_rank(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+          card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_backward_dynamic_shape(context_mode):
     """
@@ -172,7 +171,7 @@ def test_ops_cast_backward_dynamic_shape(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=168.85)
+          card_mark='onecard', mem_peak=168.85)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cast_backward_dynamic_rank(context_mode):
     """

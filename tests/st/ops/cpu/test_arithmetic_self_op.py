@@ -117,8 +117,7 @@ class SoftsignDynamicShapeNet(nn.Cell):
         return F.softsign(x_unique)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_square():
     x = np.array([1, 2, 3]).astype(np.int16)
     net = SquareNet()
@@ -163,8 +162,7 @@ def test_square():
     assert np.all(output.asnumpy() == expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_floor():
     net = FloorNet()
 
@@ -190,8 +188,7 @@ def test_floor():
     assert np.all(output.asnumpy() == expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rint():
     net = RintNet()
     prop = 100 if np.random.random() > 0.5 else -100
@@ -211,8 +208,7 @@ def test_rint():
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_round():
     """
     Feature: template
@@ -237,8 +233,7 @@ def test_round():
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype, tol',
                          [(np.int32, 1.0e-7), (np.float16, 1.0e-5), (np.float32, 1.0e-5), (np.float64, 1.0e-7)])
@@ -263,8 +258,7 @@ def test_reciprocal(shape, dtype, tol):
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype, tol',
                          [(np.int32, 1.0e-4), (np.int64, 1.0e-4), (np.float16, 1.0e-3), (np.float32, 1.0e-4),
@@ -287,8 +281,7 @@ def test_inv(shape, dtype, tol):
     assert np.allclose(output.asnumpy(), expect_output, atol=tol, rtol=tol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_vmap(mode):
     """
@@ -316,8 +309,7 @@ def test_inv_vmap(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_dynamic_shape(mode):
     """
@@ -334,8 +326,7 @@ def test_inv_dynamic_shape(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64])
 def test_invert(shape, dtype):
@@ -352,8 +343,7 @@ def test_invert(shape, dtype):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_invert_vmap(mode):
     """
@@ -379,8 +369,7 @@ def test_invert_vmap(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_invert_dynamic_shape(mode):
     """
@@ -397,8 +386,7 @@ def test_invert_dynamic_shape(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4), (np.float64, 1.0e-5)])
 def test_softsign(shape, dtype, tol):
@@ -417,8 +405,7 @@ def test_softsign(shape, dtype, tol):
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_softsign_vmap(mode):
     """
@@ -453,8 +440,7 @@ def test_softsign_vmap(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_softsign_dynamic_shape(mode):
     """
@@ -471,8 +457,7 @@ def test_softsign_dynamic_shape(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_identity_pynative():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     net = IdentityNet()
@@ -550,8 +535,7 @@ def test_identity_pynative():
     assert id(input_tensor) != id(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_identity_graph():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     net = IdentityNet()

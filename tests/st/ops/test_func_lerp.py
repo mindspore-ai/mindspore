@@ -163,8 +163,7 @@ def set_mode(mode):
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
-          essential_mark="essential", mem_peak=2.00)
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", mem_peak=2.00)
 @pytest.mark.parametrize("context_mode", ["PYNATIVE_MODE", "GRAPH_MODE"])
 def test_mint_lerp_normal(context_mode):
     """
@@ -194,11 +193,9 @@ def test_mint_lerp_normal(context_mode):
     module.grad_cmp()
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 def test_mint_lerp_dynamic_shape():
     """

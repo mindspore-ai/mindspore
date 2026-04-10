@@ -34,7 +34,7 @@ class NetHypot(nn.Cell):
         return self.hypot(x1, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_hypot_fp32():
     """
     Feature: Hypot
@@ -51,7 +51,7 @@ def test_hypot_fp32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_hypot_fp64():
     """
     Feature: Hypot

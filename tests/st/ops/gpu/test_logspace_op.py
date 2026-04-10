@@ -33,7 +33,7 @@ class LogSpaceNet(Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log_space():
     """
     Feature: Create a one-dimensional tensor of size steps whose values are spaced from base**start to base**end,

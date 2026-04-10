@@ -50,7 +50,7 @@ def dyn_grad_func(dtype=np.float16, is_dynamic_rank=False):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_stridedslicegrad_dynamic_shape():
     """
     Feature: Test the bprop process of StridedSliceGrad in PyNative mode with dynamic shape inputs
@@ -62,7 +62,7 @@ def test_stridedslicegrad_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 def test_stridedslicegrad_dynamic_rank():
     """
     Feature: Test the bprop process of StridedSliceGrad in PyNative mode with dynamic rank inputs

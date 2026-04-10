@@ -22,7 +22,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_pop():
     """
     Feature: dict get.

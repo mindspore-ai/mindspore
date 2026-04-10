@@ -37,7 +37,7 @@ def search_sorted_pynative(loss):
     assert np.allclose(output.asnumpy(), expect, loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_search_sorted_graph_int32():
     """
     Feature: ALL To ALL
@@ -47,7 +47,7 @@ def test_search_sorted_graph_int32():
     search_sorted(loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_search_sorted_pynative_int32():
     """
     Feature: ALL To ALL

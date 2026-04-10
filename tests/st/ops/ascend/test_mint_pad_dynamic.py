@@ -36,7 +36,7 @@ def pad_replicate_func(x, padding):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_ops_pad_constant_dynamic():
     """
     Feature: pyboost function.
@@ -59,8 +59,7 @@ def test_ops_pad_constant_dynamic():
                          'disable_nontensor_dynamic_type': 'MUTABLE_LEN'})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_ops_pad_reflect_1d_dynamic():
     """
     Feature: pyboost function.
@@ -82,7 +81,7 @@ def test_ops_pad_reflect_1d_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_ops_pad_reflect_2d_dynamic():
     """
     Feature: pyboost function.
@@ -104,7 +103,7 @@ def test_ops_pad_reflect_2d_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_ops_pad_reflect_3d_dynamic():
     """
     Feature: pyboost function.
@@ -126,7 +125,7 @@ def test_ops_pad_reflect_3d_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_ops_pad_replicate_1d_dynamic():
     """
     Feature: pyboost function.
@@ -147,8 +146,7 @@ def test_ops_pad_replicate_1d_dynamic():
                          'disable_nontensor_dynamic_type': 'MUTABLE_LEN'})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_ops_pad_replicate_2d_dynamic():
     """
     Feature: pyboost function.
@@ -170,7 +168,7 @@ def test_ops_pad_replicate_2d_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_ops_pad_replicate_3d_dynamic():
     """
     Feature: pyboost function.

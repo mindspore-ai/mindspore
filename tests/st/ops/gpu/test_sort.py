@@ -314,7 +314,7 @@ def dynamic_sort_3d(descending, nptype):
         np.testing.assert_array_equal(indices.asnumpy(), expected_indices)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("descending", [True, False])
 @pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, np.float16, np.float32,
                                     np.float64])
@@ -327,7 +327,7 @@ def test_sort1d(descending, nptype):
     sort_1d(descending, nptype)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("descending", [True, False])
 @pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, np.float16, np.float32,
                                     np.float64])
@@ -340,7 +340,7 @@ def test_sort3d(descending, nptype):
     sort_3d(descending, nptype)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("descending", [True, False])
 @pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, np.float16, np.float32,
                                     np.float64])
@@ -353,7 +353,7 @@ def test_gpu_dynamic_sort3d(descending, nptype):
     dynamic_sort_3d(descending, nptype)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sort_tensor_api_modes(mode):
     """

@@ -29,8 +29,7 @@ class TestAddV2(nn.Cell):
         return self.ops(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_mul_dynamic_shape():
     """
     Feature: AddV2 Grad DynamicShape.
@@ -45,8 +44,7 @@ def test_mul_dynamic_shape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_mul_dynamic_rank():
     """
     Feature: AddV2 Grad DynamicShape.

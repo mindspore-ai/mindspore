@@ -33,7 +33,7 @@ class NetUpperBound(nn.Cell):
         return self.upperbound(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_upperbound_2d_input_int32_output_int32():
     """
     Feature: UpperBound gpu TEST.
@@ -51,7 +51,7 @@ def test_upperbound_2d_input_int32_output_int32():
     assert (z_ms.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_upperbound_2d_input_float16_output_int64():
     """
     Feature: UpperBound gpu TEST.

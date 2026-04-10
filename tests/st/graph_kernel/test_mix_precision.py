@@ -172,8 +172,7 @@ def run_fuse():
     np.testing.assert_allclose(output, expect, 0, 0)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_mix_precision():
     """
     Feature: test graph kernel mix precision data type
@@ -205,8 +204,7 @@ def test_mix_precision():
     run_select("Select", float_types)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_mix_precision_fuse():
     """
     Feature: test graph kernel mix precision data type

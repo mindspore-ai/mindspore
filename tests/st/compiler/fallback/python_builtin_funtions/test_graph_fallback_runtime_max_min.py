@@ -20,8 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_runtime_max():
     """
     Feature: JIT Fallback
@@ -37,8 +36,7 @@ def test_fallback_runtime_max():
     assert out == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_runtime_min():
     """
     Feature: JIT Fallback
@@ -55,8 +53,7 @@ def test_fallback_runtime_min():
 
 
 @pytest.mark.skip(reason="Invalid call node")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_runtime_max_min():
     """
     Feature: JIT Fallback
@@ -74,8 +71,7 @@ def test_fallback_runtime_max_min():
     assert out[0] == 3, out[1] == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=8.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=8.01)
 def test_fallback_runtime_max_min_scalar_tensor():
     """
     Feature: JIT Fallback
@@ -91,8 +87,7 @@ def test_fallback_runtime_max_min_scalar_tensor():
     assert out == (2, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_fallback_runtime_max_scalar_asnumpy():
     """
     Feature: JIT Fallback

@@ -30,7 +30,7 @@ class NetCropAndResizeGradImage(nn.Cell):
         return self.op(grads, boxes, box_index, image_size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("input_type", [np.float32, np.float64])
 @pytest.mark.parametrize("output_type", [np.float16, np.float32, np.float64])
 def test_crop_and_resize_grad_image_bilinear(input_type, output_type):
@@ -67,7 +67,7 @@ def test_crop_and_resize_grad_image_bilinear(input_type, output_type):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("input_type", [np.float32, np.float64])
 @pytest.mark.parametrize("output_type", [np.float16, np.float32, np.float64])
 def test_crop_and_resize_grad_image_nearest(input_type, output_type):

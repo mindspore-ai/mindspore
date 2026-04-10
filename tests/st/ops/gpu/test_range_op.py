@@ -35,7 +35,7 @@ class RangeNet(nn.Cell):
         return self.range(start, limit, delta)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_precision_end_equals_last_element():
     range_net = RangeNet(100)
     ms_out = range_net(Tensor(1000.04, mstype.float32),
@@ -66,7 +66,7 @@ def test_range_precision_end_equals_last_element():
     np.testing.assert_allclose(ms_out, np_expected, rtol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_int():
     range_net = RangeNet()
     ms_out = range_net(Tensor(2, mstype.int32), Tensor(5, mstype.int32), Tensor(1, mstype.int32)).asnumpy()
@@ -89,7 +89,7 @@ def test_range_int():
     np.testing.assert_array_equal(ms_out, np_expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_float():
     range_net = RangeNet()
     ms_out = range_net(Tensor(2.3, mstype.float32), Tensor(5.5, mstype.float32), Tensor(1.2, mstype.float32)).asnumpy()
@@ -112,7 +112,7 @@ def test_range_float():
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_int64():
     """
     Feature: test Range op on GPU.
@@ -140,7 +140,7 @@ def test_range_int64():
     np.testing.assert_array_equal(ms_out, np_expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_float64():
     """
     Feature: test Range op on GPU.
@@ -168,7 +168,7 @@ def test_range_float64():
     np.testing.assert_array_almost_equal(ms_out, np_expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_invalid_max_output_length():
     with pytest.raises(ValueError):
         range1 = P.Range(0)
@@ -182,7 +182,7 @@ def test_range_invalid_max_output_length():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_invalid_input():
     with pytest.raises(ValueError) as info:
         range_net = RangeNet()
@@ -209,7 +209,7 @@ def test_range_invalid_input():
     assert "delta cannot be negative when limit > start" in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_functional():
     """
     Feature: functional range.
@@ -229,7 +229,7 @@ def range_fn(x, y, z, a):
 
 
 @pytest.mark.skip(reason="vmap not support dynamic rank input.")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_vmap():
     """
     Feature: Ops range with vmap.
@@ -245,7 +245,7 @@ def test_range_vmap():
     assert np.all(output.asnumpy() == np.array([[1, 5, 9], [1, 5, 9]]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_range_vmap_wrong_in_axis():
     """
     Feature: Ops range with vmap.

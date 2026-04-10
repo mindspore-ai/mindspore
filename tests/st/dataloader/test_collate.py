@@ -91,7 +91,7 @@ class MutableSequenceWithExtraProperty(collections.abc.MutableSequence):
 class TestDefaultConvert:
     """Test default_convert function."""
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -112,7 +112,7 @@ class TestDefaultConvert:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(data.asnumpy(), result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -133,7 +133,7 @@ class TestDefaultConvert:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(data, result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("data", (np.str_("abc"), np.bytes_(b"0xffff")))
     def test_convert_unsupported_numpy_scalar(self, data):
         """
@@ -145,7 +145,7 @@ class TestDefaultConvert:
         assert isinstance(result, type(data))
         assert result == data
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -166,7 +166,7 @@ class TestDefaultConvert:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(data, result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -185,7 +185,7 @@ class TestDefaultConvert:
         assert isinstance(result, type(data))
         np.testing.assert_equal(data, result)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -213,7 +213,7 @@ class TestDefaultConvert:
             else:
                 assert value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -236,7 +236,7 @@ class TestDefaultConvert:
             assert isinstance(value, ms.Tensor)
             np.testing.assert_equal(data[key], value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_convert_mapping_not_support_copy(self, monkeypatch):
         """
         Feature: Test default_convert function.
@@ -256,7 +256,7 @@ class TestDefaultConvert:
             assert isinstance(value, ms.Tensor)
             np.testing.assert_equal(data[key], value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -285,7 +285,7 @@ class TestDefaultConvert:
             else:
                 assert result_value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -310,7 +310,7 @@ class TestDefaultConvert:
             else:
                 assert result_value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -336,7 +336,7 @@ class TestDefaultConvert:
             else:
                 assert result_value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -361,7 +361,7 @@ class TestDefaultConvert:
             else:
                 assert result_value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -386,7 +386,7 @@ class TestDefaultConvert:
             else:
                 assert result_value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("data", (0, -1.5, True, 4 + 3j, "abc", b"abc", {0, 1, 2}, object()))
     def test_convert_unsupported_type(self, data):
         """
@@ -402,7 +402,7 @@ class TestDefaultConvert:
 class TestDefaultCollate:
     """Test default_collate function."""
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -428,7 +428,7 @@ class TestDefaultCollate:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(ms.Tensor(data).asnumpy(), result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -454,7 +454,7 @@ class TestDefaultCollate:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(ms.Tensor(data).asnumpy(), result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -475,7 +475,7 @@ class TestDefaultCollate:
         ):
             default_collate(data)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -501,7 +501,7 @@ class TestDefaultCollate:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(ms.Tensor(data).asnumpy(), result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -520,7 +520,7 @@ class TestDefaultCollate:
         assert result.dtype == ms.float64
         np.testing.assert_allclose(ms.Tensor(data).asnumpy(), result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("data", ([1, -2, 3],))
     def test_collate_int(self, data):
         """
@@ -532,7 +532,7 @@ class TestDefaultCollate:
         assert isinstance(result, ms.Tensor)
         np.testing.assert_equal(ms.Tensor(data).asnumpy(), result.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -555,7 +555,7 @@ class TestDefaultCollate:
 class TestCollate:
     """Test collate function."""
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("data", ([1, 2, 3],))
     def test_collate_without_collate_fn_map(self, data):
         """
@@ -566,7 +566,7 @@ class TestCollate:
         with pytest.raises(TypeError, match=f"Cannot find the appropriate collate function for type {type(data[0])}"):
             collate(data, collate_fn_map=None)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -596,7 +596,7 @@ class TestCollate:
             assert isinstance(result[key], ms.Tensor)
             np.testing.assert_equal(ms.Tensor([d[key] for d in data]).asnumpy(), result[key].asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -631,7 +631,7 @@ class TestCollate:
             assert isinstance(result[key], ms.Tensor)
             np.testing.assert_equal(ms.Tensor([d[key] for d in data]).asnumpy(), result[key].asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_collate_mapping_not_support_copy(self, monkeypatch):
         """
         Feature: Test collate function.
@@ -654,7 +654,7 @@ class TestCollate:
             assert isinstance(value, ms.Tensor)
             np.testing.assert_equal(ms.Tensor([d[key] for d in data]).asnumpy(), value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -684,7 +684,7 @@ class TestCollate:
             assert isinstance(result_value, ms.Tensor)
             np.testing.assert_equal(result_value.asnumpy(), expected_value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -711,7 +711,7 @@ class TestCollate:
             else:
                 assert value == expected_value
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("data", ([(0, 1, 2), (3, 4, 5, 6)],))
     def test_collate_tuple_with_different_length(self, data):
         """
@@ -722,7 +722,7 @@ class TestCollate:
         with pytest.raises(RuntimeError, match="Each element in list of batch must be of equal size"):
             collate(data, collate_fn_map=default_collate_fn_map)
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -750,7 +750,7 @@ class TestCollate:
             assert isinstance(value, type(expected_value))
             np.testing.assert_equal(value.asnumpy(), expected_value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -778,7 +778,7 @@ class TestCollate:
             assert isinstance(value, type(expected_value))
             np.testing.assert_equal(value.asnumpy(), expected_value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (
@@ -800,7 +800,7 @@ class TestCollate:
             assert isinstance(value, type(expected_value))
             np.testing.assert_equal(value.asnumpy(), expected_value.asnumpy())
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize(
         "data",
         (

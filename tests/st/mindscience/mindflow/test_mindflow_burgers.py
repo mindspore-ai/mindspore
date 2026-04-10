@@ -45,8 +45,7 @@ class Net(nn.Cell):
         return self.layers(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.67)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.67)
 def test_mindflow_burgers_pinns():
     """
     Feature: burgers pinns

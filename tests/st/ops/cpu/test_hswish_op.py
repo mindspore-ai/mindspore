@@ -48,8 +48,7 @@ class Net(nn.Cell):
         return self.HSwish(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net():
     """
     Feature: Test HSwish.
@@ -67,8 +66,7 @@ def test_net():
     print(output[0].asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_hswish_cpu_dynamic_shape():
     """
     Feature: test HSwish op in cpu.
@@ -84,8 +82,7 @@ def test_hswish_cpu_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_hswish_grad_cpu_dynamic_shape():
     """
     Feature: test HSwishGrad op in cpu.

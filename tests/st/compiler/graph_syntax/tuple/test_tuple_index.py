@@ -29,7 +29,7 @@ from tests.st.pi_jit.share.grad import compute_grad_of_net_inputs
 
 
 @pytest.mark.skip(reason="No support yet.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tuple_index_is_tensor_in_control_flow():
     """
     Feature: Support tuple while the index is Tensor.
@@ -52,7 +52,7 @@ def test_tuple_index_is_tensor_in_control_flow():
     assert ret == 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_from_init_with_control_flow():
     """
     Feature: Tuple negative index from init with control flow.
@@ -107,7 +107,7 @@ def test_tuple_minus_index_from_init_with_control_flow():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_in_construct_with_control_flow():
     """
     Feature: Tuple negative index defined in construct with control flow.
@@ -160,7 +160,7 @@ def test_tuple_minus_index_in_construct_with_control_flow():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_from_construct_input_with_control_flow():
     """
     Feature: Tuple negative index from construct input with control flow.
@@ -216,7 +216,7 @@ def test_tuple_minus_index_from_construct_input_with_control_flow():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_switch_layer_with_ops():
     """
     Feature: Switch layer scenario with tuple of ops and tensor scalar index.
@@ -262,7 +262,7 @@ def test_tuple_minus_index_switch_layer_with_ops():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_switch_layer_with_custom_cells():
     """
     Feature: Switch layer scenario with tuple of custom cells and tensor scalar index.
@@ -331,7 +331,7 @@ def test_tuple_minus_index_switch_layer_with_custom_cells():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_out_of_range():
     """
     Feature: Tuple negative index out of range.
@@ -356,7 +356,7 @@ def test_tuple_minus_index_out_of_range():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_from_custom_cell_output():
     """
     Feature: Tuple negative index from custom cell output.
@@ -416,7 +416,7 @@ def test_tuple_minus_index_from_custom_cell_output():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_slice_from_custom_cell_output_with_control_flow():
     """
     Feature: Tuple negative index slice from custom cell output with control flow.
@@ -477,7 +477,7 @@ def test_tuple_minus_index_slice_from_custom_cell_output_with_control_flow():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_from_batchnorm_output():
     """
     Feature: Tuple negative index from BatchNorm multi-output operator.
@@ -529,7 +529,7 @@ def test_tuple_minus_index_from_batchnorm_output():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_slice_from_split_output():
     """
     Feature: Tuple negative index slice from Split multi-output operator.
@@ -573,7 +573,7 @@ def test_tuple_minus_index_slice_from_split_output():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tuple_minus_index_from_batchnorm_split_with_control_flow():
     """
     Feature: Tuple negative index from BatchNorm and Split with control flow.
@@ -631,7 +631,7 @@ def test_tuple_minus_index_from_batchnorm_split_with_control_flow():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_index_with_grad_operation():
     """
     Feature: Tuple index with GradOperation.
@@ -668,7 +668,7 @@ def test_tuple_index_with_grad_operation():
     assert_equal(pynative_grad_output, jit_grad_output)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_index_assignment_error():
     """
     Feature: Tuple index assignment error.

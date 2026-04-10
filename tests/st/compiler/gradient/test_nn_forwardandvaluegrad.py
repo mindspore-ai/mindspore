@@ -251,7 +251,7 @@ class GradFactory:
         compare_result(ms_out, pt_out, self.get_all, self.get_by_list)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("sens_param", [False, True])
 @pytest.mark.parametrize("get_by_list", [False])
 @pytest.mark.parametrize("get_all", [False, True])
@@ -296,7 +296,7 @@ def test_forward_value_and_grad_003(get_all, get_by_list, sens_param):
     fact.first_forward_second_backnet(first_input_2, second_input_2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_value_and_grad_008():
     """
     Feature: Test value and grad under graph mode
@@ -321,7 +321,7 @@ def test_forward_value_and_grad_008():
     assert np.all(out[1].asnumpy() == 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("get_all, get_by_list, sens_param",
                          [(True, False, False), (False, False, False)])
 def test_forward_value_and_grad_022(get_all, get_by_list, sens_param):
@@ -358,7 +358,7 @@ def test_forward_value_and_grad_022(get_all, get_by_list, sens_param):
     fact.first_forward_second_backnet(first_input, second_input)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_value_and_grad_023():
     """
     Feature: Test value and grad under graph mode
@@ -378,7 +378,7 @@ def test_forward_value_and_grad_023():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_value_and_grad_034():
     """
     Feature: Test value and grad under graph mode
@@ -404,7 +404,7 @@ def test_forward_value_and_grad_034():
     assert out[1] == ()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_value_and_grad_040():
     """
     Feature: Test value and grad under graph mode
@@ -458,7 +458,7 @@ def test_forward_value_and_grad_040():
     fact.first_forward_second_backnet(first_input, second_input)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_forward_value_and_grad_058():
     """
     Feature: Test value and grad under graph mode
@@ -504,7 +504,7 @@ def test_forward_value_and_grad_058():
     assert (out_me[1][0].asnumpy() == out_me2[0].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("sens_param", [True, False])
 @pytest.mark.parametrize("get_by_list", [True, False])
 @pytest.mark.parametrize("get_all", [True, False])

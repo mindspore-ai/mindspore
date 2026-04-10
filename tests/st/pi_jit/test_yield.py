@@ -21,7 +21,7 @@ from mindspore._c_expression import get_code_extra
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3,7), reason="not support py37 setup loop bytecode")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_yield_case_1():
     """
     Feature: Test yield
@@ -50,7 +50,7 @@ def test_yield_case_1():
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3,7), reason="not support py37 setup loop bytecode")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_yield_case_2():
     """
     Feature: Test yield from
@@ -77,7 +77,7 @@ def test_yield_case_2():
 
 
 @pytest.mark.skipif(sys.version_info[:2] == (3,7), reason="not support py37 setup loop bytecode")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_yield_case_3():
     """
     Feature: Test yield from
@@ -103,7 +103,7 @@ def test_yield_case_3():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_yield_case_4():
     """
     Feature: Test yield from

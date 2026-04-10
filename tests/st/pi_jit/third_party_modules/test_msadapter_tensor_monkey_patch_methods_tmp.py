@@ -51,7 +51,7 @@ def view(self, *shape):
 
 
 @pytest.mark.skip(reason="will support it later")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_msadapter_and_mindspeed_Tensor_view_monkey_patch():
     """
     Feature: Test msadapter+mindspeed Tensor.view monkey patch method.

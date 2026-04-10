@@ -55,7 +55,7 @@ class Pad(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_constantND(context_mode):
@@ -89,7 +89,7 @@ def test_ops_pad_forward_constantND(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_reflect1d(context_mode):
@@ -108,7 +108,7 @@ def test_ops_pad_forward_reflect1d(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_reflect2d(context_mode):
@@ -126,8 +126,7 @@ def test_ops_pad_forward_reflect2d(context_mode):
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_reflect3d(context_mode):
@@ -145,8 +144,7 @@ def test_ops_pad_forward_reflect3d(context_mode):
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_replicate1d(context_mode):
@@ -165,7 +163,7 @@ def test_ops_pad_forward_replicate1d(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_replicate2d(context_mode):
@@ -183,8 +181,7 @@ def test_ops_pad_forward_replicate2d(context_mode):
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_forward_replicate3d(context_mode):
@@ -203,7 +200,7 @@ def test_ops_pad_forward_replicate3d(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_constantNd_forward_dynamic_shape(context_mode):
@@ -232,7 +229,7 @@ def test_ops_pad_constantNd_forward_dynamic_shape(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_constantNd_forward_dynamic_rank(context_mode):
@@ -260,8 +257,7 @@ def test_ops_pad_constantNd_forward_dynamic_rank(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_reflect1d_forward_dynamic_shape(context_mode):
@@ -289,8 +285,7 @@ def test_ops_pad_reflect1d_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_reflect2d_forward_dynamic_shape(context_mode):
@@ -318,8 +313,7 @@ def test_ops_pad_reflect2d_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_reflect3d_forward_dynamic_shape(context_mode):
@@ -348,7 +342,7 @@ def test_ops_pad_reflect3d_forward_dynamic_shape(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_reflect1d_forward_dynamic_rank(context_mode):
@@ -370,7 +364,7 @@ def test_ops_pad_reflect1d_forward_dynamic_rank(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_reflect2d_forward_dynamic_rank(context_mode):
@@ -391,8 +385,7 @@ def test_ops_pad_reflect2d_forward_dynamic_rank(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_reflect3d_forward_dynamic_rank(context_mode):
@@ -414,7 +407,7 @@ def test_ops_pad_reflect3d_forward_dynamic_rank(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_replicate1d_forward_dynamic_shape(context_mode):
@@ -443,7 +436,7 @@ def test_ops_pad_replicate1d_forward_dynamic_shape(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_replicate2d_forward_dynamic_shape(context_mode):
@@ -471,8 +464,7 @@ def test_ops_pad_replicate2d_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_replicate3d_forward_dynamic_shape(context_mode):
@@ -500,8 +492,7 @@ def test_ops_pad_replicate3d_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_replicate1d_forward_dynamic_rank(context_mode):
@@ -522,8 +513,7 @@ def test_ops_pad_replicate1d_forward_dynamic_rank(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_replicate2d_forward_dynamic_rank(context_mode):
@@ -545,7 +535,7 @@ def test_ops_pad_replicate2d_forward_dynamic_rank(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_pad_replicate3d_forward_dynamic_rank(context_mode):
@@ -567,7 +557,7 @@ def test_ops_pad_replicate3d_forward_dynamic_rank(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_pad_backward_constantND(context_mode):
     """
@@ -590,8 +580,7 @@ def test_ops_pad_backward_constantND(context_mode):
     np.testing.assert_array_equal(input_grad.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_pad_backward_reflect1d(context_mode):
     """
@@ -614,8 +603,7 @@ def test_ops_pad_backward_reflect1d(context_mode):
     np.testing.assert_array_equal(input_grad.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_pad_backward_reflect2d(context_mode):
     """
@@ -638,8 +626,7 @@ def test_ops_pad_backward_reflect2d(context_mode):
     np.testing.assert_array_equal(input_grad.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_pad_backward_replicate1d(context_mode):
     """
@@ -662,8 +649,7 @@ def test_ops_pad_backward_replicate1d(context_mode):
     np.testing.assert_array_equal(input_grad.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_pad_backward_replicate2d(context_mode):
     """
@@ -687,7 +673,7 @@ def test_ops_pad_backward_replicate2d(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_pad_backward_replicate3d(context_mode):
     """

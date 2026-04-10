@@ -93,7 +93,7 @@ def get_nc_inputs(np_type):
     return x, scale, dy, dout_dx, dout_dscale, dout_dbias
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nhwc():
     """
     Feature: test BatchNormGradGrad
@@ -120,7 +120,7 @@ def test_batchnorm_grad_grad_training_nhwc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nchw():
     """
     Feature: test BatchNormGradGrad
@@ -147,7 +147,7 @@ def test_batchnorm_grad_grad_training_nchw():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_inference_nhwc():
     """
     Feature: test BatchNormGradGrad
@@ -174,7 +174,7 @@ def test_batchnorm_grad_grad_inference_nhwc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_inference_nchw():
     """
     Feature: test BatchNormGradGrad
@@ -201,7 +201,7 @@ def test_batchnorm_grad_grad_inference_nchw():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nc():
     """
     Feature: test BatchNormGradGrad
@@ -224,7 +224,7 @@ def test_batchnorm_grad_grad_training_nc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_inference_nc():
     """
     Feature: test BatchNormGradGrad
@@ -247,7 +247,7 @@ def test_batchnorm_grad_grad_inference_nc():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nchw_2():
     """
     Feature: test BatchNormGradGrad
@@ -298,7 +298,7 @@ def test_batchnorm_grad_grad_training_nchw_2():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nhwc_2():
     """
     Feature: test BatchNormGradGrad
@@ -341,7 +341,7 @@ def test_batchnorm_grad_grad_training_nhwc_2():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nchw_dynamic_shape():
     """
     Feature: test BatchNormGradGrad
@@ -398,7 +398,7 @@ def test_batchnorm_grad_grad_training_nchw_dynamic_shape():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nhwc_dynamic_shape():
     """
     Feature: test BatchNormGradGrad
@@ -447,7 +447,7 @@ def test_batchnorm_grad_grad_training_nhwc_dynamic_shape():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_training_nchw_vmap():
     """
     Feature: test BatchNormGradGrad
@@ -484,7 +484,7 @@ def test_batchnorm_grad_grad_training_nchw_vmap():
         assert np.allclose(dscale.asnumpy(), expect_dscale)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_grad_grad_inference_nhwc_vmap():
     """
     Feature: test BatchNormGradGrad

@@ -41,8 +41,7 @@ class Net(nn.Cell):
         return self.apply_adagrad_v2(self.var, self.accum, lr, grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_apply_adagrad_v2():
     """
     Feature: Test the ApplyAdagradV2 CPU operation
@@ -79,8 +78,7 @@ class VmapNet(nn.Cell):
         return self.apply_gradient_descent(var, accum, lr, grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_vmap_apply_adagrad_v2():
     """
     Feature: ApplyAdagradV2 cpu op vmap.

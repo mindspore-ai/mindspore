@@ -21,7 +21,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.75)
+        level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_momentum_dynamic_weight_decay(mode):
     """
@@ -39,7 +39,7 @@ def test_momentum_dynamic_weight_decay(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_momentum_dynamic_weight_decay_group(mode):
     """
@@ -69,7 +69,7 @@ def test_momentum_dynamic_weight_decay_group(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamweightdecay_dynamic_weight_decay(mode):
     """
@@ -86,7 +86,7 @@ def test_adamweightdecay_dynamic_weight_decay(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamweightdecay_dynamic_weight_decay_group(mode):
     """
@@ -115,8 +115,7 @@ def test_adamweightdecay_dynamic_weight_decay_group(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_lamb_dynamic_weight_decay_graph_group(mode):
     """
@@ -145,8 +144,7 @@ def test_lamb_dynamic_weight_decay_graph_group(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_lars_dynamic_weight_decay(mode):
     """
@@ -165,8 +163,7 @@ def test_lars_dynamic_weight_decay(mode):
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.03)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_lars_dynamic_weight_decay_group(mode):
     """

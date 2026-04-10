@@ -89,8 +89,7 @@ class HighGradNet1(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_nested_highgrad_net1():
     """
     Feature: Test nest high grad feature
@@ -127,8 +126,7 @@ class HighGradNet2(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_nested_highgrad_net2():
     """
     Feature: Test nest high grad feature
@@ -163,8 +161,7 @@ class HighGradNet3(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_nested_highgrad_net3():
     """
     Feature: Test nest high grad feature
@@ -199,8 +196,7 @@ class HighGradNetJit(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_nested_highgrad_jit_net():
     """
     Feature: Test nest high grad feature
@@ -240,8 +236,7 @@ class HighGradNetJitWithParam(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_nested_highgrad_jit_net_param():
     """
     Feature: Test nest high grad feature
@@ -281,7 +276,6 @@ class HighGradNetWithInplace(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=4.00)
 def test_nested_highgrad_with_inplace():
     """
@@ -298,8 +292,7 @@ def test_nested_highgrad_with_inplace():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_highgrad_one_input_sec_grad():
     """
     Feature: Test high grad feature
@@ -316,8 +309,7 @@ def test_highgrad_one_input_sec_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_highgrad_one_input_third_grad():
     """
     Feature: Test high grad feature
@@ -333,8 +325,7 @@ def test_highgrad_one_input_third_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_highgrad_two_input_sec_grad():
     """
     Feature: Test high grad feature
@@ -360,8 +351,7 @@ def test_highgrad_two_input_sec_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_pynative_ms_function_highgrad_one_input_sec_grad():
     """
     Feature: Test ms_function high grad feature
@@ -378,8 +368,7 @@ def test_pynative_ms_function_highgrad_one_input_sec_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_pynative_ms_function_highgrad_one_input_third_grad():
     """
     Feature: Test ms_function high grad feature
@@ -401,8 +390,7 @@ def test_pynative_ms_function_highgrad_one_input_third_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_pynative_ms_function_highgrad_outer_jit():
     """
     Feature: Test ms_function high grad feature
@@ -429,8 +417,7 @@ def test_pynative_ms_function_highgrad_outer_jit():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_exception_handler():
     """
     Feature: Test exception handle correctly after raise exception

@@ -23,7 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_joinedstr_basic_variable_gpu():
     """
     Feature: Support joinedstr.
@@ -44,8 +44,7 @@ def test_joinedstr_basic_variable_gpu():
     assert out == f"res: {result_tensor}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_joinedstr_basic_variable_ascend():
     """
     Feature: Support joinedstr.
@@ -67,8 +66,7 @@ def test_joinedstr_basic_variable_ascend():
 
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_joinedstr_basic_variable_2():
     """
     Feature: Support joinedstr.
@@ -88,8 +86,7 @@ def test_joinedstr_basic_variable_2():
     assert str(out) == "[1 2 3 4 5]"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_joinedstr_out_tensor():
     """
     Feature: Support joinedstr.
@@ -107,8 +104,7 @@ def test_joinedstr_out_tensor():
 
 @pytest.mark.skip("the print output when I6WM9U has been resolved."
                   "otherwise the print may cause sync stream error because the data has not been sync to device")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_joinedstr_dynamic_shape_scalar():
     """
     Feature: Support joinedstr.
@@ -138,8 +134,7 @@ def test_joinedstr_dynamic_shape_scalar():
     print("out:", out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_joinedstr_with_nested_pyinterpret():
     """
     Feature: Support joinedstr.

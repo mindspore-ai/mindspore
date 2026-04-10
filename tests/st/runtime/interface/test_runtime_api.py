@@ -32,7 +32,7 @@ class Add(nn.Cell):
         return self.add(x1, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bind_cuda_ctx_api():
     """
     Feature: _bind_device_ctx api
@@ -52,13 +52,10 @@ def test_bind_cuda_ctx_api():
     assert output.asnumpy() == np.array([4])
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=4.00,
-)
+    mem_peak=4.00)
 def test_current_stream_id():
     """
     Feature: current_stream_id

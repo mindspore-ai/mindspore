@@ -64,7 +64,7 @@ def main_test(var_numpy, m_numpy, v_numpy, beta1_power_numpy, lr_numpy, beta1_nu
     return (expect_m, res_m_mindspore), (expect_v, res_v_mindspore), (expect_var, res_var_mindspore)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_adamax_fff():
     """
     Feature: None
@@ -92,7 +92,7 @@ def test_apply_adamax_fff():
     assert numpy.all(var[0] - var[1] < eps_f32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_adamax_ddd():
     """
     Feature: None

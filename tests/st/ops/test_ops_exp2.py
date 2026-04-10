@@ -50,11 +50,9 @@ def exp2_backward_func(x):
     return ms.grad(exp2_forward_func, (0))(x)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -80,11 +78,9 @@ def test_ops_exp2_normal(context_mode):
     np.testing.assert_allclose(output_b.asnumpy(), expect_b, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -110,11 +106,9 @@ def test_ops_exp2_dtype(context_mode):
         np.testing.assert_allclose(out_f_special.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE])
 def test_exp2_dynamic_shape(mode):

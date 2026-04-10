@@ -113,17 +113,17 @@ def argminwithvalue_tensor(context_mode, np_type):
     return x.argmin_with_value(axis=-1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_argminwithvalue_base_float32():
     argminwithvalue_base(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_argminwithvalue_base_float16():
     argminwithvalue_base(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_argminwithvalue_3d_float32():
     shape_x = (2, 32, 256)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
@@ -132,14 +132,14 @@ def test_argminwithvalue_3d_float32():
     argminwithvalue_3d(np.float32, shape_x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_argminwithvalue_3d_float16():
     shape_x = (2, 64, 128)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     argminwithvalue_3d(np.float16, shape_x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_argminwithvalue_3d_big_float32():
     shape_x = (128, 1024, 1)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
@@ -148,7 +148,7 @@ def test_argminwithvalue_3d_big_float32():
     argminwithvalue_3d(np.float32, shape_x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_argminwithvalue_functional():
     """
     Feature: support min op functional.
@@ -168,7 +168,7 @@ def test_argminwithvalue_functional():
     assert (output.asnumpy() == expect_output).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_argminwithvalue_tensor():
     """
     Feature: support tensor's argmin_with_value op.
@@ -192,7 +192,7 @@ def test_argminwithvalue_tensor():
     assert (output.asnumpy() == expect_output_int16).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_argminwithvalue_dynamic_shape():
     """
     Feature: support argmin_with_value op with dynamic shape.

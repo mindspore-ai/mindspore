@@ -120,7 +120,7 @@ def get_list_comp_14():
     return [[row[i] for row in matrix] for i in range(4)]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("fn", [get_list_comp_1, get_list_comp_2, get_list_comp_3, get_list_comp_4, get_list_comp_5,
                                 get_list_comp_6, get_list_comp_7, get_list_comp_8, get_list_comp_9, get_list_comp_10,
                                 get_list_comp_11, get_list_comp_12, get_list_comp_13, get_list_comp_14])
@@ -140,7 +140,7 @@ def test_list_comp_1(fn):
     assert_no_graph_break(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_2():
     """
     Feature: list comprehension.
@@ -164,7 +164,7 @@ def test_list_comp_2():
     assert_no_graph_break(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_3():
     """
     Feature: list comprehension.
@@ -188,7 +188,7 @@ def test_list_comp_3():
     assert_no_graph_break(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_4():
     """
     Feature: list comprehension.
@@ -216,7 +216,7 @@ def test_list_comp_4():
     assert_no_graph_break(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_5():
     """
     Feature: list comprehension.
@@ -241,7 +241,7 @@ def test_list_comp_5():
     assert_no_graph_break(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_6():
     """
     Feature: list comprehension.
@@ -270,7 +270,7 @@ def test_list_comp_6():
 
 
 @pytest.mark.skip('python3.7 failed, need to modify testcase')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_7():
     """
     Feature: list comprehension.
@@ -320,7 +320,7 @@ def test_list_comp_7():
     assert_no_graph_break(net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_8():
     """
     Feature: list comprehension.
@@ -343,7 +343,7 @@ def test_list_comp_8():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_9():
     """
     Feature: list comprehension.
@@ -361,7 +361,7 @@ def test_list_comp_9():
     assert_no_graph_break(foo)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_10():
     """
     Feature: list comprehension.
@@ -390,7 +390,7 @@ def test_list_comp_10():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_11():
     """
     Feature: list comprehension.
@@ -426,7 +426,7 @@ def test_list_comp_11():
     assert_no_graph_break(net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_12():
     """
     Feature: list comprehension.
@@ -459,7 +459,7 @@ def test_list_comp_12():
     assert_no_graph_break(net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comp_13():
     """
     Feature: list comprehension.
@@ -489,7 +489,7 @@ def test_list_comp_13():
     assert_no_graph_break(net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Parameter_for_loop():
     """
     Feature: Parameter parsing.
@@ -523,7 +523,7 @@ def test_Parameter_for_loop():
     assert_executed_by_graph_mode(model.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_tuple():
     """
     Feature: list comprehension.
@@ -544,7 +544,7 @@ def test_list_comprehension_with_tuple():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_tuple_for_loop():
     """
     Feature: list comprehension.
@@ -565,7 +565,7 @@ def test_list_comprehension_with_tuple_for_loop():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_list_for_loop():
     """
     Feature: list comprehension.
@@ -586,7 +586,7 @@ def test_list_comprehension_with_list_for_loop():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_const_dict():
     """
     Feature: list comprehension.
@@ -608,7 +608,7 @@ def test_list_comprehension_with_const_dict():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_dict_from_argument():
     """
     Feature: list comprehension.
@@ -629,7 +629,7 @@ def test_list_comprehension_with_dict_from_argument():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_dict_keys():
     """
     Feature: list comprehension.
@@ -651,7 +651,7 @@ def test_list_comprehension_with_dict_keys():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_dict_values():
     """
     Feature: list comprehension.
@@ -673,7 +673,7 @@ def test_list_comprehension_with_dict_values():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_dict_items():
     """
     Feature: list comprehension.
@@ -695,7 +695,7 @@ def test_list_comprehension_with_dict_items():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_range_1():
     """
     Feature: list comprehension.
@@ -716,7 +716,7 @@ def test_list_comprehension_with_range_1():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_range_2():
     """
     Feature: list comprehension.
@@ -738,7 +738,7 @@ def test_list_comprehension_with_range_2():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_range_3():
     """
     Feature: list comprehension.
@@ -760,7 +760,7 @@ def test_list_comprehension_with_range_3():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_range_4():
     """
     Feature: list comprehension.
@@ -781,7 +781,7 @@ def test_list_comprehension_with_range_4():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_range_5():
     """
     Feature: list comprehension.
@@ -802,7 +802,7 @@ def test_list_comprehension_with_range_5():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_zip_1():
     """
     Feature: list comprehension.
@@ -824,7 +824,7 @@ def test_list_comprehension_with_zip_1():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_zip_2():
     """
     Feature: list comprehension.
@@ -846,7 +846,7 @@ def test_list_comprehension_with_zip_2():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_zip_3():
     """
     Feature: list comprehension.
@@ -868,7 +868,7 @@ def test_list_comprehension_with_zip_3():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_zip_4():
     """
     Feature: list comprehension.
@@ -890,7 +890,7 @@ def test_list_comprehension_with_zip_4():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_enumerate_1():
     """
     Feature: list comprehension.
@@ -911,7 +911,7 @@ def test_list_comprehension_with_enumerate_1():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_enumerate_2():
     """
     Feature: list comprehension.
@@ -932,7 +932,7 @@ def test_list_comprehension_with_enumerate_2():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_enumerate_3():
     """
     Feature: list comprehension.
@@ -953,7 +953,7 @@ def test_list_comprehension_with_enumerate_3():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_input():
     """
     Feature: list comprehension.
@@ -974,7 +974,7 @@ def test_list_comprehension_with_variable_input():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_input_2():
     """
     Feature: list comprehension.
@@ -995,7 +995,7 @@ def test_list_comprehension_with_variable_input_2():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_input_3():
     """
     Feature: list comprehension.
@@ -1017,7 +1017,7 @@ def test_list_comprehension_with_variable_input_3():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_input_and_condition():
     """
     Feature: list comprehension.
@@ -1039,7 +1039,7 @@ def test_list_comprehension_with_variable_input_and_condition():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_input_and_condition_2():
     """
     Feature: list comprehension.
@@ -1061,7 +1061,7 @@ def test_list_comprehension_with_variable_input_and_condition_2():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_variable_input_and_condition_3():
     """
     Feature: list comprehension.
@@ -1083,7 +1083,7 @@ def test_list_comprehension_with_variable_input_and_condition_3():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_iterator_input():
     """
     Feature: list comprehension.
@@ -1106,7 +1106,7 @@ def test_list_comprehension_with_iterator_input():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_iterator_input_2():
     """
     Feature: list comprehension.
@@ -1133,7 +1133,7 @@ def test_list_comprehension_with_iterator_input_2():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_list_comprehension_with_multi_for_loop_and_multi_if_condition():
     """
     Feature: list comprehension.
@@ -1160,7 +1160,7 @@ def test_list_comprehension_with_multi_for_loop_and_multi_if_condition():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_nested_list_comprehension():
     """
     Feature: list comprehension.
@@ -1181,7 +1181,7 @@ def test_nested_list_comprehension():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_comprehension_nested_multi_generators():
     """
     Feature: list comprehension.
@@ -1220,7 +1220,7 @@ def test_list_comprehension_nested_multi_generators():
     assert_executed_by_graph_mode(jit_net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_comprehension_inline_conditional():
     """
     Feature: list comprehension.
@@ -1254,7 +1254,7 @@ def test_list_comprehension_inline_conditional():
     assert_executed_by_graph_mode(jit_net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_comprehension_tensor_creation_no_break():
     """
     Feature: list comprehension.
@@ -1293,7 +1293,7 @@ def test_list_comprehension_tensor_creation_no_break():
     assert_executed_by_graph_mode(jit_net.construct)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_before_list_comprehension_1():
     """
     Feature: list comprehension.
@@ -1316,7 +1316,7 @@ def test_graph_break_before_list_comprehension_1():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_before_list_comprehension_2():
     """
     Feature: list comprehension.
@@ -1340,7 +1340,7 @@ def test_graph_break_before_list_comprehension_2():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_before_list_comprehension_asnumpy():
     """
     Feature: list comprehension.
@@ -1375,7 +1375,7 @@ def test_graph_break_before_list_comprehension_asnumpy():
     assert_has_graph_break(jit_net.construct, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_after_list_comprehension_1():
     """
     Feature: list comprehension.
@@ -1399,7 +1399,7 @@ def test_graph_break_after_list_comprehension_1():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_after_list_comprehension_2():
     """
     Feature: list comprehension.
@@ -1424,7 +1424,7 @@ def test_graph_break_after_list_comprehension_2():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_graph_break_after_list_comprehension_asnumpy():
     """
     Feature: list comprehension.
@@ -1460,7 +1460,7 @@ def test_graph_break_after_list_comprehension_asnumpy():
     assert_has_graph_break(jit_net.construct, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_in_list_comprehension_1():
     """
     Feature: list comprehension.
@@ -1482,7 +1482,7 @@ def test_graph_break_in_list_comprehension_1():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_in_list_comprehension_2():
     """
     Feature: list comprehension.
@@ -1505,7 +1505,7 @@ def test_graph_break_in_list_comprehension_2():
     assert_has_graph_break(fn, break_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_graph_break_in_list_comprehension_3():
     """
     Feature: list comprehension.

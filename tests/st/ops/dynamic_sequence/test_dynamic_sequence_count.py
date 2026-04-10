@@ -34,8 +34,7 @@ class Net(nn.Cell):
         return self.seq_count(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_count_tuple_dy():
     """
     Feature: test sequence_count op
@@ -50,8 +49,7 @@ def test_seq_count_tuple_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_seq_count_scalar_dy():
     """
     Feature: test sequence_count op
@@ -66,8 +64,7 @@ def test_seq_count_scalar_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_count_all_dy():
     """
     Feature: test sequence_count op
@@ -82,8 +79,7 @@ def test_seq_count_all_dy():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_seq_count_grad():
     """
     Feature: test sequence_count grad op

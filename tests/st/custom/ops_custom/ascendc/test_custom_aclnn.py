@@ -116,7 +116,7 @@ class BaseNet(Cell):
         return res
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_multi_custom_aclnn(context_mode):
     """
@@ -135,7 +135,7 @@ def test_multi_custom_aclnn(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn(context_mode):
     """
@@ -154,7 +154,7 @@ def test_custom_add_aclnn(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_add_prefix(context_mode):
     """
@@ -173,7 +173,7 @@ def test_custom_add_aclnn_add_prefix(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_dynamic(context_mode):
     """
@@ -194,7 +194,7 @@ def test_custom_add_aclnn_dynamic(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_cpp_infer(context_mode):
     """
@@ -213,7 +213,7 @@ def test_custom_add_aclnn_cpp_infer(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_bprop(context_mode):
     """

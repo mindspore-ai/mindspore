@@ -63,11 +63,9 @@ def reciprocal_vmap_func(x):
     return ops.vmap(reciprocal_forward_func)(x)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -84,8 +82,7 @@ def test_ops_reciprocal_forward(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -94,7 +91,6 @@ def test_ops_reciprocal_forward(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -111,8 +107,7 @@ def test_ops_reciprocal_backward(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -121,7 +116,6 @@ def test_ops_reciprocal_backward(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -142,8 +136,7 @@ def test_ops_reciprocal_complex(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -152,7 +145,6 @@ def test_ops_reciprocal_complex(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -169,8 +161,7 @@ def test_ops_reciprocal_vmap(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -179,7 +170,6 @@ def test_ops_reciprocal_vmap(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=10.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -203,8 +193,7 @@ def test_ops_reciprocal_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -213,7 +202,6 @@ def test_ops_reciprocal_forward_dynamic_shape(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -237,8 +225,7 @@ def test_ops_reciprocal_forward_dynamic_rank(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -247,7 +234,6 @@ def test_ops_reciprocal_forward_dynamic_rank(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -271,8 +257,7 @@ def test_ops_reciprocal_backward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=[
+@arg_mark(plat_marks=[
         'platform_ascend',
         'platform_gpu',
         'cpu_linux',
@@ -281,7 +266,6 @@ def test_ops_reciprocal_backward_dynamic_shape(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -306,7 +290,7 @@ def test_ops_reciprocal_backward_dynamic_rank(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_ops_reciprocal_infer_value(context_mode):
     """

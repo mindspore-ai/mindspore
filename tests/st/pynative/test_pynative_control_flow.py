@@ -96,8 +96,7 @@ class TorchNet15(torch.nn.Module):
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_control_flow_is_for_and_else_a_int(mode):
     """
@@ -164,8 +163,7 @@ class TorchNet1(torch.nn.Module):
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_control_flow_is_if_and_else_a_int(mode):
     """

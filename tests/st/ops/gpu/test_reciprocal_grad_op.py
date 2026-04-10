@@ -32,7 +32,7 @@ class NetReciprocalGrad(nn.Cell):
         return self.grad(y, dy)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reciprocal_grad_float32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     y = Tensor(np.array([[[[-1, 1, 12],
@@ -63,7 +63,7 @@ def test_reciprocal_grad_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reciprocal_grad_float16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     y = Tensor(np.array([[0.01, 0.2, 0.22],

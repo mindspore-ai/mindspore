@@ -81,7 +81,7 @@ def run_gelu_grad():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gelu_gpu():
     """
     Feature: test graph kernel GeLU
@@ -92,8 +92,7 @@ def test_gelu_gpu():
     run_gelu()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_gelu_ascend():
     """
     Feature: test graph kernel GeLU
@@ -105,7 +104,7 @@ def test_gelu_ascend():
     run_gelu()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gelu_grad_gpu():
     """
     Feature: test graph kernel GeLUGrad
@@ -116,8 +115,7 @@ def test_gelu_grad_gpu():
     run_gelu_grad()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_gelu_grad_ascend():
     """
     Feature: test graph kernel GeLUGrad

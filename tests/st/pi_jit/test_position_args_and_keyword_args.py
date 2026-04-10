@@ -21,7 +21,7 @@ from tests.mark_utils import arg_mark
 def position_args_and_keyword_args_1(a, *b, **c):
     return a + b[0] + b[1] + c["e"] + c["f"]
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [position_args_and_keyword_args_1])
 @pytest.mark.parametrize('a', [1])
 @pytest.mark.parametrize('b', [[10, 11]])
@@ -40,7 +40,7 @@ def test_position_args_and_keyword_args_1(func, a, b, c):
 def position_args_and_keyword_args_2(a, *b, **c):
     return a + b[0] + b[1] + c["e"] + c["f"]
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [position_args_and_keyword_args_2])
 @pytest.mark.parametrize('a', [1])
 @pytest.mark.parametrize('b', [[10, 11]])
@@ -58,7 +58,7 @@ def test_position_args_and_keyword_args_2(func, a, b):
 def position_args_and_keyword_args_3(a, b, *c):
     return a + b + c[0] + c[1] + c[2]
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [position_args_and_keyword_args_3])
 @pytest.mark.parametrize('a', [1])
 @pytest.mark.parametrize('b', [2])
@@ -77,7 +77,7 @@ def test_position_args_and_keyword_args_3(func, a, b, c):
 def position_args_and_keyword_args_4(a, b, *c):
     return a + b + c[0] + c[1] + c[2]
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [position_args_and_keyword_args_4])
 @pytest.mark.parametrize('a', [1])
 @pytest.mark.parametrize('b', [2])
@@ -98,7 +98,7 @@ def test_position_args_and_keyword_args_4(func, a, b, c, d, e):
 def position_args_and_keyword_args_5(a, b, *, c):
     return a + b + c
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [position_args_and_keyword_args_5])
 @pytest.mark.parametrize('a', [1])
 @pytest.mark.parametrize('b', [2])

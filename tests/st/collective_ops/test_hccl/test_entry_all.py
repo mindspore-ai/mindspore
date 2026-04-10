@@ -23,7 +23,7 @@ from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_hccl_allreduce():
     """
     Feature: msrun 8P case
@@ -38,7 +38,7 @@ def test_hccl_allreduce():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_reduce():
     """
@@ -53,7 +53,7 @@ def test_hccl_reduce():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_barrier():
     """
@@ -68,7 +68,7 @@ def test_hccl_barrier():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_hccl_allgather():
     """
     Feature: msrun 8P case
@@ -83,7 +83,7 @@ def test_hccl_allgather():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_hccl_get_process_group_ranks_func_8p():
     """
     Feature: msrun 8P case
@@ -98,7 +98,7 @@ def test_hccl_get_process_group_ranks_func_8p():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 def test_get_comm_name_create_group_with_options_func_8p():
     """
     Feature: msrun 8P case
@@ -118,7 +118,7 @@ def test_get_comm_name_create_group_with_options_func_8p():
     assert result.find("HcclCommInitRootInfoConfig for group_buffersize_100, hcclBufferSize is 100 MB") != -1
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_batch_isend_irecv():
     """
@@ -133,7 +133,7 @@ def test_hccl_batch_isend_irecv():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_single_with_output_shape():
     """
@@ -148,7 +148,7 @@ def test_hccl_all_to_all_single_with_output_shape():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_broadcast():
     """
@@ -163,7 +163,7 @@ def test_hccl_broadcast():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_gather_into_tensor():
     """
@@ -178,7 +178,7 @@ def test_hccl_gather_into_tensor():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_scatter_tensor():
     """
@@ -203,7 +203,7 @@ def test_hccl_scatter_tensor():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_send_receive():
     """
@@ -218,7 +218,7 @@ def test_hccl_send_receive():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_allgather_v():
     """
@@ -233,7 +233,7 @@ def test_allgather_v():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_allgatherv_grad():
     """
@@ -245,7 +245,7 @@ def test_allgatherv_grad():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_dynamic_shape():
     """
@@ -257,7 +257,7 @@ def test_dynamic_shape():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_reduce_scatter_tensor_v():
     """
@@ -272,7 +272,7 @@ def test_reduce_scatter_tensor_v():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_reduce_scatter_tensor_with_diff_reduce_type():
     """
@@ -285,7 +285,7 @@ def test_reduce_scatter_tensor_with_diff_reduce_type():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_all_to_all_v_c():
     """
@@ -299,7 +299,7 @@ def test_all_to_all_v_c():
     )
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_func_all_to_all_v_c():
     """
@@ -313,7 +313,7 @@ def test_func_all_to_all_v_c():
     )
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_func_all_to_all_v_c_strict():
     """
@@ -330,7 +330,7 @@ def test_func_all_to_all_v_c_strict():
                                   "./test_func_all_to_all_v_c_strict/worker_0.log")
     assert result.find("hcclDeterministic is 2") != -1
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_func_all_to_all_v_c1():
     """
@@ -347,7 +347,7 @@ def test_func_all_to_all_v_c1():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_uneven_net():
     """
@@ -362,7 +362,7 @@ def test_uneven_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_v():
     """
@@ -377,7 +377,7 @@ def test_hccl_all_to_all_v():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_entry_hccl_allreduce_fusion_by_attr():
     """
     Feature: msrun allreduce fusion test case.
@@ -399,7 +399,7 @@ def test_entry_hccl_allreduce_fusion_by_attr():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_entry_hccl_allgather_fusion_by_attr():
     """
     Feature: msrun allgather fusion test case.
@@ -411,7 +411,7 @@ def test_entry_hccl_allgather_fusion_by_attr():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_entry_hccl_reducescatter_fusion_by_attr():
     """
     Feature: msrun reducescatter fusion test case.
@@ -423,7 +423,7 @@ def test_entry_hccl_reducescatter_fusion_by_attr():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_hccl_multi_stream():
     """
     Feature: multiple stream of hccl.
@@ -437,7 +437,7 @@ def test_hccl_multi_stream():
     del os.environ['MS_DEV_RUNTIME_CONF']
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_comm_multi_stream():
     """
     Feature: multiple stream of hccl.
@@ -448,7 +448,7 @@ def test_comm_multi_stream():
                             "pytest -s test_multi_stream.py::test_comm_multi_stream")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_comm_multi_stream_raise_error():
     """
     Feature: multiple stream of hccl.
@@ -459,8 +459,7 @@ def test_comm_multi_stream_raise_error():
                             "pytest -s test_multi_stream.py::test_comm_multi_stream_raise_error")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards",
-        essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_all_gather_into_tensor_net():
     """
@@ -473,8 +472,7 @@ def test_ops_all_gather_into_tensor_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards",
-        essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_all_gather_net():
     """
@@ -487,7 +485,7 @@ def test_ops_all_gather_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_all_reduce_net():
     """
@@ -500,7 +498,7 @@ def test_ops_all_reduce_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_isend_irecv_net():
     """
@@ -513,7 +511,7 @@ def test_ops_isend_irecv_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_reduce_scatter_tensor_net():
     """
@@ -526,7 +524,7 @@ def test_ops_reduce_scatter_tensor_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_reduce_scatter_net():
     """
@@ -539,7 +537,7 @@ def test_ops_reduce_scatter_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_all_to_all_single_net():
     """
@@ -552,8 +550,7 @@ def test_ops_all_to_all_single_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards",
-        essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_alltoall_grad_net():
     """
@@ -566,7 +563,7 @@ def test_alltoall_grad_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_grad_allgather_net():
     """
@@ -579,7 +576,7 @@ def test_grad_allgather_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_grad_allreduce_net():
     """

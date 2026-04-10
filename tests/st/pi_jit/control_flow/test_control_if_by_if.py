@@ -8,7 +8,7 @@ from ..parse.parser_factory import ParserFactory
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_basic():
     """
     Feature: PIJit
@@ -52,7 +52,7 @@ def test_ctrl_if_by_if_basic():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_with_for():
     """
     Feature: PIJit
@@ -95,7 +95,7 @@ def test_ctrl_if_by_if_with_for():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_second_if_match_the_false_branch_of_first_if():
     """
     Feature: PIJit
@@ -129,7 +129,7 @@ def test_ctrl_if_by_if_second_if_match_the_false_branch_of_first_if():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_combine_with_elif_else():
     """
     Feature: PIJit
@@ -173,7 +173,7 @@ def test_ctrl_if_by_if_combine_with_elif_else():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_call_func():
     """
     Feature: PIJit
@@ -224,7 +224,7 @@ def test_ctrl_if_by_if_call_func():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_ctrl_if_by_if_call_func_which_include_ctrl_flow():
     """
     Feature: PIJit
@@ -282,7 +282,7 @@ def test_ctrl_if_by_if_call_func_which_include_ctrl_flow():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_call_subnet():
     """
     Feature: PIJit
@@ -331,7 +331,7 @@ def test_ctrl_if_by_if_call_subnet():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_ctrl_if_by_if_call_subnet_which_include_ctrl_flow():
     """
     Feature: PIJit
@@ -390,7 +390,7 @@ def test_ctrl_if_by_if_call_subnet_which_include_ctrl_flow():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_combine_with_not_or_and():
     """
     Feature: PIJit
@@ -427,7 +427,7 @@ def test_ctrl_if_by_if_combine_with_not_or_and():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ctrl_if_by_if_combine_with_dynamic_shape():
     """
     Feature: PIJit

@@ -105,8 +105,7 @@ class LeNet5(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_lenet5_train_hook_function_print_and_save_grad():
     """
     Feature: Test hook backward ops, cell backward hook.
@@ -216,8 +215,7 @@ class LeNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_lenet_with_hook():
     """
     Feature: Test hook backward ops, cell backward hook, custom bprop.

@@ -20,7 +20,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_parallel_optimizer_dp4vpp2_zero3():
     '''
     Feature: Zero3.

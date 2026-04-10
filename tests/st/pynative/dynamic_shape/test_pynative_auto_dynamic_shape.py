@@ -97,8 +97,7 @@ class CmpNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_auto_dynamic_shape_with_three_static_shape():
     """
     Feature: PyNative auto dynamic shape.
@@ -138,8 +137,7 @@ def test_pynative_auto_dynamic_shape_with_three_static_shape():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
     """
     Feature: PyNative auto dynamic shape.
@@ -181,8 +179,7 @@ def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_2():
     """
     Feature: PyNative auto dynamic shape.

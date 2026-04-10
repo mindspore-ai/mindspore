@@ -25,7 +25,7 @@ def pynative_not_in(a, b):
     return a not in b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("jit_fn, pynative_fn", [(jit_in, pynative_in), (jit_not_in, pynative_not_in)])
 @pytest.mark.parametrize('a', [1, 0])
 @pytest.mark.parametrize('b', [[1, 2, 3], {1: 1, 2: 2}, (1, 2, 3)])
@@ -44,7 +44,7 @@ def test_in_not_in(jit_fn, pynative_fn, a, b, use_mutable):
     assert o1 == o2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("jit_fn, pynative_fn", [(jit_in, pynative_in), (jit_not_in, pynative_not_in)])
 @pytest.mark.parametrize('a', [Tensor(np.ones((2, 3)).astype(np.float32))])
 @pytest.mark.parametrize('b', [Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype='float32'))])
@@ -60,7 +60,7 @@ def test_tensor_in_list(jit_fn, pynative_fn, a, b):
     assert o1 == o2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("jit_fn, pynative_fn", [(jit_in, pynative_in), (jit_not_in, pynative_not_in)])
 @pytest.mark.parametrize('a', ['123', '012'])
 @pytest.mark.parametrize('b', ['123-456', '456-789'])

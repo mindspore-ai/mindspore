@@ -48,7 +48,7 @@ def compare_transpose_result(shape, dtype, perm):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_transpose_to_reshape():
     """
     Feature: Test transpose replacement in arithmetic_simplify pass.

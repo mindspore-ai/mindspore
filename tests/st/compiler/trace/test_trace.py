@@ -28,8 +28,7 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_1():
     """
     Feature: JIT trace function
@@ -56,8 +55,7 @@ def test_trace_1():
     assert res == 12
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_2():
     """
     Feature: JIT trace function
@@ -84,8 +82,7 @@ def test_trace_2():
     assert res == (1, 3, 12)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_3():
     """
     Feature: JIT trace function
@@ -102,8 +99,7 @@ def test_trace_3():
     assert res == 6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_4():
     """
     Feature: JIT trace function
@@ -122,8 +118,7 @@ def test_trace_4():
     assert res == 6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_5():
     """
     Feature: JIT trace function
@@ -142,8 +137,7 @@ def test_trace_5():
     assert res == (1, 2, 3, 6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_trace_6():
     """
     Feature: JIT trace function
@@ -162,8 +156,7 @@ def test_trace_6():
     assert res == (6, (1, 2, 3))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_7():
     """
     Feature: JIT trace function
@@ -193,8 +186,7 @@ class TensorSetItem(ms.nn.Cell):
         tensor[index] = value
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.skip(reason="No support")
 def test_trace_tensor_tuple_index_0():
     """
@@ -241,8 +233,7 @@ def test_trace_tensor_tuple_index_0():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_side_effect_1():
     """
     Feature: JIT trace function
@@ -283,8 +274,7 @@ def test_trace_side_effect_1():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_side_effect_2():
     """
     Feature: JIT trace function
@@ -311,8 +301,7 @@ def test_trace_side_effect_2():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_begin_end_1():
     """
     Feature: JIT trace function
@@ -334,8 +323,7 @@ def test_trace_begin_end_1():
     assert res == 12
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_begin_end_2():
     """
     Feature: JIT trace function
@@ -357,8 +345,7 @@ def test_trace_begin_end_2():
     assert res == (6, 12)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_begin_end_3():
     """
     Feature: JIT trace function
@@ -387,8 +374,7 @@ def test_trace_begin_end_3():
     assert res == (18, 36)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_1():
     """
     Feature: JIT trace function nested by JIT ast
@@ -426,8 +412,7 @@ def test_nested_trace_1():
     assert res_trace == res_jit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_2():
     """
     Feature: JIT trace function nested by JIT ast
@@ -465,8 +450,7 @@ def test_nested_trace_2():
     assert res_trace == res_jit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_3():
     """
     Feature: JIT trace function nested by JIT ast
@@ -500,8 +484,7 @@ def test_nested_trace_3():
     assert np.allclose(res_trace.asnumpy(), res_jit.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_side_effect_1():
     """
     Feature: JIT trace function nested by JIT ast
@@ -546,8 +529,7 @@ def test_nested_trace_side_effect_1():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_nested_trace_4():
     """
     Feature: JIT trace function nested by JIT ast
@@ -582,8 +564,7 @@ def test_nested_trace_4():
         err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_ast_1():
     """
     Feature: JIT ast function nested by JIT trace
@@ -621,8 +602,7 @@ def test_nested_ast_1():
     assert res_trace == res_jit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_ast_2():
     """
     Feature: JIT ast function nested by JIT trace
@@ -660,8 +640,7 @@ def test_nested_ast_2():
     assert res_trace == res_jit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_ast_3():
     """
     Feature: JIT ast function nested by JIT trace
@@ -695,8 +674,7 @@ def test_nested_ast_3():
     assert np.allclose(res_trace.asnumpy(), res_jit.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_ast_4():
     """
     Feature: JIT ast function nested by JIT trace
@@ -731,8 +709,7 @@ def test_nested_ast_4():
         err.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_double_trace():
     """
     Feature: JIT trace function nested by JIT trace
@@ -770,8 +747,7 @@ def test_double_trace():
     assert res_double_trace == res_trace
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_5():
     """
     Feature: JIT trace function nested by JIT ast
@@ -810,8 +786,7 @@ def test_nested_trace_5():
     assert np.allclose(res_trace.asnumpy(), res_jit.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_tensor_type():
     """
     Feature: JIT trace function
@@ -839,8 +814,7 @@ def test_trace_tensor_type():
     assert res == 12
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_6():
     """
     Feature: JIT trace function nested by JIT ast
@@ -879,7 +853,7 @@ def test_nested_trace_6():
     assert res_trace == res_jit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_functional():
     """
     Feature: JIT trace function
@@ -896,7 +870,7 @@ def test_trace_functional():
     assert res == 6
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_empty_input():
     """
     Feature: JIT trace function
@@ -911,8 +885,7 @@ def test_trace_empty_input():
     assert res == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_8():
     """
     Feature: JIT trace function
@@ -930,8 +903,7 @@ def test_trace_8():
     assert res == 6
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_setitem():
     """
     Feature: JIT trace function
@@ -960,8 +932,7 @@ def test_trace_setitem():
     assert np.allclose(res.asnumpy(), expected.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_ops_with_init_inputs():
     """
     Feature: JIT trace function
@@ -992,8 +963,7 @@ def test_trace_ops_with_init_inputs():
     assert np.allclose(res.asnumpy(), expected.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_9():
     """
     Feature: JIT trace function
@@ -1024,8 +994,7 @@ def test_trace_9():
     assert new_d == {}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_nested_trace_with_kwargs():
     """
     Feature: JIT trace function nested by JIT ast with kwargs
@@ -1063,8 +1032,7 @@ def test_nested_trace_with_kwargs():
     assert res_trace == res_jit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_10():
     """
     Feature: JIT trace function

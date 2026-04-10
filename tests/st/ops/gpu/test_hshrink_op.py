@@ -38,7 +38,7 @@ def hshrink_op_np_bencmark(input_x, lambd):
     return result
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
 @pytest.mark.parametrize("lambd", [0.5])

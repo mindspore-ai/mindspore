@@ -56,7 +56,7 @@ def crop_and_resize_test(is_dyn_rank):
                                  is_dyn_rank)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_dyn_shape():
     """
     Feature: CropAndResize Grad DynamicShape.
@@ -66,7 +66,7 @@ def test_crop_and_resize_dyn_shape():
     crop_and_resize_test(False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_dyn_rank():
     """
     Feature: CropAndResize Grad DynamicShape.

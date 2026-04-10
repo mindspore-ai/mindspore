@@ -52,7 +52,7 @@ def run_softmax(shape, dtype):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softmax_gpu():
     """
     Feature: todo
@@ -63,8 +63,7 @@ def test_softmax_gpu():
     run_softmax([4, 32, 48], np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.76)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.76)
 def test_softmax_ascend():
     """
     Feature: todo

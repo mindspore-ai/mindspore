@@ -90,21 +90,21 @@ def run_e2e_dump(test_key="test_e2e_dump"):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @security_off_wrap
 def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     run_e2e_dump()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @security_off_wrap
 def test_gpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_e2e_dump()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @security_off_wrap
 def test_kbk_e2e_set_dump():
     """
@@ -117,7 +117,7 @@ def test_kbk_e2e_set_dump():
     run_e2e_dump(test_key="test_kbk_e2e_set_dump")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @security_off_wrap
 def test_kbk_e2e_dump_reg():
     """
@@ -145,7 +145,7 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @security_off_wrap
 def test_dump_with_diagnostic_path():
     """
@@ -187,7 +187,7 @@ def run_e2e_dump_execution_graph():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @security_off_wrap
 def test_dump_with_execution_graph():
     """Test dump with execution graph."""
@@ -233,7 +233,7 @@ def run_saved_data_dump_test(scenario, saved_data):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @security_off_wrap
 def test_gpu_e2e_statistic_dump():
     """
@@ -245,7 +245,7 @@ def test_gpu_e2e_statistic_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'statistic')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @security_off_wrap
 def test_gpu_e2e_tensor_dump():
     """
@@ -257,7 +257,7 @@ def test_gpu_e2e_tensor_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'tensor')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @security_off_wrap
 def test_gpu_e2e_full_dump():
     """
@@ -269,7 +269,7 @@ def test_gpu_e2e_full_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'full')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @security_off_wrap
 def test_stat_dump_nulls():
     """
@@ -346,7 +346,7 @@ def run_constant_e2e_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @security_off_wrap
 def test_constant_gpu_e2e_dump():
     """

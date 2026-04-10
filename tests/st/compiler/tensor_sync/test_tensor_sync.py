@@ -23,7 +23,7 @@ from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_tensor_sync():
     """
     Feature: Tensor data sync.
@@ -55,8 +55,7 @@ def test_tensor_sync():
 
 
 @pytest.mark.skip(reason="has not supported")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_view_inplace_pynative():
     """
     Feature: View Inplace in PyNative mode.

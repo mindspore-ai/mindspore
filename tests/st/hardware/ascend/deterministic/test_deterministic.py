@@ -39,8 +39,7 @@ class ReduceMatmulNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=130.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=130.00)
 @pytest.mark.parametrize('mode', ['pynative', 'jit'])
 def test_deterministic_reduce_matmul(mode):
     """
@@ -71,8 +70,7 @@ class USSNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'jit'])
 def test_deterministic_uss(mode):
     """
@@ -120,8 +118,7 @@ def test_allreduce_deterministic():
     assert np.allclose(output1.asnumpy(), output2.asnumpy(), rtol=0, atol=0)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level0", card_mark="allcards",
-          essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_deterministic_allreduce():
     """
     Feature: mpirun ascend op deterministic test case
@@ -148,8 +145,7 @@ def test_allreduce_deterministic_after_init():
     assert np.allclose(output1.asnumpy(), output2.asnumpy(), rtol=0, atol=0)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level0", card_mark="allcards",
-          essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"], level_mark="level0", card_mark="allcards")
 def test_deterministic_after_init_allreduce():
     """
     Feature: mpirun ascend op deterministic test case

@@ -66,8 +66,7 @@ class AutoEncoderTrainNetwork(nn.Cell):
         return transformed_dataset
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_auto_monad_layer():
     """
     Feature: Auto monad feature.
@@ -268,8 +267,7 @@ class GradOfAllInputsAndParams(_Grad):
                          network=network, wrt_params=True, real_inputs_count=real_inputs_count)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_side_effect_switch_layer_pos_i_nine_layer_func():
     """
     Feature: Auto monad feature.
@@ -357,8 +355,7 @@ class SideEffectSequentialAssignAddnReluNet(nn.Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_side_effect_sequential_assign_addn_relu():
     """
     Feature: Auto monad feature.

@@ -67,7 +67,7 @@ def vmap_tensor_case():
     assert np.allclose(expect, outputs.asnumpy(), 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fill_v2_dyn():
     """
     Feature: test FillV2 dynamic shape in gpu.

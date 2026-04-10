@@ -66,7 +66,7 @@ x2 = np.array([[np.inf, 1, 88.0, 0]]).astype(np.float32)
 x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_status(dtype):
     """
@@ -88,7 +88,7 @@ def test_status(dtype):
     assert output3.asnumpy()[0] == expect3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_nan(dtype):
     """
@@ -110,7 +110,7 @@ def test_nan(dtype):
     assert (output3.asnumpy() == expect3).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_inf(dtype):
     """
@@ -132,7 +132,7 @@ def test_inf(dtype):
     assert (output3.asnumpy() == expect3).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_finite(dtype):
     """
@@ -154,7 +154,7 @@ def test_finite(dtype):
     assert (output3.asnumpy() == expect3).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_float_status_gpu_dynamic_shape():
     """
     Feature: test FloatStatus op on GPU.
@@ -171,7 +171,7 @@ def test_float_status_gpu_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_is_nan_gpu_dynamic_shape():
     """
     Feature: test FloatStatus op on GPU.
@@ -188,7 +188,7 @@ def test_is_nan_gpu_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_is_inf_gpu_dynamic_shape():
     """
     Feature: test FloatStatus op on GPU.
@@ -205,7 +205,7 @@ def test_is_inf_gpu_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_is_finite_gpu_dynamic_shape():
     """
     Feature: test FloatStatus op on GPU.

@@ -60,7 +60,7 @@ class MatMulComposite(nn.Cell):
         return self.matmul(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_MatMul_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = MatMul_d()
@@ -78,7 +78,7 @@ def test_MatMul_dynamic():
     np.testing.assert_array_almost_equal(output2.asnumpy(), expect2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matmul_float64():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = MatMulNet()
@@ -90,7 +90,7 @@ def test_matmul_float64():
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matmul_composite():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     net = MatMulComposite()
@@ -116,7 +116,7 @@ def test_matmul_composite():
         np.testing.assert_array_almost_equal(output.asnumpy(), expect, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_api_modes(mode):
     """
@@ -137,7 +137,7 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_core(mode):
     """
@@ -166,7 +166,7 @@ def test_matmul_tensor_core(mode):
     assert np.abs(out_ms_fp32 - out_ms_tf32).mean() < 0.005
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -201,7 +201,7 @@ def test_matmul_dtypes():
         del os.environ['MS_DISABLE_KERNEL_BACKOFF']
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_matmul_fp16():
     """
     Feature: Test matmul fp16 results.

@@ -34,8 +34,7 @@ class PadV3Net(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.55)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.55)
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "reflect", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -68,8 +67,7 @@ def test_padv3_constant_shape_3d(x_data_type, mode, ms_mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.92)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.92)
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "reflect", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -174,8 +172,7 @@ def test_padv3_constant_shape_4d(x_data_type, mode, ms_mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1025.98)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1025.98)
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

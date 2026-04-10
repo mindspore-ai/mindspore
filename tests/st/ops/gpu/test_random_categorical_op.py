@@ -246,7 +246,7 @@ def test_rc_pynative_fp16_int32():
     assert np.all(diff == 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_rc_pynative_fp16_int32_dynamic_shape():
     """
     Feature: random_cateogoric operation dynamic shape test

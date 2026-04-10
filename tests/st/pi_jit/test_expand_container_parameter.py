@@ -63,7 +63,7 @@ def run_closure_3(a, b, c, d):
         return s['l'][0] + s['l'][1] + s['t'][0] + s['t'][1]
     return inner
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -91,7 +91,7 @@ def test_list(func, x1, x2, y1, y2):
     res = func(s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -119,7 +119,7 @@ def test_nest_list(func, x1, x2, y1, y2):
     res = func(s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -144,7 +144,7 @@ def test_tuple(func, x1, x2, y1, y2):
     res = func(s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -169,7 +169,7 @@ def test_nested_tuple(func, x1, x2, y1, y2):
     res = func(s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -194,7 +194,7 @@ def test_mix_nested_list_tuple(func, x1, x2, y1, y2):
     res = func(s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_mix_nest_list_tuple_dict])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -219,7 +219,7 @@ def test_mix_nested_list_tuple_dict(func, x1, x2, y1, y2):
     res = func(s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_dict])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -247,7 +247,7 @@ def test_dict(func, x1, x2, y1, y2):
     res = func(d)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_dict])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -275,7 +275,7 @@ def test_nested_dict(func, x1, x2, y1, y2):
     res = func(d)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_mix_nest_dict_list_tuple])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -300,7 +300,7 @@ def test_mix_nested_dict_list_tuple(func, x1, x2, y1, y2):
     res = func(d)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_vargs_1])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -323,7 +323,7 @@ def test_vargs_1(func, x1, x2, y1, y2):
     res = func(x1 * 10, x2 * 10, y1 * 10, y2 * 10)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_vargs_2])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -348,7 +348,7 @@ def test_vargs_2(func, x1, x2, y1, y2):
     res = func(x1 * 10, s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_vargs_3])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -373,7 +373,7 @@ def test_vargs_3(func, x1, x2, y1, y2):
     res = func(x1 * 10, s)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_kwargs_1])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -396,7 +396,7 @@ def test_kwargs_1(func, x1, x2, y1, y2):
     res = func(k=x1 * 10, s=[x2 * 10, y1 * 10], d={'a': y2 *10})
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_kwargs_2])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -419,7 +419,7 @@ def test_kwargs_2(func, x1, x2, y1, y2):
     res = func(k=x1 * 10, s=({'a':[{'b': x2 * 10}]}, [{'c': y1 * 10}]), d={'e': [y2 * 10]})
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_mix_args_vargs_kwargs])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -446,7 +446,7 @@ def test_mix_args_vargs_kwargs(func, x1, x2, y1, y2):
     res = func(d, x1 * 10, s, k=x1 * 10, s=({'a':[{'b': x2 * 10}]}, [{'c': y1 * 10}]), d={'e': [y2 * 10]})
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_closure_1])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -466,7 +466,7 @@ def test_closure_1(func, x1, x2, y1, y2):
     res = inner()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_closure_2])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])
@@ -486,7 +486,7 @@ def test_closure_2(func, x1, x2, y1, y2):
     res = inner()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_closure_3])
 @pytest.mark.parametrize('x1', [Tensor([[1., 2.], [3., 4.]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10., 20.], [30., 40.]], mstype.float32)])

@@ -21,8 +21,7 @@ from mindspore.mint import clamp
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_mint_clamp():
     """
     Feature: Functional.
@@ -41,7 +40,7 @@ def test_mint_clamp():
     assert np.all(out_clamp_scalar.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_default():
     """
     Feature: Functional.
@@ -57,7 +56,7 @@ def test_mint_clamp_default():
     assert np.all(out.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_any():
     """
     Feature: Functional.
@@ -73,7 +72,7 @@ def test_mint_clamp_any():
     assert np.all(out.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_nn_pixel_shuffle():
     """
     Feature: Functional.
@@ -89,7 +88,7 @@ def test_mint_nn_pixel_shuffle():
     assert output.shape == (1, 1, 12, 12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_keyword():
     """
     Feature: Functional.
@@ -105,7 +104,7 @@ def test_mint_clamp_keyword():
     assert np.all(out_clamp_scalar.asnumpy() == ms.Tensor([1, 2, 3, 3, 3]).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_keyword_any():
     """
     Feature: Functional.
@@ -121,7 +120,7 @@ def test_mint_clamp_keyword_any():
     assert np.all(out_clamp_scalar.asnumpy() == ms.Tensor([2, 2, 3, 4, 4]).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_exception():
     """
     Feature: Functional.

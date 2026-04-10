@@ -34,8 +34,7 @@ def runMSRun(op, bbox):
     return sel_rows, sel_score
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nms_with_mask_check_order():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     nms_op = P.NMSWithMask(0.5)
@@ -54,8 +53,7 @@ def test_nms_with_mask_check_order():
             ms_sorted_scores, np_sorted_scores)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nms_with_mask_edge_case_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     # CASE 1  - FULL OVERLAP BOXES - Every box is duplicated and has a different score
@@ -74,8 +72,7 @@ def test_nms_with_mask_edge_case_1():
     np.testing.assert_almost_equal(sel_score, expected_score)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nms_with_mask_edge_case_2():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     # CASE 2 - 0 value boxes - with valid scores
@@ -90,8 +87,7 @@ def test_nms_with_mask_edge_case_2():
     np.testing.assert_almost_equal(sel_score, expected_score)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_nms_with_mask_edge_case_3():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     # CASE 3 - x2/x1 and y2/y1 sequence out of place

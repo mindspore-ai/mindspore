@@ -53,7 +53,7 @@ def dyn_case():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1.00)
 def test_resize_bilinear_grad_dyn_ascend():
     """
     Feature: Test ResizeBilinearGrad on Ascend.
@@ -66,7 +66,7 @@ def test_resize_bilinear_grad_dyn_ascend():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_grad_dyn_gpu():
     """
     Feature: Test ResizeBilinearGrad on GPU.
@@ -79,8 +79,7 @@ def test_resize_bilinear_grad_dyn_gpu():
     dyn_case()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_grad_dyn_cpu():
     """
     Feature: Test ResizeBilinearGrad on CPU.

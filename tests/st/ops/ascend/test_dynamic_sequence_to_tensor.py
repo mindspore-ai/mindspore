@@ -34,7 +34,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_seq_to_tensor0():
     """
     Feature: test xxToTensor.
@@ -52,8 +52,7 @@ def test_seq_to_tensor0():
     assert np.allclose(res_y.asnumpy(), expect_y0, 1.e-4, 1.e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_seq_to_tensor1():
     """
     Feature: test xxToTensor.
@@ -81,8 +80,7 @@ class Net1(nn.Cell):
         return self.tuple_to_tensor(x, mstype.int64), self.scalar_to_tensor(y, mstype.int64)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_seq_to_tensor2():
     """
     Feature: test xxToTensor.
@@ -111,7 +109,7 @@ class Net2(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.80)
+        card_mark='onecard', mem_peak=1024.80)
 def test_seq_to_tensor3():
     """
     Feature: test xxToTensor.

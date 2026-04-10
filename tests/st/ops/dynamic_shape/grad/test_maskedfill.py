@@ -48,8 +48,7 @@ def run_dynamic_rank():
     test_dynamic.test_dynamic_grad_net([input_0, mask, value], True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_dynamic_maskedfill_gpu():
     """
     Feature: MaskedFill Grad DynamicShape.

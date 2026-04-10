@@ -63,7 +63,7 @@ def tuple_to_list_backward_dyn_func(x):
     return ops.grad(tuple_to_list_forward_dyn_func, (0,))(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_seq_to_seq_forward(mode):
     """
@@ -98,7 +98,7 @@ def test_seq_to_seq_forward(mode):
             assert out == exp
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_seq_to_seq_forward_dyn(mode):
     """
@@ -132,7 +132,7 @@ def test_seq_to_seq_forward_dyn(mode):
         assert np.allclose(out2.asnumpy(), exp2.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_seq_to_seq_backward(mode):
     """
@@ -170,7 +170,7 @@ def test_seq_to_seq_backward(mode):
     assert grads == ()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
 def test_seq_to_seq_backward_dyn(mode):
     """

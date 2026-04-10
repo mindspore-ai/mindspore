@@ -32,8 +32,7 @@ class Net(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_item():
     """
     Feature: tensor.item

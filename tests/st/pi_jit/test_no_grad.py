@@ -48,7 +48,7 @@ class GradNetJit(nn.Cell):
         z = m * y
         return z
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('input', [Tensor([2], mindspore.float32)])
 def test_network_func(input):
     """
@@ -70,7 +70,7 @@ def test_network_func(input):
     gradient_py = ops.grad(model_py)(input)
     match_array(gradient_jit, gradient_py, error=0, err_msg=str(gradient_jit))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('input', [Tensor([2], mindspore.float32)])
 def test_network_jit_func(input):
     """

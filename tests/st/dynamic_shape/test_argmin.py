@@ -70,8 +70,7 @@ def argmin_argmax_case_dyn(op_func, np_func):
     assert np.allclose(output2.asnumpy(), expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmin(mode):
     """
@@ -83,8 +82,7 @@ def test_argmin(mode):
     argmin_argmax_case(argmin_, np.argmin)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmin_vmap(mode):
     """
@@ -96,8 +94,7 @@ def test_argmin_vmap(mode):
     argmin_argmax_case_vmap(argmin_)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmin_dyn(mode):
     """

@@ -16,7 +16,7 @@ from mindspore import context
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential", mem_peak=1.00
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", mem_peak=1.00
         )
 def test_memory_optimize_level_context():
     """

@@ -45,8 +45,7 @@ class NetOneHot(nn.Cell):
                 self.one_hot_3(indices3), self.one_hot_4(indices4))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_one_hot():
     one_hot = NetOneHot()
     indices1 = Tensor(np.array([[0, 1], [4, 5], [2, 6]]).astype(np.int32))

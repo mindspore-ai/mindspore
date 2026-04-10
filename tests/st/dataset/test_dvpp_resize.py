@@ -32,8 +32,7 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=40.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=40.0)
 def test_dvpp_resize_operation_01():
     """
     Feature: Resize operation on device
@@ -141,8 +140,7 @@ def test_dvpp_resize_operation_01():
     assert (resize_op == resize_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=42.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=42.0)
 def test_dvpp_resize_operation_02():
     """
     Feature: Resize operation on device
@@ -243,8 +241,7 @@ def test_dvpp_resize_operation_02():
         assert (image_aug == image).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_dvpp_resize_operation_03():
     """
     Feature: Resize operation on device
@@ -341,8 +338,7 @@ def test_dvpp_resize_operation_03():
     image.close()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_resize_operation_04():
     """
     Feature: Resize operation on device
@@ -408,8 +404,7 @@ def test_dvpp_resize_operation_04():
         _ = v_trans.Resize(size, interpolation=interpolation_py).device(device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=14.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=14.0)
 def test_dvpp_resize_exception_01():
     """
     Feature: Resize operation on device
@@ -487,8 +482,7 @@ def test_dvpp_resize_exception_01():
             pass
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_resize_exception_02():
     """
     Feature: Resize operation on device
@@ -573,8 +567,7 @@ def test_dvpp_resize_exception_02():
             pass
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_resize_exception_03():
     """
     Feature: Resize operation on device
@@ -650,8 +643,7 @@ def test_dvpp_resize_exception_03():
             pass
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=16.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=16.0)
 def test_dvpp_resize_exception_04():
     """
     Feature: Resize operation on device

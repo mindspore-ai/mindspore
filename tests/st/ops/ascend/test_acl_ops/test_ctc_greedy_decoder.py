@@ -32,8 +32,7 @@ class Net(nn.Cell):
         return self.ctc(inputs, sequence_length)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_ctc_greedy_deocder_float32():
     """
     Feature: CTCGreedyDecoder cpu op

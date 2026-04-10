@@ -16,7 +16,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_pfa_info_sparse_mode0_8p():
     '''
     Feature: extract communication subgraphs and reuse them to replace original communication ops under GRAPH mode.

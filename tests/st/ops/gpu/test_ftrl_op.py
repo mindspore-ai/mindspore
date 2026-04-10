@@ -45,7 +45,7 @@ class NetFtrl(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ftrl():
     epoch = 3
     net = NetFtrl()
@@ -79,7 +79,7 @@ def test_ftrl():
 
 
 @pytest.mark.skip(reason="skip gpu hashtable")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ftrl_net_with_map_tensor():
     """
     Feature: FTRL gpu kernel for MapTensor update.

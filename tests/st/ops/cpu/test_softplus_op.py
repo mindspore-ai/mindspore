@@ -38,8 +38,7 @@ def SoftplusCompute(x):
     return np.log(1 + np.exp(x))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_0d_fp32():
     """
     Feature: test ops.Softplus
@@ -56,8 +55,7 @@ def test_softplus_0d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_1d_fp32():
     """
     Feature: test ops.Softplus
@@ -74,8 +72,7 @@ def test_softplus_1d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_2d_fp32():
     """
     Feature: test ops.Softplus
@@ -92,8 +89,7 @@ def test_softplus_2d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_4d_fp32():
     """
     Feature: test ops.Softplus
@@ -110,8 +106,7 @@ def test_softplus_4d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_neg():
     """
     Feature: test ops.Softplus
@@ -128,8 +123,7 @@ def test_softplus_neg():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_4d_fp16():
     """
     Feature: test ops.Softplus
@@ -146,8 +140,7 @@ def test_softplus_4d_fp16():
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_7d_fp32():
     """
     Feature: test ops.Softplus
@@ -164,8 +157,7 @@ def test_softplus_7d_fp32():
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_softplus_with_big_input():
     """
     Feature: test ops.Softplus

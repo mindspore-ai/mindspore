@@ -56,8 +56,7 @@ def prelu_backward_func2(x, num_parameters, init, dtype=None):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_prelu_std(mode):
     """
@@ -98,7 +97,7 @@ def test_prelu_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=3072.00)
+        card_mark='onecard', mem_peak=3072.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_nn_prelu(mode):
     """
@@ -142,8 +141,7 @@ def test_nn_prelu(mode):
     assert np.allclose(output_grad2.asnumpy(), expect_grad2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_prelu_dynamic_shape():
     """
     Feature: Test leaky relu with dynamic shape in graph mode.
@@ -159,8 +157,7 @@ def test_prelu_dynamic_shape():
                          'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_prelu_bfloat16(mode):
     """

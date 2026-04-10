@@ -25,7 +25,7 @@ from tests.mark_utils import arg_mark
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_type_guard():
     """
     Feature: Test Tensor TypeGuard.
@@ -49,7 +49,7 @@ def test_tensor_type_guard():
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_stub_tensor_load_method():
     """
     Feature: Test Tensor LOAD_METHOD.
@@ -82,7 +82,7 @@ def test_stub_tensor_load_method():
     assert_executed_by_graph_mode(fn, call_count=2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_getitem_setitem_by_slice_v1():
     """
     Feature: Test Tensor getitem/setitem.
@@ -116,7 +116,7 @@ def test_tensor_getitem_setitem_by_slice_v1():
     assert_executed_by_graph_mode(compiled_fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_getitem_setitem_by_slice_v2():
     """
     Feature: Test Tensor getitem/setitem.

@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.kl_div_loss(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_kl_div_loss():
     """
     Feature: Test KLDivLoss.
@@ -52,7 +52,7 @@ def test_kl_div_loss():
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_kl_div_loss_negative_target():
     """
     Feature: Test KLDivLoss.
@@ -78,7 +78,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_kl_div_loss_grad():
     """
     Feature: Test KLDivLossGrad.
@@ -100,7 +100,7 @@ def test_kl_div_loss_grad():
     assert np.allclose(dx[0].asnumpy(), dx1_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_kl_div_loss_grad_float64():
     """
     Feature: Test KLDivLossGrad.
@@ -122,7 +122,7 @@ def test_kl_div_loss_grad_float64():
     assert np.allclose(dx[0].asnumpy(), dx1_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_kl_div_loss_grad_negative_target():
     """
     Feature: Test KLDivLoss.

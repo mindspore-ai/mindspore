@@ -43,7 +43,7 @@ class Net7(Cell):
         return b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_frontend_optimize():
     '''
     TEST_SUMMARY:

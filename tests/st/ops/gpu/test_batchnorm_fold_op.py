@@ -53,7 +53,7 @@ def np_result(x, mean, var, momentum, epsilon):
     return np_mean, np_var, mean_update, var_update, delay_mean, delay_std
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_fold():
     c = 64
     x = np.random.uniform(1, 10, size=[3, c, 32, 32]).astype('float32')
@@ -76,7 +76,7 @@ def test_batchnorm_fold():
     assert np.allclose(delay_std.asnumpy(), expect6, rtol=1.e-7, atol=1.e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_fold2():
     c = 64
     x = np.random.uniform(1, 10, size=[3, c, 512, 512]).astype('float32')
@@ -97,7 +97,7 @@ def test_batchnorm_fold2():
     assert np.allclose(delay_std.asnumpy(), expect6, rtol=1.e-7, atol=1.e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_fold_freeze():
     c = 64
     x = np.random.uniform(1, 10, size=[3, c, 32, 32]).astype('float32')

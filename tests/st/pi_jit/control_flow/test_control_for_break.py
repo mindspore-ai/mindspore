@@ -41,7 +41,7 @@ class CtrlForBreakRange1(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_1_10_3_break():
     """
     Feature: PIJit
@@ -74,7 +74,7 @@ class CtrlForBreakRange2(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_4_n8_n4_break():
     """
     Feature: PIJit
@@ -107,7 +107,7 @@ class CtrlForBreakRange3(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_n5_5_2_break():
     """
     Feature: PIJit
@@ -140,7 +140,7 @@ class CtrlForBreakRange4(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_range_n2_n8_n2_break():
     """
     Feature: PIJit
@@ -178,7 +178,7 @@ class CtrlForEnumerateIfBreak(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_enumerate_if_break():
     """
     Feature: PIJit
@@ -223,7 +223,7 @@ class CtrlForBreakElifElse(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_break_in_elif_else():
     """
     Feature: PIJit
@@ -242,7 +242,7 @@ def test_control_flow_for_break_in_elif_else():
     match_array(ps_out, pi_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_for_range_break_matches_pynative_and_jit_grad():
     """
     Feature: PIJit bytecode capture for for-loop break.

@@ -77,7 +77,7 @@ def check_result(result_path: str):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_mstx_profiler():
     """
     Feature: Ascend Profiler for mstx data
@@ -118,7 +118,7 @@ def test_mstx_profiler():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mstx_profiler_with_domain_include():
     """
     Feature: Ascend Profiler for mstx domain data
@@ -170,7 +170,7 @@ def test_mstx_profiler_with_domain_include():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mstx_profiler_with_domain_exclude():
     """
     Feature: Ascend Profiler for mstx domain data
@@ -222,7 +222,7 @@ def test_mstx_profiler_with_domain_exclude():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_mstx_profiler_with_domain_include_model_preparation():
     """
     Feature: Profiler with model preparation

@@ -66,7 +66,7 @@ class Net(nn.Cell):
         return next_v
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adam_fusion():
     beta1 = Tensor(np.array([0.9]).astype(np.float32))
     beta2 = Tensor(np.array([0.999]).astype(np.float32))

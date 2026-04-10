@@ -85,7 +85,7 @@ def dict_compare(a, b):
     return a == b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_bool():
     """
     Feature: Support mutable in graph.
@@ -114,7 +114,7 @@ def test_cal_mutable_bool():
     assert output[3]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_scalar():
     """
     Feature: Support mutable in graph.
@@ -140,7 +140,7 @@ def test_cal_mutable_scalar():
     assert output == 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_tuple_scalar():
     """
     Feature: Support mutable in graph.
@@ -166,7 +166,7 @@ def test_cal_mutable_tuple_scalar():
     assert output == 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_dyn_tuple_scalar():
     """
     Feature: Support mutable in graph.
@@ -192,7 +192,7 @@ def test_cal_mutable_dyn_tuple_scalar():
     assert output == 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_list_scalar():
     """
     Feature: Support mutable in graph.
@@ -218,7 +218,7 @@ def test_cal_mutable_list_scalar():
     assert output == 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_dyn_list_scalar():
     """
     Feature: Support mutable in graph.
@@ -244,7 +244,7 @@ def test_cal_mutable_dyn_list_scalar():
     assert output == 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_dict_any():
     """
     Feature: Support mutable in graph.
@@ -271,7 +271,7 @@ def test_cal_mutable_dict_any():
     assert output == 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cal_mutable_tensor():
     """
     Feature: Support mutable in graph.
@@ -297,7 +297,7 @@ def test_cal_mutable_tensor():
     assert output == Tensor([10])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_scalar_mul_grad_first():
     """
     Feature: Set Constants mutable.
@@ -324,7 +324,7 @@ def test_mutable_scalar_mul_grad_first():
     assert output == 3
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_scalar_mul_grad_all():
     """
     Feature: Set Constants mutable.
@@ -352,7 +352,7 @@ def test_mutable_scalar_mul_grad_all():
     assert output == (3, 2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_tuple_or_list_scalar_mul_grad():
     """
     Feature: Set Constants mutable.
@@ -383,7 +383,7 @@ def test_mutable_tuple_or_list_scalar_mul_grad():
     assert output == [3, 2]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dict_scalar_mul_grad():
     """
     Feature: Set Constants mutable.
@@ -412,7 +412,7 @@ def test_mutable_dict_scalar_mul_grad():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dict_scalar_mul_grad_with_fallback():
     """
     Feature: Set Constants mutable.
@@ -439,7 +439,7 @@ def test_mutable_dict_scalar_mul_grad_with_fallback():
     assert output == {'a': 3, 'b': 2}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dict_mix_scalar_mul_grad_all():
     """
     Feature: Set Constants mutable.
@@ -469,7 +469,7 @@ def test_mutable_dict_mix_scalar_mul_grad_all():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_dict_mix_scalar_mul_grad_all_with_fallback():
     """
     Feature: Set Constants mutable.
@@ -497,7 +497,7 @@ def test_mutable_dict_mix_scalar_mul_grad_all_with_fallback():
     assert output == ({'a': 12, 'b': 8}, (6, 0))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -549,7 +549,7 @@ def test_grad_const_tensor_to_mutable():
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_tensor_arg_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -604,7 +604,7 @@ def test_grad_const_tensor_arg_to_mutable():
     assert id(m_x.__ms_origin_object__) == id(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_tuple_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -666,7 +666,7 @@ def test_grad_const_tuple_tensor_to_mutable():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_list_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -728,7 +728,7 @@ def test_grad_const_list_tensor_to_mutable():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_list_and_tuple_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -795,7 +795,7 @@ def test_grad_const_list_and_tuple_tensor_to_mutable():
     assert compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -872,8 +872,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
     assert id(m_x.__ms_origin_object__) == id(x)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_grad_const_dict_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -939,8 +938,7 @@ def test_grad_const_dict_tensor_to_mutable():
     assert compare(output['b'], expect[1])
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_const_dict_tensor_arg_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1005,7 +1003,7 @@ def test_grad_const_dict_tensor_arg_to_mutable():
     assert id(m_x.__ms_origin_object__) == id(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_dict_and_tuple_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1077,7 +1075,7 @@ def test_grad_const_dict_and_tuple_tensor_to_mutable():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1144,7 +1142,7 @@ def test_grad_const_dict_and_tuple_tensor_arg_to_mutable():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_tuple_any_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1211,7 +1209,7 @@ def test_grad_const_tuple_any_to_mutable():
     assert seq_compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_list_any_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1278,7 +1276,7 @@ def test_grad_const_list_any_to_mutable():
     assert seq_compare(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_const_tuple_or_list_any_arg_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1359,8 +1357,7 @@ def test_grad_const_tuple_or_list_any_arg_to_mutable():
     assert id(m_x.__ms_origin_object__) == id(x)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_const_dict_any_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1426,8 +1423,7 @@ def test_grad_const_dict_any_to_mutable():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_const_dict_any_arg_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1494,8 +1490,7 @@ def test_grad_const_dict_any_arg_to_mutable():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_const_dict_any_to_mutable_with_fallback():
     """
     Feature: Support mutable in graph.
@@ -1562,8 +1557,7 @@ def test_grad_const_dict_any_to_mutable_with_fallback():
     assert dict_compare(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_const_dict_any_arg_to_mutable_with_fallback():
     """
     Feature: Support mutable in graph.
@@ -1630,7 +1624,7 @@ def test_grad_const_dict_any_arg_to_mutable_with_fallback():
     assert id(m_x.__ms_origin_object__) == id(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_grad_mutable_in_primal():
     """
     Feature: Support mutable in graph.
@@ -1668,7 +1662,7 @@ def test_grad_mutable_in_primal():
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mutable_empty_list():
     """
     Feature: Support mutable in graph.
@@ -1687,7 +1681,7 @@ def test_mutable_empty_list():
     assert out == []
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_return_scalar_dict():
     """
     Feature: Support mutable in graph.
@@ -1705,7 +1699,7 @@ def test_return_scalar_dict():
     assert isinstance(out['a'], int) and out['a'] == 4
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_return_scalar_dict_tuple():
     """
     Feature: Support mutable in graph.
@@ -1726,7 +1720,7 @@ def test_return_scalar_dict_tuple():
     assert np.allclose(std_out, out, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_return_scalar_tuple_same_type():
     """
     Feature: Support mutable in graph.
@@ -1745,7 +1739,7 @@ def test_return_scalar_tuple_same_type():
     assert np.allclose((3.5, 4.6), out, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_return_scalar_tuple_diff_type():
     """
     Feature: Support mutable in graph.
@@ -1765,7 +1759,7 @@ def test_return_scalar_tuple_diff_type():
     assert np.allclose((3.345, 4, False), out, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_return_scalar_not_top_cell():
     """
     Feature: Support mutable in graph.
@@ -1789,8 +1783,7 @@ def test_return_scalar_not_top_cell():
     assert isinstance(out, int) and out == 25
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_output_mutable_list():
     """
     Feature: Support mutable in graph.

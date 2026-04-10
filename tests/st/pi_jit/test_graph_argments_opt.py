@@ -141,7 +141,7 @@ def run_mix_case(s, d):
     return s[0][0] + d1.get('a') + d2['b'][0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize(
     'func', [run_sequence, run_sequence_append, run_sequence_assign, run_sequence_len, run_sequence_reverse]
 )
@@ -170,7 +170,7 @@ def test_list(func, x1, x2, y1, y2):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_sequence_pop, run_sequence_insert])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -192,7 +192,7 @@ def test_list_break(func, x1, x2, y1, y2):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -213,7 +213,7 @@ def test_nest_list(func, x1, x2, y1, y2):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_sequence, run_sequence_append, run_sequence_assign, run_sequence_len])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -234,7 +234,7 @@ def test_tuple(func, x1, x2, y1, y2):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_sequence])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -255,7 +255,7 @@ def test_nested_tuple(func, x1, x2, y1, y2):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize(
     'func', [run_dict, run_dict_keys_values, run_dict_dict, run_dict_sub_func, run_dict_items, run_dict_len]
 )
@@ -278,7 +278,7 @@ def test_dict(func, x1, x2, y1, y2):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_nested_dict, run_nested_dict_mix])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -299,7 +299,7 @@ def test_nested_dict(func, x1, x2, y1, y2):
     match_array(res['ret'], ms_res['ret'], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_dict_update])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -319,7 +319,7 @@ def test_nested_dict_update(func, x1, x2, y1, y2):
     match_array(res['ret'], ms_res['ret'], error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [run_mix_case])
 @pytest.mark.parametrize('x1', [Tensor([[1.0, 2.0], [3.0, 4.0]], mstype.float32)])
 @pytest.mark.parametrize('x2', [Tensor([[10.0, 20.0], [30.0, 40.0]], mstype.float32)])
@@ -383,7 +383,7 @@ def check_ir(expect_ir_num, ir_path, expect_dict, check_shape=True):
         shutil.rmtree(ir_path)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_pos_arg_unused_in_subfunc():
     """
     Feature: Graph parameter elimination.
@@ -426,7 +426,7 @@ def test_param_elimination_pos_arg_unused_in_subfunc():
     check_ir(2, ir_path, {"%para2": 0, "(2, 3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_pos_arg_unused_in_toplevel():
     """
     Feature: Graph parameter elimination.
@@ -465,7 +465,7 @@ def test_param_elimination_pos_arg_unused_in_toplevel():
     check_ir(2, ir_path, {"%para2": 0, "(2, 3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_multiple_pos_args_unused():
     """
     Feature: Graph parameter elimination.
@@ -498,7 +498,7 @@ def test_param_elimination_multiple_pos_args_unused():
     check_ir(1, ir_path, {"%para2": 0, "(3, 4)": 0, "(5, 6)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_multiple_pos_args_unused_in_subfunc():
     """
     Feature: Graph parameter elimination.
@@ -542,7 +542,7 @@ def test_param_elimination_multiple_pos_args_unused_in_subfunc():
     check_ir(2, ir_path, {"%para3": 0, "(2, 1)": 0, "(2, 4)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_list_unused_element_shape_change():
     """
     Feature: Graph parameter elimination.
@@ -575,7 +575,7 @@ def test_param_elimination_list_unused_element_shape_change():
     check_ir(1, ir_path, {"%para2": 0, "(4)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_list_used_element_shape_change():
     """
     Feature: Graph parameter elimination.
@@ -608,7 +608,7 @@ def test_param_elimination_list_used_element_shape_change():
     check_ir(2, ir_path, {"%para2": 0, "(4)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_list_unused_element_len_change():
     """
     Feature: Graph parameter elimination.
@@ -640,7 +640,7 @@ def test_param_elimination_list_unused_element_len_change():
     check_ir(2, ir_path, {"%para2": 0, "(3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_tuple_unused_element_value_change():
     """
     Feature: Graph parameter elimination.
@@ -672,7 +672,7 @@ def test_param_elimination_tuple_unused_element_value_change():
     check_ir(1, ir_path, {"%para3": 0}, False)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_tuple_len_change():
     """
     Feature: Graph parameter elimination.
@@ -704,7 +704,7 @@ def test_param_elimination_tuple_len_change():
     check_ir(2, ir_path, {"%para3": 0, "(3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_dict_unused_item_shape_change():
     """
     Feature: Graph parameter elimination.
@@ -736,7 +736,7 @@ def test_param_elimination_dict_unused_item_shape_change():
     check_ir(1, ir_path, {"%para3": 0, "(3)": 0, "(4)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_dict_len_change():
     """
     Feature: Graph parameter elimination.
@@ -768,7 +768,7 @@ def test_param_elimination_dict_len_change():
     check_ir(1, ir_path, {"%para3": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_nested_list_shape_change():
     """
     Feature: Graph parameter elimination.
@@ -800,7 +800,7 @@ def test_param_elimination_nested_list_shape_change():
     check_ir(2, ir_path, {"%para3": 0, "(3)": 0, "(4)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_vargs_shape_change():
     """
     Feature: Graph parameter elimination.
@@ -830,7 +830,7 @@ def test_param_elimination_vargs_shape_change():
     check_ir(1, ir_path, {"%para2": 0, "(3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_vargs_len_change():
     """
     Feature: Graph parameter elimination.
@@ -860,7 +860,7 @@ def test_param_elimination_vargs_len_change():
     check_ir(2, ir_path, {"%para2": 0, "(3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_kwargs_shape_change():
     """
     Feature: Graph parameter elimination.
@@ -895,7 +895,7 @@ def test_param_elimination_kwargs_shape_change():
     check_ir(1, ir_path, {"%para4": 0, "(3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_kwargs_len_change():
     """
     Feature: Graph parameter elimination.
@@ -930,7 +930,7 @@ def test_param_elimination_kwargs_len_change():
     check_ir(1, ir_path, {"%para4": 0, "(3)": 0})
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_param_elimination_mixed_args_change():
     """
     Feature: Graph parameter elimination.
@@ -970,7 +970,7 @@ def test_param_elimination_mixed_args_change():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parameter_elimination_01():
     """
     Feature: parameter elimination
@@ -1005,7 +1005,7 @@ def test_parameter_elimination_01():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parameter_elimination_02():
     """
     Feature: parameter elimination

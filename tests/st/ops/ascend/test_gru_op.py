@@ -90,7 +90,7 @@ class GRUWeightBias():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.16)
+        card_mark='onecard', mem_peak=1024.16)
 def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     input_size = 32
     hidden_size = 16
@@ -130,7 +130,7 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.31)
+        card_mark='onecard', mem_peak=0.31)
 def test_sit_gru_grad_input_3_32_32_is_32_hs_16():
     input_size = 32
     hidden_size = 16

@@ -74,7 +74,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.005, 0.005, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_grad(shape, dtype):
@@ -96,7 +96,7 @@ def test_fast_gelu_grad(shape, dtype):
     assert np_all_close_with_loss(output[0].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu(shape, dtype):
@@ -124,7 +124,7 @@ def test_fast_gelu(shape, dtype):
     assert np_all_close_with_loss(y_np, y_nn.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_grad_vmap(dtype, shape=(100, 2)):
     """
@@ -162,7 +162,7 @@ def test_fast_gelu_grad_vmap(dtype, shape=(100, 2)):
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_vmap(dtype, shape=(100, 2)):
     """

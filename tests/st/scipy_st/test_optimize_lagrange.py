@@ -33,7 +33,7 @@ def f_ieqcon(x):
     return -(x[0] - x[1] - 1.0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_minimize_lagrange():
     """
     Feature: ALL TO ALL

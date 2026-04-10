@@ -52,7 +52,7 @@ class UNet(ms.nn.Cell):
         return out, self.para + 10
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_side_effect_assign():
     """
     Feature: Fallback runtime side effect.
@@ -67,7 +67,7 @@ def test_fallback_side_effect_assign():
     assert output[1].asnumpy() == 30
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_side_effect_dict():
     """
     Feature: Fallback runtime side effect.
@@ -98,7 +98,7 @@ def test_fallback_side_effect_dict():
     assert out[1] == 44
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_side_effect_dict_2():
     """
     Feature: Fallback runtime side effect.
@@ -128,7 +128,7 @@ def test_fallback_side_effect_dict_2():
     assert out[1] == {'a': 1, 'b': 4, 'c': 3, 'd': 22}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_side_effect_nested_net():
     """
     Feature: Fallback runtime side effect.
@@ -168,7 +168,7 @@ def test_fallback_side_effect_nested_net():
     assert output == 52
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_control_flow():
     """
     Feature: Fallback runtime side effect.
@@ -198,7 +198,7 @@ def test_fallback_control_flow():
     assert out[2] == {'a': 1, 'b': 2}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_side_effect_asnumpy():
     """
     Feature: Fallback runtime side effect.
@@ -220,7 +220,7 @@ def test_fallback_side_effect_asnumpy():
     assert out == 512
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_side_effect_assign_1():
     """
     Feature: Fallback runtime side effect.
@@ -245,7 +245,7 @@ def test_fallback_side_effect_assign_1():
     assert out[1] == 20
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_side_effect_assign_2():
     """
     Feature: Fallback runtime side effect.
@@ -269,7 +269,7 @@ def test_fallback_side_effect_assign_2():
     assert out == 20
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_side_effect_dict_3():
     """
     Feature: Fallback runtime side effect.
@@ -312,8 +312,7 @@ class PrintPyExecuteNet(ms.nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_pyexecute():
     """
     Feature: Side effect in Fallback runtime.
@@ -327,8 +326,7 @@ def test_print_pyexecute():
     assert output == 200
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_dtype_is_cond():
     """
     Feature: Side effect in Fallback runtime.
@@ -347,7 +345,7 @@ def test_fallback_dtype_is_cond():
     assert out == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_if_after_for_in_if_numpy():
     """
     Feature: JIT Fallback
@@ -381,8 +379,7 @@ def test_if_after_for_in_if_numpy():
     assert (output.asnumpy() == [3, 4]).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_fallback_save_load():
     """
     Feature: JIT Fallback
@@ -419,8 +416,7 @@ def test_fallback_save_load():
         pass
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_fallback_save_load_with_annotation():
     """
     Feature: JIT Fallback
@@ -471,8 +467,7 @@ class TransformerNet(nn.Cell):
         return dense_output.asnumpy(), Tensor(np.array([1, 2]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_tensor_save_with_side_effect():
     """
     Feature: JIT Fallback

@@ -103,8 +103,7 @@ class Net_FP16(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_infer_auto(mode):
     """
@@ -127,8 +126,7 @@ def test_auto_mix_precision_infer_auto(mode):
     assert np.allclose(out.asnumpy(), out2.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_train_auto(mode):
     """
@@ -221,8 +219,7 @@ def func_for_amp_fp16(x, in_c, out_c):
     return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_infer_func_auto(mode):
     """
@@ -318,8 +315,7 @@ class SubNet_FP16(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_infer_subnet_auto(mode):
     """
@@ -344,8 +340,7 @@ def test_auto_mix_precision_infer_subnet_auto(mode):
     assert np.allclose(out.asnumpy(), out2.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_train_subnet_auto(mode):
     """
@@ -422,8 +417,7 @@ class NetWithRecompute(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_recompute(mode):
     """
@@ -461,8 +455,7 @@ class NetWithToFloat(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_with_to_float(mode):
     """
@@ -481,8 +474,7 @@ def test_auto_mix_precision_with_to_float(mode):
     assert out.dtype == ms.float32
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_with_keyword_arguments(mode):
     """
@@ -511,8 +503,7 @@ def test_auto_mix_precision_with_keyword_arguments(mode):
     assert out1.dtype == ms.float16 and out2.dtype == ms.float32
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_with_AddN(mode):
     """
@@ -537,7 +528,7 @@ def test_auto_mix_precision_with_AddN(mode):
     assert out.dtype == ms.float32
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_amp_single_func():
     """
     Feature: auto mixed precision auto mode.
@@ -556,7 +547,7 @@ def test_amp_single_func():
     assert ms.jit(amp_func)(x, y).dtype == ms.float16
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_amp_inner_func():
     """
     Feature: auto mixed precision auto mode.
@@ -579,7 +570,7 @@ def test_amp_inner_func():
     assert ms.jit(func)(x, y).dtype == ms.float16
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_amp_nested_func():
     """
     Feature: auto mixed precision auto mode.
@@ -610,7 +601,7 @@ def test_amp_nested_func():
     assert out_graph[0].dtype == ms.float16 and out_graph[1].dtype == ms.float32
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_amp_jit_func():
     """
     Feature: auto mixed precision auto mode.
@@ -648,8 +639,7 @@ def func_norm(x):
     return gen.Norm()(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_amp_auto_black_list_norm():
     """
     Feature: auto mixed precision auto mode.

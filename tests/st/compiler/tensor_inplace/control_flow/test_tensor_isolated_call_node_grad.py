@@ -21,8 +21,7 @@ from mindspore.ops.functional import grad
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_isolated_switch_call_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -51,8 +50,7 @@ def test_isolated_switch_call_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_isolated_switch_call_case2():
     """
     Feature: Support tensor inplace gradient.
@@ -80,8 +78,7 @@ def test_isolated_switch_call_case2():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_isolated_switch_call_case3():
     """
     Feature: Support tensor inplace view gradient.
@@ -112,8 +109,7 @@ def test_isolated_switch_call_case3():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_isolated_loop_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -142,8 +138,7 @@ def test_isolated_loop_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_isolated_loop_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -175,7 +170,7 @@ def test_isolated_loop_case2():
 
 @pytest.mark.skip(reason="Unsupported now, loop func only last func call node is an isolated node")
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_isolated_loop_case3():
     """
     Feature: Support tensor inplace view gradient.

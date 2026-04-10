@@ -24,7 +24,7 @@ from mindspore import Tensor
 context.set_context(device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_deformable_conv2d():
     """"
     Feature: deformable_conv2d function

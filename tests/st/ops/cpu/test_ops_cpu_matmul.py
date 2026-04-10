@@ -43,8 +43,7 @@ def judge_result_correct(result, expect):
     assert np.allclose(result, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_matmul_no_transpose_vec(dtype):
     """
@@ -70,8 +69,7 @@ def np_matmul(a: np.ndarray, b: np.ndarray, trans_a: bool, trans_b: bool):
     return np.matmul(a, b)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('trans_a', [True, False])
 @pytest.mark.parametrize('trans_b', [True, False])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -97,8 +95,7 @@ def test_matmul_matrix(trans_a, trans_b, dtype):
     judge_result_correct(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_api_modes(mode):
     """
@@ -119,8 +116,7 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.

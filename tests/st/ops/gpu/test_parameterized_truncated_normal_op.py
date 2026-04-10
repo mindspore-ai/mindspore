@@ -32,7 +32,7 @@ class ParameterizedTruncatedNormalTEST(nn.Cell):
         return self.parameterized_truncated_normal(shape, mean, stdevs, minvals, maxvals)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_parameterized_truncated_normal_op_case1():
     """
     Feature: ParameterizedTruncatedNormal gpu kernel
@@ -66,7 +66,7 @@ def test_parameterized_truncated_normal_op_case1():
         assert np.allclose(output.asnumpy(), expect_result[index].asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_parameterized_truncated_normal_op_case2():
     """
     Feature: ParameterizedTruncatedNormal gpu kernel

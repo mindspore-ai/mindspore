@@ -35,7 +35,7 @@ class Net1(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_string_with_for():
     """
     Feature: String iteration in for loop.
@@ -65,7 +65,7 @@ class Net2(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_string_using_index():
     """
     Feature: String indexing operation.
@@ -93,7 +93,7 @@ class Net4(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sliced_string_with_for():
     """
     Feature: String slicing in for loop.
@@ -108,7 +108,7 @@ def test_sliced_string_with_for():
     model.predict(input_me)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_string_add_operator():
     """
     Feature: String addition operator.

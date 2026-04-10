@@ -53,8 +53,7 @@ class RandomGammaDR(nn.Cell):
         return F.random_gamma(outshape, outalpha, seed), outshape, outalpha
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dynamic_rank():
     """
     Feature: RandomGamma cpu kernel for dynamic rank
@@ -75,8 +74,7 @@ def test_dynamic_rank():
     assert (output.shape == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
 def test_random_gamma_op(dtype):
     """
@@ -109,8 +107,7 @@ def test_random_gamma_op(dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
 def test_random_gamma_functional(dtype):
     """

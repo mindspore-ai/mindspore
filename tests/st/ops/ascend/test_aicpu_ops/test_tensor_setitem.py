@@ -51,7 +51,7 @@ def run_tensor_setitem_all(support_dtype):
     run_net_for_many_dtype((10, 10, 10), (5, 10), (9, slice(5, 10)), support_dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1024.01)
 def test_tensor_copy_slices_ascend_graph():
     support_dtype = (np.int64, np.int32, np.float32)
@@ -59,7 +59,7 @@ def test_tensor_copy_slices_ascend_graph():
     run_tensor_setitem_all(support_dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
           mem_peak=1024.01)
 def test_tensor_copy_slices_ascend_pynative():
     support_dtype = (np.int64, np.int32, np.float32, np.float64)
@@ -67,7 +67,7 @@ def test_tensor_copy_slices_ascend_pynative():
     run_tensor_setitem_all(support_dtype)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard',
           mem_peak=1024.01)
 def test_tensor_copy_slices_gpu_graph():
     support_dtype = (np.int64, np.int32, np.float32)
@@ -75,7 +75,7 @@ def test_tensor_copy_slices_gpu_graph():
     run_tensor_setitem_all(support_dtype)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard',
           mem_peak=1024.01)
 def test_tensor_copy_slices_gpu_pynative():
     support_dtype = (np.int64, np.int32, np.float32, np.float64)
@@ -83,7 +83,7 @@ def test_tensor_copy_slices_gpu_pynative():
     run_tensor_setitem_all(support_dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard',
           mem_peak=1024.01)
 def test_tensor_copy_slices_cpu_graph():
     support_dtype = (np.int64, np.int32, np.float32)
@@ -91,7 +91,7 @@ def test_tensor_copy_slices_cpu_graph():
     run_tensor_setitem_all(support_dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard',
           mem_peak=1024.01)
 def test_tensor_copy_slices_cpu_pynative():
     support_dtype = (np.int64, np.int32, np.float32, np.float64)

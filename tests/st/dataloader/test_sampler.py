@@ -91,7 +91,7 @@ def compare_tensor_list(list1, list2):
         assert (v1 == v2).all()
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_udf_sampler():
     """
     Feature: Test DataLoader sampler.
@@ -108,7 +108,7 @@ def test_dataloader_udf_sampler():
     compare_tensor_list(result, expect)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_sequential_sampler():
     """
     Feature: Test DataLoader sampler.
@@ -127,7 +127,7 @@ def test_dataloader_sequential_sampler():
     compare_tensor_list(result1, result2)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_random_sampler():
     """
     Feature: Test DataLoader sampler.
@@ -179,7 +179,7 @@ def test_dataloader_random_sampler():
     assert result == expected_value
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_batch_sampler():
     """
     Feature: Test DataLoader sampler.
@@ -206,7 +206,7 @@ def test_dataloader_batch_sampler():
     compare_tensor_list(result, expected)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_user_defined_sampler():
     """
     Feature: Test DataLoader sampler.
@@ -223,7 +223,7 @@ def test_dataloader_user_defined_sampler():
     compare_tensor_list(result, expect)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_distributed_sampler():
     """
     Feature: Test DataLoader sampler.
@@ -255,7 +255,7 @@ def test_dataloader_distributed_sampler():
     print(result)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_distributed_sampler_shuffle():
     """
     Feature: Test DataLoader sampler.
@@ -272,7 +272,7 @@ def test_dataloader_distributed_sampler_shuffle():
     compare_tensor_list(result, expect)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_distributed_sampler_drop_last():
     """
     Feature: Test DataLoader sampler.
@@ -300,7 +300,7 @@ def test_dataloader_distributed_sampler_drop_last():
     expect = [ms.Tensor(i) for i in [2, 5, 8]]
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_sequential_sampler():
     """
     Feature: Sequential Sampler
@@ -314,7 +314,7 @@ def test_sequential_sampler():
     assert list(sequential_sampler) == result
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_random_sampler():
     """
     Feature: Random Sampler
@@ -341,7 +341,7 @@ def test_random_sampler():
     assert list(random_sampler_2) == result_2
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_random_sampler_exception():
     """
     Feature: Random sampling of abnormal scenarios
@@ -379,7 +379,7 @@ def test_dataloader_random_sampler_exception():
     assert error_msssage in str(error_info.value)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_batch_sampler():
     """
     Feature: Batch Sampler
@@ -404,7 +404,7 @@ def test_batch_sampler():
     assert list(batch_sampler_2) == result_2
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_batch_sampler_exception():
     """
     Feature: Batch sampling of abnormal scenarios
@@ -437,7 +437,7 @@ def test_dataloader_batch_sampler_exception():
     assert error_msssage in str(error_info.value)
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_distributed_sampler():
     """
     Feature: Distribute Sampler
@@ -463,7 +463,7 @@ def test_distributed_sampler():
     assert list(distributed_sampler_3) == result_3
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 def test_dataloader_distributed_sampler_exception():
     """
     Feature: Distribute sampling of abnormal scenarios

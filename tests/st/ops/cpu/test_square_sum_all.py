@@ -48,8 +48,7 @@ def run_net(datatype, input_tensors, output_tensors):
     assert output1.dtype == inp1.dtype
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_square_sum_all_dynamic_shape():
     """
     Feature: test SquareSumAll cpu op.
@@ -73,8 +72,7 @@ def test_square_sum_all_dynamic_shape():
     assert out_y.asnumpy().shape == expect_out_y_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize('input_tensors, output_tensors',
                          [([[1, 2, 4], [0, 1, -1]], [21, 2]),
@@ -89,8 +87,7 @@ def test_cpu(dtype, input_tensors, output_tensors):
     run_net(dtype, input_tensors, output_tensors)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cpu_exception_dtype_diff():
     """
     Feature: SquareSumAll cpu op.
@@ -106,8 +103,7 @@ def test_cpu_exception_dtype_diff():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cpu_exception_dtype_not_support():
     """
     Feature: SquareSumAll cpu op.
@@ -123,8 +119,7 @@ def test_cpu_exception_dtype_not_support():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cpu_exception_shape_diff():
     """
     Feature: SquareSumAll cpu op.
@@ -140,8 +135,7 @@ def test_cpu_exception_shape_diff():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cpu_float16():
     """
     Feature: SquareSumAll cpu op.
@@ -159,8 +153,7 @@ def test_cpu_float16():
     assert output1.asnumpy() == expect1
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_vmap_square_sum_all():
     """
     Feature: SquareSumAll cpu op vmap feature.

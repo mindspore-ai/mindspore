@@ -39,8 +39,7 @@ class LogNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_log10(mode):
     """
@@ -59,8 +58,7 @@ def test_log10(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_log2(mode):
     """
@@ -78,8 +76,7 @@ def test_log2(mode):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_log(mode):
     """

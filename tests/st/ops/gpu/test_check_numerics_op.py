@@ -75,7 +75,7 @@ def dyn_case():
     assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_check_numerics_dyn():
     """
     Feature: test CheckNumerics ops in gpu.
@@ -88,7 +88,7 @@ def test_check_numerics_dyn():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_check_numerics_graph_float32():
     """
     Feature: ALL To ALL
@@ -98,7 +98,7 @@ def test_check_numerics_graph_float32():
     check_numerics(loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_check_numerics_pynative_float64():
     """
     Feature: ALL To ALL

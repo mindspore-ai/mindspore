@@ -22,8 +22,7 @@ from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
 def test_bias_add_4d(mode):
@@ -49,8 +48,7 @@ def test_bias_add_4d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_2d(mode):
     """
@@ -75,8 +73,7 @@ def test_bias_add_2d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_3d(mode):
     """
@@ -101,8 +98,7 @@ def test_bias_add_3d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_5d(mode):
     """
@@ -127,8 +123,7 @@ def test_bias_add_5d(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_backward(mode):
     """
@@ -152,8 +147,7 @@ def test_bias_add_backward(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
 def test_bias_add_vmap(mode):
@@ -185,7 +179,7 @@ def test_bias_add_vmap(mode):
     assert np.allclose(output.asnumpy(), expect_out)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_ncdhw(mode):
     """
@@ -210,8 +204,7 @@ def test_bias_add_ncdhw(mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_bias_add_different_input_types(mode):
     """

@@ -37,8 +37,7 @@ class NumberNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_change_net_number():
     """
     Feature: Support to change attribute of cell object
@@ -52,8 +51,7 @@ def test_change_net_number():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_change_net_number_2():
     """
     Feature: Support to change attribute of cell object
@@ -79,8 +77,7 @@ class ListNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_change_net_list():
     """
     Feature: Support to change attribute of cell object
@@ -94,8 +91,7 @@ def test_change_net_list():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_change_net_list_2():
     """
     Feature: Support to change attribute of cell object
@@ -109,8 +105,7 @@ def test_change_net_list_2():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_list_3():
     """
     Feature: Support to change attribute of cell object
@@ -136,8 +131,7 @@ class ListNet2(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_list_4():
     """
     Feature: Support to change attribute of cell object
@@ -151,8 +145,7 @@ def test_change_net_list_4():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_list_5():
     """
     Feature: Support to change attribute of cell object
@@ -176,8 +169,7 @@ class TensorNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_tensor():
     """
     Feature: Support to change attribute of cell object
@@ -191,8 +183,7 @@ def test_change_net_tensor():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_tensor_2():
     """
     Feature: Support to change attribute of cell object
@@ -219,8 +210,7 @@ class ExternalNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_external_object():
     """
     Feature: Support to change attribute of cell object
@@ -234,8 +224,7 @@ def test_change_net_external_object():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_external_object_2():
     """
     Feature: Support to change attribute of cell object
@@ -259,8 +248,7 @@ class ChangeNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_type_number_to_list():
     """
     Feature: Support to change attribute of cell object
@@ -274,8 +262,7 @@ def test_change_net_attr_type_number_to_list():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_type_tuple_to_number():
     """
     Feature: Support to change attribute of cell object
@@ -289,8 +276,7 @@ def test_change_net_attr_type_tuple_to_number():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_type_tuple_to_tensor():
     """
     Feature: Support to change attribute of cell object
@@ -304,8 +290,7 @@ def test_change_net_attr_type_tuple_to_tensor():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_type_tensor_to_number():
     """
     Feature: Support to change attribute of cell object
@@ -330,8 +315,7 @@ class ChangeNet2(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_type_tensor_to_list_with_cal():
     """
     Feature: Support to change attribute of cell object
@@ -345,8 +329,7 @@ def test_change_net_attr_type_tensor_to_list_with_cal():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_type_tensor_to_list_with_cal_2():
     """
     Feature: Support to change attribute of cell object
@@ -379,8 +362,7 @@ class HybridNet(Cell):
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr():
     """
     Feature: Support to change attribute of cell object
@@ -397,8 +379,7 @@ def test_change_net_attr():
 
 
 @pytest.mark.skip(reason="Not support to change attribute of cell object")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_change_net_attr_2():
     """
     Feature: Support to change attribute of cell object

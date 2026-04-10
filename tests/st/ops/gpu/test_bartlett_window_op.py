@@ -77,7 +77,7 @@ def bartlett_window_pynative(periodic, dtype, loss):
     assert np.allclose(bartlett_window_output.asnumpy(), bartlett_window_expect.numpy().astype(nptype), loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bartlett_window_graph_int32_true_float32():
     """
     Feature: ALL To ALL
@@ -87,7 +87,7 @@ def test_bartlett_window_graph_int32_true_float32():
     bartlett_window(periodic=True, dtype="float32", loss=1.0e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bartlett_window_pynative_int64_false_float64():
     """
     Feature: ALL To ALL
@@ -97,7 +97,7 @@ def test_bartlett_window_pynative_int64_false_float64():
     bartlett_window_pynative(periodic=False, dtype="float64", loss=1.0e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bartlett_window_functional_api(mode):
     """

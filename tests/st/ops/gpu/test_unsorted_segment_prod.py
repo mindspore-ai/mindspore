@@ -118,7 +118,7 @@ def dyn_case():
     assert out.asnumpy().shape == (2, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unsorted_segment_prod_dyn():
     """
     Feature: test UnsortedSegmentProd ops in gpu.
@@ -131,7 +131,7 @@ def test_unsorted_segment_prod_dyn():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['prod'])
 @pytest.mark.parametrize('data_type',
                          [mstype.float16, mstype.float32, mstype.int32])
@@ -154,7 +154,7 @@ def test_1D(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['prod'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -176,7 +176,7 @@ def test_2D(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['prod'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -218,7 +218,7 @@ class UnsortedSegmentProdDynNet(nn.Cell):
         return self.unsorted_segment_prod(data, ids, self.num_segments)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['prod'])
 @pytest.mark.parametrize('data_type',
                          [mstype.float16, mstype.float32, mstype.int32])
@@ -258,7 +258,7 @@ def test_dyn_ab(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['prod'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -297,7 +297,7 @@ def test_dyn_a(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', ['prod'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -336,7 +336,7 @@ def test_dyn_b(func, data_type, index_type):
     assert (output.asnumpy() == expected).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tensor_check():
     """
     Feature: test_tensor_check.
@@ -354,7 +354,7 @@ def test_tensor_check():
     np.testing.assert_allclose(output_ms.asnumpy(), expected, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_functional_check():
     """
     Feature: test_functional_check.
@@ -372,7 +372,7 @@ def test_functional_check():
     np.testing.assert_allclose(output_ms.asnumpy(), expected, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_vmap():
     """
     Feature: test_vmap.

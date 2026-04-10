@@ -89,7 +89,7 @@ class LSTMWeightBias():
         return w_ih_list, w_hh_list, b_ih_list, b_hh_list
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     """
     Feature: LSTM forward
@@ -136,7 +136,7 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     assert np.allclose(cy.asnumpy(), cy_pynative.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     """
     Feature: LSTM backward

@@ -33,8 +33,7 @@ def test_bounding_box_encode_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_bounding_box_encode_functional_modes():
     """
     Feature: test bounding_box_encode functional API in PyNative and Graph modes.

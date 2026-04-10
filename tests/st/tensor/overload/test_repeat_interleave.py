@@ -39,8 +39,7 @@ class Net2(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',
                       'platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_interleave_python(mode):
     """
@@ -91,8 +90,7 @@ class Net4(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',
                       'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_interleave_pyboost_fault(mode):
     """
@@ -113,8 +111,7 @@ def test_repeat_interleave_pyboost_fault(mode):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=4.0)
+          card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_repeat_interleave_pyboost_ok(mode):
     """

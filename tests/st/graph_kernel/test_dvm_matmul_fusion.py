@@ -75,8 +75,7 @@ def get_output(net, args, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=90.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=90.0)
 @pytest.mark.parametrize("shape1, shape2", [((4096, 1024), (4096, 2048)), ((4000, 1000), (4000, 3000)),
                                             ((1, 2048), (1, 4096)), ((16, 16), (16, 4096))])
 @pytest.mark.parametrize("dtype", [mstype.float16, mstype.bfloat16])
@@ -96,7 +95,7 @@ def test_dvm_matmul_fusion(shape1, shape2, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=164.0)
+          card_mark='onecard', mem_peak=164.0)
 def test_dvm_matmul_fusion_2():
     """
     Feature: test matmul+reshape+cast
@@ -112,7 +111,7 @@ def test_dvm_matmul_fusion_2():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=196.0)
+          card_mark='onecard', mem_peak=196.0)
 def test_dvm_same_input_matmul_fusion_0():
     """
     Feature: test same input matmul case for graph_kernel in Ascend.
@@ -129,7 +128,7 @@ def test_dvm_same_input_matmul_fusion_0():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=164.0)
+          card_mark='onecard', mem_peak=164.0)
 def test_dvm_same_input_matmul_fusion_1():
     """
     Feature: test same input matmul case for graph_kernel in Ascend.

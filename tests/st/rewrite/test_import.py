@@ -4,7 +4,7 @@ from .test_folder import import_net, import_net2
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_import(mode):
     """
@@ -15,7 +15,7 @@ def test_import(mode):
     import_net.run_net_with_import(mode)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_import2(mode):
     """

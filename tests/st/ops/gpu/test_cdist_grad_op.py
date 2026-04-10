@@ -45,7 +45,7 @@ def cdist_grad_pynative(grad, x1, x2, y, p):
     return output_ms
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, eps', [(np.float32, 1.0e-4), (np.float64, 1.0e-5)])
 def test_cdist_grad_p_graph(dtype, eps):
     """
@@ -64,7 +64,7 @@ def test_cdist_grad_p_graph(dtype, eps):
     assert ((output.asnumpy() - expect) < eps).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, eps', [(np.float32, 1.0e-4), (np.float64, 1.0e-5)])
 def test_cdist_grad_p_pynative(dtype, eps):
     """

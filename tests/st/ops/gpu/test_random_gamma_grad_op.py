@@ -30,7 +30,7 @@ class RandomGammaGradNet(nn.Cell):
         return self.random_gamma_grad(alpha, sample)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_random_gamma_grad_graph():
     """
     Feature:  RandomGammaGrad
@@ -49,7 +49,7 @@ def test_random_gamma_grad_graph():
     assert output.shape == out_expect.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_random_gamma_grad_pynative():
     """
     Feature:  RandomGammaGrad

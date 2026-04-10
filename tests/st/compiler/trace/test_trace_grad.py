@@ -35,8 +35,7 @@ from mindspore.train import Model
 from mindspore import ParameterTuple
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_1():
     """
     Feature: JIT trace function
@@ -63,8 +62,7 @@ def test_trace_1():
     assert res1 == res2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_trace_2():
     """
     Feature: JIT trace function
@@ -106,8 +104,7 @@ def test_trace_2():
     assert res3 == res4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_3():
     """
     Feature: JIT trace function
@@ -274,8 +271,7 @@ class Net(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.skip(reason="skip")
 def test_trace_train_1():
     """
@@ -294,8 +290,7 @@ def test_trace_train_1():
     assert [x for x in net.get_parameters()][0].value()[0][0] != 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.skip(reason="skip")
 def test_trace_train_2():
     """
@@ -317,8 +312,7 @@ def test_trace_train_2():
     context.set_context(save_graphs=False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_4():
     """
     Feature: JIT trace function
@@ -359,8 +353,7 @@ def test_trace_4():
     assert res1 == res2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_trace_5():
     """
     Feature: JIT trace function
@@ -418,8 +411,7 @@ def test_trace_5():
     assert res3 == res4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_trace_6():
     """
     Feature: JIT trace function
@@ -480,8 +472,7 @@ def test_trace_6():
     assert np.allclose(res1.asnumpy(), res2.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_trace_7():
     """
     Feature: JIT trace function
@@ -545,8 +536,7 @@ def test_trace_7():
     assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_trace_8():
     """
     Feature: JIT trace function
@@ -609,8 +599,7 @@ def test_trace_8():
     assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_9():
     """
     Feature: JIT trace function
@@ -673,8 +662,7 @@ def test_trace_9():
     assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_10():
     """
     Feature: JIT trace function
@@ -737,8 +725,7 @@ def test_trace_10():
     assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_11():
     """
     Feature: JIT trace function
@@ -778,8 +765,7 @@ def test_trace_11():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_12():
     """
     Feature: JIT trace function

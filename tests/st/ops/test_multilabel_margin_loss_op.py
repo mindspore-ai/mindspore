@@ -138,8 +138,7 @@ def multilabel_margin_loss_grad_template(nptype_input, reduction):
         assert x_grad_np.dtype == expected_x_grad.dtype
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_multilabel_margin_loss_graph_float32():
     """
     Feature: multilabelmarginloss float32
@@ -152,7 +151,7 @@ def test_multilabel_margin_loss_graph_float32():
         multilabel_margin_loss_grad_template(np.float32, reduction)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multilabel_margin_loss_graph():
     """
     Feature: reduction = none
@@ -165,7 +164,7 @@ def test_multilabel_margin_loss_graph():
         multilabel_margin_loss_template(np.float64, reduction)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multilabel_margin_loss_grad_graph():
     """
     Feature: reduction = none
@@ -178,7 +177,7 @@ def test_multilabel_margin_loss_grad_graph():
         multilabel_margin_loss_grad_template(np.float64, reduction)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multilabel_margin_loss_pynative():
     """
     Feature: reduction = none
@@ -192,7 +191,7 @@ def test_multilabel_margin_loss_pynative():
         multilabel_margin_loss_template(np.float64, reduction)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multilabel_margin_loss_grad_pynative():
     """
     Feature: reduction = none

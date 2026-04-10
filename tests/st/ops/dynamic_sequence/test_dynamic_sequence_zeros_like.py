@@ -29,8 +29,7 @@ class Net(nn.Cell):
         return zeros_like(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seqence_zeros_like():
     """
     Feature: test sequence zeroslike op
@@ -51,8 +50,7 @@ def test_seqence_zeros_like():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seqence_zeros_like_tupleoftensor():
     """
     Feature: test sequence zeroslike op

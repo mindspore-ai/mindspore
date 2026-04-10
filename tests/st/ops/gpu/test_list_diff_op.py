@@ -33,7 +33,7 @@ class NetListDiff(nn.Cell):
         return self.list_diff(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_diff_int32():
     """
     Feature: ListDiff gpu TEST.
@@ -53,7 +53,7 @@ def test_list_diff_int32():
     assert np.allclose(res_idx, idx.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_diff_fp32():
     """
     Feature: ListDiff gpu TEST.

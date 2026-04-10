@@ -75,7 +75,7 @@ def create_dataset(data_path, batch_size=32, num_parallel_workers=1):
     return mnist_ds
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_autotune_train_simple_model(tmp_path):
     """
     Feature: Dataset AutoTune
@@ -165,7 +165,7 @@ def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_op_parallel_wo
 
 
 @pytest.mark.skip(reason="get_next time out")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_autotune_pymultiproc_train_simple_model():
     """
     Feature: Dataset AutoTune

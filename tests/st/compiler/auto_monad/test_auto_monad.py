@@ -51,8 +51,7 @@ def _pynative_save_graphs():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print():
     """
     Feature: Auto monad feature.
@@ -84,8 +83,7 @@ def test_print():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_add():
     """
     Feature: Auto monad feature.
@@ -120,8 +118,7 @@ def test_print_add():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_assign():
     """
     Feature: Auto monad feature.
@@ -156,8 +153,7 @@ def test_print_assign():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_assign_add():
     """
     Feature: Auto monad feature.
@@ -195,8 +191,7 @@ def test_print_assign_add():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_while():
     """
     Feature: Auto monad feature.
@@ -238,8 +233,7 @@ def test_print_while():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_if():
     """
     Feature: Auto monad feature.
@@ -277,8 +271,7 @@ def test_print_if():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_assign_while():
     """
     Feature: Auto monad feature.
@@ -329,8 +322,7 @@ def test_print_assign_while():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_assign_if():
     """
     Feature: Auto monad feature.
@@ -374,8 +366,7 @@ def test_print_assign_if():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign():
     """
     Feature: Auto monad feature.
@@ -398,8 +389,7 @@ def test_assign():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_implicit():
     """
     Feature: Auto monad feature.
@@ -422,8 +412,7 @@ def test_assign_implicit():
     assert out.dtype == ms.float32
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_write_after_read():
     """
     Feature: Auto monad feature.
@@ -454,8 +443,7 @@ def test_assign_write_after_read():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_read_after_write():
     """
     Feature: Auto monad feature.
@@ -486,8 +474,7 @@ def test_assign_read_after_write():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_if():
     """
     Feature: Auto monad feature.
@@ -514,8 +501,7 @@ def test_assign_if():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_if():
     """
     Feature: Auto monad feature.
@@ -543,8 +529,7 @@ def test_if():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_while():
     """
     Feature: Auto monad feature.
@@ -568,8 +553,7 @@ def test_while():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_while():
     """
     Feature: Auto monad feature.
@@ -597,8 +581,7 @@ def test_assign_while():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_for():
     """
     Feature: Auto monad feature.
@@ -621,7 +604,7 @@ def test_for():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_for():
     """
     Feature: Auto monad feature.
@@ -665,8 +648,7 @@ def test_print_for():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_assign_for():
     """
     Feature: Auto monad feature.
@@ -717,8 +699,7 @@ def test_print_assign_for():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_for():
     """
     Feature: Auto monad feature.
@@ -751,8 +732,7 @@ def _check_shape(shape):
         raise ValueError(f"Invalid shape {shape}")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_constexpr_check():
     """
     Feature: Verify shape operation.
@@ -784,8 +764,7 @@ def test_constexpr_check():
         print(out)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_if_lambda():
     """
     Feature: Auto monad feature.
@@ -813,8 +792,7 @@ def test_if_lambda():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multi_assign():
     """
     Feature: Auto monad feature.
@@ -844,8 +822,7 @@ def test_multi_assign():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multi_assign_addn():
     """
     Feature: Auto monad feature.
@@ -874,8 +851,7 @@ def test_multi_assign_addn():
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_matmul_assign_biasadd():
     """
     Feature: Auto monad feature.
@@ -914,8 +890,7 @@ def test_matmul_assign_biasadd():
         context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_while_if():
     """
     Feature: Auto monad feature.
@@ -951,8 +926,7 @@ def test_assign_while_if():
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_isolate_call():
     """
     Feature: Auto monad feature.
@@ -986,8 +960,7 @@ def test_isolate_call():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_return_true():
     """
     Feature: Auto monad feature.
@@ -1023,8 +996,7 @@ def test_assign_return_true():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_unpack_call():
     """
     Feature: Auto monad feature.
@@ -1063,8 +1035,7 @@ def test_unpack_call():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_tuple_of_tuple():
     """
     Feature: Auto monad feature.
@@ -1105,8 +1076,7 @@ def test_tuple_of_tuple():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_write_read_write():
     """
     Feature: Auto monad feature.
@@ -1137,8 +1107,7 @@ def test_write_read_write():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_variable_from_outer_graph():
     """
     Feature: Auto monad feature.
@@ -1169,8 +1138,7 @@ def test_variable_from_outer_graph():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skip(reason="No support")
 def test_ctrl_while_by_while_and_if_in_first_while():
     """
@@ -1213,8 +1181,7 @@ def test_ctrl_while_by_while_and_if_in_first_while():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skip(reason="No support")
 def test_ctrl_if_by_while_and_while_in_first_if():
     """
@@ -1256,8 +1223,7 @@ def test_ctrl_if_by_while_and_while_in_first_if():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skip(reason="No support")
 def test_ctrl_while_by_while_and_while_in_first_while():
     """
@@ -1373,8 +1339,7 @@ class AssignNet(Cell):
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_auto_mixed_precision_train_1(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1388,8 +1353,7 @@ def test_auto_mixed_precision_train_1(pynative_save_graphs):
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_auto_mixed_precision_train_2(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1473,8 +1437,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1494,8 +1457,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
                                                        label, cast_num)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_if_cast():
     """
     Feature: Auto monad feature.
@@ -1527,8 +1489,7 @@ def test_if_cast():
     np.testing.assert_array_equal(r1.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @test_utils.run_test_with_On
 def test_while_forward():
     """
@@ -1559,8 +1520,7 @@ def test_while_forward():
     assert np.allclose(output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_multi_add_assign():
     """
     Feature: Auto monad feature.
@@ -1602,8 +1562,7 @@ def test_multi_add_assign():
     np.testing.assert_array_equal(outputs, expects)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_multi_abs_add_assign():
     """
     Feature: Auto monad feature.
@@ -1649,8 +1608,7 @@ def test_multi_abs_add_assign():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_assign_print():
     """
     Feature: Auto Monad
@@ -1697,8 +1655,7 @@ def test_print_assign_print():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_print_assign_print_for_tensor():
     """
     Feature: Auto Monad
@@ -1746,7 +1703,7 @@ def test_print_assign_print_for_tensor():
     context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_print_in_constant_returned_func():
     """
     Feature: Auto Monad
@@ -1771,8 +1728,7 @@ def test_print_in_constant_returned_func():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_none_with_side_effect():
     """
     Feature: Support None.
@@ -1798,8 +1754,7 @@ def test_return_none_with_side_effect():
     assert res == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_return_none_with_side_effect_mutil_func():
     """
     Feature: Support None.
@@ -1833,8 +1788,7 @@ def test_return_none_with_side_effect_mutil_func():
     assert res[1] == 12
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_bprop_print_func():
     """
     Feature: Support side effect node in bprop.
@@ -1881,8 +1835,7 @@ def test_bprop_print_func():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_bprop_assign_func():
     """
     Feature: Support side effect node in bprop.
@@ -1922,7 +1875,7 @@ def test_bprop_assign_func():
     assert out[1] == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_assign_func():
     """
     Feature: Support side effect.
@@ -1945,8 +1898,7 @@ def test_assign_func():
     out = Net()(x, y)
     assert out == 6
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_side_effect_warning():
     """
     Feature: Support side effect.

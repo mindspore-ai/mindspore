@@ -66,7 +66,7 @@ def func_with_dtype(ms_dtype, np_dtype):
     assert np.allclose(x.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_pyfunc_single_output():
     """
     Feature: template
@@ -81,7 +81,7 @@ def test_pyfunc_single_output():
     func_with_dtype(ms.int64, np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_pyfunc_multi_output():
     """
     Feature: template
@@ -113,7 +113,7 @@ class PyFuncGraph(nn.Cell):
         return self.func((x1, x2))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_pyfunc_no_output():
     """
     Feature: template
@@ -138,7 +138,7 @@ def test_pyfunc_no_output():
     assert np.allclose(net_output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_pyfunc_scalar():
     """
     Feature: template

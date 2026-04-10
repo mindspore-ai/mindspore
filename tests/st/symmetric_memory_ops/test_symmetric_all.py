@@ -18,7 +18,7 @@ import os
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_oneside_gather_8p():
     """
@@ -29,7 +29,7 @@ def test_oneside_gather_8p():
     return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --join=True pytest -s test_gather.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_oneside_gather_4p():
     """
@@ -40,7 +40,7 @@ def test_oneside_gather_4p():
     return_code = os.system("msrun --worker_num=4 --local_worker_num=4 --join=True pytest -s test_gather.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_oneside_pull_graph():
     """
@@ -51,7 +51,7 @@ def test_oneside_pull_graph():
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True pytest -s test_pull_graph.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_oneside_push_graph():
     """
@@ -62,7 +62,7 @@ def test_oneside_push_graph():
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True pytest -s test_push_graph.py")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_oneside_compare():
     """

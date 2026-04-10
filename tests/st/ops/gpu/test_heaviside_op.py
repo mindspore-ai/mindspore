@@ -34,7 +34,7 @@ class NetHeaviside(nn.Cell):
         return self.heaviside(x1, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_heaviside_fp16():
     """
     Feature: Heaviside
@@ -51,7 +51,7 @@ def test_heaviside_fp16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_heaviside_fp32():
     """
     Feature: Heaviside
@@ -68,7 +68,7 @@ def test_heaviside_fp32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_heaviside_fp64():
     """
     Feature: Heaviside
@@ -85,7 +85,7 @@ def test_heaviside_fp64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_heaviside_nan():
     """
     Feature: Heaviside
@@ -100,7 +100,7 @@ def test_heaviside_nan():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_heaviside_inf():
     """
     Feature: Heaviside

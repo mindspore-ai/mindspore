@@ -36,7 +36,7 @@ class Net(nn.Cell):
         return self.op(x, batch_var, moving_var)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_correction_mul():
     net = Net()
     co = 64

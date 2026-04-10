@@ -52,7 +52,7 @@ class Conv2dFilter(nn.Cell):
         return self.conv_filter(out, x, self.get_shape(w))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('algo', ["normal", "performance", "algo_0", "algo_1", "fft", "algo_3", "winograd_nonfused"])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('conv_allow_tf32', [True, False])
@@ -89,7 +89,7 @@ def test_conv2d_backprop_filter(algo, mode, conv_allow_tf32):
     assert (abs(output.asnumpy() - expect) < np.ones(shape=[1, 1, 3, 3]) * 1.0e-4).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv2d_backprop_filter_vmap():
     """
     Feature: Conv2DBackpropFilter op

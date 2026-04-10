@@ -20,7 +20,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import math_ops as P
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_addv2_fp32():
     """
     Feature: Returns the add of the  tensor
@@ -36,7 +36,7 @@ def test_addv2_fp32():
     assert (output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_addv2_complex64():
     """
     Feature: Returns the add of the  tensor
@@ -54,7 +54,7 @@ def test_addv2_complex64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_addv2_uint8():
     """
     Feature: Returns the add of the  tensor

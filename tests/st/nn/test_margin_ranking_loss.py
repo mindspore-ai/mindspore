@@ -38,8 +38,7 @@ target = Tensor(np.array([-1, -1, 1]), ms.float32)
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('reduction', ["none", "mean", "sum"])
 def test_margin_ranking_loss(mode, reduction):
@@ -63,8 +62,7 @@ def test_margin_ranking_loss(mode, reduction):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_tensor_dim(mode):
     """

@@ -145,8 +145,7 @@ def run_offload_cell_offload(net, folder_path):
     return forward_output, backward_output
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
-        essential_mark="essential", mem_peak=6084.0)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", mem_peak=6084.0)
 def test_cell_offload():
     """
     Feature: offload with lazy inline.
@@ -163,8 +162,7 @@ def test_cell_offload():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
-        essential_mark="essential", mem_peak=9476.0)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", mem_peak=9476.0)
 def test_cells_offload():
     """
     Feature: offload with lazy inline.

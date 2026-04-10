@@ -19,8 +19,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level1',
-          card_mark='allcards',
-          essential_mark='unessential')
+          card_mark='allcards')
 def test_pynative_nccl_allreduce():
     return_code = os.system("mpirun -n 8 pytest -s test_pynative_nccl_allreduce.py")
     assert return_code == 0

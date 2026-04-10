@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.conftest import run_in_subprocess
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_instantiation_1():
     """
     Feature: Dynamic tensor instantiation.
@@ -41,7 +41,7 @@ def test_tensor_instantiation_1():
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('data', [1, 1.5, True, [1, 2], [1.5, 2.5], [True, False],
         pytest.param([1, 1.5], marks=pytest.mark.skip(reason="mix types for primitive ListToTensor is unsupported")),
         pytest.param([True, 1.5], marks=pytest.mark.skip(reason="mix types for primitive ListToTensor is unsupported"))
@@ -70,7 +70,7 @@ def test_tensor_instantiation_2(data):
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_instantiation_3():
     """
     Feature: Tensor instantiation.

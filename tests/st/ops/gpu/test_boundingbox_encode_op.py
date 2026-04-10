@@ -58,7 +58,7 @@ def bbox2delta(proposals, gt, means, stds):
     return deltas
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_boundingbox_encode():
     anchor = np.array([[4, 1, 6, 9], [2, 5, 5, 9]]).astype(np.float32)
     gt = np.array([[3, 2, 7, 7], [1, 5, 5, 8]]).astype(np.float32)
@@ -96,7 +96,7 @@ def test_bounding_box_encode_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bounding_box_encode_functional_modes():
     """
     Feature: test bounding_box_encode functional API in PyNative and Graph modes.
@@ -109,7 +109,7 @@ def test_bounding_box_encode_functional_modes():
     test_bounding_box_encode_functional()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_boundingbox_encode():
     """
     Feature: Test dynamic shape of BoundingBoxEncode operator

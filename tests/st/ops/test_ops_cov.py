@@ -34,7 +34,7 @@ def _numpy_cov(x_np, correction, fweights_np):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential',
+          level_mark='level1', card_mark='onecard',
           mem_peak=1024.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_cov_float16_forward(context_mode):

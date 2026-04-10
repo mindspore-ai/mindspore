@@ -175,8 +175,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic(mode):
     """
@@ -191,8 +190,7 @@ def test_adamw_basic(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group(mode):
     """
@@ -207,8 +205,7 @@ def test_adamw_group(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_lr_dynamic(mode):
     """
@@ -223,8 +220,7 @@ def test_adamw_lr_dynamic(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic(mode):
     """
@@ -239,8 +235,7 @@ def test_adamw_group_lr_dynamic(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic_change_param(mode):
     """

@@ -29,7 +29,7 @@ jit_cfg = {'compile_with_try': False}
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='dryrun_only')
 def test_mint_dropout_function():
     """
     Feature: mint.nn.functional.dropout()

@@ -30,8 +30,7 @@ class Net(nn.Cell):
         return self.apply_came_part1(grad, eps)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_net():
     """
     Feature: test apply_came_part1 tensor api.

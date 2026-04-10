@@ -21,8 +21,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import assert_executed_by_graph_mode, pi_jit_with_config
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=3072.01)
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=3072.01)
 def test_method_clamp():
     """
     Feature: Functional.
@@ -42,7 +41,7 @@ def test_method_clamp():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_default():
     """
     Feature: Functional.
@@ -59,7 +58,7 @@ def test_method_clamp_default():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_keyword():
     """
     Feature: Functional.
@@ -76,7 +75,7 @@ def test_method_clamp_keyword():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_max():
     """
     Feature: Functional.
@@ -92,7 +91,7 @@ def test_method_max():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_max_keyword():
     """
     Feature: Functional.
@@ -108,7 +107,7 @@ def test_method_max_keyword():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_min_exception():
     """
     Feature: Functional.
@@ -123,7 +122,7 @@ def test_method_min_exception():
         func(ms.Tensor([1, 2, 3, 4, 5]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_reshape():
     """
     Feature: Functional.
@@ -141,7 +140,7 @@ def test_method_reshape():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_transpose():
     """
     Feature: Functional.

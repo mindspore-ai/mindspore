@@ -29,7 +29,7 @@ def argsort_forward(input_x, dim=-1, descending=False, stable=False):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
+          level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_argsort_normal(mode):
     """
@@ -53,8 +53,7 @@ def test_argsort_normal(mode):
     assert np.allclose(out.asnumpy(), np.array(expect))
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level2', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_argsort_dynamic_shape():
     """
     Feature: mint.argsort

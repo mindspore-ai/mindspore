@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.loss(predict, target, weight, pos_weight)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduction_none_testcases():
     # fp32 + both modes
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -69,7 +69,7 @@ def test_reduction_none_testcases():
     np.testing.assert_almost_equal(expected, output.asnumpy(), decimal=3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduction_mean_testcases():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = Net("mean")
@@ -83,7 +83,7 @@ def test_reduction_mean_testcases():
     assert math.isclose(output.asnumpy().tolist(), expected, abs_tol=0.00001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduction_sum_testcases():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = Net("sum")

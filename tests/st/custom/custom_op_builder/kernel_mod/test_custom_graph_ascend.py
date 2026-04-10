@@ -21,8 +21,7 @@ from mindspore.ops import CustomOpBuilder
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_custom_single_operator():
     """
     Feature: Single-operator loading via CustomOpBuilder.
@@ -54,8 +53,7 @@ def test_custom_single_operator():
         assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_custom_single_operator_tuple():
     """
     Feature: Single-operator loading via CustomOpBuilder.
@@ -87,8 +85,7 @@ def test_custom_single_operator_tuple():
         assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_custom_single_operator_no_doc():
     """
     Feature: Single-operator loading without documentation YAML.
@@ -119,8 +116,7 @@ def test_custom_single_operator_no_doc():
         assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_custom_single_operator_func():
     """
     Feature: Single-operator execution from a JIT-compiled function.
@@ -148,8 +144,7 @@ def test_custom_single_operator_func():
         assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_custom_multi_operator():
     """
     Feature: Multiple-operator loading and chaining.
@@ -203,8 +198,7 @@ def test_graphmode_add_offline():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_CustomOpBuilder_exception_1():
     """
     Feature: CustomOpBuilder error handling in PyNative mode.
@@ -236,8 +230,7 @@ def test_CustomOpBuilder_exception_1():
             assert "not support PyNative mode" in str(e)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_CustomOpBuilder_exception_2():
     """
     Feature: CustomOpBuilder unsupported GRAPH mode operator.
@@ -268,8 +261,7 @@ def test_CustomOpBuilder_exception_2():
             assert "does not support GRAPH mode" in str(e)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_CustomOpBuilder_exception_3():
     """
     Feature: CustomOpBuilder missing operator lookup.
@@ -300,8 +292,7 @@ def test_CustomOpBuilder_exception_3():
             assert "neither in func_module nor in so_module" in str(e)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_aclnn_batch_norm():
     """
     Feature: CustomOpBuilder.
@@ -334,8 +325,7 @@ def test_aclnn_batch_norm():
         assert np.allclose(output.asnumpy(), expect, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_aclnn_inplace_add():
     """
     Feature: CustomOpBuilder.

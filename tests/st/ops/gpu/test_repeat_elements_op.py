@@ -38,7 +38,7 @@ def repeat_elements(x, rep, axis):
     return repeat_elements_net(Tensor(x.astype(np.int32))).asnumpy()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_1d_one_element_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -53,7 +53,7 @@ def test_repeat_elements_1d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_1d_one_element_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -72,7 +72,7 @@ def test_repeat_elements_1d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_1d_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -87,7 +87,7 @@ def test_repeat_elements_1d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_1d_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -102,7 +102,7 @@ def test_repeat_elements_1d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_2d_one_element_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -121,7 +121,7 @@ def test_repeat_elements_2d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_2d_one_element_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -140,7 +140,7 @@ def test_repeat_elements_2d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_2d_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -159,7 +159,7 @@ def test_repeat_elements_2d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_2d_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -178,7 +178,7 @@ def test_repeat_elements_2d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_3d_one_element_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -201,7 +201,7 @@ def test_repeat_elements_3d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_3d_one_element_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -224,7 +224,7 @@ def test_repeat_elements_3d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_3d_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -247,7 +247,7 @@ def test_repeat_elements_3d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_3d_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -270,7 +270,7 @@ def test_repeat_elements_3d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_4d_one_element_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -297,7 +297,7 @@ def test_repeat_elements_4d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_4d_one_element_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -324,7 +324,7 @@ def test_repeat_elements_4d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_4d_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -351,7 +351,7 @@ def test_repeat_elements_4d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_4d_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -378,7 +378,7 @@ def test_repeat_elements_4d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_5d_one_element_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -409,7 +409,7 @@ def test_repeat_elements_5d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_5d_one_element_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -440,7 +440,7 @@ def test_repeat_elements_5d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_5d_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -471,7 +471,7 @@ def test_repeat_elements_5d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_5d_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -502,7 +502,7 @@ def test_repeat_elements_5d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_large_one_element_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -545,7 +545,7 @@ def test_repeat_elements_large_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_large_one_element_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -580,7 +580,7 @@ def test_repeat_elements_large_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_large_rep_1():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -623,7 +623,7 @@ def test_repeat_elements_large_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_large_rep_many():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -658,7 +658,7 @@ def test_repeat_elements_large_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_half():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -693,7 +693,7 @@ def test_repeat_elements_half():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_net_multi_use():
     """
     Feature: Test repeat elements 1d one element rep.
@@ -722,7 +722,7 @@ def test_repeat_elements_net_multi_use():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_repeat_elements_invalid_input():
     """
     Feature: Test repeat elements 1d one element rep.

@@ -45,7 +45,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(x1, out, dout, grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool2d_grad():
     x = Tensor(np.array([[[
         [0, 1, 2, 3, 4, 5],

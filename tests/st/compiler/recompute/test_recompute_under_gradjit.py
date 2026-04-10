@@ -73,7 +73,7 @@ class LeNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_recompute_block_recompute1():
     """
     Feature: Sub cell recompute under gradjit
@@ -112,8 +112,7 @@ def test_recompute_block_recompute1():
         shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=1025.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=1025.00)
 def test_recompute_block_recompute_with_output_recompute():
     """
     Feature: Sub cell recompute under gradjit
@@ -152,7 +151,7 @@ def test_recompute_block_recompute_with_output_recompute():
         shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_recompute_block_recompute1_with_func_api():
     """
     Feature: Sub cell recompute under gradjit
@@ -190,7 +189,7 @@ def test_recompute_block_recompute1_with_func_api():
         shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_recompute_block_recompute2():
     """
     Feature: Top cell recompute under gradjit
@@ -229,8 +228,7 @@ def test_recompute_block_recompute2():
         shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_recompute_lazy_inline():
     """
     Feature: Recompute with lazyinline
@@ -339,8 +337,7 @@ class Net(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=8.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=8.00)
 def test_grad_jit_recompute_001():
     """
     Feature: Recompute with net work train
@@ -369,8 +366,7 @@ def test_grad_jit_recompute_001():
     allclose_nparray(infer1, infer2, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=98.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=98.00)
 def test_grad_jit_recompute_003():
     """
     Feature: Recompute with net work train

@@ -37,11 +37,9 @@ def and_forward_func(input_x, other):
     return input_x & other
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=1024.00)
+    card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_tensor_and_normal(mode):
     """
@@ -69,11 +67,9 @@ def test_tensor_and_normal(mode):
         np.testing.assert_allclose(expect, output.asnumpy(), rtol=0, atol=0)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=2.0)
+    card_mark='onecard', mem_peak=2.0)
 def test_tensor_and_dynamic():
     """
     Feature: tensor.__and__

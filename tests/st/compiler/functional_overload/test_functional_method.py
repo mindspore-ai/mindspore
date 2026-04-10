@@ -21,8 +21,7 @@ from mindspore import Tensor
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_method_clamp():
     """
     Feature: Functional.
@@ -41,7 +40,7 @@ def test_method_clamp():
     assert np.all(out_clamp_scalar.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_default():
     """
     Feature: Functional.
@@ -57,7 +56,7 @@ def test_method_clamp_default():
     assert np.all(out.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_any():
     """
     Feature: Functional.
@@ -73,7 +72,7 @@ def test_method_clamp_any():
     assert np.all(out.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_keyword():
     """
     Feature: Functional.
@@ -89,7 +88,7 @@ def test_method_clamp_keyword():
     assert np.all(out_clamp_scalar.asnumpy() == ms.Tensor([1, 2, 3, 3, 3]).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_clamp_keyword_any():
     """
     Feature: Functional.
@@ -105,7 +104,7 @@ def test_method_clamp_keyword_any():
     assert np.all(out_clamp_scalar.asnumpy() == ms.Tensor([2, 2, 3, 4, 4]).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_max():
     """
     Feature: Functional.
@@ -120,7 +119,7 @@ def test_method_max():
     assert func(x).asnumpy() == ms.Tensor(5).asnumpy()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_max_keyword():
     """
     Feature: Functional.
@@ -135,7 +134,7 @@ def test_method_max_keyword():
     assert func(x).asnumpy() == ms.Tensor(5).asnumpy()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_max_keyword_any():
     """
     Feature: Functional.
@@ -151,7 +150,7 @@ def test_method_max_keyword_any():
     assert func(x, y).asnumpy() == ms.Tensor(5).asnumpy()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_min_exception():
     """
     Feature: Functional.
@@ -165,7 +164,7 @@ def test_method_min_exception():
     with pytest.raises(TypeError):
         func(ms.Tensor([1, 2, 3, 4, 5]))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_transpose():
     """
     Feature: Functional.
@@ -181,7 +180,7 @@ def test_method_transpose():
     expect = ms.Tensor(np.array([[1, 4], [2, 5], [3, 6]]))
     assert np.all(out.asnumpy() == expect.asnumpy())
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_add_type_error_001():
     """
     Feature: Functional.
@@ -195,7 +194,7 @@ def test_ms_fault_tensor_add_type_error_001():
     with pytest.raises(TypeError):
         func([1], [2])
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_add_type_error_002():
     """
     Feature: Functional.
@@ -212,7 +211,7 @@ def test_ms_fault_tensor_add_type_error_002():
     assert "The valid calling should be:" in str(raise_info.value)
     assert "Tensor.add(other=<number>, *, alpha=<number>)" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_add_type_error_003():
     """
     Feature: Functional.
@@ -229,7 +228,7 @@ def test_ms_fault_tensor_add_type_error_003():
     assert "match failed because invalid types: (Tensor, int)" in str(raise_info.value)
     assert "~~~~~~~~~~~~~" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_add_type_error_004():
     """
     Feature: Functional.
@@ -243,7 +242,7 @@ def test_ms_fault_tensor_add_type_error_004():
     with pytest.raises(TypeError):
         func(Tensor(2), '1')
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_all_type_error_001():
     """
     Feature: Functional.
@@ -257,7 +256,7 @@ def test_ms_fault_tensor_all_type_error_001():
     with pytest.raises(TypeError):
         func(1)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_clamp_type_error_001():
     """
     Feature: Functional.
@@ -273,7 +272,7 @@ def test_ms_fault_tensor_clamp_type_error_001():
 
     assert "match failed because incorrect keyword name: max_value" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_div_type_error_001():
     """
     Feature: Functional.
@@ -290,7 +289,7 @@ def test_ms_fault_tensor_div_type_error_001():
     assert "The valid calling should be:" in str(raise_info.value)
     assert "Tensor.div(other=<number,Tensor>)" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_log_type_error_001():
     """
     Feature: Functional.
@@ -304,7 +303,7 @@ def test_ms_fault_tensor_log_type_error_001():
     with pytest.raises(TypeError):
         func(Tensor(np.array([1.0, 2.0, 4.0]), ms.float32))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_mean_type_error_001():
     """
     Feature: Functional.
@@ -318,7 +317,7 @@ def test_ms_fault_tensor_mean_type_error_001():
     with pytest.raises(TypeError):
         func('1', '0')
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_mean_type_error_002():
     """
     Feature: Functional.
@@ -332,7 +331,7 @@ def test_ms_fault_tensor_mean_type_error_002():
     with pytest.raises(TypeError):
         func('1', '0')
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_ms_fault_tensor_roll_type_error_001():
     """
     Feature: Functional.
@@ -349,7 +348,7 @@ def test_ms_fault_tensor_roll_type_error_001():
     assert "match failed because invalid types: (shifts=int, dims=float)" in str(raise_info.value)
     assert "~~~~~~~~~~~~~~~~~~~~~~~~" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_too_many_parameters():
     """
     Feature: Functional.
@@ -366,7 +365,7 @@ def test_method_too_many_parameters():
     assert "Tensor.clamp(min=<number,None>, max=<number,None>)" in str(raise_info.value)
     assert "Tensor.clamp(min=<Tensor,None>, max=<Tensor,None>)" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_keyword_name():
     """
     Feature: Functional.
@@ -386,7 +385,7 @@ def test_method_wrong_keyword_name():
     assert ("Tensor.max(axis=<int,Tuple,None,List>, keepdims=<bool>, *, initial=<number,None>, where=<bool,Tensor>, "
             "return_indices=<bool>)") in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_type():
     """
     Feature: Functional.
@@ -407,7 +406,7 @@ def test_method_wrong_type():
     assert ("Tensor.max(axis=<int,Tuple,None,List>, keepdims=<bool>, *, initial=<number,None>, where=<bool,Tensor>, "
             "return_indices=<bool>)") in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_args_num_of_1_candidate():
     """
     Feature: Functional.
@@ -423,7 +422,7 @@ def test_method_wrong_args_num_of_1_candidate():
 
     assert "abs() takes 0 positional arguments but 1 was given." in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_args_num_of_1_candidate_2():
     """
     Feature: Functional.
@@ -439,7 +438,7 @@ def test_method_wrong_args_num_of_1_candidate_2():
 
     assert "missing 1 required" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_type_of_keyword():
     """
     Feature: Functional.
@@ -455,7 +454,7 @@ def test_method_wrong_type_of_keyword():
 
     assert "max(): argument 'initial' must be Number but got list of Any" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_type_of_1_candidate():
     """
     Feature: Functional.
@@ -471,7 +470,7 @@ def test_method_wrong_type_of_1_candidate():
 
     assert "max(): argument 'keepdims' (position 2) must be bool, not int." in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_wrong_keyword_name_of_1_candidate():
     """
     Feature: Functional.
@@ -487,7 +486,7 @@ def test_method_wrong_keyword_name_of_1_candidate():
 
     assert "match failed because incorrect keyword name: il" in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_args_to_string():
     """
     Feature: Functional.
@@ -505,7 +504,7 @@ def test_method_args_to_string():
             "list<int, int, string>>") in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_reshape():
     """
     Feature: Functional.
@@ -521,7 +520,7 @@ def test_method_reshape():
     expect = ms.Tensor([[[1, 2, 3], [4, 5, 6]]])
     assert np.all(out.asnumpy() == expect.asnumpy())
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_implicit_tuple():
     """
     Feature: Functional.
@@ -537,7 +536,7 @@ def test_method_implicit_tuple():
 
     assert "reshape(): argument 'shape' (position 2) must be tuple of int, not float." in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_implicit_tuple_2():
     """
     Feature: Functional.
@@ -553,7 +552,7 @@ def test_method_implicit_tuple_2():
 
     assert np.all(out.asnumpy() == expected.asnumpy())
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_method_implicit_tuple_3():
     """
     Feature: Functional.
@@ -569,7 +568,7 @@ def test_method_implicit_tuple_3():
 
     assert "reshape(): argument 'shape' (position 1) must be tuple of int, not float." in str(raise_info.value)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_method_explicit_tuple():
     """
     Feature: Functional.

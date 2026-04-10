@@ -85,7 +85,7 @@ def python_test6(x):
     return func(*y, **d)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('python_func', [python_test1])
 @pytest.mark.parametrize('jit_func', [jit_test1])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -102,7 +102,7 @@ def test_call_function1(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('python_func', [python_test2])
 @pytest.mark.parametrize('jit_func', [jit_test2])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -119,7 +119,7 @@ def test_call_function2(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('python_func', [python_test3])
 @pytest.mark.parametrize('jit_func', [jit_test3])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -136,7 +136,7 @@ def test_call_function3(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('python_func', [python_test4])
 @pytest.mark.parametrize('jit_func', [jit_test4])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -153,7 +153,7 @@ def test_call_function4(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('python_func', [python_test5])
 @pytest.mark.parametrize('jit_func', [jit_test5])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -170,7 +170,7 @@ def test_call_function5(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('python_func', [python_test6])
 @pytest.mark.parametrize('jit_func', [jit_test6])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -188,7 +188,7 @@ def test_call_function6(python_func, jit_func, x):
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_subgraph_return_a_freevar():
     """
     Feature: test bytecode CALL_FUNCTION/CALL_FUNCTION_KW/CALL_FUNCTION_EX.
@@ -215,7 +215,7 @@ def test_subgraph_return_a_freevar():
     match_array(o1, o2)
     assert_executed_by_graph_mode(compiled_fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_support_create_user_defined_class():
     """
     Feature: call function.

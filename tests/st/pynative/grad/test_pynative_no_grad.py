@@ -92,8 +92,7 @@ class NestedNetWork2(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_no_grad_with_parameter():
     """
     Feature: Test no grad feature
@@ -111,8 +110,7 @@ def test_no_grad_with_parameter():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_no_grad_with_nested_network():
     """
     Feature: Test no grad feature
@@ -130,8 +128,7 @@ def test_no_grad_with_nested_network():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_no_grad_decorator():
     """
     Feature: Test no grad feature
@@ -149,8 +146,7 @@ def test_no_grad_decorator():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_no_grad_exception():
     """
     Feature: Test no grad feature
@@ -167,8 +163,7 @@ def test_no_grad_exception():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_no_grad_for_jit_run_twice():
     """
     Feature: Test no grad feature

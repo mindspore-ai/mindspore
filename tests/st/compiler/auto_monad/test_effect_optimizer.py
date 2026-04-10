@@ -38,8 +38,7 @@ class AdamNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_adam():
     """
     Feature: Auto monad feature.
@@ -78,8 +77,7 @@ class ApplyAdaMaxNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_ada_max():
     """
     Feature: Auto monad feature.
@@ -116,8 +114,7 @@ class ApplyAdadeltaNet(nn.Cell):
         return self.var, self.accum, self.accum_update
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_adadelta():
     """
     Feature: Auto monad feature.
@@ -150,8 +147,7 @@ class ApplyAdagrad(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_apply_adagrad():
     """
     Feature: Auto monad feature.
@@ -181,8 +177,7 @@ class ApplyAdagradV2Net(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_apply_adagrad_v2():
     """
     Feature: Auto monad feature.
@@ -213,8 +208,7 @@ class ApplyAddSignNet(nn.Cell):
         return self.var, self.m
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_apply_add_sign():
     """
     Feature: Auto monad feature.
@@ -247,8 +241,7 @@ class ApplyCenteredRMSPropNet(nn.Cell):
         return self.var
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_apply_centered_rms_prop():
     """
     Feature: Auto monad feature.
@@ -286,8 +279,7 @@ class ApplyFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-        essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_ftrl():
     """
     Feature: Auto monad feature.
@@ -320,8 +312,7 @@ class ApplyGradientDescentNet(nn.Cell):
         return self.var
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_gradient_descent():
     """
     Feature: Auto monad feature.
@@ -349,8 +340,7 @@ class ApplyMomentumNet(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_apply_momentum():
     """
     Feature: Auto monad feature.
@@ -382,8 +372,7 @@ class ApplyPowerSignNet(nn.Cell):
         return self.var, self.m
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_apply_power_sign():
     """
     Feature: Auto monad feature.
@@ -416,8 +405,7 @@ class ApplyProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_apply_proximal_adagrad():
     """
     Feature: Auto monad feature.
@@ -448,8 +436,7 @@ class ApplyProximalGradientDescentNet(nn.Cell):
         return self.var
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_proximal_gradient_descent():
     """
     Feature: Auto monad feature.
@@ -479,7 +466,7 @@ class ApplyRMSPropNet(nn.Cell):
         return self.var
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_apply_rms_prop():
     """
     Feature: Auto monad feature.
@@ -511,7 +498,7 @@ class FusedSparseAdamNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_fused_sparse_adam():
     """
     Feature: Auto monad feature.
@@ -552,8 +539,7 @@ class FusedSparseFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_fused_sparse_ftrl():
     """
     Feature: Auto monad feature.
@@ -586,8 +572,7 @@ class FusedSparseLazyAdamNet(nn.Cell):
         return self.var, self.m, self.v
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.75)
 def test_fused_sparse_lazyadam():
     """
     Feature: Auto monad feature.
@@ -626,7 +611,7 @@ class FusedSparseProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_fused_sparse_proximal_adagrad():
     """
     Feature: Auto monad feature.
@@ -659,8 +644,7 @@ class SparseApplyAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_sparse_apply_adagrad():
     """
     Feature: Auto monad feature.
@@ -691,8 +675,7 @@ class SparseApplyAdagradV2Net(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sparse_apply_adagrad_v2():
     """
     Feature: Auto monad feature.
@@ -725,8 +708,7 @@ class SparseApplyFtrlNet(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sparse_apply_ftrl():
     """
     Feature: Auto monad feature.
@@ -760,7 +742,7 @@ class SparseApplyFtrlV2Net(nn.Cell):
         return self.var, self.accum, self.linear
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_sparse_apply_ftrl_v2():
     """
     Feature: Auto monad feature.
@@ -792,8 +774,7 @@ class SparseApplyProximalAdagradNet(nn.Cell):
         return self.var, self.accum
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sparse_apply_proximal_adagrad():
     """
     Feature: Auto monad feature.
@@ -825,8 +806,7 @@ class SGDNet(nn.Cell):
         return self.var
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sgd():
     """
     Feature: Auto monad feature.
@@ -859,8 +839,7 @@ class ApplyProximalAdagradConstantNet(nn.Cell):
         return self.const
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_sparse_apply_proximal_adagrad_constant():
     """
     Feature: Auto monad feature.
@@ -893,8 +872,7 @@ class MulSGDNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_mul_sgd():
     """
     Feature: Auto monad feature.

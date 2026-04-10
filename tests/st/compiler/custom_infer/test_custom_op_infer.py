@@ -28,7 +28,7 @@ def teardown_module():
     clear_op_wrapper()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_1():
     """
     Feature: Custom op infer.
@@ -58,7 +58,7 @@ def test_custom_op_infer_1():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_2():
     """
     Feature: Custom op infer.
@@ -98,7 +98,7 @@ def test_custom_op_infer_2():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_with_wrapper():
     """
     Feature: Custom op infer and Custom op wrapper.
@@ -157,7 +157,7 @@ def test_custom_op_infer_with_wrapper():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_attribute_propagation():
     """
     Feature: Custom op infer attribute propagation.
@@ -192,7 +192,7 @@ def test_custom_op_infer_attribute_propagation():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_multiple_attributes():
     """
     Feature: Custom op infer multiple attributes.
@@ -240,7 +240,7 @@ def test_custom_op_infer_multiple_attributes():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_complex_chain():
     """
     Feature: Custom op infer complex computation chain.
@@ -298,7 +298,7 @@ def test_custom_op_infer_complex_chain():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_error_invalid_op_name():
     """
     Feature: Custom op infer error handling.
@@ -318,7 +318,7 @@ def test_custom_op_infer_error_invalid_op_name():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_error_invalid_attr_name():
     """
     Feature: Custom op infer error handling.
@@ -338,7 +338,7 @@ def test_custom_op_infer_error_invalid_attr_name():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_error_duplicate_registration():
     """
     Feature: Custom op infer error handling for duplicate registration.
@@ -357,7 +357,7 @@ def test_custom_op_infer_error_duplicate_registration():
     teardown_module()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_op_infer_nonexistent_operator():
     """
     Feature: Custom op infer for nonexistent operator.

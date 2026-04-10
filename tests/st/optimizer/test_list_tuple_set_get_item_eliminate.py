@@ -28,7 +28,7 @@ class NetWork(Cell):
         return blocks
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_getitem_eliminate():
     """
     Feature: optimizer

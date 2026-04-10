@@ -30,8 +30,7 @@ class Net(nn.Cell):
         return self.op(images)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rgb_to_csv_dyn():
     """
     Feature: test RGBToHSV ops in cpu.

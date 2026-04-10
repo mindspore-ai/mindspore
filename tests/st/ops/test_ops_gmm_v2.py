@@ -71,8 +71,7 @@ def gmm_golden_backward_func(x, weight, split_sizes):
     return ms.grad(gmm_golden_forward_func, (0, 1))(x, weight, split_sizes)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['PYBOOST', 'KBK'])
 def test_gmm_v2_static_shape(mode):
     """
@@ -111,11 +110,9 @@ def test_gmm_v2_static_shape(mode):
     assert np.allclose(output_backward_fusion.asnumpy(), expect_backward_out[0], 1e-04, 1e-04)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 def test_gmm_v2_dyn_shape():
     """

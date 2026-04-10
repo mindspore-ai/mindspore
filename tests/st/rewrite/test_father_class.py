@@ -13,7 +13,7 @@ class NetA(BaseNet):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_one_father_class(mode):
     """
@@ -40,7 +40,7 @@ class NetB(NetA):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_two_level_father_classes(mode):
     """
@@ -82,7 +82,7 @@ class NetC(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_two_level_father_classes_in_tree(mode):
     """
@@ -117,7 +117,7 @@ class NetD(BaseNet, NoCellNet):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_two_father_classes_one_not_cell(mode):
     """
@@ -157,7 +157,7 @@ class NetE(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_net_with_class_var(mode):
     """
@@ -196,7 +196,7 @@ class NetF(BaseNet, NoCellNet, NetWithClassVar):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_father_classes_with_class_var(mode):
     """
@@ -266,7 +266,7 @@ class MyNet(FatherNet):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_two_level_father_classes_with_class_var(mode):
     """
@@ -313,7 +313,7 @@ class MyNet2(FatherNet2):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_father_classes_has_two_bases(mode):
     """

@@ -53,7 +53,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_coalesce_dyn():
     """
     Feature: Coalesce function.
@@ -66,7 +66,7 @@ def test_coalesce_dyn():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_coalesce_fp32():
     """
     Feature: Coalesce function.
@@ -86,7 +86,7 @@ def test_coalesce_fp32():
     assert np.array_equal(y_shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_coalesce_fp16():
     """
     Feature: Coalesce function.
@@ -106,7 +106,7 @@ def test_coalesce_fp16():
     assert np.array_equal(y_shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_coalesce_fp64():
     """
     Feature: Coalesce function.

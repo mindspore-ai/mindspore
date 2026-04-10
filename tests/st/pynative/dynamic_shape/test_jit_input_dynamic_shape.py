@@ -80,8 +80,7 @@ class ShapeAdd(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_dynamic_shape_jit_shape_add():
     """
     Feature: Jit call graph
@@ -115,8 +114,7 @@ class EmptyLess(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_dynamic_rank_shape_lt():
     """
     Feature: Jit call graph
@@ -151,8 +149,7 @@ class ListEQ(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_dynamic_rank_shape_list_eq():
     """
     Feature: Jit call graph
@@ -185,8 +182,7 @@ class ListLt(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_list_lt():
     """
     Feature: Jit call graph
@@ -219,8 +215,7 @@ class ListInsert(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_list_insert():
     """
     Feature: Jit call graph
@@ -249,8 +244,7 @@ class NegStepSlice(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_neg_step_slice():
     """
     Feature: Jit call graph
@@ -279,8 +273,7 @@ class SliceNegStep(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_slice_neg_step():
     """
     Feature: Jit call graph
@@ -314,8 +307,7 @@ class InTuple(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_in_tuple():
     """
     Feature: Jit call graph
@@ -344,8 +336,7 @@ class TupleIndex(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_tuple_index():
     """
     Feature: Jit call graph
@@ -375,8 +366,7 @@ class SliceNeg(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_slice_neg():
     """
     Feature: Jit call graph
@@ -404,8 +394,7 @@ class GetItemNeg(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_getitem_neg():
     """
     Feature: Jit call graph
@@ -434,8 +423,7 @@ class TupleMulInt(Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_set_inputs_shape_tuple_mul_int():
     """
     Feature: Jit call graph

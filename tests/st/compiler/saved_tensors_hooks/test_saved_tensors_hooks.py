@@ -93,7 +93,7 @@ input_x2 = ms.Tensor(np_x2, dtype=mstype.float64)
 input_p = ms.Tensor(np_p, dtype=mstype.float64)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net', [mul_power, MulPowNet()])
 def test_saved_tensors_hooks_forward_only(net):
     """
@@ -110,7 +110,7 @@ def test_saved_tensors_hooks_forward_only(net):
         np_x1 * np_x2, np_p), atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_nothing_used():
     """
     Feature: saved tensors hooks.
@@ -125,7 +125,7 @@ def test_saved_tensors_hooks_nothing_used():
     assert np.allclose(out[1].asnumpy(), 1.0, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_only_inputs_used():
     """
     Feature: saved tensors hooks.
@@ -169,7 +169,7 @@ def net_with_constant_operand5(p):
     return ops.pow(x, p)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net, tensor, expected', [
     (net_with_constant_operand1, input_x1, NUM_5),
     (net_with_constant_operand2, input_x1, NUM_5),
@@ -191,7 +191,7 @@ def test_saved_tensors_hooks_with_constant_operand(net, tensor, expected):
     assert np.allclose(out.asnumpy(), expected, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_only_out_used():
     """
     Feature: saved tensors hooks.
@@ -210,7 +210,7 @@ def test_saved_tensors_hooks_only_out_used():
     assert np.allclose(out.asnumpy(), expected_dx, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_inputs_and_out_used():
     """
     Feature: saved tensors hooks.
@@ -232,7 +232,7 @@ def test_saved_tensors_hooks_inputs_and_out_used():
     assert np.allclose(out[1].asnumpy(), expected_dp, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_multi_prims():
     """
     Feature: saved tensors hooks.
@@ -267,7 +267,7 @@ def test_saved_tensors_hooks_multi_prims():
     assert np.allclose(out[2].asnumpy(), expected_dp, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_multiple_saves():
     """
     Feature: saved tensors hooks.
@@ -317,7 +317,7 @@ def test_saved_tensors_hooks_multiple_saves():
     assert np.allclose(out[2].asnumpy(), expected_dp, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_multi_outs():
     """
     Feature: saved tensors hooks.
@@ -355,7 +355,7 @@ def test_saved_tensors_hooks_multi_outs():
     assert np.allclose(out[2].asnumpy(), expected_dp, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_multiple_independent_functions():
     """
     Feature: saved tensors hooks.
@@ -406,7 +406,7 @@ def test_saved_tensors_hooks_multiple_independent_functions():
     assert np.allclose(out[2].asnumpy(), expected_dp, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_nested_hooks():
     """
     Feature: saved tensors hooks.
@@ -518,7 +518,7 @@ class SavedTensorsHooksOnBar(nn.Cell):
         return self.foo(x1, x2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net_cls', [
     SavedTensorsHooksOnConstruct1,
     SavedTensorsHooksOnConstruct2,
@@ -560,7 +560,7 @@ def test_saved_tensors_hooks_on_cell(net_cls):
                        atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_on_inner_method_only():
     """
     Feature: saved tensors hooks.
@@ -610,7 +610,7 @@ def test_saved_tensors_hooks_on_inner_method_only():
                        atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_saved_tensors_hooks_on_cell_with_multi_level_hooks():
     """
     Feature: saved tensors hooks.
@@ -732,7 +732,7 @@ class GradJitNetRegJitOverReg(nn.Cell):
         return self.foo(x1, x2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net', [grad_jit_net_reg_over_jit, grad_jit_net_jit_over_reg])
 def test_saved_tensors_hooks_grad_jit(net):
     """
@@ -766,7 +766,7 @@ def test_saved_tensors_hooks_grad_jit(net):
     assert np.allclose(out[2].asnumpy(), expected_dp, atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net_cls', [GradJitNetRegOverJit, GradJitNetRegJitOverReg])
 def test_saved_tensors_hooks_grad_jit_on_cell(net_cls):
     """
@@ -805,7 +805,7 @@ def test_saved_tensors_hooks_grad_jit_on_cell(net_cls):
                        atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cell_register_saved_tensors_hooks_via_api():
     """
     Feature: saved tensors hooks.
@@ -857,7 +857,7 @@ def test_cell_register_saved_tensors_hooks_via_api():
                        atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cell_register_saved_tensors_hooks_mixed_registration():
     """
     Feature: saved tensors hooks.
@@ -911,8 +911,7 @@ def test_cell_register_saved_tensors_hooks_mixed_registration():
                        atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cell_register_saved_tensors_hooks_with_mem_side_effect():
     """
     Feature: saved tensors hooks.
@@ -1057,7 +1056,7 @@ class CellCustomBpropNet5(Cell):
         return p + out + dout, x2 + out + dout, x1 + out + dout
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net_cls, expected', [
     (CellCustomBpropNet1, (
         np.float64(NUM_1),
@@ -1197,7 +1196,7 @@ class PrintNet(nn.Cell):
         return self.foo(x1, x2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('net_cls', [TensorHookNet, DictGetItemNet, TupleGetItemNet, DependNet, PrintNet])
 def test_saved_tensors_hooks_with_special_prim(net_cls):
     """

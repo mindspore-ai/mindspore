@@ -29,8 +29,7 @@ def embedding_func(input_x, weight, padding_idx=None, max_norm=None, norm_type=2
     return ops.embedding(input_x, weight, padding_idx, max_norm=max_norm, norm_type=norm_type)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_embedding_static_shape():
     """
     Feature: static shape of embedding.
@@ -87,8 +86,7 @@ def test_embedding_static_shape():
     assert np.allclose(weight.asnumpy(), expect_w, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=3072.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=3072.0)
 def test_embedding_dynamic_shape():
     """
     Feature: dynamic shape of embedding.
@@ -105,8 +103,7 @@ def test_embedding_dynamic_shape():
                          'deterministic_use_origin_inputs': True})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_embedding_grad():
     """
     Feature: grad of embedding.
@@ -195,7 +192,7 @@ def test_embedding_grad():
     assert np.allclose(ms_out.asnumpy(), expect_out4, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_embedding_ge_grad():
     """
     Feature: grad of embedding of GE mode.
@@ -241,8 +238,7 @@ def test_embedding_ge_grad():
     assert np.allclose(ms_out.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_embedding_nn_api():
     """
     Feature: nn.extend.Embedding.

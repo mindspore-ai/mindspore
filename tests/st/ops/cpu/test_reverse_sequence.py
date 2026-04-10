@@ -21,8 +21,7 @@ class Net(nn.Cell):
         return self.reverse_sequence(x, seq_lengths)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net_int8():
     """
     Feature: ReverseSequence CPU operation
@@ -40,8 +39,7 @@ def test_net_int8():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard')
 def test_net_int32():
     """
     Feature: ReverseSequence CPU operation
@@ -59,8 +57,7 @@ def test_net_int32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net_float32():
     """
     Feature: ReverseSequence CPU operation
@@ -92,8 +89,7 @@ def test_net_float32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net_float64_0_dim():
     """
     Feature: ReverseSequence CPU operation
@@ -125,8 +121,7 @@ def test_net_float64_0_dim():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net_dynamic_shape():
     """
     Feature: ReverseSequence CPU operation
@@ -164,8 +159,7 @@ def test_net_dynamic_shape():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_reverse_sequence_tensor_api():
     """
     Feature: ReverseSequence CPU operation

@@ -66,7 +66,7 @@ def compare_with_numpy(x, dim, index, value):
     return np.allclose(ms_result_graph, np_result) and np.allclose(ms_result_pynative, np_result)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data_type', [np.bool_, np.int8, np.int16, np.int32, np.float16, np.float64])
 def test_index_fill_data_type(data_type):
     """
@@ -82,7 +82,7 @@ def test_index_fill_data_type(data_type):
     assert compare_with_numpy(x_np, dim, index_np, value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim_type', [np.int32, np.int64])
 def test_index_fill_dim_type(dim_type):
     """
@@ -98,7 +98,7 @@ def test_index_fill_dim_type(dim_type):
     assert compare_with_numpy(x_np, dim, index_np, value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [0, 1])
 @pytest.mark.parametrize('data_type', [np.int32])
 def test_index_fill_error(dim, data_type):
@@ -128,7 +128,7 @@ class IndexFillVmapNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_index_fill_vmap():
     """
     Feature: IndexFill

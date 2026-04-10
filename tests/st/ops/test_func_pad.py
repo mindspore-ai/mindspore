@@ -33,7 +33,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('pad_mode', ["constant", "reflect", "replicate"])
 @pytest.mark.parametrize('padding', [[1, 2, 2, 1], (1, 2, 2, 1), ms.Tensor([1, 2, 2, 1])])
@@ -96,7 +96,7 @@ def test_pad_normal(mode, pad_mode, padding):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('pad_mode', ["constant", "reflect", "replicate"])
 @pytest.mark.parametrize('padding', [[-1, 2, 2, 1]])

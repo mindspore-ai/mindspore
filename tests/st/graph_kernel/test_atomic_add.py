@@ -59,7 +59,7 @@ class MultiOutNet(Cell):
         return self.add(add_res, sum_res)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_atomic_add_sum_output():
     """
     Feature: todo
@@ -79,7 +79,7 @@ def test_atomic_add_sum_output():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_atomic_add_single_output():
     """
     Feature: todo
@@ -100,7 +100,7 @@ def test_atomic_add_single_output():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_atomic_add_multi_output():
     """
     Feature: todo

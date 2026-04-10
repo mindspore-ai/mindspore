@@ -32,8 +32,7 @@ def reverse_v2_backward_func(x):
     return ops.grad(reverse_v2_forward_func, (0,))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.05)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.05)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_reverse_v2(mode):
@@ -54,8 +53,7 @@ def test_reverse_v2(mode):
     assert (grad.asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.skip(reason="Probability of failure.")
 def test_reverse_v2_vmap(mode):
@@ -85,7 +83,7 @@ def test_reverse_v2_vmap(mode):
     assert (out.asnumpy() == expect_out).all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_reverse_v2_axis_incorrect():
     """
     Feature: test reverse_v2.

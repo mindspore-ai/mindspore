@@ -994,8 +994,7 @@ def test_cell_backward_hook_graph_and_jit():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_backward_hook_test_suite():
     """
     Feature: PyNative hook function.
@@ -1029,8 +1028,7 @@ def test_pynative_backward_hook_test_suite():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_backward_hook_return_error():
     """
     Feature: PyNative hook function.
@@ -1062,8 +1060,7 @@ class InplaceNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_pynative_backward_hook_single_inplace_net():
     """
     Feature: PyNative cell backward hook.
@@ -1093,8 +1090,7 @@ class MultiInputInplaceNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2.00)
+          card_mark='onecard', mem_peak=2.00)
 def test_pynative_backward_hook_multi_inplace_net():
     """
     Feature: PyNative cell backward hook.

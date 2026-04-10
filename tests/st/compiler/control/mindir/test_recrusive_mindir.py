@@ -47,8 +47,7 @@ class RecrusiveNet(nn.Cell):
         return f(x, z)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_recrusive():
     """
     Feature: Control flow

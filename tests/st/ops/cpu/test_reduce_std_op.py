@@ -39,8 +39,7 @@ class NetReduceStd(nn.Cell):
         return F.std_mean(indice, axis=self._axis, ddof=False, keepdims=self._keep_dims)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [None, 0, 1, -1, (-1, 0, 1), (0, 1, 2)])
 @pytest.mark.parametrize('keep_dims', [True, False])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
@@ -76,8 +75,7 @@ class ReduceStdDynamicShapeNet(nn.Cell):
         return F.std_mean(x_unique, ddof=False, keepdims=False)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reduce_std_dynamic_shape(mode):
     """

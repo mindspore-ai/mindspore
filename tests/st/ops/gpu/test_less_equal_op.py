@@ -34,7 +34,7 @@ class Net(Cell):
         return self.lessequal(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lessequal():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
     y = Tensor(np.array([[2, 2, 2]]).astype(np.float32))
@@ -111,7 +111,7 @@ def test_less_equal_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_less_equal_functional_tensor_modes():
     """
     Feature: test less_equal functional and tensor APIs in PyNative and Graph modes.
