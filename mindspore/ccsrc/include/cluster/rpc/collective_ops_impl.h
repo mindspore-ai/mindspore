@@ -46,6 +46,7 @@ constexpr uint32_t kCollectiveCommTimeout = 30;
 constexpr uint32_t kCollectiveCommMaxTimeout = 300;
 // comm op timeout env
 const char kEnvCommOpTimeOut[] = "MS_NODE_TIMEOUT";
+const char kEnvCpuCommOpTimeOut[] = "MS_CPU_COMM_OP_TIMEOUT";
 // The collective communication groups which are composed of multiple processes. Refer to MPI_Group.
 struct CommunicationGroupInfo {
   // This group's rank size.
@@ -102,7 +103,10 @@ class CLUSTER_EXPORT CollectiveOpsImpl {
  private:
   CollectiveOpsImpl()
       : rank_id_(0), server_num_(0), node_(nullptr), node_role_(ps::core::NodeRole::WORKER), rank_size_(0) {
-    std::string env_op_timeout = common::GetEnv(kEnvCommOpTimeOut);
+    std::string env_op_timeout = common::GetEnv(kEnvCpuCommOpTimeOut);
+    if (env_op_timeout.empty()) {
+      env_op_timeout = common::GetEnv(kEnvCommOpTimeOut);
+    }
     int comm_op_timeout = env_op_timeout.empty() ? kCollectiveCommTimeout : std::stoi(env_op_timeout);
     comm_op_timeout_ = (comm_op_timeout < 0) ? UINT64_MAX : comm_op_timeout;
     MS_LOG(INFO) << "cpu comm op exec timeout bave been set " << comm_op_timeout_ << " seconds.";

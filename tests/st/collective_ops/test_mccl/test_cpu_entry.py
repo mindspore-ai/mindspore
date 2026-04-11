@@ -212,3 +212,45 @@ def test_hccl_mint_cpu_ops1():
         r"--master_port=10666 --join=True pytest -s test_comm_cpu1.py"
     )
     assert return_code == 0
+
+
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
+def test_cpu_comm_op_timeout_env_priority():
+    """
+    Feature: MS_CPU_COMM_OP_TIMEOUT takes priority over MS_NODE_TIMEOUT.
+    Description: When both MS_CPU_COMM_OP_TIMEOUT and MS_NODE_TIMEOUT are set,
+                 comm_op_timeout_ should be read from MS_CPU_COMM_OP_TIMEOUT.
+    Expectation: worker log contains the value set in MS_CPU_COMM_OP_TIMEOUT.
+    """
+    log_dir = "test_cpu_comm_op_timeout_env_priority"
+    return_code = os.system(
+        "export GLOG_v=1; export MS_CPU_COMM_OP_TIMEOUT=123; export MS_NODE_TIMEOUT=456; "
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10666 "
+        f"--join=True --log_dir={log_dir} pytest -s test_comm_cpu.py::test_cpu_broadcast"
+    )
+    assert return_code == 0
+    result = subprocess.getoutput(
+        f"grep -rn 'cpu comm op exec timeout bave been set' ./{log_dir}/worker_0.log"
+    )
+    assert result.find("cpu comm op exec timeout bave been set 123 seconds") != -1
+
+
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
+def test_cpu_comm_op_timeout_env_fallback():
+    """
+    Feature: fallback to MS_NODE_TIMEOUT when MS_CPU_COMM_OP_TIMEOUT is unset.
+    Description: When MS_CPU_COMM_OP_TIMEOUT is not set but MS_NODE_TIMEOUT is,
+                 comm_op_timeout_ should be read from MS_NODE_TIMEOUT.
+    Expectation: worker log contains the value set in MS_NODE_TIMEOUT.
+    """
+    log_dir = "test_cpu_comm_op_timeout_env_fallback"
+    return_code = os.system(
+        "unset MS_CPU_COMM_OP_TIMEOUT; export GLOG_v=1; export MS_NODE_TIMEOUT=789; "
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10666 "
+        f"--join=True --log_dir={log_dir} pytest -s test_comm_cpu.py::test_cpu_broadcast"
+    )
+    assert return_code == 0
+    result = subprocess.getoutput(
+        f"grep -rn 'cpu comm op exec timeout bave been set' ./{log_dir}/worker_0.log"
+    )
+    assert result.find("cpu comm op exec timeout bave been set 789 seconds") != -1
