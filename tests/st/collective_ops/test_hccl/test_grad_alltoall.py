@@ -40,6 +40,18 @@ class AllToAllSingleNet(nn.Cell):
         return out
 
 
+class AllToAllSingleTransposeNet(nn.Cell):
+    def construct(self, data):
+        out, _ = all_to_all_single(None, data)
+        return out.transpose(1, 0)
+
+
+class AllToAllSingleSliceNet(nn.Cell):
+    def construct(self, data):
+        out, _ = all_to_all_single(None, data)
+        return out[::2]
+
+
 def test_alltoall_grad():
     """
     Feature: test 'all_to_all_single' communication function in cell.
@@ -84,5 +96,40 @@ def test_alltoallv_grad():
     net = AllToAllSingleNet()
     grad_fn = value_and_grad(net, grad_position=1)
     out, inputs_gradient = grad_fn(output_shape, data, data1, [1, 1], [1, 1])
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_alltoall_grad_non_contiguous_transpose():
+    """
+    Feature: test 'all_to_all_single' backward when upstream gradient is non-contiguous via transpose.
+    Description: transpose after all_to_all_single produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommAllToAllV.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    data = ms.Tensor(np.ones([2, 4]).astype(np.float32))
+    expect_output = np.ones([4, 2]).astype(np.float32)
+    expect_output1 = np.ones([2, 4]).astype(np.float32)
+    net = AllToAllSingleTransposeNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(data)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_alltoall_grad_non_contiguous_slice():
+    """
+    Feature: test 'all_to_all_single' backward when upstream gradient is non-contiguous via strided slice.
+    Description: strided slice after all_to_all_single produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommAllToAllV.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    data = ms.Tensor(np.ones([4, 4]).astype(np.float32))
+    expect_output = np.ones([2, 4]).astype(np.float32)
+    expect_output1 = np.zeros([4, 4]).astype(np.float32)
+    expect_output1[::2] = 1
+    net = AllToAllSingleSliceNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(data)
     assert np.allclose(out, expect_output)
     assert np.allclose(inputs_gradient, expect_output1)
