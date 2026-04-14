@@ -1401,7 +1401,7 @@ bool AscendResManager::CreateStreamWithPriority(size_t *stream_id, int32_t prior
     return false;
   }
   AscendStreamMng::GetInstance().CreateStreamWithFlags(stream_id, ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC,
-                                                       IntToUint(priority));
+                                                       priority);
   return true;
 }
 

@@ -16,6 +16,7 @@
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
+#include <algorithm>
 #include <string>
 #include "utils/log_adapter.h"
 #include "acl/error_codes/rt_error_codes.h"
@@ -24,6 +25,7 @@
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
+#include "include/runtime/utils/runtime_conf/runtime_env.h"
 
 namespace mindspore {
 namespace device {
@@ -71,9 +73,51 @@ uint32_t AscendStreamMng::GetCurAllocStreamId() const {
   return cur_stream_num_ - 1;
 }
 
+uint32_t AscendStreamMng::MapPriority(int32_t priority) {
+  // Opt-in switch: disabled by default to preserve legacy behavior. Enable via
+  // MS_DEV_RUNTIME_CONF="stream_priority:True" to activate the signed->device priority mapping.
+  const bool enable_priority_map = runtime::IsEnableRuntimeConfig(runtime::kRuntimeStreamPriorityMap);
+  if (!enable_priority_map) {
+    const uint32_t legacy = IntToUint(priority);
+    MS_LOG(INFO) << "MapPriority disabled, user priority:" << priority << " -> acl priority:" << legacy << ".";
+    return legacy;
+  }
+  std::call_once(priority_range_flag_, [this]() {
+    int32_t least = 0;
+    int32_t greatest = 0;
+    auto ret = CALL_ASCEND_API(aclrtDeviceGetStreamPriorityRange, &least, &greatest);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(WARNING) << "aclrtDeviceGetStreamPriorityRange failed, ret:" << ret
+                      << ", fall back to default range [0, 7].";
+      least = 0;
+      greatest = 7;
+    }
+    least_priority_ = least;
+    greatest_priority_ = greatest;
+    MS_LOG(INFO) << "Device stream priority range: [" << least_priority_ << ", " << greatest_priority_
+                 << "]; user priority 0 maps to " << ((least_priority_ + greatest_priority_) / 2) << ".";
+  });
+  const int32_t middle = (least_priority_ + greatest_priority_) / 2;
+  // User priority semantics are "negative => higher priority, positive => lower priority",
+  // independent of which numerical convention the device uses for its priority range.
+  // Determine the sign of one user-priority step in device space from the actual range:
+  //   - CUDA convention (Ascend today): greatest < least numerically  => +1 step per +1 user
+  //   - Inverse convention (fallback / hypothetical):                     => -1 step per +1 user
+  const int32_t step_sign = (least_priority_ >= greatest_priority_) ? 1 : -1;
+  const int32_t raw = middle + priority * step_sign;
+  // Clamp by numerical bounds (cannot assume least_priority_ < greatest_priority_).
+  const int32_t lo = std::min(least_priority_, greatest_priority_);
+  const int32_t hi = std::max(least_priority_, greatest_priority_);
+  const int32_t mapped = std::max(lo, std::min(hi, raw));
+  MS_LOG(INFO) << "MapPriority user priority:" << priority << " -> acl priority:" << mapped << " (range:["
+               << least_priority_ << ", " << greatest_priority_ << "], middle:" << middle
+               << (raw != mapped ? ", clamped from " + std::to_string(raw) : "") << ").";
+  return static_cast<uint32_t>(mapped);
+}
+
 void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, stream, IntToUint(priority),
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, stream, MapPriority(priority),
                              (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
@@ -89,7 +133,7 @@ void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   aclrtStream stream;
-  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &stream, IntToUint(priority),
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &stream, MapPriority(priority),
                              (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
@@ -156,7 +200,7 @@ void AscendStreamMng::UnRegCallback(aclrtStream stream, bool delete_item) {
 
 void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, stream, IntToUint(priority), flags);
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, stream, MapPriority(priority), flags);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
@@ -171,7 +215,7 @@ void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags,
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   aclrtStream stream;
-  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &stream, IntToUint(priority), flags);
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &stream, MapPriority(priority), flags);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }

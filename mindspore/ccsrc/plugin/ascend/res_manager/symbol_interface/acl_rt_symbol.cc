@@ -85,6 +85,7 @@ aclrtGetMemUceInfoFunObj aclrtGetMemUceInfo_ = nullptr;
 aclrtDeviceTaskAbortFunObj aclrtDeviceTaskAbort_ = nullptr;
 aclrtDeviceCanAccessPeerFunObj aclrtDeviceCanAccessPeer_ = nullptr;
 aclrtDeviceEnablePeerAccessFunObj aclrtDeviceEnablePeerAccess_ = nullptr;
+aclrtDeviceGetStreamPriorityRangeFunObj aclrtDeviceGetStreamPriorityRange_ = nullptr;
 aclrtMemUceRepairFunObj aclrtMemUceRepair_ = nullptr;
 aclrtEventGetTimestampFunObj aclrtEventGetTimestamp_ = nullptr;
 aclrtDeviceGetBareTgidFunObj aclrtDeviceGetBareTgid_ = nullptr;
@@ -167,6 +168,7 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   aclrtDeviceTaskAbort_ = DlsymAscendFuncObj(aclrtDeviceTaskAbort, handler);
   aclrtDeviceCanAccessPeer_ = DlsymAscendFuncObj(aclrtDeviceCanAccessPeer, handler);
   aclrtDeviceEnablePeerAccess_ = DlsymAscendFuncObj(aclrtDeviceEnablePeerAccess, handler);
+  aclrtDeviceGetStreamPriorityRange_ = DlsymAscendFuncObj(aclrtDeviceGetStreamPriorityRange, handler);
   aclrtMemUceRepair_ = DlsymAscendFuncObj(aclrtMemUceRepair, handler);
   aclrtEventGetTimestamp_ = DlsymAscendFuncObj(aclrtEventGetTimestamp, handler);
   aclrtDeviceGetBareTgid_ = DlsymAscendFuncObj(aclrtDeviceGetBareTgid, handler);
@@ -244,6 +246,7 @@ void LoadSimulationRtApi() {
   ASSIGN_SIMU(aclrtDeviceTaskAbort);
   ASSIGN_SIMU(aclrtDeviceCanAccessPeer);
   ASSIGN_SIMU(aclrtDeviceEnablePeerAccess);
+  ASSIGN_SIMU(aclrtDeviceGetStreamPriorityRange);
   ASSIGN_SIMU(aclrtMemUceRepair);
   ASSIGN_SIMU(aclrtEventGetTimestamp);
   ASSIGN_SIMU(aclrtDeviceGetBareTgid);

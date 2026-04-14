@@ -93,6 +93,7 @@ ORIGIN_METHOD_WITH_SIMU(aclrtGetMemUceInfo, aclError, int32_t, aclrtMemUceInfo *
 ORIGIN_METHOD_WITH_SIMU(aclrtDeviceTaskAbort, aclError, int32_t, uint32_t)
 ORIGIN_METHOD_WITH_SIMU(aclrtDeviceCanAccessPeer, aclError, int32_t *, int32_t, int32_t)
 ORIGIN_METHOD_WITH_SIMU(aclrtDeviceEnablePeerAccess, aclError, int32_t, uint32_t)
+ORIGIN_METHOD_WITH_SIMU(aclrtDeviceGetStreamPriorityRange, aclError, int32_t *, int32_t *)
 ORIGIN_METHOD_WITH_SIMU(aclrtMemUceRepair, aclError, int32_t, aclrtMemUceInfo *, size_t)
 ORIGIN_METHOD_WITH_SIMU(aclrtEventGetTimestamp, aclError, aclrtEvent, uint64_t *)
 ORIGIN_METHOD_WITH_SIMU(aclrtDeviceGetBareTgid, aclError, int32_t *)

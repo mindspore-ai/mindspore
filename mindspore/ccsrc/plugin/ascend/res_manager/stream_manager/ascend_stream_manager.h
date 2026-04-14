@@ -129,6 +129,12 @@ class ASCEND_RES_MANAGER_EXPORT AscendStreamMng {
   bool is_enable_callback() { return is_enable_callback_; }
 
  private:
+  // Map a user-facing signed priority (0 = default, negative = higher priority, positive = lower priority)
+  // to the device priority space reported by aclrtDeviceGetStreamPriorityRange.
+  // User priority 0 maps to the middle of [leastPriority, greatestPriority]; values outside the
+  // mapped range are clamped to the boundary.
+  uint32_t MapPriority(int32_t priority);
+
   // Count streams and events number in task sink scenario
   uint32_t cur_stream_num_{0};
   uint32_t cur_event_num_{0};
@@ -169,6 +175,11 @@ class ASCEND_RES_MANAGER_EXPORT AscendStreamMng {
   // This vector used for simplify logic of tracing multi stream creates.
   std::vector<aclrtStream> callback_cached_streams_;
   mindspore::HashMap<aclrtStream, CallbackThreadPtr> stream_call_backs_;
+
+  // Cached device stream priority range, initialized lazily via aclrtDeviceGetStreamPriorityRange.
+  std::once_flag priority_range_flag_;
+  int32_t least_priority_{0};
+  int32_t greatest_priority_{0};
 };
 }  // namespace ascend
 }  // namespace device
