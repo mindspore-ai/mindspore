@@ -44,8 +44,15 @@ def cleanup_tmp_file(request):
     def search_and_remove_file():
         for file_path in file_paths:
             for file in glob.glob(file_path):
-                if os.path.exists(file):
+                if not os.path.exists(file):
+                    continue
+                if os.path.isdir(file) and not os.path.islink(file):
+                    shutil.rmtree(file, ignore_errors=True)
+                    continue
+                try:
                     os.remove(file)
+                except FileNotFoundError:
+                    continue
 
     request.addfinalizer(search_and_remove_file)
 
