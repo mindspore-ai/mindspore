@@ -66,7 +66,16 @@ class OffloadManager {
   static HyperOffloadContext *GetCurrentContext() { return current_offload_context_; }
 
   // Fast check if there is an active context (for performance optimization)
-  static bool HasActiveContext() { return current_offload_context_ != nullptr; }
+  static bool HasActiveContext() { return current_offload_context_ != nullptr && !skip_offload_; }
+
+  // Set whether to skip offload temporarily
+  static void SetSkipOffload(bool skip) { skip_offload_ = skip; }
+
+  // Set whether to skip offload temporarily asynchronously
+  static void SetSkipOffloadAsync(bool skip);
+
+  // Check if offload is currently skipped
+  static bool skip_offload() { return skip_offload_; }
 
  private:
   OffloadManager() = default;
@@ -82,6 +91,9 @@ class OffloadManager {
 
   // Current active offload context (set by StartOffload, cleared by EndOffload)
   inline static HyperOffloadContext *current_offload_context_{nullptr};
+
+  // Static flag indicating whether to skip offload temporarily
+  inline static bool skip_offload_{false};
 
   // Mutex for thread safety
   std::mutex mutex_;

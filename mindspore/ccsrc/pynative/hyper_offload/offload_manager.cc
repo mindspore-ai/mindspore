@@ -21,6 +21,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ir_dump/anf_ir_dump.h"
 #include "pynative/backward/grad_utils.h"
+#include "pynative/hyper_offload/offload_task.h"
 #include "mindspore/ccsrc/frontend/jit/ps/resource.h"
 #include "mindspore/ccsrc/include/frontend/jit/ps/action_interface.h"
 
@@ -36,6 +37,9 @@ OffloadManager &OffloadManager::GetInstance() {
 }
 
 void OffloadRunOPPreHook(const BackendOpRunInfoPtr &op_run_info) {
+  if (OffloadManager::skip_offload()) {
+    return;
+  }
   auto current_ctx = OffloadManager::GetCurrentContext();
   if (current_ctx == nullptr) {
     return;
@@ -51,6 +55,9 @@ void OffloadRunOPPreHook(const BackendOpRunInfoPtr &op_run_info) {
 }
 
 void OffloadRunOPPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRef &outputs) {
+  if (OffloadManager::skip_offload()) {
+    return;
+  }
   auto current_ctx = OffloadManager::GetCurrentContext();
   if (current_ctx == nullptr) {
     return;
@@ -122,6 +129,18 @@ struct OffloadHookRegistrar {
 
 // This static instance triggers registration at program startup
 static OffloadHookRegistrar g_offload_hook_registrar;
+
+void OffloadManager::SetSkipOffloadAsync(bool skip) {
+  auto task = std::make_shared<OffloadAsyncTask>(
+    [skip]() { skip_offload_ = skip; }, runtime::TaskType::kFrontendTask);
+  static bool need_sync = runtime::OpExecutor::NeedSync();
+  if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
+    runtime::Pipeline::Get().WaitForward();
+    task->Run();
+  } else {
+    runtime::Pipeline::Get().frontend_stage()->Push(task);
+  }
+}
 
 HyperOffloadContextPtr OffloadManager::GetOrCreateOffloadCtx(size_t offload_key) {
   std::lock_guard<std::mutex> lock(mutex_);

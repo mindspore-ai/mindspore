@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import os
 import json
+import functools
 from mindspore import log as logger
 from mindspore import context
 from mindspore import _checkparam as Validator
@@ -24,9 +25,11 @@ from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops import HookBackward
 from mindspore.graph.api import jit_class
 from mindspore._c_expression import _tft_start_record_threads, _tft_finish_record_threads
 from mindspore._c_expression import set_is_reboot_node, tft_register_config, set_reboot_type
+from mindspore._c_expression import OffloadManager
 
 
 @jit_class
@@ -340,3 +343,61 @@ class TftHandle:
 
 
 _tft_handler = TftHandle()
+
+
+def skip_offload(func):
+    """
+    Decorator to skip offload for both forward and backward passes of an function.
+
+    This decorator wraps a function or method. When called, it temporarily disables
+    offload during the forward execution of the function. It also registers
+    backward hooks on the input and output tensors to temporarily disable tracing
+    during the backward execution of the function.
+
+    Args:
+        func (function): The function to wrap.
+
+    Returns:
+        function: The wrapped function.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if kwargs is not None and len(kwargs) > 0:
+            raise ValueError("kwargs is not supported in skip_offload decorator.")
+
+        manager = OffloadManager.get_instance()
+
+        def start_hook(grad):
+            manager.set_skip_offload(False)
+            return grad
+
+        def end_hook(grad):
+            manager.set_skip_offload(True)
+            return grad
+
+        # Wrap inputs: Attach start_hook to run at the end of the backward pass
+        new_args = []
+        for arg in args:
+            if isinstance(arg, Tensor):
+                new_args.append(HookBackward(start_hook)(arg))
+            else:
+                new_args.append(arg)
+        new_args = tuple(new_args)
+
+        # Forward pass: Pause offload manually
+        manager.set_skip_offload_async(True)
+        out = func(*new_args, **kwargs)
+        manager.set_skip_offload_async(False)
+
+        # Wrap outputs: Attach end_hook to run at the start of the backward pass
+        if isinstance(out, (tuple, list)):
+            out = type(out)(
+                HookBackward(end_hook)(o) if isinstance(o, Tensor) else o for o in out
+            )
+        elif isinstance(out, Tensor):
+            out = HookBackward(end_hook)(out)
+
+        return out
+
+    return wrapper

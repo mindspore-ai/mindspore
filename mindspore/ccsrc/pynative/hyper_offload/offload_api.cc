@@ -69,6 +69,10 @@ void RegOffloadModule(py::module *m) {
           >>> # At the end of first step
           >>> manager.analyse()
     )")
+    .def_static("set_skip_offload", &OffloadManager::SetSkipOffload, py::arg("skip"),
+                "Set whether to skip offload temporarily")
+    .def_static("set_skip_offload_async", &OffloadManager::SetSkipOffloadAsync, py::arg("skip"),
+                "Set whether to skip offload temporarily asynchronously")
     .def("reset", &OffloadManager::Reset, "Reset the OffloadManager and all contexts")
     .def_static("is_offload_ready", &OffloadManager::IsOffloadReady, "Check if offload is ready (warm-up completed)")
     .def("context_count", &OffloadManager::context_count, "Get the number of registered HyperOffloadContext instances");
