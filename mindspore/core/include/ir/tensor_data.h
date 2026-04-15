@@ -621,7 +621,14 @@ class TensorDataImpl : public TensorData {
     if (ref_mem_) {
       return "";
     }
-    TensorStringifier<T> stringifier{data_.get(), data_size_, ndim_};
+    // Always drive stringification by the caller-provided shape rather than
+    // the ndim_/data_size_ cached at construction time. A TensorData can be
+    // shared across tensors (e.g., view output tensor aliases its parent's
+    // CPU DeviceAddress, which owns the parent's TensorData). In that case
+    // the cached ndim_ belongs to the parent and disagrees with the view's
+    // shape, which previously caused out-of-bound access at shape[depth] in
+    // SummaryStringRecursive.
+    TensorStringifier<T> stringifier{data_.get(), SizeOf(shape), shape.size()};
     return stringifier.ToString(type, shape, use_comma);
   }
 
