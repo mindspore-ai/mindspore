@@ -4779,7 +4779,7 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
     .. note::
         - `batch1` and `batch2` must be 3-D tensors each containing the same number of matrices.
         - When batch1 is a :math:`(C, W, T)` tensor and batch2 is a :math:`(C, T, H)` tensor, input must be
-          broadcastable with :math:`(W, H)` tensor, and out will be a  :math:`(W, H)` tensor.
+          broadcastable with :math:`(W, H)` tensor, and out will be a :math:`(W, H)` tensor.
         - If `beta` is 0, then `input` will be ignored.
 
     .. math::
@@ -5083,7 +5083,7 @@ def adjoint(x):
 
 def addr(x, vec1, vec2, *, beta=1, alpha=1):
     """
-    Compute the outer product of two vector `vec1` and `vec2`, and add the resulting matrix to `x`.
+    Compute the outer product of two vectors `vec1` and `vec2`, and add the resulting matrix to `x`.
 
     .. warning::
         After version 2.9.0, `x` will be renamed to `input`.
@@ -6831,7 +6831,7 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     Keyword Args:
         initial (scalar, optional): Initial value for the minimum. Default ``None`` .
         where (Tensor[bool], optional): Specifies the range over which to compute the minimum values. The shape of this
-            tensor must bebroadcastable to the shape of `input` . An `initial` value must be specified. Default
+            tensor must be broadcastable to the shape of `input` . An `initial` value must be specified. Default
             ``None`` , indicating that all elements are to be computed.
 
     Returns:
