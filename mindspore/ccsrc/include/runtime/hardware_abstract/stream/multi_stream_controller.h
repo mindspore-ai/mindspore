@@ -87,6 +87,9 @@ class RUNTIME_HARDWARE_EXPORT MultiStreamController {
 
   bool WaitMultiStream(size_t wait_stream_id);
 
+  void SetCrossStreamTaskId(uint32_t stream_id, int64_t task_id);
+  int64_t GetCrossStreamTaskId(uint32_t stream_id) const;
+
  protected:
   TaskIdOnStreamManagerPtr task_id_on_stream_manager_;
   std::unordered_map<uint32_t, std::mutex> stream_mutexes_;
@@ -94,6 +97,7 @@ class RUNTIME_HARDWARE_EXPORT MultiStreamController {
 
   DeviceResManager *device_res_base_;
   SpinLock lock_;
+  std::unordered_map<uint32_t, int64_t> cross_stream_task_id_cache_;
 };
 using MultiStreamControllerPtr = std::shared_ptr<MultiStreamController>;
 }  // namespace device

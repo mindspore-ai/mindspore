@@ -78,6 +78,7 @@ file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operat
 file(GLOB_RECURSE UT_PYNATIVE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./pynative/*.cc)
 file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc ./kernel/*/*.cc
         ./pre_activate/common/*.cc  ./session/*.cc ./runtime/device/move_to_test.cc
+        ./runtime/device/multi_stream_controller_test.cc
         ./transform/*.cc ./vm/*.cc)
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc ./runtime/graph_scheduler/*.cc
         ./runtime/pipeline/*.cc ./plugin/device/ascend/hal/hardware/*.cc)
