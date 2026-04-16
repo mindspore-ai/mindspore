@@ -56,8 +56,13 @@ class COMMON_EXPORT HyperOffloadOperations {
   // Merge operations from another HyperOffloadOperations object.
   void MergeFrom(const HyperOffloadOperations &other);
 
-  // Move a specific node ahead by a certain distance.
-  void MoveAhead(const CNodePtr &node, size_t prefetch_distance);
+  // Move a specific node ahead by a certain distance. Optionally ensure node stays after must_remain_after.
+  // min_attach_after_exec_idx: if set, final attach slot is clamped to >= this value.
+  void MoveAhead(const CNodePtr &node, size_t prefetch_distance, const CNodePtr &must_remain_after = nullptr,
+                 std::optional<size_t> min_attach_after_exec_idx = std::nullopt);
+
+  // Get the attach index of a node (0 if in pre_ops, otherwise index in operations).
+  size_t GetNodeAttachIndex(const CNodePtr &node) const;
 
   // Get the operations to be executed before the main sequence.
   const NodeOperations &GetPreOperations() const;

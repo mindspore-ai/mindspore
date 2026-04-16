@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_EVENT_H_
 
 #include <map>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -41,8 +42,12 @@ class HyperOffloadEventInjector {
   void Run();
 
  private:
+  using H2DGroupMap = std::unordered_map<AnfNodePtr, std::vector<std::pair<size_t, CNodePtr>>>;
+  using H2DAttachSlotMap = std::unordered_map<AnfNodePtr, std::vector<size_t>>;
+
   void AddEventNodesForSingleD2HNode(const CNodePtr &d2h_node, EventNodeFactory &event_factory, size_t node_index,
-                                     const std::map<KernelWithIndex, size_t> &data_node_last_user_index_map);
+                                     const std::map<KernelWithIndex, size_t> &data_node_last_user_index_map,
+                                     const H2DAttachSlotMap &h2d_attach_slots);
   void AddEventNodesForD2HNodes(EventNodeFactory &event_factory);
   std::map<KernelWithIndex, size_t> BuildDataNodeLastUserIndexMap() const;
   void AddEventNodesForNonLastH2DNode(const CNodePtr &h2d_node, const AnfNodePtr &original_data, size_t first_user_idx,
@@ -51,7 +56,11 @@ class HyperOffloadEventInjector {
                                    const CNodePtr &recv_node);
   void AddEventNodesForH2DNodes(EventNodeFactory &event_factory);
 
-  using H2DGroupMap = std::unordered_map<AnfNodePtr, std::vector<std::pair<size_t, CNodePtr>>>;
+  H2DAttachSlotMap BuildH2DAttachSlotsByOriginalData() const;
+  std::optional<size_t> FindNextH2DAttachSlot(const AnfNodePtr &original_data, size_t current_attach_slot,
+                                              const H2DAttachSlotMap &h2d_attach_slots) const;
+  size_t GetGuardedReleaseTargetIndex(const AnfNodePtr &original_data, size_t current_attach_slot, size_t raw_target,
+                                      const H2DAttachSlotMap &h2d_attach_slots) const;
   H2DGroupMap GroupH2DNodes() const;
   void ProcessH2DGroup(const AnfNodePtr &input_node, const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
                        EventNodeFactory &event_factory,

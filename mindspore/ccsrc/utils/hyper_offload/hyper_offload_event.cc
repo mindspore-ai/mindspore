@@ -17,11 +17,16 @@
 #include "utils/hyper_offload/hyper_offload_event.h"
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <map>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "primitive/framework_ops.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -29,6 +34,22 @@ namespace utils {
 namespace hyper_offload {
 namespace {
 constexpr size_t kPrimaryDataInputIndex = 1;
+constexpr size_t kConditionSwitchFirstDataInputIndex = 2;
+
+bool IsConditionSwitchDataInput(const AnfNodePtr &node, size_t input_index) {
+  return IsPrimitiveCNode(node, prim::kPrimConditionSwitch) && input_index >= kConditionSwitchFirstDataInputIndex;
+}
+
+AnfNodePtr GetOriginalDataForH2DInput(const AnfNodePtr &input_node) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!IsD2HNode(input_node)) {
+    return input_node;
+  }
+  auto d2h_node = input_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(d2h_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
+  return d2h_node->input(kPrimaryDataInputIndex);
+}
 
 size_t GetReleaseTargetIndex(const CNodePtrList &exec_order, size_t node_index, size_t last_user_index,
                              size_t release_distance) {
@@ -49,6 +70,7 @@ size_t GetReleaseTargetIndex(const CNodePtrList &exec_order, size_t node_index, 
   }
   return target_index;
 }
+
 }  // namespace
 
 HyperOffloadEventInjector::HyperOffloadEventInjector(const FuncGraphPtr &graph, const CNodePtrList &exec_order,
@@ -69,7 +91,11 @@ std::map<KernelWithIndex, size_t> HyperOffloadEventInjector::BuildDataNodeLastUs
   std::map<KernelWithIndex, size_t> data_node_last_user_index_map;
   for (size_t i = 0; i < exec_order_.size(); ++i) {
     const auto &node = exec_order_[i];
-    for (const auto &input : node->inputs()) {
+    for (size_t input_index = 0; input_index < node->inputs().size(); ++input_index) {
+      if (IsConditionSwitchDataInput(node, input_index)) {
+        continue;
+      }
+      const auto &input = node->input(input_index);
       const auto &[cur_node, cur_index] = GetRealDataNodeWithIndex(input);
       MS_EXCEPTION_IF_NULL(cur_node);
       if (!cur_node->isa<CNode>()) {
@@ -81,9 +107,54 @@ std::map<KernelWithIndex, size_t> HyperOffloadEventInjector::BuildDataNodeLastUs
   return data_node_last_user_index_map;
 }
 
+HyperOffloadEventInjector::H2DAttachSlotMap HyperOffloadEventInjector::BuildH2DAttachSlotsByOriginalData() const {
+  H2DAttachSlotMap h2d_attach_slots;
+  const auto &all_ops = operations_->GetOperations();
+  for (size_t i = 0; i < all_ops.size(); ++i) {
+    for (const auto &node : all_ops[i].operations) {
+      if (!IsH2DNode(node)) {
+        continue;
+      }
+      MS_EXCEPTION_IF_CHECK_FAIL(node->inputs().size() > kPrimaryDataInputIndex, "H2D node input size invalid.");
+      auto original_data = GetOriginalDataForH2DInput(node->input(kPrimaryDataInputIndex));
+      (void)h2d_attach_slots[original_data].emplace_back(i);
+    }
+  }
+  return h2d_attach_slots;
+}
+
+std::optional<size_t> HyperOffloadEventInjector::FindNextH2DAttachSlot(const AnfNodePtr &original_data,
+                                                                       size_t current_attach_slot,
+                                                                       const H2DAttachSlotMap &h2d_attach_slots) const {
+  MS_EXCEPTION_IF_NULL(original_data);
+  auto it = h2d_attach_slots.find(original_data);
+  if (it == h2d_attach_slots.end()) {
+    return std::nullopt;
+  }
+  const auto &attach_slots = it->second;
+  auto next_it = std::upper_bound(attach_slots.begin(), attach_slots.end(), current_attach_slot);
+  if (next_it == attach_slots.end()) {
+    return std::nullopt;
+  }
+  return *next_it;
+}
+
+size_t HyperOffloadEventInjector::GetGuardedReleaseTargetIndex(const AnfNodePtr &original_data,
+                                                               size_t current_attach_slot, size_t raw_target,
+                                                               const H2DAttachSlotMap &h2d_attach_slots) const {
+  MS_EXCEPTION_IF_NULL(original_data);
+  const auto next_h2d_attach = FindNextH2DAttachSlot(original_data, current_attach_slot, h2d_attach_slots);
+  if (!next_h2d_attach.has_value()) {
+    return raw_target;
+  }
+  const size_t guarded_target =
+    (*next_h2d_attach > current_attach_slot) ? std::min(raw_target, *next_h2d_attach - 1) : current_attach_slot;
+  return std::max(guarded_target, current_attach_slot);
+}
+
 void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
   const CNodePtr &d2h_node, EventNodeFactory &event_factory, size_t node_index,
-  const std::map<KernelWithIndex, size_t> &data_node_last_user_index_map) {
+  const std::map<KernelWithIndex, size_t> &data_node_last_user_index_map, const H2DAttachSlotMap &h2d_attach_slots) {
   MS_LOG(DEBUG) << "Adding event nodes for single D2H node at index " << node_index;
   MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
   auto data_node = d2h_node->input(kPrimaryDataInputIndex);
@@ -112,43 +183,48 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
   MS_EXCEPTION_IF_NULL(free_cnode);
   MS_EXCEPTION_IF_NULL(assign_cnode);
 
-  bool use_immediate_release = (HyperOffloadConfig::GetInstance().max_device_memory() > 0);
-  if (use_immediate_release) {
-    // Peak strategy: Recv_Completion, FreeData, AssignData right after D2H.
-    operations_->AddOperationAfter(node_index, recv_completion);
-    operations_->AddOperationAfter(node_index, free_cnode);
-    operations_->AddOperationAfter(node_index, assign_cnode);
-    MS_LOG(DEBUG) << "Added event nodes for D2H, immediate release at index " << node_index;
-  } else {
-    // Distance strategy: use pre-computed map for O(1) lookup.
-    const auto &[target_node, target_output_index] = GetRealDataNodeWithIndex(data_node);
-    size_t last_user_index = node_index;
-    auto it = data_node_last_user_index_map.find({target_node, target_output_index});
-    if (it != data_node_last_user_index_map.end() && it->second > node_index) {
-      last_user_index = it->second;
-    }
-    const size_t release_distance =
-      GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
-    size_t target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
-    operations_->AddOperationAfter(target_index, recv_completion);
-    operations_->AddOperationAfter(target_index, free_cnode);
-    operations_->AddOperationAfter(target_index, assign_cnode);
-    MS_LOG(DEBUG) << "Added event nodes for D2H, release at index " << target_index;
+  // Shared release-distance policy:
+  // distance strategy uses the raw target directly;
+  // peak strategy reuses the same raw target but clamps it to the largest legal slot when needed.
+  const bool use_peak_strategy = HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy();
+  const auto &[target_node, target_output_index] = GetRealDataNodeWithIndex(data_node);
+  size_t last_user_index = node_index;
+  auto it = data_node_last_user_index_map.find({target_node, target_output_index});
+  if (it != data_node_last_user_index_map.end() && it->second > node_index) {
+    last_user_index = it->second;
   }
+  const size_t release_distance =
+    GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
+  const size_t raw_target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
+  size_t target_index = use_peak_strategy
+                          ? GetGuardedReleaseTargetIndex(data_node, node_index, raw_target_index, h2d_attach_slots)
+                          : raw_target_index;
+  const auto branch_range = GetInlineBranchIndexRange(graph_, exec_order_, d2h_node);
+  if (branch_range.has_value() && target_index > branch_range->second) {
+    target_index = std::max(node_index, branch_range->second);
+  }
+  operations_->AddOperationAfter(target_index, recv_completion);
+  operations_->AddOperationAfter(target_index, free_cnode);
+  operations_->AddOperationAfter(target_index, assign_cnode);
+  MS_LOG(DEBUG) << "Added event nodes for D2H, release at index " << target_index;
 }
 
 void HyperOffloadEventInjector::AddEventNodesForD2HNodes(EventNodeFactory &event_factory) {
   MS_LOG(INFO) << "Adding event nodes for D2H nodes";
-  const auto &data_node_last_user_index_map = BuildDataNodeLastUserIndexMap();
   const auto &all_ops = operations_->GetOperations();
   MS_EXCEPTION_IF_CHECK_FAIL(all_ops.size() == exec_order_.size(),
                              "The size of operations is not equal to the size of original order.");
+  const auto &data_node_last_user_index_map = BuildDataNodeLastUserIndexMap();
+  H2DAttachSlotMap h2d_attach_slots;
+  if (HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy()) {
+    h2d_attach_slots = BuildH2DAttachSlotsByOriginalData();
+  }
   size_t d2h_count = 0;
   for (size_t i = 0; i < exec_order_.size(); ++i) {
     auto current_ops = all_ops[i].operations;
     for (const auto &node : current_ops) {
       if (IsD2HNode(node)) {
-        AddEventNodesForSingleD2HNode(node, event_factory, i, data_node_last_user_index_map);
+        AddEventNodesForSingleD2HNode(node, event_factory, i, data_node_last_user_index_map, h2d_attach_slots);
         ++d2h_count;
       }
     }
@@ -210,9 +286,62 @@ HyperOffloadEventInjector::H2DGroupMap HyperOffloadEventInjector::GroupH2DNodes(
       }
     }
   }
-  MS_LOG(INFO) << "Grouped H2D nodes into " << h2d_groups.size() << " groups";
   return h2d_groups;
 }
+
+namespace {
+// Peak strategy may emit H2D nodes that are consumed only by graph output, not by any exec_order_ kernel.
+void AppendH2DUsersFromFuncGraphOutput(const FuncGraphPtr &graph, const CNodePtrList &exec_order,
+                                       std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> *h2d_user_indices) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(h2d_user_indices);
+  const size_t anchor = exec_order.size();
+
+  std::vector<AnfNodePtr> h2d_from_output;
+  std::function<void(const AnfNodePtr &)> visit;
+  visit = [&visit, &h2d_from_output](const AnfNodePtr &node) {
+    if (node == nullptr) {
+      return;
+    }
+    if (IsH2DNode(node)) {
+      (void)h2d_from_output.emplace_back(node);
+      return;
+    }
+    if (!node->isa<CNode>()) {
+      return;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+      for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+        visit(cnode->input(i));
+      }
+      return;
+    }
+    if (IsOneOfPrimitiveCNode(node, {prim::kPrimDepend, prim::kPrimLoad})) {
+      MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kRealInputIndexInDepend, "Depend/Load inputs invalid.");
+      visit(cnode->input(kRealInputIndexInDepend));
+      return;
+    }
+    if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
+      MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kUpdateStateStateInput, "UpdateState inputs invalid.");
+      visit(cnode->input(kUpdateStateStateInput));
+      return;
+    }
+  };
+  visit(graph->output());
+
+  for (const auto &h2d : h2d_from_output) {
+    auto it = h2d_user_indices->find(h2d);
+    if (it == h2d_user_indices->end()) {
+      (*h2d_user_indices)[h2d] = {anchor, anchor};
+    } else {
+      it->second.first = std::min(it->second.first, anchor);
+      it->second.second = std::max(it->second.second, anchor);
+    }
+  }
+}
+}  // namespace
 
 std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> HyperOffloadEventInjector::BuildH2DUserIndicesMap() const {
   std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> h2d_user_indices;
@@ -223,6 +352,9 @@ std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> HyperOffloadEventInjec
       }
     }
   }
+  if (HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy()) {
+    AppendH2DUsersFromFuncGraphOutput(graph_, exec_order_, &h2d_user_indices);
+  }
   return h2d_user_indices;
 }
 
@@ -230,16 +362,7 @@ void HyperOffloadEventInjector::ProcessH2DGroup(
   const AnfNodePtr &input_node, const std::vector<std::pair<size_t, CNodePtr>> &h2d_list,
   EventNodeFactory &event_factory, const std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> &h2d_user_indices) {
   MS_LOG(DEBUG) << "Processing H2D group with " << h2d_list.size() << " nodes";
-  AnfNodePtr original_data = nullptr;
-  if (IsD2HNode(input_node)) {
-    auto d2h_node = input_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(d2h_node);
-    MS_EXCEPTION_IF_CHECK_FAIL(d2h_node->inputs().size() > kPrimaryDataInputIndex, "D2H node input size invalid.");
-    original_data = d2h_node->input(kPrimaryDataInputIndex);
-  } else {
-    // If input is not D2H, assume it is the data itself (e.g. host parameter)
-    original_data = input_node;
-  }
+  auto original_data = GetOriginalDataForH2DInput(input_node);
 
   size_t count = h2d_list.size();
   for (size_t i = 0; i < count; ++i) {

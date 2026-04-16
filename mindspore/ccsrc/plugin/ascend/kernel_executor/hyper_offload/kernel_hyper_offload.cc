@@ -289,7 +289,10 @@ void KernelHyperOffloadOptimizer::UpdateRefMapForHyperOffloadInput(const KernelG
     }
     const auto &user_nodes = user_info.users;
     for (const auto &user_node : user_nodes) {
-      kernel_graph->ReplaceRefMapInput({user_node.first, 0}, {data_node, 0});
+      const auto ref_output_indexes = utils::hyper_offload::GetRefOutputIndexesForInput(user_node);
+      for (const auto output_index : ref_output_indexes) {
+        kernel_graph->ReplaceRefMapInput({user_node.first, output_index}, {data_node, 0});
+      }
     }
   }
 }
@@ -349,6 +352,7 @@ void KernelHyperOffloadOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   }
   AdjustFrontendHyperOffloadOpsExecutionOrder(kernel_graph);
   ApplyHyperOffloadOptimizer(kernel_graph);
+  ReorderControlFlowNodes(kernel_graph);
   UpdateRefMapForHyperOffloadInput(kernel_graph);
 }
 
@@ -388,6 +392,7 @@ void KernelHyperOffloadOptimizer::AddEventToHyperOffloadOps(const KernelGraphPtr
     }
   }
   kernel_graph->set_execution_order(new_execution_order);
+  ReorderControlFlowNodes(kernel_graph);
 }
 
 // Reorder the control flow nodes in the execution order, keep true branch and false branch nodes together
