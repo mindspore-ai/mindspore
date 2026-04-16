@@ -78,7 +78,7 @@ def get_output(net, args, enable_graph_kernel=False):
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential', mem_peak=90.0)
 @pytest.mark.parametrize("shape1, shape2", [((4096, 1024), (4096, 2048)), ((4000, 1000), (4000, 3000)),
-                                            ((1, 2048), (1, 4096))])
+                                            ((1, 2048), (1, 4096)), ((16, 16), (16, 4096))])
 @pytest.mark.parametrize("dtype", [mstype.float16, mstype.bfloat16])
 def test_dvm_matmul_fusion(shape1, shape2, dtype):
     """
@@ -87,9 +87,9 @@ def test_dvm_matmul_fusion(shape1, shape2, dtype):
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.random.normal(1, 0.01, shape1).astype(np.float32), dtype=dtype)
-    y = Tensor(np.random.normal(1, 0.01, shape2).astype(np.float32), dtype=dtype)
-    z = Tensor(np.random.normal(1, 0.01, [shape2[1]]).astype(np.float32), dtype=dtype)
+    x = Tensor(np.random.normal(0, 0.1, shape1).astype(np.float32), dtype=dtype)
+    y = Tensor(np.random.normal(0, 0.1, shape2).astype(np.float32), dtype=dtype)
+    z = Tensor(np.random.normal(0, 0.1, [shape2[1]]).astype(np.float32), dtype=dtype)
     expect = get_output(Net, [x, y, z], False)
     output = get_output(Net, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
@@ -104,8 +104,8 @@ def test_dvm_matmul_fusion_2():
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x0 = Tensor(np.random.normal(1, 0.01, [2048, 2112]).astype(np.float32), dtype=mstype.bfloat16)
-    x1 = Tensor(np.random.normal(1, 0.01, [2112, 4096]).astype(np.float32), dtype=mstype.bfloat16)
+    x0 = Tensor(np.random.normal(0, 0.1, [2048, 2112]).astype(np.float32), dtype=mstype.bfloat16)
+    x1 = Tensor(np.random.normal(0, 0.1, [2112, 4096]).astype(np.float32), dtype=mstype.bfloat16)
     expect = get_output(Net2, [x0, x1], False)
     output = get_output(Net2, [x0, x1], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 4e-3, 4e-3)
@@ -120,9 +120,9 @@ def test_dvm_same_input_matmul_fusion_0():
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    y = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    z = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
+    x = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    y = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    z = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
     expect = get_output(SameInputMatMulNet0, [x, y, z], False)
     output = get_output(SameInputMatMulNet0, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
@@ -137,9 +137,9 @@ def test_dvm_same_input_matmul_fusion_1():
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    y = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    z = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
+    x = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    y = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    z = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
     expect = get_output(SameInputMatMulNet1, [x, y, z], False)
     output = get_output(SameInputMatMulNet1, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
