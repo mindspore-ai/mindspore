@@ -206,7 +206,9 @@ class _CreatePlaceholderHook(saved_tensors_hooks):
             if not state.is_recomputed[engine_id]:
                 new_inputs = state.recover_inputs()
                 prev_grad_flag = _pynative_executor.grad_flag()
+                prev_enable_grad = _pynative_executor.enable_grad()
                 _pynative_executor.set_grad_flag(True)
+                _pynative_executor.set_enable_grad(True)
                 try:
                     with _RecomputationHook(weakref.ref(state), engine_id):
                         _pynative_executor.new_empty_graph()
@@ -215,6 +217,7 @@ class _CreatePlaceholderHook(saved_tensors_hooks):
                 except _StopRecomputationError:
                     _pynative_executor.end_empty_graph()
                 _pynative_executor.set_grad_flag(prev_grad_flag)
+                _pynative_executor.set_enable_grad(prev_enable_grad)
                 state.is_recomputed[engine_id] = True
             if state.recomputed_data[engine_id].get(holder, default=None) is None:
                 raise RuntimeError("Unpack is being triggered for a tensor, make sure to do this only once!")
