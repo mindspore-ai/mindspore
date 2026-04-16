@@ -322,7 +322,8 @@ def test_func_all_to_all_v_c_strict():
     Expectation: success
     """
     return_code = os.system(
-        "export HCCL_DETERMINISTIC='strict'; msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 "\
+        "export HCCL_DETERMINISTIC='strict'; export GLOG_v=2; "\
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 "\
         "--master_port=10666 --join=True --log_dir=test_func_all_to_all_v_c_strict pytest -s test_all_to_all_v_c.py"
     )
     assert return_code == 0

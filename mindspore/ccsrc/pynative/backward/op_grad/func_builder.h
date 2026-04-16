@@ -670,6 +670,7 @@ class FuncBuilder : public BpropBuilder {
   NodePtr SoftShrink(const NodePtr &input, const NodePtr &lambd) override;
   NodePtr InplaceRemainderTensorScalar(const NodePtr &input, const NodePtr &other) override;
   NodePtr Contiguous(const NodePtr &input) override;
+  NodePtr ContiguousIfNeeded(const NodePtr &input);
   NodePtr ToDtype(const NodePtr &input, const NodePtr &dtype, const NodePtr &non_blocking,
                   const NodePtr &copy) override;
   NodePtr SplitWithSize(const NodePtr &input, const NodePtr &split_size, const NodePtr &dim) override;

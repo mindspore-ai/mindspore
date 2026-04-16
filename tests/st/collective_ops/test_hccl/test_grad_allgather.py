@@ -43,6 +43,30 @@ class ReduceScatterFuncNet(nn.Cell):
         return out
 
 
+class AllGatherTransposeNet(nn.Cell):
+    def construct(self, x):
+        out, _ = all_gather_into_tensor(None, x)
+        return out.transpose(1, 0)
+
+
+class AllGatherSliceNet(nn.Cell):
+    def construct(self, x):
+        out, _ = all_gather_into_tensor(None, x)
+        return out[::2]
+
+
+class ReduceScatterTransposeNet(nn.Cell):
+    def construct(self, x):
+        out, _ = reduce_scatter_tensor(None, x)
+        return out.transpose(1, 0)
+
+
+class ReduceScatterSliceNet(nn.Cell):
+    def construct(self, x):
+        out, _ = reduce_scatter_tensor(None, x)
+        return out[::2]
+
+
 def test_hccl_all_gather_into_tensor_grad():
     """
     Feature: test 'all_gather_into_tensor' communication function in cell.
@@ -69,6 +93,80 @@ def test_hccl_reduce_scatter_tensor_grad():
     expect_output = np.ones([3, 4]).astype(np.float32) * 4
     expect_output1 = np.ones([6, 4]).astype(np.float32)
     net = ReduceScatterFuncNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(x)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_hccl_all_gather_into_tensor_grad_non_contiguous_transpose():
+    """
+    Feature: test 'all_gather_into_tensor' backward when upstream gradient is non-contiguous via transpose.
+    Description: transpose after all_gather produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommAllGather.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    x = ms.Tensor(np.ones([3, 4]).astype(np.float32))
+    expect_output = np.ones([4, 6]).astype(np.float32)
+    expect_output1 = np.ones([3, 4]).astype(np.float32) * 2
+    net = AllGatherTransposeNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(x)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_hccl_all_gather_into_tensor_grad_non_contiguous_slice():
+    """
+    Feature: test 'all_gather_into_tensor' backward when upstream gradient is non-contiguous via strided slice.
+    Description: strided slice after all_gather produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommAllGather.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    x = ms.Tensor(np.ones([3, 4]).astype(np.float32))
+    expect_output = np.ones([3, 4]).astype(np.float32)
+    # slice[::2] backward yields non-contig dy[6,4] with rows 0,2,4 = 1s.
+    # all_gather backward is reduce_scatter: sum across ranks then split per-rank.
+    summed = np.zeros([6, 4]).astype(np.float32)
+    summed[::2] = 2
+    expect_output1 = summed[:3] if this_rank == 0 else summed[3:]
+    net = AllGatherSliceNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(x)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_hccl_reduce_scatter_tensor_grad_non_contiguous_transpose():
+    """
+    Feature: test 'reduce_scatter_tensor' backward when upstream gradient is non-contiguous via transpose.
+    Description: transpose after reduce_scatter produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommReduceScatter.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    x = ms.Tensor(np.ones([6, 4]).astype(np.float32)) * 2
+    expect_output = np.ones([4, 3]).astype(np.float32) * 4
+    expect_output1 = np.ones([6, 4]).astype(np.float32)
+    net = ReduceScatterTransposeNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(x)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_hccl_reduce_scatter_tensor_grad_non_contiguous_slice():
+    """
+    Feature: test 'reduce_scatter_tensor' backward when upstream gradient is non-contiguous via strided slice.
+    Description: strided slice after reduce_scatter produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommReduceScatter.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    x = ms.Tensor(np.ones([8, 4]).astype(np.float32)) * 2
+    expect_output = np.ones([2, 4]).astype(np.float32) * 4
+    expect_grad = np.zeros([4, 4]).astype(np.float32)
+    expect_grad[::2] = 1
+    expect_output1 = np.concatenate([expect_grad, expect_grad], axis=0)
+    net = ReduceScatterSliceNet()
     grad_fn = value_and_grad(net, grad_position=0)
     out, inputs_gradient = grad_fn(x)
     assert np.allclose(out, expect_output)

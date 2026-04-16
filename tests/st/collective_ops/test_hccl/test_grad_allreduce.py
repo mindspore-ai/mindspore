@@ -38,6 +38,18 @@ class AllReduceFuncNet(nn.Cell):
         return out
 
 
+class AllReduceTransposeNet(nn.Cell):
+    def construct(self, x):
+        out, _ = all_reduce(x)
+        return out.transpose(1, 0)
+
+
+class AllReduceSliceNet(nn.Cell):
+    def construct(self, x):
+        out, _ = all_reduce(x)
+        return out[::2]
+
+
 def test_hccl_all_reduce_grad():
     """
     Feature: test 'all_reduce' communication function in cell.
@@ -52,3 +64,38 @@ def test_hccl_all_reduce_grad():
     out, inputs_gradient = grad_fn(x)
     assert np.allclose(out, expect_output)
     assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_hccl_all_reduce_grad_non_contiguous_transpose():
+    """
+    Feature: test 'all_reduce' backward when upstream gradient is non-contiguous via transpose.
+    Description: transpose after all_reduce produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommAllReduce.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    x = ms.Tensor(np.ones([3, 4]).astype(np.float32))
+    expect_output = np.ones([4, 3]).astype(np.float32) * 2
+    expect_output1 = np.ones([3, 4]).astype(np.float32) * 2
+    net = AllReduceTransposeNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(x)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_output1)
+
+
+def test_hccl_all_reduce_grad_non_contiguous_slice():
+    """
+    Feature: test 'all_reduce' backward when upstream gradient is non-contiguous via strided slice.
+    Description: strided slice after all_reduce produces a non-contiguous gradient on backward,
+                 which should be auto-contiguized before feeding into InnerCommAllReduce.
+    Expectation: expect correct result without raising 'not-contiguous tensor' exception.
+    """
+    x = ms.Tensor(np.ones([4, 4]).astype(np.float32))
+    expect_output = np.ones([2, 4]).astype(np.float32) * 2
+    expect_grad = np.zeros([4, 4]).astype(np.float32)
+    expect_grad[::2] = 2
+    net = AllReduceSliceNet()
+    grad_fn = value_and_grad(net, grad_position=0)
+    out, inputs_gradient = grad_fn(x)
+    assert np.allclose(out, expect_output)
+    assert np.allclose(inputs_gradient, expect_grad)

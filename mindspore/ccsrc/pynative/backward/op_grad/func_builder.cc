@@ -530,9 +530,19 @@ NodePtr FuncBuilder::Tile(const NodePtr &input, const NodePtr &dims) {
   return NativeFunc::Tile(input, dims);
 }
 
+NodePtr FuncBuilder::ContiguousIfNeeded(const NodePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  auto tensor = input->Value()->cast<tensor::TensorPtr>();
+  if (tensor != nullptr && tensor->storage_info() != nullptr && !tensor->storage_info()->is_contiguous) {
+    return Contiguous(input);
+  }
+  return input;
+}
+
 NodePtr FuncBuilder::InnerCommAllReduce(const NodePtr &grad, const NodePtr &op, const NodePtr &group) {
   MS_LOG(DEBUG) << "Enter InnerCommAllReduce Grad.";
-  auto node_ptr = NativeFunc::InnerCommAllReduce(grad, op, group);
+  auto grad_input = ContiguousIfNeeded(grad);
+  auto node_ptr = NativeFunc::InnerCommAllReduce(grad_input, op, group);
   std::shared_ptr<CommFuncNode> comm_func_ptr = std::dynamic_pointer_cast<CommFuncNode>(node_ptr);
   MS_EXCEPTION_IF_NULL(comm_func_ptr);
   auto handle = comm_func_ptr->comm_handle();
@@ -543,7 +553,8 @@ NodePtr FuncBuilder::InnerCommAllReduce(const NodePtr &grad, const NodePtr &op, 
 
 NodePtr FuncBuilder::InnerCommAllGather(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group) {
   MS_LOG(DEBUG) << "Enter InnerCommAllGather Grad.";
-  auto node_ptr = NativeFunc::InnerCommAllGather(grad, rank_size, group);
+  auto grad_input = ContiguousIfNeeded(grad);
+  auto node_ptr = NativeFunc::InnerCommAllGather(grad_input, rank_size, group);
   std::shared_ptr<CommFuncNode> comm_func_ptr = std::dynamic_pointer_cast<CommFuncNode>(node_ptr);
   MS_EXCEPTION_IF_NULL(comm_func_ptr);
   auto handle = comm_func_ptr->comm_handle();
@@ -555,7 +566,8 @@ NodePtr FuncBuilder::InnerCommAllGather(const NodePtr &grad, const NodePtr &rank
 NodePtr FuncBuilder::InnerCommReduceScatter(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &type,
                                             const NodePtr &group) {
   MS_LOG(DEBUG) << "Enter InnerCommReduceScatter Grad.";
-  auto node_ptr = NativeFunc::InnerCommReduceScatter(grad, rank_size, type, group);
+  auto grad_input = ContiguousIfNeeded(grad);
+  auto node_ptr = NativeFunc::InnerCommReduceScatter(grad_input, rank_size, type, group);
   std::shared_ptr<CommFuncNode> comm_func_ptr = std::dynamic_pointer_cast<CommFuncNode>(node_ptr);
   MS_EXCEPTION_IF_NULL(comm_func_ptr);
   auto handle = comm_func_ptr->comm_handle();
@@ -567,7 +579,8 @@ NodePtr FuncBuilder::InnerCommReduceScatter(const NodePtr &grad, const NodePtr &
 NodePtr FuncBuilder::InnerCommIsend(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group,
                                     const NodePtr &tag) {
   MS_LOG(DEBUG) << "Enter InnerCommIsend Grad.";
-  auto node_ptr = NativeFunc::InnerCommIsend(grad, rank_size, group, tag);
+  auto grad_input = ContiguousIfNeeded(grad);
+  auto node_ptr = NativeFunc::InnerCommIsend(grad_input, rank_size, group, tag);
   std::shared_ptr<CommFuncNode> comm_func_ptr = std::dynamic_pointer_cast<CommFuncNode>(node_ptr);
   MS_EXCEPTION_IF_NULL(comm_func_ptr);
   auto handle = comm_func_ptr->comm_handle();
@@ -592,8 +605,9 @@ NodePtr FuncBuilder::InnerCommAllToAllV(const NodePtr &grad, const NodePtr &grou
                                         const NodePtr &recv_numel_list, const NodePtr &rank_size,
                                         const NodePtr &split_sizes_empty) {
   MS_LOG(DEBUG) << "Enter InnerCommAllToAllV Grad.";
+  auto grad_input = ContiguousIfNeeded(grad);
   auto node_ptr =
-    NativeFunc::InnerCommAllToAllV(grad, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty);
+    NativeFunc::InnerCommAllToAllV(grad_input, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty);
   std::shared_ptr<CommFuncNode> comm_func_ptr = std::dynamic_pointer_cast<CommFuncNode>(node_ptr);
   MS_EXCEPTION_IF_NULL(comm_func_ptr);
   auto handle = comm_func_ptr->comm_handle();
