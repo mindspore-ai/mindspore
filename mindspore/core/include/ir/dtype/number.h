@@ -83,16 +83,16 @@ class MS_CORE_API Number : public Object {
   }
 
   bool IsSigned() const {
-    static const std::vector<int> unsigned_types = {kObjectTypeNumber, kNumberTypeBool,  kNumberTypeUInt,
-                                                    kNumberTypeGLUInt, kNumberTypeUInt8, kNumberTypeUInt16,
-                                                    kNumberTypeUInt32, kNumberTypeUInt64};
+    static const std::vector<int> unsigned_types = {kObjectTypeNumber, kNumberTypeBool,   kNumberTypeUInt,
+                                                    kNumberTypeGLUInt, kNumberTypeUInt8,  kNumberTypeUInt16,
+                                                    kNumberTypeUInt32, kNumberTypeUInt64, kNumberTypeFloat8E8M0FNU};
     return std::find(unsigned_types.begin(), unsigned_types.end(), number_type_) == unsigned_types.end();
   }
 
   bool IsFloatingPoint() const {
     static const std::vector<int> floating_point_types = {
-      kNumberTypeFloat,    kNumberTypeFloat8E4M3FN, kNumberTypeFloat8E5M2, kNumberTypeHiFloat8, kNumberTypeFloat16,
-      kNumberTypeBFloat16, kNumberTypeFloat32,      kNumberTypeFloat64,    kNumberTypeDouble};
+      kNumberTypeFloat,   kNumberTypeFloat8E4M3FN, kNumberTypeFloat8E5M2, kNumberTypeHiFloat8, kNumberTypeFloat8E8M0FNU,
+      kNumberTypeFloat16, kNumberTypeBFloat16,     kNumberTypeFloat32,    kNumberTypeFloat64,  kNumberTypeDouble};
     return std::find(floating_point_types.begin(), floating_point_types.end(), number_type_) !=
            floating_point_types.end();
   }
@@ -233,6 +233,9 @@ class MS_CORE_API Float : public Number {
     if (type_id() == kNumberTypeHiFloat8) {
       return "HiFloat8";
     }
+    if (type_id() == kNumberTypeFloat8E8M0FNU) {
+      return "Float8E8M0FNU";
+    }
     return GetTypeName("Float");
   }
 
@@ -246,6 +249,9 @@ class MS_CORE_API Float : public Number {
     if (type_id() == kNumberTypeHiFloat8) {
       return "hifloat8";
     }
+    if (type_id() == kNumberTypeFloat8E8M0FNU) {
+      return "float8_e8m0fnu";
+    }
     return GetTypeName("float");
   }
   std::string DumpText() const override {
@@ -257,6 +263,9 @@ class MS_CORE_API Float : public Number {
     }
     if (type_id() == kNumberTypeHiFloat8) {
       return "HiF8";
+    }
+    if (type_id() == kNumberTypeFloat8E8M0FNU) {
+      return "F8E8M0FNU";
     }
     return nbits() == 0 ? std::string("Float") : std::string("F") + std::to_string(nbits());
   }
@@ -338,6 +347,7 @@ GVAR_DEF(TypePtr, kFloat64, std::make_shared<Float>(kNumberTypeFloat64, static_c
 GVAR_DEF(TypePtr, kFloat8E4M3FN, std::make_shared<Float>(kNumberTypeFloat8E4M3FN, static_cast<int>(BitsNum::eBits8)));
 GVAR_DEF(TypePtr, kFloat8E5M2, std::make_shared<Float>(kNumberTypeFloat8E5M2, static_cast<int>(BitsNum::eBits8)));
 GVAR_DEF(TypePtr, kHiFloat8, std::make_shared<Float>(kNumberTypeHiFloat8, static_cast<int>(BitsNum::eBits8)));
+GVAR_DEF(TypePtr, kFloat8E8M0FNU, std::make_shared<Float>(kNumberTypeFloat8E8M0FNU, static_cast<int>(BitsNum::eBits8)));
 GVAR_DEF(TypePtr, kBFloat16, std::make_shared<BFloat>(static_cast<int>(BitsNum::eBits16)));
 GVAR_DEF(TypePtr, kInt, std::make_shared<Int>());
 GVAR_DEF(TypePtr, kUInt, std::make_shared<UInt>());
@@ -363,6 +373,7 @@ inline TypePtr ToRealType(TypeId type_id, std::string type_name) {
                                                                {kNumberTypeFloat8E4M3FN, kFloat8E4M3FN},
                                                                {kNumberTypeFloat8E5M2, kFloat8E5M2},
                                                                {kNumberTypeHiFloat8, kHiFloat8},
+                                                               {kNumberTypeFloat8E8M0FNU, kFloat8E8M0FNU},
                                                                {kNumberTypeFloat16, kFloat16},
                                                                {kNumberTypeFloat32, kFloat32},
                                                                {kNumberTypeFloat64, kFloat64},

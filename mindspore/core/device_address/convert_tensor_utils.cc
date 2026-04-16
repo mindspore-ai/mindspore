@@ -19,6 +19,7 @@
 #include "base/float8_e4m3fn.h"
 #include "base/float8_e5m2.h"
 #include "base/hifloat8.h"
+#include "base/float8_e8m0fnu.h"
 #include "utils/shape_utils.h"
 namespace mindspore {
 namespace device {
@@ -143,6 +144,10 @@ void ConvertSameType(void *const dst, const void *src, size_t size, TypeId type)
     auto dst_data = static_cast<float8_e4m3fn *>(dst);
     auto src_data = static_cast<const float8_e4m3fn *>(src);
     ConvertSameType(dst_data, src_data, size / sizeof(float8_e4m3fn));
+  } else if (type == kNumberTypeFloat8E8M0FNU) {
+    auto dst_data = static_cast<float8_e8m0fnu *>(dst);
+    auto src_data = static_cast<const float8_e8m0fnu *>(src);
+    ConvertSameType(dst_data, src_data, size / sizeof(float8_e8m0fnu));
   } else if (type == kNumberTypeInt8) {
     auto dst_data = static_cast<int8_t *>(dst);
     auto src_data = static_cast<const int8_t *>(src);

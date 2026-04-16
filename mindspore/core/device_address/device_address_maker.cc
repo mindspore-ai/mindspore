@@ -109,6 +109,7 @@ template DeviceAddressPtr MakeDeviceAddress<float16>(TypeId, float16);
 template DeviceAddressPtr MakeDeviceAddress<float8_e5m2>(TypeId, float8_e5m2);
 template DeviceAddressPtr MakeDeviceAddress<float8_e4m3fn>(TypeId, float8_e4m3fn);
 template DeviceAddressPtr MakeDeviceAddress<hifloat8>(TypeId, hifloat8);
+template DeviceAddressPtr MakeDeviceAddress<float8_e8m0fnu>(TypeId, float8_e8m0fnu);
 template DeviceAddressPtr MakeDeviceAddress<bfloat16>(TypeId, bfloat16);
 template DeviceAddressPtr MakeDeviceAddress<uint64_t>(TypeId, uint64_t);
 template DeviceAddressPtr MakeDeviceAddress<uint32_t>(TypeId, uint32_t);

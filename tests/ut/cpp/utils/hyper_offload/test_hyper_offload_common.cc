@@ -482,7 +482,7 @@ TEST_F(TestHyperOffloadCommon, TestH2DAndD2HShareTransferStreamAssignment) {
   ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
 
   auto node1 = exec_order[0];
-  constexpr char kStreamIdAttr[] = "stream_id";
+  constexpr auto kStreamIdAttr = "stream_id";
   auto src_prim = common::AnfAlgo::GetCNodePrimitive(node1);
   MS_EXCEPTION_IF_NULL(src_prim);
   (void)src_prim->set_attr(kStreamIdAttr, MakeValue(static_cast<int64_t>(7)));

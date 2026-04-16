@@ -28,44 +28,43 @@
 namespace mindspore {
 namespace tensor {
 template <typename T>
-TypeId GetTypeId() {
-  if constexpr (std::is_same_v<T, int64_t>) {
-    return kNumberTypeInt64;
-  } else if constexpr (std::is_same_v<T, int32_t>) {
-    return kNumberTypeInt32;
-  } else if constexpr (std::is_same_v<T, int16_t>) {
-    return kNumberTypeInt16;
-  } else if constexpr (std::is_same_v<T, int8_t>) {
-    return kNumberTypeInt8;
-  } else if constexpr (std::is_same_v<T, double> || std::is_same_v<T, float>) {
-    return kNumberTypeFloat32;
-  } else if constexpr (std::is_same_v<T, float16>) {
-    return kNumberTypeFloat16;
-  } else if constexpr (std::is_same_v<T, float8_e5m2>) {
-    return kNumberTypeFloat8E5M2;
-  } else if constexpr (std::is_same_v<T, float8_e4m3fn>) {
-    return kNumberTypeFloat8E4M3FN;
-  } else if constexpr (std::is_same_v<T, hifloat8>) {
-    return kNumberTypeHiFloat8;
-  } else if constexpr (std::is_same_v<T, bfloat16>) {
-    return kNumberTypeBFloat16;
-  } else if constexpr (std::is_same_v<T, uint64_t>) {
-    return kNumberTypeUInt64;
-  } else if constexpr (std::is_same_v<T, uint32_t>) {
-    return kNumberTypeUInt32;
-  } else if constexpr (std::is_same_v<T, uint16_t>) {
-    return kNumberTypeUInt16;
-  } else if constexpr (std::is_same_v<T, uint8_t>) {
-    return kNumberTypeUInt8;
-  } else if constexpr (std::is_same_v<T, bool>) {
-    return kNumberTypeBool;
-  } else if constexpr (std::is_same_v<T, std::complex<float>>) {
-    return kNumberTypeComplex64;
-  } else if constexpr (std::is_same_v<T, std::complex<double>>) {
-    return kNumberTypeComplex128;
-  } else {
+struct TensorTypeIdTrait {
+  static TypeId type_id() {
     MS_LOG(EXCEPTION) << "Not support type " << typeid(T).name();
+    return kTypeUnknown;
   }
+};
+
+#define TENSOR_TYPE_ID_TRAIT(prototype, type_id_value)          \
+  template <>                                                   \
+  struct TensorTypeIdTrait<prototype> {                         \
+    static constexpr TypeId type_id() { return type_id_value; } \
+  }
+
+TENSOR_TYPE_ID_TRAIT(int64_t, kNumberTypeInt64);
+TENSOR_TYPE_ID_TRAIT(int32_t, kNumberTypeInt32);
+TENSOR_TYPE_ID_TRAIT(int16_t, kNumberTypeInt16);
+TENSOR_TYPE_ID_TRAIT(int8_t, kNumberTypeInt8);
+TENSOR_TYPE_ID_TRAIT(double, kNumberTypeFloat32);
+TENSOR_TYPE_ID_TRAIT(float, kNumberTypeFloat32);
+TENSOR_TYPE_ID_TRAIT(float16, kNumberTypeFloat16);
+TENSOR_TYPE_ID_TRAIT(float8_e5m2, kNumberTypeFloat8E5M2);
+TENSOR_TYPE_ID_TRAIT(float8_e4m3fn, kNumberTypeFloat8E4M3FN);
+TENSOR_TYPE_ID_TRAIT(hifloat8, kNumberTypeHiFloat8);
+TENSOR_TYPE_ID_TRAIT(float8_e8m0fnu, kNumberTypeFloat8E8M0FNU);
+TENSOR_TYPE_ID_TRAIT(bfloat16, kNumberTypeBFloat16);
+TENSOR_TYPE_ID_TRAIT(uint64_t, kNumberTypeUInt64);
+TENSOR_TYPE_ID_TRAIT(uint32_t, kNumberTypeUInt32);
+TENSOR_TYPE_ID_TRAIT(uint16_t, kNumberTypeUInt16);
+TENSOR_TYPE_ID_TRAIT(uint8_t, kNumberTypeUInt8);
+TENSOR_TYPE_ID_TRAIT(bool, kNumberTypeBool);
+TENSOR_TYPE_ID_TRAIT(std::complex<float>, kNumberTypeComplex64);
+TENSOR_TYPE_ID_TRAIT(std::complex<double>, kNumberTypeComplex128);
+#undef TENSOR_TYPE_ID_TRAIT
+
+template <typename T>
+TypeId GetTypeId() {
+  return TensorTypeIdTrait<T>::type_id();
 }
 
 MS_CORE_API TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId);

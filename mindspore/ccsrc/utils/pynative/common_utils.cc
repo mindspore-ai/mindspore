@@ -21,6 +21,7 @@
 #include <utility>
 #include "abstract/abstract_value.h"
 #include "base/float8_e4m3fn.h"
+#include "base/float8_e8m0fnu.h"
 #include "ir/core_ops_primitive.h"
 #include "ir/manager.h"
 #include "ir/tensor_new.h"
@@ -136,6 +137,8 @@ ValuePtr CastScalarToScalar(S in, const TypeId &type_id) {
       return MakeValue(static_cast<float8_e5m2>(in).int_value());
     case kNumberTypeFloat8E4M3FN:
       return MakeValue(static_cast<float8_e4m3fn>(in).int_value());
+    case kNumberTypeFloat8E8M0FNU:
+      return MakeValue(static_cast<float8_e8m0fnu>(in).int_value());
     default:
       MS_LOG(DEBUG) << "Not support cast to dst type: " << TypeIdToType(type_id)->ToString();
       return nullptr;

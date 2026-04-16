@@ -36,6 +36,7 @@
 #include "primitive/arithmetic_ops.h"
 #include "primitive/framework_ops.h"
 #include "base/float8_e4m3fn.h"
+#include "base/float8_e8m0fnu.h"
 #include "ops_utils/op_utils.h"
 #include "ops/op_def.h"
 #include "ir/anf.h"
@@ -2382,6 +2383,8 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
     fn(reinterpret_cast<float8_e5m2 *>(cpu_tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat8E4M3FN) {
     fn(reinterpret_cast<float8_e4m3fn *>(cpu_tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeFloat8E8M0FNU) {
+    fn(reinterpret_cast<float8_e8m0fnu *>(cpu_tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeComplex64) {
     fn(reinterpret_cast<complex64 *>(cpu_tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeComplex128) {

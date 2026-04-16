@@ -379,6 +379,7 @@ namespace {
   M(kNumberTypeFloat8E4M3FN, float8_e4m3fn)      \
   M(kNumberTypeFloat8E5M2, float8_e5m2)          \
   M(kNumberTypeHiFloat8, hifloat8)               \
+  M(kNumberTypeFloat8E8M0FNU, float8_e8m0fnu)   \
   M(kNumberTypeComplex64, ComplexStorage<float>) \
   M(kNumberTypeComplex128, ComplexStorage<double>)
 
