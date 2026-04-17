@@ -33,6 +33,7 @@ from mindspore import log as logger
 from .datasets import UnionBaseDataset, SourceDataset, MappableDataset, Schema
 from .samplers import Shuffle, shuffle_to_shuffle_mode
 from .datasets_user_defined import GeneratorDataset
+from .obs.config_loader import create_obs_config
 from .obs.obs_mindrecord_dataset import MindRecordFromOBS
 from .validators import check_csvdataset, check_minddataset, check_tfrecorddataset, check_obsminddataset
 from ..core.validator_helpers import type_check
@@ -574,8 +575,7 @@ class OBSMindDataset(GeneratorDataset):
                  shard_id=None,
                  shard_equal_rows=True):
 
-        from .obs.config_loader import config
-        obs_config = config.copy()
+        obs_config = create_obs_config()
         obs_config.AK = ak
         obs_config.SK = sk
         obs_config.SERVER = server
