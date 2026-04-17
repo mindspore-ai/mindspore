@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,34 +17,48 @@
 The dataset module provide the internal Dataset API which load mindrecord files from OBS.
 """
 
-
 import math
-from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing.managers import SyncManager
 import os
 import queue
 import random
 import stat
 import sys
 import time
+import traceback
+from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing.managers import SyncManager
 
 from mindspore import log as logger
-from ..samplers import Shuffle
+
 from ...core.config import set_seed
+from ..samplers import Shuffle
+from .util import (
+    OBSRuntime,
+    detect_all_meta_files,
+    get_bucket_and_key,
+    init_cache_and_queue,
+    make_dataset_tuple,
+    make_sampler,
+    make_shard_files,
+    make_shard_samples,
+)
 
 
 class _Manager(SyncManager):
     pass
 
+
 # pylint: disable=consider-using-with
 def _get_manager():
-    """ PriorityQueue that cross threads."""
+    """PriorityQueue that cross threads."""
 
     _Manager.register("PriorityQueue", queue.PriorityQueue)
     # The manager instance must outlive this helper and be returned to the caller.
     m = _Manager()
     m.start()
     return m
+
+
 # pylint: enable=consider-using-with
 
 
@@ -53,23 +67,22 @@ def _init_cache_and_working_queue(cache, q, shard_files, local_path):
     Initialize the downloading queue and local cache which store the status of local dataset file.
     """
 
-    from .util import init_cache_and_queue
-
     idx = 0
     for shard_file, _, _, is_full_dataset in shard_files:
         dataset_file = os.path.basename(shard_file)
         path = os.path.join(local_path, dataset_file)
-        init_cache_and_queue(cache, q, path, shard_file,
-                             idx, is_full_dataset, lock_file=dataset_file)
+        init_cache_and_queue(cache, q, path, shard_file, idx, is_full_dataset, lock_file=dataset_file)
         idx += 1
     return cache, q
 
 
-def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num):
-    """ Rank(rank_id mod 8 equal to 0) remove all dataset files. """
+def _current_func_name():
+    """Return caller function name for log messages."""
+    return sys._getframe(1).f_code.co_name  # pylint: disable=protected-access
 
-    from .config_loader import config
 
+def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num, obs_runtime):
+    """Rank(rank_id mod 8 equal to 0) remove all dataset files."""
     if not num_shards:
         return
     # if num_shards less than or equal to 8, assume that there is only one node(server) and
@@ -77,28 +90,32 @@ def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num):
     if num_shards <= 8 or shard_id % 8 != 0:
         return
 
-    sync_dir = '/cache/sync_data/' + str(epoch_num)
+    sync_dir = "/cache/sync_data/" + str(epoch_num)
     while True:
         if os.path.exists(sync_dir) and len(os.listdir(sync_dir)) >= min(num_shards - 1, 7):
             break
-        time.sleep(config.WARMINGUP_TIME)
-        logger.info("[{} FUNCTION] Shard: {} wait for other rank ready in epoch: {}.".format(
-            sys._getframe().f_code.co_name, shard_id, epoch_num))  # pylint: disable=W0212
+        time.sleep(obs_runtime.config.WARMINGUP_TIME)
+        logger.info(
+            f"[{_current_func_name()} FUNCTION] Shard: {shard_id} wait for other rank ready in epoch: {epoch_num}."
+        )
 
     local_path_fd = os.open(local_path, os.O_RDONLY)
     try:
         files = os.listdir(local_path)
         for dataset_file in files:
-            if dataset_file.endswith('.db'):
+            if dataset_file.endswith(".db"):
                 continue
             try:
                 os.unlink(dataset_file, dir_fd=local_path_fd)
             except FileNotFoundError:
-                logger.warning("[{} FUNCTION] Dataset file: {} was removed before cleanup in path: {}.".format(
-                    sys._getframe().f_code.co_name, dataset_file, local_path))  # pylint: disable=W0212
+                logger.warning(
+                    f"[{_current_func_name()} FUNCTION] Dataset file: {dataset_file} was removed "
+                    f"before cleanup in path: {local_path}."
+                )
             except IsADirectoryError:
-                logger.warning("[{} FUNCTION] Skip directory during dataset cleanup: {}.".format(
-                    sys._getframe().f_code.co_name, dataset_file))  # pylint: disable=W0212
+                logger.warning(
+                    f"[{_current_func_name()} FUNCTION] Skip directory during dataset cleanup: {dataset_file}."
+                )
     finally:
         os.close(local_path_fd)
 
@@ -106,17 +123,14 @@ def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num):
         os.remove(os.path.join(sync_dir, ready_file))
 
 
-def _wait_remove_datset(num_shards, shard_id, epoch_num):
-    """ Rank(rank_id mod 8 not equal to 0) wait for removing dataset files. """
-
-    from .config_loader import config
-
+def _wait_remove_datset(num_shards, shard_id, epoch_num, obs_runtime):
+    """Rank(rank_id mod 8 not equal to 0) wait for removing dataset files."""
     if not num_shards:
         return
     if num_shards <= 8 or shard_id % 8 == 0:
         return
 
-    sync_dir = '/cache/sync_data/' + str(epoch_num)
+    sync_dir = "/cache/sync_data/" + str(epoch_num)
 
     if not os.path.exists(sync_dir):
         try:
@@ -124,9 +138,9 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num):
         except FileExistsError:
             pass
 
-    sync_file = os.path.join(sync_dir, 'ready_' + str(shard_id))
-    with open(sync_file, 'w', encoding='utf-8') as f:
-        f.write('ok')
+    sync_file = os.path.join(sync_dir, "ready_" + str(shard_id))
+    with open(sync_file, "w", encoding="utf-8") as f:
+        f.write("ok")
 
     if os.path.exists(sync_file):
         os.chmod(sync_file, stat.S_IRUSR | stat.S_IWUSR)
@@ -134,18 +148,26 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num):
     while True:
         if os.path.exists(sync_dir) and not os.listdir(sync_dir):
             break
-        time.sleep(config.WARMINGUP_TIME)
-        logger.info("[{} FUNCTION] Shard: {} wait for removing dataset files in epoch: {}.".format(
-            sys._getframe().f_code.co_name, shard_id, epoch_num))  # pylint: disable=W0212
+        time.sleep(obs_runtime.config.runtime_config.WARMINGUP_TIME)
+        logger.info(
+            f"[{_current_func_name()} FUNCTION] Shard: {shard_id} wait for removing dataset files "
+            f"in epoch: {epoch_num}."
+        )
 
 
-def _init_shard_files(dataset_files, shuffle, seed, num_shards, shard_id, shard_equal_rows,
-                      size_per_shard, local_path, current_epoch):
-    """ Calculate the dataset files required by each sharding and the corresponding index. """
-
-    from .config_loader import config
-    from .util import detect_all_meta_files, fetch_meta_files, make_dataset_tuple, make_shard_files, make_shard_samples
-
+def _init_shard_files(
+    dataset_files,
+    shuffle,
+    seed,
+    num_shards,
+    shard_id,
+    shard_equal_rows,
+    size_per_shard,
+    local_path,
+    current_epoch,
+    obs_runtime,
+):
+    """Calculate the dataset files required by each sharding and the corresponding index."""
     shard_files = None
     if shuffle is False or shuffle == Shuffle.INFILE:
         pass
@@ -157,60 +179,55 @@ def _init_shard_files(dataset_files, shuffle, seed, num_shards, shard_id, shard_
         if shard_equal_rows:
             if size_per_shard is None:
                 if shard_id % 8 == 0:
-                    fetch_meta_files(dataset_files, local_path)
+                    obs_runtime.fetch_meta_files(dataset_files, local_path)
                 else:
                     while detect_all_meta_files(dataset_files, local_path) is False:
-                        time.sleep(config.WAIT_META_TIME)
-            full_dataset_size, dataset_file_size_list = make_dataset_tuple(
-                dataset_files, local_path)
+                        time.sleep(obs_runtime.config.WAIT_META_TIME)
+            full_dataset_size, dataset_file_size_list = make_dataset_tuple(dataset_files, local_path)
             size_per_shard = math.ceil(full_dataset_size / num_shards)
-            shard_files = make_shard_samples(
-                dataset_file_size_list, size_per_shard, shard_id)
+            shard_files = make_shard_samples(dataset_file_size_list, size_per_shard, shard_id)
         else:
             shard_files = make_shard_files(dataset_files, num_shards, shard_id)
     else:
-        shard_files = [(dataset_file, -1, -1, True)
-                       for dataset_file in dataset_files]
-    logger.info("[{} FUNCTION] Shard: {} expect dataset: {} in epoch: {}.".format(
-        sys._getframe().f_code.co_name, shard_id, shard_files, current_epoch))  # pylint: disable=W0212
+        shard_files = [(dataset_file, -1, -1, True) for dataset_file in dataset_files]
+    logger.info(
+        f"[{_current_func_name()} FUNCTION] Shard: {shard_id} expect dataset: {shard_files} in epoch: {current_epoch}."
+    )
     return shard_files, size_per_shard
 
 
-def _download_work(shard_id, current_idx, local_path, cache, q):
-    """ daemon process in backend. """
-    from .config_loader import config
-    from .util import try_load_from_obs, get_used_disk_per
-
+def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime):
+    """daemon process in backend."""
+    runtime_config = obs_runtime.config
     while True:
         idx, dataset_file = q.get()
-        used_disk = get_used_disk_per()
-        while used_disk > float(config.DISK_THRESHOLD):
-            logger.info("[{} FUNCTION] Used disk space is {}%, and the disk threshold is {}%.".format(
-                sys._getframe().f_code.co_name, used_disk * 100,  # pylint: disable=W0212
-                float(config.DISK_THRESHOLD)*100))
+        used_disk = obs_runtime.get_used_disk_per()
+        while used_disk > float(runtime_config.DISK_THRESHOLD):
+            logger.info(
+                f"[{_current_func_name()} FUNCTION] Used disk space is {used_disk * 100}%, "
+                f"and the disk threshold is {float(runtime_config.DISK_THRESHOLD) * 100}%."
+            )
             retry_cnt = 0
-            has_deleted = _delete_candidate_datasets(
-                current_idx.value, idx, cache, q, local_path)
+            has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path)
             while not has_deleted:
-                if retry_cnt > config.MAX_RETRY:
-                    logger.warning("Delete operation retries times {} has exceeded threshold {}, "
-                                   "please clear enough disk space.".format(retry_cnt, config.MAX_RETRY))
-                has_deleted = _delete_candidate_datasets(
-                    current_idx.value, idx, cache, q, local_path)
+                if retry_cnt > runtime_config.MAX_RETRY:
+                    logger.warning(
+                        f"Delete operation retries times {retry_cnt} has exceeded threshold "
+                        f"{runtime_config.MAX_RETRY}, please clear enough disk space."
+                    )
+                has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path)
                 retry_cnt += 1
-                time.sleep(config.RETRY_DELTA_TIME)
-            used_disk = get_used_disk_per()
+                time.sleep(runtime_config.RETRY_DELTA_TIME)
+            used_disk = obs_runtime.get_used_disk_per()
 
-        logger.info("[{} FUNCTION] Shard: {} try to download: {}.".format(
-            sys._getframe().f_code.co_name, shard_id, dataset_file))  # pylint: disable=W0212
+        logger.info(f"[{_current_func_name()} FUNCTION] Shard: {shard_id} try to download: {dataset_file}.")
         # update cache
         remote_path = os.path.dirname(dataset_file)
         dataset_file = os.path.basename(dataset_file)
         _, is_shared = cache[dataset_file]
-        try_load_from_obs(remote_path, dataset_file, local_path)
+        obs_runtime.try_load_from_obs(remote_path, dataset_file, local_path)
         cache[dataset_file] = (idx, is_shared)
-        logger.info("[{} FUNCTION] Shard: {} finish to download: {}.".format(
-            sys._getframe().f_code.co_name, shard_id, dataset_file))  # pylint: disable=W0212
+        logger.info(f"[{_current_func_name()} FUNCTION] Shard: {shard_id} finish to download: {dataset_file}.")
 
 
 def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path):
@@ -221,7 +238,7 @@ def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path)
     """
 
     used_datasets = []
-    low_priority_dataset = ''
+    low_priority_dataset = ""
     max_idx = -1
     delete = False
     for k, v in cache.items():
@@ -241,8 +258,7 @@ def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path)
         cache[used_dataset] = (-1, is_shared)
         os.remove(dataset_path)
         delete = True
-        logger.info("[{} FUNCTION] Delete used dataset file: {} and update the cache.".format(
-            sys._getframe().f_code.co_name, used_dataset))  # pylint: disable=W0212
+        logger.info(f"[{_current_func_name()} FUNCTION] Delete used dataset file: {used_dataset} and update the cache.")
 
     if delete:
         return True
@@ -256,29 +272,29 @@ def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path)
     cache[low_priority_dataset] = (-1, is_shared)
     os.remove(dataset_path)
     q.put((idx, low_priority_dataset))
-    logger.info("[{} FUNCTION] Delete low priority dataset file: {} and update the cache.".format(
-        sys._getframe().f_code.co_name, low_priority_dataset))  # pylint: disable=W0212
+    logger.info(
+        f"[{_current_func_name()} FUNCTION] Delete low priority dataset file: {low_priority_dataset} "
+        f"and update the cache."
+    )
     return True
 
 
-def _sync_up_for_obs_mindrecord_dataset(rank_id, current_epoch):
-    """ Upload the synchronization file to OBS. """
-
-    from .config_loader import config
-    from .util import file_upload_to_obs
-
+def _sync_up_for_obs_mindrecord_dataset(rank_id, current_epoch, obs_runtime):
+    """Upload the synchronization file to OBS."""
+    runtime_config = obs_runtime.config
     sync_info = "download_dataset"
-    job_id = os.environ.get('BATCH_JOB_ID', 'unknown')
-    ready_file_name = sync_info + '_ready_' + str(rank_id) + '.txt'
+    job_id = os.environ.get("BATCH_JOB_ID", "unknown")
+    ready_file_name = sync_info + "_ready_" + str(rank_id) + ".txt"
     ready_dir = os.path.join(job_id, str(current_epoch) + "/")
 
-    file_upload_to_obs(config.SYNC_OBS_PATH, ready_dir, ready_file_name)
-    logger.info("[{} FUNCTION] Current rank:{}'s sync file:{} is ready for epoch:{}.".format(
-        sys._getframe().f_code.co_name, rank_id, os.path.join(ready_dir, ready_file_name),  # pylint: disable=W0212
-        current_epoch))
+    obs_runtime.file_upload_to_obs(runtime_config.SYNC_OBS_PATH, ready_dir, ready_file_name)
+    logger.info(
+        f"[{_current_func_name()} FUNCTION] Current rank:{rank_id}'s sync file:"
+        f"{os.path.join(ready_dir, ready_file_name)} is ready for epoch:{current_epoch}."
+    )
 
 
-def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
+def sync_wait_for_dataset(rank_id, rank_size, current_epoch, obs_runtime):
     """
     Wait until the dataset files required by all devices are downloaded.
 
@@ -290,6 +306,7 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
         rank_id (int): Rank ID of the device.
         rank_size (int): Rank size.
         current_epoch (int): Number of current epochs.
+        obs_runtime (OBSRuntime): OBS runtime from the corresponding OBSMindDataset instance.
 
     Examples:
         >>> # Create a synchronization callback
@@ -299,28 +316,29 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
         >>> class SyncForDataset(ms.Callback):
         ...     def __init__(self):
         ...         super(SyncForDataset, self).__init__()
+        ...
         ...     def epoch_begin(self, run_context):
         ...         cb_params = run_context.original_args()
         ...         epoch_num = cb_params.cur_epoch_num
-        ...         sync_wait_for_dataset(rank_id, rank_size, epoch_num)
+        ...         sync_wait_for_dataset(rank_id, rank_size, epoch_num, obs_runtime=dataset.source.get_obs_runtime())
 
     """
 
-    from .config_loader import config
-    from .util import obsClient, get_bucket_and_key
+    runtime_config = obs_runtime.config
+    bucket_name, object_key = get_bucket_and_key(runtime_config.SYNC_OBS_PATH)
+    obs_client = obs_runtime.get_obs_client()
 
-    bucket_name, object_key = get_bucket_and_key(config.SYNC_OBS_PATH)
-
-    job_id = os.environ.get('BATCH_JOB_ID', 'unknown')
+    job_id = os.environ.get("BATCH_JOB_ID", "unknown")
     ready_dir = os.path.join(object_key, job_id, str(current_epoch) + "/")
 
     success = False
+    ready_num = 0
     while True:
         if success:
             break
         try:
             # no guarantee that the dir is included.
-            resp = obsClient.listObjects(bucket_name, prefix=ready_dir)
+            resp = obs_client.listObjects(bucket_name, prefix=ready_dir)
             if resp.status < 300:
                 ready_num = 0
                 for content in resp.body.contents:
@@ -329,24 +347,22 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
                 if ready_num >= rank_size:
                     success = True
             else:
-                logger.warning("[{} FUNCTION] OBS SDK errorCode:{}, errMsg: {}.".format(
-                    sys._getframe(), resp.errorCode, resp.errorMessage))  # pylint: disable=W0212
+                logger.warning(
+                    f"[{_current_func_name()} FUNCTION] OBS SDK errorCode:{resp.errorCode}, "
+                    f"errMsg: {resp.errorMessage}."
+                )
         except Exception:  # pylint: disable=W0703
-            import traceback
             logger.error(traceback.format_exc())
-        time.sleep(config.RETRY_DELTA_TIME)
-        logger.info("[{} FUNCTION] Waiting for sync dir:{} and current_rank:{}, total_rank:{}, "
-                    "ready_rank:{} in epoch:{}.".format(sys._getframe().f_code.co_name,  # pylint: disable=W0212
-                                                        ready_dir, rank_id, rank_size, ready_num, current_epoch))
-    logger.info("[{} FUNCTION] Succeed to sync dir:{} and begin epoch:{}.".format(
-        sys._getframe().f_code.co_name, ready_dir, current_epoch))  # pylint: disable=W0212
+        time.sleep(runtime_config.RETRY_DELTA_TIME)
+        logger.info(
+            f"[{_current_func_name()} FUNCTION] Waiting for sync dir:{ready_dir} and "
+            f"current_rank:{rank_id}, total_rank:{rank_size}, ready_rank:{ready_num} in epoch:{current_epoch}."
+        )
+    logger.info(f"[{_current_func_name()} FUNCTION] Succeed to sync dir:{ready_dir} and begin epoch:{current_epoch}.")
 
 
-def _sync_for_obs_mindrecord_dataset(worker, shard_files, cache, num_shards, shard_id, current_epoch):
-    """ Synchronize all shardings. """
-
-    from .config_loader import config
-
+def _sync_for_obs_mindrecord_dataset(worker, shard_files, cache, num_shards, shard_id, current_epoch, obs_runtime):
+    """Synchronize all shardings."""
     while True:
         if worker.ready():
             worker.get()
@@ -354,18 +370,22 @@ def _sync_for_obs_mindrecord_dataset(worker, shard_files, cache, num_shards, sha
         current_dataset = os.path.basename(dataset)
         hit_cache = cache[current_dataset][0]
         if hit_cache >= 0:  # hit cache
-            logger.info("[{} FUNCTION] Current_rank:{} has download:{} for epoch:{}.".format(
-                sys._getframe().f_code.co_name, shard_id, dataset, current_epoch))  # pylint: disable=W0212
-            _sync_up_for_obs_mindrecord_dataset(shard_id, current_epoch)
+            logger.info(
+                f"[{_current_func_name()} FUNCTION] Current_rank:{shard_id} has download:"
+                f"{dataset} for epoch:{current_epoch}."
+            )
+            _sync_up_for_obs_mindrecord_dataset(shard_id, current_epoch, obs_runtime=obs_runtime)
             break
-        time.sleep(config.WARMINGUP_TIME)
-        logger.info("[{} FUNCTION] Current_rank:{} wait for downloading:{} in epoch:{}.".format(
-            sys._getframe().f_code.co_name, shard_id, dataset, current_epoch))  # pylint: disable=W0212
-    sync_wait_for_dataset(shard_id, num_shards, current_epoch)
+        time.sleep(obs_runtime.config.WARMINGUP_TIME)
+        logger.info(
+            f"[{_current_func_name()} FUNCTION] Current_rank:{shard_id} wait for downloading:"
+            f"{dataset} in epoch:{current_epoch}."
+        )
+    sync_wait_for_dataset(shard_id, num_shards, current_epoch, obs_runtime=obs_runtime)
 
 
 class MindRecordFromOBS:
-    """ Internal class which load remote dataset files from OBS. """
+    """Internal class which load remote dataset files from OBS."""
 
     def __init__(self, dataset_files, columns_list, shuffle, num_shards, shard_id, shard_equal_rows, obs_config):
         self._dataset_files = dataset_files
@@ -377,26 +397,36 @@ class MindRecordFromOBS:
         self._shard_equal_rows = shard_equal_rows
         self._shuffle = Shuffle.GLOBAL if shuffle is True else shuffle
         self._obs_config = obs_config
+        self._obs_runtime = OBSRuntime(self._obs_config)
         self._local_path = os.path.realpath(self._obs_config.DATASET_LOCAL_PATH)
         self._epoch_seed = self._obs_config.SEED
         self._file_seed = self._obs_config.SEED
         self._size_per_shard = None
         self._curr_epoch = 1
         self._curr_step = 1
-        self._shard_files, self._size_per_shard = _init_shard_files(self._dataset_files, self._shuffle,
-                                                                    self._epoch_seed, self._num_shards, self._shard_id,
-                                                                    self._shard_equal_rows, self._size_per_shard,
-                                                                    self._local_path, self._curr_epoch)
+        self._shard_files, self._size_per_shard = _init_shard_files(
+            self._dataset_files,
+            self._shuffle,
+            self._epoch_seed,
+            self._num_shards,
+            self._shard_id,
+            self._shard_equal_rows,
+            self._size_per_shard,
+            self._local_path,
+            self._curr_epoch,
+            self._obs_runtime,
+        )
 
         m = _get_manager()
         self._queue = m.PriorityQueue()
         self._cache = m.dict()
 
         self._index = 0
-        self._current_idx = m.Value('i', self._index)
+        self._current_idx = m.Value("i", self._index)
 
         self._cache, self._queue = _init_cache_and_working_queue(
-            self._cache, self._queue, self._shard_files, self._local_path)
+            self._cache, self._queue, self._shard_files, self._local_path
+        )
 
         self._index = 0
         self._first_epoch = True
@@ -405,14 +435,21 @@ class MindRecordFromOBS:
 
         self._pool = ThreadPool(processes=1)
         self._worker = self._pool.apply_async(
-            _download_work, (self._shard_id, self._current_idx, self._local_path, self._cache, self._queue))
+            _download_work,
+            (self._shard_id, self._current_idx, self._local_path, self._cache, self._queue, self._obs_runtime),
+        )
         _sync_for_obs_mindrecord_dataset(
-            self._worker, self._shard_files, self._cache, self._num_shards, self._shard_id, self._curr_epoch)
+            self._worker,
+            self._shard_files,
+            self._cache,
+            self._num_shards,
+            self._shard_id,
+            self._curr_epoch,
+            self._obs_runtime,
+        )
 
     def __next__(self):
-        from .config_loader import config
         from ..datasets_standard_format import MindDataset
-        from .util import make_sampler
 
         if self._iteration:
             try:
@@ -438,22 +475,25 @@ class MindRecordFromOBS:
                 # launch pipeline
 
                 set_seed(self._file_seed)
-                sampler = make_sampler(
-                    self._shuffle, is_full_dataset, start, end)
+                sampler = make_sampler(self._shuffle, is_full_dataset, start, end)
                 self._file_seed += 1
                 path = os.path.join(self._local_path, current_dataset)
-                logger.info("[{} FUNCTION] Shard:{} start to load dataset:{} in epoch:{}.".format(
-                    sys._getframe().f_code.co_name, self._shard_id, path, self._curr_epoch))  # pylint: disable=W0212
-                self._iteration = MindDataset(dataset_files=[path], columns_list=self._columns_list, sampler=sampler,
-                                              shuffle=None).create_tuple_iterator(num_epochs=1, output_numpy=True)
+                logger.info(
+                    f"[{_current_func_name()} FUNCTION] Shard:{self._shard_id} start to load dataset:"
+                    f"{path} in epoch:{self._curr_epoch}."
+                )
+                self._iteration = MindDataset(
+                    dataset_files=[path], columns_list=self._columns_list, sampler=sampler, shuffle=None
+                ).create_tuple_iterator(num_epochs=1, output_numpy=True)
 
             else:
                 # cache miss
                 self._cache_miss_times += 1
-                logger.info("[{} FUNCTION]  Cache miss in shard {} for times {}, expect dataset {}.".format(
-                    sys._getframe().f_code.co_name, self._shard_id, self._cache_miss_times,  # pylint: disable=W0212
-                    current_dataset))
-                time.sleep(self._cache_miss_times * config.WAIT_STEP_TIME)
+                logger.info(
+                    f"[{_current_func_name()} FUNCTION]  Cache miss in shard {self._shard_id} for "
+                    f"times {self._cache_miss_times}, expect dataset {current_dataset}."
+                )
+                time.sleep(self._cache_miss_times * self._obs_config.WAIT_STEP_TIME)
             return next(self)
 
     def __iter__(self):
@@ -467,10 +507,18 @@ class MindRecordFromOBS:
 
         self._epoch_seed += 1
         self._iteration = None
-        self._shard_files, self._size_per_shard = _init_shard_files(self._dataset_files, self._shuffle,
-                                                                    self._epoch_seed, self._num_shards, self._shard_id,
-                                                                    self._shard_equal_rows, self._size_per_shard,
-                                                                    self._local_path, self._curr_epoch)
+        self._shard_files, self._size_per_shard = _init_shard_files(
+            self._dataset_files,
+            self._shuffle,
+            self._epoch_seed,
+            self._num_shards,
+            self._shard_id,
+            self._shard_equal_rows,
+            self._size_per_shard,
+            self._local_path,
+            self._curr_epoch,
+            self._obs_runtime,
+        )
         self._cache.clear()
         # reset queue
         try:
@@ -479,33 +527,35 @@ class MindRecordFromOBS:
         except queue.Empty:
             pass
 
-        _remove_unused_dataset(
-            self._local_path, self._num_shards, self._shard_id, self._curr_epoch)
-        _wait_remove_datset(self._num_shards, self._shard_id, self._curr_epoch)
+        _remove_unused_dataset(self._local_path, self._num_shards, self._shard_id, self._curr_epoch, self._obs_runtime)
+        _wait_remove_datset(self._num_shards, self._shard_id, self._curr_epoch, self._obs_runtime)
 
         self._cache, self._queue = _init_cache_and_working_queue(
-            self._cache, self._queue, self._shard_files, self._local_path)
-        _sync_for_obs_mindrecord_dataset(self._worker,
-                                         self._shard_files, self._cache,
-                                         self._num_shards, self._shard_id, self._curr_epoch)
+            self._cache, self._queue, self._shard_files, self._local_path
+        )
+        _sync_for_obs_mindrecord_dataset(
+            self._worker,
+            self._shard_files,
+            self._cache,
+            self._num_shards,
+            self._shard_id,
+            self._curr_epoch,
+            self._obs_runtime,
+        )
         return self
 
     def __len__(self):
-        from .util import fetch_meta_files, make_dataset_tuple
-
         if self._size_per_shard is not None:
             return self._size_per_shard
         dataset_files = []
         for dataset_file, _, _, _ in self._shard_files:
             dataset_files.append(dataset_file)
-        fetch_meta_files(dataset_files, self._local_path)
-        self._size_per_shard, _ = make_dataset_tuple(
-            dataset_files, self._local_path)
-        return len(self)
+        self._obs_runtime.fetch_meta_files(dataset_files, self._local_path)
+        self._size_per_shard, _ = make_dataset_tuple(dataset_files, self._local_path)
+        return self._size_per_shard
 
     def get_col_names(self):
-        """ Get column names of MindRecord format dataset."""
-
+        """Get column names of MindRecord format dataset."""
         from ..datasets_standard_format import MindDataset
 
         target_dataset = None
@@ -518,8 +568,12 @@ class MindRecordFromOBS:
         _iteration = MindDataset(dataset_files=[path], shuffle=False)
         return _iteration.get_col_names()
 
+    def get_obs_runtime(self):
+        """Get runtime object bound to this dataset instance."""
+        return self._obs_runtime
+
     def close(self):
-        if self._pool:
+        if hasattr(self, "_pool") and self._pool:
             self._pool.terminate()
             self._pool = None
 
