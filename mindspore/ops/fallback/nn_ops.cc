@@ -15,6 +15,8 @@
  */
 
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
+#include "infer/ops_func_impl/clamp_scalar.h"
+#include "infer/ops_func_impl/clamp_tensor.h"
 #include "infer/renorm.h"
 #include "infer/scatter_update.h"
 #include "mindapi/base/types.h"
@@ -61,6 +63,14 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
   reverse_axis[LongToSize(axis)] = rk - 1;
   reverse_axis[LongToSize(rk - 1)] = axis;
   return reverse_axis;
+}
+
+// Returns the dtype TypeId of `node`, or `kMetaTypeNone` when the dtype is TypeNone
+// (i.e. the optional input was not provided). Avoids calling `ib->GetDtype(...)` twice
+// for the common "isa<TypeNone>() ? ... : type_id()" pattern.
+TypeId GetNodeTypeIdOrNone(FallbackIRBuilder *ib, const NodePtr &node) {
+  const auto type = ib->GetDtype(node);
+  return type->isa<TypeNone>() ? kMetaTypeNone : type->type_id();
 }
 }  // namespace
 
@@ -413,51 +423,53 @@ REG_FALLBACK_BUILDER("ScatterValue").SetBody(BODYFUNC(ib) {
 
 REG_FALLBACK_BUILDER("ClampTensor").SetBody(BODYFUNC(ib) {
   // clamp equation: output = minimum(maximum(x, min), max)
-  auto x = ib->GetInput(kIndex0);
-  auto min = ib->GetInput(kIndex1);
-  auto max = ib->GetInput(kIndex2);
+  // Output dtype promotion is shared with ClampTensorFuncImpl::InferType via
+  // ops::ClampTensorPromoteType.
+  const auto x = ib->GetInput(kIndex0);
+  const auto min = ib->GetInput(kIndex1);
+  const auto max = ib->GetInput(kIndex2);
 
-  auto min_type_none = ib->GetDtype(min)->isa<TypeNone>();
-  auto max_type_none = ib->GetDtype(max)->isa<TypeNone>();
+  const TypeId x_type_id = GetNodeTypeIdOrNone(ib, x);
+  const TypeId min_type_id = GetNodeTypeIdOrNone(ib, min);
+  const TypeId max_type_id = GetNodeTypeIdOrNone(ib, max);
+  const TypeId out_type_id = ops::ClampTensorPromoteType(x_type_id, min_type_id, max_type_id, "ClampTensor");
+  const TypePtr out_type = TypeIdToType(out_type_id);
 
-  auto output = x;
-  if (!min_type_none) {
-    if (ib->GetDtype(x)->type_id() != ib->GetDtype(min)->type_id()) {
-      min = ib->Cast(min, ib->GetDtype(x)->type_id());
-    }
-    output = ib->Maximum(output, min);
+  auto align_to_out = [&](const NodePtr &node, TypeId cur_type_id) {
+    return (cur_type_id == out_type_id) ? node : ib->Cast(node, out_type);
+  };
+
+  auto output = align_to_out(x, x_type_id);
+  if (min_type_id != kMetaTypeNone) {
+    output = ib->Maximum(output, align_to_out(min, min_type_id));
   }
-
-  if (!max_type_none) {
-    if (ib->GetDtype(x)->type_id() != ib->GetDtype(max)->type_id()) {
-      max = ib->Cast(max, ib->GetDtype(x)->type_id());
-    }
-    output = ib->Minimum(output, max);
+  if (max_type_id != kMetaTypeNone) {
+    output = ib->Minimum(output, align_to_out(max, max_type_id));
   }
-
   return {output};
 });
 
 REG_FALLBACK_BUILDER("ClampScalar").SetBody(BODYFUNC(ib) {
   // clamp equation: output = minimum(maximum(x, min), max)
-  auto x = ib->GetInput(kIndex0);
-  auto min = ib->GetInput(kIndex1);
-  auto max = ib->GetInput(kIndex2);
+  // Output dtype promotion is shared with ClampScalarFuncImpl::InferType via
+  // ops::ClampScalarPromoteType.
+  const auto x = ib->GetInput(kIndex0);
+  const auto min = ib->GetInput(kIndex1);
+  const auto max = ib->GetInput(kIndex2);
 
-  auto min_type_none = ib->GetDtype(min)->isa<TypeNone>();
-  auto max_type_none = ib->GetDtype(max)->isa<TypeNone>();
+  const TypeId x_type_id = GetNodeTypeIdOrNone(ib, x);
+  const TypeId min_type_id = GetNodeTypeIdOrNone(ib, min);
+  const TypeId max_type_id = GetNodeTypeIdOrNone(ib, max);
+  const TypeId out_type_id = ops::ClampScalarPromoteType(x_type_id, min_type_id, max_type_id);
+  const TypePtr out_type = TypeIdToType(out_type_id);
 
-  auto output = x;
-  if (!min_type_none) {
-    min = ib->ScalarToTensor(min, ib->GetDtype(x));
-    output = ib->Maximum(output, min);
+  auto output = (x_type_id == out_type_id) ? x : ib->Cast(x, out_type);
+  if (min_type_id != kMetaTypeNone) {
+    output = ib->Maximum(output, ib->ScalarToTensor(min, out_type));
   }
-
-  if (!max_type_none) {
-    max = ib->ScalarToTensor(max, ib->GetDtype(x));
-    output = ib->Minimum(output, max);
+  if (max_type_id != kMetaTypeNone) {
+    output = ib->Minimum(output, ib->ScalarToTensor(max, out_type));
   }
-
   return {output};
 });
 

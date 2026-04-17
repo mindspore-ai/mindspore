@@ -99,18 +99,26 @@ tensor::TensorPtr ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, 
                                            const std::optional<TensorPtr> &min, const std::optional<TensorPtr> &max,
                                            device::DeviceType device_target) {
   MS_LOG(DEBUG) << "Call ClampTensor start";
-  if (!min.has_value() && !max.has_value()) {
-    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
-  }
+  // Let ClampTensorFuncImpl::InferType promote the output dtype across input, min and max
+  // (and raise for the None/bool cases), then align the working tensors to that promoted
+  // dtype so the result matches the inferred output type.
+  OpRunner::InferOpOutput(op, x_tensor, min, max);
+  const auto out_dtype = op->output(0)->Dtype();
+  MS_EXCEPTION_IF_NULL(out_dtype);
+  const auto out_type_id = out_dtype->type_id();
 
   TensorPtr output = x_tensor;
+  if (x_tensor->Dtype()->type_id() != out_type_id) {
+    output = PyBoostUtils::CastTensor(x_tensor, out_type_id, device_target);
+  }
+
   if (min.has_value()) {
-    auto min_tensor = PyBoostUtils::CastTensor(min.value(), x_tensor->Dtype()->type_id(), device_target);
+    auto min_tensor = PyBoostUtils::CastTensor(min.value(), out_type_id, device_target);
     const auto &maximum = CREATE_PYBOOST_OP(Maximum, device_target);
     output = maximum->Call(output, min_tensor);
   }
   if (max.has_value()) {
-    auto max_tensor = PyBoostUtils::CastTensor(max.value(), x_tensor->Dtype()->type_id(), device_target);
+    auto max_tensor = PyBoostUtils::CastTensor(max.value(), out_type_id, device_target);
     const auto &minimum = CREATE_PYBOOST_OP(Minimum, device_target);
     output = minimum->Call(output, max_tensor);
   }
@@ -123,20 +131,26 @@ tensor::TensorPtr ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, 
                                            const std::optional<ScalarPtr> &min, const std::optional<ScalarPtr> &max,
                                            device::DeviceType device_target) {
   MS_LOG(DEBUG) << "Call ClampScalar start";
-  if (!min.has_value() && !max.has_value()) {
-    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
-  }
+  // Let ClampScalarFuncImpl::InferType promote the output dtype to the highest type level among
+  // input, min and max (and raise for the None/bool cases), then align the working tensors to that
+  // promoted dtype so the result matches the inferred output type.
+  OpRunner::InferOpOutput(op, x_tensor, min, max);
+  const auto out_dtype = op->output(0)->Dtype();
+  MS_EXCEPTION_IF_NULL(out_dtype);
+  const auto out_type_id = out_dtype->type_id();
 
   TensorPtr output = x_tensor;
+  if (x_tensor->Dtype()->type_id() != out_type_id) {
+    output = PyBoostUtils::CastTensor(x_tensor, out_type_id, device_target);
+  }
+
   if (min.has_value()) {
-    auto min_tensor = PyBoostUtils::ScalarToTensor(min.value());
-    min_tensor = PyBoostUtils::CastTensor(min_tensor, x_tensor->Dtype()->type_id(), device_target);
+    auto min_tensor = PyBoostUtils::ScalarToTensor(min.value(), out_dtype);
     const auto &maximum = CREATE_PYBOOST_OP(Maximum, device_target);
     output = maximum->Call(output, min_tensor);
   }
   if (max.has_value()) {
-    auto max_tensor = PyBoostUtils::ScalarToTensor(max.value());
-    max_tensor = PyBoostUtils::CastTensor(max_tensor, x_tensor->Dtype()->type_id(), device_target);
+    auto max_tensor = PyBoostUtils::ScalarToTensor(max.value(), out_dtype);
     const auto &minimum = CREATE_PYBOOST_OP(Minimum, device_target);
     output = minimum->Call(output, max_tensor);
   }
