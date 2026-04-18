@@ -422,6 +422,27 @@ std::optional<ValuePtr> Converter::ToTensorOptional(PyObject *python_args, size_
   return std::make_optional(ToTensor(python_args, i));
 }
 
+namespace {
+bool CheckSequenceFallbackAttr(PyObject *raw_obj) {
+  if (PyTuple_Check(raw_obj)) {
+    Py_ssize_t seq_size = PyTuple_Size(raw_obj);
+    for (Py_ssize_t j = 0; j < seq_size; ++j) {
+      if (PyObjectHasFallbackAttr(PyTuple_GetItem(raw_obj, j))) {
+        return true;
+      }
+    }
+  } else if (PyList_Check(raw_obj)) {
+    Py_ssize_t seq_size = PyList_Size(raw_obj);
+    for (Py_ssize_t j = 0; j < seq_size; ++j) {
+      if (PyObjectHasFallbackAttr(PyList_GetItem(raw_obj, j))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+}  // namespace
+
 template <typename T>
 ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
   // convert to py::object and then used in data_converter, because data_converter haven't been refactored to PyObject
@@ -455,6 +476,10 @@ ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
     }
     EnablePipelineForTupleTensor(value_tuple);
     return value_tuple;
+  }
+  // Check fallback for type_cast path (e.g., list input when tuple was expected, or vice versa)
+  if (!has_fallback_ && fallback_enabled()) {
+    has_fallback_ = CheckSequenceFallbackAttr(obj.ptr());
   }
   return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }

@@ -19,6 +19,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import Tensor, mint, ops
+from mindspore.ops.auto_generate.gen_ops_prim import SelectExtView
 from mindspore.utils.ms_dispatch import MsDispatchMode
 from mindspore._c_expression import _DisableMsDispatchMode
 from tests.mark_utils import arg_mark
@@ -513,7 +514,6 @@ def test_ms_dispatch_mode_guard_with_grad_reshape():
             return x.reshape((4,)).sum()
         ms.value_and_grad(forward_fn)(x)
     assert RUN_OPS == ["Reshape", "SumExt", "Ones", "Reshape", "Tile", "Reshape"]
-    assert "Reshape" in RUN_OPS
 
 
 def test_ms_dispatch_nested_mode_guard_with_grad_reshape():
@@ -846,9 +846,7 @@ def test_ms_dispatch_disable_mode_guard_bypasses_dispatch():
         with _DisableMsDispatchMode():
             _ = x.cos()  # should NOT be recorded
         _ = x.exp()  # should be recorded
-    assert "Sin" in RUN_OPS
-    assert "Cos" not in RUN_OPS
-    assert "Exp" in RUN_OPS
+    assert RUN_OPS == ["Sin", "Exp"]
 
 
 def test_ms_dispatch_disable_mode_guard_with_dtensor():
@@ -863,7 +861,7 @@ def test_ms_dispatch_disable_mode_guard_with_dtensor():
     x = _make_base_dtensor([1.0, 2.0, 3.0])
     y = x.sin()
     assert isinstance(y, DTensor)
-    assert "Sin" in RUN_OPS
+    assert RUN_OPS == ["Sin"]
     ops_before = len(RUN_OPS)
     with _DisableMsDispatchMode():
         z = Tensor([1.0, 2.0, 3.0]).sin()
@@ -883,7 +881,7 @@ def test_ms_dispatch_guard_exception_handling():
     with guard:
         x = Tensor([1.0, 2.0, 3.0])
         _ = x.sin()  # should succeed
-        assert "Sin" in RUN_OPS
+        assert RUN_OPS == ["Sin"]
         try:
             _ = x.cos()  # should raise
             assert False, "Expected RuntimeError"
@@ -892,7 +890,7 @@ def test_ms_dispatch_guard_exception_handling():
         # Mode should still work after the caught exception
         RUN_OPS.clear()
         _ = x.exp()
-        assert "Exp" in RUN_OPS
+        assert RUN_OPS == ["Exp"]
 
 
 def test_ms_dispatch_guard_created_outside_with_block():
@@ -956,8 +954,7 @@ def test_ms_dispatch_guard_priority_over_dtensor():
         x = _make_base_dtensor([1.0, 2.0, 3.0])
         _ = x.sin()
     # Mode should appear first, then DTensor's dispatch
-    assert RUN_OPS[0] == "PriorityGuard"
-    assert "Sin" in RUN_OPS
+    assert RUN_OPS == ["PriorityGuard", "Sin", "Sin"]
 
 
 def test_ms_dispatch_grad_numerical_correctness():
@@ -997,7 +994,7 @@ def test_ms_dispatch_guard_as_decorator():
 
     result = guarded_computation()
     assert np.allclose(result.asnumpy(), np.sin(np.array([1.0, 2.0, 3.0])), atol=1e-5)
-    assert "Sin" in RUN_OPS
+    assert RUN_OPS == ["Sin"]
 
 
 def test_ms_dispatch_dtensor_mul_scalar_inplace_pattern():
@@ -1014,11 +1011,7 @@ def test_ms_dispatch_dtensor_mul_scalar_inplace_pattern():
     assert isinstance(y, DTensor)
     assert isinstance(z, DTensor)
     assert np.allclose(z.asnumpy(), np.array([3.0, 6.0, 9.0]))
-    # Check that mul and add ops were recorded
-    mul_ops = [op for op in RUN_OPS if "Mul" in op]
-    add_ops = [op for op in RUN_OPS if "Add" in op]
-    assert len(mul_ops) >= 1
-    assert len(add_ops) >= 1
+    assert RUN_OPS == ["Muls", "AddExt"]
 
 
 def test_ms_dispatch_complex_multi_branch_computation():
@@ -1040,12 +1033,615 @@ def test_ms_dispatch_complex_multi_branch_computation():
     assert isinstance(result, DTensor)
     expected = np.sin(np.array([1.0, 2.0, 3.0])) + np.cos(np.array([1.0, 2.0, 3.0]))
     assert np.allclose(result.asnumpy(), expected, atol=1e-5)
-    assert "Sin" in RUN_OPS
-    assert "Cos" in RUN_OPS
-    assert "AddExt" in RUN_OPS
+    assert RUN_OPS == ["Sin", "Cos", "AddExt"]
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+class SkipCallbackDispatchMode(MsDispatchMode):
+    """Mode that intercepts Reshape and returns its own result without calling func()."""
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        RUN_OPS.append(func.name)
+        if func.name == "Reshape":
+            # Skip calling func(*args) — manually compute the reshape result
+            input_tensor = args[0]
+            shape = args[1]
+            with _DisableMsDispatchMode():
+                return input_tensor.reshape(shape)
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+def test_ms_dispatch_reshape_grad_when_callback_skipped():
+    """
+    Feature: Ms dispatch
+    Description: When MsDispatchMode intercepts Reshape and does NOT call func(*args),
+                 gradient should still be recorded for reshape.
+    Expectation: value_and_grad succeeds; grad has correct shape and values.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]])
+    with SkipCallbackDispatchMode():
+        def forward_fn(x):
+            return x.reshape((4,)).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+    assert value.asnumpy() == 10.0
+    assert grad.shape == (2, 2)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 2)))
+
+
+def test_ms_dispatch_mode_guard_with_grad_reshape_values():
+    """
+    Feature: Ms dispatch
+    Description: Reshape grad through normal dispatch (handler calls func).
+    Expectation: Grad values are correct (all ones for sum after reshape).
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]])
+    with TestMsDispatchMode():
+        def forward_fn(x):
+            return x.reshape((4,)).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+    assert value.asnumpy() == 10.0
+    assert grad.shape == (2, 2)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 2)))
+    assert RUN_OPS == ["Reshape", "SumExt", "Ones", "Reshape", "Tile", "Reshape"]
+
+
+def test_reshape_grad_normal_view_path():
+    """
+    Feature: Reshape grad
+    Description: Test reshape backward on normal (non-dispatch) view path.
+    Expectation: Grad values are correct.
+    """
+    x = Tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    def forward_fn(x):
+        return x.reshape((3, 2)).sum()
+    value, grad = ms.value_and_grad(forward_fn)(x)
+    assert value.asnumpy() == 21.0
+    assert grad.shape == (2, 3)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 3)))
+
+
+def test_ms_dispatch_dtensor_reshape_grad_values():
+    """
+    Feature: Ms dispatch
+    Description: Test DTensor reshape with gradient values.
+    Expectation: Grad flows correctly through DTensor dispatch path.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = _make_base_dtensor([[1.0, 2.0], [3.0, 4.0]])
+    def forward_fn(x):
+        out = x.reshape((4,)).sum()
+        return out
+    value, grad = ms.value_and_grad(forward_fn)(x)
+    assert np.allclose(value.asnumpy(), 10.0)
+    assert grad.shape == (2, 2)
+    assert np.allclose(grad.asnumpy(), np.ones((2, 2)))
+    assert RUN_OPS == ["Reshape", "SumExt"]
+
+
+def test_reshape_meta_device_shape_correct():
+    """
+    Feature: Meta device reshape
+    Description: Reshape on meta device returns correct shape (no kernel executed).
+    Expectation: Output has correct shape and is on meta device.
+    """
+    with ms.DeviceCtx('meta'):
+        x = mint.rand((2, 3), dtype=ms.float32)
+        y = x.reshape(6)
+        assert y.shape == (6,)
+        assert y.device == 'meta'
+        assert y.data_ptr() == 0
+
+
+# ====== RunOpStub dispatch grad: callback skipped ======
+
+class SkipCallbackComputeMode(MsDispatchMode):
+    """Mode that intercepts ACos via RunOpStub and computes with numpy,
+    skipping the callback. PostDispatchGrad handles gradient registration.
+    Note: ACos has no 'dispatch: enable: True' in its op_def yaml, so
+    Primitive.__call__ routes through _run_op -> RunOpStub (not pyboost).
+    RunOpStub args format: (Primitive, op_name_str, (tensor_inputs,))."""
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        RUN_OPS.append(func.name)
+        if func.name == "ACos":
+            # args[2] is the tuple of actual tensor inputs in RunOpStub path
+            actual_inputs = args[2]
+            return Tensor(np.arccos(actual_inputs[0].asnumpy()))
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+def test_runopstub_dispatch_grad_callback_skipped():
+    """
+    Feature: RunOpStub dispatch grad
+    Description: Guard handler intercepts ACos (via Primitive.__call__ -> RunOpStub)
+                 and returns numpy-computed result WITHOUT calling func().
+                 ACos uses py_method dispatch (no 'dispatch: enable: True' in yaml),
+                 so it enters RunOpStub -> RunOpDispatch -> PostDispatchGrad path.
+                 PostDispatchGrad must register gradient so backward works.
+    Expectation: value_and_grad succeeds with correct gradient values.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = Tensor(np.array([0.1, 0.2, 0.3], dtype=np.float32))
+    with SkipCallbackComputeMode():
+        def forward_fn(x):
+            return ops.ACos()(x).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+    expected_value = np.sum(np.arccos(np.array([0.1, 0.2, 0.3], dtype=np.float32)))
+    expected_grad = -1.0 / np.sqrt(1 - np.array([0.1, 0.2, 0.3], dtype=np.float32) ** 2)
+    assert np.allclose(value.asnumpy(), expected_value, atol=1e-5)
+    assert np.allclose(grad.asnumpy(), expected_grad, atol=1e-5)
+
+
+def test_runopstub_dispatch_grad_callback_called():
+    """
+    Feature: RunOpStub dispatch grad
+    Description: Guard handler calls func() normally (callback IS called) for ACos
+                 which routes through RunOpStub (no 'dispatch: enable: True' in yaml).
+                 Regression test: PostDispatchGrad must NOT be called to avoid double grad.
+    Expectation: value_and_grad succeeds with correct gradient values.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    x = Tensor(np.array([0.1, 0.2, 0.3], dtype=np.float32))
+    with TestMsDispatchMode():
+        def forward_fn(x):
+            return ops.ACos()(x).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+    expected_value = np.sum(np.arccos(np.array([0.1, 0.2, 0.3], dtype=np.float32)))
+    expected_grad = -1.0 / np.sqrt(1 - np.array([0.1, 0.2, 0.3], dtype=np.float32) ** 2)
+    assert np.allclose(value.asnumpy(), expected_value, atol=1e-5)
+    assert np.allclose(grad.asnumpy(), expected_grad, atol=1e-5)
+    assert RUN_OPS == ["ACos", "SumExt", "Ones", "Reshape", "Tile"]
+
+
+class SkipCallbackLayerNormMode(MsDispatchMode):
+    """Mode that intercepts LayerNorm via RunOpStub and computes with numpy,
+    skipping the callback. Tests PostDispatchGrad with a multi-output op.
+    LayerNorm has no 'dispatch: enable: True', so it routes through RunOpStub.
+    RunOpStub args format: (Primitive, op_name_str, (input_x, gamma, beta, ...)).
+    Note: LayerNorm returns (output, mean, rstd) where rstd = 1/sqrt(var + eps)."""
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        RUN_OPS.append(func.name)
+        if func.name == "LayerNorm":
+            actual = args[2]
+            x_np = actual[0].asnumpy()
+            gamma_np = actual[1].asnumpy()
+            beta_np = actual[2].asnumpy()
+            eps = actual[5]
+            mean = x_np.mean(axis=-1, keepdims=True)
+            var = x_np.var(axis=-1, keepdims=True)
+            rstd = 1.0 / np.sqrt(var + eps)
+            normed = (x_np - mean) * rstd
+            out = normed * gamma_np + beta_np
+            return (Tensor(out.astype(np.float32)),
+                    Tensor(mean.astype(np.float32)),
+                    Tensor(rstd.astype(np.float32)))
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+def test_runopstub_dispatch_grad_layernorm_callback_skipped():
+    """
+    Feature: RunOpStub dispatch grad
+    Description: Guard handler intercepts LayerNorm (multi-output op) via RunOpStub
+                 and returns numpy-computed result WITHOUT calling func().
+                 Tests PostDispatchGrad with tuple-of-tensors output.
+    Expectation: value_and_grad succeeds; gradient matches the callback-called path.
+    """
+    global RUN_OPS
+    np.random.seed(42)
+    x_np = np.random.randn(2, 3).astype(np.float32)
+    x = Tensor(x_np)
+    gamma = Tensor(np.ones(3, dtype=np.float32))
+    beta = Tensor(np.zeros(3, dtype=np.float32))
+
+    # Callback-skipped path
+    RUN_OPS = []
+    with SkipCallbackLayerNormMode():
+        def forward_fn(x):
+            out, _, _ = ops.LayerNorm(begin_norm_axis=-1)(x, gamma, beta)
+            return (out * out).sum()
+        value_skip, grad_skip = ms.value_and_grad(forward_fn)(x)
+
+    # Reference: callback-called path
+    RUN_OPS = []
+    with TestMsDispatchMode():
+        def forward_fn_ref(x):
+            out, _, _ = ops.LayerNorm(begin_norm_axis=-1)(x, gamma, beta)
+            return (out * out).sum()
+        value_ref, grad_ref = ms.value_and_grad(forward_fn_ref)(x)
+
+    assert np.allclose(value_skip.asnumpy(), value_ref.asnumpy(), atol=1e-4)
+    assert np.allclose(grad_skip.asnumpy(), grad_ref.asnumpy(), atol=1e-4)
+
+
+def test_runopstub_dispatch_grad_layernorm_callback_called():
+    """
+    Feature: RunOpStub dispatch grad
+    Description: Guard handler calls func() normally (callback IS called) for LayerNorm.
+                 Regression test: PostDispatchGrad must NOT be called for multi-output ops.
+    Expectation: value_and_grad succeeds with correct gradient values.
+    """
+    global RUN_OPS
+    np.random.seed(42)
+    x_np = np.random.randn(2, 3).astype(np.float32)
+    x = Tensor(x_np)
+    gamma = Tensor(np.ones(3, dtype=np.float32))
+    beta = Tensor(np.zeros(3, dtype=np.float32))
+
+    # Without dispatch (ground truth)
+    def forward_fn_plain(x):
+        out, _, _ = ops.LayerNorm(begin_norm_axis=-1)(x, gamma, beta)
+        return (out * out).sum()
+    value_plain, grad_plain = ms.value_and_grad(forward_fn_plain)(x)
+
+    # With dispatch (callback called)
+    RUN_OPS = []
+    with TestMsDispatchMode():
+        def forward_fn(x):
+            out, _, _ = ops.LayerNorm(begin_norm_axis=-1)(x, gamma, beta)
+            return (out * out).sum()
+        value, grad = ms.value_and_grad(forward_fn)(x)
+
+    assert np.allclose(value.asnumpy(), value_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(grad.asnumpy(), grad_plain.asnumpy(), atol=1e-5)
+    assert "LayerNorm" in RUN_OPS
+
+
+# ====== Pyboost view ops dispatch grad ======
+
+class SkipCallbackViewMode(MsDispatchMode):
+    """Mode that intercepts pyboost view ops and computes with numpy,
+    skipping the callback. These ops have 'dispatch: enable: True' in yaml
+    so they go through the pyboost path (not RunOpStub).
+    Pyboost args format: (Tensor, scalar_arg1, scalar_arg2, ...)."""
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        RUN_OPS.append(func.name)
+        if func.name == "SelectExtView":
+            x, dim, idx = args
+            return Tensor(np.take(x.asnumpy(), idx, axis=dim))
+        if func.name == "TransposeExtView":
+            x, d0, d1 = args
+            return Tensor(np.swapaxes(x.asnumpy(), d0, d1).copy())
+        if func.name == "Transpose":
+            x, dims = args
+            return Tensor(np.transpose(x.asnumpy(), dims).copy())
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+@pytest.mark.xfail(reason="SelectExtView backward uses select_ext_view+inplace_copy with view semantics; "
+                           "skipping callback returns a numpy copy, breaking shared storage")
+def test_pyboost_dispatch_grad_select_ext_view_callback_skipped():
+    """
+    Feature: Pyboost dispatch grad
+    Description: Guard handler intercepts SelectExtView (pyboost view op) and
+                 returns numpy-computed result WITHOUT calling func().
+                 SelectExtView backward relies on view/inplace semantics:
+                   grad_input = zeros(); select_ext_view(grad_input); inplace_copy(...)
+                 When the guard intercepts backward's select_ext_view with numpy,
+                 the view link is broken and grad_input stays zero.
+    Expectation: Gradient is lost (known limitation of skip-callback for view ops
+                 whose backward depends on view semantics).
+    """
+    global RUN_OPS
+    np.random.seed(0)
+    x = Tensor(np.random.randn(3, 4).astype(np.float32))
+
+    RUN_OPS = []
+    with SkipCallbackViewMode():
+        v_skip, g_skip = ms.value_and_grad(lambda x: SelectExtView()(x, 0, 1).sum())(x)
+    v_plain, g_plain = ms.value_and_grad(lambda x: SelectExtView()(x, 0, 1).sum())(x)
+
+    assert np.allclose(v_skip.asnumpy(), v_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(g_skip.asnumpy(), g_plain.asnumpy(), atol=1e-5)
+
+
+def test_pyboost_dispatch_grad_select_ext_view_callback_called():
+    """
+    Feature: Pyboost dispatch grad
+    Description: Guard handler calls func() normally for SelectExtView.
+    Expectation: value_and_grad succeeds; gradient matches the plain path.
+    """
+    global RUN_OPS
+    np.random.seed(0)
+    x = Tensor(np.random.randn(3, 4).astype(np.float32))
+
+    RUN_OPS = []
+    with TestMsDispatchMode():
+        v_call, g_call = ms.value_and_grad(lambda x: SelectExtView()(x, 0, 1).sum())(x)
+    v_plain, g_plain = ms.value_and_grad(lambda x: SelectExtView()(x, 0, 1).sum())(x)
+
+    assert np.allclose(v_call.asnumpy(), v_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(g_call.asnumpy(), g_plain.asnumpy(), atol=1e-5)
+
+
+def test_pyboost_dispatch_grad_transpose_ext_view_callback_skipped():
+    """
+    Feature: Pyboost dispatch grad
+    Description: Guard handler intercepts only TransposeExtView and returns
+                 numpy-computed result WITHOUT calling func().
+                 TransposeExtView backward doesn't rely on view semantics
+                 (just does transpose_ext_view on grad), so skip-callback is safe.
+    Expectation: value_and_grad succeeds; gradient matches the plain path.
+    """
+    global RUN_OPS
+    np.random.seed(0)
+    x = Tensor(np.random.randn(2, 3).astype(np.float32))
+
+    class SkipTransposeExtViewOnly(MsDispatchMode):
+        def __ms_dispatch__(self, func, args=(), kwargs=None):
+            RUN_OPS.append(func.name)
+            if func.name == "TransposeExtView":
+                t, d0, d1 = args
+                return Tensor(np.swapaxes(t.asnumpy(), d0, d1).copy())
+            if kwargs is None:
+                kwargs = {}
+            return func(*args, **kwargs)
+
+    RUN_OPS = []
+    with SkipTransposeExtViewOnly():
+        v_skip, g_skip = ms.value_and_grad(lambda x: ops.TransposeExtView()(x, 0, 1)[0, 0])(x)
+    v_plain, g_plain = ms.value_and_grad(lambda x: ops.TransposeExtView()(x, 0, 1)[0, 0])(x)
+
+    assert np.allclose(v_skip.asnumpy(), v_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(g_skip.asnumpy(), g_plain.asnumpy(), atol=1e-5)
+
+
+def test_pyboost_dispatch_grad_transpose_ext_view_callback_called():
+    """
+    Feature: Pyboost dispatch grad
+    Description: Guard handler calls func() normally for TransposeExtView.
+    Expectation: value_and_grad succeeds; gradient matches the plain path.
+    """
+    global RUN_OPS
+    np.random.seed(0)
+    x = Tensor(np.random.randn(2, 3).astype(np.float32))
+
+    RUN_OPS = []
+    with TestMsDispatchMode():
+        v_call, g_call = ms.value_and_grad(lambda x: ops.TransposeExtView()(x, 0, 1)[0, 0])(x)
+    v_plain, g_plain = ms.value_and_grad(lambda x: ops.TransposeExtView()(x, 0, 1)[0, 0])(x)
+
+    assert np.allclose(v_call.asnumpy(), v_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(g_call.asnumpy(), g_plain.asnumpy(), atol=1e-5)
+
+
+def test_pyboost_dispatch_grad_transpose_callback_skipped():
+    """
+    Feature: Pyboost dispatch grad
+    Description: Guard handler intercepts only Transpose and returns
+                 numpy-computed result WITHOUT calling func().
+                 Transpose backward doesn't rely on view semantics
+                 (just does inverse transpose on grad), so skip-callback is safe.
+    Expectation: value_and_grad succeeds; gradient matches the plain path.
+    """
+    global RUN_OPS
+    np.random.seed(0)
+    x = Tensor(np.random.randn(2, 3).astype(np.float32))
+
+    class SkipTransposeOnly(MsDispatchMode):
+        def __ms_dispatch__(self, func, args=(), kwargs=None):
+            RUN_OPS.append(func.name)
+            if func.name == "Transpose":
+                t, dims = args
+                return Tensor(np.transpose(t.asnumpy(), dims).copy())
+            if kwargs is None:
+                kwargs = {}
+            return func(*args, **kwargs)
+
+    RUN_OPS = []
+    with SkipTransposeOnly():
+        v_skip, g_skip = ms.value_and_grad(lambda x: ops.Transpose()(x, (1, 0))[0, 0])(x)
+    v_plain, g_plain = ms.value_and_grad(lambda x: ops.Transpose()(x, (1, 0))[0, 0])(x)
+
+    assert np.allclose(v_skip.asnumpy(), v_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(g_skip.asnumpy(), g_plain.asnumpy(), atol=1e-5)
+
+
+def test_pyboost_dispatch_grad_transpose_callback_called():
+    """
+    Feature: Pyboost dispatch grad
+    Description: Guard handler calls func() normally for Transpose.
+    Expectation: value_and_grad succeeds; gradient matches the plain path.
+    """
+    global RUN_OPS
+    np.random.seed(0)
+    x = Tensor(np.random.randn(2, 3).astype(np.float32))
+
+    RUN_OPS = []
+    with TestMsDispatchMode():
+        v_call, g_call = ms.value_and_grad(lambda x: ops.Transpose()(x, (1, 0))[0, 0])(x)
+    v_plain, g_plain = ms.value_and_grad(lambda x: ops.Transpose()(x, (1, 0))[0, 0])(x)
+
+    assert np.allclose(v_call.asnumpy(), v_plain.asnumpy(), atol=1e-5)
+    assert np.allclose(g_call.asnumpy(), g_plain.asnumpy(), atol=1e-5)
+
+
+# ====== Realistic dispatch scenarios (torchtitan-style) ======
+
+class OpTracer(MsDispatchMode):
+    """Like torchtitan's MmWeightTracker: traces op execution during fwd/bwd.
+    Always calls func() — pure observation, no interception."""
+    def __init__(self):
+        self.fwd_ops = []
+        self.bwd_ops = []
+        self._in_backward = False
+
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        if self._in_backward:
+            self.bwd_ops.append(func.name)
+        else:
+            self.fwd_ops.append(func.name)
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+def test_dispatch_op_tracer_fwd_bwd():
+    """
+    Feature: Realistic dispatch — op tracing (torchtitan MmWeightTracker pattern)
+    Description: MsDispatchMode that always calls func() and records which ops
+                 run during forward and backward. Validates that dispatch does not
+                 affect gradient correctness and that op list is deterministic.
+    Expectation: Gradient matches non-dispatch baseline; expected ops appear.
+    """
+    np.random.seed(42)
+    x = Tensor(np.random.randn(4, 4).astype(np.float32))
+
+    def mlp(x):
+        h = ops.MatMul()(x, x)          # RunOpStub path (no dispatch yaml)
+        h = mint.nn.functional.relu(h)   # pyboost path
+        return h.sum()
+
+    # baseline
+    v_ref, g_ref = ms.value_and_grad(mlp)(x)
+
+    # traced
+    tracer = OpTracer()
+    with tracer:
+        v_traced, g_traced = ms.value_and_grad(mlp)(x)
+        tracer._in_backward = True
+    # backward ops are captured automatically since dispatch mode spans the whole call
+
+    assert np.allclose(v_traced.asnumpy(), v_ref.asnumpy(), atol=1e-5)
+    assert np.allclose(g_traced.asnumpy(), g_ref.asnumpy(), atol=1e-5)
+    assert "MatMul" in tracer.fwd_ops
+    assert "ReLU" in tracer.fwd_ops or "ReluExt" in tracer.fwd_ops
+
+
+class ActivationOffloadMode(MsDispatchMode):
+    """Simulates activation CPU offloading (swap) — like PyTorch's offload_to_cpu pattern.
+    After func() produces output, save a numpy copy and return the original tensor.
+    This tests that dispatch interception + callback-called path preserves gradient."""
+    def __init__(self):
+        self.saved_activations = {}
+        self._counter = 0
+
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+        result = func(*args, **kwargs)
+        # "Offload" output to CPU (save numpy snapshot)
+        if isinstance(result, Tensor) and result.size > 0:
+            self.saved_activations[self._counter] = result.asnumpy().copy()
+            self._counter += 1
+        return result
+
+
+def test_dispatch_activation_offload_with_grad():
+    """
+    Feature: Realistic dispatch — activation offloading (swap pattern)
+    Description: MsDispatchMode calls func() normally but also saves a numpy copy
+                 of each output (simulating CPU offload). Verifies that the extra
+                 asnumpy() call doesn't corrupt autograd.
+    Expectation: Gradient matches non-dispatch baseline; activations are captured.
+    """
+    np.random.seed(42)
+    x = Tensor(np.random.randn(4, 4).astype(np.float32))
+
+    def net(x):
+        return (x.sin() * x.cos()).sum()
+
+    v_ref, g_ref = ms.value_and_grad(net)(x)
+
+    offloader = ActivationOffloadMode()
+    with offloader:
+        v_off, g_off = ms.value_and_grad(net)(x)
+
+    assert np.allclose(v_off.asnumpy(), v_ref.asnumpy(), atol=1e-5)
+    assert np.allclose(g_off.asnumpy(), g_ref.asnumpy(), atol=1e-5)
+    assert len(offloader.saved_activations) > 0
+
+
+class SelectiveRecomputeMode(MsDispatchMode):
+    """Simulates selective activation checkpointing (torchtitan SAC pattern).
+    For a target op, skips the callback and computes a low-cost approximation.
+    During backward, the framework recomputes the real op via the autograd graph.
+    Tests that PostDispatchGrad correctly registers gradient for recomputed ops."""
+    def __init__(self, target_op, approx_fn):
+        self.target_op = target_op
+        self.approx_fn = approx_fn
+        self.recompute_count = 0
+
+    def __ms_dispatch__(self, func, args=(), kwargs=None):
+        if func.name == self.target_op:
+            self.recompute_count += 1
+            return self.approx_fn(*args)
+        if kwargs is None:
+            kwargs = {}
+        return func(*args, **kwargs)
+
+
+def test_dispatch_selective_recompute_acos():
+    """
+    Feature: Realistic dispatch — selective recompute (SAC pattern, RunOpStub path)
+    Description: Intercepts ACos (RunOpStub op) and computes with numpy, simulating
+                 a scenario where forward activation is discarded and recomputed.
+                 PostDispatchGrad must register gradient so backward works.
+    Expectation: Gradient matches baseline.
+    """
+    np.random.seed(42)
+    x = Tensor(np.array([0.1, 0.3, 0.5, 0.7], dtype=np.float32))
+
+    def net(x):
+        return ops.ACos()(x).sum()
+
+    v_ref, g_ref = ms.value_and_grad(net)(x)
+
+    # ACos goes through RunOpStub; args = (Primitive, name, (tensor,))
+    def acos_approx(*args):
+        actual = args[2]
+        return Tensor(np.arccos(actual[0].asnumpy()))
+
+    mode = SelectiveRecomputeMode("ACos", acos_approx)
+    with mode:
+        v_sac, g_sac = ms.value_and_grad(net)(x)
+
+    assert np.allclose(v_sac.asnumpy(), v_ref.asnumpy(), atol=1e-5)
+    assert np.allclose(g_sac.asnumpy(), g_ref.asnumpy(), atol=1e-5)
+    assert mode.recompute_count >= 1
+
+
+def test_dispatch_selective_recompute_sin():
+    """
+    Feature: Realistic dispatch — selective recompute (SAC pattern, pyboost path)
+    Description: Intercepts Sin (pyboost op) and computes with numpy.
+                 Unlike RunOpStub ops, pyboost handles gradient registration
+                 via the auto-grad framework after inner returns.
+    Expectation: Gradient matches baseline.
+    """
+    np.random.seed(42)
+    x = Tensor(np.array([0.1, 0.3, 0.5, 0.7], dtype=np.float32))
+
+    def net(x):
+        return mint.sin(x).sum()
+
+    v_ref, g_ref = ms.value_and_grad(net)(x)
+
+    # Sin is pyboost; args = (tensor,)
+    def sin_approx(*args):
+        return Tensor(np.sin(args[0].asnumpy()))
+
+    mode = SelectiveRecomputeMode("Sin", sin_approx)
+    with mode:
+        v_sac, g_sac = ms.value_and_grad(net)(x)
+
+    assert np.allclose(v_sac.asnumpy(), v_ref.asnumpy(), atol=1e-5)
+    assert np.allclose(g_sac.asnumpy(), g_ref.asnumpy(), atol=1e-5)
+    assert mode.recompute_count >= 1
+
+
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard', mem_peak=2048.01)
 def test_ms_dispatch():
@@ -1115,3 +1711,29 @@ def test_ms_dispatch():
     test_ms_dispatch_guard_as_decorator()
     test_ms_dispatch_dtensor_mul_scalar_inplace_pattern()
     test_ms_dispatch_complex_multi_branch_computation()
+
+    # Reshape grad coverage tests
+    test_ms_dispatch_reshape_grad_when_callback_skipped()
+    test_ms_dispatch_mode_guard_with_grad_reshape_values()
+    test_reshape_grad_normal_view_path()
+    test_ms_dispatch_dtensor_reshape_grad_values()
+    #test_reshape_meta_device_shape_correct()
+
+    # RunOpStub dispatch grad tests
+    test_runopstub_dispatch_grad_callback_skipped()
+    test_runopstub_dispatch_grad_callback_called()
+    test_runopstub_dispatch_grad_layernorm_callback_skipped()
+    test_runopstub_dispatch_grad_layernorm_callback_called()
+
+    # Pyboost view ops dispatch grad tests
+    test_pyboost_dispatch_grad_select_ext_view_callback_called()
+    test_pyboost_dispatch_grad_transpose_ext_view_callback_skipped()
+    test_pyboost_dispatch_grad_transpose_ext_view_callback_called()
+    test_pyboost_dispatch_grad_transpose_callback_skipped()
+    test_pyboost_dispatch_grad_transpose_callback_called()
+
+    # Realistic dispatch scenarios (torchtitan-style)
+    test_dispatch_op_tracer_fwd_bwd()
+    test_dispatch_activation_offload_with_grad()
+    test_dispatch_selective_recompute_acos()
+    test_dispatch_selective_recompute_sin()

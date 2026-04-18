@@ -10,7 +10,7 @@ class ${cpp_func_name}Functional : public Functional {
 #ifndef ENABLE_TEST
     auto backend = DeviceManagerConf::GetInstance()->device_type();
     static auto callback = [this](const py::args &args, const py::kwargs &kwargs){
-      return py::reinterpret_steal<py::object>(Call(args, kwargs));
+      return Call(args, kwargs);
     };
     switch (parse_args.GetOvertLoadIndex()) {
       ${dispatch_cases}

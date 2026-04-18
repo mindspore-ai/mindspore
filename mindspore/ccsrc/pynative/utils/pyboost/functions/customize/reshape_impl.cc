@@ -58,8 +58,6 @@ mindspore::tensor::TensorPtr reshape_view_internal(const mindspore::tensor::Tens
     MS_LOG(DEBUG) << "View device task Reshape end";
   }));
 
-  static auto reshape_grad_func = AutoGradFactory::Get().ops_auto_grad_registers().ReshapeGradFuncObj;
-  reshape_grad_func(outputs[0], input, shape);
   MS_LOG(DEBUG) << "View Reshape Call end";
   return outputs[0];
 }
@@ -81,7 +79,13 @@ mindspore::tensor::TensorPtr reshape_impl_inner(const mindspore::tensor::TensorP
       return reshape_impl_inner(_input, _shape);
     };
     auto [packed_args, dispatch_callback, is_guard_callback] = pynative::PackArgs(input, shape);
-    return pynative::HandleMsDispatch(handle_callback, packed_args, dispatch_callback, is_guard_callback, "Reshape");
+    auto output =
+      pynative::HandleMsDispatch(handle_callback, packed_args, dispatch_callback, is_guard_callback, "Reshape");
+    static auto reshape_grad_func_dispatch = AutoGradFactory::Get().ops_auto_grad_registers().ReshapeGradFuncObj;
+    if (reshape_grad_func_dispatch) {
+      reshape_grad_func_dispatch(output, input, shape);
+    }
+    return output;
   }
 
   auto storage_info = ops::ReshapeBasicTypeCalc(input, shape);
@@ -94,7 +98,12 @@ mindspore::tensor::TensorPtr reshape_impl_inner(const mindspore::tensor::TensorP
   }
 
   if (MS_LIKELY(storage_info)) {
-    return reshape_view_internal(input, shape, storage_info, device_target);
+    auto output = reshape_view_internal(input, shape, storage_info, device_target);
+    static auto reshape_grad_func_view = AutoGradFactory::Get().ops_auto_grad_registers().ReshapeGradFuncObj;
+    if (reshape_grad_func_view) {
+      reshape_grad_func_view(output, input, shape);
+    }
+    return output;
   }
 
   // Contiguous + View branch: contiguous and view will handle __ms_dispatch__ themselves
