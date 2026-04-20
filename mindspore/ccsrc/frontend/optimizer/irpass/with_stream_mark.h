@@ -216,6 +216,7 @@ void GetFuncAttrFromGetStreamInfoNode(const FuncGraphPtr &func) {
     constexpr auto kStreamIdIndex = 2;
 
     auto flag_arg = get_stream_info->input(kFlagIndex)->abstract();
+    MS_EXCEPTION_IF_NULL(flag_arg);
     auto flag_str = GetValue<string>(flag_arg->BuildValue());
     MS_LOG(DEBUG) << "flag_str: " << flag_str;
     auto stream_id_node = get_stream_info->input(kStreamIdIndex);
