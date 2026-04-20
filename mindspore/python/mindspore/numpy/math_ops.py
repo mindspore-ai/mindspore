@@ -2597,7 +2597,7 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
     Returns the sum of array elements over a given axis treating Not a Numbers (NaNs) as zero.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
 
     Args:
         a (Union[int, float, list, tuple, Tensor]): Array containing numbers
@@ -2770,7 +2770,7 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
     otherwise over the specified axis.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
@@ -5295,7 +5295,7 @@ def result_type(*arrays_and_dtypes):
 
     Note:
         The promotion rule is slightly different from original Numpy, but more like
-        jax, due to the preference on ``32-bit`` over ``64-bit`` data types.
+        JAX, due to the preference on ``32-bit`` over ``64-bit`` data types.
         Complex dtypes are not supported.
 
     Args:
