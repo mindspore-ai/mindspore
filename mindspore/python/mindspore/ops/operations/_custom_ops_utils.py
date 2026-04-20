@@ -372,13 +372,14 @@ typedef struct aclScalarList aclScalarList;
         func_params_len = input_size + output_size + 2
         if func_params_len != len(input_output_types):
             raise RuntimeError(
-                f"Reg info input size: {func_params_len} is not equal to aclnn api input size {aclnn_api_input_size}")
+                f"Reg info input size: {func_params_len} is not equal to aclnn api input size "
+                f"{aclnn_api_input_size}, func name: {func_name}")
         reg_info_input_output_type = inputs_types + outputs_types
         for i, typ in enumerate(reg_info_input_output_type):
             if typ != input_output_types[i]:
-                logger.warning(
-                    "Reg info type {} is not  same with function prototype {}".format(typ,
-                                                                                      input_output_types[i]))
+                logger.info(
+                    "Reg info type {} is not same with function prototype {}, func name: {}".format(
+                        typ, input_output_types[i], func_name))
 
         return self._generate_callback(func_name, input_output_types[:input_size],
                                        input_output_types[input_size:output_size + input_size])
