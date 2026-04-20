@@ -17,9 +17,9 @@ func_dropout_ext:
     returns:
         output:
             dtype: tensor
+    composite: True
     bprop_expander: False
     dispatch:
         enable: True
-        Ascend: FuncDropoutExtAscend
     function:
         disable: True
