@@ -300,6 +300,7 @@ class PYNATIVE_EXPORT Converter {
   bool has_ms_dispatch() const { return has_ms_dispatch_; }
 
  private:
+  void CheckTensorListFallback(PyObject *seq_obj);
   ops::OpDefPtr op_def_;
   // If op not type cast, source_type is default type: DT_BEGIN, if op type cast, source_type is origin type.
   std::vector<ops::OP_DTYPE> source_type_;

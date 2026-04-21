@@ -25,6 +25,7 @@
 #include "include/pynative/utils/pyboost/functions/base.h"
 #include "include/pynative/utils/pyboost/auto_generate/custom_ext.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "include/pynative/forward/pyboost/fallback.h"
 #include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore::pynative {
@@ -35,6 +36,14 @@ py::object PyboostCustomExtBase(const PrimitivePtr &prim, const py::list &args) 
   static pynative::Converter converter(&ops::gCustomExt);
   converter.Parse(args.ptr());
   auto tensors = converter.ToTensorList<pynative::CPythonTuple>(args.ptr(), kIndex0);
+  MS_EXCEPTION_IF_NULL(tensors);
+  if (converter.has_fallback()) {
+    auto op_call = std::make_shared<OpCall>("CustomExt", [prim](const py::args &args, const py::kwargs &kwargs) {
+      auto list_args = py::list(args);
+      return PyboostCustomExtBase(prim, list_args);
+    });
+    return py::reinterpret_steal<py::object>(pynative::HandleFallback(args.ptr(), py::cast(op_call)));
+  }
 
   static auto op_type = kernel::pyboost::GetOpTypeFromOpdef(ops::gCustomExt);
   op_run_info->source_type = converter.source_type();
