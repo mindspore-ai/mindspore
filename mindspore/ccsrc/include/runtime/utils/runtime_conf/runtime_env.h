@@ -45,6 +45,7 @@ const char kRuntimeSyncCopyInput[] = "sync_copy_input";
 const char kRuntimeClusterThreadNum[] = "cluster_thread_num";
 const char kRuntimeThreadLoadCache[] = "multi_thread_load_cache";
 const char kRuntimeAsyncInitComm[] = "async_init_comm";
+const char kRuntimeAsyncMcclInitComm[] = "async_mccl_init_comm";
 const char kRuntimeCpuAffinityList[] = "cpu_affinity_list";
 const char kRuntimeCpuAffinityMoudule[] = "cpu_affinity_module";
 const char kRuntimeActorThreadFixBind[] = "actor_thread_fix_bind";

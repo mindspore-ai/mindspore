@@ -595,6 +595,25 @@ bool MsCollectiveCommLib::CheckIfVal(const std::string &group_name, Communicatio
   CHECK_IF_NULL(node_);
   CHECK_IF_NULL(group_info);
 
+  // Wait for the collective node to be initialized
+
+  size_t start_tick = LongToSize(CURRENT_TIMESTAMP_MILLI.count());
+  size_t comm_op_timeout_ms = CollectiveOpsImpl::GetInstance().GetCommOpTimeout() * 1000;
+  while (!node_->Initialized() &&
+         LongToSize(CURRENT_TIMESTAMP_MILLI.count()) - start_tick <= static_cast<uint32_t>(comm_op_timeout_ms)) {
+    // seconds interval for large-scale cluster.
+    unsigned int interval = 1;
+    // milliseconds interval for small-scale cluster.
+    uint32_t interval_ms = 10;
+    SleepBasedOnScale(interval, interval_ms);
+  }
+
+  if (!node_->Initialized()) {
+    MS_LOG(ERROR) << "The collective node is not initialized after " << comm_op_timeout_ms
+                  << " milliseconds, skip check if val.";
+    return false;
+  }
+
   if (groups_.count(group_name) == 0) {
     MS_LOG(ERROR) << "The group " << group_name << " does not exist.";
     return false;

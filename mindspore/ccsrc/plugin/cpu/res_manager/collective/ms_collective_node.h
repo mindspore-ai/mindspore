@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MS_COLLECTIVE_NODE_H_
 
 #include <memory>
+#include <atomic>
 #include "include/cluster/rpc/abstract_node.h"
 #include "include/cluster/topology/compute_graph_node.h"
 
@@ -34,6 +35,7 @@ class CollectiveNode : public AbstractNode {
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
   bool Stop() override;
 
+  bool Initialized() const { return is_initialized_.load(); }
   // Register the address of this collective node and then lookup the addresses of all the other nodes.
   void SynchronizeAddresses();
 
@@ -43,6 +45,7 @@ class CollectiveNode : public AbstractNode {
  private:
   std::shared_ptr<distributed::cluster::topology::TcpNodeBase> client_node_;
   bool FetchNodeAddress(const std::string &other_rank_id, size_t node_index);
+  std::atomic<bool> is_initialized_{false};
 };
 }  // namespace core
 }  // namespace ps
