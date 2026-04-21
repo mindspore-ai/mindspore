@@ -22,6 +22,7 @@
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
 #include "kernel/ascend/hccl/hcom_util.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,7 +37,10 @@ void DistCommReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
 
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
     auto root = GetValue<int64_t>(dst);
-    auto op_type_enum = HcomUtil::GetHcomReduceOpType(GetValue<std::string>(op_type));
+    auto op_type_str = GetValue<std::string>(op_type);
+    bool is_avg = (op_type_str == "avg");
+    auto real_op_type = is_avg ? "sum" : op_type_str;
+    auto op_type_enum = HcomUtil::GetHcomReduceOpType(real_op_type);
     const auto &op_name = op->primitive()->name();
     auto input_data_ptr = GetDevicePtrFromTensor(op_name, input_tensor);
     auto launch_func = [input_data_ptr, hccl_count, hccl_data_type, op_type_enum, root](const HcclComm &hccl_comm,
@@ -53,7 +57,8 @@ void DistCommReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
       auto comm_handle = op->comm_handle();
       comm_handle->UpdateMemoryStreamId(input_tensor, op->output(0));
     };
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, root);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, root,
+                         /*avg_div_tensor=*/is_avg ? input_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }

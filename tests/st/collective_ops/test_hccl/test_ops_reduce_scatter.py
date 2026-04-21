@@ -19,7 +19,8 @@ import os
 import numpy as np
 from mindspore import Tensor
 from mindspore import dtype as mstype
-from mindspore.communication.management import init, get_group_size
+from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.ops import ReduceOp
 from mindspore.ops.communication import reduce_scatter, set_comm_ops_inplace
 from mindspore import context, jit
 
@@ -77,4 +78,30 @@ def test_hccl_reduce_scatter_func_dynstatic1():
         h[1].wait()
     else:
         h.wait()
+    assert np.allclose(y.asnumpy(), expect_output)
+
+
+def test_hccl_reduce_scatter_func_avg():
+    """
+    Feature: test 'reduce_scatter' communication function with ReduceOp.AVG.
+    Description: AVG = SUM / world_size on each chunk, exercises dist_comm_reduce_scatter avg path.
+    Expectation: expect correct result.
+    """
+    @jit(jit_level="O0")
+    def test(out_tensor, in_tensor):
+        h = reduce_scatter(out_tensor, in_tensor, op=ReduceOp.AVG, async_op=True)
+        if isinstance(h, tuple):
+            h[1].wait()
+        else:
+            h.wait()
+        return h
+
+    set_comm_ops_inplace(True)
+    rank = get_rank()
+    input_tensor = []
+    for _ in range(size):
+        input_tensor.append(Tensor(np.ones([3, 4]).astype(np.float32) * (rank + 1)))
+    y = Tensor(np.zeros([3, 4]).astype(np.float32), mstype.float32)
+    expect_output = np.ones([3, 4]).astype(np.float32) * (sum(range(1, size + 1)) / size)
+    test(y, input_tensor)
     assert np.allclose(y.asnumpy(), expect_output)

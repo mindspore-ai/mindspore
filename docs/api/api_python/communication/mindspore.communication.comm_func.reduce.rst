@@ -15,7 +15,7 @@ mindspore.communication.comm_func.reduce
     参数：
         - **tensor** (Tensor) - 输入待归约的Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
         - **dst** (int) - 指定接收输出的目标进程编号，只有该进程会接收归约操作后的输出结果。
-        - **op** (str, 可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
+        - **op** (str, 可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 、 ``"min"`` 和 ``"avg"`` 。使用 ``"avg"`` 时，结果为求和后除以组内设备数。默认值： ``ReduceOp.SUM`` 。
         - **group** (str, 可选) - 工作的通信组。默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
 
     返回：

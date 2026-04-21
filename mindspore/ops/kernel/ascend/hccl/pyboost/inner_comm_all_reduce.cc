@@ -39,13 +39,17 @@ void InnerCommAllReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
     PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, op->outputs());
 
     auto hccl_count = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor).first;
-    auto reduce_op = HcomUtil::GetCollectiveOpReduceType(GetValue<std::string>(op_type));
+    auto op_type_str = GetValue<std::string>(op_type);
+    bool is_avg = (op_type_str == "avg");
+    auto real_op_type = is_avg ? "sum" : op_type_str;
+    auto reduce_op = HcomUtil::GetCollectiveOpReduceType(real_op_type);
 
     const auto &op_name = op->primitive()->name();
     auto input_data_ptr = GetDevicePtrFromTensor(op_name, input_tensor);
     auto output_data_ptr = GetDevicePtrFromTensor(op_name, op->output(0));
     auto input_dtype = input_tensor->data_type();
     std::string group_name = GetValue<std::string>(group);
+    auto output_tensor = op->output(0);
     auto launch_func = [input_data_ptr, output_data_ptr, hccl_count, input_dtype, reduce_op, group_name](
                          const HcclComm &, void *comm_stream_ptr) {
       auto comm_lib = distributed::collective::CollectiveManager::instance()->device_comm_lib();
@@ -56,7 +60,8 @@ void InnerCommAllReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
       }
     };
 
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, /*rank=*/-1,
+                         /*avg_div_tensor=*/is_avg ? output_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }

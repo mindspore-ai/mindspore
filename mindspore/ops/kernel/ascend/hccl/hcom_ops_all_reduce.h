@@ -41,6 +41,9 @@ class InnerCommAllReduceKernel : public HcclKernel {
   HcclComm comm_;
   int64_t rank_size_;
   HcclReduceOp op_type_enum_;
+  bool is_avg_{false};
+  std::string group_;
+  ScalarPtr avg_div_scalar_{nullptr};
 };
 MS_HCCL_REG_KERNEL(InnerCommAllReduce, InnerCommAllReduceKernel);
 MS_HCCL_REG_KERNEL(DistCommAllReduce, InnerCommAllReduceKernel);

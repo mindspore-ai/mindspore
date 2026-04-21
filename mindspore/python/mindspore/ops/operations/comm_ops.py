@@ -36,13 +36,15 @@ class ReduceOp:
     - MAX: ReduceOp.MAX.
     - MIN: ReduceOp.MIN.
     - PROD: ReduceOp.PROD.
+    - AVG: ReduceOp.AVG.
 
-    There are four kinds of operation options, "SUM", "MAX", "MIN", and "PROD".
+    There are five kinds of operation options, "SUM", "MAX", "MIN", "PROD", and "AVG".
 
     - SUM: Take the sum.
     - MAX: Take the maximum.
     - MIN: Take the minimum.
     - PROD: Take the product.
+    - AVG: Take the average (sum divided by group size).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -85,6 +87,7 @@ class ReduceOp:
     MAX = "max"
     MIN = "min"
     PROD = "prod"
+    AVG = "avg"
 
 
 def check_collective_target_dtype(data_name, data_dtype, prim_name):

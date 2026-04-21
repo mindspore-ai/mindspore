@@ -19,7 +19,8 @@ import os
 import numpy as np
 from mindspore import Tensor
 from mindspore import dtype as mstype
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.ops import ReduceOp
 from mindspore.ops.communication import all_reduce, set_comm_ops_inplace
 from mindspore import context, jit
 
@@ -113,3 +114,24 @@ def test_hccl_all_reduce_func_dynstatic2():
     else:
         h.wait()
     assert np.allclose(x.asnumpy(), expect_output)
+
+
+def test_hccl_all_reduce_func_avg():
+    """
+    Feature: test 'all_reduce' communication function with ReduceOp.AVG.
+    Description: AVG = SUM / world_size, exercises inner_comm_all_reduce avg path.
+    Expectation: expect correct result.
+    """
+    @jit(jit_level="O0")
+    def test(in_tensor):
+        output, h = all_reduce(in_tensor, op=ReduceOp.AVG, async_op=True)
+        h.wait()
+        return output
+
+    set_comm_ops_inplace(False)
+    rank = get_rank()
+    size = get_group_size()
+    x = np.ones([3, 4]).astype(np.float32) * (rank + 1)
+    expect_output = np.ones([3, 4]).astype(np.float32) * (sum(range(1, size + 1)) / size)
+    output = test(Tensor(x, mstype.float32))
+    assert np.allclose(output.asnumpy(), expect_output)

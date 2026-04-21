@@ -1404,7 +1404,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
     Args:
         tensor (Tensor): The input tensor of collective. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
             If the function operates in-place, this also means output of collective.
-        op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
+        op (str, optional): Specifies an operation used for element-wise reductions,
+            like sum, prod, max, min and avg. On ``"avg"``, the result is the sum divided by the group size.
             Default: ``ReduceOp.SUM``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -1455,9 +1456,9 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         raise TypeError("For all_reduce, the input tensor must be tensor")
     if not isinstance(op, str):
         raise TypeError("For all_reduce, the input op type must be str")
-    if op not in ("sum", "prod", "min", "max"):
+    if op not in ("sum", "prod", "min", "max", "avg"):
         raise TypeError(
-            "For all_reduce, the input op value must be one of sum, prod, min, max"
+            "For all_reduce, the input op value must be one of sum, prod, min, max, avg"
         )
 
     if group is None:
@@ -1675,7 +1676,8 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
             means any number of additional dimensions. N must be divisible by rank_size.
             rank_size refers to the number of cards in the communication group.
         op (str, optional): Specifies an operation used for element-wise reductions,
-            like SUM and MAX. Default: ``ReduceOp.SUM``.
+            like ``"sum"``, ``"prod"``, ``"max"``, ``"min"``, and ``"avg"``. On ``"avg"``,
+            the result is the sum divided by the group size. Default: ``ReduceOp.SUM`` 
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False``.
@@ -1734,9 +1736,9 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         raise TypeError("For reduce_scatter_tensor, the output tensor must be tensor")
     if not isinstance(op, str):
         raise TypeError("For reduce_scatter_tensor, the input op type must be str")
-    if op not in ("sum", "prod", "min", "max"):
+    if op not in ("sum", "prod", "min", "max", "avg"):
         raise TypeError(
-            "For reduce_scatter_tensor, the input op value must be one of sum, prod, min, max"
+            "For reduce_scatter_tensor, the input op value must be one of sum, prod, min, max, avg"
         )
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
@@ -1775,7 +1777,8 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
         input_split_sizes (list[int], optional): List specifying how to split the first dimension of input tensor.
             Default: ``None``, which means splits evenly according to communication group size.
         op (str, optional): Specifies an operation used for element-wise reductions,
-            One of ReduceOp: 'SUM', 'MIN', 'MAX'. Default: ``ReduceOp.SUM``.
+            One of ReduceOp: 'SUM', 'MIN', 'MAX', 'AVG'. On ``"avg"``, the result is the sum divided
+            by the group size. Default: ``ReduceOp.SUM``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False``.
@@ -1831,9 +1834,9 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
         raise ValueError("Non-inplace mode is currently not supported.")
     if not isinstance(op, str):
         raise TypeError("For reduce_scatter_tensor_uneven, the input op type must be str")
-    if op not in ("sum", "min", "max"):
+    if op not in ("sum", "min", "max", "avg"):
         raise TypeError(
-            "For reduce_scatter_tensor_uneven, the input op value must be one of sum, prod, min, max"
+            "For reduce_scatter_tensor_uneven, the input op value must be one of sum, min, max, avg"
         )
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
@@ -1868,7 +1871,8 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
     Args:
         tensor (Tensor): Input and output of the collective. The function operates in-place.
         dst (int): The target rank of the process(global rank) that receives the reduced output.
-        op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, and min.
+        op (str, optional): Specifies an operation used for element-wise reductions, like sum, prod, max, min
+            and avg. On ``"avg"``, the result is the sum divided by the group size.
             Default: ``ReduceOp.SUM``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -1923,9 +1927,9 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
         raise TypeError("For reduce, the dst must be int")
     if not isinstance(op, str):
         raise TypeError("For reduce, the input op type must be str")
-    if op not in ("sum", "prod", "min", "max"):
+    if op not in ("sum", "prod", "min", "max", "avg"):
         raise TypeError(
-            "For reduce, the input op value must be one of sum, prod, min, max"
+            "For reduce, the input op value must be one of sum, prod, min, max, avg"
         )
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
@@ -3202,7 +3206,8 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
         output (Tensor): The output tensor.
         input_list (list[Tensor]): List of tensors to reduce and scatter.
         op (str, optional): Specifies an operation used for element-wise reductions,
-            like SUM and MAX. Default: ``ReduceOp.SUM``.
+            like ``"sum"``, ``"prod"``, ``"max"``, ``"min"``, and ``"avg"``. On ``"avg"``,
+            the result is the sum divided by the group size. Default: ``ReduceOp.SUM`` 
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False``.
@@ -3268,9 +3273,9 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
         )
     if not isinstance(op, str):
         raise TypeError("For reduce_scatter, the input op type must be str")
-    if op not in ("sum", "prod", "min", "max"):
+    if op not in ("sum", "prod", "min", "max", "avg"):
         raise TypeError(
-            "For reduce_scatter, the input op value must be one of sum, prod, min, max"
+            "For reduce_scatter, the input op value must be one of sum, prod, min, max, avg"
         )
     rank_size = get_cache_group_size(group)
     _check_group_tensor_list(input_list, rank_size)

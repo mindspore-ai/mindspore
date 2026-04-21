@@ -26,6 +26,7 @@
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -71,7 +72,10 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
     PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
     PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, {other_tensor});
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
-    auto op_type_enum = HcomUtil::GetHcomReduceOpType(GetValue<std::string>(op_type));
+    auto op_type_str = GetValue<std::string>(op_type);
+    bool is_avg = (op_type_str == "avg");
+    auto real_op_type = is_avg ? "sum" : op_type_str;
+    auto op_type_enum = HcomUtil::GetHcomReduceOpType(real_op_type);
 
     auto input_split_sizes_vec = ConvertValueTupleToVector<int64_t>(input_split_sizes);
     auto rank_size_val = GetValue<int64_t>(rank_size);
@@ -111,7 +115,8 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
       }
     };
 
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, /*rank=*/-1,
+                         /*avg_div_tensor=*/is_avg ? other_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }

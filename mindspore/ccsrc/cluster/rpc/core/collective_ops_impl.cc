@@ -30,7 +30,7 @@ const char kCollectivePhaseBroadcast[] = "broadcast";
 
 template <typename T>
 void calculate(T *output_buff, T *tmp_buff, size_t count, CollectiveOpReduceType reduce_op) {
-  if (reduce_op == CollectiveOpReduceType::Reduce_Sum) {
+  if (reduce_op == CollectiveOpReduceType::Reduce_Sum || reduce_op == CollectiveOpReduceType::Reduce_Mean) {
     for (size_t j = 0; j < count; j++) {
       output_buff[j] += tmp_buff[j];
     }
@@ -49,6 +49,16 @@ void calculate(T *output_buff, T *tmp_buff, size_t count, CollectiveOpReduceType
     for (size_t j = 0; j < count; j++) {
       output_buff[j] = tmp_buff[j] * output_buff[j];
     }
+  }
+}
+
+template <typename T>
+void calculate_mean(T *output_buff, size_t count, uint32_t rank_size, CollectiveOpReduceType reduce_op) {
+  if (reduce_op != CollectiveOpReduceType::Reduce_Mean) {
+    return;
+  }
+  for (size_t j = 0; j < count; j++) {
+    output_buff[j] = static_cast<T>(static_cast<double>(output_buff[j]) / static_cast<double>(rank_size));
   }
 }
 
@@ -645,11 +655,16 @@ bool CollectiveOpsImpl::AllReduce(const void *sendbuff, void *recvbuff, size_t c
     return false;
   }
 
+  bool ret;
   if (count >= rank_size_) {
-    return RingAllReduce<T>(sendbuff, recvbuff, count, (CollectiveOpReduceType)reduce_op, group_info);
+    ret = RingAllReduce<T>(sendbuff, recvbuff, count, (CollectiveOpReduceType)reduce_op, group_info);
   } else {
-    return ReduceBroadcastAllReduce<T>(sendbuff, recvbuff, count, (CollectiveOpReduceType)reduce_op, group_info);
+    ret = ReduceBroadcastAllReduce<T>(sendbuff, recvbuff, count, (CollectiveOpReduceType)reduce_op, group_info);
   }
+  if (ret) {
+    calculate_mean<T>(static_cast<T *>(recvbuff), count, rank_size_, (CollectiveOpReduceType)reduce_op);
+  }
+  return ret;
 }
 
 template <typename T>

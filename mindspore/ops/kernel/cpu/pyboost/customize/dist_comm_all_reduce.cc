@@ -39,10 +39,9 @@ void DistCommAllReduceCPUCustomize(const std::shared_ptr<OpRunner> &op, const Te
   op->set_outputs({tensor});
 
   std::unordered_map<std::string, CollectiveOpReduceType> kHcomReduceOpTypeMap = {
-    {"min", CollectiveOpReduceType::Reduce_Min},
-    {"max", CollectiveOpReduceType::Reduce_Max},
-    {"prod", CollectiveOpReduceType::Reduce_Prod},
-    {"sum", CollectiveOpReduceType::Reduce_Sum},
+    {"min", CollectiveOpReduceType::Reduce_Min},   {"max", CollectiveOpReduceType::Reduce_Max},
+    {"prod", CollectiveOpReduceType::Reduce_Prod}, {"sum", CollectiveOpReduceType::Reduce_Sum},
+    {"avg", CollectiveOpReduceType::Reduce_Mean},
   };
   auto iter = kHcomReduceOpTypeMap.find(GetValue<std::string>(op_type));
   if (iter == kHcomReduceOpTypeMap.end()) {

@@ -10,7 +10,7 @@ mindspore.ops.communication.all_reduce
 
     参数：
         - **tensor** (Tensor) - 输入和输出待归约操作的tensor，tensor的shape为 :math:`(x_1, x_2, ..., x_R)`，该函数输出直接覆盖输入。
-        - **op** (str，可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
+        - **op** (str，可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 、 ``"min"`` 和 ``"avg"`` 。使用 ``"avg"`` 时，结果为求和后除以组内设备数。默认值： ``ReduceOp.SUM`` 。
         - **group** (str，可选) - 通信组名称。默认值： ``None`` ，即Ascend平台表示为 ``"hccl_world_group"`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。
 

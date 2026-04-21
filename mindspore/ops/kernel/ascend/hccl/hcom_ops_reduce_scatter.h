@@ -47,6 +47,9 @@ class InnerCommReduceScatterKernel : public HcclKernel {
   bool same_shape_ = true;
   hccl::HcclReduceScatterVParams params_ = {};
   std::vector<uint64_t> send_size_byte_;
+  bool is_avg_{false};
+  std::string group_;
+  ScalarPtr avg_div_scalar_{nullptr};
 };
 MS_HCCL_REG_KERNEL(DistCommReduceScatter, InnerCommReduceScatterKernel);
 
