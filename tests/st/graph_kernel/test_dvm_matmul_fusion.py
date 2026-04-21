@@ -103,8 +103,8 @@ def test_dvm_matmul_fusion_2():
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x0 = Tensor(np.random.normal(1, 0.01, [2048, 2112]).astype(np.float32), dtype=mstype.bfloat16)
-    x1 = Tensor(np.random.normal(1, 0.01, [2112, 4096]).astype(np.float32), dtype=mstype.bfloat16)
+    x0 = Tensor(np.random.normal(0, 0.1, [2048, 2112]).astype(np.float32), dtype=mstype.bfloat16)
+    x1 = Tensor(np.random.normal(0, 0.1, [2112, 4096]).astype(np.float32), dtype=mstype.bfloat16)
     expect = get_output(Net2, [x0, x1], False)
     output = get_output(Net2, [x0, x1], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 4e-3, 4e-3)
@@ -119,9 +119,9 @@ def test_dvm_same_input_matmul_fusion_0():
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    y = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    z = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
+    x = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    y = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    z = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
     expect = get_output(SameInputMatMulNet0, [x, y, z], False)
     output = get_output(SameInputMatMulNet0, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
@@ -136,9 +136,9 @@ def test_dvm_same_input_matmul_fusion_1():
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    y = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
-    z = Tensor(np.random.normal(1, 0.01, [4096, 4096]).astype(np.float16))
+    x = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    y = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
+    z = Tensor(np.random.normal(0, 0.1, [4096, 4096]).astype(np.float16))
     expect = get_output(SameInputMatMulNet1, [x, y, z], False)
     output = get_output(SameInputMatMulNet1, [x, y, z], True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 2e-3, 2e-3)
