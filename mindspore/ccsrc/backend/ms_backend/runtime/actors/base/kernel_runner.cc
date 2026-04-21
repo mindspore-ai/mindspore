@@ -1717,6 +1717,84 @@ bool KernelRunner::LaunchKernelHP(OpContext<KernelTensor> *const context, bool i
   return ret;
 }
 
+void KernelRunner::WaitCrossStreamEvents(const device::MultiStreamControllerPtr &controller,
+                                         uint32_t memory_stream_id) {
+  if (!common::AnfAlgo::HasNodeAttr("CrossStream", kernel_)) {
+    return;
+  }
+  auto all_cross_streams = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(kernel_, "CrossStream");
+  std::vector<uint32_t> unique_stream_list;
+  std::unordered_set<uint32_t> unique_stream_set;
+  for (auto s : all_cross_streams) {
+    if (unique_stream_set.insert(s).second) {
+      unique_stream_list.push_back(s);
+    }
+  }
+  for (auto s : unique_stream_list) {
+    auto cached_task_id = controller->GetCrossStreamTaskId(s);
+    auto max_task_id = std::max(cached_task_id, *(stream_send_actor_->task_id_on_stream_));
+    (void)controller->WaitEvent(max_task_id, s, memory_stream_id);
+  }
+}
+
+void KernelRunner::CollectCrossStreamInputs(uint32_t stream_id, int64_t task_id_on_stream,
+                                            std::vector<KernelTensor *> *cross_stream_kernel_tensors) {
+  size_t index = 0;
+  for (const auto &input_kernel_tensor : input_kernel_tensors_) {
+    if (is_monad_input_[index++]) {
+      continue;
+    }
+    MS_EXCEPTION_IF_NULL(input_kernel_tensor);
+    if (input_kernel_tensor->stream_id() == stream_id) {
+      continue;
+    }
+    if (input_kernel_tensor->task_id_on_stream() == nullptr) {
+      input_kernel_tensor->set_task_id_on_stream(task_id_on_stream_);
+      MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor
+                    << " task id on stream is nullptr, set task id for it.";
+    }
+    if (input_kernel_tensor->managed_by_somas()) {
+      MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor << " is managed by somas.";
+      continue;
+    }
+    if (input_kernel_tensor->device_ptr() == nullptr) {
+      MS_LOG(DEBUG) << "Input kernel tensor device ptr is nullptr.";
+      continue;
+    }
+    (void)cross_stream_addresses_.emplace_back(kDefaultStreamIndex, input_kernel_tensor->device_ptr());
+    if (!is_multi_stream_safe_) {
+      (void)cross_stream_kernel_tensors->emplace_back(input_kernel_tensor.get());
+    }
+  }
+}
+
+void KernelRunner::DispatchCrossStreamRecordWait(const device::MultiStreamControllerPtr &multi_stream_controller,
+                                                 uint32_t stream_id,
+                                                 const std::vector<KernelTensor *> &cross_stream_kernel_tensors) {
+  for (const auto &cross_stream_kernel_tensor : cross_stream_kernel_tensors) {
+    if (cross_stream_kernel_tensor->task_id_on_stream() == nullptr) {
+      continue;
+    }
+    auto user_stream_id = stream_id;
+    auto memory_stream_id = cross_stream_kernel_tensor->stream_id();
+    auto memory_task_id_on_stream = *cross_stream_kernel_tensor->task_id_on_stream();
+    auto safe_task_id_on_stream = multi_stream_controller->QueryTaskIdOnStream(user_stream_id, memory_stream_id);
+    if (safe_task_id_on_stream >= memory_task_id_on_stream) {
+      MS_LOG(DEBUG) << "Safe_task_id_on_stream : " << safe_task_id_on_stream
+                    << " is bigger than memory_task_id_on_stream : " << memory_task_id_on_stream << ".";
+      continue;
+    }
+    multi_stream_controller->DispatchRecordWaitEvent(user_stream_id, memory_stream_id);
+    user_stream_id = memory_stream_id;
+    memory_stream_id = stream_id;
+    auto last_task_id_on_stream = multi_stream_controller->GetTaskIdOnStream(user_stream_id);
+    MS_LOG(DEBUG) << "Dispatch wait stream start, user_stream_id : " << user_stream_id
+                  << ", memory_stream_id : " << memory_stream_id
+                  << ", last_task_id_on_stream : " << last_task_id_on_stream << ".";
+    (void)multi_stream_controller->WaitEvent(last_task_id_on_stream, user_stream_id, memory_stream_id);
+  }
+}
+
 void KernelRunner::ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kProcessMultiStream, GetAID().Name());
   auto device_context = device_contexts_[0];
@@ -1761,6 +1839,7 @@ void KernelRunner::ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> 
     // Here, need get task id on stream from send node.
     (void)multi_stream_controller->WaitEvent(*(stream_send_actor_->task_id_on_stream_), user_stream_id,
                                              memory_stream_id);
+    WaitCrossStreamEvents(multi_stream_controller, memory_stream_id);
     return;
   }
 
@@ -1770,66 +1849,10 @@ void KernelRunner::ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> 
   }
 
   std::vector<KernelTensor *> cross_stream_kernel_tensors;
-  size_t index = 0;
-  for (const auto &input_kernel_tensor : input_kernel_tensors_) {
-    if (is_monad_input_[index++]) {
-      continue;
-    }
-    MS_EXCEPTION_IF_NULL(input_kernel_tensor);
-    if (input_kernel_tensor->stream_id() == stream_id) {
-      continue;
-    }
-    if (input_kernel_tensor->task_id_on_stream() == nullptr) {
-      input_kernel_tensor->set_task_id_on_stream(task_id_on_stream_);
-      MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor
-                    << " task id on stream is nullptr, set task id for it.";
-    }
-    if (input_kernel_tensor->managed_by_somas()) {
-      MS_LOG(DEBUG) << "Input_kernel_tensor : " << input_kernel_tensor << " is managed by somas.";
-      continue;
-    }
-    // Nullptr device ptr is normal case, here need skip these inputs.
-    if (input_kernel_tensor->device_ptr() == nullptr) {
-      MS_LOG(DEBUG) << "Input kernel tensor device ptr is nullptr.";
-      continue;
-    }
-    (void)cross_stream_addresses_.emplace_back(kDefaultStreamIndex, input_kernel_tensor->device_ptr());
-    if (!is_multi_stream_safe_) {
-      (void)cross_stream_kernel_tensors.emplace_back(input_kernel_tensor.get());
-    }
-  }
+  CollectCrossStreamInputs(stream_id, task_id_on_stream, &cross_stream_kernel_tensors);
 
-  // Dispatch record/wait.
   if (!is_multi_stream_safe_) {
-    for (const auto &cross_stream_kernel_tensor : cross_stream_kernel_tensors) {
-      // Nullptr of task id on stream is normal case.
-      // If cross_stream_kernel_tensor's task id on stream is nullptr, kernel tensor must be safe.
-      // Data prepare actor, data source actor and so on has prepare device tensors without task id on stream, and
-      // those device tensors is multi-stream safe.
-      if (cross_stream_kernel_tensor->task_id_on_stream() == nullptr) {
-        continue;
-      }
-      // Input kernel tensor is memory stream id, this is important.
-      auto user_stream_id = stream_id;
-      auto memory_stream_id = cross_stream_kernel_tensor->stream_id();
-      auto memory_task_id_on_stream = *cross_stream_kernel_tensor->task_id_on_stream();
-      auto safe_task_id_on_stream = multi_stream_controller->QueryTaskIdOnStream(user_stream_id, memory_stream_id);
-      if (safe_task_id_on_stream >= memory_task_id_on_stream) {
-        MS_LOG(DEBUG) << "Safe_task_id_on_stream : " << safe_task_id_on_stream
-                      << " is bigger than memory_task_id_on_stream : " << memory_task_id_on_stream << ".";
-        continue;
-      }
-      multi_stream_controller->DispatchRecordWaitEvent(user_stream_id, memory_stream_id);
-      // Add recv process.
-      user_stream_id = memory_stream_id;
-      memory_stream_id = stream_id;
-      auto last_task_id_on_stream = multi_stream_controller->GetTaskIdOnStream(user_stream_id);
-      MS_LOG(DEBUG) << "Dispatch wait stream start, user_stream_id : " << user_stream_id
-                    << ", memory_stream_id : " << memory_stream_id
-                    << ", last_task_id_on_stream : " << last_task_id_on_stream << ".";
-      // Here, need get task id on stream from send node.
-      (void)multi_stream_controller->WaitEvent(last_task_id_on_stream, user_stream_id, memory_stream_id);
-    }
+    DispatchCrossStreamRecordWait(multi_stream_controller, stream_id, cross_stream_kernel_tensors);
   }
 }
 
@@ -1857,6 +1880,9 @@ void KernelRunner::ProcessMultiStreamAfterKernelLaunch(OpContext<KernelTensor> *
       auto device_context = device_contexts_[0];
       auto &multi_stream_controller = device::DeviceContextManager::GetInstance().GetMultiStreamController(
         device_context->device_context_key().device_type_);
+      if (common::AnfAlgo::HasNodeAttr("CrossStreamNode", kernel_)) {
+        multi_stream_controller->SetCrossStreamTaskId(stream_id, *task_id_on_stream_);
+      }
       multi_stream_controller->RecordEvent(*task_id_on_stream_, stream_id, cross_stream_addresses_);
     }
   }

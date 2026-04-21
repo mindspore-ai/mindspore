@@ -172,6 +172,12 @@ class KernelRunner {
   virtual void UpdateRefDeviceAddress(OpContext<KernelTensor> *const context, bool increase_ref_count);
   // Execute kernel actor multi stream produre to make sure safety of memory before kernel launch.
   void ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> *const context);
+  void WaitCrossStreamEvents(const device::MultiStreamControllerPtr &controller, uint32_t memory_stream_id);
+  void CollectCrossStreamInputs(uint32_t stream_id, int64_t task_id_on_stream,
+                                std::vector<KernelTensor *> *cross_stream_kernel_tensors);
+  void DispatchCrossStreamRecordWait(const device::MultiStreamControllerPtr &multi_stream_controller,
+                                     uint32_t stream_id,
+                                     const std::vector<KernelTensor *> &cross_stream_kernel_tensors);
   // Execute kernel actor multi stream produre to make sure safety of memory after kernel launch.
   void ProcessMultiStreamAfterKernelLaunch(OpContext<KernelTensor> *const context);
   // Update the output ref count of graph output kernel.
