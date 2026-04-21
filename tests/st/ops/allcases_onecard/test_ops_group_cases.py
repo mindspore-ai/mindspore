@@ -322,6 +322,8 @@ ops_group_cases_registry_level1 = {
     'other_op': [
         op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_dynamic_forward),
         op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_dynamic_backward),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_error),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_error_kbk),
     ]
 }
 
