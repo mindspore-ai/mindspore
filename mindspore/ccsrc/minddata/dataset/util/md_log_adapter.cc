@@ -41,7 +41,7 @@ std::string MDLogAdapter::ConstructMsg(const enum StatusCode &status_code, const
   if (err_description.find("[Internal ERROR]") != std::string::npos) {
     ss << kSplitLine << "- Framework Unexpected Exception Raised: \n" << kSplitLine;
     ss << "This exception is caused by framework's unexpected error. Please create an issue at "
-       << "https://gitee.com/mindspore/mindspore/issues to get help.\n\n";
+       << "https://atomgit.com/mindspore/mindspore/issues to get help.\n\n";
   }
 
   /// Python Stack
