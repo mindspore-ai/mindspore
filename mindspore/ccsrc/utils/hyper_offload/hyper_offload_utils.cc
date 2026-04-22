@@ -20,14 +20,18 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "abstract/abstract_value.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
@@ -41,6 +45,7 @@ namespace utils {
 namespace hyper_offload {
 namespace {
 constexpr std::string_view kMsDevHyperOffloadEnv = "MS_DEV_HYPER_OFFLOAD";
+constexpr std::string_view kMsDevHyperOffloadPeakStrategyEnv = "MS_DEV_HYPER_OFFLOAD_PEAK_STRATEGY";
 constexpr std::string_view kSelectDistanceConfig = "HYPER_OFFLOAD_SELECT_DISTANCE";
 constexpr std::string_view kSelectNumConfig = "HYPER_OFFLOAD_SELECT_NUM";
 constexpr std::string_view kPrefetchDistanceConfig = "HYPER_OFFLOAD_PREFETCH_DISTANCE";
@@ -56,11 +61,122 @@ constexpr std::string_view kOffloadPercentageConfig = "MS_DEV_HYPER_OFFLOAD_FILT
 constexpr std::string_view kPrefetchDistanceAttr = "prefetch_distance";
 constexpr std::string_view kReleaseDistanceAttr = "release_distance";
 constexpr std::string_view kEnableOffloadAttr = "enable_offload";
+constexpr auto kSwitchTrueBranchNumAttr = "TrueBranchNodeNum";
+constexpr auto kSwitchFalseBranchNumAttr = "FalseBranchNodeNum";
 
 constexpr size_t kPrimaryDataInputIndex = 1;
+constexpr size_t kConditionSwitchFirstDataInputIndex = 2;
 constexpr size_t kCopyToHostInputSize = 3;
 constexpr size_t kCopyToHostExtInputSize = 5;
 constexpr size_t kCopyToDeviceInputSize = 4;
+constexpr size_t kSwitchBranchNameTupleSize = 2;
+constexpr size_t kSwitchFalseBranchNameIndex = 0;
+constexpr size_t kSwitchTrueBranchNameIndex = 1;
+
+bool IsConditionSwitchDataInput(const AnfNodePtr &node, size_t input_index) {
+  return IsPrimitiveCNode(node, prim::kPrimConditionSwitch) && input_index >= kConditionSwitchFirstDataInputIndex;
+}
+
+struct ConditionSwitchBranchNames {
+  std::string false_branch_name;
+  std::string true_branch_name;
+};
+
+std::optional<std::string> GetInlineBranchName(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
+  const auto &iter = inline_sub_graph_kernels.find(node);
+  if (iter == inline_sub_graph_kernels.end()) {
+    return std::nullopt;
+  }
+  return iter->second;
+}
+
+std::optional<ConditionSwitchBranchNames> GetConditionSwitchBranchNames(const CNodePtr &switch_node) {
+  MS_EXCEPTION_IF_NULL(switch_node);
+  const auto &inline_sub_graph_names = switch_node->GetAttr(kInlineSubGraphName);
+  if (inline_sub_graph_names == nullptr || !inline_sub_graph_names->isa<ValueTuple>()) {
+    return std::nullopt;
+  }
+  const auto &tuple_name = inline_sub_graph_names->cast<ValueTuplePtr>()->value();
+  if (tuple_name.size() != kSwitchBranchNameTupleSize) {
+    return std::nullopt;
+  }
+  ConditionSwitchBranchNames branch_names;
+  branch_names.false_branch_name = GetValue<std::string>(tuple_name[kSwitchFalseBranchNameIndex]);
+  branch_names.true_branch_name = GetValue<std::string>(tuple_name[kSwitchTrueBranchNameIndex]);
+  return branch_names;
+}
+
+std::optional<bool> MatchConditionSwitchBranch(const ConditionSwitchBranchNames &branch_names,
+                                               const std::string &branch_name) {
+  if (branch_name == branch_names.true_branch_name) {
+    return true;
+  }
+  if (branch_name == branch_names.false_branch_name) {
+    return false;
+  }
+  return std::nullopt;
+}
+
+std::optional<std::pair<size_t, size_t>> BuildConditionSwitchBranchRange(size_t switch_index, size_t exec_order_size,
+                                                                         size_t true_branch_node_num,
+                                                                         size_t false_branch_node_num,
+                                                                         bool is_true_branch) {
+  if (true_branch_node_num == 0 || false_branch_node_num == 0 || switch_index + 1 >= exec_order_size) {
+    return std::nullopt;
+  }
+  const size_t true_branch_start = switch_index + 1;
+  if (true_branch_node_num > exec_order_size - true_branch_start) {
+    return std::nullopt;
+  }
+  const size_t true_branch_end = true_branch_start + true_branch_node_num - 1;
+  const size_t false_branch_start = true_branch_end + 1;
+  if (false_branch_start >= exec_order_size || false_branch_node_num > exec_order_size - false_branch_start) {
+    return std::nullopt;
+  }
+  const size_t false_branch_end = false_branch_start + false_branch_node_num - 1;
+  return is_true_branch ? std::make_pair(true_branch_start, true_branch_end)
+                        : std::make_pair(false_branch_start, false_branch_end);
+}
+
+std::optional<std::pair<size_t, size_t>> GetConditionSwitchBranchRange(const CNodePtr &switch_node, size_t switch_index,
+                                                                       size_t exec_order_size, bool is_true_branch) {
+  MS_EXCEPTION_IF_NULL(switch_node);
+  const auto &true_branch_node_num_value = switch_node->GetAttr(kSwitchTrueBranchNumAttr);
+  const auto &false_branch_node_num_value = switch_node->GetAttr(kSwitchFalseBranchNumAttr);
+  if (true_branch_node_num_value == nullptr || false_branch_node_num_value == nullptr) {
+    return std::nullopt;
+  }
+  const size_t true_branch_node_num = GetValue<size_t>(true_branch_node_num_value);
+  const size_t false_branch_node_num = GetValue<size_t>(false_branch_node_num_value);
+  return BuildConditionSwitchBranchRange(switch_index, exec_order_size, true_branch_node_num, false_branch_node_num,
+                                         is_true_branch);
+}
+
+std::optional<std::pair<size_t, size_t>> GetInlineBranchIndexRangeBySwitch(const CNodePtrList &exec_order,
+                                                                           const std::string &branch_name) {
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    const auto &node = exec_order[i];
+    if (!IsPrimitiveCNode(node, prim::kPrimConditionSwitch)) {
+      continue;
+    }
+    const auto branch_names = GetConditionSwitchBranchNames(node);
+    if (!branch_names.has_value()) {
+      continue;
+    }
+    const auto is_true_branch = MatchConditionSwitchBranch(*branch_names, branch_name);
+    if (!is_true_branch.has_value()) {
+      continue;
+    }
+    const auto branch_range = GetConditionSwitchBranchRange(node, i, exec_order.size(), *is_true_branch);
+    if (branch_range.has_value()) {
+      return branch_range;
+    }
+  }
+  return std::nullopt;
+}
 
 std::string GetParameterDeviceStr(const AnfNodePtr &node) {
   constexpr auto kParameterDeviceUserDataName = "parameter_device";
@@ -145,6 +261,7 @@ HyperOffloadConfig &HyperOffloadConfig::GetInstance() {
 
 HyperOffloadConfig::HyperOffloadConfig() {
   enable_hyper_offload_ = (common::GetEnv(std::string(kMsDevHyperOffloadEnv)) == "1");
+  enable_hyper_offload_peak_strategy_ = (common::GetEnv(std::string(kMsDevHyperOffloadPeakStrategyEnv)) == "1");
   if (enable_hyper_offload_) {
     select_distance_ = ParseCompileConfigAsSize(kSelectDistanceConfig);
     select_num_ = ParseCompileConfigAsSize(kSelectNumConfig);
@@ -171,6 +288,97 @@ bool IsStageEnabled(int64_t stage_id, const std::set<int64_t> &enabled_stages) {
     return true;
   }
   return enabled_stages.find(stage_id) != enabled_stages.end();
+}
+
+std::vector<size_t> GetRefOutputIndexesForInput(const KernelWithIndex &user_node) {
+  std::vector<size_t> ref_output_indexes;
+  const auto &node = user_node.first;
+  if (node == nullptr || user_node.second == 0 || !node->isa<CNode>()) {
+    return ref_output_indexes;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (user_node.second >= cnode->inputs().size()) {
+    return ref_output_indexes;
+  }
+  const size_t tensor_input_index = user_node.second - 1;
+  if (tensor_input_index >= common::AnfAlgo::GetInputTensorNum(cnode)) {
+    return ref_output_indexes;
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
+  if (kernel_info == nullptr) {
+    return ref_output_indexes;
+  }
+  for (const auto &ref : kernel_info->out_in_ref_map()) {
+    if (ref.second == tensor_input_index) {
+      ref_output_indexes.emplace_back(ref.first);
+    }
+  }
+  return ref_output_indexes;
+}
+
+bool IsRefInputUser(const KernelWithIndex &user_node) { return !GetRefOutputIndexesForInput(user_node).empty(); }
+
+bool IsRefOutput(const KernelWithIndex &node_output) {
+  const auto &node = node_output.first;
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
+  if (kernel_info == nullptr) {
+    return false;
+  }
+  return kernel_info->out_in_ref_map().count(node_output.second) != 0;
+}
+
+std::optional<std::pair<size_t, size_t>> GetInlineBranchIndexRange(const FuncGraphPtr &graph,
+                                                                   const CNodePtrList &exec_order,
+                                                                   const AnfNodePtr &node) {
+  if (graph == nullptr || node == nullptr || exec_order.empty()) {
+    return std::nullopt;
+  }
+  const auto &kernel_graph = graph->cast<KernelGraphPtr>();
+  if (kernel_graph == nullptr || kernel_graph->inline_sub_graph_kernels().empty()) {
+    return std::nullopt;
+  }
+  const auto branch_name = GetInlineBranchName(kernel_graph, node);
+  if (!branch_name.has_value()) {
+    return std::nullopt;
+  }
+  const auto switch_branch_range = GetInlineBranchIndexRangeBySwitch(exec_order, *branch_name);
+  if (switch_branch_range.has_value()) {
+    return switch_branch_range;
+  }
+
+  bool found = false;
+  size_t branch_start = 0;
+  size_t branch_end = 0;
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    const auto current_branch_name = GetInlineBranchName(kernel_graph, exec_order[i]);
+    if (!current_branch_name.has_value() || *current_branch_name != *branch_name) {
+      continue;
+    }
+    if (!found) {
+      branch_start = i;
+      found = true;
+    }
+    branch_end = i;
+  }
+  if (!found) {
+    return std::nullopt;
+  }
+  return std::make_pair(branch_start, branch_end);
+}
+
+std::optional<size_t> GetInlineBranchStartAttachIndex(const FuncGraphPtr &graph, const CNodePtrList &exec_order,
+                                                      const AnfNodePtr &node) {
+  const auto branch_range = GetInlineBranchIndexRange(graph, exec_order, node);
+  if (!branch_range.has_value()) {
+    return std::nullopt;
+  }
+  return branch_range->first == 0 ? 0 : branch_range->first - 1;
 }
 
 bool IsD2HNode(const AnfNodePtr &node) {
@@ -212,11 +420,27 @@ bool IsInplaceNode(const AnfNodePtr &node) {
 
 KernelWithIndex GetRealDataNodeWithIndex(const AnfNodePtr &node) {
   auto res = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false);
-  while (IsViewNode(res.first)) {
-    auto cnode = res.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kPrimaryDataInputIndex, "View node input size is not correct");
-    res = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kPrimaryDataInputIndex), 0, false);
+  while (true) {
+    if (IsViewNode(res.first)) {
+      auto cnode = res.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kPrimaryDataInputIndex,
+                                 "View node input size is not correct");
+      res = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kPrimaryDataInputIndex), 0, false);
+      continue;
+    }
+    if (IsPrimitiveCNode(res.first, prim::kPrimConditionSwitch)) {
+      auto switch_node = res.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(switch_node);
+      const size_t data_input_index = res.second + kConditionSwitchFirstDataInputIndex;
+      if (data_input_index >= switch_node->inputs().size()) {
+        break;
+      }
+      // ConditionSwitch forwards data inputs to branch consumers without materializing them on device.
+      res = common::AnfAlgo::VisitKernelWithReturnType(switch_node->input(data_input_index), 0, false);
+      continue;
+    }
+    break;
   }
   return res;
 }
@@ -225,6 +449,11 @@ bool IsValidOffloadNode(const UserInfo &user_info) {
   auto node = user_info.node.first;
   MS_EXCEPTION_IF_NULL(node);
   if (!AnfUtils::IsRealKernel(node)) {
+    return false;
+  }
+  if (IsRefOutput(user_info.node)) {
+    MS_LOG(INFO) << "Skip HyperOffload ref output node: " << node->fullname_with_scope()
+                 << ", output index: " << user_info.node.second;
     return false;
   }
   if (IsOneOfPrimitiveCNode(node, {prim::kPrimMoveTo, prim::kPrimTensorMove, prim::kPrimConditionSwitch})) {
@@ -251,18 +480,46 @@ bool IsValidOffloadNode(const UserInfo &user_info) {
   return true;
 }
 
+namespace {
+bool ProducerAbstractOkForCollectUsers(const KernelWithIndex &producer) {
+  const auto &node = producer.first;
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abs = node->abstract();
+  if (abs == nullptr) {
+    return false;
+  }
+  if (abs->isa<abstract::AbstractTensor>()) {
+    return true;
+  }
+  if (!HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy()) {
+    return false;
+  }
+  auto tuple_abs = abs->cast_ptr<abstract::AbstractTuple>();
+  if (tuple_abs == nullptr || producer.second >= tuple_abs->elements().size()) {
+    return false;
+  }
+  // Keep tensor tuple-output producers visible only to peak strategy for now, to avoid changing
+  // distance-based candidate collection through this shared utility path.
+  const auto &output_abs = tuple_abs->elements()[producer.second];
+  return output_abs != nullptr && output_abs->isa<abstract::AbstractTensor>();
+}
+}  // namespace
+
 UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
   UserInfoList user_info_list;
   MS_LOG(INFO) << "Collecting node users from " << nodes.size() << " nodes";
   for (const CNodePtr &node : nodes) {
     for (size_t i = 0; i < node->inputs().size(); ++i) {
+      if (IsConditionSwitchDataInput(node, i)) {
+        continue;
+      }
       const auto &input = node->input(i);
       const auto &cur_kernel_with_index = GetRealDataNodeWithIndex(input);
       auto real_input = cur_kernel_with_index.first;
       if (real_input == nullptr || !real_input->isa<CNode>()) {
         continue;
       }
-      if (real_input->abstract() == nullptr || !real_input->abstract()->isa<abstract::AbstractTensor>()) {
+      if (!ProducerAbstractOkForCollectUsers(cur_kernel_with_index)) {
         continue;
       }
       auto iter = std::find_if(user_info_list.begin(), user_info_list.end(),
@@ -560,7 +817,11 @@ size_t FindLastUserIndex(const CNodePtrList &exec_order, const AnfNodePtr &data_
   const auto &[target_node, target_index] = GetRealDataNodeWithIndex(data_node);
   for (size_t i = exec_order.size() - 1; i > current_node_index; --i) {
     const auto &node = exec_order[i];
-    for (const auto &input : node->inputs()) {
+    for (size_t input_index = 0; input_index < node->inputs().size(); ++input_index) {
+      if (IsConditionSwitchDataInput(node, input_index)) {
+        continue;
+      }
+      const auto &input = node->input(input_index);
       // Get original data node to handle view-inplace scenario
       const auto &[cur_node, cur_index] = GetRealDataNodeWithIndex(input);
       MS_EXCEPTION_IF_NULL(cur_node);

@@ -19,6 +19,7 @@
 
 #include <map>
 #include <vector>
+
 #include "ir/anf.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
@@ -33,19 +34,14 @@ struct PeakEstimateCandidate {
   UserInfo user_info;
   size_t size;
   size_t creation_index;
-  size_t last_usage_index;
+  size_t last_usage_index;  // Aligned with profile modeling (OutputLastUsageMap after missing-table extension).
 };
 
 /**
- * @brief Build memory profile (bytes per execution index) and offload candidates.
- * @param user_info_list User info from graph analysis
- * @param node_to_index Node to execution order index map
- * @param order_size Execution order size
- * @param parameter_memory_baseline Total parameter memory (bytes)
- * @param memory_profile Output: memory bytes at each index
- * @param all_candidates Output: offload candidates
- * @param index_order Execution order for indices (use mem_reuse when subgraph_multi_call)
- * @param graph FuncGraph for output/summary resolution
+ * @brief Build the modeled memory profile and peak-offload candidates.
+ * @note The function prefers `memory_block.csv` when it is available. If the table cannot be loaded,
+ *       it falls back to static tensor-size estimation and uses `parameter_memory_baseline` as the
+ *       profile baseline.
  */
 void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
                                      const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size,
@@ -54,14 +50,25 @@ void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
                                      const CNodePtrList &index_order, const FuncGraphPtr &graph);
 
 /**
- * @brief Reduce memory profile in [start_index, end_index) by size (simulate offload).
+ * @brief Extend UserInfo.users so ReplaceInfo/offload spans reach schedule last-use.
+ */
+void AugmentUserInfoListForOffloadSpan(UserInfoList *user_info_list, const CNodePtrList &index_order,
+                                       const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size);
+
+/**
+ * @brief Reduce memory profile in [start_index, end_index) by size.
  */
 void ReduceMemoryProfile(size_t start_index, size_t end_index, size_t size, std::vector<size_t> *memory_profile);
 
 /**
- * @brief Compute total parameter memory (bytes) for graph.
+ * @brief Compute total parameter memory used as the fallback profile baseline.
  */
 size_t ComputeTotalParameterMemory(const FuncGraphPtr &graph);
+
+/**
+ * @brief Query the one-step workspace pulse used by peak modeling for a node.
+ */
+size_t GetNodeWorkspacePulseForProfile(const AnfNodePtr &node);
 
 }  // namespace hyper_offload
 }  // namespace utils

@@ -101,6 +101,7 @@ class COMMON_EXPORT HyperOffloadConfig {
   void operator=(const HyperOffloadConfig &) = delete;
 
   bool enable_hyper_offload() const { return enable_hyper_offload_; }
+  bool enable_hyper_offload_peak_strategy() const { return enable_hyper_offload_peak_strategy_; }
   size_t select_distance() const { return select_distance_; }
   size_t select_num() const { return select_num_; }
   size_t prefetch_distance() const { return prefetch_distance_; }
@@ -117,6 +118,7 @@ class COMMON_EXPORT HyperOffloadConfig {
   HyperOffloadConfig();
 
   bool enable_hyper_offload_{false};
+  bool enable_hyper_offload_peak_strategy_{false};
   size_t select_distance_{0};
   size_t select_num_{0};
   size_t prefetch_distance_{0};
@@ -148,6 +150,20 @@ COMMON_EXPORT bool IsValidOffloadNode(const UserInfo &user_info);
 COMMON_EXPORT UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes);
 // Check if a pipeline stage is enabled.
 COMMON_EXPORT bool IsStageEnabled(int64_t stage_id, const std::set<int64_t> &enabled_stages);
+// Return ref output indexes whose input is the given CNode raw input index.
+COMMON_EXPORT std::vector<size_t> GetRefOutputIndexesForInput(const KernelWithIndex &user_node);
+// Check whether the given CNode raw input index participates in an output-input ref pair.
+COMMON_EXPORT bool IsRefInputUser(const KernelWithIndex &user_node);
+// Check whether the given output participates in an output-input ref pair.
+COMMON_EXPORT bool IsRefOutput(const KernelWithIndex &node_output);
+// Get the execution-order range of the inline control-flow branch that a node belongs to.
+COMMON_EXPORT std::optional<std::pair<size_t, size_t>> GetInlineBranchIndexRange(const FuncGraphPtr &graph,
+                                                                                 const CNodePtrList &exec_order,
+                                                                                 const AnfNodePtr &node);
+// Get the attach slot immediately before the inline branch that a node belongs to.
+COMMON_EXPORT std::optional<size_t> GetInlineBranchStartAttachIndex(const FuncGraphPtr &graph,
+                                                                    const CNodePtrList &exec_order,
+                                                                    const AnfNodePtr &node);
 // Build a ToHost (D2H) node.
 COMMON_EXPORT CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
                                        const HandleNewNodeCallback &callback = nullptr);

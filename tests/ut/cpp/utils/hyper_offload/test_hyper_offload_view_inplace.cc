@@ -16,11 +16,13 @@
 
 #include <memory>
 
+#include "abstract/abstract_value.h"
 #include "common/common_test.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
+#include "primitive/framework_ops.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
 namespace mindspore {
@@ -215,9 +217,117 @@ TEST_F(TestHyperOffloadViewInplace, TestCollectAllNodeUsersSkipViewNode) {
 }
 
 // Feature: HyperOffload Utils
+// Description: Test CollectAllNodeUsers with tuple producer outputs
+// Expectation: Tuple producer outputs are collected as distinct KernelWithIndex entries only in peak strategy mode
+TEST_F(TestHyperOffloadViewInplace, test_collect_all_node_users_tuple_producer_outputs) {
+  auto funcGraph = std::make_shared<FuncGraph>();
+  auto tensorAbstract = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{1});
+  auto tupleAbstract =
+    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{tensorAbstract, tensorAbstract});
+
+  auto sourcePrimitive = std::make_shared<Primitive>("TupleSource");
+  auto sourceNode = funcGraph->NewCNode({NewValueNode(sourcePrimitive)});
+  sourceNode->set_abstract(tupleAbstract);
+
+  auto tupleGetItemPrimitive = prim::kPrimTupleGetItem;
+  auto getItemNode0 =
+    funcGraph->NewCNode({NewValueNode(tupleGetItemPrimitive), sourceNode, NewValueNode(static_cast<int64_t>(0))});
+  getItemNode0->set_abstract(tensorAbstract);
+  auto getItemNode1 =
+    funcGraph->NewCNode({NewValueNode(tupleGetItemPrimitive), sourceNode, NewValueNode(static_cast<int64_t>(1))});
+  getItemNode1->set_abstract(tensorAbstract);
+
+  auto userPrimitive0 = std::make_shared<Primitive>("User0");
+  auto userNode0 = funcGraph->NewCNode({NewValueNode(userPrimitive0), getItemNode0});
+  userNode0->set_abstract(tensorAbstract);
+  auto userPrimitive1 = std::make_shared<Primitive>("User1");
+  auto userNode1 = funcGraph->NewCNode({NewValueNode(userPrimitive1), getItemNode1});
+  userNode1->set_abstract(tensorAbstract);
+
+  CNodePtrList executionOrder = {sourceNode, userNode0, userNode1};
+  auto userInfos = CollectAllNodeUsers(executionOrder);
+  const bool peakStrategyEnabled = HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy();
+
+  bool foundOutput0 = false;
+  bool foundOutput1 = false;
+  size_t sourceNodeEntryCount = 0;
+  for (const auto &userInfo : userInfos) {
+    if (userInfo.node.first != sourceNode) {
+      continue;
+    }
+    ++sourceNodeEntryCount;
+    if (userInfo.node.second == 0) {
+      foundOutput0 = true;
+      ASSERT_EQ(userInfo.users.size(), 1);
+      EXPECT_EQ(userInfo.users[0].first, userNode0);
+    } else if (userInfo.node.second == 1) {
+      foundOutput1 = true;
+      ASSERT_EQ(userInfo.users.size(), 1);
+      EXPECT_EQ(userInfo.users[0].first, userNode1);
+    }
+  }
+
+  if (peakStrategyEnabled) {
+    EXPECT_EQ(sourceNodeEntryCount, 2);
+    EXPECT_TRUE(foundOutput0);
+    EXPECT_TRUE(foundOutput1);
+  } else {
+    EXPECT_EQ(sourceNodeEntryCount, 0);
+    EXPECT_FALSE(foundOutput0);
+    EXPECT_FALSE(foundOutput1);
+  }
+}
+
+// Feature: HyperOffload Utils
+// Description: Test CollectAllNodeUsers with tuple producer event output
+// Expectation: Event tuple outputs are not collected as HyperOffload candidates
+TEST_F(TestHyperOffloadViewInplace, test_collect_all_node_users_skips_event_tuple_output) {
+  auto funcGraph = std::make_shared<FuncGraph>();
+  auto tensorAbstract = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{1});
+  auto eventAbstract =
+    std::make_shared<abstract::AbstractEvent>(std::make_shared<Event>(0), std::make_shared<EventType>(), 0);
+  auto tupleAbstract =
+    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{eventAbstract, tensorAbstract});
+
+  auto sourcePrimitive = std::make_shared<Primitive>("TupleSource");
+  auto sourceNode = funcGraph->NewCNode({NewValueNode(sourcePrimitive)});
+  sourceNode->set_abstract(tupleAbstract);
+
+  auto getEventNode =
+    funcGraph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sourceNode, NewValueNode(static_cast<int64_t>(0))});
+  getEventNode->set_abstract(eventAbstract);
+  auto recvNode = funcGraph->NewCNode({NewValueNode(prim::kPrimStreamRecv), getEventNode});
+  recvNode->set_abstract(eventAbstract);
+
+  auto getTensorNode =
+    funcGraph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sourceNode, NewValueNode(static_cast<int64_t>(1))});
+  getTensorNode->set_abstract(tensorAbstract);
+  auto userPrimitive = std::make_shared<Primitive>("TensorUser");
+  auto userNode = funcGraph->NewCNode({NewValueNode(userPrimitive), getTensorNode});
+  userNode->set_abstract(tensorAbstract);
+
+  CNodePtrList executionOrder = {sourceNode, recvNode, userNode};
+  auto userInfos = CollectAllNodeUsers(executionOrder);
+  const bool peakStrategyEnabled = HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy();
+
+  bool foundEventOutput = false;
+  bool foundTensorOutput = false;
+  for (const auto &userInfo : userInfos) {
+    if (userInfo.node.first != sourceNode) {
+      continue;
+    }
+    foundEventOutput = foundEventOutput || userInfo.node.second == 0;
+    foundTensorOutput = foundTensorOutput || userInfo.node.second == 1;
+  }
+
+  EXPECT_FALSE(foundEventOutput);
+  EXPECT_EQ(foundTensorOutput, peakStrategyEnabled);
+}
+
+// Feature: HyperOffload Utils
 // Description: Test CollectAllNodeUsers with nested view nodes and TupleGetItem
 // Expectation: Correctly identifies target users and skips TupleGetItem users
-TEST_F(TestHyperOffloadViewInplace, TestCollectAllNodeUsersNestedViewTupleGetItem) {
+TEST_F(TestHyperOffloadViewInplace, test_collect_all_node_users_nested_view_tuple_get_item) {
   auto funcGraph = std::make_shared<FuncGraph>();
   auto tensorAbstract = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{1});
 

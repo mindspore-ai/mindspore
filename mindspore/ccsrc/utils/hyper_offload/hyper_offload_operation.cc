@@ -119,24 +119,51 @@ CNodePtrList HyperOffloadOperations::GetAllH2DNodes() const {
   return h2d_nodes;
 }
 
-void HyperOffloadOperations::MoveAhead(const CNodePtr &node, size_t ahead_distance) {
-  if (ahead_distance == 0) {
+size_t HyperOffloadOperations::GetNodeAttachIndex(const CNodePtr &node) const {
+  auto pos = GetAttachPosition(node);
+  return pos.is_pre ? 0 : pos.index;
+}
+
+void HyperOffloadOperations::MoveAhead(const CNodePtr &node, size_t ahead_distance, const CNodePtr &must_remain_after,
+                                       std::optional<size_t> min_attach_after_exec_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (ahead_distance == 0 && !min_attach_after_exec_idx.has_value()) {
     return;
   }
   auto pos = GetAttachPosition(node);
-
   if (pos.is_pre) {
     return;
   }
 
+  size_t capped_req_distance = ahead_distance;
+  if (must_remain_after != nullptr) {
+    const size_t after_index = GetNodeAttachIndex(must_remain_after);
+    if (pos.index > after_index) {
+      const size_t max_by_d2h = pos.index - after_index - 1;
+      capped_req_distance = std::min(ahead_distance, max_by_d2h);
+    }
+  }
+
+  const size_t old_slot = pos.index;
+  bool use_pre_ops = (old_slot < capped_req_distance);
+  size_t new_index = 0;
+  if (!use_pre_ops) {
+    new_index = old_slot - capped_req_distance;
+  }
+
+  if (min_attach_after_exec_idx.has_value()) {
+    const size_t lo = *min_attach_after_exec_idx;
+    if (use_pre_ops || new_index < lo) {
+      new_index = lo;
+      use_pre_ops = false;
+    }
+  }
+
   RemoveNode(node);
-  if (pos.index >= ahead_distance) {
-    size_t new_index = pos.index - ahead_distance;
-    MS_LOG(DEBUG) << "Moving node from " << pos.index << " to " << new_index;
-    AddOperationAfter(new_index, node);
-  } else {
-    MS_LOG(DEBUG) << "Moving node to pre-operations";
+  if (use_pre_ops) {
     AddPreOperation(node);
+  } else {
+    AddOperationAfter(new_index, node);
   }
 }
 

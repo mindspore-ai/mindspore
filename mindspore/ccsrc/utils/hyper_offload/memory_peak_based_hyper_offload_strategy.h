@@ -26,16 +26,6 @@ namespace utils {
 namespace hyper_offload {
 
 /**
- * @brief A contiguous execution range where memory exceeds max_device_memory threshold.
- */
-struct OffloadZone {
-  size_t start_index;
-  size_t end_index;
-  size_t peak_index;
-  size_t peak_memory;
-};
-
-/**
  * @brief Memory-peak-based strategy for selecting offload candidates when memory exceeds threshold.
  */
 class MemoryPeakBasedHyperOffloadStrategy : public HyperOffloadStrategy {

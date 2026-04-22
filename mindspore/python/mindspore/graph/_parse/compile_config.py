@@ -339,12 +339,15 @@ HYPER_OFFLOAD_RELEASE_DISTANCE = '0'
 
 """
 Name: HYPER_OFFLOAD_MAX_DEVICE_MEMORY
-Function: Max device memory in bytes; when > 0 use memory-peak-based offload strategy.
-          Backend applies ~10% safety margin (e.g. 60GB configured -> offload at ~54GB).
-Value Range: Int value (bytes), 0 to disable.
-    Default: 0
+Function: Max device memory threshold in bytes for memory-peak-based offload strategy.
+          Used when MS_DEV_HYPER_OFFLOAD_PEAK_STRATEGY=1.
+          Set this value according to the real available memory capacity of the target device.
+          Backend subtracts HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES as headroom before
+          comparing with the modeled peak.
+Value Range: Int value (bytes), 0 to disable peak candidate selection.
+    Default: 40GB
 """
-HYPER_OFFLOAD_MAX_DEVICE_MEMORY = '0'
+HYPER_OFFLOAD_MAX_DEVICE_MEMORY = '42949672960'
 
 """
 Name: HYPER_OFFLOAD_SCORE_WEIGHT_SIZE
@@ -377,6 +380,35 @@ Value Range: Float value.
     Default: 1.0
 """
 HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT = '1.0'
+
+"""
+Name: HYPER_OFFLOAD_MEMORY_BLOCK_PATH
+Function: Path to memory_block.csv for HyperOffload peak memory modeling.
+Value Range: File path string.
+    Default: Empty
+"""
+HYPER_OFFLOAD_MEMORY_BLOCK_PATH = ''
+
+"""
+Name: HYPER_OFFLOAD_DYNAMIC_SHAPE_PLACEHOLDER_BYTES
+Function: Placeholder memory size used by HyperOffload peak modeling fallback when a dynamic-shape operator cannot be
+    resolved precisely.
+Value Range: Int value (bytes).
+    Default: 128MB
+"""
+HYPER_OFFLOAD_DYNAMIC_SHAPE_PLACEHOLDER_BYTES = '134217728'
+
+"""
+Name: HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES
+Function: Reserved memory headroom subtracted from HYPER_OFFLOAD_MAX_DEVICE_MEMORY.
+    It is used when deciding whether the modeled peak already fits without additional offload
+    selection. This margin covers modeling error and runtime memory fluctuation.
+    It should be determined from the observed gap between modeled peak memory and actual
+    device memory usage on the target model and device.
+Value Range: Int value (bytes).
+    Default: 4GB
+"""
+HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES = '4294967296'
 
 """
 Name: PIJIT_SUBGRAPH_BREAK_OPTIMIZE
@@ -495,6 +527,9 @@ __all__ = [
     "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START",
     "HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END",
     "HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT",
+    "HYPER_OFFLOAD_MEMORY_BLOCK_PATH",
+    "HYPER_OFFLOAD_DYNAMIC_SHAPE_PLACEHOLDER_BYTES",
+    "HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES",
     "PIJIT_SUBGRAPH_BREAK_OPTIMIZE",
     "ENABLE_ELIMINATE_UNUSED_PARAMS",
     "PUT_ALL_CNODE_INTO_ORDER_LIST",
