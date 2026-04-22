@@ -17,6 +17,10 @@ mindspore.nn.CELU
     .. image:: ../images/CELU.png
         :align: center
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`，并新增可选构造参数 `inplace`。
+        接口签名将变更为 ``mindspore.nn.CELU(alpha=1.0, inplace=False)`` 。
+
     参数：
         - **alpha** (float，可选) - CELU公式中的 :math:`\alpha` 值。默认值： ``1.0`` 。
 

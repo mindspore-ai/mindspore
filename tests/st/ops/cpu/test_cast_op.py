@@ -31,8 +31,7 @@ class Net(Cell):
         return self.Cast(x, self.dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_complex64():
     """
     Feature: cast
@@ -63,8 +62,7 @@ def test_cast_complex64():
         assert output.asnumpy().dtype == 'complex64'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_complex128():
     """
     Feature: cast
@@ -95,8 +93,7 @@ def test_cast_complex128():
         assert output.asnumpy().dtype == 'complex128'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_bool():
     """
     Feature: cast
@@ -127,8 +124,7 @@ def test_cast_bool():
         assert output.asnumpy().dtype == 'bool'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_float16():
     """
     Feature: cast
@@ -159,8 +155,7 @@ def test_cast_float16():
         assert output.asnumpy().dtype == 'float16'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_float32():
     """
     Feature: cast
@@ -191,8 +186,7 @@ def test_cast_float32():
         assert output.asnumpy().dtype == 'float32'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_float64():
     """
     Feature: cast
@@ -223,8 +217,7 @@ def test_cast_float64():
         assert output.asnumpy().dtype == 'float64'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_bfloat16():
     """
     Feature: cast
@@ -255,8 +248,7 @@ def test_cast_bfloat16():
         assert output.dtype == mstype.bfloat16
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_int8():
     """
     Feature: cast
@@ -287,8 +279,7 @@ def test_cast_int8():
         assert output.asnumpy().dtype == 'int8'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_int16():
     """
     Feature: cast
@@ -319,8 +310,7 @@ def test_cast_int16():
         assert output.asnumpy().dtype == 'int16'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_int32():
     """
     Feature: cast
@@ -351,8 +341,7 @@ def test_cast_int32():
         assert output.asnumpy().dtype == 'int32'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_int64():
     """
     Feature: cast
@@ -383,8 +372,7 @@ def test_cast_int64():
         assert output.asnumpy().dtype == 'int64'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_uint8():
     """
     Feature: cast
@@ -415,8 +403,7 @@ def test_cast_uint8():
         assert output.asnumpy().dtype == 'uint8'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_uint16():
     """
     Feature: cast
@@ -447,8 +434,7 @@ def test_cast_uint16():
         assert output.asnumpy().dtype == 'uint16'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_uint32():
     """
     Feature: cast
@@ -479,8 +465,7 @@ def test_cast_uint32():
         assert output.asnumpy().dtype == 'uint32'
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cast_uint64():
     """
     Feature: cast

@@ -88,7 +88,7 @@ def run_adam_weight_decay(enable_graph_kernel=False):
     return losses
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_adam_weight_decay():
     """
     Feature: graph kernel testcase for AdamWeightDecay

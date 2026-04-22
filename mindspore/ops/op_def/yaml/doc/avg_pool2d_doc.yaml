@@ -9,6 +9,10 @@ avg_pool2d:
             \text{output}(N_i, C_j, h, w) = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
             \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
+        .. warning::
+            Starting after version 2.9.0, the default value of `stride` will change from ``1`` to ``None``,
+            and the default value of `divisor_override` will change from ``0`` to ``None``.
+
         Inputs:
             input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` .
             kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value. Can be

@@ -28,7 +28,7 @@ class Net1(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_tensor_bool():
     """
     TEST_SUMMARY:
@@ -58,7 +58,7 @@ class Net2(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_tensor_bool_with_x():
     """
     TEST_SUMMARY:

@@ -25,8 +25,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -63,8 +62,7 @@ def test_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_getitem():
     """
     Feature: Grad for dict.
@@ -101,8 +99,7 @@ def test_forward_contain_make_dict_and_dict_getitem():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_forward_return_dict():
     """
     Feature: Grad for dict.
@@ -138,8 +135,7 @@ def test_forward_return_dict():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_forward_return_dict_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -177,8 +173,7 @@ def test_forward_return_dict_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -217,8 +212,7 @@ def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     """
     Feature: Grad for dict.
@@ -258,8 +252,7 @@ def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict2():
     """
     Feature: Grad for dict.

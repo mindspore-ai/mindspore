@@ -19,7 +19,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 from mindspore._c_expression import function_id, TensorPy as Tensor_
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_config_disable_pijit():
     """
     Feature: Jit config
@@ -37,7 +37,7 @@ def test_config_disable_pijit():
     assert_executed_by_graph_mode(func, call_count=2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_config_function_id_map():
     """
     Feature: Test function_id

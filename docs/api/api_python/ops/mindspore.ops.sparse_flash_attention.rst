@@ -28,8 +28,7 @@ mindspore.ops.sparse_flash_attention
     通常具有稀疏或块稀疏特性。:math:`d_k` 为 :math:`Q, \tilde{K}` 的头维度。
 
     .. warning::
-        - 这是一个实验性API，可能会发生变更或被删除。
-        - 只支持 `Atlas A2/A3` 推理系列产品。
+        这是一个实验性API，可能会发生变更或被删除。
 
     参数：
         - **query** (Tensor) - query Tensor，对应公式中的 `Q`。支持的数据类型为 float16 与 bfloat16。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, S1, N1, D)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(T1, N1, D)`。N1 支持 1/2/4/8/16/32/64/128。
@@ -44,7 +43,7 @@ mindspore.ops.sparse_flash_attention
         - **actual_seq_lengths_kv** (Tensor，可选) - 每个batch中key和value的有效token数量。数据格式为 ND，数据类型为 int32，shape为 :math:`(B,)`。用于变长序列的前缀和格式。默认值为： ``None`` 。
         - **query_rope** (Tensor，可选) - MLA结构中query的RoPE信息。shape与query相同，但最后一维D替换为D_rope（64）。**当 attention_mode=2（MLA-absorb模式）时必须提供。** 默认值为： ``None`` 。
         - **key_rope** (Tensor，可选) - MLA结构中key的RoPE信息。shape与key相同，但最后一维D替换为D_rope（64）。**当 attention_mode=2（MLA-absorb模式）时必须提供。** 默认值为： ``None`` 。
-        - **sparse_block_size** (int，可选) - 稀疏阶段的块大小，用于重要性分数计算。取值范围为 [1, 128]，必须是2的幂次方。默认值为： ``1`` 。
+        - **sparse_block_size** (int，可选) - 稀疏阶段的块大小，用于重要性分数计算。取值范围为 [1, 64]，必须是2的幂次方。不建议 K * sparse_block_size 超过 100k，由于硬件限制可能会导致 OOM。默认值为： ``1`` 。
         - **layout_query** (str，可选) - query的数据布局格式。支持 ``"BSND"`` 和 ``"TND"``。默认值为： ``"BSND"``。
         - **layout_kv** (str，可选) - key的数据布局格式。支持 ``"TND"``、``"BSND"`` 和 ``"PA_BSND"``。为 ``"PA_BSND"`` 时，无需与 `layout_query` 取值保持一致；为 ``"BSND"`` 或 ``"TND"`` 时，需要与 `layout_query` 取值保持一致。默认值为： ``"BSND"``。
         - **sparse_mode** (int，可选) - 稀疏模式。仅支持 ``0`` （全部计算）与 ``3`` （rightDownCausal 掩码模式）。默认值为： ``3``。

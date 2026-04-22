@@ -37,7 +37,7 @@ def get_output(x, axis, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_argmax():
     context.set_context(mode=context.GRAPH_MODE)
     x0 = Tensor(np.random.normal(0, 1, [2, 3, 4, 4]).astype(np.float32))

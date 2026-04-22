@@ -112,7 +112,7 @@ def prompt_flash_attention_func(query, key, value, num_heads, num_key_value_head
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
+        level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 def test_ops_prompt_flash_attention_dynamic(input_layout):
     """
@@ -153,8 +153,7 @@ def test_ops_prompt_flash_attention_dynamic(input_layout):
                          'disable_grad': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=26.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=26.0)
 @pytest.mark.parametrize('input_layout', ["BSH"])
 def test_ops_prompt_flash_attention_dynamic_all_params(input_layout):
     """

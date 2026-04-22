@@ -5,6 +5,9 @@ mindspore.ops.csr_to_coo
 
     将一个CSRTensor转化成一个COOTensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         现在只支持二维CSRTensor。
 

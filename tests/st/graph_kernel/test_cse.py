@@ -46,7 +46,7 @@ def run_basic():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_basic_gpu():
     """
     Feature: test graph kernel cse
@@ -57,8 +57,7 @@ def test_basic_gpu():
     run_basic()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_basic_ascend():
     """
     Feature: test graph kernel cse

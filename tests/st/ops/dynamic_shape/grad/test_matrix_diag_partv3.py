@@ -34,7 +34,7 @@ class MatrixDiagPartV3Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_shape_matrix_diag_partv3():
     """
     Feature: MatrixDiagPartV3 Grad DynamicShape.
@@ -56,7 +56,7 @@ def test_dynamic_shape_matrix_diag_partv3():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_rank_matrix_diag_partv3():
     """
     Feature: MatrixDiagPartV3 Grad DynamicShape.

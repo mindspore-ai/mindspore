@@ -33,7 +33,7 @@ class NetIOU(nn.Cell):
         return self.encode(anchor, groundtruth)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float64])
 def test_iou_gpu(data_type):
     """
@@ -63,7 +63,7 @@ def test_iou_gpu(data_type):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_iou_gpu_dynamic_shape():
     """
     Feature: test iou op in gpu.

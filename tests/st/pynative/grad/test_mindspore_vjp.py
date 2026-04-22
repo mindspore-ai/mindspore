@@ -790,8 +790,7 @@ def test_vjp_graph_mode_nested_third_order():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_vjp():
     """
     Feature: vjp
@@ -827,8 +826,7 @@ def test_vjp():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_vjp_non_tensor_input_raises():
     """
     Feature: vjp
@@ -846,8 +844,7 @@ def test_vjp_non_tensor_input_raises():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_vjp_non_tensor_v_raises():
     """
     Feature: vjp
@@ -868,8 +865,7 @@ def test_vjp_non_tensor_v_raises():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_vjp_has_aux_single_output_raises():
     """
     Feature: vjp
@@ -889,8 +885,7 @@ def test_vjp_has_aux_single_output_raises():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_vjp_has_aux_type_error():
     """
     Feature: vjp

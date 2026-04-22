@@ -5,6 +5,9 @@ mindspore.ops.cholesky
 
     计算给定对称正定矩阵的Cholesky分解。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `input_x` 将重命名为 `input`。
+
     如果 `upper` 为True，则返回的矩阵 :math:`U` 为上三角矩阵，分解形式为：
 
     .. math::

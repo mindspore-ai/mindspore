@@ -591,9 +591,6 @@ class Conv3d(_Conv):
 
     For the detail of limitations of the parameters, please refer to :func:`mindspore.mint.nn.functional.conv3d`.
 
-    .. warning::
-        It is only supported on Atlas A2 Training Series Products.
-
     Args:
         in_channels (int): The channel number of the input tensor of the Conv3d layer.
         out_channels (int): The channel number of the output tensor of the Conv3d layer.
@@ -852,7 +849,6 @@ class ConvTranspose2d(_ConvTranspose):
     .. warning::
         - This is an experimental API that is subject to change or deletion.
         - In the scenario where inputs are non-contiguous, `output_padding` must be less than `stride` .
-        - For Atlas training products, when the dtype of input is float32, the `groups` only supports 1.
 
     Args:
         in_channels (int): Number of channels in the input image.

@@ -56,21 +56,24 @@ void ReleaseConvertTypesImpl(const std::vector<void *> &params,
         break;
       }
       case CustomSupportType::kTypeIntArray: {
-        const auto &acl_int_array = static_cast<aclIntArray *>(params[i]);
-        MS_EXCEPTION_IF_NULL(acl_int_array);
-        Release(acl_int_array);
+        const auto acl_int_array = static_cast<aclIntArray *>(params[i]);
+        if (acl_int_array != nullptr) {
+          Release(acl_int_array);
+        }
         break;
       }
       case CustomSupportType::kTypeBoolArray: {
-        const auto &acl_bool_array = static_cast<aclBoolArray *>(params[i]);
-        MS_EXCEPTION_IF_NULL(acl_bool_array);
-        Release(acl_bool_array);
+        const auto acl_bool_array = static_cast<aclBoolArray *>(params[i]);
+        if (acl_bool_array != nullptr) {
+          Release(acl_bool_array);
+        }
         break;
       }
       case CustomSupportType::kTypeFloatArray: {
-        const auto &acl_float_array = static_cast<aclFloatArray *>(params[i]);
-        MS_EXCEPTION_IF_NULL(acl_float_array);
-        Release(acl_float_array);
+        const auto acl_float_array = static_cast<aclFloatArray *>(params[i]);
+        if (acl_float_array != nullptr) {
+          Release(acl_float_array);
+        }
         break;
       }
       default:
@@ -137,20 +140,17 @@ void CustomGraphCache::UpdateAddressForTensor(aclOpExecutor *executor,
         break;
       }
       case CustomSupportType::kTypeIntArray: {
-        const auto &acl_int_array = static_cast<aclIntArray *>(params[i]);
-        MS_EXCEPTION_IF_NULL(acl_int_array);
+        auto acl_int_array = static_cast<aclIntArray *>(params[i]);
         UpdateAddress(executor, acl_int_array, address_list[i], &valid_index);
         break;
       }
       case CustomSupportType::kTypeBoolArray: {
-        const auto &acl_bool_array = static_cast<aclBoolArray *>(params[i]);
-        MS_EXCEPTION_IF_NULL(acl_bool_array);
+        auto acl_bool_array = static_cast<aclBoolArray *>(params[i]);
         UpdateAddress(executor, acl_bool_array, address_list[i], &valid_index);
         break;
       }
       case CustomSupportType::kTypeFloatArray: {
-        const auto &acl_float_array = static_cast<aclFloatArray *>(params[i]);
-        MS_EXCEPTION_IF_NULL(acl_float_array);
+        auto acl_float_array = static_cast<aclFloatArray *>(params[i]);
         UpdateAddress(executor, acl_float_array, address_list[i], &valid_index);
         break;
       }

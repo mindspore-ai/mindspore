@@ -54,8 +54,7 @@ def my_approximate_equal(x1, x2, tol=1e-5):
     return abs(x1 - x2) < tol
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal():
     """
     Feature: test ops ApproximateEqual.
@@ -69,8 +68,7 @@ def test_approxmiate_equal():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_docs():
     """
     Feature: test ops ApproximateEqual.
@@ -86,8 +84,7 @@ def test_approxmiate_equal_docs():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_different_shape():
     r"""
     Feature: test ops ApproximateEqual.
@@ -103,8 +100,7 @@ def test_approxmiate_equal_different_shape():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_tol_not_float():
     r"""
     Feature: test ops ApproximateEqual.
@@ -120,8 +116,7 @@ def test_approxmiate_equal_tol_not_float():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_max_rank():
     r"""
     Feature: test ops ApproximateEqual.
@@ -139,8 +134,7 @@ def test_approxmiate_equal_max_rank():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_diff_dtype():
     r"""
     Feature: test ops ApproximateEqual.
@@ -157,8 +151,7 @@ def test_approxmiate_equal_diff_dtype():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_tensor_api():
     r"""
     Feature: test ops ApproximateEqual on tensor API.
@@ -182,8 +175,7 @@ def test_approxmiate_equal_tensor_api():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_approxmiate_equal_functional_api():
     r"""
     Feature: test ops ApproximateEqual on functional API.
@@ -207,8 +199,7 @@ def test_approxmiate_equal_functional_api():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_vmap_approximate_equal():
     """
     Feature: ApproximateEqual cpu op vmap feature.

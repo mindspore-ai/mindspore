@@ -10,6 +10,9 @@ mindspore.nn.TransformerEncoderLayer
     .. image:: ../images/TransformerEncoderLayer.png
         :align: center
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``TransformerEncoderLayer(d_model, nhead, dim_feedforward=2048, dropout=0.1, activation='relu', layer_norm_eps=1e-5, batch_first=False, norm_first=False, bias=True, dtype=None)`` 。新增 `bias` 参数，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     参数：
         - **d_model** (int) - 输入的特征数。
         - **nhead** (int) - MultiheadAttention模块中注意力头的数量。

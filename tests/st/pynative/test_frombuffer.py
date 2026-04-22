@@ -73,8 +73,7 @@ def dtypes(*dtype_list):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 class TestBufferProtocol:
     """
     Test buffer protocol support in frombuffer function

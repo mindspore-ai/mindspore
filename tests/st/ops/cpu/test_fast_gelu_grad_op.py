@@ -69,8 +69,7 @@ def np_all_close_with_loss(out_cpu, expect_cpu):
     return np.allclose(out_cpu, expect_cpu, 0.005, 0.005, equal_nan=True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_grad_float32(shape, dtype):
@@ -93,8 +92,7 @@ def test_fast_gelu_grad_float32(shape, dtype):
     assert np_all_close_with_loss(output[0].asnumpy(), expect_cpu)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_grad_vmap_cpu(dtype, shape=(100, 2)):
     """

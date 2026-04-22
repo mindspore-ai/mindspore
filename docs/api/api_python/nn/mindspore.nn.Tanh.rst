@@ -17,6 +17,9 @@ mindspore.nn.Tanh
     .. image:: ../images/Tanh.png
         :align: center
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
+
     输入：
         - **x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32的输入。
 

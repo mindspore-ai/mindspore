@@ -5,6 +5,9 @@ mindspore.ops.ormqr
 
     计算一个普通矩阵 `other` 与一个矩阵Q（由Householder反射向量 `input` 和反射系数 `tau` 生成）的乘积。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `tau` 将重命名为 `input2`，`other` 将重命名为 `input3`，并新增 `out` 参数。
+
     如果 `left` 为 ``True`` ，计算顺序为Q \* `other` ，否则，计算顺序为 `other` \* Q。
 
     参数：

@@ -24,7 +24,9 @@ scatter_:
           this position in `self` is uncertain.
         - On Ascend, behavior is unpredictable when the value of `index` is not in the
           range `[-self.shape[dim], self.shape[dim])` in forward.
-        - This is an experimental API that is subject to change or deletion.
+        - Non-backward-compatible change after version 2.9.0: the ``scatter_(dim, index, value, ...)``
+          overloads will be removed, and only ``scatter_(dim, index, src, *, reduce=None)`` will be
+          supported, where `src` accepts both tensors and scalars.
 
     .. note::
         The inverse gradient from `self` to `src` can be calculated only when

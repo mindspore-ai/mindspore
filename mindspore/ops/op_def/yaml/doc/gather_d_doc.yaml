@@ -2,6 +2,10 @@ gather_d:
   description: |
     Gathers elements along an axis specified by dim.
 
+    .. warning::
+        After version 2.9.0, this interface will be aligned with `mindspore.ops.gather` semantics.
+        The parameter `x` will be renamed to `input`, and the public entry name will be unified.
+
     Refer to :func:`mindspore.ops.gather_elements` for more details.
 
     Supported Platforms:

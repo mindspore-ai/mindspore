@@ -35,8 +35,7 @@ class LinSpaceNet(Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('start_np, stop_np', [(5, 150), (-25, 147), (-25.3, -147)])
 @pytest.mark.parametrize('num_np', [1, 12, 10, 20])
 def test_lin_space(start_np, stop_np, num_np):
@@ -56,8 +55,7 @@ def test_lin_space(start_np, stop_np, num_np):
     assert np.allclose(result_ms, result_np)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('start_np, stop_np', [(5, 150), (-25, 147), (-25.3, -147)])
 @pytest.mark.parametrize('num_np', [10, 20, 36])
 def test_lin_space_net(start_np, stop_np, num_np):
@@ -77,8 +75,7 @@ def test_lin_space_net(start_np, stop_np, num_np):
     assert np.allclose(result_ms, result_np)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_lin_space_vmap_1d():
     """
     Feature: ALL To ALL
@@ -100,8 +97,7 @@ def test_lin_space_vmap_1d():
     assert np.allclose(result_ms, result_np)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_lin_space_vmap_2d():
     """
     Feature: ALL To ALL
@@ -125,8 +121,7 @@ def test_lin_space_vmap_2d():
     assert np.allclose(result_ms, result_np)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_lin_space_vmap_dynamic_shape():
     """
     Feature: ALL To ALL
@@ -152,8 +147,7 @@ def test_lin_space_vmap_dynamic_shape():
     assert np.allclose(result_ms, result_np)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_lin_space_num():
     """
     Feature: ALL To ALL

@@ -20,8 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_fallback_list_tuple_asnumpy():
     """
     Feature: JIT Fallback
@@ -50,7 +49,7 @@ def test_fallback_list_tuple_asnumpy():
     assert (out[1][3] == np.array([2, 3])).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_runtime_list():
     """
     Feature: JIT Fallback
@@ -68,7 +67,7 @@ def test_fallback_runtime_list():
     assert (out == x.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_runtime_tuple():
     """
     Feature: JIT Fallback

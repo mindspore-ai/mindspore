@@ -31,8 +31,7 @@ class NetGetItem(nn.Cell):
         return seq[idx]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_tensor_getitem():
     """
     Feature: test sequence getitem op
@@ -47,7 +46,7 @@ def test_seq_tensor_getitem():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_tensor_getitem1():
     """
     Feature: test sequence getitem op
@@ -62,8 +61,7 @@ def test_seq_tensor_getitem1():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_seq_getitem():
     """
     Feature: test sequence getitem op
@@ -78,7 +76,7 @@ def test_seq_getitem():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_getitem_grad():
     """
     Feature: test sequence getitem grad op
@@ -93,8 +91,7 @@ def test_seq_getitem_grad():
     print("grad out1 = ", grad_func(seq, index, dout))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_getitem_grad_tensor():
     """
     Feature: test sequence getitem grad op
@@ -109,8 +106,7 @@ def test_seq_getitem_grad_tensor():
     print("grad out1 = ", grad_func(seq, index, dout))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_getitem_grad_scalar():
     """
     Feature: test sequence getitem grad op

@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asin_fp32():
     """
     Feature: asin kernel
@@ -37,7 +37,7 @@ def test_asin_fp32():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asin_fp16():
     """
     Feature: asin kernel
@@ -50,7 +50,7 @@ def test_asin_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asin_fp64():
     """
     Feature: asin kernel
@@ -101,7 +101,7 @@ def test_asin_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asin_float32_tensor_api():
     """
     Feature: test asin tensor api.

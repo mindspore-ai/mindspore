@@ -40,7 +40,7 @@ class Net(nn.Cell):
         return z1, z2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_xdivy():
     """
     Feature: xdivy

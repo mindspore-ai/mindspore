@@ -46,7 +46,7 @@ class TestCase():
     def teardown(self):
         shutil.rmtree(self.temp_dir)
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclop(self):
         """
         Feature: Custom op testcase
@@ -57,7 +57,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclop_dynamic(self):
         """
         Feature: Custom op testcase
@@ -68,7 +68,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclop_graph(self):
         """
         Feature: Custom op testcase
@@ -79,8 +79,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level4', card_mark='onecard',
-              essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclnn(self):
         """
         Feature: Custom op testcase
@@ -91,7 +90,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclnn_add_prefix(self):
         """
         Feature: Custom op testcase
@@ -102,7 +101,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclnn_dynamic(self):
         """
         Feature: Custom op testcase
@@ -113,7 +112,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclnn_cpp_infer(self):
         """
         Feature: Custom op testcase
@@ -124,7 +123,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_custom_add_aclnn_bprop(self):
         """
         Feature: Custom op testcase
@@ -135,7 +134,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard')
     def test_multi_custom_aclnn(self):
         """
         Feature: Custom op testcase

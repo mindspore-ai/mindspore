@@ -46,13 +46,10 @@ def setup_teardown():
         compile_config.ENABLE_HYPER_OFFLOAD_SLIDE = old_slide_switch
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=50.00,
-)
+    mem_peak=50.00)
 def test_memory_with_sliding_window_base():
     """
     Feature: Hyper offload with sliding window method.
@@ -77,13 +74,10 @@ def test_memory_with_sliding_window_base():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=44.0,
-)
+    mem_peak=44.0)
 def test_memory_with_sliding_window_with_control_flow():
     """
     Feature: Hyper offload with sliding window method.
@@ -115,13 +109,10 @@ def test_memory_with_sliding_window_with_control_flow():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=44.0,
-)
+    mem_peak=44.0)
 def test_memory_with_sliding_window_with_control_flow2():
     """
     Feature: Hyper offload with sliding window method.
@@ -157,13 +148,10 @@ def test_memory_with_sliding_window_with_control_flow2():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=40.0,
-)
+    mem_peak=40.0)
 def test_memory_with_sliding_window_with_control_flow3():
     """
     Feature: Hyper offload with sliding window method.
@@ -199,13 +187,10 @@ def test_memory_with_sliding_window_with_control_flow3():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=34.0,
-)
+    mem_peak=34.0)
 def test_memory_with_sliding_window_with_tuple_output():
     """
     Feature: Hyper offload with sliding window method.

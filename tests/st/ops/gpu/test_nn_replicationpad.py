@@ -34,7 +34,7 @@ class Net3d(nn.Cell):
         return self.pad(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_replicationpad1d_2d(mode):
     """
@@ -58,7 +58,7 @@ def test_replicationpad1d_2d(mode):
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_replicationpad1d_3d(mode):
     """
@@ -83,7 +83,7 @@ def test_replicationpad1d_3d(mode):
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_replicationpad2d_3d(mode):
     r"""
@@ -109,7 +109,7 @@ def test_replicationpad2d_3d(mode):
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_replicationpad2d_4d(mode):
     r"""
@@ -135,7 +135,7 @@ def test_replicationpad2d_4d(mode):
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_replicationpad3d_4d(mode):
     r"""
@@ -167,7 +167,7 @@ def test_replicationpad3d_4d(mode):
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_replicationpad3d_5d(mode):
     r"""

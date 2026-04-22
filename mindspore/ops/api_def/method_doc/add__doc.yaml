@@ -1,5 +1,5 @@
 add_:
   description: |
-    add_(other) -> Tensor
-    
+    add_(other, *, alpha=1) -> Tensor
+
     In-place version of :func:`mindspore.Tensor.add`.

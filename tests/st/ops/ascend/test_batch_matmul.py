@@ -49,7 +49,7 @@ def test_bmm_forward_tensor_api(nptype):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_bmm_forward_float32_tensor_api():
     """
     Feature: test bmm forward tensor api.
@@ -76,7 +76,7 @@ def test_bmm_forward_functional_api(nptype):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_bmm_forward_float32_functional_api():
     """
     Feature: test bmm forward functional api.
@@ -89,8 +89,7 @@ def test_bmm_forward_float32_functional_api():
     test_bmm_forward_functional_api(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_bmm_forward_int8_functional_api():
     """
     Feature: test bmm forward functional api.
@@ -107,8 +106,7 @@ def test_bmm_forward_int8_functional_api():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bmm_forward_functional_api_bf16(mode):
     """
@@ -125,8 +123,7 @@ def test_bmm_forward_functional_api_bf16(mode):
     np.testing.assert_array_almost_equal(output.float().asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_batch_matmul_broadcast():
     """
     Feature: test BatchMatMul support broadcast in ascend

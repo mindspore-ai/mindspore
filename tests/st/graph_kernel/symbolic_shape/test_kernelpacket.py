@@ -43,8 +43,7 @@ def run_with_log(test_case, log_file):
         raise RuntimeError("{}\n case {} run failed!".format(e, test_case))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_reshape():
     """
     Feature: KernelPacket
@@ -54,8 +53,7 @@ def test_reshape():
     run_with_log("kernelpacket_cases.py::test_reshape", "test_kernelpacket_reshape.log")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_reducesum():
     """
     Feature: KernelPacket
@@ -65,8 +63,7 @@ def test_reducesum():
     run_with_log("kernelpacket_cases.py::test_reducesum", "test_reducesum.log")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fuse_host_ops():
     """
     Feature: KernelPacket
@@ -76,8 +73,7 @@ def test_fuse_host_ops():
     run_with_log("kernelpacket_cases.py::test_fuse_host_ops", "test_fuse_host_ops.log")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_stridedslice():
     """
     Feature: KernelPacket
@@ -87,8 +83,7 @@ def test_stridedslice():
     run_with_log("kernelpacket_cases.py::test_stridedslice", "test_stridedslice.log")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_matmul_only_shape():
     """
     Feature: KernelPacket
@@ -98,8 +93,7 @@ def test_matmul_only_shape():
     run_with_log("kernelpacket_cases.py::test_matmul_only_shape", "test_matmul_only_shape.log")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_concat_grad():
     """
     Feature: KernelPacket
@@ -109,8 +103,7 @@ def test_concat_grad():
     run_with_log("kernelpacket_cases.py::test_concat_grad", "test_concat_grad.log")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_stridedslice_grad():
     """
     Feature: KernelPacket

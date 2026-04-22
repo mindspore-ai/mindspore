@@ -88,7 +88,13 @@ ShapeArray LightningIndexerFuncImpl::InferShape(const PrimitivePtr &primitive,
     }
   }
   output_shape.push_back(!sparse_count_opt.has_value() ? kDimUnknown : sparse_count_opt.value());
-  return {output_shape, output_shape};
+
+  auto &return_value = input_infos[kIndex12];
+  auto return_value_opt = return_value->GetScalarValue<bool>();
+  if (MS_UNLIKELY(!return_value_opt.has_value())) {
+    return {output_shape, ShapeVector{abstract::TensorShape::kShapeRankAny}};
+  }
+  return {output_shape, return_value_opt.value() ? output_shape : ShapeVector{0}};
 }
 
 std::vector<TypeId> LightningIndexerFuncImpl::InferType(const PrimitivePtr &primitive,

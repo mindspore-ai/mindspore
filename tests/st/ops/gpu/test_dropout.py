@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.drop(x_)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dropout():
     """"
     Feature: Test dropout
@@ -72,7 +72,7 @@ class DropoutDynamic(nn.Cell):
         return self.drop(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dropout_dynamic():
     """"
     Feature: Test dropout dynamic
@@ -122,7 +122,7 @@ class NetFilter(nn.Cell):
         return self.add(mask, x_)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dropout_attrs():
     """"
     Feature: Test dropout gpu optimization

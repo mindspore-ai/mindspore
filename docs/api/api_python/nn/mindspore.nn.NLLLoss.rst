@@ -5,6 +5,9 @@ mindspore.nn.NLLLoss
 
     计算预测值和目标值之间的负对数似然损失。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `logits` 和 `labels` 将分别重命名为 `input` 和 `target`。
+
     :math:`reduction = none` 时，负对数似然损失公式如下：
 
     .. math::

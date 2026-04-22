@@ -36,7 +36,7 @@ def mish_compute(x):
     return x * np.tanh(np.log(1 + np.exp(x)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1e-3), (np.float32, 1e-4), (np.float64, 1e-5)])
 def test_mish_net(dtype, tol):
     """

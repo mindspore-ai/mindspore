@@ -28,9 +28,13 @@
 #include "ir/tensor_new.h"
 #include "ops/op_def.h"
 #include "runtime/pipeline/pipeline.h"
+#include "tools/profiler/profiler.h"
 
 namespace mindspore::kernel {
 using mindspore::ops::OP_DTYPE;
+using mindspore::runtime::ProfilerEvent;
+using mindspore::runtime::ProfilerModule;
+using mindspore::runtime::ProfilerRecorder;
 using mindspore::tensor::TensorPtr;
 namespace {
 
@@ -49,16 +53,11 @@ ValuePtr ValueFromScalarKernelTensor(const kernel::KernelTensor *kernel_tensor) 
   MS_LOG(DEBUG) << "Type:" << kernel_tensor->dtype_id() << " shape:" << kernel_tensor->GetShapeVector()
                 << " size:" << kernel_tensor->size();
 
-  auto real_value = kernel_tensor->GetValue();
-  MS_EXCEPTION_IF_NULL(real_value);
-  if (!real_value->isa<KernelTensorValue>()) {
-    MS_LOG(EXCEPTION) << "Invalid kernel tensor value: " << real_value->ToString();
-  }
-
   if (kernel_tensor->GetType() != nullptr && kernel_tensor->GetType()->isa<Number>()) {
-    auto kernel_tensor_value = real_value->cast<KernelTensorValuePtr>();
-    MS_EXCEPTION_IF_NULL(kernel_tensor_value);
-    return common::AnfAlgo::ValueToScalar(kernel_tensor_value, kernel_tensor->GetType()->type_id());
+    auto real_value = kernel_tensor->GetValue();
+    MS_EXCEPTION_IF_NULL(real_value);
+
+    return common::AnfAlgo::ValueToScalar(real_value, kernel_tensor->GetType()->type_id());
   }
 
   return std::make_shared<tensor::Tensor>(kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector(),
@@ -147,6 +146,10 @@ std::vector<std::vector<KernelTensor *>> GroupInputs(const std::vector<KernelTen
 }  // namespace
 
 bool PyFuncKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (Py_IsInitialized() == 0) {
+    MS_LOG(ERROR) << "Python interpreter is not initialized.";
+    return false;
+  }
   func_id_ = GetValue<int64_t>(primitive_->GetAttr("fn_id"));
   py_func_ = GetPythonFunc();
   return true;
@@ -155,16 +158,12 @@ bool PyFuncKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std:
 bool PyFuncKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                              const std::vector<KernelTensor *> & /* workspace */,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-  if (Py_IsInitialized() == 0) {
-    MS_LOG(ERROR) << "Python interpreter is not initialized.";
-    return false;
-  }
-
   pybind11::gil_scoped_acquire gil_acquire;
   pybind11::tuple py_args = PreprocessInputs(inputs);
   pybind11::object result;
 
   try {
+    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, "CallPython");
     result = inputs.empty() ? py_func_() : py_func_(*py_args);
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Python function call failed: " << e.what();
@@ -196,6 +195,7 @@ pybind11::function PyFuncKernelMod::GetPythonFunc() const {
 }
 
 pybind11::tuple PyFuncKernelMod::PreprocessInputs(const std::vector<KernelTensor *> &inputs) {
+  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, "PreprocessInputs");
   auto group_sizes_value = primitive_->GetAttr("grouped_info");
   MS_EXCEPTION_IF_NULL(group_sizes_value);
   auto group_sizes = GetValue<std::vector<int64_t>>(group_sizes_value);
@@ -225,6 +225,7 @@ pybind11::tuple PyFuncKernelMod::PreprocessInputs(const std::vector<KernelTensor
 
 bool PyFuncKernelMod::PostprocessOutputs(pybind11::handle result, const std::vector<KernelTensor *> &outputs,
                                          void *stream_ptr) {
+  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, "PostprocessOutputs");
   if (outputs.empty()) {
     MS_LOG(ERROR) << "No output tensors provided.";
     return false;

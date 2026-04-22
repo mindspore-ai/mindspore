@@ -33,6 +33,9 @@
 
 namespace mindspore {
 namespace parallel {
+
+extern const char kSharedParamMirrorNode[];
+
 class PipelineInterleave {
  public:
   PipelineInterleave(const FuncGraphManagerPtr &manager, int stage, const FuncGraphPtr &root)

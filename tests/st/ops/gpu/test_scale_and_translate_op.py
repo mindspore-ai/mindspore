@@ -29,7 +29,7 @@ class NetScaleAndTranslate(nn.Cell):
         return self.op(images, size, scale, translation)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scale_and_translate_lanczos3_true_graph_mode():
     """
     Feature: Test ScaleAndTranslate.
@@ -71,7 +71,7 @@ def test_scale_and_translate_lanczos3_true_graph_mode():
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_scale_and_translate_lanczos1_true_pynative_mode():
     """
     Feature: Test ScaleAndTranslate.

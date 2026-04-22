@@ -70,8 +70,7 @@ truth_combine_idx_k = np.array([[[1, 7], [5, 14],
 
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_topprouter_sdrop(mode):
     """
@@ -87,8 +86,7 @@ def test_topprouter_sdrop(mode):
     np.testing.assert_allclose(combine_idx.asnumpy(), truth_combine_idx_s)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_topprouter_dynamic_shape_sdrop(mode):
     """
@@ -104,8 +102,7 @@ def test_topprouter_dynamic_shape_sdrop(mode):
     np.testing.assert_allclose(combine_idx.asnumpy(), truth_combine_idx_s)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_topprouter_kdrop(mode):
     """
@@ -120,8 +117,7 @@ def test_topprouter_kdrop(mode):
     np.testing.assert_allclose(combine_idx.asnumpy(), truth_combine_idx_k)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_topprouter_dynamic_shape_kdrop(mode):
     """

@@ -10,6 +10,9 @@ mindspore.nn.BatchNorm1d
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    .. warning::
+        2.9.0（不含）之后版本中，构造签名将调整为 ``BatchNorm1d(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, dtype=None)`` 。其中 `momentum` 默认值由 ``0.9`` 改为 ``0.1`` ；`use_batch_statistics` 替换为 `track_running_stats`；`gamma_init`、`beta_init`、`moving_mean_init`、`moving_var_init`、`data_format` 将被移除。
+
     .. note::
         BatchNorm的实现在图模式和PyNative模式下是不同的，因此不建议在网络初始化后更改其模式。
 

@@ -5,6 +5,9 @@ expand_as:
     Expand the shape of the input tensor to be the same as another input tensor. The dim of the
     input shape must be smaller than or equal to that of another and the broadcast rules must be met.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `expand_as(x)` will be removed, and only `expand_as(other)` will be supported.
+
     Args:
         other (Tensor): The target Tensor. Its shape is the target shape that input tensor needs to be expanded.
 

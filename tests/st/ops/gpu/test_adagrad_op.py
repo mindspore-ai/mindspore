@@ -41,7 +41,7 @@ class Net(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_apply_adagrad():
     """
     Feature: template

@@ -43,8 +43,7 @@ class TestBlock(Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_nest():
     """
     Feature: Nest reusing cell with lazy inline.
@@ -117,7 +116,7 @@ def test_nest():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+        card_mark='onecard', mem_peak=1024.01)
 def test_no_inline():
     """
     Feature: make reusing function with no inline.
@@ -140,8 +139,7 @@ def test_no_inline():
     x = call_no_inline_fun(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_lazy_inline_block_if_in_if():
     """
     Feature: lazy inline

@@ -53,8 +53,7 @@ class AvgPoolGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool2d_valid():
     """
     Feature: test avgpool2d op.
@@ -87,8 +86,7 @@ def test_avgpool2d_valid():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool2d_same():
     """
     Feature: test avgpool2d op.
@@ -124,8 +122,7 @@ def test_avgpool2d_same():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_1():
     """
     Feature: test avgpool3d op.
@@ -170,8 +167,7 @@ def test_avgpool3d_1():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_2():
     """
     Feature: test avgpool3d op.
@@ -215,8 +211,7 @@ def test_avgpool3d_2():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_3():
     """
     Feature: test avgpool3d op.
@@ -257,8 +252,7 @@ def test_avgpool3d_3():
     assert (actual_grad[0].asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_4():
     """
     Feature: test avgpool3d op.
@@ -327,8 +321,7 @@ def avg_pool1d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avg_pool1d_forward_float32_functional():
     """
     Feature: test avg_pool1d forward.
@@ -353,8 +346,7 @@ def avg_pool2d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avg_pool2d_forward_float32_functional():
     """
     Feature: test avg_pool2d forward.
@@ -379,8 +371,7 @@ def avg_pool3d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
 def test_avg_pool3d_forward_float32_functional(dtype):
     """
@@ -394,8 +385,7 @@ def test_avg_pool3d_forward_float32_functional(dtype):
     avg_pool3d_forward_functional(dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_avgpool_cpu_dynamic_shape():
     """
     Feature: test dynamic shape of avgpool.

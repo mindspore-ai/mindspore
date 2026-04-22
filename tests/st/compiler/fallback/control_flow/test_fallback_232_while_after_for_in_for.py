@@ -20,8 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_while_after_for_in_for_2():
     """
     Feature: JIT Fallback
@@ -53,8 +52,7 @@ def test_while_after_for_in_for_2():
     assert res_y == 6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_while_after_for_in_for_3():
     """
     Feature: JIT Fallback

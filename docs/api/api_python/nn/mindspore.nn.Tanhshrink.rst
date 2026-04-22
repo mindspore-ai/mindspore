@@ -13,6 +13,9 @@ mindspore.nn.Tanhshrink
 
     其中 :math:`x_i` 是输入Tensor的元素。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     输入：
         - **x** (Tensor) - 任意维度的Tensor。
 

@@ -25,7 +25,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_kwargs_has_side_effect():
     """
     Feature: Support kwargs has side effect.
@@ -56,7 +56,7 @@ def test_kwargs_has_side_effect():
 
 
 @pytest.mark.skip("the key in kwargs is any")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_kwargs_key_value_both_is_custom_class_attr():
     """
     Feature: Support the kwargs is any.
@@ -89,7 +89,7 @@ def test_kwargs_key_value_both_is_custom_class_attr():
     assert output == 6
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_useless_kwargs():
     """
     Feature: Support the kwargs is not used in function.
@@ -110,7 +110,7 @@ def test_useless_kwargs():
     assert np.allclose(res.asnumpy(), np.array([1, 4]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_use_partial_kwargs():
     """
     Feature: Support Not all key-value parameters are fully utilized in the iinput function.
@@ -144,7 +144,7 @@ class GradOperationNet(nn.Cell):
         return gradient_function(*args, **kwargs)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_args_var_kwargs_001():
     """
     Feature: Support the kwargs.
@@ -161,7 +161,7 @@ def test_parser_args_var_kwargs_001():
     assert ms_grad[0] == 1 and ms_grad[1] == 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_args_var_kwargs_002():
     """
     Feature: Support the kwargs.
@@ -176,7 +176,7 @@ def test_parser_args_var_kwargs_002():
     assert Net()() == {}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_args_var_mixed_001():
     """
     Feature: Support the kwargs.
@@ -196,7 +196,7 @@ def test_parser_args_var_mixed_001():
     assert out == 9
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_args_var_mixed_002():
     """
     Feature: Support the kwargs.
@@ -223,7 +223,7 @@ def test_parser_args_var_mixed_002():
     assert all(out == Tensor([5, 5, 5]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_args_var_kwargs_index_exception():
     """
     Feature: Support the kwargs.
@@ -247,7 +247,7 @@ def test_parser_args_var_kwargs_index_exception():
         net1(b=3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_parser_args_var_kwargs_grad():
     """
     Feature: Support the kwargs.
@@ -290,7 +290,7 @@ def func1(x=0, y=0, z=0):
     return x * 100 + y * 10 + z
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_1():
     """
     Feature: Support the kwargs.
@@ -302,7 +302,7 @@ def test_jit_with_kwargs_input_1():
     assert output == 123
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_2():
     """
     Feature: Support the kwargs.
@@ -315,7 +315,7 @@ def test_jit_with_kwargs_input_2():
     assert output == 120
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_6():
     """
     Feature: Support the kwargs.
@@ -327,7 +327,7 @@ def test_jit_with_kwargs_input_6():
     assert output == 123
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_7():
     """
     Feature: Support the kwargs.
@@ -339,7 +339,7 @@ def test_jit_with_kwargs_input_7():
     assert output == 123
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_8():
     """
     Feature: Support the kwargs.
@@ -351,7 +351,7 @@ def test_jit_with_kwargs_input_8():
     assert output == 103
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_9():
     """
     Feature: Support the kwargs.
@@ -376,7 +376,7 @@ def func4(x, *, y=0, z=0):
     return x * 100 + y * 10 + z
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_14():
     """
     Feature: Support the kwargs.
@@ -388,7 +388,7 @@ def test_jit_with_kwargs_input_14():
     assert output == 123
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_15():
     """
     Feature: Support the kwargs.
@@ -400,7 +400,7 @@ def test_jit_with_kwargs_input_15():
     assert output == 123
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_16():
     """
     Feature: Support the kwargs.
@@ -412,7 +412,7 @@ def test_jit_with_kwargs_input_16():
     assert output == 123
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_19():
     """
     Feature: Support the kwargs.
@@ -424,7 +424,7 @@ def test_jit_with_kwargs_input_19():
     assert output == 103
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_with_kwargs_input_20():
     """
     Feature: Support the kwargs.

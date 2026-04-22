@@ -25,7 +25,7 @@ from tests.st.pi_jit.one_stage.test_utils import save_graph_ir, check_ir_num
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hal_stream_ctx_matmul():
     """
     Feature: mindspore.hal stream context under PIJit.

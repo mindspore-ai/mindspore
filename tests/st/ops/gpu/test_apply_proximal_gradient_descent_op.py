@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.apply_proximal_gradient_descent(self.var, alpha, l1, l2, delta)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_proximal_gradient_descent_float32():
     """
     Feature: ApplyProximalGradientDescent gpu kernel

@@ -62,11 +62,9 @@ class Net4(nn.Cell):
         return result
 
 
-@arg_mark(
-    plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['platform_gpu'],
     level_mark='level0',
-    card_mark='onecard',
-    essential_mark='unessential')
+    card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_set_dtype(mode):
     """

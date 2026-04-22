@@ -23,7 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_equal_np_int8_1():
     """
     Feature: Support constant folding for parse.
@@ -46,7 +46,7 @@ def test_equal_np_int8_1():
     assert out == 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_equal_np_int8_2():
     """
     Feature: Support constant folding for parse.
@@ -70,7 +70,7 @@ def test_equal_np_int8_2():
     assert "The self.num should be 2." in str(raise_info)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_constant_condition_comment():
     """
     Feature: Support constant folding for parse.
@@ -95,7 +95,7 @@ def test_constant_condition_comment():
     assert f2(x) == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_nested_if_with_raise():
     """
     Feature: Support constant folding for parse.

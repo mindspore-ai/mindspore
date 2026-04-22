@@ -34,6 +34,9 @@ mindspore.nn.LARS
 
     :math:`w` 表示网络中的param，:math:`g` 表示 `gradients` ，:math:`t` 表示当前step，:math:`\lambda` 表示 `optimizer` 配置的 `weight_decay` ，:math:`\gamma` 表示 `optimizer` 配置的 `learning_rate` ，:math:`\eta` 表示 `coefficient` 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **optimizer** (:class:`mindspore.nn.Optimizer`) - 待封装和修改梯度的MindSpore优化器。
         - **epsilon** (float) - 将添加到分母中，提高数值稳定性。默认值： ``1e-05`` 。

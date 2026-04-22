@@ -47,8 +47,7 @@ class StridedSliceDynamicRank(nn.Cell):
         return self.stridedslice(x, begin, end, strides)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard')
 def test_stridedslice_dynamic_shape():
     """
     Feature: Dynamic shape.
@@ -65,8 +64,7 @@ def test_stridedslice_dynamic_shape():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_stridedslice_dynamic_rank():
     """
     Feature: Dynamic rank.

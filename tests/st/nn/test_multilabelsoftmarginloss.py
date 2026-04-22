@@ -34,8 +34,7 @@ class MultiLabelSoftMarginLossNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level2',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('weight', [None, Tensor([1.0, 1.5, 0.8], mstype.float32)])
 @pytest.mark.parametrize('reduction', ['mean', 'none', 'sum'])

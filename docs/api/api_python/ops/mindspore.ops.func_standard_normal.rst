@@ -9,7 +9,8 @@ mindspore.ops.standard_normal
         f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **shape** (Union[tuple, Tensor]) - 指定生成随机数的shape。

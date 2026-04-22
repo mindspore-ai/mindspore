@@ -36,7 +36,7 @@ class NetSublist(nn.Cell):
         return ops.einsum(x, [..., 0, 1], y, [..., 1, 2], [..., 0, 2])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_einsum(mode):
     """

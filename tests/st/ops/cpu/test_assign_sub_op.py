@@ -34,8 +34,7 @@ class AssignSub(nn.Cell):
         return self.var
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_assign_sub():
     """
     Feature: assign sub kernel
@@ -83,8 +82,7 @@ def test_assign_sub():
     assert (output2.asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_assign_sub_func():
     """
     Feature: assign sub kernel

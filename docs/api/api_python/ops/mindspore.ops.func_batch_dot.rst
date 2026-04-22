@@ -3,9 +3,10 @@ mindspore.ops.batch_dot
 
 .. py:function:: mindspore.ops.batch_dot(x1, x2, axes=None)
 
-    `ops.batch_dot` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
-
     计算 `x1` 和 `x2` 中的向量点积。
+
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         `x1` 和 `x2` 的第零维表示batch数量， `x1` 和 `x2` 数据类型为float32且秩大于或等于2。
@@ -20,4 +21,3 @@ mindspore.ops.batch_dot
 
     返回：
         Tensor
-

@@ -32,7 +32,7 @@ class TriuIndicesNet(nn.Cell):
         return self.triu_indices()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_triu_indices_int32_positive_offset():
     """
     Feature: TriuIndcies GPU TEST.
@@ -47,7 +47,7 @@ def test_triu_indices_int32_positive_offset():
         assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_triu_indices_int64_negative_offset():
     """
     Feature: TriuIndcies GPU TEST.

@@ -148,7 +148,7 @@ def run_net(json_name):
     model.train(epoch=10, train_dataset=dataset, callbacks=call_back, dataset_sink_mode=False, sink_size=25)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_func_autotune_generatordataset_cpu():
     """
     Feature: Test autotune with generator

@@ -19,8 +19,7 @@ from mindspore import context, Tensor
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_gru():
     """
     Feature: test gru cpu operation.

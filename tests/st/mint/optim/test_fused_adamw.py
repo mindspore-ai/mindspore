@@ -282,7 +282,7 @@ class AdamWMock(AdamWFactory):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_graph_compile():
     """
     Feature: Test FusedAdamW.
@@ -304,7 +304,7 @@ def test_mint_optim_fused_adamw_graph_compile():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_group1_graph_compile():
     """
     Feature: Test FusedAdamW.
@@ -329,7 +329,7 @@ def test_mint_optim_fused_adamw_group1_graph_compile():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_group2_graph_compile():
     """
     Feature: Test FusedAdamW.
@@ -353,7 +353,7 @@ def test_mint_optim_fused_adamw_group2_graph_compile():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_pynative():
     """
     Feature: Test FusedAdamW.
@@ -375,7 +375,7 @@ def test_mint_optim_fused_adamw_pynative():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_basic(mode):
     """
@@ -391,7 +391,7 @@ def test_mint_optim_fused_adamw_basic(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_basic_amsgrad(mode):
     """
@@ -407,7 +407,7 @@ def test_mint_optim_fused_adamw_basic_amsgrad(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_basic_maximize(mode):
     """
@@ -424,7 +424,7 @@ def test_mint_optim_fused_adamw_basic_maximize(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_basic_group(mode):
     """
@@ -438,7 +438,7 @@ def test_mint_optim_fused_adamw_basic_group(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_basic_lr_dynamic(mode):
     """
@@ -452,7 +452,7 @@ def test_mint_optim_fused_adamw_basic_lr_dynamic(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_group_lr_dynamic(mode):
     """
@@ -466,7 +466,7 @@ def test_mint_optim_fused_adamw_group_lr_dynamic(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_group_lr_dynamic_change_param(mode):
     """
@@ -480,7 +480,7 @@ def test_mint_optim_fused_adamw_group_lr_dynamic_change_param(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_base():
     """
     Feature: Test FusedAdamW
@@ -498,7 +498,7 @@ def test_mint_optim_fused_adamw_dtype_base():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mint_optim_fused_adamw_dtype_1000_3000(mode):
     """
@@ -520,7 +520,7 @@ def test_mint_optim_fused_adamw_dtype_1000_3000(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_float32():
     """
     Feature: Test FusedAdamW
@@ -539,7 +539,7 @@ def test_mint_optim_fused_adamw_dtype_float32():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_20_30():
     """
     Feature: Test FusedAdamW
@@ -558,7 +558,7 @@ def test_mint_optim_fused_adamw_dtype_20_30():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_200_300():
     """
     Feature: Test FusedAdamW
@@ -577,7 +577,7 @@ def test_mint_optim_fused_adamw_dtype_200_300():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_bfloat16():
     """
     Feature: Test FusedAdamW
@@ -597,7 +597,7 @@ def test_mint_optim_fused_adamw_bfloat16():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_float32_4d():
     """
     Feature: Test FusedAdamW
@@ -614,7 +614,7 @@ def test_mint_optim_fused_adamw_float32_4d():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_float32_5d():
     """
     Feature: Test FusedAdamW
@@ -631,7 +631,7 @@ def test_mint_optim_fused_adamw_float32_5d():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_float32_6d():
     """
     Feature: Test FusedAdamW
@@ -648,7 +648,7 @@ def test_mint_optim_fused_adamw_float32_6d():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_float32_7d():
     """
     Feature: Test FusedAdamW
@@ -665,7 +665,7 @@ def test_mint_optim_fused_adamw_float32_7d():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_float32_8d():
     """
     Feature: Test FusedAdamW
@@ -682,7 +682,7 @@ def test_mint_optim_fused_adamw_float32_8d():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_base_discontinuous_tensor():
     """
     Feature: Test FusedAdamW with non-contiguous tensors
@@ -706,7 +706,7 @@ def test_mint_optim_fused_adamw_dtype_base_discontinuous_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_float16_group_true_5d():
     """
     Feature: Test FusedAdamW
@@ -725,7 +725,7 @@ def test_mint_optim_fused_adamw_dtype_float16_group_true_5d():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_float64():
     """
     Feature: Test FusedAdamW
@@ -745,7 +745,7 @@ def test_mint_optim_fused_adamw_dtype_float64():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_withoutparam():
     """
     Feature: Test FusedAdamW.
@@ -760,7 +760,7 @@ def test_mint_optim_fused_adamw_withoutparam():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_lr_neg():
     """
     Feature: Test FusedAdamW
@@ -779,7 +779,7 @@ def test_mint_optim_fused_adamw_lr_neg():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_20_30_lr_int():
     """
     Feature: Test FusedAdamW
@@ -800,7 +800,7 @@ def test_mint_optim_fused_adamw_dtype_20_30_lr_int():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_betas_neg():
     """
     Feature: Test FusedAdamW
@@ -821,7 +821,7 @@ def test_mint_optim_fused_adamw_dtype_betas_neg():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_mint_optim_fused_adamw_dtype_weight_neg():
     """
     Feature: Test FusedAdamW
@@ -842,7 +842,7 @@ def test_mint_optim_fused_adamw_dtype_weight_neg():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize("mode, init_amsgrad, new_amsgrad",
                          [(context.PYNATIVE_MODE, False, True), (context.GRAPH_MODE, True, False)])
 def test_fusedadamw_no_mixed_amsgrad(mode, init_amsgrad, new_amsgrad):
@@ -862,8 +862,7 @@ def test_fusedadamw_no_mixed_amsgrad(mode, init_amsgrad, new_amsgrad):
             f"Please keep amsgrad consistent for all groups.") in str(exc.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_fusedadamw_add_param_group_amsgrad_true_missing_max_raises(mode):
     """
@@ -881,8 +880,7 @@ def test_fusedadamw_add_param_group_amsgrad_true_missing_max_raises(mode):
     assert "FusedAdamW: max_exp_avg_sq must be initialized when amsgrad=True." in str(exc.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=1024.00)
 def test_fusedadamw_add_param_group_amsgrad_true_no_duplicate_max_state():
     """
     Feature: FusedAdamW
@@ -914,8 +912,7 @@ def test_fusedadamw_add_param_group_amsgrad_true_no_duplicate_max_state():
     optimizer(grads)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1024.00)
 def test_fusedadamw_add_param_group_amsgrad_false_no_max_state():
     """
     Feature: FusedAdamW
@@ -942,8 +939,7 @@ def test_fusedadamw_add_param_group_amsgrad_false_no_max_state():
     optimizer(grads)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1024.00)
 def test_fusedadamw_many_groups_amsgrad_true_alignment_and_update():
     """
     Feature: FusedAdamW

@@ -44,8 +44,7 @@ def test_np_array_advanced_index_complex():
     assert np.all(c.asnumpy() == np.array([2. + 6.j, 3.5 + 5.j]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_rollaxis():
     """
     Feature: JIT Fallback
@@ -63,8 +62,7 @@ def test_np_rollaxis():
     assert x == 6 and y == 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_swapaxes():
     """
     Feature: JIT Fallback
@@ -82,8 +80,7 @@ def test_np_swapaxes():
     assert x == 6 and y == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tensor_index_asnp():
     """
     Feature: JIT Fallback

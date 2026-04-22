@@ -5,7 +5,7 @@ from mindspore import jit, context, Tensor
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_fp32():
     """
     Description:
@@ -25,7 +25,7 @@ def test_p_dtype_input_1x12x1x1_dtype_fp32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_bool():
     """
     Description:
@@ -46,7 +46,7 @@ def test_p_dtype_input_1x12x1x1_dtype_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1_dtype_fp32():
     """
     Description:
@@ -67,7 +67,7 @@ def test_p_dtype_input_1x12x1_dtype_fp32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12_dtype_fp32():
     """
     Description:
@@ -88,7 +88,7 @@ def test_p_dtype_input_1x12_dtype_fp32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_12_dtype_fp32():
     """
     Description:
@@ -109,7 +109,7 @@ def test_p_dtype_input_12_dtype_fp32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_5x1x2x5x1x2x8_dtype_fp32():
     """
     Description:
@@ -130,7 +130,7 @@ def test_p_dtype_input_5x1x2x5x1x2x8_dtype_fp32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1x2x3_dtype_fp16():
     """
     Description:
@@ -151,7 +151,7 @@ def test_p_dtype_input_1x12x1x1x2x3_dtype_fp16():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1x2_dtype_fp64():
     """
     Description:
@@ -172,7 +172,7 @@ def test_p_dtype_input_1x12x1x1x2_dtype_fp64():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_int8():
     """
     Description:
@@ -193,7 +193,7 @@ def test_p_dtype_input_1x12x1x1_dtype_int8():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_forward_input_1x12x1x1_dtype_int16():
     """
     Description:
@@ -214,7 +214,7 @@ def test_p_dtype_forward_input_1x12x1x1_dtype_int16():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_int32():
     """
     Description:
@@ -235,7 +235,7 @@ def test_p_dtype_input_1x12x1x1_dtype_int32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_int64():
     """
     Description:
@@ -256,7 +256,7 @@ def test_p_dtype_input_1x12x1x1_dtype_int64():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_uint8():
     """
     Description:
@@ -277,7 +277,7 @@ def test_p_dtype_input_1x12x1x1_dtype_uint8():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_uint16():
     """
     Description:
@@ -298,7 +298,7 @@ def test_p_dtype_input_1x12x1x1_dtype_uint16():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_uint32():
     """
     Description:
@@ -319,7 +319,7 @@ def test_p_dtype_input_1x12x1x1_dtype_uint32():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_dtype_uint64():
     """
     Description:
@@ -340,7 +340,7 @@ def test_p_dtype_input_1x12x1x1_dtype_uint64():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_scalar():
     """
     Description:
@@ -361,7 +361,7 @@ def test_p_dtype_input_scalar():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_int():
     """
     Description:
@@ -382,7 +382,7 @@ def test_p_dtype_input_int():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_float():
     """
     Description:
@@ -403,7 +403,7 @@ def test_p_dtype_input_float():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_contains_none():
     """
     Description:
@@ -425,7 +425,7 @@ def test_p_dtype_input_1x12x1x1_contains_none():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_contains_nan():
     """
     Description:
@@ -447,7 +447,7 @@ def test_p_dtype_input_1x12x1x1_contains_nan():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_1x12x1x1_contains_inf():
     """
     Description:
@@ -469,7 +469,7 @@ def test_p_dtype_input_1x12x1x1_contains_inf():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_int():
     """
     Description:
@@ -490,7 +490,7 @@ def test_p_dtype_input_tuple_int():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_bool():
     """
     Description:
@@ -511,7 +511,7 @@ def test_p_dtype_input_tuple_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_float():
     """
     Description:
@@ -532,7 +532,7 @@ def test_p_dtype_input_tuple_float():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_int_float():
     """
     Description:
@@ -553,7 +553,7 @@ def test_p_dtype_input_tuple_int_float():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_int_bool():
     """
     Description:
@@ -574,7 +574,7 @@ def test_p_dtype_input_tuple_int_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_float_bool():
     """
     Description:
@@ -595,7 +595,7 @@ def test_p_dtype_input_tuple_float_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_int_nan():
     """
     Description:
@@ -616,7 +616,7 @@ def test_p_dtype_input_tuple_int_nan():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_tuple_int_inf():
     """
     Description:
@@ -637,7 +637,7 @@ def test_p_dtype_input_tuple_int_inf():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_int():
     """
     Description:
@@ -658,7 +658,7 @@ def test_p_dtype_input_list_int():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_bool():
     """
     Description:
@@ -679,7 +679,7 @@ def test_p_dtype_input_list_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_float():
     """
     Description:
@@ -700,7 +700,7 @@ def test_p_dtype_input_list_float():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_int_float():
     """
     Description:
@@ -721,7 +721,7 @@ def test_p_dtype_input_list_int_float():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_int_bool():
     """
     Description:
@@ -742,7 +742,7 @@ def test_p_dtype_input_list_int_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_float_bool():
     """
     Description:
@@ -763,7 +763,7 @@ def test_p_dtype_input_list_float_bool():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_int_nan():
     """
     Description:
@@ -784,7 +784,7 @@ def test_p_dtype_input_list_int_nan():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_list_int_inf():
     """
     Description:
@@ -805,7 +805,7 @@ def test_p_dtype_input_list_int_inf():
     fact.grad_cmp(net)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dtype_input_bool():
     """
     Description:

@@ -78,7 +78,7 @@ def lp_norm_vmap_case(data_type):
     assert np.allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_op(data_type):
     """
@@ -103,7 +103,7 @@ def test_lp_norm_op(data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lp_norm_op_keepdims():
     """
     Feature: Test LpNorm with keep_dims=True.
@@ -122,7 +122,7 @@ def test_lp_norm_op_keepdims():
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_vmap_gpu(data_type):
     """
@@ -134,7 +134,7 @@ def test_lp_norm_vmap_gpu(data_type):
     lp_norm_vmap_case(data_type)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_dy_shape(data_type):
     """

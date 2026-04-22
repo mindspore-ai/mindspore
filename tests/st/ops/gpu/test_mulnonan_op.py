@@ -30,7 +30,7 @@ class MulNoNanNet(nn.Cell):
         return self.mulnonan(x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_mulnonan_graph():
     '''
         Description: 1d fp32
@@ -45,7 +45,7 @@ def test_mulnonan_graph():
     assert (res.asnumpy() == res_expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_mulnonan_pynative():
     '''
         Description: 1d fp32

@@ -102,7 +102,7 @@ class WithLossCellLocal(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_high_grad_train():
     x_pure = np.random.randint(-10, 100, 32)
     x_train = x_pure.astype(np.float32)
@@ -123,8 +123,7 @@ def test_high_grad_train():
         train_network(Tensor([x_train[i]]), Tensor([y_train[i]]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_high_grad_environ_eliminate():
     """
     Feature: eliminate the environ node.
@@ -204,8 +203,7 @@ class LayerInputFinalNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_highgrad_switch_layer_grad():
     """
     Feature: High grad with switch layer.
@@ -222,8 +220,7 @@ def test_highgrad_switch_layer_grad():
     grad_net(Tensor(input_np), index)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.03)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.03)
 def test_highgrad_grad_in_switch_layer():
     """
     Feature: High grad with switch layer.
@@ -241,8 +238,7 @@ def test_highgrad_grad_in_switch_layer():
     net(Tensor(input_np), index)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_highgrad_grad_in_net():
     """
     Feature: High grad with grad in net.
@@ -277,8 +273,7 @@ def test_highgrad_grad_in_net():
     assert (grad.asnumpy() == np.array([[4, 4], [4, 4]]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_highgrad_two_input_sec_grad():
     """
     Feature: High grad with bprop two input.
@@ -312,8 +307,7 @@ def test_highgrad_two_input_sec_grad():
     assert (dydy.asnumpy() == np.array([8, 8]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_highgrad_control_if_mul():
     """
     Feature: High grad with control flow.

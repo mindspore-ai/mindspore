@@ -10,6 +10,9 @@ mindspore.ops.coo_relu
     .. math::
         ReLU(x) = (x)^+ = \max(0, x)
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - coo_relu的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，
           其数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_。

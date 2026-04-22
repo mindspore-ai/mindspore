@@ -43,8 +43,7 @@ def collect_profiler_data(tmpdir, pretty_on=False):
             assert data["profiler_parameters"]["l2_cache"] is False
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_profiler_analyse_pretty_true_010():
     """
     Feature: Profiler Analyse with Pretty Print Enabled
@@ -55,8 +54,7 @@ def test_profiler_analyse_pretty_true_010():
         collect_profiler_data(tmpdir, pretty_on=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_profiler_analyse_pretty_true_011():
     """
     Feature: Profiler Analyse with Pretty Print Disabled
@@ -67,8 +65,7 @@ def test_profiler_analyse_pretty_true_011():
         collect_profiler_data(tmpdir, pretty_on=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_profiler_analyse_pretty_true_012():
     """
     Feature: Profiler Analyse with Non-Boolean Pretty Parameter

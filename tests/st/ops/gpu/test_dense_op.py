@@ -37,7 +37,7 @@ class BiasAdd(nn.Cell):
         return self.ba(x, b)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_biasadd():
     x = Tensor(np.array([[0.1, 0.2, 0.3, 0.4],
                          [0.5, 0.6, 0.7, 0.8],
@@ -99,7 +99,7 @@ class DenseNet(nn.Cell):
         return self.dense(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dx():
     x = np.array([[0.1, 0.2, 0.3, 0.4],
                   [0.1, 0.2, 0.3, 0.4],
@@ -127,7 +127,7 @@ def test_dx():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dx_nd():
     """
     Feature: Dense gpu kernel
@@ -171,7 +171,7 @@ def test_dx_nd():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dw():
     x = np.array([[0.1, 0.2, 0.3, 0.4],
                   [0.1, 0.2, 0.3, 0.4],
@@ -206,7 +206,7 @@ def test_dw():
     assert np.all(-diff < db_error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dw_nd():
     """
     Feature: Dense gpu kernel
@@ -262,7 +262,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(input_, bias, dy)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_biasadd_3d():
     x = Tensor(np.array([[[1, 2, 3, 4, 5, 6, 7, 8],
                           [9, 10, 11, 12, 13, 14, 15, 16],
@@ -327,7 +327,7 @@ def test_biasadd_3d():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_biasadd_4d():
     x = Tensor(np.array([[[[1, 2, 3, 4],
                            [5, 6, 7, 8],
@@ -455,7 +455,7 @@ class BiasAddDynamic(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bias_add_dynamic_two_inputs():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BiasAddDynamic()
@@ -520,7 +520,7 @@ class DenseOp(nn.Dense):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dx_op():
     """
     Feature: Dense gpu kernel
@@ -553,7 +553,7 @@ def test_dx_op():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dx_nd_op():
     """
     Feature: Dense gpu kernel
@@ -597,7 +597,7 @@ def test_dx_nd_op():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dw_op():
     """
     Feature: Dense gpu kernel
@@ -637,7 +637,7 @@ def test_dw_op():
     assert np.all(-diff < db_error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dw_nd_op():
     """
     Feature: Dense gpu kernel
@@ -893,7 +893,7 @@ def test_3d_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_1d_complex64_backward():
     """
     Feature: Test dense 1d complex64 backward.
@@ -928,7 +928,7 @@ def test_1d_complex64_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_2d_complex128_backward():
     """
     Feature: Test dense 2d complex128 backward.
@@ -963,7 +963,7 @@ def test_2d_complex128_backward():
     assert np.abs(db_ms - db_np).mean() < error
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_2d_dtypes_forward():
     """
     Feature: Test dense 2d dtypes forward.
@@ -986,7 +986,7 @@ def test_2d_dtypes_forward():
         assert np.abs(out_ms - out_np).mean() < error
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_0d_bias():
     """
     Feature: Test dense 0d bias.

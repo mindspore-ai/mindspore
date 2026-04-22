@@ -8,6 +8,9 @@ mindspore.ops.tensor_scatter_mul
     .. math::
         output\left [indices \right ] = input\_x\times updates
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         - 如果 `indices` 的某些值超出 `input_x` 的维度范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。
 

@@ -5,6 +5,9 @@ mindspore.ops.elu
 
     指数线性单元激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `input_x` 将重命名为 `input`，并新增 `inplace` 参数。
+
     对输入的每个元素计算ELU。该激活函数定义如下：
 
     .. math::

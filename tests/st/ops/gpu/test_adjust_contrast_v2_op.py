@@ -31,7 +31,7 @@ class AdjustContrastV2(Cell):
         return self.adjustcontrastv2(images, contrast_factor)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adjust_contrast_v2():
     """
     Feature:  AdjustContrastV2 2 inputs and 1 output.

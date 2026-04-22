@@ -5,6 +5,9 @@ mindspore.Tensor.isclose
 
     返回一个bool类型的Tensor，表示 `input` 的每个元素与 `other` 的对应元素在给定容忍度内是否“接近”。其中“接近”的数学公式为：
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `isclose(x2, ...)` 重载，仅支持 `isclose(other, ...)`。
+
     .. math::
         |input-other| <= atol + rtol * |other|
 

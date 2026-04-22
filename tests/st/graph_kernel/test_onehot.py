@@ -49,7 +49,7 @@ def fusion_net_get_output(x, y, indices, depth, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_graph_mode():
     """
     Feature: graph kernel testcase for onehot

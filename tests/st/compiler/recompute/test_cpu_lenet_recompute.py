@@ -74,7 +74,7 @@ def train(net, data, label):
     assert np.all(diff < 1.e-6)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_lenet():
     """
     Feature: Recompute .

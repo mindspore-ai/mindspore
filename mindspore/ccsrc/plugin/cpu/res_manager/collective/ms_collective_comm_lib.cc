@@ -298,9 +298,17 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
     const auto &group_info = groups_.at(group_name);
     uint32_t root_rank = group_info->group_ranks().at(0);
     MS_LOG(EXCEPTION)
-      << "Failed to fetch the unique id of the collective lib from the meta server node. Maybe the root rank process "
-         "of this group has exited or has not executed to QueryUniqueID step. Please check root rank: "
-      << root_rank << "'s log.";
+      << "Failed to fetch the unique id of the collective lib from the meta server for group " << group_name
+      << ". Root rank: " << root_rank
+      << ". Possible causes:"
+         "\n1. Root rank exited unexpectedly."
+         "\n2. Root rank did not complete SendUniqueID before timeout."
+         "\nSuggestions:"
+         "\n1. Check whether root rank "
+      << root_rank
+      << " exited early."
+         "\n2. Check whether root rank lags behind this rank and does not publish the unique id before timeout. "
+         "If needed, increase the timeout by setting MS_NODE_TIMEOUT. The default timeout is 200s.";
   }
   return true;
 }

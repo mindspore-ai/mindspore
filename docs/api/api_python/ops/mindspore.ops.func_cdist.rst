@@ -10,6 +10,11 @@ mindspore.ops.cdist
         - CPU上支持的输入数据类型为float16和float32。
         - GPU上支持的输入数据类型为float32和float64。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `compute_mode` ，接口签名将变更为
+        ``mindspore.ops.cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary')`` 。
+        该变更与当前版本兼容，不使用 `compute_mode` 参数时行为不变。
+
     参数：
         - **x1** (Tensor) - 输入Tensor，shape为 :math:`(B, P, M)` ， :math:`B` 表示0或者正整数。 :math:`B` 维度为0时该维度被忽略，shape为 :math:`(P, M)` 。
         - **x2** (Tensor) - 输入Tensor，shape为 :math:`(B, R, M)` ，与 `x1` 的数据类型一致。

@@ -393,8 +393,7 @@ class GradWrap(Cell):
 
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("use_reentrant", [
     True,
 ])
@@ -470,8 +469,7 @@ class Block(Cell):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=76.01)
+          card_mark='onecard', mem_peak=76.01)
 @pytest.mark.parametrize("use_reentrant, output_recompute", [
     (True, True),
     (True, False),
@@ -529,8 +527,7 @@ class OuterBlock(Cell):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=74.01)
+          card_mark='onecard', mem_peak=74.01)
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -577,8 +574,7 @@ def test_net_normal_recompute_function(use_reentrant):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -608,8 +604,7 @@ def test_net_normal_recompute_sequential_cell(use_reentrant):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -641,8 +636,7 @@ def test_net_normal_recompute_not_tensor_input(use_reentrant):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("output_recompute", [
     True,
     False
@@ -688,8 +682,7 @@ def test_net_recompute_not_tensor_input(output_recompute):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_net_multi_call_saved_tensors_custom_function():
     """
     Feature: Recompute function
@@ -740,8 +733,7 @@ def test_net_multi_call_saved_tensors_custom_function():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_net_output_recompute_trigger_num():
     """
     Feature: Recompute function
@@ -800,8 +792,7 @@ def test_net_output_recompute_trigger_num():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -839,8 +830,7 @@ def test_recompute_hook_execution_count(use_reentrant):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -872,8 +862,7 @@ def test_recompute_with_jit_top_cell(use_reentrant):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -915,8 +904,7 @@ def test_recompute_with_jit_inner_cell(use_reentrant):
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=14.01)
+          card_mark='onecard', mem_peak=14.01)
 def test_custom_function_tensor_ref_count():
     """
     Feature: Recompute function
@@ -959,8 +947,7 @@ def test_custom_function_tensor_ref_count():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_net_normal_recompute_function_with_side_effect():
     """
     Feature: Recompute function with side effect forward function
@@ -1000,8 +987,7 @@ def test_net_normal_recompute_function_with_side_effect():
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=74.01)
+          card_mark='onecard', mem_peak=74.01)
 def test_net_multi_recompute_function():
     """
     Feature: Recompute function with side effect forward function
@@ -1050,8 +1036,7 @@ def test_net_multi_recompute_function():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_net_nested_recompute_function():
     """
     Feature: Recompute function with side effect forward function
@@ -1097,8 +1082,7 @@ def test_net_nested_recompute_function():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_net_output_recompute_function_ops():
     """
     Feature: Recompute function with op.
@@ -1137,8 +1121,7 @@ def test_net_output_recompute_function_ops():
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=258.01)
+          card_mark='onecard', mem_peak=258.01)
 def test_net_output_recompute():
     """
     Feature: Recompute function
@@ -1186,8 +1169,7 @@ def test_net_output_recompute():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_output_used_by_multi_op_recompute_function():
     """
     Feature: Recompute function with side effect forward function
@@ -1237,8 +1219,7 @@ def test_output_used_by_multi_op_recompute_function():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_multi_output_op_recompute_function():
     """
     Feature: Recompute function with side effect forward function
@@ -1289,8 +1270,7 @@ def test_multi_output_op_recompute_function():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize("early_stop", [
     False
 ])
@@ -1335,8 +1315,7 @@ def test_net_nested_recompute_function_early_stop(early_stop):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_recompute_with_context_fn():
     """
     Feature: Recompute function with context fn.

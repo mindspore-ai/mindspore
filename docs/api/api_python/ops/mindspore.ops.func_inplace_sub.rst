@@ -5,6 +5,9 @@ mindspore.ops.inplace_sub
 
     根据索引将 `x` 减 `v` 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     对于 `indices` 的每个元素下标 :math:`i, ..., j` ：
 
     .. math::

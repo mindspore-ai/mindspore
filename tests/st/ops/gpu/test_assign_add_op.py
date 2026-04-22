@@ -76,7 +76,7 @@ def assign_add(nptype):
     assert (output2.asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_fp16():
     """
     Feature: assign add kernel
@@ -86,7 +86,7 @@ def test_assign_add_fp16():
     assign_add(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_fp32():
     """
     Feature: assign add kernel
@@ -96,7 +96,7 @@ def test_assign_add_fp32():
     assign_add(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_fp64():
     """
     Feature: assign add kernel
@@ -106,7 +106,7 @@ def test_assign_add_fp64():
     assign_add(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_comp64():
     """
     Feature: assign add kernel
@@ -116,7 +116,7 @@ def test_assign_add_comp64():
     assign_add(np.complex64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_comp128():
     """
     Feature: assign add kernel
@@ -126,7 +126,7 @@ def test_assign_add_comp128():
     assign_add(np.complex128)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_int8():
     """
     Feature: assign add kernel
@@ -136,7 +136,7 @@ def test_assign_add_int8():
     assign_add(np.int8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_uint8():
     """
     Feature: assign add kernel
@@ -146,7 +146,7 @@ def test_assign_add_uint8():
     assign_add(np.uint8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_int16():
     """
     Feature: assign add kernel
@@ -156,7 +156,7 @@ def test_assign_add_int16():
     assign_add(np.int16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_uint16():
     """
     Feature: assign add kernel
@@ -166,7 +166,7 @@ def test_assign_add_uint16():
     assign_add(np.uint16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_int32():
     """
     Feature: assign add kernel
@@ -176,7 +176,7 @@ def test_assign_add_int32():
     assign_add(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_uint32():
     """
     Feature: assign add kernel
@@ -186,7 +186,7 @@ def test_assign_add_uint32():
     assign_add(np.uint32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_int64():
     """
     Feature: assign add kernel
@@ -196,7 +196,7 @@ def test_assign_add_int64():
     assign_add(np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_add_uint64():
     """
     Feature: assign add kernel

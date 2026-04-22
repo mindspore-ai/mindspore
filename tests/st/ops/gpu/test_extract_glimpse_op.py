@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.op(x, size, offsets)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_graph1():
     '''
     Feature: ALL To ALL.
@@ -50,7 +50,7 @@ def test_net_graph1():
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_graph2():
     '''
     Feature: ALL To ALL.
@@ -67,7 +67,7 @@ def test_net_graph2():
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_graph3():
     '''
     Feature: ALL To ALL.
@@ -85,7 +85,7 @@ def test_net_graph3():
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_graph4():
     '''
     Feature: ALL To ALL.

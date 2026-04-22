@@ -4,6 +4,9 @@ diag:
 
     For details, please refer to :func:`mindspore.ops.diag`.
 
+    .. warning::
+        After version 2.9.0, the `diag()` overload will be removed, and only `diag(diagonal=0)` will be supported. This is a compatible change, and existing `diag()` calls will remain supported.
+
     .. method:: Tensor.diag(diagonal=0) -> Tensor
         :noindex:
 

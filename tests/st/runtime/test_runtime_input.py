@@ -239,7 +239,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=512.00)
+          card_mark='onecard', mem_peak=512.00)
 def test_parameter_increm_init():
     """
     Feature: Parameter checkpoint loading and inference consistency

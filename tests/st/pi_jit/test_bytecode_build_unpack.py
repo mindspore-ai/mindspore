@@ -47,7 +47,7 @@ def check_func_compile_state(func):
     assert jcr['compile_count_'] == 1
     assert jcr['stat'] == 'GRAPH_CALLABLE'
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_list_unpack])
 @pytest.mark.parametrize('x', [(1, 2, 3)])
 @pytest.mark.parametrize('y', [(5, 6)])
@@ -65,7 +65,7 @@ def test_build_list_unpack(func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_set_unpack])
 @pytest.mark.parametrize('x', [(1, 2, 3)])
 @pytest.mark.parametrize('y', [(5, 6)])
@@ -83,7 +83,7 @@ def test_build_set_unpack(func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_tuple_unpack])
 @pytest.mark.parametrize('x', [(1, 2, 3)])
 @pytest.mark.parametrize('y', [(5, 6)])
@@ -101,7 +101,7 @@ def test_build_tuple_unpack(func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_tuple_unpack_with_call])
 @pytest.mark.parametrize('x', [(1, 2, 3)])
 @pytest.mark.parametrize('y', [(5, 6)])
@@ -119,7 +119,7 @@ def test_build_tuple_unpack_with_call(func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_map_unpack])
 @pytest.mark.parametrize('x', [{"a":1, "b":2, "c":3}])
 @pytest.mark.parametrize('y', [{"d":5, "e":6}])
@@ -137,7 +137,7 @@ def test_build_map_unpack(func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_map_unpack_with_call])
 @pytest.mark.parametrize('x', [{"a":1, "b":2, "c":3}])
 @pytest.mark.parametrize('y', [{"d":5, "e":6}])
@@ -155,7 +155,7 @@ def test_build_map_unpack_with_call(func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
     check_func_compile_state(wrapped_func)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [build_mix_unpack_with_call])
 @pytest.mark.parametrize('a', [[1, 2, 3]])
 @pytest.mark.parametrize('b', [[4, 5, 6]])

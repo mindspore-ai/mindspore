@@ -34,7 +34,7 @@ class ReNormNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_op_float32(data_type=np.float32):
     """
     Feature: test Renorm with using float32.
@@ -58,7 +58,7 @@ def test_renorm_op_float32(data_type=np.float32):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_op_float16(data_type=np.float16):
     """
     Feature: test Renorm using float16.
@@ -82,7 +82,7 @@ def test_renorm_op_float16(data_type=np.float16):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_op1_float32(data_type=np.float32):
     """
     Feature: test Renorm using float32.
@@ -106,7 +106,7 @@ def test_renorm_op1_float32(data_type=np.float32):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_op2_float16(data_type=np.float16):
     """
     Feature: test Renorm using float16.
@@ -210,7 +210,7 @@ def vmap_nested_case():
     np.testing.assert_allclose(output.asnumpy(), fornet_output.asnumpy(), rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_vmap_cpu():
     """
     Feature: test Renorm vmap on GPU.
@@ -221,7 +221,7 @@ def test_renorm_vmap_cpu():
     vmap_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_vmap_cpu_nested():
     """
     Feature: test nested Renorm vmap on GPU.
@@ -232,7 +232,7 @@ def test_renorm_vmap_cpu_nested():
     vmap_nested_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_renorm_op2_complex64(data_type=np.complex64):
     """
     Feature: test Renorm using complex64.

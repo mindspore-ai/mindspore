@@ -54,7 +54,7 @@ def generate_dump_json(dump_path, json_file_name, enable_sync):
         json.dump(data, f)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 @security_off_wrap
 def test_multi_stream_async_statistic_dump():
     """

@@ -25,7 +25,7 @@ def func(x, y=ms.Tensor([1])): # Tensor as input to ensure graph compile.
     return x, y + 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("value", [1, 2.0, 'str', b'bytes', [1 + 1j]])
 def test_guard_scalar(value):
     """
@@ -46,7 +46,7 @@ def test_guard_scalar(value):
     reset_func(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("value", [True, False])
 def test_guard_bool(value):
     """
@@ -66,7 +66,7 @@ def test_guard_bool(value):
     reset_func(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize("value", [1, 1.0])
 def test_guard_mutable_scalar(value):
     """
@@ -81,7 +81,7 @@ def test_guard_mutable_scalar(value):
     reset_func(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_mutable_bool():
     """
     Feature: Guard

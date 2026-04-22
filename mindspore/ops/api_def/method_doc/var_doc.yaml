@@ -13,6 +13,9 @@ var:
     Note:
         Numpy arguments `dtype`, `out` and `where` are not supported.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the ``var(axis=None, ddof=0, keepdims=False)`` overload will be removed, and only ``var(dim=None, *, correction=1, keepdim=False)`` will be supported (default ``ddof`` changes from ``0`` to ``1``).
+
     Args:
         axis (Union[None, int, tuple(int)], optional): Axis or axes along which the variance is computed.
             The default is to compute the variance of the flattened array. Default: ``None`` .
@@ -51,7 +54,7 @@ var:
     Calculates the variance over the dimensions specified by `dim`. `dim` can be a single dimension, list of
     dimensions, or None to reduce over all dimensions.
 
-    The variance (:math:`\delta ^2`) is calculated as:
+    The variance ( :math:`\delta ^2` ) is calculated as:
 
     .. math::
         \delta ^2 = \frac{1}{\max(0, N - \delta N)}\sum^{N - 1}_{i = 0}(x_i - \bar{x})^2

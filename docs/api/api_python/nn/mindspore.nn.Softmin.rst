@@ -7,6 +7,9 @@ mindspore.nn.Softmin
 
     对输入Tensor在轴 `axis` 上的元素计算其指数函数值，然后归一化到[0, 1]范围，总和为1。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更： `axis` 将改为 `dim`，且默认值会调整。
+
     Softmin定义为：
 
     .. math::

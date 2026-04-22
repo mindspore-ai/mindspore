@@ -2,9 +2,6 @@ isneginf:
   description: |
     Return whether each element in the input is a negative infinity number.
 
-    .. warning::
-        - This API can be used only on the Atlas A2 training series.
-
     Args:
         input (Tensor): The input tensor.
 

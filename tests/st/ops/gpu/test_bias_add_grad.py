@@ -34,7 +34,7 @@ class BiasAddGradNet(nn.Cell):
         return self.op(dout)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_bias_add_grad2d(data_type):
     """
@@ -49,7 +49,7 @@ def test_bias_add_grad2d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_bias_add_grad4d(data_type):
     """
@@ -64,7 +64,7 @@ def test_bias_add_grad4d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_bias_add_grad5d(data_type):
     """
@@ -79,7 +79,7 @@ def test_bias_add_grad5d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bias_add_grad4d_dyn_inputs():
     """
     Feature: GPU BiasAddGrad.

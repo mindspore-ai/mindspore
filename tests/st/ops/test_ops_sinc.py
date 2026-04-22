@@ -46,8 +46,7 @@ def sinc_vmap_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
-                      'cpu_macos'], level_mark='level0', card_mark='onecard',
-                      essential_mark='essential', mem_peak=2.00)
+                      'cpu_macos'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_sinc_forward_backward(mode):
     """
@@ -75,7 +74,7 @@ def test_ops_sinc_forward_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
-                      'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+                      'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_sinc_vmap(mode):
     """
@@ -94,7 +93,7 @@ def test_ops_sinc_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
+        level_mark='level1', card_mark='onecard', mem_peak=3072.00)
 def test_ops_sinc_dynamic_shape():
     """
     Feature: pyboost function.

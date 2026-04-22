@@ -33,8 +33,7 @@ class Net(nn.Cell):
         return x > y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_compare_bool_vs_bool():
     """
     Feature: simple expression
@@ -46,8 +45,7 @@ def test_compare_bool_vs_bool():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_compare_bool_vs_int():
     """
     Feature: simple expression
@@ -59,8 +57,7 @@ def test_compare_bool_vs_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_compare_tensor_int_vs_tensor_float():
     """
     Feature: simple expression
@@ -74,8 +71,7 @@ def test_compare_tensor_int_vs_tensor_float():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_multiple_compare():
     """
     Feature: Test compare including multiple comparators.
@@ -94,8 +90,7 @@ def test_multiple_compare():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_multiple_compare_2():
     """
     Feature: Test compare including multiple comparators.
@@ -114,8 +109,7 @@ def test_multiple_compare_2():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multiple_compare_3():
     """
     Feature: Test compare including multiple comparators.
@@ -134,8 +128,7 @@ def test_multiple_compare_3():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_multiple_compare_4():
     """
     Feature: Test compare including multiple comparators.

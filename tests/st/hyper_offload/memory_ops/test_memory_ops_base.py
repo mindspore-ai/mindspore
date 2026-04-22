@@ -39,13 +39,10 @@ def _hyper_offload_guard(enabled="1"):
             os.environ["MS_DEV_HYPER_OFFLOAD"] = old_value
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=4.0,
-)
+    mem_peak=4.0)
 def test_ops_get_data():
     """
     Feature: Hyper offload base operator
@@ -84,13 +81,10 @@ def test_ops_get_data():
         assert np.all(result.asnumpy() == np.array((3, 4, 5, 6)))
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=2.0,
-)
+    mem_peak=2.0)
 def test_remote_ops_copy_to_host():
     """
     Feature: Hyper offload base operator
@@ -109,13 +103,10 @@ def test_remote_ops_copy_to_host():
         assert result.device == "CPU"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=0.01,
-)
+    mem_peak=0.01)
 def test_copy_to_host():
     """
     Feature: Hyper offload base operator
@@ -136,13 +127,10 @@ def test_copy_to_host():
         assert "Invalid input device tensor type for kernel" in str(error_info.value)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=4.0,
-)
+    mem_peak=4.0)
 def test_memory_ops_set_data():
     """
     Feature: Hyper offload base operator
@@ -199,13 +187,10 @@ def test_memory_ops_set_data():
         assert np.all(result.asnumpy() == np.array((8, 8, 8)))
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=4.0,
-)
+    mem_peak=4.0)
 def test_remote_ops_copy_to():
     """
     Feature: Hyper offload base operator
@@ -226,13 +211,10 @@ def test_remote_ops_copy_to():
         assert result.device == "Ascend:0"
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=4.0,
-)
+    mem_peak=4.0)
 def test_ops_to_host_free_set_data():
     """
     Feature: Hyper offload base operator
@@ -254,13 +236,10 @@ def test_ops_to_host_free_set_data():
         assert np.all(result.asnumpy() == np.array((1, 2, 3, 4)))
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
-    mem_peak=2.0,
-)
+    mem_peak=2.0)
 def test_remote_ops_copy_to_and_free():
     """
     Feature: Hyper offload base operator

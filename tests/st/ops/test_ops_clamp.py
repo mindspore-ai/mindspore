@@ -48,8 +48,7 @@ def clamp_backward_func(x, min_, max_):
     return ms.grad(clamp_forward_func, (0, 1, 2))(x, min_, max_)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_normal0(context_mode):
     """
@@ -75,8 +74,7 @@ def test_ops_clamp_normal0(context_mode):
     assert output.asnumpy().shape == (2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_normal1(context_mode):
     """
@@ -102,8 +100,7 @@ def test_ops_clamp_normal1(context_mode):
     assert output.asnumpy().shape == (2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_normal2(context_mode):
     """
@@ -129,8 +126,7 @@ def test_ops_clamp_normal2(context_mode):
     assert output.asnumpy().shape == (2, 3, 4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_ops_clamp_min_max_tensor_dynamic_shape():
     """
     Feature: pyboost function.
@@ -151,8 +147,7 @@ def test_ops_clamp_min_max_tensor_dynamic_shape():
             case_config={'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_ops_clamp_min_max_scalar_dynamic_shape():
     """
     Feature: pyboost function.
@@ -171,8 +166,7 @@ def test_ops_clamp_min_max_scalar_dynamic_shape():
     TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], disable_mode=['GRAPH_MODE_GE'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_type_promotion(context_mode):
     """

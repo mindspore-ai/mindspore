@@ -17,7 +17,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_broadcast_gradient_args():
     """
     Feature: for DynamicBroadcastGradientArgs op
@@ -28,7 +28,7 @@ def test_broadcast_gradient_args():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_conv2d_backprop_filter():
     """
     Feature: for Conv2DBackpropFilter op
@@ -39,7 +39,7 @@ def test_conv2d_backprop_filter():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_conv2d_backprop_input():
     """
     Feature: for Conv2DBackpropInput op
@@ -50,7 +50,7 @@ def test_conv2d_backprop_input():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_conv2d_transpose():
     """
     Feature: for Conv2DTranspose op
@@ -61,7 +61,7 @@ def test_conv2d_transpose():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_dynamic_broadcast_to():
     """
     Feature: for DynamicBroadcastTo op
@@ -72,7 +72,7 @@ def test_dynamic_broadcast_to():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_unique():
     """
     Feature: for Unique op

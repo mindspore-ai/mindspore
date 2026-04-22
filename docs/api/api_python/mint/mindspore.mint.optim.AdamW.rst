@@ -48,7 +48,6 @@ mindspore.mint.optim.AdamW
 
     .. warning::
         - 这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
-        - 对于Ascend，仅Atlas A2以上平台支持。
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。

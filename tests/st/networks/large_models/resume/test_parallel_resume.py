@@ -45,7 +45,7 @@ def remove_folder(folder_path):
 class TestResumeTraining:
     """A test class for testing pipeline."""
 
-    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
     def test_train(self):
         """
         Feature: Trainer.train()

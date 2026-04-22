@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.sparse_apply_adagrad_da(*x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplyadagradda_fp32():
     """
     Feature: SparseApplyAdagradDA gpu op
@@ -60,7 +60,7 @@ def test_sparseapplyadagradda_fp32():
     assert np.all(var_out.asnumpy() == expect_var)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplyadagradda_fp16():
     """
     Feature: SparseApplyAdagradDA gpu op

@@ -9,6 +9,9 @@ mindspore.Tensor.var
 
     返回方差值，默认情况下计算展开Tensor的方差，否则在指定维度上计算。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `var(axis=None, ddof=0, keepdims=False)` 重载，仅支持 `var(dim=None, *, correction=1, keepdim=False)` （ `ddof` 0 -> 1）。
+
     .. note::
         不支持NumPy参数 `dtype` 、 `out` 和 `where` 。
 
@@ -35,7 +38,7 @@ mindspore.Tensor.var
 
     计算指定维度 `dim` 上的方差。 `dim` 可以是单个维度、维度列表，也可以是 `None` ，表示移除所有维度。
 
-    方差 (:math:`\delta ^2`) 计算如下：
+    方差 （ :math:`\delta ^2` ）计算如下：
 
     .. math::
         \delta ^2 = \frac{1}{\max(0, N - \delta N)}\sum^{N - 1}_{i = 0}(x_i - \bar{x})^2

@@ -99,6 +99,7 @@
 "mindspore/mindspore/python/mindspore/onnx/onnx_export.py"                                                               "protected-access"
 "mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "protected-access"
 "mindspore/mindspore/python/mindspore/nn/optim/ftrl.py"                                                                  "unused-import"
+"mindspore/mindspore/python/mindspore/nn/layer/embedding.py"                                                             "super-with-arguments"
 "mindspore/mindspore/python/mindspore/train/amp.py"                                                                      "protected-access"
 "mindspore/mindspore/python/mindspore/train/serialization.py"                                                            "protected-access"
 "mindspore/mindspore/python/mindspore/train/model.py"                                                                    "protected-access"

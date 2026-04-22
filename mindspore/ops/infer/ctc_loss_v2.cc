@@ -106,7 +106,12 @@ void CalcMaxTargetLengthsValue(int64_t *max_target_lengths_value, const Abstract
   if (type->object_type() == kObjectTypeTuple) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
-    CalcMaxTargetLengthsValueImpl(max_target_lengths_value, target_lengths, tuple_type->elements()[kIndex0]->type_id());
+    auto elements = tuple_type->elements();
+    if (elements.empty()) {
+      // Empty tuple has no elements to calculate max value, just return
+      return;
+    }
+    CalcMaxTargetLengthsValueImpl(max_target_lengths_value, target_lengths, elements[kIndex0]->type_id());
   } else if (type->object_type() == kObjectTypeTensorType) {
     auto tensor_type = type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);

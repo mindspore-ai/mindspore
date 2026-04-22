@@ -46,16 +46,23 @@ The actual test logic is implemented in test_swap.py wrapper, which validates:
 - Checkpoint saving and loading with offload state
 """
 import numpy as np
+import os
 import mindspore as ms
-from mindspore import nn
+import mindspore.dataset as ds
 import mindspore.ops.operations as P
+from mindspore import nn
 from mindspore import Tensor
+from mindspore.train.callback import CheckpointConfig
+from mindspore.train.callback import ModelCheckpoint
 from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.graph.lazy_inline import lazy_inline
 from tests.mark_utils import arg_mark
 from tests.st.auto_parallel.model_parallel import FakeData
 from tests.st.auto_parallel.utils.modeltrain_base import modeltrainbase
+from tests.st.high_availability.utils.context_base import contextbase
+from tests.st.auto_parallel.checkpoint_unified_safetensors import clean_all_ckpt_files
+from tests.st.pi_jit.share.modeltrain_utils import GeneratorFakeData
 
 
 class Network(nn.Cell):
@@ -124,8 +131,7 @@ class Network(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard",
-        essential_mark="essential", mem_peak=6.00)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", mem_peak=6.00)
 def test_swap_offload_store_key_check():
     '''
     Feature: swap.
@@ -141,3 +147,104 @@ def test_swap_offload_store_key_check():
     model2 = modeltrainbase.create_train_model(network2)
     model2.train(epoch=1, train_dataset=dataset2, dataset_sink_mode=False)
     model2.predict(inputs)
+
+
+class MulAddMulNet(nn.Cell):
+    """A neural network for memory swap and offload testing."""
+    def __init__(self, mul_shape, add_shape, strategy=None, dtype=ms.float32, swap=False):
+        super().__init__()
+        if swap:
+            self.mul_weight_1 = Parameter(Tensor(np.full(mul_shape, 0.5), dtype=dtype),
+                                          name="mul_weight_1", device="CPU")
+            self.mul_weight_2 = Parameter(Tensor(np.full(mul_shape, 0.5), dtype=dtype),
+                                          name="mul_weight_2", device="CPU")
+            self.add_weight = Parameter(Tensor(np.full(add_shape, 0.5), dtype=dtype), name="add_weight", device="CPU")
+        else:
+            self.mul_weight_1 = Parameter(Tensor(np.full(mul_shape, 0.5), dtype=dtype), name="mul_weight_1")
+            self.mul_weight_2 = Parameter(Tensor(np.full(mul_shape, 0.5), dtype=dtype), name="mul_weight_2")
+            self.add_weight = Parameter(Tensor(np.full(add_shape, 0.5), dtype=dtype), name="add_weight")
+        self.mul1 = P.Mul()
+        self.mul2 = P.Mul()
+        self.add = P.Add()
+
+        if strategy is not None:
+            self.mul1.shard(strategy)
+            self.add.shard(strategy)
+            self.mul2.shard(strategy)
+
+    def construct(self, x):
+        output = self.mul1(x, self.mul_weight_1)
+        output = self.add(output, self.add_weight)
+        output = self.mul2(output, self.mul_weight_2)
+        return output
+
+
+def save_checkpoint_and_model_train(model, epoch, dataset, ckpt_path, ckpt_format=None,
+                                    save_checkpoint_steps=1,
+                                    keep_checkpoint_max=1, integrated_save=False, async_save=False,
+                                    append_info=None, remove_redundancy=True,
+                                    exception_save=False, ckpt_prefix="ckpt_ms",
+                                    dataset_sink_mode=False, sink_size=-1,
+                                    **kwargs):
+    """save ckpt"""
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=save_checkpoint_steps,
+                                   keep_checkpoint_max=keep_checkpoint_max,
+                                   integrated_save=integrated_save, append_info=append_info,
+                                   async_save=async_save, remove_redundancy=remove_redundancy,
+                                   exception_save=exception_save, format=ckpt_format, **kwargs)
+    ckpt_callback = ModelCheckpoint(prefix=ckpt_prefix, directory=ckpt_path, config=ckpt_config)
+    clean_all_ckpt_files(ckpt_path)
+    model.train(epoch=epoch, train_dataset=dataset, dataset_sink_mode=dataset_sink_mode,
+                callbacks=[ckpt_callback], sink_size=sink_size)
+
+
+def test_parallel_safetensors_with_swap():
+    """
+    Feature: Save safetensors and reload it, using the swap functionality.
+    Description: Define a network with multiple weight parameters, save all as non-deduplicated safetensors,
+    load deduplicated safetensors, compare precision, and use the swap functionality.
+    Expectation: Run success
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    rank_id = contextbase.get_parallel_variable_from_env("RANK_ID")
+    context.reset_auto_parallel_context()
+    contextbase.set_parallel_context(device_num=8,
+                                     parallel_mode="semi_auto_parallel")
+    net_parallel = MulAddMulNet(mul_shape=(16, 8), add_shape=(16, 8,), swap=True)
+    dataset_parallel = FakeData(size=32, batch_size=2, image_size=(8,), num_classes=8,
+                                use_parallel=True)
+    parallel_model = modeltrainbase.create_train_model(net_parallel)
+
+    safetensors_path = f"./parallel_weight/rank_{rank_id}"
+    # 不去冗余保存
+    save_checkpoint_and_model_train(parallel_model, 1, dataset_parallel, ckpt_path=safetensors_path,
+                                    remove_redundancy=False, keep_checkpoint_max=1, ckpt_format='safetensors')
+    net1 = MulAddMulNet(mul_shape=(16, 8), add_shape=(16, 8,), swap=True)
+    model = modeltrainbase.create_train_model(net1)
+    model1_dataset = ds.GeneratorDataset(
+        GeneratorFakeData(size=32, batch_size=2, image_size=(8,), num_classes=8),
+        ["data", "label"])
+    model.build(train_dataset=model1_dataset, epoch=2)
+
+    ms.load_checkpoint(f"./parallel_weight/rank_{rank_id}/ckpt_ms-1_2.safetensors", model.train_network,
+                       format="safetensors", remove_redundancy=True)
+    input_x = Tensor(np.random.rand(2, 8).astype(np.float32))
+    assert np.array_equal(parallel_model.predict(input_x).asnumpy(), model.predict(input_x).asnumpy()), \
+        "result not equal, please check"
+
+
+@arg_mark(plat_marks=["platform_ascend910b"],
+    level_mark="level0",
+    card_mark="allcards")
+def test_parallel_safetensors_remove_redundancy_match_load_false_with_swap():
+    """
+    Feature: Save safetensors and reload it, using the swap functionality.
+    Description: Define a network with multiple weight parameters, save all as non-deduplicated safetensors,
+    load deduplicated safetensors, compare precision, and use the swap functionality.
+    Expectation: Run success
+    """
+    ret = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --log_dir=msrun_log --join=True --master_port=8129\
+        pytest -s test_swap.py::test_parallel_safetensors_with_swap"
+    )
+    assert ret == 0

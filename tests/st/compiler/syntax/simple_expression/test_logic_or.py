@@ -47,8 +47,7 @@ class LogicOrSpec(nn.Cell):
         return or_v
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_int_or_int():
     """
     Feature: simple expression
@@ -60,8 +59,7 @@ def test_ms_syntax_operator_logic_int_or_int():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_float_or_float():
     """
     Feature: simple expression
@@ -73,8 +71,7 @@ def test_ms_syntax_operator_logic_float_or_float():
     assert ret == 1.89
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_float_or_int():
     """
     Feature: simple expression
@@ -86,8 +83,7 @@ def test_ms_syntax_operator_logic_float_or_int():
     assert ret == 1.89
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_ms_syntax_operator_logic_tensor_1_int_or_tensor_1_int():
     """
     Feature: simple expression
@@ -101,8 +97,7 @@ def test_ms_syntax_operator_logic_tensor_1_int_or_tensor_1_int():
     assert (ret.asnumpy() == [1]).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_tensor_1_float_or_tensor_1_int():
     """
     Feature: simple expression
@@ -117,8 +112,7 @@ def test_ms_syntax_operator_logic_tensor_1_float_or_tensor_1_int():
         print(ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_tensor_2x2_int_or_tensor_2x2_int():
     """
     Feature: simple expression
@@ -134,8 +128,7 @@ def test_ms_syntax_operator_logic_tensor_2x2_int_or_tensor_2x2_int():
     assert "Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is (2, 2)" in str(err)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_int_or_str():
     """
     Feature: simple expression
@@ -147,8 +140,7 @@ def test_ms_syntax_operator_logic_int_or_str():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_int_or_str_2():
     """
     Feature: simple expression
@@ -160,8 +152,7 @@ def test_ms_syntax_operator_logic_int_or_str_2():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_str_or_str():
     """
     Feature: simple expression
@@ -173,8 +164,7 @@ def test_ms_syntax_operator_logic_str_or_str():
     assert ret == "abc"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_list_int_or_list_int():
     """
     Feature: simple expression
@@ -186,8 +176,7 @@ def test_ms_syntax_operator_logic_list_int_or_list_int():
     assert ret == [1, 2, 3]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_list_int_or_int():
     """
     Feature: simple expression
@@ -199,8 +188,7 @@ def test_ms_syntax_operator_logic_list_int_or_int():
     assert ret == [1, 2, 3]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_list_int_or_str():
     """
     Feature: simple expression
@@ -212,8 +200,7 @@ def test_ms_syntax_operator_logic_list_int_or_str():
     assert ret == [1, 2, 3]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_list_int_or_list_str():
     """
     Feature: simple expression

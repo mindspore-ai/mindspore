@@ -153,8 +153,7 @@ from .utils import verify_op_removed_after_pass, verify_frontend_custom_pass_ir_
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_plugin_build_and_existence(build_plugin):
     """
     Feature: test custom pass plugin build and file existence
@@ -183,8 +182,7 @@ def test_plugin_build_and_existence(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_plugin_registration(build_plugin):
     """
     Feature: test custom pass plugin registration
@@ -211,8 +209,7 @@ def test_plugin_registration(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_addn_fusion_functionality(build_plugin, graphs_dir_fixture):
     """
     Feature: test AddN fusion pass functionality
@@ -279,8 +276,7 @@ def test_addn_fusion_functionality(build_plugin, graphs_dir_fixture):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_simple_addn_network(build_plugin, graphs_dir_fixture):
     """
     Feature: test simple AddN network
@@ -321,8 +317,7 @@ def test_simple_addn_network(build_plugin, graphs_dir_fixture):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_invalid_plugin_path():
     """
     Feature: test error handling for invalid plugin paths
@@ -345,8 +340,7 @@ def test_invalid_plugin_path():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_invalid_pass_name(build_plugin):
     """
     Feature: test error handling for invalid pass names
@@ -368,8 +362,7 @@ def test_invalid_pass_name(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_multi_device_registration(build_plugin):
     """
     Feature: test multiple device registration
@@ -394,8 +387,7 @@ def test_multi_device_registration(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_without_addn(build_plugin, graphs_dir_fixture):
     """
     Feature: test network without AddN operations
@@ -436,8 +428,7 @@ def test_network_without_addn(build_plugin, graphs_dir_fixture):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_multiple_pass_registration_cpu(build_plugin):
     """
     Feature: test multiple pass registration on CPU
@@ -460,8 +451,7 @@ def test_multiple_pass_registration_cpu(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_add_neg_fusion_registration(build_plugin):
     """
     Feature: test AddNegFusionPass plugin registration
@@ -478,8 +468,7 @@ def test_add_neg_fusion_registration(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_add_neg_fusion_functionality(build_plugin, graphs_dir_fixture):
     """
     Feature: test AddNegFusionPass functionality
@@ -567,8 +556,7 @@ class AddNNegNetwork(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pass_execution_order_a_b(build_plugin, graphs_dir_fixture):
     """
     Feature: test pass execution order A-B (ReplaceAddN -> AddNeg)
@@ -616,8 +604,7 @@ def test_pass_execution_order_a_b(build_plugin, graphs_dir_fixture):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pass_execution_order_b_a(build_plugin, graphs_dir_fixture):
     """
     Feature: test pass execution order B-A (AddNeg -> ReplaceAddN)
@@ -665,8 +652,7 @@ def test_pass_execution_order_b_a(build_plugin, graphs_dir_fixture):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_full_graph_pass_registration(build_plugin):
     """
     Feature: test FullGraphPass plugin registration for frontend
@@ -683,8 +669,7 @@ def test_full_graph_pass_registration(build_plugin):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_full_graph_pass_for_frontend(build_plugin, graphs_dir_fixture):
     """
     Feature: test full graph pass for frontend
@@ -729,8 +714,7 @@ def test_full_graph_pass_for_frontend(build_plugin, graphs_dir_fixture):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_mixed_passes_execution_order(build_plugin, graphs_dir_fixture):
     """
     Feature: test mixed pass execution order

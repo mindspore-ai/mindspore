@@ -24,7 +24,7 @@ from tests.mark_utils import arg_mark
 
 
 # test to make sure this op actually generates a dynamically shaped output
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dyanamic_shape_confirm_dynamic():
     """
     Feature: Test dynamic shaoe
@@ -106,7 +106,7 @@ def gpu_convert_to_dynamic_shape_int(dtype):
     np.testing.assert_array_equal(x, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_bool():
     """
     Feature: Test dynamic shaoe
@@ -121,7 +121,7 @@ def test_gpu_convert_to_dynamic_shape_bool():
     np.testing.assert_array_equal(x, ms_out)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_float16():
     """
     Feature: Test dynamic shaoe
@@ -131,7 +131,7 @@ def test_gpu_convert_to_dynamic_shape_float16():
     gpu_convert_to_dynamic_shape_float(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_float32():
     """
     Feature: Test dynamic shaoe
@@ -141,7 +141,7 @@ def test_gpu_convert_to_dynamic_shape_float32():
     gpu_convert_to_dynamic_shape_float(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_float64():
     """
     Feature: Test dynamic shaoe
@@ -151,7 +151,7 @@ def test_gpu_convert_to_dynamic_shape_float64():
     gpu_convert_to_dynamic_shape_float(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_int8():
     """
     Feature: Test dynamic shaoe
@@ -161,7 +161,7 @@ def test_gpu_convert_to_dynamic_shape_int8():
     gpu_convert_to_dynamic_shape_int(np.int8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_int16():
     """
     Feature: Test dynamic shaoe
@@ -171,7 +171,7 @@ def test_gpu_convert_to_dynamic_shape_int16():
     gpu_convert_to_dynamic_shape_int(np.int16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_int32():
     """
     Feature: Test dynamic shaoe
@@ -181,7 +181,7 @@ def test_gpu_convert_to_dynamic_shape_int32():
     gpu_convert_to_dynamic_shape_int(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_int64():
     """
     Feature: Test dynamic shaoe
@@ -191,7 +191,7 @@ def test_gpu_convert_to_dynamic_shape_int64():
     gpu_convert_to_dynamic_shape_int(np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_uint8():
     """
     Feature: Test dynamic shaoe
@@ -201,7 +201,7 @@ def test_gpu_convert_to_dynamic_shape_uint8():
     gpu_convert_to_dynamic_shape_int(np.uint8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_uint16():
     """
     Feature: Test dynamic shaoe
@@ -211,7 +211,7 @@ def test_gpu_convert_to_dynamic_shape_uint16():
     gpu_convert_to_dynamic_shape_int(np.uint16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_uint32():
     """
     Feature: Test dynamic shaoe
@@ -221,7 +221,7 @@ def test_gpu_convert_to_dynamic_shape_uint32():
     gpu_convert_to_dynamic_shape_int(np.uint32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_convert_to_dynamic_shape_uint64():
     """
     Feature: Test dynamic shaoe

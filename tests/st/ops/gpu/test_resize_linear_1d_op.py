@@ -24,7 +24,7 @@ from mindspore.ops.operations import ResizeLinear1D
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_align_corners(dtype):
     """
@@ -41,7 +41,7 @@ def test_resize_linear_1d_align_corners(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_half_pixel(dtype):
     """
@@ -59,7 +59,7 @@ def test_resize_linear_1d_half_pixel(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_size_not_change(dtype):
     """

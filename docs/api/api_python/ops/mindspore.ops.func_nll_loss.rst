@@ -5,6 +5,10 @@
 
     获取预测值和目标值之间的负对数似然损失。
 
+    .. warning::
+        - 从2.9.0（不含）之后版本开始，`label_smoothing` 参数将删除。
+        - 在GPU或CPU设备上运行时， `inputs` 必须为2维Tensor。
+
     reduction为 ``'none'`` 时，负对数似然损失公式如下：
 
     .. math::
@@ -22,14 +26,6 @@
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.
-
-    .. warning::
-        - 在GE模式下： `inputs` 需为1维或2维Tensor， `target` 和 `weight` 需为1维，并需满足以下约束条件：
-
-          - 当 `inputs` 为1维时：target_shape[0] == 1 且 weight_shape[0] == inputs_shape[0]。
-          - 当 `inputs` 为2维时：target_shape[0] == inputs_shape[0] 且 weight_shape[0] == inputs_shape[1]。
-
-        - 在GPU或CPU设备上运行时， `inputs` 必须为2维Tensor。
 
     参数：
         - **inputs** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, H, W)`

@@ -8,7 +8,7 @@ mindspore.numpy.sign
     当 `x < 0` 时，sign 函数返回 -1，当 `x == 0` 时，返回 0；当 `x > 0` 时，返回 1。对于 nan 输入，返回 nan。
 
     .. note::
-        不支持NumPy参数 `out` 、 `where` 、 `casting` 、 `order` 、 `subok` 、 `signature` 、 `extobj` 。 目前不支持复数输入。 在Ascend上，不支持整数输入。
+        不支持NumPy参数 `out` 、 `where` 、 `casting` 、 `order` 、 `subok` 、 `signature` 、 `extobj` 。目前不支持复数输入。在Ascend上，不支持整数输入。
 
     参数：
         - **x** (Union[int, float, list, tuple, Tensor]) - 输入值。

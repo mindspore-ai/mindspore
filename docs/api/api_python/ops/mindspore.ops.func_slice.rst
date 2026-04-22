@@ -5,6 +5,9 @@ mindspore.ops.slice
 
     根据指定shape对输入tensor进行切片。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         `begin` 的起始值为0，`size` 的起始值为1。
 

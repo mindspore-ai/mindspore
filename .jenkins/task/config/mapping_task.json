@@ -34,7 +34,8 @@
       "mindspore/core/README_CN.md",
       "third_party/patch",
       "config",
-      ".claude"
+      ".claude",
+      "CLAUDE.md"
     ],
     "ENVIRONMENT": "BASE"
   },

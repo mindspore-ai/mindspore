@@ -9,6 +9,9 @@ mindspore.ops.scatter_min
         \text{input_x}[\text{indices}[i, ..., j], :]
         = \min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         - 支持隐式类型转换、类型提升。
         - 因Parameter对象不支持类型转换，当 `input_x` 为低精度数据类型时，会抛出异常。

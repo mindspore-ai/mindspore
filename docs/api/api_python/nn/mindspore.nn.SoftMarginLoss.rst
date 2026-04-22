@@ -12,6 +12,9 @@ mindspore.nn.SoftMarginLoss
 
     :math:`x.nelement()` 代表 `x` 中元素的个数。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     参数：
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
@@ -20,14 +23,14 @@ mindspore.nn.SoftMarginLoss
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **logits** (Tensor) - 预测值，数据类型为float16、float32、bfloat16（Atlas训练系列产品不支持）。
-        - **labels** (Tensor) - 目标值，shape与 `logits` 的相同。GE模式下类型需要与 `logits` 相同。
+        - **logits** (Tensor) - 预测值，数据类型为float16、float32、bfloat16。
+        - **labels** (Tensor) - 目标值，shape与 `logits` 的相同。
 
     输出：
         Tensor或Scalar，如果 `reduction` 为 ``"none"`` ，其shape与 `logits` 相同。否则，将返回Scalar。
 
     异常：
         - **TypeError** - `logits` 或 `labels` 不是Tensor。
-        - **TypeError** - `logits` 或 `labels` 的数据类型不是float16、float32、bfloat16（Atlas训练系列产品不支持）。
+        - **TypeError** - `logits` 或 `labels` 的数据类型不是float16、float32、bfloat16。
         - **ValueError** - `logits` 的shape与 `labels` 不同。
         - **ValueError** - `reduction` 不为 ``"mean"`` ， ``"sum"`` ，或 ``"none"`` 。

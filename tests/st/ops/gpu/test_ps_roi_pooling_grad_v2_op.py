@@ -151,7 +151,7 @@ def ps_roi_pooling_grad_case(data_type, dynamic_shape=False):
     assert np.allclose(output_ms, output_gt, atol=1e-4, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ps_roi_pooling_grad():
     """
     Feature: PSROIPoolingGrad op.

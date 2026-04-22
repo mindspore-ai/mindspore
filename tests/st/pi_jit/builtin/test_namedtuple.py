@@ -31,7 +31,7 @@ context.set_context(mode=context.PYNATIVE_MODE)
 jit_cfg = {'compile_with_try': False}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_getattr():
     """
     Feature: Support namedtuple in pijit.
@@ -51,7 +51,7 @@ def test_namedtuple_getattr():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_getattr_with_wrong_keyword():
     """
     Feature: Support namedtuple in pijit.
@@ -70,7 +70,7 @@ def test_namedtuple_getattr_with_wrong_keyword():
     assert 'has no attribute' in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('idx, expect', [(0, Tensor([1, 2, 3])), (1, Tensor([1, 1, 1])), (-1, Tensor([1, 1, 1]))])
 def test_namedtuple_getitem(idx: int, expect: Tensor):
     """
@@ -94,7 +94,7 @@ def test_namedtuple_getitem(idx: int, expect: Tensor):
 Point = namedtuple('Point', ['x', 'y'])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_positional_args():
     """
     Feature: Support namedtuple in pijit.
@@ -115,7 +115,7 @@ def test_create_namedtuple_with_positional_args():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_keyword_args():
     """
     Feature: Support namedtuple in pijit.
@@ -136,7 +136,7 @@ def test_create_namedtuple_with_keyword_args():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_disordered_keyword_args():
     """
     Feature: Support namedtuple in pijit.
@@ -160,7 +160,7 @@ def test_create_namedtuple_with_disordered_keyword_args():
 Point3D = namedtuple('Point', ['x', 'y', 'z'])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_positional_and_keyword_args():
     """
     Feature: Support namedtuple in pijit.
@@ -185,7 +185,7 @@ def test_create_namedtuple_with_positional_and_keyword_args():
 PointV2 = namedtuple('Point', ['x', 'y', 'offset'], defaults=(1,))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_positional_and_default_args():
     """
     Feature: Support namedtuple in pijit.
@@ -209,7 +209,7 @@ def test_create_namedtuple_with_positional_and_default_args():
 PointV3 = namedtuple('Point', ['x', 'y', 'z', 'offset', 'scale'], defaults=(0.5, 2.))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_positional_and_keywords_and_default_args():
     """
     Feature: Support namedtuple in pijit.
@@ -236,7 +236,7 @@ def test_create_namedtuple_with_positional_and_keywords_and_default_args():
 PointV4 = namedtuple('Point', ['x', 'y'], defaults=[1, 2])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_entirely_using_default_args():
     """
     Feature: Support namedtuple in pijit.
@@ -259,7 +259,7 @@ def test_create_namedtuple_entirely_using_default_args():
 PointV5 = namedtuple('Point', ['x', 'y'], defaults=[Tensor([1, 1, 1])])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_default_args_of_tensor_type():
     """
     Feature: Support namedtuple in pijit.
@@ -279,7 +279,7 @@ def test_create_namedtuple_with_default_args_of_tensor_type():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_variable_length_args():
     """
     Feature: Support namedtuple in pijit.
@@ -306,7 +306,7 @@ def test_create_namedtuple_with_variable_length_args():
 PointV6 = namedtuple('Point', ['x', 'y', 'z', 'offset', 'scale'])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_variable_length_args_and_kwargs():
     """
     Feature: Support namedtuple in pijit.
@@ -333,7 +333,7 @@ def test_create_namedtuple_with_variable_length_args_and_kwargs():
 PointV7 = namedtuple('Point', ['x', 'y', 'z', 'offset', 'scale'], defaults=[0., 1.])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_all_kinds_of_arguments():
     """
     Feature: Support namedtuple in pijit.
@@ -360,7 +360,7 @@ def test_create_namedtuple_with_all_kinds_of_arguments():
 PointV8 = namedtuple('Point', ['x', 'def', 'y', 'class'], rename=True)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_rename():
     """
     Feature: Support namedtuple in pijit.
@@ -381,7 +381,7 @@ def test_create_namedtuple_with_rename():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_too_few_args():
     """
     Feature: Support namedtuple in pijit.
@@ -400,7 +400,7 @@ def test_create_namedtuple_with_too_few_args():
     assert 'missing 1 required' in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_too_many_args():
     """
     Feature: Support namedtuple in pijit.
@@ -423,7 +423,7 @@ def test_create_namedtuple_with_too_many_args():
 PointV9 = namedtuple('Point', ['x', 'y'], rename=True)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_wrong_keyword_args():
     """
     Feature: Support namedtuple in pijit.
@@ -443,7 +443,7 @@ def test_create_namedtuple_with_wrong_keyword_args():
     assert 'unexpected keyword' in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -465,7 +465,7 @@ def test_create_namedtuple_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_None_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -488,7 +488,7 @@ def test_create_namedtuple_with_None_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_nested_None_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -515,7 +515,7 @@ def test_create_namedtuple_with_nested_None_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_dict_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -540,7 +540,7 @@ def test_create_namedtuple_with_dict_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_numpy_object_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -567,7 +567,7 @@ def test_create_namedtuple_with_numpy_object_and_return_in_top_graph():
 Color = namedtuple('Color', 'r g b')
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_nested_namedtuple_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -595,7 +595,7 @@ def test_create_namedtuple_with_nested_namedtuple_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_in_subgraph_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -620,7 +620,7 @@ def test_create_namedtuple_in_subgraph_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_with_None_in_subgraph_and_return_in_top_graph():
     """
     Feature: Support namedtuple in pijit.
@@ -646,7 +646,7 @@ def test_create_namedtuple_with_None_in_subgraph_and_return_in_top_graph():
     assert_no_graph_break(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_and_return_in_subgraph():
     """
     Feature: Support namedtuple in pijit.
@@ -670,7 +670,7 @@ def test_create_namedtuple_and_return_in_subgraph():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_namedtuple_and_put_it_in_nested_structures_then_return_in_subgraph():
     """
     Feature: Support namedtuple in pijit.
@@ -708,7 +708,7 @@ def assert_tuple_equals(x: tuple, y: tuple):
         match_array(l, r)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_add():
     """
     Feature: Support namedtuple in pijit.
@@ -731,7 +731,7 @@ def test_namedtuple_add():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_add_namedtuple():
     """
     Feature: Support namedtuple in pijit.
@@ -755,7 +755,7 @@ def test_namedtuple_add_namedtuple():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_multiply():
     """
     Feature: Support namedtuple in pijit.
@@ -778,7 +778,7 @@ def test_namedtuple_multiply():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_unpack():
     """
     Feature: Support namedtuple in pijit.
@@ -805,7 +805,7 @@ def test_namedtuple_unpack():
 Point5D = namedtuple('Point', ['a', 'b', 'c', 'd', 'e'])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_slice():
     """
     Feature: Support namedtuple in pijit.
@@ -828,7 +828,7 @@ def test_namedtuple_slice():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_slice_with_step():
     """
     Feature: Support namedtuple in pijit.
@@ -851,7 +851,7 @@ def test_namedtuple_slice_with_step():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_len():
     """
     Feature: Support namedtuple in pijit.
@@ -875,7 +875,7 @@ def test_namedtuple_len():
 PointV10 = namedtuple('Point', 'a b c d e')
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_index_method():
     """
     Feature: Support namedtuple in pijit.
@@ -894,7 +894,7 @@ def test_namedtuple_index_method():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_namedtuple_count_method():
     """
     Feature: Support namedtuple in pijit.

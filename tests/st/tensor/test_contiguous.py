@@ -26,8 +26,7 @@ from mindspore import dtype as mstype
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_contiguous_pynative():
     """
     Feature: countiguous
@@ -62,8 +61,7 @@ class WithoutContiguousNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_contiguous_grad(mode):
     """

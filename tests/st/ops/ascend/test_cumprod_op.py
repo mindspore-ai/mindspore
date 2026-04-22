@@ -53,7 +53,7 @@ def test_cumprod_tensor_api():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_cumprod_functional_tensor_modes():
     """
     Feature: test cumprod functional and tensor APIs in PyNative and Graph modes.

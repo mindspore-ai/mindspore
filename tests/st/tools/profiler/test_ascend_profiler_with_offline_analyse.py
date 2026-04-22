@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test module for Ascend profiler offline analysis functionality.
+
+This module contains test cases to verify the offline analysis capabilities of the
+Ascend profiler in MindSpore. It tests both single device and multi-device scenarios
+using both the legacy Profiler API and the new profiler API.
+"""
 import os
 import glob
 import tempfile
@@ -29,8 +36,7 @@ from file_check import FileChecker
 from model_zoo import TinyAddNet
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_ascend_profiler_offline_analyse_with_single_device():
     """
     Feature: Ascend Offline Profiler Analysis with Single Device
@@ -54,8 +60,7 @@ def test_ascend_profiler_offline_analyse_with_single_device():
         check_ascend_offline_analyse_files(ascend_ms_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_ascend_profiler_offline_analyse_with_multi_devices():
     """
     Feature: Ascend Offline Profiler Analysis with Multi Devices
@@ -83,8 +88,7 @@ def test_ascend_profiler_offline_analyse_with_multi_devices():
         check_ascend_offline_analyse_files(copy_ascend_ms_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=1024.01)
 def test_new_profiler_offline_analyse_with_single_device():
     """
     Feature: Ascend Offline Profiler Analysis with Single Device
@@ -110,8 +114,7 @@ def test_new_profiler_offline_analyse_with_single_device():
         check_ascend_offline_analyse_files(ascend_ms_dir, True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=1024.01)
 def test_new_profiler_offline_analyse_with_multi_devices():
     """
     Feature: Ascend Offline Profiler Analysis with Multi Devices
@@ -164,5 +167,5 @@ def check_ascend_offline_analyse_files(ascend_ms_dir: str, with_db: bool = False
     )
 
     # check kernel_details.csv
-    kernel_details_path = os.path.join(ascend_profiler_output_path, f"kernel_details.csv")
+    kernel_details_path = os.path.join(ascend_profiler_output_path, "kernel_details.csv")
     FileChecker.check_csv_items(kernel_details_path, {"Name": ["*Add*"]})

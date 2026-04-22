@@ -25,7 +25,7 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 np.random.seed(1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinhgrad_fp32():
     """
     Feature: asinh grad kernel
@@ -39,7 +39,7 @@ def test_asinhgrad_fp32():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinhgrad_fp16():
     """
     Feature: asinh grad kernel
@@ -53,7 +53,7 @@ def test_asinhgrad_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np.astype(np.float16), 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinhgrad_fp64():
     """
     Feature: asinh grad kernel
@@ -67,7 +67,7 @@ def test_asinhgrad_fp64():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinhgrad_complex64():
     """
     Feature: asinh grad kernel
@@ -81,7 +81,7 @@ def test_asinhgrad_complex64():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinhgrad_complex128():
     """
     Feature: asinh grad kernel

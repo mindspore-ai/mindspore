@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 import pytest
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_symbol_graphmode_setinputs():
     """
     Feature: Symbol
@@ -62,7 +62,7 @@ def test_symbol_graphmode_setinputs():
     assert net(x, x).shape == (16, 8, 8)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_symbol_pynativemode_setinputs():
     """
     Feature: Symbol
@@ -94,7 +94,7 @@ def test_symbol_pynativemode_setinputs():
     assert net(x, x).shape == (16, 8)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_symbol_pynativemode_enable_dynamic():
     """
     Feature: Symbol

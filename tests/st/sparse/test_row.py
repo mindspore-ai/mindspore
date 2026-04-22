@@ -32,7 +32,7 @@ def compare_row(row1, row2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_make_row():
     """
     Feature: Test RowTensor Constructor in Graph and PyNative.
@@ -52,8 +52,7 @@ def test_make_row():
     compare_row(row1, row2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_row_tensor_with_control_if():
     """
     Feature: Test RowTensor in if.

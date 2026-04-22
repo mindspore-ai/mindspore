@@ -5,11 +5,12 @@
 
     使用均匀分布对一组类别进行采样。
 
-    此函数使用均匀分布从[0, range_max-1]中采样一组类（sampled_candidates）。如果 `unique` 为True，则候选采样没有重复；如果 `unique` 为False，则有重复。
+    此函数使用均匀分布从[0, range_max-1]中采样一组类（sampled_candidates）。如果 `unique` 为 ``True``，则候选采样没有重复；如果 `unique` 为 ``False``，则有重复。
 
     .. warning::
         - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
         - Ascend后端暂不支持动态shape场景。
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **true_classes** (Tensor) - 输入Tensor，目标类，其shape为 :math:`(batch\_size, num\_true)` 。其元素值范围需要在 :math:`[0, range\_max)` 。

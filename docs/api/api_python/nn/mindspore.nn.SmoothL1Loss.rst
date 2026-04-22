@@ -30,6 +30,9 @@ mindspore.nn.SmoothL1Loss
         - :class:`mindspore.nn.L1Loss` 计算两个输入Tensor之间的绝对误差，而 :class:`mindspore.ops.L2Loss` 计算两个输入Tensor之间的平方误差。
         - :class:`mindspore.ops.L2Loss` 通常更快收敛，但对离群值的鲁棒性较差。该损失函数具有较好的鲁棒性。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造参数顺序将调整为 `reduction, beta`，且默认 `reduction` 将从 ``none`` 改为 ``mean``。
+
     参数：
         - **beta** (number，可选) - 损失函数计算在L1Loss和L2Loss间变换的阈值。默认值： ``1.0`` 。
 

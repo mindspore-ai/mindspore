@@ -17,6 +17,7 @@
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -279,6 +280,23 @@ UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
   return user_info_list;
 }
 
+void CopyHyperOffloadFrontendAttrs(const AnfNodePtr &from, const AnfNodePtr &to) {
+  MS_EXCEPTION_IF_NULL(from);
+  MS_EXCEPTION_IF_NULL(to);
+  if (!from->isa<CNode>() || !to->isa<CNode>()) {
+    return;
+  }
+  auto from_cnode = from->cast<CNodePtr>();
+  auto to_cnode = to->cast<CNodePtr>();
+  const std::array kHyperOffloadFrontendAttrNames{kPrefetchDistanceAttr, kReleaseDistanceAttr, kEnableOffloadAttr};
+  for (const auto attr_name : kHyperOffloadFrontendAttrNames) {
+    const std::string name(attr_name);
+    if (from_cnode->HasAttr(name)) {
+      to_cnode->AddAttr(name, from_cnode->GetAttr(name));
+    }
+  }
+}
+
 CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
                          const HandleNewNodeCallback &callback) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -293,7 +311,7 @@ CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
   if (data_node->isa<CNode>()) {
-    common::AnfAlgo::CopyNodeAttrs(data_node, ret_node);
+    CopyHyperOffloadFrontendAttrs(data_node, ret_node);
   }
   if (callback != nullptr) {
     callback(ret_node, data_node);
@@ -317,7 +335,7 @@ CNodePtr BuildInplaceToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &dat
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
   if (depend_node->isa<CNode>()) {
-    common::AnfAlgo::CopyNodeAttrs(depend_node, ret_node);
+    CopyHyperOffloadFrontendAttrs(depend_node, ret_node);
   }
   if (callback != nullptr) {
     callback(ret_node, depend_node);
@@ -338,7 +356,7 @@ CNodePtr BuildToDeviceNode(const FuncGraphPtr &graph, const AnfNodePtr &data_nod
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
   if (data_node->isa<CNode>()) {
-    common::AnfAlgo::CopyNodeAttrs(data_node, ret_node);
+    CopyHyperOffloadFrontendAttrs(data_node, ret_node);
   }
   if (callback != nullptr) {
     callback(ret_node, data_node);

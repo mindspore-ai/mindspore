@@ -71,8 +71,7 @@ class NetFractionalAvgPoolGradOverlapping(nn.Cell):
                                              col_pooling_sequence)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_fractionalavgpool_graph():
     """
     Feature: FractionalAvgPool
@@ -135,8 +134,7 @@ def test_fractionalavgpool_graph():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_fractionalavgpool_pynative():
     """
     Feature: FractionalAvgPool
@@ -198,8 +196,7 @@ def test_fractionalavgpool_pynative():
         assert np.allclose(output_grad.asnumpy(), expect_output_grad_y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_fractionalavgpool_pynative_dynamic():
     """
     Feature: FractionalAvgPool
@@ -227,8 +224,7 @@ def test_fractionalavgpool_pynative_dynamic():
         assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_fractionalavgpoolgrad_graph_dynamic():
     """
     Feature: FractionalAvgPool
@@ -301,8 +297,7 @@ def test_fractionalavgpoolgrad_graph_dynamic():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_fractionalavgpoolgrad_pynative_dynamic():
     """
     Feature: FractionalAvgPool

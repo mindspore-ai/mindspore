@@ -68,6 +68,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
 
   bool has_dynamic_length = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const AbstractBasePtr &abs) {
     // Abs must be sequence since it is checked before.
+    MS_EXCEPTION_IF_NULL(abs);
     auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
     return seq_abs->dynamic_len();
   });

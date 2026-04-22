@@ -21,6 +21,9 @@ mindspore.nn.TripletMarginLoss
     .. math::
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：构造参数顺序将调整为 `margin, p, eps, swap, ...`。
+
     参数：
         - **p** (int，可选) - 成对距离的范数。默认值： ``2`` 。
         - **swap** (bool，可选) - 距离交换。默认值： ``False`` 。

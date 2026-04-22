@@ -21,7 +21,7 @@ class Net(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplymomentum_fp16_int32():
     """
     Feature: SparseApplyAdagrad gpu op
@@ -40,7 +40,7 @@ def test_sparseapplymomentum_fp16_int32():
     assert np.all(var_out.asnumpy() == var_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparseapplymomentum_fp32_int32():
     """
     Feature: SparseApplyAdagrad gpu op

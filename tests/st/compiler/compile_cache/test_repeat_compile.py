@@ -38,7 +38,7 @@ def run_same_network_twice_in_one_process(file_name, log_file_name):
     os.remove(log_file_name)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_mutable_compile_repeat():
     """
     Feature: Repeating compile .

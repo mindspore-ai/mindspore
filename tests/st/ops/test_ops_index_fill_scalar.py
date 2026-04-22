@@ -53,11 +53,9 @@ def index_fill_scalar_backward(input_x, dim, index, value):
     grad_fn = ms.grad(index_fill_scalar_forward_func, grad_position=(0, 3))
     return grad_fn(input_x, dim, index, value)
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
     mem_peak=0.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
@@ -92,11 +90,9 @@ def test_ops_index_fill_scalar(mode):
     allclose_nparray(grads.asnumpy(), expected_grad_input, 1e-4, 1e-4)
     # np.testing.assert_allclose(grads[-1].asnumpy(), expected_grads[1], 1e-4, 1e-4)
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2.01
+    card_mark="onecard", mem_peak=2.01
 )
 def test_ops_index_fill_scalar_dynamic():
     """

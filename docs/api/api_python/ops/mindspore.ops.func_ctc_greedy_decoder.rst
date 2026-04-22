@@ -5,6 +5,9 @@ mindspore.ops.ctc_greedy_decoder
 
     对输入中给定的logits执行贪婪解码。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         在Ascend平台上，目前不支持配置 `merge_repeated=False` 。
 

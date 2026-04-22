@@ -33,7 +33,7 @@ def msrun_cross_cluster(rank_size=8):
         return False, "test move_to failed, please check the log for more details."
     return True, "test move_to success."
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_move_to_2_cards():
     '''
     Feature: test move_to in 2 cards
@@ -44,7 +44,7 @@ def test_move_to_2_cards():
     assert result, msg
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards")
 def test_tensor_move_to():
     '''
     Feature: Test Tensor move_to

@@ -34,8 +34,7 @@ class Net_l1_regularizer(nn.Cell):
         return self.l1_regularizer(weights)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l1_regularizer01():
     scale = 0.5
     weights = Tensor(np.array([[1.0, -2.0], [-3.0, 4.0]]).astype(np.float32))
@@ -48,8 +47,7 @@ def test_l1_regularizer01():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l1_regularizer08():
     scale = 0.5
     net = nn.L1Regularizer(scale)
@@ -60,8 +58,7 @@ def test_l1_regularizer08():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l1_regularizer_input_int():
     scale = 0.5
     net = nn.L1Regularizer(scale)
@@ -73,8 +70,7 @@ def test_l1_regularizer_input_int():
         assert True
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l1_regularizer_input_tuple():
     scale = 0.5
     net = nn.L1Regularizer(scale)

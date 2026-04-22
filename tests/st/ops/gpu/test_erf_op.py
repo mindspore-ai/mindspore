@@ -36,7 +36,7 @@ class NetErf(nn.Cell):
         return self.erf(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_erf_fp32():
     erf = NetErf()
     x = np.random.rand(3, 8).astype(np.float32)
@@ -46,7 +46,7 @@ def test_erf_fp32():
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_erf_fp16():
     erf = NetErf()
     x = np.random.rand(3, 8).astype(np.float16)

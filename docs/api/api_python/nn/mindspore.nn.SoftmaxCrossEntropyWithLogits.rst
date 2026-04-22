@@ -19,6 +19,9 @@ mindspore.nn.SoftmaxCrossEntropyWithLogits
 
     其中 :math:`x_i` 是一维的Tensor， :math:`c` 为one-hot中等于1的位置。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         虽然目标值是互斥的，即目标值中只有一个为正，但预测的概率不为互斥。只要求输入的预测概率分布有效。
 

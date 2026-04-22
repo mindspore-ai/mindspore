@@ -90,11 +90,9 @@ def backward_func(a, mode='reduced'):
     return ms.grad(forward_func, (0))(a, mode)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1024.01
+    card_mark="onecard", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -116,11 +114,9 @@ def test_ops_qr_forward(context_mode):
     np.testing.assert_allclose(out_r.asnumpy(), expect_r, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=1.00
+    card_mark="onecard", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -147,11 +143,9 @@ def test_ops_qr_backward(context_mode):
     np.testing.assert_allclose(dx.asnumpy(), dx_expect, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -176,11 +170,9 @@ def test_ops_qr_dtype(context_mode):
         np.testing.assert_allclose(out_r.asnumpy(), expect_r, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 def test_linalg_qr_dynamic_shape():
     """

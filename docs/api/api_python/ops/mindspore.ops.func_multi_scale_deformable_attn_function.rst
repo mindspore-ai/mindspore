@@ -8,9 +8,6 @@ mindspore.ops.multi_scale_deformable_attn_function
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
-    .. note::
-        Atlas训练系列产品不支持。
-
     参数：
         - **value** (Tensor) - 特征张量，数据类型为 ``'float32'`` ， ``'float16'`` 。shape为 :math:`(bs, num\_keys, num\_heads, embed\_dims)`。其中 ``'bs'`` 为 ``'batch size'`` ， ``'num_keys'`` 为特征图的大小， ``'num_heads'`` 为头的数量， ``'embed_dims'`` 为特征图的维度，其中 ``'embed_dims'`` 需要为 ``8`` 的倍数。
         - **shape** (Tensor) - 特征图的形状，数据类型为 ``'int32'`` ， ``'int64'`` 。shape为 :math:`(num\_levels, 2)`。其中 ``'num_levels'`` 为特征图的数量， ``2`` 分别代表 ``'H, W'`` 。

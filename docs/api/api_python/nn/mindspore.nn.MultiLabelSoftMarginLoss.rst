@@ -17,6 +17,9 @@ mindspore.nn.MultiLabelSoftMarginLoss
     :math:`y_{ij}=1` 时属于，为0时不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签中含有多个1。
     如果 `weight` 不为 ``None`` ，将会和每个分类的loss相乘。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     参数：
         - **weight** (Union[Tensor, int, float]) - 每个类别的缩放权重。默认值： ``None`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。

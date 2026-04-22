@@ -61,7 +61,7 @@ class Net(Cell):
         return self.one_hot(x, num_classes)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
         mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ops_onehot_forward1(mode):
@@ -79,7 +79,7 @@ def test_ops_onehot_forward1(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
         mem_peak=1024.10)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_normal(mode):
@@ -102,8 +102,7 @@ def test_ops_onehot_normal(mode):
     np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_vmap(mode):
     """
@@ -121,8 +120,7 @@ def test_ops_onehot_vmap(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_forward_dynamic_shape(mode):
     """
@@ -150,8 +148,7 @@ def test_ops_onehot_forward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_forward_dynamic_rank(mode):
     """
@@ -179,8 +176,7 @@ def test_ops_onehot_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_backward_dynamic_shape(mode):
     """
@@ -205,8 +201,7 @@ def test_ops_onehot_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_backward_dynamic_rank(mode):
     """
@@ -231,8 +226,7 @@ def test_ops_onehot_backward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=3072.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=3072.01)
 def test_onehot_dynamic_shape_testop():
     """
     Feature: Test onehot with dynamic shape in graph mode using TEST_OP.
@@ -248,8 +242,7 @@ def test_onehot_dynamic_shape_testop():
                          'disable_grad': True})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.05)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.05)
 @pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
 def test_onehot_vmap(param_jit_level):
     """
@@ -285,8 +278,7 @@ def test_onehot_vmap(param_jit_level):
     assert np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_one_hot_int32(mode):
     """
@@ -304,8 +296,7 @@ def test_ops_one_hot_int32(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_one_hot_int64(mode):
     """
@@ -359,8 +350,7 @@ def ops_one_hot_binary_case5(input_binary_data=None, output_binary_data=None):
     ops_one_hot_binary_compare(input_binary_data, output_binary_data, 8)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=3072.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=3072.0)
 @pytest.mark.parametrize('mode', ["pynative", "kbk", "ge"])
 def test_ops_onehot_binary_cases(mode):
     """
@@ -381,8 +371,7 @@ def test_ops_onehot_binary_cases(mode):
     ops_one_hot_binary_case5()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=9216.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=9216.00)
 def test_ops_onehot_huge_binary_cases():
     """
     Feature: pyboost function.

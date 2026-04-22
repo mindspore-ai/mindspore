@@ -8,6 +8,9 @@ median:
         - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
+        - Non-backward-compatible change after version 2.9.0: the ``median(axis=-1, keepdims=False)`` overload
+          will be removed, and only ``median(dim=None, keepdim=False) -> (Tensor, LongTensor)`` will be
+          supported (the default value of ``dim`` changes from ``-1`` to ``None``).
 
     Args:
         axis (int, optional): Specify the axis for calculation. Default: ``-1`` .

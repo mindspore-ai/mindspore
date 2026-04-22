@@ -28,8 +28,7 @@ class Net(nn.Cell):
         return self.rrelu(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rrelu_normal():
     """
     Feature: RReLU
@@ -43,8 +42,7 @@ def test_rrelu_normal():
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rrelu_negative_lu():
     """
     Feature: RReLU
@@ -58,8 +56,7 @@ def test_rrelu_negative_lu():
     assert np.array_equal(output, expected_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_rrelu_zeros():
     """
     Feature: RReLU

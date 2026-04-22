@@ -50,8 +50,7 @@ class PReLUDyNet(nn.Cell):
         return real_x, weight, out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize("data_shape", [((8, 6, 7), (1,))])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_dynamic_shape_prelu(data_shape, data_type):

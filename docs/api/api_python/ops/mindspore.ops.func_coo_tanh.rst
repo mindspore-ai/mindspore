@@ -10,6 +10,9 @@
 
     其中 :math:`x_i` 是输入COOTensor的元素。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - Tanh的输入，任意维度的COOTensor，其数据类型为float16或float32。
 

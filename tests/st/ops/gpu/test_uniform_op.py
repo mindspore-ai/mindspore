@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.uniform(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_uniform_double():
     """
     Feature: Uniform gpu TEST.
@@ -45,7 +45,7 @@ def test_uniform_double():
     assert y.shape == (3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_uniform_float():
     """
     Feature: Uniform gpu TEST.
@@ -58,7 +58,7 @@ def test_uniform_float():
     assert y.shape == (3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_uniform_half():
     """
     Feature: Uniform gpu TEST.
@@ -71,7 +71,7 @@ def test_uniform_half():
     assert y.shape == (3, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_uniform_int32_input_error():
     """
     Feature: Uniform gpu TEST.

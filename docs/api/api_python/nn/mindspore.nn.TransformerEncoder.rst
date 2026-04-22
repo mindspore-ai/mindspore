@@ -5,6 +5,11 @@ mindspore.nn.TransformerEncoder
 
     Transformer编码器模块，多层 :class:`mindspore.nn.TransformerEncoderLayer` 的堆叠，包括MultiheadAttention层和FeedForward层。可以使用此模块构造BERT(https://arxiv.org/abs/1810.04805)模型。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `enable_nested_tensor` 和 `mask_check` ，接口签名将变更为
+        ``mindspore.nn.TransformerEncoder(encoder_layer, num_layers, norm=None, enable_nested_tensor=True, mask_check=True)`` 。
+        该变更与当前版本兼容，不使用新增参数时行为不变。
+
     参数：
         - **encoder_layer** (Cell) - :class:`mindspore.nn.TransformerEncoderLayer` 的实例。
         - **num_layers** (int) - 编码器层数。

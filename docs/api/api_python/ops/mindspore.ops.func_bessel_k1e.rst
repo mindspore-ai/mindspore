@@ -11,6 +11,9 @@ mindspore.ops.bessel_k1e
             ^{\infty} e^{-x \cosh t} \cosh (t) d t
         \end{array}
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (Tensor) - 输入tensor。
 

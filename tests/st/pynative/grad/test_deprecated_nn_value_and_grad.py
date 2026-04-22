@@ -137,8 +137,7 @@ class GradFactory:
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_forward_value_and_grad_0():
     """
     Feature: Test pynative value and grad
@@ -171,8 +170,7 @@ def test_forward_value_and_grad_0():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_forward_value_and_grad_1():
     """
     Feature: Test pynative value and grad

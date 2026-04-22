@@ -5,6 +5,9 @@ mindspore.Tensor.diag
 
     详情请参考 :func:`mindspore.ops.diag`。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始， ``diag()`` 重载将被移除，仅支持 ``diag(diagonal=0)`` 。该变更与当前版本兼容，现有调用保持不变。
+
     .. py:method:: mindspore.Tensor.diag(diagonal=0) -> Tensor
         :noindex:
 

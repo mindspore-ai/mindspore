@@ -16,7 +16,7 @@ class Net(nn.Cell):
         return self.hsvtorgb(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_float16():
     """
     Feature: None
@@ -32,7 +32,7 @@ def test_net_float16():
     assert np.allclose(output.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_float32():
     """
     Feature: None
@@ -48,7 +48,7 @@ def test_net_float32():
     assert np.allclose(output.asnumpy(), expected, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_float64():
     """
     Feature: None

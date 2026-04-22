@@ -3,7 +3,9 @@ diag:
         Return a tensor with the `input` as its diagonal elements and ``0`` elsewhere.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            Starting after version 2.9.0, an optional parameter `diagonal` will be added.
+            The signature will change to ``mindspore.ops.diag(input, diagonal=0)``.
+            This change is backward-compatible; behavior is unchanged when `diagonal` is not specified.
 
         Args:
             input (Tensor): The input tensor.
@@ -43,7 +45,7 @@ diag:
                [ 0.          0.44775972  0.        ]]
               [[ 0.          0.          0.        ]
                [ 0.          0.         -1.4063131 ]]]]
-            >>> # Assume input has dimensions (D_1,... D_k), the output is a tensor of rank 2k with dimensions
+            >>> # Assuming the input has dimensions (D_1,... D_k), the output is a tensor of rank 2k with dimensions
                 (D_1,..., D_k, D_1,..., D_k).
             >>> print(output.shape)
             (2, 3, 2, 3)

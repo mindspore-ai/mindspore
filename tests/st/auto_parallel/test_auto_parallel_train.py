@@ -15,7 +15,7 @@
 import os
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_auto_parallel_sharding_propagation():
     '''
     Feature: Auto parallel, strategy:((1,1),(1,2)), parallel_mode is sharding_paopagation
@@ -29,7 +29,7 @@ def test_msrun_auto_parallel_sharding_propagation():
     assert ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_msrun_auto_parallel_recursive_programming():
     '''
     Feature: Auto parallel, parallel_mode is recursive_programming

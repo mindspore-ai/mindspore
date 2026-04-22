@@ -35,7 +35,7 @@ class NetLog1p(nn.Cell):
         return self.log1p(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log1p_fp32():
     log1p = NetLog1p()
     x = np.random.rand(3, 8).astype(np.float32)
@@ -45,7 +45,7 @@ def test_log1p_fp32():
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_log1p_fp16():
     log1p = NetLog1p()
     x = np.random.rand(3, 8).astype(np.float16)

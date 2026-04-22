@@ -49,8 +49,7 @@ def dir_data():
     return data_list
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=62.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=62.0)
 def test_dvpp_auto_contrast_operation_01():
     """
     Feature: AutoContrast operation on device
@@ -160,8 +159,7 @@ def test_dvpp_auto_contrast_operation_01():
         assert np.allclose(data1["image"], data2["image"], rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=30.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=30.0)
 def test_dvpp_auto_contrast_operation_02():
     """
     Feature: AutoContrast operation on device
@@ -270,8 +268,7 @@ def test_dvpp_auto_contrast_operation_02():
         assert np.allclose(data1["image"], data2["image"], rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=22.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=22.0)
 def test_dvpp_auto_contrast_operation_03():
     """
     Feature: AutoContrast operation on device
@@ -365,8 +362,7 @@ def test_dvpp_auto_contrast_operation_03():
         assert np.allclose(auto_contrast, auto_contrast_op, rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 def test_dvpp_auto_contrast_operation_04():
     """
     Feature: AutoContrast operation on device
@@ -454,8 +450,7 @@ def test_dvpp_auto_contrast_operation_04():
         assert np.allclose(auto_contrast, auto_contrast_op, rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 def test_dvpp_auto_contrast_operation_05():
     """
     Feature: AutoContrast operation on device
@@ -562,8 +557,7 @@ def test_dvpp_auto_contrast_operation_05():
     assert np.allclose(auto_contrast, auto_contrast_op, rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_auto_contrast_operation_06():
     """
     Feature: AutoContrast operation on device
@@ -609,8 +603,7 @@ def test_dvpp_auto_contrast_operation_06():
     assert np.allclose(auto_contrast, auto_contrast_op, rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_auto_contrast_exception_01():
     """
     Feature: AutoContrast operation on device
@@ -719,8 +712,7 @@ def test_dvpp_auto_contrast_exception_01():
             assert np.allclose(data1["image"], data2["image"], rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=16.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=16.0)
 def test_dvpp_auto_contrast_exception_02():
     """
     Feature: AutoContrast operation on device
@@ -815,8 +807,7 @@ def test_dvpp_auto_contrast_exception_02():
             pass
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_auto_contrast_exception_03():
     """
     Feature: AutoContrast operation on device
@@ -921,8 +912,7 @@ def test_dvpp_auto_contrast_exception_03():
         v_trans.AutoContrast().device(device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_auto_contrast_exception_04():
     """
     Feature: AutoContrast operation on device

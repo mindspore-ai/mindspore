@@ -1210,6 +1210,9 @@ def jit(
           decorated with @jit(capture_mode=“ast”) are not supported,
           and the decoration @jit(capture_mode=“bytecode”) is considered invalid.
 
+    .. warning::
+        The value ``"GE"`` of `backend` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Args:
         function (Callable, optional): The Python function or Cell that will be run as a graph. Default: ``None``.
 
@@ -1243,16 +1246,10 @@ def jit(
             not supported), then it will raise an exception. This currently only applies when capture_mode is ``ast``
             or ``bytecode``. Default: ``False``.
         backend (str, optional): The compilation backend to be used. If this parameter is not set, the framework will
-            use ``"GE"`` backend for Atlas training series products and ``"ms_backend"`` backend for others including
-            Atlas A2 training series products by default.
+            use ``"ms_backend"`` backend by default.
 
             - ms_backend: Utilizes the built-in backend engine of MindSpore for hardware-related compilation
               optimization and execution, supporting multiple hardware forms such as Ascend, GPU, and CPU.
-            - GE: Utilizes the GraphEngine, a graph compilation and execution engine within CANN,
-              for Ascend model compilation and execution. Note: This backend only supports GRAPH Mode in Ascend,
-              only supports whole graph sinking or sub graph sinking in pipeline parallel, and does not support
-              dynamic shape scenes. In addition, this backend incurs additional compilation costs and is difficult to
-              debug and tune.
 
         **options (dict): A dictionary of options to pass to the compilation backend.
 
@@ -1264,8 +1261,6 @@ def jit(
             | disable_format_transform  |  GPU                      |  ms_backend             |
             +---------------------------+---------------------------+-------------------------+
             | exec_order                |  Ascend                   |  ms_backend             |
-            +---------------------------+---------------------------+-------------------------+
-            | ge_options                |  Ascend                   |  GE                     |
             +---------------------------+---------------------------+-------------------------+
             | infer_boost               |  Ascend                   |  ms_backend             |
             +---------------------------+---------------------------+-------------------------+
@@ -1284,13 +1279,6 @@ def jit(
               - dfs: An optional sorting method, depth-first sorting. The performance is relatively worse than that
                 of bfs execution order, but it occupies less memory. It is recommended to try dfs in scenarios where
                 other execution orders run out of memory (OOM).
-
-            - ge_options (dict): Set options for ge backend. The options are divided into two categories: global,
-              and session. This is an experimental prototype that is subject to change and/or deletion.
-              For detailed information, please refer to `Ascend community <https://www.hiascend.com/document/detail/zh/canncommercial/80RC3/apiref/ascendgraphapi/atlasgeapi_07_0146.html>`_ .
-
-              - global (dict): Set global options.
-              - session (dict): Set session options.
 
             - infer_boost (str, optional): Used to control the inference mode. Default: ``"off"``, which means
               the inference mode is disabled. The range is as follows:
@@ -1378,19 +1366,6 @@ def jit(
         ...
         >>> # Create a callable MindSpore graph with ms_backend and jit_level="O1".
         >>> @jit(backend="ms_backend", jit_level="O1")
-        ... def tensor_add_by_trace(x, y):
-        ...     z = x + y
-        ...     return z
-        ...
-        >>> out = tensor_add_by_trace(x, y)
-        >>> print(out)
-        Tensor(shape=[1, 1, 3, 3], dtype=Float32, value=
-        [[[[ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00],
-           [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00],
-           [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00]]]])
-        ...
-        >>> # Create a callable MindSpore graph with GE backend and some ge options on Ascend.
-        >>> @jit(backend="GE", ge_options={"global": {"ge.opSelectImplmode": "high_precision"}})
         ... def tensor_add_by_trace(x, y):
         ...     z = x + y
         ...     return z
@@ -1660,6 +1635,43 @@ class _no_grad(contextlib.ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _pynative_executor.set_enable_grad(self.prev_state)
+        return False
+
+
+class _unsafe_preserve_version_counter:
+    r"""DO NOT USE THIS UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING.
+
+    This context manager can lead to arbitrary silent-correctness issues in any other part of your code
+    (even the ones not touched directly by the context manager)!
+
+    Ordinarily, autograd will track mutations to tensors by incrementing its ``._version`` attribute.
+    This is generally important for correctness, as for example, mutating a tensor that autograd has saved
+    for the backwards pass can result in incorrect gradients, and autograd uses the version counter to detect
+    and error out in this situation.
+
+    However, there are rare instances where it might be useful to hide mutations from autograd. For example:
+    if a tensor is very large, and you'd like to free its memory by storing it elsewhere, and re-populate
+    the tensor right before it is needed by autograd.
+
+    Args:
+        tensors (Union[Tensor, tuple[Tensor, ...]]): the tensor(s) whose version counters should be preserved.
+    """
+
+    def __init__(self, tensors):
+        if isinstance(tensors, PythonTensor):
+            self.tensors = (tensors,)
+        elif isinstance(tensors, tuple):
+            self.tensors = tensors
+        else:
+            raise AssertionError("Expected tensors to be a Tensor or tuple of Tensors")
+        self.prev_versions = tuple(t._version for t in self.tensors)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        from mindspore._c_expression import _unsafe_set_version_counter
+        _unsafe_set_version_counter(list(self.tensors), list(self.prev_versions))
         return False
 
 

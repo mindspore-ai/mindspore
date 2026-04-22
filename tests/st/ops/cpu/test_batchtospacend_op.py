@@ -51,8 +51,7 @@ def batch_to_space_nd_test_case(nptype, block_shape=2, input_shape=(4, 1, 1, 1))
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int8, np.int32, np.uint8, np.uint32])
 def test_batch_to_space_nd_graph(dtype):
     """
@@ -64,8 +63,7 @@ def test_batch_to_space_nd_graph(dtype):
     batch_to_space_nd_test_case(dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int8, np.int32, np.uint8, np.uint32])
 def test_batch_to_space_nd_pynative(dtype):
     """
@@ -77,8 +75,7 @@ def test_batch_to_space_nd_pynative(dtype):
     batch_to_space_nd_test_case(dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_batch_to_space_nd_function():
     """
     Feature: test BatchToSpaceND function interface.
@@ -130,8 +127,7 @@ def batch_to_space_nd_dynamic(is_dynamic_rank):
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_batch_to_space_nd_dynamic_case():
     """
     Feature: test BatchToSpaceND dynamic shape.
@@ -182,8 +178,7 @@ def vmap_case():
         assert np.allclose(output_v[:, i, :, :, :], net(Tensor(data_np[i, :, :, :, :])).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_batch_to_space_nd_vmap_cpu():
     """
     Feature: test SpactToBatchND vmap on CPU.

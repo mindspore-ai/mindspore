@@ -5,6 +5,9 @@ mindspore.ops.leaky_relu
 
     leaky_relu激活函数。 `input` 中小于0的元素乘以 `alpha` 。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `alpha` 将重命名为 `negative_slope`，默认值将从 ``0.2`` 调整为 ``0.01``。
+
     该激活函数定义如下：
 
     .. math::

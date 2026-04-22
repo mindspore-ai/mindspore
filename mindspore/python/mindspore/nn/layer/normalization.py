@@ -192,6 +192,13 @@ class BatchNorm1d(_BatchNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``BatchNorm1d(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, dtype=None)``.
+        The default value of `momentum` will change from ``0.9`` to ``0.1``, `use_batch_statistics` will be replaced
+        by `track_running_stats`, and `gamma_init`, `beta_init`, `moving_mean_init`, `moving_var_init`, and
+        `data_format` will be removed.
+
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore the mode is not
         recommended to be changed after net was initialized.
@@ -278,6 +285,13 @@ class BatchNorm2d(_BatchNorm):
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``BatchNorm2d(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, dtype=None)``.
+        The default value of `momentum` will change from ``0.9`` to ``0.1``, `use_batch_statistics` will be replaced
+        by `track_running_stats`, and `gamma_init`, `beta_init`, `moving_mean_init`, `moving_var_init`, and
+        `data_format` will be removed.
 
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
@@ -377,6 +391,13 @@ class BatchNorm3d(Cell):
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``BatchNorm3d(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, dtype=None)``.
+        The default value of `momentum` will change from ``0.9`` to ``0.1``, `use_batch_statistics` will be replaced
+        by `track_running_stats`, and `gamma_init`, `beta_init`, `moving_mean_init`, and `moving_var_init` will be
+        removed.
 
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
@@ -507,6 +528,14 @@ class SyncBatchNorm(_BatchNorm):
     Note:
         Currently, SyncBatchNorm only supports 2D and 4D inputs.
         :math:`\gamma` and :math:`\beta` are trainable scale and shift.
+
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``SyncBatchNorm(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, process_group=None,
+        dtype=None)``.
+        The default value of `momentum` will change from ``0.9`` to ``0.1``, `use_batch_statistics` will be replaced
+        by `track_running_stats`, `process_groups` will be renamed to `process_group`, and `gamma_init`,
+        `beta_init`, `moving_mean_init`, and `moving_var_init` will be removed.
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, H, W)`.
@@ -685,6 +714,13 @@ class LayerNorm(Cell):
     r"""
     Applies Layer Normalization over a mini-batch of inputs.
 
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``LayerNorm(normalized_shape, eps=1e-5, elementwise_affine=True, bias=True, dtype=None)``.
+        Parameters `begin_norm_axis` and `begin_params_axis` will be removed, `epsilon` will be renamed to `eps`
+        with its default value changed from ``1e-7`` to ``1e-5``, and `gamma_init` / `beta_init` will be controlled
+        by `elementwise_affine` / `bias`.
+
     Layer Normalization is widely used in recurrent neural networks. It applies
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
@@ -787,9 +823,9 @@ class LayerNormExt(Cell):
     Layer Normalization applies normalization on a mini-batch of inputs for each single
     training case as described in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_.
 
-    Unlike Batch Normalization and Instance Normalization, which applies scalar scale and bias for 
-    each entire channel/plane with the affine option, Layer Normalization applies per-element scale 
-    and bias with elementwise_affine. :math:`\gamma` is the scale value learned through training 
+    Unlike Batch Normalization and Instance Normalization, which applies scalar scale and bias for
+    each entire channel/plane with the affine option, Layer Normalization applies per-element scale
+    and bias with elementwise_affine. :math:`\gamma` is the scale value learned through training
     and :math:`\beta` is the shift value. It can be described using the following formula:
 
     .. math::
@@ -803,7 +839,7 @@ class LayerNormExt(Cell):
         eps (float, optional): A value added to the denominator for numerical stability( :math:`\epsilon` ).
             Default ``1e-5`` .
         elementwise_affine (bool, optional): Whether affine transformation is required.
-            A boolean value that when set to True, 
+            A boolean value that when set to True,
             this module has learnable per-element affine parameters initialized
             to ones (for weights) and zeros (for biases).
             Default ``True``.
@@ -956,6 +992,10 @@ class InstanceNorm1d(_InstanceNorm):
     InstanceNorm1d and BatchNorm1d are very similar, but have some differences. InstanceNorm1d is applied on each
     channel of channeled data like RGB images, but BatchNorm1d is usually applied on each batch of batched data.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `gamma_init` and `beta_init` will be removed, and
+        `affine` will default to ``False``.
+
     Note:
         Note that the formula for updating the running_mean and running_var is
         :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
@@ -1036,6 +1076,10 @@ class InstanceNorm2d(_InstanceNorm):
     InstanceNorm2d and BatchNorm2d are very similar, but have some differences. InstanceNorm2d is applied on each
     channel of channeled data like RGB images, but BatchNorm2d is usually applied on each batch of batched data.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `gamma_init` and `beta_init` will be removed, and
+        `affine` will default to ``False``.
+
     Note:
         Note that the formula for updating the running_mean and running_var is
         :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
@@ -1115,6 +1159,10 @@ class InstanceNorm3d(_InstanceNorm):
     InstanceNorm3d and BatchNorm3d are very similar, but have some differences. InstanceNorm3d is applied on each
     channel of channeled data like RGB images, but BatchNorm3d is usually applied on each batch of batched data.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `gamma_init` and `beta_init` will be removed, and
+        `affine` will default to ``False``.
+
     Note:
         Note that the formula for updating the running_mean and running_var is
         :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
@@ -1179,6 +1227,11 @@ class InstanceNorm3d(_InstanceNorm):
 class GroupNorm(Cell):
     r"""
     Group Normalization over a mini-batch of inputs.
+
+    .. warning::
+        After version 2.9.0, the constructor signature will be changed to
+        ``GroupNorm(num_groups, num_channels, eps=1e-05, affine=True, dtype=None)``, and `gamma_init` and
+        `beta_init` will be removed.
 
     Group Normalization is widely used in recurrent neural networks. It applies
     normalization on a mini-batch of inputs for each single training case as described

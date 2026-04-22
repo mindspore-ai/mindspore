@@ -10,8 +10,8 @@ mindspore.nn.LPPool1d
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
 
     参数：
         - **norm_type** (Union[int, float]) - 标准化类型，代表公式里的 :math:`p` ，不能为0，

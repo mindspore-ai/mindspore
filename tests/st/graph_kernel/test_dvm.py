@@ -95,8 +95,7 @@ def fuse(shape1, shape2, dtype):
     np.testing.assert_allclose(expects[2], outputs[2], 0, 0)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=46.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=46.0)
 @pytest.mark.parametrize("shape1, shape2", [((32, 1024), (32, 1024)), ((1, 32, 1), (256, 1, 64))])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32])
 def test_easy_fuse_dvm(shape1, shape2, dtype):
@@ -121,8 +120,7 @@ class Net(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_dvm_dynamic_shape():
     """
     Feature: dynamic shape test case
@@ -159,8 +157,7 @@ class NetD(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_dvm_multiple_run():
     """
     Feature: dynamic shape test case
@@ -201,8 +198,7 @@ class NetT(nn.Cell):
         return y1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_dvm_transpose():
     """
     Feature: Transpose test case
@@ -250,8 +246,7 @@ class SelectNet(nn.Cell):
         return y2
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 def test_dvm_bool():
     """
     Feature: Boolean type test case
@@ -309,8 +304,7 @@ class NetPow(nn.Cell):
         return y3
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_fuse_pow():
     """
     Feature: Pow fuse net
@@ -330,8 +324,7 @@ def test_fuse_pow():
     assert np.allclose(expect, output, 1e-4, 1e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=188.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=188.0)
 def test_hsigmoid():
     """
     Feature: HSigmoid
@@ -348,8 +341,7 @@ def test_hsigmoid():
     assert np.allclose(expect, output, 1e-4, 1e-4, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_fuse_virtual_node():
     """
     Feature: test split pattern FuseVirtualNode

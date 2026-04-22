@@ -26,8 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context.set_context(jit_config={"jit_level": "O0"})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_if_by_if_basic():
     """
     Feature: Control flow
@@ -93,8 +92,7 @@ def grad_func(net, x, y):
     return F.grad(net, grad_position=(0, 1))(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_branch_same_shape():
     """
     Feature: control flow function.
@@ -130,8 +128,7 @@ def test_branch_same_shape():
     print(fgrad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_parallel_if_add_by_zero():
     """
     Feature: AddByZero optimization in parallel if.
@@ -160,7 +157,7 @@ def test_parallel_if_add_by_zero():
     assert np.allclose(out.asnumpy(), np.array(1, np.float32))
 
 
-@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux',], level_mark='level1', card_mark='onecard')
 def test_control_flow_tensor_bool():
     """
     Feature: Control Flow

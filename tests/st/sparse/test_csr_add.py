@@ -53,7 +53,7 @@ def create_csr_tensor():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_function_csr_add():
     """
     Feature: Test function csr_add.
@@ -83,7 +83,7 @@ def test_function_csr_add():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_graph_csr_add():
     """
     Feature: Test ops SparseMatrixAdd.
@@ -120,7 +120,7 @@ def test_graph_csr_add():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_pynative_csr_add():
     """
     Feature: Test Tensor csr_add.
@@ -150,7 +150,7 @@ def test_pynative_csr_add():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_csr_add():
     """
     Feature: Test Tensor csr_add.
@@ -179,7 +179,7 @@ def test_tensor_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_csr_add_3d():
     """
     Feature: Test 3D Tensor csr_add.
@@ -211,7 +211,7 @@ def test_csr_add_3d():
     assert np.allclose(c[4].asnumpy(), (1, 2, 4, 5, 3, 1, 2, 4, 5, 3))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_csr_add_abnormal():
     """
     Feature: Test abnormal csr_add.

@@ -31,7 +31,7 @@ class SqueezeNet(nn.Cell):
         return self.squeeze(tensor)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type",
                          [np.bool_, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
                           np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
@@ -50,7 +50,7 @@ def test_squeeze(data_type):
     assert np.all(output.asnumpy() == x.squeeze())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_func():
     """
     Feature: Test Squeeze GPU.
@@ -68,7 +68,7 @@ def test_func():
     assert np.all(output.asnumpy() == x.squeeze(0))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tensor():
     """
     Feature: Test Squeeze GPU.

@@ -21,8 +21,7 @@ import numpy as np
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_implicit_cast():
     """
     Feature: Pynative implicit cast

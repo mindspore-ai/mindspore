@@ -54,8 +54,7 @@ def case_input_dyn(mode, device_target, dtype="float32"):
     assert np.allclose(output.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.25)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.25)
 def test_resize_bilinear_ascend():
     """
     Feature: Test resize_bilinear on ascend.
@@ -66,7 +65,7 @@ def test_resize_bilinear_ascend():
     case_input_dyn(context.PYNATIVE_MODE, "Ascend")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_resize_bilinear_gpu():
     """
     Feature: Test resize_bilinear on GPU.
@@ -77,8 +76,7 @@ def test_resize_bilinear_gpu():
     case_input_dyn(context.PYNATIVE_MODE, "GPU")
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_cpu():
     """
     Feature: Test resize_bilinear on CPU.
@@ -89,7 +87,7 @@ def test_resize_bilinear_cpu():
     case_input_dyn(context.PYNATIVE_MODE, "CPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_gpu_fp64():
     """
     Feature: Test resize_bilinear on GPU (fp64).
@@ -100,8 +98,7 @@ def test_resize_bilinear_gpu_fp64():
     case_input_dyn(context.PYNATIVE_MODE, "GPU", "float64")
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_cpu_fp64():
     """
     Feature: Test resize_bilinear on CPU (fp64).
@@ -112,7 +109,7 @@ def test_resize_bilinear_cpu_fp64():
     case_input_dyn(context.PYNATIVE_MODE, "CPU", "float64")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_gpu_fp16():
     """
     Feature: Test resize_bilinear on GPU (fp16).
@@ -123,8 +120,7 @@ def test_resize_bilinear_gpu_fp16():
     case_input_dyn(context.PYNATIVE_MODE, "GPU", "float16")
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_cpu_fp16():
     """
     Feature: Test resize_bilinear on CPU (fp16).

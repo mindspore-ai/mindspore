@@ -42,7 +42,7 @@ def _check_env_valid_cpu_resource():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_bind_thread_auto():
     """
     Feature: Runtime set_cpu_affinity api.
@@ -75,7 +75,7 @@ def test_bind_thread_auto():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_bind_thread_manual():
     """
     Feature: Runtime set_cpu_affinity api.
@@ -117,7 +117,7 @@ def test_bind_thread_manual():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_bind_thread_manual_empty_module_assigned():
     """
     Feature: Runtime set_cpu_affinity api.
@@ -148,7 +148,7 @@ def test_bind_thread_manual_empty_module_assigned():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_bind_thread_manual_no_available_cpus():
     """
     Feature: Runtime set_cpu_affinity api.
@@ -162,7 +162,7 @@ def test_bind_thread_manual_no_available_cpus():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_bind_thread_repeatly_call():
     """
     Feature: Runtime set_cpu_affinity api.
@@ -176,7 +176,7 @@ def test_bind_thread_repeatly_call():
     assert "The 'mindspore.runtime.set_cpu_affinity' cannot be set repeatedly." in str(err_info)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_true_bind_thread_auto():
     """
     Feature: Runtime set_cpu_affinity api with msrun --bind_core arg.
@@ -217,7 +217,7 @@ def test_msrun_bind_core_true_bind_thread_auto():
     assert re.search("Skip to bind thread core for 'runtime actor'", worker_0_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_numa_true_bind_thread_auto():
     """
     Feature: Runtime set_cpu_affinity api with msrun --bind_numa arg.
@@ -258,7 +258,7 @@ def test_msrun_bind_numa_true_bind_thread_auto():
     assert re.search("Skip to bind thread core for 'runtime actor'", worker_0_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_msrun_bind_core_manual_bind_thread_manual():
     """
     Feature: Runtime set_cpu_affinity api with msrun --bind_core arg.

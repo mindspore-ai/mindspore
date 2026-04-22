@@ -75,7 +75,7 @@ def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False, is_dyn_rank=Fa
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_roi_align_grad_float16():
     """
     Feature: Test the operator ROIAlignGrad
@@ -89,7 +89,7 @@ def test_roi_align_grad_float16():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.95)
+          card_mark='onecard', mem_peak=1024.95)
 def test_roi_align_grad_float32():
     """
     Feature: Test the operator ROIAlignGrad
@@ -103,7 +103,7 @@ def test_roi_align_grad_float32():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_roi_align_grad_float16_dynamic_shape():
     """
     Feature: Test the operator ROIAlignGrad with dynamic shape inputs
@@ -117,7 +117,7 @@ def test_roi_align_grad_float16_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_roi_align_grad_float32_dynamic_rank():
     """
     Feature: Test the operator ROIAlignGrad with dynamic rank inputs

@@ -74,7 +74,7 @@ def count_output(output, target, num):
     assert output.count(target) == num
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_print_tensor():
     """
     Feature: One stage basic operation.
@@ -108,7 +108,7 @@ def test_print_tensor():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_print_tensor_multiple_times():
     """
     Feature: One stage basic operation.
@@ -145,7 +145,7 @@ def test_print_tensor_multiple_times():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_print_constant_scalar():
     """
     Feature: One stage basic operation.
@@ -185,7 +185,7 @@ def test_print_constant_scalar():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_print_in_sub_graph():
     """
     Feature: One stage basic operation.
@@ -237,7 +237,7 @@ def test_print_in_sub_graph():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_print_in_sub_graph_with_no_return():
     """
     Feature: One stage basic operation.
@@ -286,7 +286,7 @@ def test_print_in_sub_graph_with_no_return():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_base_grad_operation_with_side_effect():
     """
     Feature: One stage GradOperation
@@ -327,7 +327,7 @@ def test_base_grad_operation_with_side_effect():
 
 @pytest.mark.skip(reason="The implementation of InplaceCopy primitive has been changed. Fix it later.")
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Tensor_inplace_copy_v1():
     """
     Feature: test Tensor.copy_().
@@ -358,7 +358,7 @@ def test_Tensor_inplace_copy_v1():
 
 
 @pytest.mark.skip(reason="The implementation of InplaceCopy primitive has been changed. Fix it later.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Tensor_inplace_copy_v2():
     """
     Feature: test Tensor.copy_().
@@ -389,7 +389,7 @@ def test_Tensor_inplace_copy_v2():
 
 
 @pytest.mark.skip(reason="The implementation of InplaceCopy primitive has been changed. Fix it later.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_Tensor_inplace_copy_v3():
     """
     Feature: test Tensor.copy_().

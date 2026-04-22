@@ -46,8 +46,7 @@ def adam_weight_decay_forward_func(param, m, v, lr, beta1, beta2, eps, weight_de
     return out[0]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_adam_weight_decay(mode):
     """

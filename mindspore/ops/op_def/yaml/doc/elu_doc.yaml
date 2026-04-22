@@ -1,48 +1,52 @@
 elu:
-  description: |
-    Exponential Linear Unit activation function.
+    description: |
+        Exponential Linear Unit activation function.
 
-    Applies the exponential linear unit function element-wise.
-    The activation function is defined as:
+        .. warning::
+            After version 2.9.0, the parameter `input_x` will be renamed to `input`, and an `inplace`
+            argument will be added.
 
-    .. math::
+        Applies the exponential linear unit function element-wise.
+        The activation function is defined as:
 
-        \text{ELU}(x)= \left\{
-        \begin{array}{align}
-            \alpha(e^{x}  - 1) & \text{if } x \le 0\\
-            x & \text{if } x \gt 0\\
-        \end{array}\right.
+        .. math::
 
-    Where :math:`x` is the element of input Tensor `input_x`, and :math:`\alpha` is parameter `alpha`.
-    It determines the smoothness of ELU.
+            \text{ELU}(x)= \left\{
+            \begin{array}{align}
+                \alpha(e^{x}  - 1) & \text{if } x \le 0\\
+                x & \text{if } x \gt 0\\
+            \end{array}\right.
 
-    ELU function graph:
+        Where :math:`x` is the element of input Tensor `input_x`, and :math:`\alpha` is parameter `alpha`.
+        It determines the smoothness of ELU.
 
-    .. image:: ../images/ELU.png
-        :align: center
+        ELU function graph:
 
-    Args:
-        input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
-        alpha (float, optional): The alpha value of ELU, and the data type is float. Only support ``1.0`` currently.
-            Default: ``1.0`` .
+        .. image:: ../images/ELU.png
+            :align: center
 
-    Returns:
-        Tensor, has the same shape and data type as `input_x`.
+        Args:
+            input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
+            alpha (float, optional): The alpha value of ELU, and the data type is float. Only support ``1.0`` currently.
+                Default: ``1.0`` .
 
-    Raises:
-        TypeError: If `alpha` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-        ValueError: If `alpha` is not equal to 1.0.
+        Returns:
+            Tensor, has the same shape and data type as `input_x`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Raises:
+            TypeError: If `alpha` is not a float.
+            TypeError: If dtype of `input_x` is neither float16 nor float32.
+            ValueError: If `alpha` is not equal to 1.0.
 
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.elu(x)
-        >>> print(output)
-        [[-0.63212055  4.         -0.99966455]
-         [ 2.         -0.99326205  9.        ]]
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+            >>> output = ops.elu(x)
+            >>> print(output)
+            [[-0.63212055  4.         -0.99966455]
+            [ 2.         -0.99326205  9.        ]]

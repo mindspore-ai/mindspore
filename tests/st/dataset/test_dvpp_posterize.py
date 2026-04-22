@@ -30,8 +30,7 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=102.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=102.0)
 def test_dvpp_posterize_operation_01():
     """
     Feature: Posterize operation on device
@@ -136,8 +135,7 @@ def test_dvpp_posterize_operation_01():
     assert posterize_op_dvpp.shape == (24, 56, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=130.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=130.0)
 def test_dvpp_posterize_exception_01():
     """
     Feature: Posterize operation on device

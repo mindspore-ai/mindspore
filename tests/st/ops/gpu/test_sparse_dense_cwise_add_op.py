@@ -31,7 +31,7 @@ class SparseDenseCwiseadd(Cell):
         return self.sparsedensecwiseddd(x1_indices, x1_values, x1_shape, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_dense_cwise_add():
     """
     Feature:  SparseDenseCwiseAdd 4 inputs and 1 output.

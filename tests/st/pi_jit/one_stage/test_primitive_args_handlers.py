@@ -31,7 +31,7 @@ cfg = {
 }
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_add_fp16_and_fp32():
     """
     Feature: One stage basic operation.
@@ -51,7 +51,7 @@ def test_add_fp16_and_fp32():
     match_array(ret.asnumpy(), Tensor([2, 4, 6], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_add_fp32_and_int32():
     """
     Feature: One stage basic operation.
@@ -71,7 +71,7 @@ def test_add_fp32_and_int32():
     match_array(ret.asnumpy(), Tensor([2, 4, 6], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_add_fp32_and_int_scalar():
     """
     Feature: One stage basic operation.
@@ -91,7 +91,7 @@ def test_add_fp32_and_int_scalar():
     match_array(ret.asnumpy(), Tensor([3, 4, 5], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_add_fp16_and_int_scalar():
     """
     Feature: One stage basic operation.
@@ -111,7 +111,7 @@ def test_add_fp16_and_int_scalar():
     match_array(ret.asnumpy(), Tensor([3, 4, 5], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mul_fp16_and_fp32():
     """
     Feature: One stage basic operation.
@@ -131,7 +131,7 @@ def test_mul_fp16_and_fp32():
     match_array(ret.asnumpy(), Tensor([1, 4, 9], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mul_fp32_and_int32():
     """
     Feature: One stage basic operation.
@@ -151,7 +151,7 @@ def test_mul_fp32_and_int32():
     match_array(ret.asnumpy(), Tensor([1, 4, 9], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mul_fp32_and_int_scalar():
     """
     Feature: One stage basic operation.
@@ -171,7 +171,7 @@ def test_mul_fp32_and_int_scalar():
     match_array(ret.asnumpy(), Tensor([2, 4, 6], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mul_fp16_and_int_scalar():
     """
     Feature: One stage basic operation.
@@ -191,7 +191,7 @@ def test_mul_fp16_and_int_scalar():
     match_array(ret.asnumpy(), Tensor([2, 4, 6], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pow_fp16_and_fp32():
     """
     Feature: One stage basic operation.
@@ -211,7 +211,7 @@ def test_pow_fp16_and_fp32():
     match_array(ret.asnumpy(), Tensor([1, 4, 27], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pow_fp32_and_int_scalar():
     """
     Feature: One stage basic operation.
@@ -231,7 +231,7 @@ def test_pow_fp32_and_int_scalar():
     match_array(ret.asnumpy(), Tensor([1, 4, 9], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_div_fp16_and_fp32():
     """
     Feature: One stage basic operation.
@@ -251,7 +251,7 @@ def test_div_fp16_and_fp32():
     match_array(ret.asnumpy(), Tensor([0.25, 0.4, 0.5], dtype=ms.float32).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_div_fp32_and_int_scalar():
     """
     Feature: One stage basic operation.
@@ -274,7 +274,7 @@ def test_div_fp32_and_int_scalar():
 ################# auto-cast by arg_handler ######################
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_zeros_dtype_arg_handler_dtype_to_type_id():
     """
     Feature: One stage basic operation.
@@ -292,7 +292,7 @@ def test_zeros_dtype_arg_handler_dtype_to_type_id():
     match_array(ret.asnumpy(), np.zeros((2, 3), np.float16))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_div_rounding_mode_arg_handler_str_to_enum():
     """
     Feature: One stage basic operation.
@@ -319,7 +319,7 @@ def test_div_rounding_mode_arg_handler_str_to_enum():
 ################# auto-cast by type_cast ######################
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_less_type_cast_from_number_bool_to_tensor():
     """
     Feature: One stage basic operation.
@@ -338,7 +338,7 @@ def test_less_type_cast_from_number_bool_to_tensor():
         fn(False, -1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_reshape_type_cast_from_list_tensor_to_tuple():
     """
     Feature: One stage basic operation.
@@ -364,7 +364,7 @@ def test_reshape_type_cast_from_list_tensor_to_tuple():
 ################# args with default-value ######################
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_concat_axis_using_default_value():
     """
     Feature: One stage basic operation.
@@ -383,7 +383,7 @@ def test_concat_axis_using_default_value():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_concat_axis_using_custom_value():
     """
     Feature: One stage basic operation.
@@ -402,7 +402,7 @@ def test_concat_axis_using_custom_value():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pad_mode_default_value():
     """
     Feature: One stage basic operation.
@@ -428,7 +428,7 @@ def test_pad_mode_default_value():
 ################# primitive with __init__() args ######################
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_MutMul_with_no_init_args():
     """
     Feature: One stage basic operation.
@@ -447,7 +447,7 @@ def test_MutMul_with_no_init_args():
     match_array(ret.asnumpy(), np.array([[14], [14]]).astype(np.float32))
     assert_executed_by_graph_mode(fn)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_MutMul_with_two_init_args():
     """
     Feature: One stage basic operation.
@@ -467,7 +467,7 @@ def test_MutMul_with_two_init_args():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_MutMul_with_one_init_arg_transpose_a():
     """
     Feature: One stage basic operation.
@@ -487,7 +487,7 @@ def test_MutMul_with_one_init_arg_transpose_a():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_MutMul_with_one_init_arg_transpose_b():
     """
     Feature: One stage basic operation.
@@ -507,7 +507,7 @@ def test_MutMul_with_one_init_arg_transpose_b():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_BiasAdd_with_no_init_args():
     """
     Feature: One stage basic operation.
@@ -527,7 +527,7 @@ def test_BiasAdd_with_no_init_args():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_BiasAdd_with_one_init_args():
     """
     Feature: One stage basic operation.

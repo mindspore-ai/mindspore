@@ -1,6 +1,6 @@
 fill_diagonal_:
   description: |
-    fill_diagonal_(fill_value, warp=False) -> Tensor
+    fill_diagonal_(fill_value, wrap=False) -> Tensor
 
     Fills the main diagonal of a Tensor in-place with a specified value and returns the result.
     The `self` has at least 2 dimensions, and all dimensions of `self` must be equal in length

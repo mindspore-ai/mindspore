@@ -790,7 +790,7 @@ def outer(a, b):
         Tensor or scalar, ``out[i, j] = a[i] * b[j]``.
 
     Raises:
-        TypeError: If the input is not a tensor.
+        TypeError: If the inputs are not tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -846,8 +846,8 @@ def tensordot(a, b, axes=2):
     followed by the non-contracted axes of the second.
 
     Note:
-        On CPU, the supported dypes are np.float16 and np.float32.
-        On GPU, the supported dypes are np.float16 and np.float32.
+        On CPU, the supported dtypes are np.float16 and np.float32.
+        On GPU, the supported dtypes are np.float16 and np.float32.
 
     Args:
         a (Tensor): Tensor to "dot".
@@ -858,7 +858,7 @@ def tensordot(a, b, axes=2):
             axes of `b` in order. The sizes of the corresponding axes must match.
 
             sequence of ints: Or, a list of axes to be summed over, first sequence
-            applying to `a`, second to `b`. Both elements `array_like` must be of the same
+            applying to `a`, second to `b`. Both `array_like` elements must be of the same
             length.
 
     Returns:
@@ -1224,7 +1224,7 @@ def reciprocal(x, dtype=None):
             output Tensor.
 
     Returns:
-        Tensor or scalar, this is a scalar if `x` is a scalar.
+        Tensor or scalar. This is a scalar if `x` is a scalar.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2040,8 +2040,6 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     """
     Integrates along the given axis using the composite trapezoidal rule.
 
-    Integrates `y` (x) along given axis.
-
     Args:
         y (Tensor): Input array to integrate.
         x (Union[int, float, bool, list, tuple, Tensor], optional): The sample points
@@ -2599,7 +2597,7 @@ def nansum(a, axis=None, dtype=None, keepdims=False):
     Returns the sum of array elements over a given axis treating Not a Numbers (NaNs) as zero.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
 
     Args:
         a (Union[int, float, list, tuple, Tensor]): Array containing numbers
@@ -2772,7 +2770,7 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
     otherwise over the specified axis.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
@@ -3834,7 +3832,7 @@ def promote_types(type1, type2):
         The promoted data type.
 
     Raises:
-        TypeError: If the input are not valid :class:`mindspore.dtype` input.
+        TypeError: If the inputs are not valid :class:`mindspore.dtype` inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5070,7 +5068,7 @@ def polyadd(a1, a2):
         Tensor, the sum of the inputs.
 
     Raises:
-        ValueError: If the input array has more than 1 dimensions.
+        ValueError: If the input array has more than 1 dimension.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5106,7 +5104,7 @@ def polysub(a1, a2):
         Tensor, the difference of the inputs.
 
     Raises:
-        ValueError: If the input array has more than 1 dimensions.
+        ValueError: If the input array has more than 1 dimension.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5134,8 +5132,8 @@ def polyval(p, x):
         p (Union[int, float, bool, list, tuple, Tensor]): 1D array of polynomial
             coefficients (including coefficients equal to zero) from highest
             degree to the constant term.
-        x (Union[int, float, bool, list, tuple, Tensor]): A number, an array of
-            numbers, at which to evaluate `p`.
+        x (Union[int, float, bool, list, tuple, Tensor]): A number or an array of
+            numbers at which to evaluate `p`.
 
     Returns:
         Tensor.
@@ -5210,7 +5208,7 @@ def polymul(a1, a2):
         Tensor, a new polynomial representing the derivative.
 
     Raises:
-        ValueError: If the input array has more than 1 dimensions.
+        ValueError: If the input array has more than 1 dimension.
 
     Supported Platforms:
         ``GPU``
@@ -5297,7 +5295,7 @@ def result_type(*arrays_and_dtypes):
 
     Note:
         The promotion rule is slightly different from original Numpy, but more like
-        jax, due to the preference on ``32-bit`` over ``64-bit`` data types.
+        JAX, due to the preference on ``32-bit`` over ``64-bit`` data types.
         Complex dtypes are not supported.
 
     Args:
@@ -5776,7 +5774,7 @@ def rint(x, dtype=None):
             output Tensor.
 
     Returns:
-        Output tensor is same shape and type as x. This is a scalar if x is a scalar.
+        Output tensor is the same shape and type as x. This is a scalar if x is a scalar.
 
     Raises:
         TypeError: If `x` can not be converted to tensor.

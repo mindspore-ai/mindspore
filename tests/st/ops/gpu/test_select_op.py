@@ -36,7 +36,7 @@ class Net(nn.Cell):
         return self.select(cond_op, input_x, input_y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
                                    np.uint8, np.uint16, np.uint32, np.uint64,
                                    np.float16, np.float32, np.float64,
@@ -88,7 +88,7 @@ def select_ops_fn(condition, x, y):
     return ops.select(condition, x, y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tensor_select_input_tensor():
     """
     Feature: Test tensor select interface.
@@ -104,7 +104,7 @@ def test_tensor_select_input_tensor():
     assert np.all(output2.asnumpy() == np.array([2, 2]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tensor_select_input_number():
     """
     Feature: Test tensor select interface.
@@ -120,7 +120,7 @@ def test_tensor_select_input_number():
     assert np.all(output2.asnumpy() == np.array([2, 5]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_select_fn_vmap():
     """
     Feature: Test select function interface with interface.
@@ -138,7 +138,7 @@ def test_select_fn_vmap():
     assert np.all(output2.asnumpy() == np.array([[2, 5], [3, 1]]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_select_tensor_vmap():
     """
     Feature: Test select tensor interface with interface.
@@ -156,8 +156,7 @@ def test_select_tensor_vmap():
     assert np.all(output2.asnumpy() == np.array([[2, 5], [3, 1]]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_select_broadcast_forward_backward(mode):
     """

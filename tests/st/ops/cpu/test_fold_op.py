@@ -51,8 +51,7 @@ def test_fold_tensor_api():
     assert output.shape == expected_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_fold_functional_api_with_invalid_output_size():
     """
     Feature: test fold tensor API with invalid output size.
@@ -67,8 +66,7 @@ def test_fold_functional_api_with_invalid_output_size():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_fold_tensor_functional_api_modes():
     """
     Feature: test fold tensor and functional APIs for different modes.

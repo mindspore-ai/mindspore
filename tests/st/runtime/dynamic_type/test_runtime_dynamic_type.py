@@ -21,7 +21,7 @@ import mindspore.numpy as mnp
 import mindspore.ops.functional as F
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_value_depend_infer():
     """
     Feature: Dynamic type.
@@ -89,7 +89,7 @@ def test_value_depend_infer():
     assert out.shape == (64, 64)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tuple_arg_to_dynamic_tuple_and_partial_para():
     """
     Feature: Dynamic type.
@@ -115,7 +115,7 @@ def test_tuple_arg_to_dynamic_tuple_and_partial_para():
     _ = gradnet(inputx)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_twice_execute_for_dynamic_type_graph():
     """
     Feature: Dynamic type.
@@ -152,7 +152,7 @@ def test_twice_execute_for_dynamic_type_graph():
 
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cpu_optimize_fp16():
     """
     Feature: Dynamic type.
@@ -194,7 +194,7 @@ def test_cpu_optimize_fp16():
     assert np.allclose(var1.value().asnumpy(), var2.value().asnumpy(), 1.0e-4, 1.0e-4)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cpu_empty_tuple():
     """
     Feature: tensor data.
@@ -261,7 +261,7 @@ def test_cpu_empty_tuple():
     grad_net(input1_ms, input2, out_ms)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_cpu_any_type_empty_tuple():
     """
     Feature: tensor data.
@@ -377,8 +377,7 @@ def test_cpu_any_type_empty_tuple():
     print(a, b, c, d)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
-        essential_mark="essential", mem_peak=4.0)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", mem_peak=4.0)
 def test_pyobj_to_tensor():
     """
     Feature: tensor data.
@@ -433,8 +432,7 @@ def test_pyobj_to_tensor():
     assert grad_out[0].asnumpy()[0][0][0] == 1
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
-        essential_mark="essential", mem_peak=4.0)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", mem_peak=4.0)
 def test_pyexecute_launch_d2h():
     """
     Feature: tensor data.
@@ -479,7 +477,7 @@ def test_pyexecute_launch_d2h():
     assert np.allclose(ret2.asnumpy(), ret1.asnumpy(), 0, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sequence_slice():
     """
     Feature: dynamic shape and dynamic value op.
@@ -514,7 +512,7 @@ def test_sequence_slice():
     print(net(x, y))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pyexecute_for_single_pipeline():
     """
     Feature: dynamic shape and dynamic value op.

@@ -80,6 +80,14 @@ class Adagrad(Optimizer):
     :math:`\gamma` stands for `learning_rate`, :math:`w` stands for `params`.
     :math:`t` represents current `step`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the constructor signature will be changed to
+        ``Adagrad(params, lr=0.01, lr_decay=0, weight_decay=0, initial_accumulator_value=0, eps=1e-10)``.
+        Parameter `learning_rate` will be renamed to `lr`, `accum` will be renamed to `initial_accumulator_value`,
+        parameters `lr_decay` and `eps` will be added, `update_slots` and `loss_scale` will be removed, the default
+        value of `lr` will change from ``0.001`` to ``0.01``, and the default value of `accum` will change from
+        ``0.1`` to ``0``.
+
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When

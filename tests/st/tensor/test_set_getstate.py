@@ -19,7 +19,7 @@ import numpy as np
 
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_set_getstate_bypickle():
     """
     Feature: TensorPy.__setstate__ TensorPy.__getstate__

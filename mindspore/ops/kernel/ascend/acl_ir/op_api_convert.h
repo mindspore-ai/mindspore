@@ -238,8 +238,9 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
     for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
       strides[i] = strides[i] * strides[i + 1];
     }
-    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                 shape.size(), tensor->device_ptr());
+    const ShapeVector storage_shape = shape.empty() ? ShapeVector{1} : shape;
+    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format,
+                                 storage_shape.data(), storage_shape.size(), tensor->device_ptr());
   } else {
     const auto &strides = storage_info->strides;
     const auto &storage_shape = storage_info->ori_shape;
@@ -296,8 +297,9 @@ inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool>
       std::swap(shape[shape.size() - 1], shape[shape.size() - 2]);
       std::swap(strides[strides.size() - 1], strides[strides.size() - 2]);
     }
-    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                 shape.size(), tensor->device_ptr());
+    const ShapeVector storage_shape = shape.empty() ? ShapeVector{1} : shape;
+    acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format,
+                                 storage_shape.data(), storage_shape.size(), tensor->device_ptr());
   } else {
     auto strides = storage_info->strides;
     const auto &storage_shape = storage_info->ori_shape;

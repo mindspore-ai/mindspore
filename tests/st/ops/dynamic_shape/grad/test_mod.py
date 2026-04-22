@@ -17,7 +17,7 @@ class NetMod(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_mod_shape():
     """
     Feature: Mod Grad DynamicShape.
@@ -32,7 +32,7 @@ def test_dynamic_mod_shape():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_mod_rank():
     """
     Feature: Mod Grad DynamicRank.

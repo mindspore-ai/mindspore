@@ -21,6 +21,9 @@ mindspore.ops.scatter_nd
 
     .. image:: ScatterNd.png
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **indices** (Tensor) - 指定新tensor中散布的索引。索引的秩须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
         - **updates** (Tensor) - 指定更新tensor。shape为 `indices.shape[:-1] + shape[indices.shape[-1]:]` 。

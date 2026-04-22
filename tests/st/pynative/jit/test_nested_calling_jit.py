@@ -31,8 +31,7 @@ ret_output_2 = Tensor(np.full((1, 1, 120, 640), 3.125), dtype=mstype.float32)
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_nested_local():
     """
     Feature: Jit graph
@@ -84,8 +83,7 @@ def function11_g(x, y):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_nested_global():
     """
     Feature: Jit graph
@@ -105,8 +103,7 @@ def test_jit_nested_global():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_nested_grad():
     """
     Feature: Nested call of jit

@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 from ..share.utils import match_array, assert_executed_by_graph_mode
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_shape_not_none():
     '''
     Description:
@@ -34,7 +34,7 @@ def test_tensor_shape_not_none():
     Tensor(input_data=None, dtype=mstype.float32, shape=[2, 4], init=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_shape():
     '''
     Description:
@@ -48,7 +48,7 @@ def test_tensor_shape():
     assert s == (-1, 4)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_create_new_tensor_from_dynamic_shape_tensor():
     """
     Feature: Test dynamic shape tensor.

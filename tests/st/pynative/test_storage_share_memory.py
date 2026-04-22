@@ -81,7 +81,7 @@ def send_tensor(queue, event):
     event.wait()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_share_memory_single_put_and_get(mode):
     """
@@ -111,7 +111,7 @@ def test_ipc_share_memory_single_put_and_get(mode):
         do_test()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_share_memory_multi_put_and_get(mode):
     """
@@ -144,7 +144,7 @@ def test_ipc_share_memory_multi_put_and_get(mode):
     with leak_checker() as lc:
         test_receive()
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_share_list(mode):
     """
@@ -169,7 +169,7 @@ def test_ipc_share_list(mode):
         do_test()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_pool(mode):
     """
@@ -201,8 +201,7 @@ def test_ipc_pool(mode):
         do_test()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_ascend_tensor(mode):
     """
@@ -219,7 +218,7 @@ def test_ipc_ascend_tensor(mode):
         reduce_storage(t1.untyped_storage())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_tensor_is_shared(mode):
     """
@@ -239,7 +238,7 @@ def test_ipc_tensor_is_shared(mode):
     assert out.is_shared()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ipc_empty_tensor(mode):
     """

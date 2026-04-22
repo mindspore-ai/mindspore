@@ -40,7 +40,7 @@ class NetGpu(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_var_mean(mode):
     """
@@ -68,7 +68,7 @@ def test_ops_var_mean(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=3080.0)
+          card_mark='onecard', mem_peak=3080.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_var_mean_grad_ddof(mode):
     """
@@ -90,7 +90,7 @@ def test_ops_var_mean_grad_ddof(mode):
     assert np.allclose(grads.asnumpy(), expected_grad, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_var_mean_gpu(mode):
     """

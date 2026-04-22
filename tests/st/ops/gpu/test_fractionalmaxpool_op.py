@@ -71,7 +71,7 @@ class NetFractionalMaxPoolGradOverlapping(nn.Cell):
                                              col_pooling_sequence)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fractionalmaxpool_graph():
     """
     Feature: FractionalMaxPool
@@ -129,7 +129,7 @@ def test_fractionalmaxpool_graph():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fractionalmaxpool_pynative():
     """
     Feature: FractionalMaxPool

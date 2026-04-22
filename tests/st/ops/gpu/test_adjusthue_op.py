@@ -35,7 +35,7 @@ class AdHue(nn.Cell):
         return self.adjusthue(input_images, hue_delta)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adjusthue_float32():
     """
     Feature: None
@@ -51,7 +51,7 @@ def test_adjusthue_float32():
     np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adjusthue_float64():
     """
     Feature: None
@@ -67,7 +67,7 @@ def test_adjusthue_float64():
     np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_adjusthue_float16():
     """
     Feature: None

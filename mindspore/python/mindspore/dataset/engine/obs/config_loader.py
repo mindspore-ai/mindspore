@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 """
-This dataset module provides internal global variables for OBSMindDataset API.
+This dataset module provides config object factory for OBSMindDataset API.
 """
+
 import os
 
 
-class Config():
-    """ Config class for OBSMindDataset """
+class Config:
+    """Config class for OBSMindDataset"""
 
     WORKING_PATH = "/cache"
     DATASET_LOCAL_PATH = os.path.join(WORKING_PATH, "dataset")
@@ -36,21 +37,20 @@ class Config():
 
 
 class _Config:
-    """ Internal class that get and set global variables. """
+    """Internal class that get and set global variables."""
 
     def __init__(self):
-        self.config = dict((k, v) for k, v in Config.__dict__.items()
-                           if not callable(v) and not k.startswith('__'))
+        self.config = {k: v for k, v in Config.__dict__.items() if not callable(v) and not k.startswith("__")}
 
     def __getattr__(self, key):
         if key in os.environ:
             return self._convert_type(key)
         if key in self.config:
             return self.config[key]
-        raise RuntimeError("Variable {} can not be found in configuration file or environment variables.".format(key))
+        raise RuntimeError(f"Variable {key} can not be found in configuration file or environment variables.")
 
     def __setattr__(self, key, value):
-        if key == 'config':
+        if key == "config":
             self.__dict__[key] = value
         else:
             self.config[key] = value
@@ -64,5 +64,13 @@ class _Config:
             return float(os.environ[key])
         return os.environ[key]
 
+    def copy(self):
+        """Return an independent config object with the current values."""
+        new_config = _Config()
+        new_config.config = self.config.copy()
+        return new_config
 
-config = _Config()
+
+def create_obs_config():
+    """Create an independent OBS config object for one dataset instance."""
+    return _Config()

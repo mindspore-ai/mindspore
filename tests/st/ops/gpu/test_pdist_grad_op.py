@@ -45,7 +45,7 @@ def pdist_grad_pynative(y_grad, x, y, p):
     return output_ms
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, eps', [(np.float32, 1.0e-4), (np.float64, 1.0e-5)])
 def test_pdist_grad_graph(dtype, eps):
     """
@@ -64,7 +64,7 @@ def test_pdist_grad_graph(dtype, eps):
     assert np.all(diff_graph < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype, eps', [(np.float32, 1.0e-4), (np.float64, 1.0e-5)])
 def test_pdist_grad_pynative(dtype, eps):
     """

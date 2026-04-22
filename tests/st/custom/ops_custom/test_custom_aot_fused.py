@@ -63,7 +63,7 @@ def aot_fused_kernel():
     assert np.allclose(expected, output.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_aot_fused_kernel():
     """
     Feature: custom aot operator, multiple inputs, single output, CPU, GRAPH_MODE

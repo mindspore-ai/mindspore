@@ -9,6 +9,9 @@ mindspore.nn.FractionalMaxPool3d
 
     输入输出的数据格式可以是”NCDHW“。其中，N是批次大小，C是通道数，D是特征深度，H是特征高度，W是特征宽度。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，如果为正整数，则代表池化核的深度，高和宽。如果为tuple，其值必须包含三个正整数值分别表示池化核的深度，高和宽。取值必须为正整数。
         - **output_size** (Union[int, tuple[int]]，可选) - 目标输出大小。如果是正整数，则表示输出目标的深、高和宽。如果是tuple，其值必须包含三个正整数值分别表示目标输出的深、高和宽。为 ``None`` 时，输出大小由 `output_ratio` 决定。默认值： ``None`` 。

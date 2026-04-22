@@ -27,8 +27,7 @@ class NetTrunc(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_divide_none_tensor(mode):
     """
@@ -47,7 +46,6 @@ def test_divide_none_tensor(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2.00)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_divide_none_scalar(mode):
@@ -66,8 +64,7 @@ def test_divide_none_scalar(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_divide_floor(mode):
     """
@@ -86,8 +83,7 @@ def test_divide_floor(mode):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_divide_trunc(mode):
     """

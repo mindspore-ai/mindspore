@@ -11,8 +11,7 @@ add_rms_norm:
             \end{array}
 
         .. warning::
-            This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2
-            training series for now.
+            This is an experimental API that is subject to change or deletion.
 
         Args:
             x1 (Tensor): Input data of AddRmsNorm. Support data type: float16, float32, bfloat16.

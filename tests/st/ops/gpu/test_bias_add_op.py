@@ -36,7 +36,7 @@ def test_bias_add_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bias_add_forward_float32_functional():
     """
     Feature: test bias_add forward.
@@ -65,7 +65,7 @@ def run_bias_add(dtype):
     net(x, b)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bias_add_gpu_valid_type():
     """
     Feature: test bias_add.

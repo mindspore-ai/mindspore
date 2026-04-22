@@ -22,14 +22,13 @@ import subprocess
 from tests.st.common.random_generator import set_numpy_global_seed
 
 
-def arg_mark(plat_marks, level_mark, card_mark, essential_mark, mem_peak=None):
+def arg_mark(plat_marks, level_mark, card_mark, mem_peak=None):
     """
     Decorator for marking test cases with various attributes.
     Args:
         plat_marks (list): Platform marks like 'platform_ascend', 'platform_gpu'
         level_mark (str): Test level mark like 'level0', 'level1'
         card_mark (str): Card mark like 'onecard', 'allcards'
-        essential_mark (str): Essential mark like 'essential', 'unessential'
         mem_peak (float, optional): Expected peak memory usage in MB
     Returns:
         function: Decorator function
@@ -38,15 +37,12 @@ def arg_mark(plat_marks, level_mark, card_mark, essential_mark, mem_peak=None):
                            'cpu_linux', 'cpu_windows', 'cpu_macos']
     optional_level_marks = ['level0', 'level1', 'level2', 'level3', 'level4']
     optional_card_marks = ['onecard', 'allcards', 'dryrun', 'dryrun_only']
-    optional_essential_marks = ['essential', 'unessential']
     if not plat_marks or not set(plat_marks).issubset(set(optional_plat_marks)):
         raise ValueError("wrong plat_marks values")
     if level_mark not in optional_level_marks:
         raise ValueError("wrong level_mark value")
     if card_mark not in optional_card_marks:
         raise ValueError("wrong card_mark value")
-    if essential_mark not in optional_essential_marks:
-        raise ValueError("wrong essential_mark value")
     if card_mark == "onecard" and "ascend" in str(plat_marks) and level_mark in ['level0', 'level1'] and not mem_peak:
         raise ValueError("wrong mem_peak value")
 
@@ -55,7 +51,6 @@ def arg_mark(plat_marks, level_mark, card_mark, essential_mark, mem_peak=None):
             func = getattr(pytest.mark, plat_mark)(func)
         func = getattr(pytest.mark, level_mark)(func)
         func = getattr(pytest.mark, card_mark)(func)
-        func = getattr(pytest.mark, essential_mark)(func)
         if mem_peak: 
             func = pytest.mark.mem_peak(mem_peak)(func)
         set_numpy_global_seed()

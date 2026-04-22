@@ -6,7 +6,7 @@ from ..share.ops.primitive.minimum_ops import MinimumFactory
 from ..share.ops.primitive.minimum_ops import Minimum
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_512x1_512x1():
     """
     Feature: Ops.
@@ -19,7 +19,7 @@ def test_p_minimum_input_512x1_512x1():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_2x2_2x2():
     """
     Feature: Ops.
@@ -31,7 +31,7 @@ def test_p_minimum_input_2x2_2x2():
     MinimumFactory(left_input, right_input, np.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_3x3x3x3_3x3x3x3():
     """
     Feature: Ops.
@@ -44,7 +44,7 @@ def test_p_minimum_input_3x3x3x3_3x3x3x3():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_5d():
     """
     Feature: Ops.
@@ -57,7 +57,7 @@ def test_p_minimum_input_5d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_6d():
     """
     Feature: Ops.
@@ -70,7 +70,7 @@ def test_p_minimum_input_6d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_7d():
     """
     Feature: Ops.
@@ -83,7 +83,7 @@ def test_p_minimum_input_7d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_3dtensor_scalar():
     """
     Feature: Ops.
@@ -96,7 +96,7 @@ def test_p_minimum_input_3dtensor_scalar():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_scalar_3dtensor():
     """
     Feature: Ops.
@@ -109,7 +109,7 @@ def test_p_minimum_input_scalar_3dtensor():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_forward_input_2dtensor_3dtensor_int32():
     """
     Feature: Ops.
@@ -123,7 +123,7 @@ def test_p_minimum_forward_input_2dtensor_3dtensor_int32():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_dtype_int64():
     """
     Feature: Ops.
@@ -136,7 +136,7 @@ def test_p_minimum_dtype_int64():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_input_bool_tensor_int32():
     """
     Feature: Ops.
@@ -151,7 +151,7 @@ def test_p_minimum_input_bool_tensor_int32():
     assert out_me.asnumpy().all() == out_np.all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_dtype_int8():
     """
     Feature: Ops.
@@ -164,7 +164,7 @@ def test_p_minimum_dtype_int8():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_dtype_int16():
     """
     Feature: Ops.
@@ -177,7 +177,7 @@ def test_p_minimum_dtype_int16():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_dtype_uint16():
     """
     Feature: Ops.
@@ -190,7 +190,7 @@ def test_p_minimum_dtype_uint16():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_dtype_uint8():
     """
     Feature: Ops.
@@ -203,7 +203,7 @@ def test_p_minimum_dtype_uint8():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_minimum_dtype_int32_tensor_interface():
     """
     Feature: Ops.

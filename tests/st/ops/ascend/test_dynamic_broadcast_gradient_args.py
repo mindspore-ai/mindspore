@@ -36,7 +36,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_net():
     shape0 = (4, 2, 1)
     shape1 = (2, 7)
@@ -72,7 +72,7 @@ class GradWrap(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_dynamic_broadcast_to_net():
     """
     Feature: Test DynamicBroadcastTo grad process. The input shape is not dynamic.
@@ -90,7 +90,7 @@ def test_dynamic_broadcast_to_net():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_dynamic_broadcast_to_net_dyn():
     """
     Feature: Test DynamicBroadcastTo grad process. The input shape is dynamic.

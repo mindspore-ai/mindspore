@@ -75,8 +75,7 @@ class UniqueReshapeAdd(nn.Cell):
         return self.add(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_unique():
     """
     Feature: Dynamic shape with heterogeneity.
@@ -92,8 +91,7 @@ def test_unique():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_unique_square():
     """
     Feature: Dynamic shape with heterogeneity.
@@ -107,8 +105,7 @@ def test_unique_square():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_unique_square_relu():
     """
     Feature: Dynamic shape with heterogeneity.
@@ -122,8 +119,7 @@ def test_unique_square_relu():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_unique_reshape_add():
     """
     Feature: Dynamic shape with heterogeneity.

@@ -185,6 +185,13 @@ class Conv2d(_Conv):
     For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will be changed to
+        ``Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+        padding_mode='zeros', dtype=None)``.
+        Parameter `pad_mode` will be renamed to `padding_mode`, and `has_bias` will be renamed to `bias` with its
+        default value changed from ``False`` to ``True``.
+
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
@@ -415,6 +422,13 @@ class Conv1d(_Conv):
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_
     and `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ .
 
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will be changed to
+        ``Conv1d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+        padding_mode='zeros', dtype=None)``.
+        Parameter `pad_mode` will be renamed to `padding_mode`, and `has_bias` will be renamed to `bias` with its
+        default value changed from ``False`` to ``True``.
+
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
@@ -644,6 +658,13 @@ class Conv3d(_Conv):
     For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will be changed to
+        ``Conv3d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+        padding_mode='zeros', dtype=None)``.
+        Parameter `pad_mode` will be renamed to `padding_mode`, and `has_bias` will be renamed to `bias` with its
+        default value changed from ``False`` to ``True``.
+
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
         That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
@@ -869,8 +890,13 @@ class Conv3dTranspose(_Conv):
     For the detailed information of Deconvolutional network,
     refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
 
-    Note:
-        For Atlas A2 training series products, `output_padding` is currently not supported.
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will be changed to
+        ``Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
+        bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
+        Parameter `group` will be renamed to `groups`, `has_bias` will be renamed to `bias` with its default value
+        changed from ``False`` to ``True``, `pad_mode`, `weight_init`, `bias_init`, and `data_format` will be
+        removed, and parameter `padding_mode` will be added.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv3dTranspose layer.
@@ -1107,6 +1133,14 @@ class Conv2dTranspose(_Conv):
     directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape. Deconvolutional network
     can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
+
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will be changed to
+        ``Conv2dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
+        bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
+        Parameter `group` will be renamed to `groups`, `has_bias` will be renamed to `bias` with its default value
+        changed from ``False`` to ``True``, `pad_mode`, `weight_init`, and `bias_init` will be removed, and
+        parameter `padding_mode` will be added.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv2dTranspose layer.
@@ -1353,6 +1387,14 @@ class Conv1dTranspose(_Conv):
     they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv1d maps multiple input shapes to the same output shape. Deconvolutional network
     can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
+
+    .. warning::
+        Starting after version 2.9.0, the constructor signature will be changed to
+        ``Conv1dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
+        bias=True, dilation=1, padding_mode='zeros', dtype=None)``.
+        Parameter `group` will be renamed to `groups`, `has_bias` will be renamed to `bias` with its default value
+        changed from ``False`` to ``True``, `pad_mode`, `weight_init`, and `bias_init` will be removed, and
+        parameters `output_padding` and `padding_mode` will be added.
 
     Args:
         in_channels (int): The channel number of the input tensor of the Conv1dTranspose layer.

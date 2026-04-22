@@ -2,6 +2,49 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.9.0 Release Notes
+
+### Major Features and Improvements
+
+#### Runtime
+
+- [STABLE] Enhanced Usability of Memory Binding and Core Binding: Support memory binding during process startup to stabilize the performance of heterogeneous copy operations. Users can enable this feature by configuring the `--bind_numa` parameter of `msrun`. Both `--bind_numa` and `mindspore.runtime.set_cpu_affinity` support unified JSON-format binding configuration input.
+
+#### PyNative
+
+- [STABLE] Enhancement of the DVM operator automatic fusion in dynamic graph asynchronous execution mode, supporting the backward fusion of Elemwise operators after MatMul operators. Users can enable it by setting the environment variable `MS_DEV_PYNATIVE_FUSION_FLAGS`.
+- [STABLE] Added support for `device` of type `meta`, including the ability to create Tensors of type `meta`, and supported Tensors of type `meta` as operator inputs.
+
+### API Change
+
+- [STABLE] [mindspore.ops](https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html) API has added two DeepSeek Sparse Attention (DSA) interfaces:
+
+  | mindspore.ops                        |
+  | :----------------------------------- |
+  | mindspore.ops.sparse_flash_attention |
+  | mindspore.ops.lightning_indexer      |
+
+- [STABLE] The first argument `input` of [mindspore.mint.eq](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.eq.html#mindspore.mint.eq), [mindspore.ops.equal](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.equal.html#mindspore.ops.equal), [mindspore.ops.Equal](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Equal.html#mindspore.ops.Equal), [mindspore.mint.less](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.less.html#mindspore.mint.less), [mindspore.mint.lt](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.lt.html#mindspore.mint.lt), [mindspore.ops.less](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.less.html#mindspore.ops.less) and [mindspore.ops.Less](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Less.html#mindspore.ops.Less) no longer support Scalar type.
+- [STABLE] On the CPU backend, [mindspore.ops.trunc](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.trunc.html#mindspore.ops.trunc) now supports `uint16` data as input, [mindspore.ops.floor_div](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.floor_div.html#mindspore.ops.floor_div), [mindspore.ops.floor_divide](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.floor_divide.html#mindspore.ops.floor_divide), and [mindspore.ops.remainder](https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.remainder.html#mindspore.ops.remainder) now support `bool` data as input.
+- [STABLE] The argument `output_recompute` of [mindspore.nn.Cell.recompute](https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell.recompute) and [mindspore.recompute](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.recompute.html) can be used in static graphs.
+- [BETA] [mindspore.nn.Cell](https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html) adds the [register_parameter_forward_hook](https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell.register_parameter_forward_hook) method, enabling users to register forward hooks for Parameters.
+- [STABLE] [mindspore.mint.optim.FusedAdamW](https://www.mindspore.cn/docs/en-US/master/api_python/mint/mindspore.mint.optim.FusedAdamW.html#mindspore.mint.optim.FusedAdamW), a fused optimizer, is added in mindspore.mint.optim. It is an implementation of the Fused Adaptive Moment Estimation Weight Decay (​**FusedAdamW**​) algorithm.
+- [STABLE] [mindspore.load_checkpoint](https://www.mindspore.cn/docs/en-US/master/api_python/mindspore/mindspore.load_checkpoint.html#mindspore.load_checkpoint) added support for BytesIO objects in safetensors format to the checkpoint loading interface.
+
+### Dependencies Change
+
+- oneDNN dependency pinned to 3.10.1
+- PyYAML dependency changed to `>=6.0`
+- Eigen dependency pinned to 5.0.0
+- glog(Google Logging Library) dependency pinned to 0.7.1
+- JSON for Modern C++ dependency pinned to 3.12.0
+- CUB removed
+- jemalloc removed
+
+### Contributors
+
+baochong1,bellatan,BigSkySea,bleub,caifubi,celiaccui,chaijinwei,changzherui1,chenshan2623,chujinjin,chuting,dingjinshan,downsivan,fangwenyi1,fary86,fengyixing,fortunegit,ginfung,haloradar,haozhang,hbhu_bin,horcham_zhq,huan-xiaoling,hulongjie,hwcaifubi,hwjiaorui,hz893,jiangna,jiaorui,jonyguo,lanshaozuishuai,Liangcan-Li,liangchenghui,LiangZhibo,lichen666,lijiajie1234,limingqi107,LinHaier,LiNuohang,liuchengji3,looop5,luochao60,machangwei ,maoyuanpeng1,Margaret_wangrui,nicholas_yhr,panzhihui1,probiotics_53,propathee,Qiao_Fu,rainyhorse,shen_haochen,shenwei41,shuqian0,silkage_jiajia,SorryNaCN,sunshineko,wangnan39,wang-ziqi-code,wjlflyer,wujueying,wusuqin4,XianglongZeng,xuzhen,yangjiane,yangting,yanluojia2025,ynagxiaochun2025,yt_289,yuanqi1104,zh_qh,zhanglei,zhanglei546,zhangyifan999,zhangyinxia,zhaochenjie-huawei,zzhongmin,刘飞扬
+
 ## MindSpore 2.8.0 Release Notes
 
 ### Major Features and Improvements

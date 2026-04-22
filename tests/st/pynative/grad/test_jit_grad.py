@@ -29,8 +29,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_network_with_dict_output():
     """
     Feature: Test sens dict in jit
@@ -66,8 +65,7 @@ def test_jit_network_with_dict_output():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_network_with_multi_output_contain_dict():
     """
     Feature: Test pynative jit with multi output contain dict
@@ -103,8 +101,7 @@ def test_jit_network_with_multi_output_contain_dict():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_network_with_dict_output_has_constant_value():
     """
     Feature: Test pynative jit with dict output has constant value
@@ -140,8 +137,7 @@ def test_jit_network_with_dict_output_has_constant_value():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_network_with_list_output():
     """
     Feature: Test list in jit
@@ -183,8 +179,7 @@ def test_jit_network_with_list_output():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_network_with_list_inplace():
     """
     Feature: Test list in jit
@@ -226,8 +221,7 @@ def test_jit_network_with_list_inplace():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_with_while():
     """
     Feature: Control flow
@@ -261,8 +255,7 @@ def test_grad_jit_with_while():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_with_dict_input():
     """
     Feature: Grad jit function has dict input
@@ -283,8 +276,7 @@ def test_grad_jit_with_dict_input():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_with_multiple_output_contain_list():
     """
     Feature: Grad jit function has multiple output contain list
@@ -304,8 +296,7 @@ def test_grad_jit_with_multiple_output_contain_list():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_with_string_output():
     """
     Feature: Grad jit function has multiple output contain string
@@ -324,8 +315,7 @@ def test_grad_jit_with_string_output():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_with_scalar_output():
     """
     Feature: Grad jit function has multiple output contain scalar
@@ -346,8 +336,7 @@ def test_grad_jit_with_scalar_output():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_bprop_net():
     """
     Feature: Test jit grad custom bprop construct func
@@ -376,8 +365,7 @@ def test_grad_jit_bprop_net():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_jit_stop_gradient():
     """
     Feature: Test jit grad stop gradient.

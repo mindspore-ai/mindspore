@@ -35,8 +35,7 @@ class SparseSparseMaximumNet(nn.Cell):
                        x2_shape)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_sparse_maximum_dynamic_shape():
     """
     Feature: SparseSparseMaximum op in cpu.

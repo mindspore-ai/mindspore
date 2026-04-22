@@ -50,8 +50,7 @@ class DynamicGRUV2(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_dynamic_gru_v2():
     input_x = Tensor(np.random.rand(2, 8, 64).astype(np.float16))
     w_i = Tensor(np.random.rand(64, 48).astype(np.float16))
@@ -65,7 +64,7 @@ def test_dynamic_gru_v2():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.05)
+        card_mark='onecard', mem_peak=1024.05)
 def test_dynamic_gru_v2_export_onnx_default():
     """
     Feature: test export DynamicGRUV2 op to onnx.
@@ -106,8 +105,7 @@ def test_dynamic_gru_v2_export_onnx_default():
     os.remove(file_name)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_dynamic_gru_v2_export_onnx_fp32_bias():
     """
     Feature: test export DynamicGRUV2 op to onnx.
@@ -156,7 +154,7 @@ def test_dynamic_gru_v2_export_onnx_fp32_bias():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.04)
+        card_mark='onecard', mem_peak=1024.04)
 def test_dynamic_gru_v2_export_onnx_gate_order():
     """
     Feature: test export DynamicGRUV2 op to onnx.

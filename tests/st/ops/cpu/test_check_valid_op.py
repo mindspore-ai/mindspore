@@ -56,8 +56,7 @@ def check_valid_modes(nptype):
     assert np.array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_check_valid_float32():
     """
     Feature: test CheckValid op given input float32 dtype.
@@ -67,8 +66,7 @@ def test_check_valid_float32():
     check_valid_modes(np.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_check_valid_float16():
     """
     Feature: test CheckValid op given input float16 dtype.
@@ -78,8 +76,7 @@ def test_check_valid_float16():
     check_valid_modes(np.float16)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_check_valid_int16():
     """
     Feature: test CheckValid op given input int16 dtype.
@@ -89,8 +86,7 @@ def test_check_valid_int16():
     check_valid_modes(np.int16)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_check_valid_uint8():
     """
     Feature: test CheckValid op given input uint8 dtype.
@@ -127,8 +123,7 @@ def test_check_valid_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_check_valid_functional_modes():
     """
     Feature: test check_valid functional API in PyNative and Graph modes.

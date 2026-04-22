@@ -51,7 +51,7 @@ def run_floatstatus_addn():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_floatstatus_addn():
     """
     Feature: graph kernel testcase for floatstatus addn fusion
@@ -62,8 +62,7 @@ def test_floatstatus_addn():
     run_floatstatus_addn()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=36.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=36.0)
 @pytest.mark.parametrize("input_type", [mindspore.float16, mindspore.bfloat16])
 def test_floatstatus_addn_ascend(input_type):
     """

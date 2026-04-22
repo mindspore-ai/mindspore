@@ -15,6 +15,10 @@ mindspore.nn.ReLU6
     .. image:: ../images/ReLU6.png
         :align: center
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`，并新增可选构造参数 `inplace`。
+        接口签名将变更为 ``mindspore.nn.ReLU6(inplace=False)`` 。
+
     输入：
         - **x** (Tensor) - ReLU6的输入，是具有任何有效形状的张量，其数据类型为float16或float32。
 

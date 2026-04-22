@@ -40,8 +40,7 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net([a, b, x], is_dynamic_rank)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_betainc_dynamic_shape():
     """
     Feature: test Betainc grad dynamic shape on CPU.
@@ -54,8 +53,7 @@ def test_betainc_dynamic_shape():
     grad_dyn_case(False)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_betainc_dynamic_rank():
     """
     Feature: test Betainc grad dynamic rank on CPU.

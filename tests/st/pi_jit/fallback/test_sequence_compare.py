@@ -20,7 +20,7 @@ from tests.st.pi_jit.share.utils import assert_has_graph_break, assert_no_graph_
 
 
 @pytest.mark.skip(reason="need fix later")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -43,7 +43,7 @@ def test_sequence_compare_with_operation():
     assert_has_graph_break(foo)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_2():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -65,7 +65,7 @@ def test_sequence_compare_with_operation_2():
     assert_has_graph_break(foo)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_3():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -87,7 +87,7 @@ def test_sequence_compare_with_operation_3():
     assert_has_graph_break(foo)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_4():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -108,7 +108,7 @@ def test_sequence_compare_with_operation_4():
     assert not a4
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_5():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -129,7 +129,7 @@ def test_sequence_compare_with_operation_5():
     assert "not supported between instances of" in str(execinfo.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_6():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -152,7 +152,7 @@ def test_sequence_compare_with_operation_6():
     assert_has_graph_break(foo)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_7():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -175,7 +175,7 @@ def test_sequence_compare_with_operation_7():
     assert_has_graph_break(foo)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_sequence_compare_with_operation_8():
     """
     Feature: Enable sequence operations with nested or irregular inputs.

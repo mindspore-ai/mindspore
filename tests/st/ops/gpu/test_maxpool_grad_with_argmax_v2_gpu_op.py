@@ -36,7 +36,7 @@ class MaxPoolGradWithArgmaxV2(nn.Cell):
         return self.grad(x, grad, argmax)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool_grad_with_argmax_v2():
     """
     Feature: test maxPoolGradWithArgmaxV2 gpu float32 version.
@@ -73,7 +73,7 @@ def test_maxpool_grad_with_argmax_v2():
     assert (actual_output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool_grad_with_argmax_v2_fp16():
     """
     Feature: test MaxPoolGradWithArgmaxV2 gpu float16 version.
@@ -111,7 +111,7 @@ def test_maxpool_grad_with_argmax_v2_fp16():
     assert (actual_output.asnumpy() == expect_result).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool_grad_with_argmax_v2_vmap():
     """
     Feature: test maxPoolGradWithArgmaxV2 gpu vmap version.
@@ -135,7 +135,7 @@ def test_maxpool_grad_with_argmax_v2_vmap():
     assert actual_output.shape == (1, 1, 1, 6, 6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool_grad_with_argmax_v2_x_dynamic_shape():
     """
     Feature: test MaxPoolGradWithArgmaxV2 gpu dynamic shape version.

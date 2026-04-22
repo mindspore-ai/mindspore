@@ -22,6 +22,9 @@ mindspore.nn.PolynomialDecayLR
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **learning_rate** (float) - 学习率的初始值。
         - **end_learning_rate** (float) - 学习率的最终值。

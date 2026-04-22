@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.bincount(array, size, weights)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bincount_graph():
     """
     Feature: Bincount
@@ -51,7 +51,7 @@ def test_bincount_graph():
         assert np.allclose(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bincount_pynative():
     """
     Feature: Bincount
@@ -70,7 +70,7 @@ def test_bincount_pynative():
         assert np.allclose(output, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bincount_bigdata():
     """
     Feature: Bincount

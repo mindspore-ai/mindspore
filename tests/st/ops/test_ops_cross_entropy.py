@@ -121,8 +121,7 @@ def cross_entropy_backward_func(inputx, target, weight=None, ignore_index=-100, 
     return grad_op(inputx, target, weight, ignore_index, reduction, label_smoothing)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_cross_entropy_pro(mode, reduction):
@@ -148,8 +147,7 @@ def test_ops_cross_entropy_pro(mode, reduction):
     np.testing.assert_allclose(output_backward[2].asnumpy(), expect_backward[2], rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_cross_entropy_class(mode, reduction):
@@ -173,7 +171,7 @@ def test_ops_cross_entropy_class(mode, reduction):
     np.testing.assert_allclose(output_backward[0].asnumpy(), expect_backward[0], rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_cross_entropy_dynamic_shape(reduction):
     """

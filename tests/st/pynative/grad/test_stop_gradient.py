@@ -26,8 +26,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_stop_gradient_single_input():
     """
     Feature: Test stop gradient.
@@ -56,8 +55,7 @@ def test_stop_gradient_single_input():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_stop_gradient_multiple_inputs():
     """
     Feature: Test stop gradient.
@@ -87,8 +85,7 @@ def test_stop_gradient_multiple_inputs():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_stop_gradient_with_python_objects():
     """
     Feature: Test stop gradient.
@@ -121,8 +118,7 @@ def test_stop_gradient_with_python_objects():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_stop_gradient_complex_computation():
     """
     Feature: Test stop gradient.
@@ -157,8 +153,7 @@ def test_stop_gradient_complex_computation():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_stop_gradient_nested():
     """
     Feature: Test stop gradient.
@@ -215,8 +210,7 @@ class StopGradientInplaceParameterNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+          card_mark='onecard', mem_peak=4.00)
 def test_auto_grad_stop_gradient_inplace():
     """
     Feature: Test stop gradient inplace.
@@ -238,8 +232,7 @@ def test_auto_grad_stop_gradient_inplace():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_auto_grad_stop_gradient_inplace_input():
     """
     Feature: Test stop gradient inplace.
@@ -260,8 +253,7 @@ def test_auto_grad_stop_gradient_inplace_input():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_no_grad_stop_gradient_inplace_view():
     """
     Feature: Test stop gradient inplace view in no grad mode.
@@ -277,8 +269,7 @@ def test_no_grad_stop_gradient_inplace_view():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_auto_grad_stop_gradient_inplace_view_error():
     """
     Feature: Test stop gradient inplace view exception.

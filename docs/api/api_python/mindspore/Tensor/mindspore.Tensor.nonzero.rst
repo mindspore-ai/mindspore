@@ -8,7 +8,7 @@ mindspore.Tensor.nonzero
     .. note::
         关于 `self` 的秩的限制。
 
-        - Ascend：其秩可以等于0，GE后端除外。
+        - Ascend：其秩可以等于0。
         - CPU/GPU：其秩应大于等于1。
 
     关键字参数：
@@ -21,4 +21,4 @@ mindspore.Tensor.nonzero
     异常：
         - **TypeError** - 如果 `self` 不是Tensor。
         - **TypeError** - 如果 `as_tuple` 不是bool。
-        - **RuntimeError** - 在CPU或者GPU或者Ascend的GE后端中，如果 `self` 的维度为0。
+        - **RuntimeError** - 在CPU或者GPU中，如果 `self` 的维度为0。

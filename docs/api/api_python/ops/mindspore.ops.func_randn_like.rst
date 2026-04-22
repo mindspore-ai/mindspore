@@ -6,7 +6,8 @@ mindspore.ops.randn_like
     返回一个与输入shape相同的tensor，其元素为服从标准正态分布的随机数。
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
+        - 2.9.0（不含）之后版本非兼容性变更：`seed` 将移除，并新增 `generator` 和 `device` 参数。
+        - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
 
     参数：
         - **input** (Tensor) - 输入tensor。

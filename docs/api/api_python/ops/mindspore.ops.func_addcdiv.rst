@@ -8,6 +8,11 @@ mindspore.ops.addcdiv
     .. math::
         y[i] = input[i] + value[i] * (tensor1[i] / tensor2[i])
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：参数 `value` 将改为关键字参数。
+
+        变更后的接口签名为 ``mindspore.ops.addcdiv(input, tensor1, tensor2, *, value=1)`` 。
+
     参数：
         - **input** (Tensor) - 输入tensor。
         - **tensor1** (Tensor) - 被除数（分子）。
@@ -16,4 +21,3 @@ mindspore.ops.addcdiv
 
     返回：
         Tensor
-

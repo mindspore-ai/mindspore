@@ -67,7 +67,7 @@ def test_add_tensor_api(nptype=np.float32, mstype=None):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+        card_mark='onecard', mem_peak=1024.00)
 def test_add_float32_tensor_api():
     """
     Feature: test add tensor api.
@@ -80,8 +80,7 @@ def test_add_float32_tensor_api():
     test_add_tensor_api(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_add_bfloat16_tensor_api():
     """
     Feature: test add tensor api.

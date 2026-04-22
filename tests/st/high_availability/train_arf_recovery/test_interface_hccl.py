@@ -23,7 +23,7 @@ from pathlib import Path
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_msrun_comm_subgraph_8p():
     """
     Feature: test hcom create/destroy interface.
@@ -39,7 +39,7 @@ def test_msrun_comm_subgraph_8p():
         shutil.rmtree(logs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_save_hccl_op_status_8p():
     """
     Feature: test save hccl op exe status.

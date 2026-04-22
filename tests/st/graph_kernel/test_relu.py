@@ -47,7 +47,7 @@ def run_relu(shape, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_relu_gpu():
     """
     Feature: todo
@@ -60,7 +60,7 @@ def test_relu_gpu():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 def test_relu_ascend():
     """
     Feature: todo

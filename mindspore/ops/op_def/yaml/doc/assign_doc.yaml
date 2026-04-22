@@ -2,18 +2,21 @@ assign:
     description: |
         Assigns a parameter or tensor with a value.
 
+        .. warning::
+            This API is deprecated and will be removed after version 2.9.0.
+
         Support implicit type conversion and type promotion.
 
         Args:
             variable (Union[Parameter, Tensor]): The input parameter or tensor.
             value (Tensor): The value to be assigned.
-    
+
         Returns:
             Tensor
-    
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> value = mindspore.tensor([2.0], mindspore.float32)

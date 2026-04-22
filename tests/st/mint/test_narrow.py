@@ -46,7 +46,7 @@ def narrow_backward(mode, x, dim, start, length):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+          card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_narrow_normal(mode):
     """
@@ -150,7 +150,7 @@ KBK_NARROW_BACKWARD = jit(narrow_backward_func, backend="ms_backend", jit_level=
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
+        card_mark="onecard", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_narrow_std(mode):
     """
@@ -185,7 +185,7 @@ def test_narrow_std(mode):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
+        card_mark="onecard", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize(
     "dtype",
@@ -236,7 +236,7 @@ def test_narrow_dtype_coverage(mode, dtype):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
+        card_mark="onecard", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize(
     "shape",
@@ -289,7 +289,7 @@ def test_narrow_dimensions(mode, shape):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
+        card_mark="onecard", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("special_type", ["inf", "nan", "zero", "large", "small"])
 def test_narrow_special_values(mode, special_type):
@@ -323,7 +323,7 @@ def test_narrow_special_values(mode, special_type):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
+        card_mark="onecard", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_narrow_empty_tensor(mode):
     """
@@ -366,7 +366,7 @@ def test_narrow_empty_tensor(mode):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
+        card_mark="onecard", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_narrow_non_contiguous(mode):
     """

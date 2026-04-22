@@ -361,5 +361,16 @@ bool MultiStreamController::WaitMultiStream(size_t wait_stream_id) {
   }
   return true;
 }
+void MultiStreamController::SetCrossStreamTaskId(uint32_t stream_id, int64_t task_id) {
+  cross_stream_task_id_cache_[stream_id] = task_id;
+}
+
+int64_t MultiStreamController::GetCrossStreamTaskId(uint32_t stream_id) const {
+  auto it = cross_stream_task_id_cache_.find(stream_id);
+  if (it != cross_stream_task_id_cache_.end()) {
+    return it->second;
+  }
+  return 0;
+}
 }  // namespace device
 }  // namespace mindspore

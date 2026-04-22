@@ -7,7 +7,6 @@ gmm:
         .. warning::
             - This is an experimental API that is subject to change or deletion.
             - `group_type` must be a constant.
-            - Only support on Atlas A2 training series.
             - When the type of `group_list` is tuple[int] or list[int], it should a non-negative non-decreasing sequence,
               indicating indexes of each group along the split axis. In this scenario, the arg `group_list_type` is useless.
 

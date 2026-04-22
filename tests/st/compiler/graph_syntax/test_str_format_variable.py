@@ -20,7 +20,7 @@ import pytest
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_base():
     """
     Feature: String formatting with variable in jit.
@@ -38,7 +38,7 @@ def test_str_format_variable_base():
     assert f_str == "str x is [1 2 3]"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_setitem_init():
     """
     Feature: String formatting with variable in jit.
@@ -61,7 +61,7 @@ def test_str_format_variable_setitem_init():
     assert f_str == "str x is [1. 2. 3.]"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_subscript():
     """
     Feature: String formatting with variable in jit.
@@ -81,7 +81,7 @@ def test_str_format_variable_subscript():
     assert f_str == "[1 2] or [1 2 3] is in [1 2 3]"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_list():
     """
     Feature: String formatting with variable in jit.
@@ -100,7 +100,7 @@ def test_str_format_variable_list():
     assert f_str == "hello, it's mindspore 2.0"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_map():
     """
     Feature: String formatting with variable in jit.
@@ -120,7 +120,7 @@ def test_str_format_variable_map():
 
 
 @pytest.mark.skip(reason="has not supported")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_tensor_comb():
     """
     Feature: String formatting with variable in jit.
@@ -150,7 +150,7 @@ def test_str_format_variable_tensor_comb():
     assert format_str3 == "loss is 2.1 + 1.03"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_ops():
     """
     Feature: String formatting with variable in jit.
@@ -171,7 +171,7 @@ def test_str_format_variable_ops():
     assert f_str == "ret is [2.+0.j 4.-5.j]"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_multi_lines():
     """
     Feature: String formatting with variable in jit.
@@ -189,7 +189,7 @@ def test_str_format_variable_multi_lines():
     assert f_str == "str[0] is 1.0 and str[1] is 2.0"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_number_format():
     """
     Feature: String formatting with variable in jit.
@@ -233,7 +233,7 @@ def test_str_format_variable_number_format():
     assert num_format_list == expect_format_lis2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variablems_class():
     """
     Feature: String formatting with variable in jit.
@@ -258,7 +258,7 @@ def test_str_format_variablems_class():
     assert f_str == "value is [1, 2, 3]"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_cell():
     """
     Feature: String formatting with variable in jit.
@@ -283,7 +283,7 @@ def test_str_format_variable_cell():
         net(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_if():
     """
     Feature: String formatting with variable in jit.
@@ -321,7 +321,7 @@ def test_str_format_variable_if():
 
 
 @pytest.mark.skip(reason="has not supported")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_kwargs():
     """
     Feature: String formatting with variable in jit.
@@ -341,7 +341,7 @@ def test_str_format_variable_kwargs():
         name2=x, name1=y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_str_format_variable_dynamic_shape():
     """
     Feature: String formatting with variable in jit.

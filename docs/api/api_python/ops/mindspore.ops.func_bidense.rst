@@ -11,7 +11,7 @@ mindspore.ops.bidense
     其中， :math:`x_{1}` 代表 `input1` ， :math:`x_{2}` 代表 `input2` ， :math:`A` 代表 `weight` ， :math:`b` 代表 `bias` 。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **input1** (Tensor) - 输入Tensor，shape是 :math:`(*, in1\_channels)` ，其中 :math:`*` 表示任意的附加维度，除最后一维外的维度与 `input2` 保持一致。

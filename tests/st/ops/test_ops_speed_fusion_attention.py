@@ -541,8 +541,7 @@ def test_speed_fusion_attention_normal(mode):
     speed_fusion_attention_case4()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 @pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND", "TND"])
 def test_speed_fusion_attention_dynamic(input_layout):
     """
@@ -597,8 +596,7 @@ def test_speed_fusion_attention_dynamic(input_layout):
                          "ignore_output_index": 5})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_speed_fusion_attention_rng_state(mode):
     """

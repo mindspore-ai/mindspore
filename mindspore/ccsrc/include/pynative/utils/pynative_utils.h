@@ -29,6 +29,7 @@
 #include "include/pynative/utils/pyboost/op_runner.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/forward/pyboost/forward_task.h"
+#include "include/pynative/forward/pyboost/fallback.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/visible.h"
 
@@ -235,12 +236,19 @@ class PYNATIVE_EXPORT OpCall {
       : name_(std::move(name)), func_(std::move(func)) {}
 
   py::object operator()(const py::args &args, const py::kwargs &kwargs) {
-    MS_LOG(DEBUG) << "In OpCall __call__";
-    if (func_) {
-      return func_(args, kwargs);
-    } else {
-      MS_LOG(EXCEPTION) << "OpCall func is not callable!";
+    if (MS_UNLIKELY(!func_)) {
+      MS_LOG(EXCEPTION) << "OpCall '" << name_ << "' func is not callable!";
     }
+    py::object result = func_(args, kwargs);
+    if (MS_UNLIKELY(!result.ptr() || Py_REFCNT(result.ptr()) <= 0)) {
+      auto *ptr = result.ptr();
+      if (ptr) {
+        (void)result.release();
+      }
+      MS_LOG(EXCEPTION) << "OpCall '" << name_ << "' returned an object with invalid refcount. "
+                        << "This may indicate a reference counting bug in the PyBoost async path.";
+    }
+    return result;
   }
 
   const std::string &name() const { return name_; }

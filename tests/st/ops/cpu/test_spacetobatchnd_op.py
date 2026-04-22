@@ -69,8 +69,7 @@ def space_to_batch_nd_all_dtype():
     space_to_batch_nd_test_case(np.uint64)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_space_to_batch_nd_graph():
     """
     Feature: test SpaceToBatchND function interface.
@@ -81,8 +80,7 @@ def test_space_to_batch_nd_graph():
     space_to_batch_nd_all_dtype()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_space_to_batch_nd_pynative():
     """
     Feature: test SpaceToBatchND function interface.
@@ -93,8 +91,7 @@ def test_space_to_batch_nd_pynative():
     space_to_batch_nd_all_dtype()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_space_to_batch_nd_function():
     """
     Feature: test SpaceToBatchND function interface.
@@ -129,8 +126,7 @@ class SpaceToBatchNDDynamicShapeNetMS(nn.Cell):
         return self.space_to_batch_nd(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_space_to_batch_nd_dynamic():
     """
     Feature: test SpaceToBatchND dynamic shape.
@@ -202,8 +198,7 @@ def vmap_case():
         assert np.allclose(output_v[:, i, :, :, :], net(Tensor(data_np[i, :, :, :, :])).asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_space_to_batch_nd_vmap_cpu():
     """
     Feature: test SpactToBatchND vmap on CPU.

@@ -66,8 +66,7 @@ def lrn_np_bencmark(data_type):
     return y_exp
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lrn(data_type):
     """
@@ -94,8 +93,7 @@ def test_lrn(data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=loss, atol=loss)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_lrn_vmap():
     """
     Feature: Test LRN Vmap on CPU.
@@ -136,8 +134,7 @@ def test_lrn_vmap():
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=loss, atol=loss)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_lrn_dy_shape():
     """
     Feature: Test LRN Dynamic Shape.

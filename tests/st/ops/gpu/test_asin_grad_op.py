@@ -24,7 +24,7 @@ import mindspore.ops.operations._grad_ops as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asingrad_fp32():
     """
     Feature: asin grad kernel
@@ -40,7 +40,7 @@ def test_asingrad_fp32():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asingrad_fp16():
     """
     Feature: asin grad kernel
@@ -56,7 +56,7 @@ def test_asingrad_fp16():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asingrad_fp64():
     """
     Feature: asin grad kernel
@@ -72,7 +72,7 @@ def test_asingrad_fp64():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asingrad_complex64():
     """
     Feature: asin grad kernel
@@ -88,7 +88,7 @@ def test_asingrad_complex64():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asingrad_complex128():
     """
     Feature: asin grad kernel

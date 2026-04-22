@@ -1,4 +1,6 @@
 true_divide:
     description: |
-        Alias for Tensor.div() with :math:`rounding\_mode=None`.
+        true_divide(other) -> Tensor
+
+        Alias for :func:`Tensor.div` with :math:`rounding\_mode=None`.
         For details, please refer to :func:`mindspore.ops.div`.

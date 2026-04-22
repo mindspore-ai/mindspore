@@ -556,8 +556,7 @@ description = {
 }
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=210.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=210.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_sd(ctx_mode):
     """
@@ -586,8 +585,7 @@ def test_flash_attention_score_sd(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=210.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=210.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bnsd_64(ctx_mode):
     """
@@ -616,8 +614,7 @@ def test_flash_attention_score_bnsd_64(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=218.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=218.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bsh(ctx_mode):
     """
@@ -646,8 +643,7 @@ def test_flash_attention_score_bsh(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=220.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=220.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bsh_mask(ctx_mode):
     """
@@ -678,8 +674,7 @@ def test_flash_attention_score_bsh_mask(ctx_mode):
 # internal
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=236.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=236.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bsh_mask_alibi(ctx_mode):
     """
@@ -708,8 +703,7 @@ def test_flash_attention_score_bsh_mask_alibi(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=206.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=206.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_fa_bsh_small(ctx_mode):
     """
@@ -738,8 +732,7 @@ def test_flash_attention_score_fa_bsh_small(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=222.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=222.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_d256_amask_fp16(ctx_mode):
     """
@@ -768,8 +761,7 @@ def test_flash_attention_score_d256_amask_fp16(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=220.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=220.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_d256_low_tri_bf16(ctx_mode):
     """
@@ -798,8 +790,7 @@ def test_flash_attention_score_d256_low_tri_bf16(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=206.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=206.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_dynamic(ctx_mode):
     """

@@ -10,6 +10,9 @@ mindspore.nn.RNNCell
 
     其中 :math:`h_t` 是在 `t` 时刻的隐藏状态， :math:`x_t` 是在 `t` 时刻的输入， :math:`h_{(t-1)}` 是在 :math:`t-1` 时刻的隐藏状态，或初始隐藏状态。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`has_bias` 将改为 `bias`。
+
     参数：
         - **input_size** (int) - 输入层输入的特征向量维度。
         - **hidden_size** (int) - 隐藏层输出的特征向量维度。

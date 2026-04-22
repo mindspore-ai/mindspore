@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST cases for DVM BatchMatMul fusion."""
 
 import numpy as np
 import pytest
@@ -22,7 +23,7 @@ from mindspore.common import dtype as mstype
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.bmm = ops.BatchMatMul(transpose_a=True)
         self.cast = ops.Cast()
 
@@ -43,9 +44,9 @@ def get_output(net, x, y, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=756.0)
-@pytest.mark.parametrize("shape1, shape2", [((1, 2, 4096, 1024), (4, 1, 4096, 2048)), ((16, 4000, 1000), (4000, 3000))])
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=756.0)
+@pytest.mark.parametrize("shape1, shape2", [((1, 2, 4096, 1024), (4, 1, 4096, 2048)), ((16, 4000, 1000), (4000, 3000)),
+                                            ((4096, 1, 1, 3584), (4096, 1, 1, 4))])
 def test_dvm_matmul_fusion(shape1, shape2):
     """
     Feature: test matmul case for graph_kernel in Ascend.

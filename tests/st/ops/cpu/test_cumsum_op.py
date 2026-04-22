@@ -166,8 +166,7 @@ class CumSum(nn.Cell):
                 self.cumsum_op(self.x35, self.axis35))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cumsum():
     cumsum = CumSum()
     output = cumsum()
@@ -281,8 +280,7 @@ class Net(nn.Cell):
         return self.op(x, 0)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_cumsum_dshape():
     """
     Feature: Test cumsum dynamic shape.

@@ -39,8 +39,7 @@ def grep(keyword, path):
     return False
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
-        essential_mark="unessential", mem_peak=2048.00)
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", mem_peak=2048.00)
 def test_range_no_heter_copy():
     """
     Feature: heter no copy generalization.

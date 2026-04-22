@@ -33,8 +33,7 @@ class NetSparseSegmentMeanWithNumSegments(nn.Cell):
             x, indices, seg_ids, num_segments)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_mean_with_num_segments_dynamic_shape():
     """
     Feature: SparseSegmentMeanWithNumSegments Grad DynamicShape.
@@ -53,8 +52,7 @@ def test_sparse_segment_mean_with_num_segments_dynamic_shape():
     test_dynamic.test_dynamic_grad_net(inputs, False)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_mean_with_num_segments_dynamic_rank():
     """
     Feature: SparseSegmentMeanWithNumSegments Grad DynamicShape.

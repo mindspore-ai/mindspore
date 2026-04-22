@@ -55,8 +55,7 @@ class Grad(Cell):
         return gout
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_training_nchw_dynamic_shape():
     """
     Feature: test batchnorm op in training mode and nchw input data on cpu.
@@ -96,7 +95,7 @@ def test_batchnorm_training_nchw_dynamic_shape():
     assert grad[4].asnumpy().shape == (channel,)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_not_training_nhwc_dynamic_shape():
     """
     Feature: test batchnorm op not in training mode and nhcw input data on gpu.

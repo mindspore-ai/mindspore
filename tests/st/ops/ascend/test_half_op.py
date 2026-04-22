@@ -36,7 +36,7 @@ def test_half_tensor_api():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_half_tensor_api_modes():
     """
     Feature: test half tensor API for different modes.

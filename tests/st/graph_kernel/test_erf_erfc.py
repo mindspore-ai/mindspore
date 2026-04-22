@@ -60,7 +60,7 @@ def basic_test(net, datatype):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_fp16():
     """
     Feature: todo
@@ -72,7 +72,7 @@ def test_gpu_fp16():
     basic_test(ErfcNet, np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_fp32():
     """
     Feature: todo

@@ -32,19 +32,30 @@ void LightningIndexerAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> 
   pre_tokens_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex10]);
   next_tokens_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex11]);
   return_value_ = device::ascend::ConvertKernelTensor<bool>(inputs[kIndex12]);
-
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-                        inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_,
-                        next_tokens_, return_value_, outputs[kIndex0], outputs[kIndex1]);
+  if (return_value_) {
+    GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+                          inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_,
+                          next_tokens_, return_value_, outputs[kIndex0], outputs[kIndex1]);
+  } else {
+    GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+                          inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_,
+                          next_tokens_, return_value_, outputs[kIndex0], nullptr);
+  }
 }
 
 bool LightningIndexerAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &workspace,
                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-        inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_, next_tokens_,
-        return_value_, outputs[kIndex0], outputs[kIndex1]);
+  if (return_value_) {
+    RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+          inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_, next_tokens_,
+          return_value_, outputs[kIndex0], outputs[kIndex1]);
+  } else {
+    RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+          inputs[kIndex5], layout_query_str_, layout_key_str_, sparse_count_, sparse_mode_, pre_tokens_, next_tokens_,
+          return_value_, outputs[kIndex0], nullptr);
+  }
   return true;
 }
 

@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.ndints(shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nondeterministicints_graph():
     """
     Feature: nondeterministicints gpu kernel
@@ -49,7 +49,7 @@ def test_nondeterministicints_graph():
     assert (output.shape == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nondeterministicints_pynative():
     """
     Feature: nondeterministicints gpu kernel

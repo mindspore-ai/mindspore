@@ -8,15 +8,13 @@ mindspore.nn.AvgPool3d
     通常，输入的shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` ，AvgPool3D输出 :math:`(D_{in}, H_{in}, W_{in})` 维度的区域平均值。给定 `kernel_size` 为 :math:`ks = (d_{ker}, h_{ker}, w_{ker})` 和 `stride` 为 :math:`s = (s_0, s_1, s_2)`，公式如下。
 
     .. warning::
-        `kernel_size` 在[1, 255]的范围内取值。`stride` 在[1, 63]的范围内取值。
+        - `kernel_size` 在[1, 255]的范围内取值。`stride` 在[1, 63]的范围内取值。
+        - 2.9.0（不含）之后版本中，构造签名将调整为 ``AvgPool3d(kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True, divisor_override=None)`` 。其中 `stride` 默认值由 ``1`` 改为 ``None`` ，`pad_mode` 参数将被移除。
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
-
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
 
     参数：
         - **kernel_size** (Union[int, tuple[int]]，可选) - 指定池化核尺寸大小。如果为整数或单元素tuple，则同时代表池化核的深度，高度和宽度。如果为tuple且长度不为 ``1`` ，其值必须包含三个正整数，分别表示池化核的深度，高度和宽度。默认值： ``1`` 。

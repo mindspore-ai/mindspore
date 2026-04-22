@@ -21,7 +21,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_cos():
     '''
     Feature: Test sparse unary function api csr_cos.
@@ -42,7 +42,7 @@ def test_csr_cos():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_cos():
     '''
     Feature: Test sparse unary function api coo_cos.
@@ -62,7 +62,7 @@ def test_coo_cos():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_tan():
     '''
     Feature: Test sparse unary function api csr_tan.
@@ -83,7 +83,7 @@ def test_csr_tan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_coo_tan():
     '''
     Feature: Test sparse unary function api coo_tan.
@@ -103,7 +103,7 @@ def test_coo_tan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_exp():
     '''
     Feature: Test sparse unary function api csr_exp.
@@ -124,7 +124,7 @@ def test_csr_exp():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_exp():
     '''
     Feature: Test sparse unary function api coo_exp.
@@ -144,7 +144,7 @@ def test_coo_exp():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_inv():
     '''
     Feature: Test sparse unary function api csr_inv.
@@ -165,7 +165,7 @@ def test_csr_inv():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_inv():
     '''
     Feature: Test sparse unary function api coo_inv.
@@ -185,7 +185,7 @@ def test_coo_inv():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_relu():
     '''
     Feature: Test sparse unary function api csr_relu.
@@ -206,7 +206,7 @@ def test_csr_relu():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_relu():
     '''
     Feature: Test sparse unary function api coo_relu.
@@ -226,7 +226,7 @@ def test_coo_relu():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_expm1():
     '''
     Feature: Test sparse unary function api csr_expm1.
@@ -247,7 +247,7 @@ def test_csr_expm1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_expm1():
     '''
     Feature: Test sparse unary function api coo_expm1.
@@ -267,7 +267,7 @@ def test_coo_expm1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_isfinite():
     '''
     Feature: Test sparse unary function api csr_isfinite.
@@ -288,7 +288,7 @@ def test_csr_isfinite():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_isfinite():
     '''
     Feature: Test sparse unary function api coo_isfinite.
@@ -308,7 +308,7 @@ def test_coo_isfinite():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_asin():
     '''
     Feature: Test sparse unary function api csr_asin.
@@ -329,7 +329,7 @@ def test_csr_asin():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_asin():
     '''
     Feature: Test sparse unary function api coo_asin.
@@ -349,7 +349,7 @@ def test_coo_asin():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_sqrt():
     '''
     Feature: Test sparse unary function api csr_sqrt.
@@ -370,7 +370,7 @@ def test_csr_sqrt():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_sqrt():
     '''
     Feature: Test sparse unary function api coo_sqrt.
@@ -390,7 +390,7 @@ def test_coo_sqrt():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_log():
     '''
     Feature: Test sparse unary function api csr_log.
@@ -411,7 +411,7 @@ def test_csr_log():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_log():
     '''
     Feature: Test sparse unary function api coo_log.
@@ -431,7 +431,7 @@ def test_coo_log():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_isnan():
     '''
     Feature: Test sparse unary function api csr_isnan.
@@ -452,7 +452,7 @@ def test_csr_isnan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_isnan():
     '''
     Feature: Test sparse unary function api coo_isnan.
@@ -472,7 +472,7 @@ def test_coo_isnan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_acos():
     '''
     Feature: Test sparse unary function api csr_acos.
@@ -493,7 +493,7 @@ def test_csr_acos():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_acos():
     '''
     Feature: Test sparse unary function api coo_acos.
@@ -513,7 +513,7 @@ def test_coo_acos():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_floor():
     '''
     Feature: Test sparse unary function api csr_floor.
@@ -534,7 +534,7 @@ def test_csr_floor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_floor():
     '''
     Feature: Test sparse unary function api coo_floor.
@@ -554,7 +554,7 @@ def test_coo_floor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_atan():
     '''
     Feature: Test sparse unary function api csr_atan.
@@ -575,7 +575,7 @@ def test_csr_atan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_atan():
     '''
     Feature: Test sparse unary function api coo_atan.
@@ -595,7 +595,7 @@ def test_coo_atan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_square():
     '''
     Feature: Test sparse unary function api csr_square.
@@ -616,7 +616,7 @@ def test_csr_square():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_square():
     '''
     Feature: Test sparse unary function api coo_square.
@@ -636,7 +636,7 @@ def test_coo_square():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_relu6():
     '''
     Feature: Test sparse unary function api csr_relu6.
@@ -657,7 +657,7 @@ def test_csr_relu6():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_relu6():
     '''
     Feature: Test sparse unary function api coo_relu6.
@@ -677,7 +677,7 @@ def test_coo_relu6():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_sinh():
     '''
     Feature: Test sparse unary function api csr_sinh.
@@ -698,7 +698,7 @@ def test_csr_sinh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_sinh():
     '''
     Feature: Test sparse unary function api coo_sinh.
@@ -718,7 +718,7 @@ def test_coo_sinh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_csr_ceil():
     '''
     Feature: Test sparse unary function api csr_ceil.
@@ -739,7 +739,7 @@ def test_csr_ceil():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_ceil():
     '''
     Feature: Test sparse unary function api coo_ceil.
@@ -759,7 +759,7 @@ def test_coo_ceil():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_cosh():
     '''
     Feature: Test sparse unary function api csr_cosh.
@@ -780,7 +780,7 @@ def test_csr_cosh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_cosh():
     '''
     Feature: Test sparse unary function api coo_cosh.
@@ -800,7 +800,7 @@ def test_coo_cosh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_softsign():
     '''
     Feature: Test sparse unary function api csr_softsign.
@@ -821,7 +821,7 @@ def test_csr_softsign():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_softsign():
     '''
     Feature: Test sparse unary function api coo_softsign.
@@ -841,7 +841,7 @@ def test_coo_softsign():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_log1p():
     '''
     Feature: Test sparse unary function api csr_log1p.
@@ -862,7 +862,7 @@ def test_csr_log1p():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_log1p():
     '''
     Feature: Test sparse unary function api coo_log1p.
@@ -882,7 +882,7 @@ def test_coo_log1p():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_round():
     '''
     Feature: Test sparse unary function api csr_round.
@@ -903,7 +903,7 @@ def test_csr_round():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_round():
     '''
     Feature: Test sparse unary function api coo_round.
@@ -923,7 +923,7 @@ def test_coo_round():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_tanh():
     '''
     Feature: Test sparse unary function api csr_tanh.
@@ -944,7 +944,7 @@ def test_csr_tanh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_tanh():
     '''
     Feature: Test sparse unary function api coo_tanh.
@@ -964,7 +964,7 @@ def test_coo_tanh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_asinh():
     '''
     Feature: Test sparse unary function api csr_asinh.
@@ -985,7 +985,7 @@ def test_csr_asinh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_asinh():
     '''
     Feature: Test sparse unary function api coo_asinh.
@@ -1005,7 +1005,7 @@ def test_coo_asinh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_neg():
     '''
     Feature: Test sparse unary function api csr_neg.
@@ -1026,7 +1026,7 @@ def test_csr_neg():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_neg():
     '''
     Feature: Test sparse unary function api coo_neg.
@@ -1046,7 +1046,7 @@ def test_coo_neg():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_acosh():
     '''
     Feature: Test sparse unary function api csr_acosh.
@@ -1067,7 +1067,7 @@ def test_csr_acosh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_acosh():
     '''
     Feature: Test sparse unary function api coo_acosh.
@@ -1087,7 +1087,7 @@ def test_coo_acosh():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_isinf():
     '''
     Feature: Test sparse unary function api csr_isinf.
@@ -1108,7 +1108,7 @@ def test_csr_isinf():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_isinf():
     '''
     Feature: Test sparse unary function api coo_isinf.
@@ -1128,7 +1128,7 @@ def test_coo_isinf():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_atanh():
     '''
     Feature: Test sparse unary function api csr_atanh.
@@ -1149,7 +1149,7 @@ def test_csr_atanh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_atanh():
     '''
     Feature: Test sparse unary function api coo_atanh.
@@ -1169,7 +1169,7 @@ def test_coo_atanh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_sigmoid():
     '''
     Feature: Test sparse unary function api csr_sigmoid.
@@ -1190,7 +1190,7 @@ def test_csr_sigmoid():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_coo_sigmoid():
     '''
     Feature: Test sparse unary function api coo_sigmoid.
@@ -1210,7 +1210,7 @@ def test_coo_sigmoid():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_abs():
     '''
     Feature: Test sparse unary function api csr_abs.
@@ -1231,7 +1231,7 @@ def test_csr_abs():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_abs():
     '''
     Feature: Test sparse unary function api coo_abs.
@@ -1251,7 +1251,7 @@ def test_coo_abs():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_csr_sin():
     '''
     Feature: Test sparse unary function api csr_sin.
@@ -1272,7 +1272,7 @@ def test_csr_sin():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_sin():
     '''
     Feature: Test sparse unary function api coo_sin.

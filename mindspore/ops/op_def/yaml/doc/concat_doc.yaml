@@ -2,6 +2,9 @@ concat:
     description: |
         Connect input tensors along with the given axis.
 
+        .. warning::
+            After version 2.9.0, the `axis` argument will be renamed to `dim`.
+
         Args:
             tensors (Union[tuple[Tensor], list[Tensor]]): The input tensors.
                 The shapes of all axes except the specified concatenation `axis` should be equal.

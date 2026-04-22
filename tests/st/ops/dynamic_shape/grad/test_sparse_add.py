@@ -47,7 +47,7 @@ def grad_dyn_case(is_dynamic_rank):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_grad_dynamic_shape():
     """
     Feature: test SparseAdd dynamic shape.
@@ -59,7 +59,7 @@ def test_grad_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_grad_dynamic_rank():
     """
     Feature: test SparseAdd dynamic rank.

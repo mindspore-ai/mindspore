@@ -66,8 +66,7 @@ def collect_profiler_data(tmpdir):
     prof.stop()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_func_profiler_with_model_preparation():
     """
     Feature: Profiler with model preparation
@@ -84,8 +83,7 @@ def test_func_profiler_with_model_preparation():
         assert "model_preparation" in trace_content, "model_preparation not found in trace_view.json"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2918.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2918.0)
 def test_func_profiler_with_resnet_train():
     """
     Feature: Profiler with resnet train.
@@ -115,8 +113,7 @@ def test_func_profiler_with_resnet_train():
             assert item in trace_content, f"{item} not found in trace_view.json"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_mstx_range_decorator():
     """
     Feature: Test _mstx_range_decorator functionality

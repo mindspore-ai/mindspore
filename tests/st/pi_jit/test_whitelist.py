@@ -90,7 +90,7 @@ def whitelist_forbidden_func(x, y):
     else:
         return x - y
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('func', [(whitelist_const_func, 0), (whitelist_builtin_func0, 0), \
                                   (whitelist_builtin_func1, 1), (whitelist_builtin_func2, 0), \
                                   (whitelist_forbidden_func, 1)])

@@ -11,7 +11,7 @@ class ${class_name}Functional : public Functional {
     MS_EXCEPTION_IF_NULL(ms_context);
     auto backend = DeviceManagerConf::GetInstance()->device_type();
     static auto callback = [this](const py::args &args, const py::kwargs &kwargs){
-      return py::reinterpret_steal<py::object>(Call(args, kwargs));
+      return Call(args, kwargs);
     };
     ${device_dispatcher}
     return py::none();

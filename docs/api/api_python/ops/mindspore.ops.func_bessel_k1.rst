@@ -5,6 +5,9 @@ mindspore.ops.bessel_k1
 
     逐元素计算输入tensor的第二类一阶修正贝塞尔函数值。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     计算公式定义如下：
 
     .. math::

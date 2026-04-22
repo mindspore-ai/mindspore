@@ -42,8 +42,7 @@ def leaky_relu_backward_func(x, negative_slope):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_leaky_relu_std(mode):
     """
@@ -72,7 +71,7 @@ def test_leaky_relu_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
+        card_mark='onecard', mem_peak=2048.0)
 def test_leaky_relu_dynamic_shape():
     """
     Feature: Test leaky relu with dynamic shape in graph mode.
@@ -87,8 +86,7 @@ def test_leaky_relu_dynamic_shape():
             case_config={'disable_input_check': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_leaky_relu_bfloat16(mode):
     """

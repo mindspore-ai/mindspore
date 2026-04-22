@@ -5,6 +5,9 @@ mindspore.ops.pad
 
     根据参数 `padding` 对输入进行填充。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，关键字 `padding` 将重命名为 `pad`。
+
     参数：
         - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`， :math:`*` 代表任意附加维度。在Ascend后端运行时，不支持该维度大于5的情况。
         - **padding** (Union[tuple[int], list[int], Tensor]) - pad的填充位置。在Ascend后端运行时，不支持 `padding` 包含负值情况。

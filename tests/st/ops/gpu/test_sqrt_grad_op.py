@@ -31,7 +31,7 @@ class NetSqrtGrad(nn.Cell):
         return self.sqrt_grad(x, dx)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sqrt_grad():
     """
     Feature: ALL To ALL
@@ -56,7 +56,7 @@ def test_sqrt_grad():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_sqrt_grad_dy_shape(dtype):
     """

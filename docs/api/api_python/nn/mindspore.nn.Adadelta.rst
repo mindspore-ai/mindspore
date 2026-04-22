@@ -21,6 +21,9 @@ mindspore.nn.Adadelta
     :math:`accum` 表示累加器， :math:`accum\_update` 表示累加器更新，
     :math:`t` 代表当前step。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 和 `epsilon` 将分别改为 `lr` 和 `eps`。
+
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 

@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_psjit():
     """
     Feature: Test filter grad jit graph.
@@ -47,7 +47,7 @@ def test_level2_filter_grad_jit_psjit():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_psjit_2():
     """
     Feature: Test filter grad jit graph.
@@ -74,7 +74,7 @@ def test_level2_filter_grad_jit_psjit_2():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_psjit_with_multiple_position():
     """
     Feature: Test filter grad jit graph.
@@ -107,7 +107,7 @@ def test_level2_filter_grad_jit_psjit_with_multiple_position():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_psjit_with_multiple_position_2():
     """
     Feature: Test filter grad jit graph.
@@ -140,7 +140,7 @@ def test_level2_filter_grad_jit_psjit_with_multiple_position_2():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_pijit():
     """
     Feature: Test filter grad jit graph.
@@ -167,7 +167,7 @@ def test_level2_filter_grad_jit_pijit():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_pijit_2():
     """
     Feature: Test filter grad jit graph.
@@ -194,7 +194,7 @@ def test_level2_filter_grad_jit_pijit_2():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_pijit_with_multiple_position():
     """
     Feature: Test filter grad jit graph.
@@ -227,7 +227,7 @@ def test_level2_filter_grad_jit_pijit_with_multiple_position():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_level2_filter_grad_jit_pijit_with_multiple_position_2():
     """
     Feature: Test filter grad jit graph.

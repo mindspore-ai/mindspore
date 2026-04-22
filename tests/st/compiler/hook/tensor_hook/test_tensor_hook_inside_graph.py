@@ -200,7 +200,7 @@ ground_grad_net = ground_grad_op(ground_net, ground_net.trainable_params())
 ground_output = ground_grad_net(ground_input_x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_tensor_one_hook():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -225,7 +225,7 @@ def test_one_tensor_one_hook():
     assert np.allclose(output_weight1_grad, expected_weight1_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_one_tensor_multi_hook():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -257,7 +257,7 @@ def test_one_tensor_multi_hook():
         e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_multi_tensor_multi_hook():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -288,7 +288,7 @@ def test_multi_tensor_multi_hook():
         e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_hook_no_return():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -327,7 +327,7 @@ def test_hook_no_return():
         shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_need_reorder_hook_stmt_net():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -355,7 +355,7 @@ def test_need_reorder_hook_stmt_net():
     assert np.allclose(output_weight1_grad, expected_weight1_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode, net', [
     (context.PYNATIVE_MODE, HookInJITNet()),
     (context.PYNATIVE_MODE, CtrlFlowHookInJITNet()),
@@ -417,7 +417,7 @@ class Tet5(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parse_hook_register_method():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -472,7 +472,7 @@ class Tet6(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parse_hook_register_lambda():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -533,7 +533,7 @@ class Tet8(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parse_hook_register_fallback():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -575,8 +575,7 @@ class Net12(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_parse_hook_register_middle_fallback():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.

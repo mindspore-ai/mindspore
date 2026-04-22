@@ -36,11 +36,9 @@ def mod_backward_func(input_x, other):
     return grad_fn(input_x, other)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=4.0)
+    card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_mod_normal(mode):
     """
@@ -81,11 +79,9 @@ def test_tensor_mod_normal(mode):
             np.testing.assert_allclose(expect_grad, grad.asnumpy(), rtol=1e-4)
 
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=4.0)
+    card_mark='onecard', mem_peak=4.0)
 def test_tensor_mod_dynamic():
     """
     Feature: tensor.__mod__

@@ -45,7 +45,7 @@ class Grad(Cell):
         return gout
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_nobroadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -61,7 +61,7 @@ def test_nobroadcast():
     assert np.allclose(output_ms[1].asnumpy(), output1_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -184,7 +184,7 @@ def test_broadcast():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_diff_dims():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -215,7 +215,7 @@ def test_broadcast_diff_dims():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_broadcast_int32():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -231,7 +231,7 @@ def test_broadcast_int32():
     assert np.allclose(output_ms[1].asnumpy(), output1_np)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_minimum_grad_with_same_input():
     """
     Feature: test minimumgrad on GPU

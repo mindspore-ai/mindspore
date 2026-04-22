@@ -11,6 +11,11 @@ mindspore.ops.dropout1d
 
     `dropout1d` 可以提高通道特征映射之间的独立性。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `inplace` ，接口签名将变更为
+        ``mindspore.ops.dropout1d(input, p=0.5, training=True, inplace=False)`` 。
+        该变更与当前版本兼容，不使用 `inplace` 参数时行为不变。
+
     参数：
         - **input** (Tensor) - 一个shape为 :math:`(N, C, L)` 或 :math:`(C, L)` 的 `3D` 或 `2D` Tensor，其中N是批处理大小，`C` 是通道数，`L` 是特征长度。其数据类型应为int8、int16、int32、int64、float16、float32或float64。
         - **p** (float，可选) - 通道的丢弃概率，介于 0 和 1 之间，例如 `p` = 0.8，意味着80%的清零概率。默认 ``0.5`` 。

@@ -34,8 +34,7 @@ class L2LossNet(nn.Cell):
         return self.l2_loss(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_pynative_fp32_2x2():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     error = 1e-4
@@ -46,8 +45,7 @@ def test_l2loss_pynative_fp32_2x2():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_pynative_fp16_2x2():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     error = 1e-4
@@ -58,8 +56,7 @@ def test_l2loss_pynative_fp16_2x2():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_pynative_fp32_1x4():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     error = 1e-4
@@ -70,8 +67,7 @@ def test_l2loss_pynative_fp32_1x4():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_pynative_fp16_1x4():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     error = 1e-4
@@ -82,8 +78,7 @@ def test_l2loss_pynative_fp16_1x4():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_graph_fp32_1x4():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     error = 1e-4
@@ -95,8 +90,7 @@ def test_l2loss_graph_fp32_1x4():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_graph_fp16_1x4():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     error = 1e-4
@@ -119,8 +113,7 @@ class GradNet(nn.Cell):
         return gradient_function(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_grad_fp32():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = Tensor(np.array([2.4, 3.2, 1.2, 5.9, 9.]).astype(np.float32))
@@ -132,8 +125,7 @@ def test_l2loss_grad_fp32():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_grad_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     x = Tensor(np.array([[2.4, 3.2, 4.8], [1.2, 5.9, 9.]]).astype(np.float16))
@@ -145,8 +137,7 @@ def test_l2loss_grad_fp16():
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_l2loss_cpu_dynamic_shape():
     """
     Feature: test L2Loss op in cpu.

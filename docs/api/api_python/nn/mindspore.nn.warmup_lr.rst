@@ -12,6 +12,9 @@ mindspore.nn.warmup_lr
 
     其中 :math:`tmp\_epoch= \min(current\_epoch, warmup\_epoch),\ current\_epoch=floor(\frac{i}{step\_per\_epoch})`
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **learning_rate** (float) - 学习率的初始值。
         - **total_step** (int) - step总数。

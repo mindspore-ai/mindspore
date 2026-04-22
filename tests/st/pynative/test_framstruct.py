@@ -137,8 +137,7 @@ def test_operation_jacobian_checker():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_framstruct_all():
     """
     Feature: Auto diff.

@@ -50,8 +50,7 @@ def less_infervalue_func2():
     return ops.less(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_forward(mode):
@@ -68,8 +67,7 @@ def test_less_forward(mode):
     assert np.allclose(out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_backward(mode):
@@ -88,8 +86,7 @@ def test_less_backward(mode):
     assert np.allclose(grad_y.asnumpy(), expect_grad_y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_vmap(mode):
@@ -108,8 +105,7 @@ def test_less_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_dynamic_shape(mode):
@@ -139,8 +135,7 @@ def test_less_dynamic_shape(mode):
     assert np.allclose(out_2.asnumpy(), expect_2, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode',
                          [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_less_dynamic_rank(mode):
@@ -170,8 +165,7 @@ def test_less_dynamic_rank(mode):
     assert np.allclose(out_2.asnumpy(), expect_2, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_less_op_infervalue(context_mode):
     """

@@ -36,8 +36,7 @@ class Assign(nn.Cell):
         return self.y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_bool():
     """
     Feature: simple expression
@@ -54,8 +53,7 @@ def test_assign_bool():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_int8():
     """
     Feature: simple expression
@@ -72,8 +70,7 @@ def test_assign_int8():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_assign_uint8():
     """
     Feature: simple expression
@@ -90,8 +87,7 @@ def test_assign_uint8():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_int16():
     """
     Feature: Graph syntax .
@@ -108,8 +104,7 @@ def test_assign_int16():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.75)
 def test_assign_uint16():
     """
     Feature: simple expression
@@ -126,8 +121,7 @@ def test_assign_uint16():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_assign_int32():
     """
     Feature: simple expression
@@ -144,8 +138,7 @@ def test_assign_int32():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_uint32():
     """
     Feature: simple expression
@@ -162,8 +155,7 @@ def test_assign_uint32():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.75)
 def test_assign_int64():
     """
     Feature: simple expression
@@ -180,8 +172,7 @@ def test_assign_int64():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_uint64():
     """
     Feature: simple expression
@@ -198,8 +189,7 @@ def test_assign_uint64():
     assert np.all(output == output_expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_assign_float16():
     """
     Feature: simple expression
@@ -222,8 +212,7 @@ def test_assign_float16():
     assert np.all(output - output_expect < 1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_assign_float32():
     """
     Feature: simple expression
@@ -246,7 +235,7 @@ def test_assign_float32():
     assert np.all(output - output_expect < 1e-6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_float64():
     """
     Feature: simple expression
@@ -281,8 +270,7 @@ class AssignAdd(nn.Cell):
         return self.y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assignadd_tensor():
     """
     Feature: simple expression
@@ -311,8 +299,7 @@ class AssignSub(nn.Cell):
         return self.y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assignmul_number():
     """
     Feature: simple expression
@@ -326,8 +313,7 @@ def test_number_assignmul_number():
     assert np.all(result == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assignmul_tensor():
     """
     Feature: simple expression
@@ -341,8 +327,7 @@ def test_tensor_assignmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assignmul_number():
     """
     Feature: simple expression
@@ -356,8 +341,7 @@ def test_tensor_assignmul_number():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assignmul_tensor():
     """
     Feature: simple expression
@@ -371,8 +355,7 @@ def test_number_assignmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assigndiv_number():
     """
     Feature: simple expression
@@ -386,8 +369,7 @@ def test_number_assigndiv_number():
     assert np.all(result == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_tensor_assigndiv_tensor():
     """
     Feature: simple expression
@@ -401,8 +383,7 @@ def test_tensor_assigndiv_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_tensor_assigndiv_number():
     """
     Feature: simple expression
@@ -416,8 +397,7 @@ def test_tensor_assigndiv_number():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assigndiv_tensor():
     """
     Feature: simple expression
@@ -431,8 +411,7 @@ def test_number_assigndiv_tensor():
     assert np.all(result.asnumpy() == expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_number_assignmod_number():
     """
     Feature: simple expression
@@ -446,8 +425,7 @@ def test_number_assignmod_number():
     assert np.all(result == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_tensor_assignmod_tensor():
     """
     Feature: simple expression
@@ -461,8 +439,7 @@ def test_tensor_assignmod_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assignmod_number():
     """
     Feature: simple expression
@@ -476,8 +453,7 @@ def test_tensor_assignmod_number():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assignmod_tensor():
     """
     Feature: simple expression
@@ -491,8 +467,7 @@ def test_number_assignmod_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assignmulmul_number():
     """
     Feature: simple expression
@@ -506,8 +481,7 @@ def test_number_assignmulmul_number():
     assert np.all(result == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assignmulmul_tensor():
     """
     Feature: simple expression
@@ -521,8 +495,7 @@ def test_tensor_assignmulmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assignmulmul_number():
     """
     Feature: simple expression
@@ -536,8 +509,7 @@ def test_tensor_assignmulmul_number():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_number_assignmulmul_tensor():
     """
     Feature: simple expression
@@ -551,8 +523,7 @@ def test_number_assignmulmul_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assigndivdiv_number():
     """
     Feature: simple expression
@@ -566,8 +537,7 @@ def test_number_assigndivdiv_number():
     assert np.all(result == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_tensor_assigndivdiv_tensor():
     """
     Feature: simple expression
@@ -581,8 +551,7 @@ def test_tensor_assigndivdiv_tensor():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_tensor_assigndivdiv_number():
     """
     Feature: simple expression
@@ -596,8 +565,7 @@ def test_tensor_assigndivdiv_number():
     assert np.all(result.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_number_assigndivdiv_tensor():
     """
     Feature: simple expression

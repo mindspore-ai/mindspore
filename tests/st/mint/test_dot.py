@@ -42,8 +42,7 @@ def dot_backward_func(x, y):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_dot_std(mode):
     """
@@ -69,7 +68,7 @@ def test_dot_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+        card_mark='onecard', mem_peak=2048.00)
 def test_dot_dynamic_shape():
     """
     Feature: Test dot with dynamic shape in graph mode.
@@ -82,8 +81,7 @@ def test_dot_dynamic_shape():
             disable_mode=['GRAPH_MODE_GE'], disable_case=['ScalarTensor'], case_config={'disable_input_check': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dot_bfloat16():
     """
     Feature: test dot functional API.

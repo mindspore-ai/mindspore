@@ -21,8 +21,7 @@ import mindspore as ms
 from mindspore import Tensor, mint, ops
 from mindspore.utils.dlpack import from_dlpack, to_dlpack
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dlpack_npu_tensor_conversion():
     """
     Feature: test dlpack for npu tensor
@@ -39,8 +38,7 @@ def test_dlpack_npu_tensor_conversion():
     assert np.allclose(x.asnumpy(), y.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dlpack_empty_tensor():
     """
     Feature: test dlpack for empty tensor
@@ -54,8 +52,7 @@ def test_dlpack_empty_tensor():
     assert ms_tensor.data_ptr() == ms_tensor_from_ms_pack.data_ptr()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize("dtype", [ms.uint8, ms.uint16, ms.uint32, ms.uint64])
 def test_dlpack_uint(dtype):
     """
@@ -72,8 +69,7 @@ def test_dlpack_uint(dtype):
     assert ms_tensor.data_ptr() == ms_tensor_from_ms_pack.data_ptr()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize("dtype", [ms.int8, ms.int16, ms.int32, ms.int64, ms.float16, ms.float32, ms.float64])
 def test_dlpack_different_types(dtype):
     """
@@ -88,8 +84,7 @@ def test_dlpack_different_types(dtype):
     assert ms_tensor.data_ptr() == ms_tensor_from_ms_pack.data_ptr()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dlpack_bf16():
     """
     Feature: test dlpack for different data types
@@ -102,8 +97,7 @@ def test_dlpack_bf16():
     assert ms_tensor.data_ptr() == ms_tensor_from_ms_pack.data_ptr()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dlpack_scalar_tensor():
     """
     Feature: test dlpack for scalar tensor
@@ -117,8 +111,7 @@ def test_dlpack_scalar_tensor():
     assert ms_tensor.data_ptr() == ms_tensor_from_ms_pack.data_ptr()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dlpack_non_contiguous_tensor():
     """
     Feature: test dlpack for non-contiguous tensor
@@ -133,8 +126,7 @@ def test_dlpack_non_contiguous_tensor():
     assert ms_tensor.data_ptr() == ms_tensor_from_ms_pack.data_ptr()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dlpack_shared_memory():
     """
     Feature: test dlpack for shared memory
@@ -148,7 +140,7 @@ def test_dlpack_shared_memory():
     assert np.allclose(a.asnumpy(), b.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dlpack_cpu_tensor_conversion():
     """
     Feature: test dlpack for cpu tensor
@@ -164,7 +156,7 @@ def test_dlpack_cpu_tensor_conversion():
     assert np.allclose(x.asnumpy(), y.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [ms.int8, ms.int16, ms.int32, ms.int64, ms.float16, ms.float32, ms.float64])
 def test_dlpack_cpu_different_types(dtype):
     """

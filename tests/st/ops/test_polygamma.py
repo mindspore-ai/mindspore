@@ -32,8 +32,7 @@ class PolygammaNet(nn.Cell):
         return self.polygamma(a, x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.40)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.40)
 def test_polygamma_1d_a_1_int64_float16():
     """
     Feature: Polygamma
@@ -49,7 +48,7 @@ def test_polygamma_1d_a_1_int64_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_polygamma_1d_a_1_int64_float32():
     """
     Feature: Polygamma
@@ -65,7 +64,7 @@ def test_polygamma_1d_a_1_int64_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_polygamma_1d_a_1_int64_float64():
     """
     Feature: Polygamma
@@ -81,7 +80,7 @@ def test_polygamma_1d_a_1_int64_float64():
     assert np.allclose(z_ms.asnumpy(), expect, 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_polygamma_1d_a_2_int64_float16():
     """
     Feature: Polygamma
@@ -97,7 +96,7 @@ def test_polygamma_1d_a_2_int64_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_polygamma_1d_a_2_int64_float32():
     """
     Feature: Polygamma
@@ -113,7 +112,7 @@ def test_polygamma_1d_a_2_int64_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_polygamma_1d_a_2_int64_float64():
     """
     Feature: Polygamma

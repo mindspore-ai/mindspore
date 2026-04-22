@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,72 +16,263 @@
 This dataset module provides internal utility function for OBSMindDataset API.
 """
 
-import fcntl
+import hashlib
 import os
 import shutil
+import sqlite3
 import stat
 import sys
-import sqlite3
+import tempfile
 import time
-
+import traceback
 from functools import wraps
-from obs import ObsClient
 
 from mindspore import log as logger
-from .config_loader import config
+
 from ..datasets import Shuffle
-from ..samplers import RandomSampler, SequentialSampler, SubsetSampler, SubsetRandomSampler
+from ..samplers import RandomSampler, SequentialSampler, SubsetRandomSampler, SubsetSampler
 
-obsClient = ObsClient(
-    access_key_id=config.AK,
-    secret_access_key=config.SK,
-    server=config.SERVER
-)
+if os.name == "nt":
+    import msvcrt  # pylint: disable=import-error
+else:
+    import fcntl
+try:
+    from obs import ObsClient
+except ImportError:
+    ObsClient = None
+
+LOCK_FILE_DIR = os.path.join(tempfile.gettempdir(), "mindspore_dataset_locks")
 
 
-def get_used_disk_per():
-    """ Get the disk usage of working directory."""
+def _lock_file(fd):
+    """Lock file descriptor exclusively on current platform."""
+    if os.name == "nt":
+        fd.seek(0)
+        fd.write("0")
+        fd.flush()
+        fd.seek(0)
+        msvcrt.locking(fd.fileno(), msvcrt.LK_LOCK, 1)
+    else:
+        fcntl.flock(fd, fcntl.LOCK_EX)
 
-    if os.path.exists(config.WORKING_PATH) and not os.access(config.WORKING_PATH, os.R_OK | os.W_OK | os.X_OK):
-        err_msg =\
-                "Permission denied:'{}'. Suggestion: " \
-                "1) It is recommended to manually create the {} directory and add read/write permissions to it. " \
-                "2) If you can't create, we suggest you download MindRecord manually and "\
-                "read it using the MindDataset interface.".format(config.WORKING_PATH, config.WORKING_PATH)
-        raise RuntimeError(err_msg)
 
-    if not os.path.exists(config.WORKING_PATH):
+def _unlock_file(fd):
+    """Release file lock on current platform."""
+    if os.name == "nt":
+        fd.seek(0)
+        msvcrt.locking(fd.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+
+
+def _retry_execute(max_retry, retry_delta_time, func_name, execute_fn):
+    """Execute a callback with retries."""
+    retry_cnt = 0
+    while True:
         try:
-            os.makedirs(config.WORKING_PATH)
-        except FileExistsError:
-            pass
-        except PermissionError as e:
-            err_msg =\
-                str(e) + ". Suggestion: " \
-                "1) It is recommended to manually create the {} directory and add read/write permissions to it. " \
-                "2) If you can't create, we suggest you download MindRecord manually and "\
-                "read it using the MindDataset interface.".format(config.WORKING_PATH)
+            if retry_cnt >= max_retry:
+                err_msg = f"Function {func_name} has retried for {retry_cnt} times, please check error above."
+                logger.error(err_msg)
+                raise RuntimeError(err_msg)
+            return execute_fn()
+        except RuntimeError:
+            raise
+        except Exception:  # pylint: disable=broad-except
+            retry_cnt += 1
+
+            logger.error(traceback.format_exc())
+            time.sleep(retry_delta_time)
+
+
+def exclusive_lock(func):
+    """Decorator that execute func under exclusive lock."""
+    func_name = func.__name__
+
+    @wraps(func)
+    def wrapped_func(*args, **kwargs):
+        try:
+            lock_file = _get_lock_file_path(kwargs["lock_file"])
+        except KeyError as exc:
+            raise RuntimeError(f"Lock file can not found in function {func_name}.") from exc
+        with open(lock_file, "w", encoding="utf-8") as fd:
+            try:
+                _lock_file(fd)
+                result = func(*args, **kwargs)
+            finally:
+                _unlock_file(fd)
+        if os.path.exists(lock_file):
+            os.chmod(lock_file, stat.S_IRUSR | stat.S_IWUSR)
+        return result
+
+    return wrapped_func
+
+
+class OBSRuntime:
+    """Runtime wrapper that keeps OBS config and client creation logic instance-local."""
+
+    def __init__(self, obs_config):
+        self.config = obs_config
+
+    def get_obs_client(self):
+        """Create an OBS client for this runtime."""
+        if ObsClient is None:
+            raise RuntimeError("OBS SDK is not installed. Please install dependency 'obs'.")
+        return ObsClient(access_key_id=self.config.AK, secret_access_key=self.config.SK, server=self.config.SERVER)
+
+    def get_used_disk_per(self):
+        """Get the disk usage of working directory."""
+        working_path = self.config.WORKING_PATH
+        if os.path.exists(working_path) and not os.access(working_path, os.R_OK | os.W_OK | os.X_OK):
+            err_msg = (
+                f"Permission denied:'{working_path}'. Suggestion: "
+                f"1) It is recommended to manually create the {working_path} directory and add read/write "
+                "permissions to it. "
+                "2) If you can't create, we suggest you download MindRecord manually and "
+                "read it using the MindDataset interface."
+            )
             raise RuntimeError(err_msg)
 
-    total, used, _ = shutil.disk_usage(config.WORKING_PATH)
-    return used / total
+        if not os.path.exists(working_path):
+            try:
+                os.makedirs(working_path)
+            except FileExistsError:
+                pass
+            except PermissionError as e:
+                err_msg = (
+                    f"{e}. Suggestion: "
+                    f"1) It is recommended to manually create the {working_path} directory and add read/write "
+                    "permissions to it. "
+                    "2) If you can't create, we suggest you download MindRecord manually and "
+                    "read it using the MindDataset interface."
+                )
+                raise RuntimeError(err_msg) from e
+
+        total, used, _ = shutil.disk_usage(working_path)
+        return used / total
+
+    def try_load_from_obs(self, remote_path, dataset_file, local_path):
+        """Download one dataset file and its metadata if missing in local cache."""
+        if not os.path.exists(os.path.join(local_path, dataset_file)):
+            self._download_file(remote_path, dataset_file, local_path, lock_file=dataset_file)
+        meta_file = dataset_file + ".db"
+        if not os.path.exists(os.path.join(local_path, meta_file)):
+            self._download_file(remote_path, meta_file, local_path, lock_file=meta_file)
+
+    def fetch_meta_files(self, meta_files, local_path):
+        """Download all metadata files from OBS."""
+        for df in meta_files:
+            dataset_file = os.path.basename(df)
+            meta_file = dataset_file + ".db"
+            remote_path = os.path.dirname(df)
+            self._download_file(remote_path, meta_file, local_path, lock_file=meta_file)
+
+    def file_upload_to_obs(self, obs_path, sync_dir, ready_file_name):
+        """Upload one synchronization file to OBS."""
+        bucket_name, object_key = get_bucket_and_key(obs_path)
+        obs_client = self.get_obs_client()
+
+        def _upload():
+            if not object_key:
+                resp = obs_client.headBucket(bucket_name)
+            else:
+                normalized_key = object_key
+                if not normalized_key.endswith("/"):
+                    normalized_key += "/"
+                resp = obs_client.getObjectMetadata(bucket_name, normalized_key)
+
+            if resp.status < 300:
+                logger.debug(f"[{sys._getframe()} FUNCTION] OBS requestId: {resp.requestId}.")  # pylint: disable=W0212
+            else:
+                raise RuntimeError(
+                    f"Directory/Bucket used for synchronization {obs_path} is not found in OBS, "
+                    "please create it on OBS first."
+                )
+
+            remote_dir = os.path.join(object_key, sync_dir)
+            resp = obs_client.putContent(bucket_name, remote_dir, content=None)
+            if resp.status < 300:
+                logger.debug(f"[{sys._getframe()} FUNCTION] OBS requestId: {resp.requestId}.")  # pylint: disable=W0212
+            else:
+                raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
+            resp = obs_client.putContent(bucket_name, os.path.join(remote_dir, ready_file_name), content="OK")
+            if resp.status < 300:
+                logger.debug(f"[{sys._getframe()} FUNCTION] OBS requestId: {resp.requestId}.")  # pylint: disable=W0212
+            else:
+                raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
+
+        _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "file_upload_to_obs", _upload)
+
+    def _check_file_exists_in_obs(self, obs_path):
+        """Detect that file exists in OBS."""
+        bucket_name, object_key = get_bucket_and_key(obs_path)
+        obs_client = self.get_obs_client()
+
+        def _check():
+            try:
+                resp = obs_client.getObjectMetadata(bucket_name, object_key)
+            except ConnectionRefusedError as exc:
+                err_msg = f"Failed to connect to OBS, please check OBS sever {obs_client.server}:{obs_client.port}."
+                logger.error(err_msg)
+                raise RuntimeError(err_msg) from exc
+
+            if resp.status < 300:
+                logger.debug(f"[{sys._getframe()} FUNCTION] OBS requestId: {resp.requestId}.")  # pylint: disable=W0212
+            elif resp.status == 403:
+                err_msg = "OBS access is Forbidden, please check AK or SK."
+                logger.error(err_msg)
+                raise RuntimeError(err_msg)
+            else:
+                err_msg = f"File {obs_path} not found in OBS, please check again."
+                logger.error(err_msg)
+                raise RuntimeError(err_msg)
+
+        _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_check_file_exists_in_obs", _check)
+
+    def _file_download_from_obs(self, obs_path, local_path):
+        """Download one file from OBS."""
+        bucket_name, object_key = get_bucket_and_key(obs_path)
+        obs_client = self.get_obs_client()
+
+        def _download():
+            resp = obs_client.downloadFile(
+                bucket_name, object_key, local_path, self.config.PART_SIZE, self.config.TASK_NUM, True
+            )
+            if resp.status < 300:
+                logger.debug(f"[{sys._getframe()} FUNCTION] OBS requestId: {resp.requestId}.")  # pylint: disable=W0212
+            else:
+                raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
+
+        _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_file_download_from_obs", _download)
+
+    @exclusive_lock
+    def _download_file(self, remote_path, object_name, des_path, lock_file="tmp"):
+        """
+        Download file from OBS exclusively.
+
+        Args:
+            remote_path (str): OBS directory path which dataset file is stored.
+            object_name (str): Name of dataset file.
+            des_path (str): Local directory path which dataset file is stored.
+            lock_file (str): File name to lock.
+        """
+
+        local_path = os.path.join(des_path, object_name)
+        if os.path.exists(local_path):
+            return
+        if not os.path.exists(des_path):
+            os.makedirs(des_path)
+        obs_path = os.path.join(remote_path, object_name)
+
+        self._check_file_exists_in_obs(obs_path)
+        self._file_download_from_obs(obs_path, local_path)
 
 
-def try_load_from_obs(remote_path, dataset_file, local_path):
-    """
-    Download all dataset files from OBS, skip if it exists.
-
-    Args:
-        remote_path (str): OBS path of dataset files.
-        dataset_file (str): Name of dataset file.
-        local_path (str): Local path of dataset files.
-    """
-
-    if not os.path.exists(os.path.join(local_path, dataset_file)):
-        _download_file(remote_path, dataset_file, local_path, lock_file=dataset_file)
-    meta_file = dataset_file + '.db'
-    if not os.path.exists(os.path.join(local_path, meta_file)):
-        _download_file(remote_path, meta_file, local_path, lock_file=meta_file)
+def _get_lock_file_path(lock_name):
+    """Build a deterministic lock file path without exposing the raw lock name."""
+    lock_digest = hashlib.sha256(lock_name.encode("utf-8")).hexdigest()
+    if not os.path.exists(LOCK_FILE_DIR):
+        os.makedirs(LOCK_FILE_DIR, mode=stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR, exist_ok=True)
+    return os.path.join(LOCK_FILE_DIR, f"{lock_digest}.lock")
 
 
 def detect_all_meta_files(meta_files, local_path):
@@ -96,7 +287,7 @@ def detect_all_meta_files(meta_files, local_path):
     all_meta_files = True
     for f in meta_files:
         dataset_file = os.path.basename(f)
-        meta_file = dataset_file + '.db'
+        meta_file = dataset_file + ".db"
         if _detect_file_exist(local_path, meta_file, lock_file=meta_file) is False:
             all_meta_files = False
             break
@@ -145,6 +336,8 @@ def make_shard_samples(dataset_file_size_list, size_per_shard, shard_id):
         for f, dataset_size in dataset_file_size_list:
             start_idx = shard_id * size_per_shard
             end_idx = (shard_id + 1) * size_per_shard
+            start = 0
+            end = dataset_size
             push = False
             is_full_dataset = False
 
@@ -187,36 +380,17 @@ def make_dataset_tuple(dataset_files, local_path):
     dataset_size = 0
 
     for dataset_file in dataset_files:
-        meta_file = os.path.basename(dataset_file) + '.db'
+        meta_file = os.path.basename(dataset_file) + ".db"
         path = os.path.join(local_path, meta_file)
         try:
-            conn = sqlite3.connect(path)
-            c = conn.cursor()
-            cursor = c.execute("SELECT COUNT(*) FROM INDEXES")
-            for row in cursor:
-                dataset_size += row[0]
-                dataset_file_size_list.append((dataset_file, row[0]))
-            conn.close()
+            with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as conn:
+                cursor = conn.execute("SELECT COUNT(*) FROM INDEXES")
+                for row in cursor:
+                    dataset_size += row[0]
+                    dataset_file_size_list.append((dataset_file, row[0]))
         except Exception as e:
-            raise RuntimeError(
-                "Failed to get dataset size from metadata, err: " + str(e))
+            raise RuntimeError("Failed to get dataset size from metadata, err: " + str(e)) from e
     return dataset_size, dataset_file_size_list
-
-
-def fetch_meta_files(meta_files, local_path):
-    """
-    Download all meta files from obs, skip if it exists.
-
-    Args:
-        meta_files (List[str]): Full paths of meta files.
-        local_path (str): Local directory path of dataset files.
-    """
-
-    for df in meta_files:
-        dataset_file = os.path.basename(df)
-        meta_file = dataset_file + '.db'
-        remote_path = os.path.dirname(df)
-        _download_file(remote_path, meta_file, local_path, lock_file=meta_file)
 
 
 def make_shard_files(dataset_files, num_shards, shard_id):
@@ -250,161 +424,15 @@ def get_bucket_and_key(obs_path):
         bucketName and objectKey.
     """
 
-    start = obs_path.find('//')
-    end = obs_path.find('/', start + 2)
+    start = obs_path.find("//")
+    end = obs_path.find("/", start + 2)
     if end == -1:
-        return obs_path[start + 2:], ""
-    return obs_path[start + 2:end], obs_path[end + 1:]
-
-
-def exclusive_lock(func):
-    """ Decorator that execute func under exclusive lock. """
-
-    @wraps(func)
-    def wrapped_func(*args, **kwargs):
-        try:
-            lock_file = os.path.join('/tmp/', '{}.lock'.format(kwargs['lock_file']))
-        except KeyError:
-            raise RuntimeError("Lock file can not found in function {}.".format(func_name))
-        with open(lock_file, 'w') as fd:
-            retry_cnt = 0
-            success = False
-            while True:
-                if success:
-                    break
-                try:
-                    if retry_cnt > config.MAX_RETRY:
-                        raise RuntimeError("Function {} retries times {} has exceeded threshold {}.".format(
-                            func_name, retry_cnt, config.MAX_RETRY))
-                    fcntl.flock(fd, fcntl.LOCK_EX)
-                    success = True
-                    result = func(*args, **kwargs)
-                except RuntimeError as e:
-                    raise e
-                except Exception as e: # pylint: disable=W0703
-                    retry_cnt += 1
-                    import traceback
-                    logger.error(traceback.format_exc())
-                    time.sleep(config.RETRY_DELTA_TIME)
-                finally:
-                    fcntl.flock(fd, fcntl.LOCK_UN)
-        if os.path.exists(lock_file):
-            os.chmod(lock_file, stat.S_IRUSR | stat.S_IWUSR)
-        return result
-    return wrapped_func
-
-
-def retry_execute(func):
-    """ Decorator that retry on unexpected errors. """
-
-    func_name = func.__name__
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        retry_cnt = 0
-        success = False
-        while True:
-            if success:
-                break
-            try:
-                if retry_cnt >= config.MAX_RETRY:
-                    err_msg = "Function {} has retried for {} times, please check error above.".format(
-                        func_name, retry_cnt)
-                    logger.error(err_msg)
-                    raise RuntimeError(err_msg)
-                result = func(*args, **kwargs)
-                success = True
-            except RuntimeError as e:
-                raise e
-            except Exception: # pylint: disable=W0703
-                retry_cnt += 1
-                import traceback
-                logger.error(traceback.format_exc())
-                time.sleep(config.RETRY_DELTA_TIME)
-        return result
-    return wrapper
-
-
-@retry_execute
-def _check_file_exists_in_obs(obs_path):
-    """
-    Detect that file exists in OBS.
-
-    Args:
-        obs_path (str): OBS path of dataset file.
-    """
-
-    bucket_name, object_key = get_bucket_and_key(obs_path)
-    try:
-        resp = obsClient.getObjectMetadata(bucket_name, object_key)
-    except ConnectionRefusedError:
-        err_msg = "Failed to connect to OBS, please check OBS sever {}:{}.".format(obsClient.server, obsClient.port)
-        logger.error(err_msg)
-        raise RuntimeError(err_msg)
-    if resp.status < 300:
-        logger.debug("[{} FUNCTION] OBS requestId: {}.".format(
-            sys._getframe(), resp.requestId)) # pylint: disable=W0212
-    elif resp.status == 403:
-        err_msg = "OBS access is Forbidden, please check AK or SK."
-        logger.error(err_msg)
-        raise RuntimeError(err_msg)
-    else:
-        err_msg = "File {} not found in OBS, please check again.".format(obs_path)
-        logger.error(err_msg)
-        raise RuntimeError(err_msg)
-
-
-@retry_execute
-def _file_download_from_obs(obs_path, local_path):
-    """
-    Download file from OBS.
-
-    Args:
-        obs_path (str): OBS path of dataset file.
-        local_path (str): Local path of dataset file.
-    """
-
-    bucket_name, object_key = get_bucket_and_key(obs_path)
-    downloadFile = local_path
-    taskNum = config.TASK_NUM
-    partSize = config.PART_SIZE
-    enableCheckpoint = True
-
-    resp = obsClient.downloadFile(
-        bucket_name, object_key, downloadFile, partSize, taskNum, enableCheckpoint)
-    if resp.status < 300:
-        logger.debug("[{} FUNCTION] OBS requestId: {}.".format(
-            sys._getframe(), resp.requestId)) # pylint: disable=W0212
-    else:
-        raise Exception("OBS SDK errorCode:{}, errMsg: {}.".format(
-            resp.errorCode, resp.errorMessage))
+        return obs_path[start + 2 :], ""
+    return obs_path[start + 2 : end], obs_path[end + 1 :]
 
 
 @exclusive_lock
-def _download_file(remote_path, object_name, des_path, lock_file='tmp'):
-    """
-    Download file from OBS exclusively.
-
-    Args:
-        remote_path (str): OBS directory path which dataset file is stored.
-        object_name (str): Name of dataset file.
-        des_path (str): Local directory path which dataset file is stored.
-        lock_file (str): File name to lock.
-    """
-
-    local_path = os.path.join(des_path, object_name)
-    if os.path.exists(local_path):
-        return
-    if not os.path.exists(des_path):
-        os.makedirs(des_path)
-    obs_path = os.path.join(remote_path, object_name)
-
-    _check_file_exists_in_obs(obs_path)
-    _file_download_from_obs(obs_path, local_path)
-
-
-@exclusive_lock
-def init_cache_and_queue(cache, q, path, shard_file, idx, is_full_dataset, lock_file='tmp'):
+def init_cache_and_queue(cache, q, path, shard_file, idx, is_full_dataset, lock_file="tmp"):
     """
     Initialize cache and queue according to the status of local dataset files.
 
@@ -420,18 +448,19 @@ def init_cache_and_queue(cache, q, path, shard_file, idx, is_full_dataset, lock_
 
     dataset_file = os.path.basename(shard_file)
     if os.path.exists(path):  # found in local
-        logger.info("[{} FUNCTION] Push dataset file {} to cache.".format(
-            sys._getframe(), dataset_file)) # pylint: disable=W0212
+        logger.info(f"[{sys._getframe()} FUNCTION] Push dataset file {dataset_file} to cache.")  # pylint: disable=W0212
         cache[dataset_file] = (idx, not is_full_dataset)
     else:
-        logger.info("[{} FUNCTION] Push dataset file {} to downloading queue.".format(
-            sys._getframe(), dataset_file)) # pylint: disable=W0212
+        logger.info(
+            f"[{sys._getframe()} FUNCTION] Push dataset file {dataset_file} "  # pylint: disable=W0212
+            "to downloading queue."
+        )
         cache[dataset_file] = (-1, not is_full_dataset)
         q.put((idx, shard_file))
 
 
 @exclusive_lock
-def _detect_file_exist(local_path, meta_file, lock_file='tmp'):
+def _detect_file_exist(local_path, meta_file, lock_file="tmp"):
     """
     Detect that local meta file exists or not.
 
@@ -443,48 +472,3 @@ def _detect_file_exist(local_path, meta_file, lock_file='tmp'):
     if os.path.exists(os.path.join(local_path, meta_file)):
         return True
     return False
-
-
-@retry_execute
-def file_upload_to_obs(obs_path, sync_dir, ready_file_name):
-    """
-    Upload sync file to OBS.
-
-    Args:
-        obs_path (str): OBS path of dataset file.
-        sync_fir (str): OBS directory path used for synchronization.
-        ready_file_name (str): Name of synchronization file.
-    """
-
-    bucket_name, object_key = get_bucket_and_key(obs_path)
-
-    if not object_key:
-        resp = obsClient.headBucket(bucket_name)
-    else:
-        if not object_key.endswith("/"):
-            object_key += "/"
-        resp = obsClient.getObjectMetadata(bucket_name, object_key)
-
-    if resp.status < 300:
-        logger.debug("[{} FUNCTION] OBS requestId: {}.".format(
-            sys._getframe(), resp.requestId)) # pylint: disable=W0212
-    else:
-        raise RuntimeError("Directory/Bucket used for synchronization {} is not found in OBS, " \
-                           "please create it on OBS first.".format(obs_path))
-
-    remote_dir = os.path.join(object_key, sync_dir)
-    resp = obsClient.putContent(bucket_name, remote_dir, content=None)
-    if resp.status < 300:
-        logger.debug("[{} FUNCTION] OBS requestId: {}.".format(
-            sys._getframe(), resp.requestId)) # pylint: disable=W0212
-    else:
-        raise Exception("OBS SDK errorCode:{}, errMsg: {}.".format(
-            resp.errorCode, resp.errorMessage))
-    resp = obsClient.putContent(bucket_name, os.path.join(
-        remote_dir, ready_file_name), content='OK')
-    if resp.status < 300:
-        logger.debug("[{} FUNCTION] OBS requestId: {}.".format(
-            sys._getframe(), resp.requestId)) # pylint: disable=W0212
-    else:
-        raise Exception("OBS SDK errorCode:{}, errMsg: {}.".format(
-            resp.errorCode, resp.errorMessage))

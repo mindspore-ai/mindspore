@@ -27,6 +27,9 @@ mindspore.nn.HuberLoss
             \operatorname{sum}(L),  & \text{if reduction} = \text{"sum".}
         \end{cases}
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     参数：
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 

@@ -36,7 +36,7 @@ class Net1(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_with_for():
     """
     Feature: Tuple iteration in for loop.
@@ -66,7 +66,7 @@ class Net2(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_using_index():
     """
     Feature: Tuple indexing operation.
@@ -95,7 +95,7 @@ class Net3(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cell_tuple_with_for():
     """
     Feature: Tuple of Cell objects iteration in for loop.
@@ -110,7 +110,7 @@ def test_cell_tuple_with_for():
     model.predict(input_me)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_assign_tensor():
     """
     Feature: Tuple unpacking assignment with tensor operations.
@@ -148,7 +148,7 @@ def test_tuple_assign_tensor():
     match_array(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_assign_created_in_construct():
     """
     Feature: Tuple unpacking assignment with tuple created in construct.
@@ -185,7 +185,7 @@ def test_tuple_assign_created_in_construct():
     match_array(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tuple_assign_scalar():
     """
     Feature: Tuple unpacking assignment with scalar operations.
@@ -223,7 +223,7 @@ def test_tuple_assign_scalar():
     match_array(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_tuple_add():
     """
     Feature: Scalar tuple addition operation.
@@ -276,7 +276,7 @@ class Net4(Cell):
         return t
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_tuple_add():
     """
     Feature: Tensor tuple addition operation.
@@ -308,7 +308,7 @@ class Net5(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_tuple_add_in_construct():
     """
     Feature: Tensor tuple addition operation in construct.

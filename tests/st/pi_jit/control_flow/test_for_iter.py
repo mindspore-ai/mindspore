@@ -63,7 +63,7 @@ def for_mix_with_sideeffect(x):
     return list(z)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [for_range, for_enumerate, for_mix, for_zip])
 @pytest.mark.parametrize('param', [1, Tensor([1])])
 def test_for_iter_unrolling(func, param):
@@ -85,7 +85,7 @@ def test_for_iter_unrolling(func, param):
     assert excepted == result
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [for_mix_with_sideeffect])
 @pytest.mark.parametrize('param', [1, Tensor([1])])
 def test_not_implement_for_iter(func, param):
@@ -107,7 +107,7 @@ def test_not_implement_for_iter(func, param):
 jit_cfg = {"loop_unrolling": True, "compile_with_try": False}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_for_zip_iter_1():
     """
     Feature: Test zip iter.
@@ -133,7 +133,7 @@ def test_for_zip_iter_1():
         assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_for_zip_iter_2():
     """
     Feature: Test zip iter.
@@ -160,7 +160,7 @@ def test_for_zip_iter_2():
         assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_for_iter_of_non_const_tuple():
     """
     Feature: Test FOR_ITER.

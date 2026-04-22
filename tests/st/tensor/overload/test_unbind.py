@@ -70,8 +70,7 @@ def ops_unbind_float32_dim_neg_case():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
                       'platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+          card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['KBK'])
 def test_deprecated_tensor_unbind(mode): # It will be called in KBK mode.
     """
@@ -91,8 +90,7 @@ def test_deprecated_tensor_unbind(mode): # It will be called in KBK mode.
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
                       'platform_ascend910b'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2.0)
+          card_mark='onecard', mem_peak=2.0)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_pyboost_tensor_unbind(mode): # It will be called only in pynative mode.
     """
@@ -110,7 +108,7 @@ def test_pyboost_tensor_unbind(mode): # It will be called only in pynative mode.
     ops_unbind_float32_dim_neg_case()
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2.0)
+          card_mark='onecard', mem_peak=2.0)
 def test_tensor_unbind_dynamic():
     """
     Feature: tensor.unbind

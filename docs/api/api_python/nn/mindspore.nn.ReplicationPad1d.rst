@@ -5,6 +5,9 @@ mindspore.nn.ReplicationPad1d
 
     根据 `padding` 对输入 `x` 的W维度上进行填充。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
+
     参数：
         - **padding** (union[int, tuple]) - 填充 `x` 最后一个维度的大小。
 

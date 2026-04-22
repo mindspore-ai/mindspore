@@ -5,6 +5,9 @@ mindspore.nn.LayerNorm
 
     在mini-batch输入上应用层归一化（Layer Normalization）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``LayerNorm(normalized_shape, eps=1e-5, elementwise_affine=True, bias=True, dtype=None)`` 。其中 `begin_norm_axis`、`begin_params_axis` 将被移除；参数名 `epsilon` 将改为 `eps`，默认值由 ``1e-7`` 改为 ``1e-5`` ；`gamma_init`、`beta_init` 将分别由 `elementwise_affine`、`bias` 控制。
+
     层归一化在递归神经网络中被广泛的应用。适用单个训练用例的mini-batch输入上应用归一化，详见论文 `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_ 。
 
     与批归一化（Batch Normalization）不同，层归一化在训练和测试时执行完全相同的计算。

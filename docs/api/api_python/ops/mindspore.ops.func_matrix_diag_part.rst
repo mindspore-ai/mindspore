@@ -7,6 +7,9 @@ mindspore.ops.matrix_diag_part
 
     在graph mode中，输入 `k` 和 `padding_value` 必须为常量tensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (Tensor) - 输入tensor，其秩不小于2。
         - **k** (Union[int, Tensor], 可选) - 对角线偏移。正值表示超对角线，负值表示次对角线。当k是2个整数，表示子对角线的上界和下界。

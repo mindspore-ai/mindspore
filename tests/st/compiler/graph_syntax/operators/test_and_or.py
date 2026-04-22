@@ -21,8 +21,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_int_tensor():
     """
     Feature: graph and syntax
@@ -38,8 +37,7 @@ def test_and_int_tensor():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_int_tensor_2():
     """
     Feature: graph and syntax
@@ -57,8 +55,7 @@ def test_and_int_tensor_2():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_bool_tensor():
     """
     Feature: graph and syntax
@@ -74,8 +71,7 @@ def test_and_bool_tensor():
     assert ret == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_bool_tensor_2():
     """
     Feature: graph and syntax
@@ -93,8 +89,7 @@ def test_and_bool_tensor_2():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_different_type_variable_tensor():
     """
     Feature: graph and syntax
@@ -112,8 +107,7 @@ def test_and_different_type_variable_tensor():
     assert "return x and y" in str(error_info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_and_different_type_constant_tensor():
     """
     Feature: graph and syntax
@@ -131,8 +125,7 @@ def test_and_different_type_constant_tensor():
     assert res == 2.0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_constant_and_variable_tensor():
     """
     Feature: graph and syntax
@@ -149,8 +142,7 @@ def test_and_constant_and_variable_tensor():
     assert res == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_and_constant_and_variable_tensor_2():
     """
     Feature: graph and syntax
@@ -169,8 +161,7 @@ def test_and_constant_and_variable_tensor_2():
     assert "return x and y" in str(error_info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_constant_and_variable_tensor_3():
     """
     Feature: graph and syntax
@@ -187,8 +178,7 @@ def test_and_constant_and_variable_tensor_3():
     assert res == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_and_variable_tensor_and_numpy_input():
     """
     Feature: graph and syntax

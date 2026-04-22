@@ -17,20 +17,37 @@
 #include <memory>
 #include "include/utils/tensor_py.h"
 #include "include/utils/tensor_utils.h"
+#include "include/utils/python_attr.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/pynative/forward/pyboost/forward_task.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/runtime/lazy_fusion.h"
+#include "include/pynative/forward/pyboost/fallback.h"
 #include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore::pynative {
+namespace {
+bool NeedFallback(PyObject *obj) {
+  if (!fallback_enabled() || tensor::IsPyObjectPythonTensorStrict(obj)) {
+    return false;
+  }
+  return FastGetPyObjectAttr(obj, GetFallbackStr().c_str()).ptr() != nullptr;
+}
+}  // namespace
+
 static const char *OP_NAME = "Detach";
 py::object PyboostDetach(const py::object &input) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp, OP_NAME, false,
                                      true);
   if (!tensor::IsTensorPy(input)) {
     MS_EXCEPTION(TypeError) << OP_NAME << " input is not a tensor";
+  }
+  if (NeedFallback(input.ptr())) {
+    auto op_call = std::make_shared<OpCall>(
+      OP_NAME, [](const py::args &args, const py::kwargs &kwargs) { return PyboostDetach(args[0]); });
+    py::tuple args_tuple = py::make_tuple(input);
+    return py::reinterpret_steal<py::object>(pynative::HandleFallback(args_tuple.ptr(), py::cast(op_call)));
   }
   PyNativeAlgo::PyBoost::MarkSideEffect(input.ptr());
   auto py_output = tensor::MakeTuple<tensor::TensorWrapper, 1, true>();

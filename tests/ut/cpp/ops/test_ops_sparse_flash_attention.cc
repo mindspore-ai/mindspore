@@ -44,9 +44,9 @@ constexpr ShapeValueDType kShapeDimAny = mindspore::abstract::Shape::kShapeDimAn
 static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
   GeneralInferParamGenerator gen;
 
-  // Case 0: BSND layout, fp16
+  // Case 0: BSND layout, fp16, return_softmax_lse=False
   // query [B, S1, N1, D], key [B, S2, N2, D], value [B, S2, N2, D], sparse_indices [B, S1, N2, sparse_count]
-  // Output: attention_out [B, S1, N1, D], softmax_max [B, N2, S1, N1/N2], softmax_sum [B, N2, S1, N1/N2]
+  // Output: attention_out [B, S1, N1, D], softmax_max {0}, softmax_sum {0}
   {
     const int64_t B = 4, S1 = 1, S2 = 8192, N1 = 128, N2 = 1, D = 512, D_rope = 64, sparse_count = 2048;
     gen
@@ -70,11 +70,11 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},  // return_softmax_lse=False
       })
-      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{B, N2, S1, N1 / N2}, ShapeVector{B, N2, S1, N1 / N2}},
+      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
-  // Case 1: BSND layout, bfloat16
+  // Case 1: BSND layout, bfloat16, return_softmax_lse=False
   {
     const int64_t B = 2, S1 = 1, S2 = 4096, N1 = 64, N2 = 1, D = 512, D_rope = 64, sparse_count = 1024;
     gen
@@ -98,7 +98,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
       })
-      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{B, N2, S1, N1 / N2}, ShapeVector{B, N2, S1, N1 / N2}},
+      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeBFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
@@ -130,9 +130,9 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
-  // Case 3: TND layout, fp16
+  // Case 3: TND layout, fp16, return_softmax_lse=False
   // query [T1, N1, D], key [T2, N2, D], value [T2, N2, D]
-  // Output: attention_out [T1, N1, D], softmax_max [N2, T1, N1/N2], softmax_sum [N2, T1, N1/N2]
+  // Output: attention_out [T1, N1, D], softmax_max {0}, softmax_sum {0}
   {
     const int64_t T1 = 4, T2 = 8192, N1 = 128, N2 = 1, D = 512, D_rope = 64, sparse_count = 2048;
     gen
@@ -158,11 +158,11 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
       })
-      .FeedExpectedOutput({ShapeVector{T1, N1, D}, ShapeVector{N2, T1, N1 / N2}, ShapeVector{N2, T1, N1 / N2}},
+      .FeedExpectedOutput({ShapeVector{T1, N1, D}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
-  // Case 4: BSND with dynamic query shape
+  // Case 4: BSND with dynamic query shape, return_softmax_lse=False
   {
     const int64_t D_rope = 64;
     gen
@@ -186,7 +186,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
       })
-      .FeedExpectedOutput({ShapeVector{-1, -1, -1, -1}, ShapeVector{-1, 1, -1, -1}, ShapeVector{-1, 1, -1, -1}},
+      .FeedExpectedOutput({ShapeVector{-1, -1, -1, -1}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
@@ -218,7 +218,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
-  // Case 6: N1=32
+  // Case 6: N1=32, return_softmax_lse=False
   {
     const int64_t B = 2, S1 = 1, S2 = 4096, N1 = 32, N2 = 1, D = 512, D_rope = 64, sparse_count = 1024;
     gen
@@ -242,11 +242,11 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
       })
-      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{B, N2, S1, N1 / N2}, ShapeVector{B, N2, S1, N1 / N2}},
+      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
-  // Case 7: sparse_mode=0
+  // Case 7: sparse_mode=0, return_softmax_lse=False
   {
     const int64_t B = 4, S1 = 1, S2 = 4096, N1 = 64, N2 = 1, D = 512, D_rope = 64, sparse_count = 1024;
     gen
@@ -270,11 +270,11 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
       })
-      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{B, N2, S1, N1 / N2}, ShapeVector{B, N2, S1, N1 / N2}},
+      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 
-  // Case 8: sparse_block_size=64
+  // Case 8: sparse_block_size=64, return_softmax_lse=False
   {
     const int64_t B = 4, S1 = 1, S2 = 8192, N1 = 128, N2 = 1, D = 512, D_rope = 64, sparse_count = 2048;
     gen
@@ -298,7 +298,7 @@ static std::vector<GeneralInferParam> prepare_params_sparse_flash_attention() {
         InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(2)},  // attention_mode=2
         InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
       })
-      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{B, N2, S1, N1 / N2}, ShapeVector{B, N2, S1, N1 / N2}},
+      .FeedExpectedOutput({ShapeVector{B, S1, N1, D}, ShapeVector{0}, ShapeVector{0}},
                           {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat32});
   }
 

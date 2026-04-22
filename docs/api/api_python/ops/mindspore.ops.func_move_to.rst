@@ -5,6 +5,9 @@ mindspore.ops.move_to
 
     拷贝tensor到目标设备，包含同步和异步两种方式，默认是同步方式。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         该接口当前仅支持graph mode，并且jit_level为O0或O1。
 

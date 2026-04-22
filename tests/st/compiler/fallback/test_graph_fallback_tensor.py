@@ -39,8 +39,7 @@ class ControlNet(nn.Cell):
         return self.inner_function_2(a, b)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_control_sink_tensor():
     """
     Feature: Fallback feature: support define Tensor in Class construct.
@@ -54,8 +53,7 @@ def test_fallback_control_sink_tensor():
     assert output == output_expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_np_tensor_list():
     """
     Feature: Fallback feature
@@ -88,8 +86,7 @@ def np_fallback_func_tensor_index(x):
     return me_x[x]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_fallback_func_tensor_index():
     """
     Feature: Fallback feature: support Tensor index.
@@ -102,8 +99,7 @@ def test_np_fallback_func_tensor_index():
     assert output == output_expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_tensor_compare_with_variable():
     """
     Feature: Fallback feature
@@ -121,8 +117,7 @@ def test_fallback_tensor_compare_with_variable():
     assert res == 0
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_np_tensor_add():
     """
     Feature: Fallback feature
@@ -149,7 +144,7 @@ def test_np_tensor_add():
     assert tensor_list[-1] == 11
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_user_define_bprop_using_fallback():
     """
     Feature: Fallback feature

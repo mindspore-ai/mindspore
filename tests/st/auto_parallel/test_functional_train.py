@@ -18,8 +18,7 @@ import pytest
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="allcards",
-          essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level2", card_mark="allcards")
 def test_pynative_functional_train():
     '''
     Feature: Object Oriented and Functional Mixed Programming
@@ -31,8 +30,7 @@ def test_pynative_functional_train():
 
 
 @pytest.mark.skip(reason="Jit pipeline doesn't support parallel.")
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards",
-          essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards")
 def test_pynative_func_sink():
     '''
     Feature: Object Oriented and Functional Mixed Programming

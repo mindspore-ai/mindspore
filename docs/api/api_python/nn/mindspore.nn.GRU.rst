@@ -19,6 +19,9 @@ mindspore.nn.GRU
 
     其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W, b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向调用将从 ``(x, hx, seq_length)`` 调整为 ``(input, h_0)``，且 `has_bias` 将改为 `bias`。
+
     .. note:: 当GRU运行在Ascend上时，hidden size仅支持16的倍数。
 
     参数：
@@ -47,4 +50,3 @@ mindspore.nn.GRU
         - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
         - **TypeError** - `dropout` 既不是浮点数也不是整数。
         - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
-

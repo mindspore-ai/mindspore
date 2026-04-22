@@ -22,8 +22,7 @@ class Net(nn.Cell):
         return self.bias_add1(self.bias_add(x, b), c)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add1():
     x = np.ones([2, 2]).astype(np.float16)
     b = np.array([1, 1]).astype(np.float16)
@@ -57,8 +56,7 @@ class Net2(nn.Cell):
         return self.bias_add1(self.bias_add(x, b), c)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_bias_add2():
     x = np.ones([2, 2]).astype(np.float32)
     a = np.array([1, 1]).astype(np.float32)
@@ -91,8 +89,7 @@ class MomentumNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_momentum():
     epoch = 1
     net = MomentumNet()

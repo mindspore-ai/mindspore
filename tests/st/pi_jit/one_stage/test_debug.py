@@ -30,7 +30,7 @@ def check_debug_info_with_break(func, inputs, expect_ir_num, expect_dict, dir):
     check_ir_info(func, inputs, expect_dict, 'graph_before_compile', expect_ir_num, dir)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_debug_info_for_binary_op():
     """
     Feature: PIJit stage debug info in IR.
@@ -48,7 +48,7 @@ def test_debug_info_for_binary_op():
     check_debug_info_no_break(foo, (input_x, input_y), {"m = x + y": 1}, "./test_debug_info_for_binary_op")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_debug_info_for_primitive_call():
     """
     Feature: PIJit stage debug info in IR.
@@ -66,7 +66,7 @@ def test_debug_info_for_primitive_call():
     check_debug_info_no_break(foo, (input_x, input_y), {"m = ops.add(x, y)": 3}, "./test_debug_info_for_primitive_call")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_debug_info_for_func_graph_call():
     """
     Feature: PIJit stage debug info in IR.
@@ -88,7 +88,7 @@ def test_debug_info_for_func_graph_call():
     check_debug_info_no_break(foo, (input_x, input_y), expect_dict, "./test_debug_info_for_func_graph_call")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_debug_info_for_binary_op_with_break():
     """
     Feature: PIJit stage debug info in IR.
@@ -109,7 +109,7 @@ def test_debug_info_for_binary_op_with_break():
     check_debug_info_with_break(foo, (input_x, input_y), 2, expect_dict, "./test_debug_info_for_binary_op_with_break")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_debug_info_for_graph_call_with_break():
     """
     Feature: PIJit stage debug info in IR.
@@ -133,7 +133,7 @@ def test_debug_info_for_graph_call_with_break():
     check_debug_info_with_break(foo, (input_x, input_y), 2, expect_dict, "./test_debug_info_for_graph_call_with_break")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_debug_info_for_ops_call_with_break():
     """
     Feature: PIJit stage debug info in IR.
@@ -159,7 +159,7 @@ def test_debug_info_for_ops_call_with_break():
     check_debug_info_with_break(foo, (input_x, input_y), 3, expect_dict, "./test_debug_info_for_ops_call_with_break")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_info_function_basic():
     """
     Feature: PIJit stage debug info in IR.
@@ -178,7 +178,7 @@ def test_debug_info_function_basic():
     check_debug_info_no_break(func_1, (input_np1, input_np2), expect_dict, "./test_debug_info_function_basic")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_info_function_with_graph_break():
     """
     Feature: PIJit stage debug info in IR.
@@ -198,7 +198,7 @@ def test_debug_info_function_with_graph_break():
     check_debug_info_with_break(func_2, (input_x, input_y), 2, expect_dict, "./test_debug_info_function_with_graph_break")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_info_function_with_subgraph_call():
     """
     Feature: PIJit stage debug info in IR.
@@ -221,7 +221,7 @@ def test_debug_info_function_with_subgraph_call():
     check_debug_info_no_break(func_3, (input_np1, input_np2), expect_scope_info_dict, "./test_debug_info_function_with_subgraph_call")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_info_function_with_subgraph_and_graph_break():
     """
     Feature: PIJit stage debug info in IR.

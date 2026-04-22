@@ -278,13 +278,11 @@ bool PyObjectHasMsDispatchAttr(PyObject *obj) {
 }
 
 /// \brief Convert PyObject to C++ Tensor with ms_dispatch support.
-///
 /// If obj is a Tensor subclass with __ms_dispatch__ attribute:
 /// 1. Convert to C++ Tensor
 /// 2. Create shallow copy
 /// 3. Store original PyObject in user_data (key: "source_py_obj")
 /// 4. Copy __ms_dispatch__ to the new tensor's user_data
-///
 /// \param obj The PyObject to convert
 /// \return ValuePtr (TensorPtr or nullptr)
 ValuePtr ConvertTensorWithMsDispatch(PyObject *obj) {
@@ -424,6 +422,21 @@ std::optional<ValuePtr> Converter::ToTensorOptional(PyObject *python_args, size_
   return std::make_optional(ToTensor(python_args, i));
 }
 
+void Converter::CheckTensorListFallback(PyObject *seq_obj) {
+  if (has_fallback_ || !fallback_enabled()) {
+    return;
+  }
+  bool is_list = PyList_Check(seq_obj);
+  Py_ssize_t seq_size = is_list ? PyList_Size(seq_obj) : PyTuple_Size(seq_obj);
+  for (Py_ssize_t j = 0; j < seq_size; ++j) {
+    PyObject *item = is_list ? PyList_GetItem(seq_obj, j) : PyTuple_GetItem(seq_obj, j);
+    if (PyObjectHasFallbackAttr(item)) {
+      has_fallback_ = true;
+      return;
+    }
+  }
+}
+
 template <typename T>
 ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
   // convert to py::object and then used in data_converter, because data_converter haven't been refactored to PyObject
@@ -435,17 +448,7 @@ ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
   auto val_seq = py_parse::ConvertSequence<typename T::pybind_type, ValueTuple, py_parse::ConvertTensor>(obj);
   if (val_seq != nullptr && val_seq->template isa<ValueTuple>()) {
     auto value_tuple = val_seq->template cast<ValueTuplePtr>();
-    if (!has_fallback_ && fallback_enabled()) {
-      PyObject *raw_obj = obj.ptr();
-      Py_ssize_t seq_size = T::GetSize(raw_obj);
-      for (Py_ssize_t j = 0; j < seq_size; ++j) {
-        PyObject *item = T::GetItem(raw_obj, j);
-        if (PyObjectHasFallbackAttr(item)) {
-          has_fallback_ = true;
-          break;
-        }
-      }
-    }
+    CheckTensorListFallback(obj.ptr());
     // Check for ms_dispatch
     if (!has_ms_dispatch_ && ms_dispatch_enabled()) {
       const auto &values = value_tuple->value();
@@ -458,6 +461,8 @@ ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
     EnablePipelineForTupleTensor(value_tuple);
     return value_tuple;
   }
+
+  CheckTensorListFallback(obj.ptr());
   return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }
 

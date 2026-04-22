@@ -271,6 +271,20 @@ def _get_tft_obj(**kwargs):
     return obj
 
 
+def _get_ckpt_obj(**kwargs):
+    """
+    Get ModelCheckpoint from kwargs of callback
+    """
+    obj = None
+    if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), ModelCheckpoint):
+        obj = kwargs.get('callbacks')
+    if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), list):
+        for item in kwargs.get('callbacks'):
+            if isinstance(item, ModelCheckpoint):
+                obj = item
+    return obj
+
+
 def _handle_tft(func):
     """
     Decorator function, which starts uce handle process when an exception occurs during training.
@@ -281,6 +295,16 @@ def _handle_tft(func):
         obj = _get_tft_obj(**kwargs)
         if obj and not TrainFaultTolerance._only_enable_ckpt_d2h_async():
             tft_env = os.getenv("MS_ENABLE_TFT", "")
+            ato_env = "ATO:1" in tft_env
+            if ato_env:
+                ckpt_obj = _get_ckpt_obj(**kwargs)
+                obj.ato.bind_ckpt_obj(ckpt_obj)
+                try:
+                    return func(self, *args, **kwargs)
+                except BaseException as e:
+                    current_step_num = (self._current_epoch_num-1) * self.batch_num + self._current_step_num #pylint: disable=W0212
+                    obj.ato.handle_fault(e, current_step_num)
+                    raise e
             uce_env = "UCE:1" in tft_env or "ARF:1" in tft_env or "HCCE:1" in tft_env
             tre_env = "TRE:1" in tft_env or "TRE:2" in tft_env
             while True:

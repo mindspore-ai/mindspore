@@ -8,7 +8,7 @@ mindspore.mint.nn.functional.dropout
     参数：
         - **input** (Tensor) - 输入Tensor，shape为 :math:`(*, N)` 。
         - **p** (float，可选) - 输入神经元丢弃概率，数值范围在0到1之间。例如， `p` =0.1，删除10%的神经元。默认值： ``0.5`` 。
-        - **training** (bool，可选) - 若为 ``True`` 则启用dropout功能，若为 ``False`` 则直接返回输入，并且 `p` 无效。默认值： ``True`` 。
+        - **training** (bool，可选) - 若为 ``True`` 则启用dropout功能；若为 ``False`` 则直接返回输入，并且 `p` 无效。默认值： ``True`` 。
         - **inplace** (bool，可选) - 若为 ``True`` 则启用原地更新功能。默认值： ``False`` 。
 
     返回：

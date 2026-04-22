@@ -10,3 +10,6 @@ mindspore.nn.Dropout2d
     `Dropout2d` 可以提高通道特征映射之间的独立性。
 
     更多参考详见 :func:`mindspore.ops.dropout2d`。
+
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`，并新增构造参数 `inplace`。

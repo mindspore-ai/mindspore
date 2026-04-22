@@ -11,7 +11,7 @@ mindspore.ops.celu
     详情请参考： `celu <https://arxiv.org/abs/1704.07483>`_ 。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`，并新增 `inplace` 参数。
 
     CELU函数图：
 

@@ -22,7 +22,6 @@ speed_fusion_attention:
 
         .. warning::
             - This is an experimental API that is subject to change or deletion.
-            - Only support on Atlas A2 training series.
 
         Note:
             This interface is not supported in `graph mode (mode=mindspore.GRAPH_MODE)

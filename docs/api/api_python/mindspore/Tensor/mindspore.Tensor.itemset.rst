@@ -8,6 +8,9 @@ mindspore.Tensor.itemset
     至少有1个参数，并且最后一个参数被定义为设定值。
     Tensor.itemset(\*args)等同于 :math:`Tensor[args] = item` 。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
 

@@ -21,8 +21,7 @@ from mindspore import nn, Tensor, Parameter, ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_morph_custom_bprop_001():
     """
     Feature: Morph.
@@ -94,7 +93,7 @@ def test_morph_custom_bprop_001():
                        bwd_out_1[1][1].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_morph_custom_bprop_multi_outputs():
     """
     Feature: Morph.
@@ -166,7 +165,7 @@ def test_morph_custom_bprop_multi_outputs():
                        bwd_out_1[1][1].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_morph_with_ctrl_flow_in_custom_bprop():
     """
     Feature: Morph.
@@ -240,7 +239,7 @@ def test_morph_with_ctrl_flow_in_custom_bprop():
                        bwd_out_1[1][1].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_morph_with_side_effect_in_custom_bprop():
     """
     Feature: Morph.
@@ -313,7 +312,7 @@ def test_morph_with_side_effect_in_custom_bprop():
                        bwd_out_1[1][1].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_morph_with_custom_fn_and_bprop_fn_not_match():
     """
     Feature: Morph.
@@ -358,7 +357,7 @@ def test_morph_with_custom_fn_and_bprop_fn_not_match():
         _ = ms.jit(grad_net)(input_x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_morph_custom_bprop_fn_inputs_and_outputs_not_match():
     """
     Feature: Morph.

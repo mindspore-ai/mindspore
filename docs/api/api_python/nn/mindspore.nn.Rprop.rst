@@ -22,6 +22,9 @@ mindspore.nn.Rprop
 
     :math:`g` 表示 `gradients` ，:math:`w` 表示 `parameters`，:math:`\Delta_{min/max}` 表示最小或者最大步长， :math:`\eta_{+/-}` 表示加速和减速因子。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，且 `weight_decay` 将被移除。
+
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 

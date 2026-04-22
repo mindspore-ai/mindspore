@@ -47,7 +47,7 @@ list_arg = [[tensor_x, tensor_x], [[tensor_x, tensor_y], {"x": tensor_x, "y": te
 dict_arg = {"x": tensor_x, "y": tensor_y, "u": tensor_u}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_non_tensor_inputs(mode):
     """
@@ -90,7 +90,7 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_grad_parameter_input(mode):
     """
@@ -134,7 +134,7 @@ class GradCellWithParameterTuple(nn.Cell):
         return self.grad(self.net, self.params)(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_grad_parameter_as_input_and_fv2(mode):
     """

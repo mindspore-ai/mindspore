@@ -86,7 +86,7 @@ def onp_not_equal(a, b):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_not_equal():
     run_binop_test(mnp_not_equal, onp_not_equal, test_case)
 
@@ -100,7 +100,7 @@ def onp_less_equal(a, b):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_less_equal():
     run_binop_test(mnp_less_equal, onp_less_equal, test_case)
 
@@ -114,7 +114,7 @@ def onp_less(a, b):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_less():
     run_binop_test(mnp_less, onp_less, test_case)
 
@@ -128,7 +128,7 @@ def onp_greater_equal(a, b):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_greater_equal():
     run_binop_test(mnp_greater_equal, onp_greater_equal, test_case)
 
@@ -142,7 +142,7 @@ def onp_greater(a, b):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_greater():
     run_binop_test(mnp_greater, onp_greater, test_case)
 
@@ -168,7 +168,7 @@ def onp_isfinite(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isfinite():
     match_res(mnp_isfinite, onp_isfinite, test_case.infs)
 
@@ -182,7 +182,7 @@ def onp_isnan(x):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isnan():
     match_res(mnp_isnan, onp_isnan, test_case.infs)
 
@@ -196,7 +196,7 @@ def onp_isinf(x):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isinf():
     match_res(mnp_isinf, onp_isinf, test_case.infs)
 
@@ -210,7 +210,7 @@ def onp_isposinf(x):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isposinf():
     match_res(mnp_isposinf, onp_isposinf, test_case.infs)
 
@@ -224,13 +224,13 @@ def onp_isneginf(x):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isneginf():
     match_res(mnp_isneginf, onp_isneginf, test_case.infs)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isscalar():
     assert mnp.isscalar(1) == onp.isscalar(1)
     assert mnp.isscalar(2.3) == onp.isscalar(2.3)
@@ -241,7 +241,7 @@ def test_isscalar():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isclose():
     a = [0, 1, 2, float('inf'), float('inf'), float('nan')]
     b = [0, 1, -2, float('-inf'), float('inf'), float('nan')]
@@ -263,7 +263,7 @@ def test_isclose():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_in1d():
     xi = [rand_int(), rand_int(1), rand_int(10)]
     yi = [rand_int(), rand_int(1), rand_int(10)]
@@ -274,7 +274,7 @@ def test_in1d():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_isin():
     xi = [rand_int(), rand_int(1), rand_int(10), rand_int(2, 3)]
     yi = [rand_int(), rand_int(1), rand_int(10), rand_int(2, 3)]
@@ -293,7 +293,7 @@ def onp_logical_or(x1, x2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_logical_or():
     run_logical_test(mnp_logical_or, onp_logical_or, test_case)
 
@@ -307,7 +307,7 @@ def onp_logical_xor(x1, x2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_logical_xor():
     run_logical_test(mnp_logical_xor, onp_logical_xor, test_case)
 
@@ -321,7 +321,7 @@ def onp_logical_and(x1, x2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_logical_and():
     run_logical_test(mnp_logical_and, onp_logical_and, test_case)
 
@@ -335,7 +335,7 @@ def onp_logical_not(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_logical_not():
     for arr in test_case.boolean_arrs:
         expected = onp_logical_not(arr)
@@ -344,7 +344,7 @@ def test_logical_not():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_array_equal():
     a = [0, 1, 2, float('inf'), float('nan')]
     b = [0, 1, 2, float('inf'), float('nan')]
@@ -355,7 +355,7 @@ def test_array_equal():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_array_equiv():
     a = [0, 1, 2, float('inf'), float('nan')]
     b = [0, 1, 2, float('inf'), float('nan')]
@@ -382,7 +382,7 @@ def onp_signbit(*arrs):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_signbit():
     onp_arrs = [onp.arange(-10, 10).astype('float32'), onp.arange(-10, 10).astype('int32')]
     mnp_arrs = [mnp.arange(-10, 10).astype('float32'), mnp.arange(-10, 10).astype('int32')]
@@ -411,7 +411,7 @@ def onp_sometrue(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_sometrue():
     onp_arr = onp.full((3, 2), [True, False])
     mnp_arr = to_tensor(onp_arr)
@@ -420,7 +420,7 @@ def test_sometrue():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_setdiff1d():
     """
     Feature: test setdiff1d.

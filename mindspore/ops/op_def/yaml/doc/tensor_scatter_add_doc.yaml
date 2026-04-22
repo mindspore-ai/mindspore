@@ -4,6 +4,9 @@ tensor_scatter_add:
 
         Return a new tensor by adding the values from `updates` in `input_x` indicated by `indices` .
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         .. math::
             output\left [indices \right ] = input\_x + updates
 

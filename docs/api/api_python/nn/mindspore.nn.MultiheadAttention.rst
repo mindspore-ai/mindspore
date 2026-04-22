@@ -12,6 +12,9 @@ mindspore.nn.MultiheadAttention
 
     如果query、key和value相同，则上述即为自注意力机制的计算过程。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``MultiheadAttention(embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None, vdim=None, batch_first=False, dtype=None)`` 。其中 `has_bias` 替换为 `bias`，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     参数：
         - **embed_dim** (int) - 模型的总维数。
         - **num_heads** (int) - 并行注意力头的数量。`num_heads` 需要能够整除 `embed_dim` （每个头的维数为 `embed_dim // num_heads` ）。

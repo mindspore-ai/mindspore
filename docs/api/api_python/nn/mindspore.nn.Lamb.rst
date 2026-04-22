@@ -49,13 +49,14 @@ mindspore.nn.Lamb
 
     其中， :math:`m` 代表第一个动量矩阵 `moment1` ，:math:`v` 代表第二个动量矩阵 `moment2` ，:math:`g` 代表梯度 `gradients` ，:math:`\gamma` 代表学习率 `learning_rate`，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 和 :math:`beta_2^t` 代表 `beta1` 和 `beta2` 的t次方 ， :math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps`， :math:`\lambda` 表示LAMB权重衰减率，对应weight_decay。
 
+    .. warning::
+        - 该接口已废弃，2.9.0（不含）之后版本将删除。
+        - Lamb优化器的更新过程不是完全element-wise的，分布式并行下对权重进行切分可能会影响更新结果。
+
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 
         .. include:: mindspore.nn.optim_note_loss_scale.rst
-
-    .. warning::
-            Lamb优化器的更新过程不是完全element-wise的，分布式并行下对权重进行切分可能会影响更新结果。
 
     参数：
         - **params** (Union[list[Parameter], list[dict]]) - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：

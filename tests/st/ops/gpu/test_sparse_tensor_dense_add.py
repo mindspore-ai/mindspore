@@ -43,7 +43,7 @@ def generate_data(datatype="float32", indicetype="int32"):
     return data
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "int8"),
                                                   ("int32", "int16"),
                                                   ("int32", "int32"),
@@ -78,7 +78,7 @@ def test_sparse_tensor_dense_add(indicetype, datatype):
     assert np.all(expected - out < eps)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_sparse_tensor_dense_add_dyn():
     """
     Feature: test SparseTensorDenseAdd op in gpu.

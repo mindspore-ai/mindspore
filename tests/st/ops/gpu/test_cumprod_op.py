@@ -131,7 +131,7 @@ def cum_prod(nptype):
     assert output[6].shape == expect6.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_prod_uint8():
     """
     Feature: Test CumProd with uint8.
@@ -141,7 +141,7 @@ def test_cum_prod_uint8():
     cum_prod(np.uint8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_prod_int8():
     """
     Feature: Test CumProd with int8.
@@ -151,7 +151,7 @@ def test_cum_prod_int8():
     cum_prod(np.int8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_prod_int32():
     """
     Feature: Test CumProd with int32.
@@ -161,7 +161,7 @@ def test_cum_prod_int32():
     cum_prod(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_prod_float16():
     """
     Feature: Test CumProd with float16.
@@ -171,7 +171,7 @@ def test_cum_prod_float16():
     cum_prod(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cum_prod_float32():
     """
     Feature: Test CumProd with float32.
@@ -190,7 +190,7 @@ class Net(nn.Cell):
         return self.op(x, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cumprod_dshape():
     """
     Feature: Test cumprod dynamic shape.
@@ -234,7 +234,7 @@ def test_cumprod_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_cumprod_functional_tensor_modes():
     """
     Feature: test cumprod functional and tensor APIs in PyNative and Graph modes.

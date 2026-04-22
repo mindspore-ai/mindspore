@@ -122,7 +122,7 @@ class DataNet(ms.nn.Cell):
                         self.n_nodes, self.indptr, self.indices)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gcn_csr():
     """
     Feature: Test GCN model with CSR optimizations.

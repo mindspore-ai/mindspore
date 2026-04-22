@@ -33,7 +33,7 @@ class SparseReorder(Cell):
         return self.sparse_reorder(indices, values, shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_reorder_int16():
     """
     Feature: SparseReorder
@@ -55,7 +55,7 @@ def test_sparse_reorder_int16():
     assert np.allclose(y_values, expect_y_values, ertol_loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_reorder_int32():
     """
     Feature: SparseReorder

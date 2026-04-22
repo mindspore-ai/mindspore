@@ -18,11 +18,9 @@ Test module for GPTO execution order.
 import os
 from tests.mark_utils import arg_mark
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=0.01
+    card_mark="onecard", mem_peak=0.01
 )
 def test_gpto_exec_order_interface_static():
     """
@@ -64,12 +62,9 @@ def test_gpto_exec_order_interface_static():
     assert return_code == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level0",
-    card_mark="allcards",
-    essential_mark="unessential",
-)
+    card_mark="allcards")
 def test_gpto_exec_order_interface_dynamic():
     """
     Feature: this test calls gpto_net_dynamic_ops.py

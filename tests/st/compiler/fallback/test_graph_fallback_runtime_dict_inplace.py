@@ -27,8 +27,7 @@ context.set_context(jit_level='O0')
 global_dict_1 = {"1": 1}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_global_dict_used_in_graph():
     """
     Feature: Enable dict inplace operation
@@ -47,8 +46,7 @@ def test_global_dict_used_in_graph():
 global_dict_2 = {"1": [1, 2, 3, 4]}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_dict_used_in_graph_2():
     """
     Feature: Enable dict inplace operation
@@ -67,8 +65,7 @@ def test_global_dict_used_in_graph_2():
 global_dict_3 = {"1": ([np.array([1, 2, 3]), np.array([4, 5, 6])], "test")}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_dict_used_in_graph_3():
     """
     Feature: Enable dict inplace operation
@@ -87,8 +84,7 @@ def test_global_dict_used_in_graph_3():
 global_input_dict_1 = {"1": 1}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_global_dict_as_graph_input():
     """
     Feature: Enable dict inplace operation
@@ -107,8 +103,7 @@ def test_global_dict_as_graph_input():
 global_input_dict_2 = {"1": [1, 2, 3, 4]}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_dict_as_graph_input_2():
     """
     Feature: Enable dict inplace operation
@@ -127,8 +122,7 @@ def test_global_dict_as_graph_input_2():
 global_input_dict_3 = {"1": ([1, 2, 3, 4], 5, 6)}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_global_dict_as_graph_input_3():
     """
     Feature: Enable dict inplace operation
@@ -144,7 +138,7 @@ def test_global_dict_as_graph_input_3():
     assert id(res[0]) == id(global_input_dict_3["1"][0])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_inplace_with_attribute():
     """
     Feature: Enable dict do inplace operation.
@@ -166,7 +160,7 @@ def test_dict_inplace_with_attribute():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_inplace_with_attribute_2():
     """
     Feature: Enable dict do inplace operation.
@@ -188,7 +182,7 @@ def test_dict_inplace_with_attribute_2():
     assert id(x["2"]) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_inplace_setitem():
     """
     Feature: Enable dict inplace operation
@@ -208,7 +202,7 @@ def test_dict_inplace_setitem():
 
 
 @pytest.mark.skip(reason="Dictionary with no return will be convert to tuple")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_inplace_setitem_2():
     """
     Feature: Enable dict inplace operation
@@ -225,8 +219,7 @@ def test_dict_inplace_setitem_2():
     assert x == {"a": 3, "b": 2}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_inplace_setitem_3():
     """
     Feature: Enable dict inplace operation
@@ -247,8 +240,7 @@ def test_dict_inplace_setitem_3():
     assert id(y) == id(res["b"])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_inplace_setitem_with_attribute():
     """
     Feature: Enable dict inplace operation
@@ -274,8 +266,7 @@ def test_dict_inplace_setitem_with_attribute():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_inplace_setitem_with_attribute_2():
     """
     Feature: Enable dict inplace operation
@@ -307,8 +298,7 @@ def test_dict_inplace_setitem_with_attribute_2():
 
 
 @pytest.mark.skip(reason="setitem with abstract any do not convert to pyexecute yet")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dict_inplace_setitem_with_attribute_3():
     """
     Feature: Enable dict inplace operation
@@ -338,8 +328,7 @@ def test_dict_inplace_setitem_with_attribute_3():
     assert id(x) == id(ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_dict_getitem_after_setitem():
     """
     Feature: Enable dict inplace operation
@@ -366,8 +355,7 @@ def test_dict_getitem_after_setitem():
 global_dict_for_update = {'Name': 'a', 'Age': 7}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_dict_getitem_after_setitem_2():
     """
     Feature: Enable dict inplace operation
@@ -396,8 +384,7 @@ def test_dict_getitem_after_setitem_2():
     assert ret3 == {'Name': 'c', 'Age': 18, 'Grade': 'college'}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_dict_inplace_setitem_with_dict_getitem():
     """
     Feature: Enable dict inplace operation

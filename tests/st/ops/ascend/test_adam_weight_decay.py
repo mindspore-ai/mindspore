@@ -117,7 +117,7 @@ def test_adam_weight_decay_fission_2_decay_flag_is_false():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_adam_weight_decay_pass_without_same_type():
     """
     Feature: AdamWeightDecay op
@@ -151,7 +151,7 @@ def test_adam_weight_decay_pass_without_same_type():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_adam_weight_decay_pass_with_same_type_to_assign():
     """
     Feature: AdamWeightDecay op

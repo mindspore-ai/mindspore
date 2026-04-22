@@ -33,7 +33,7 @@ class TraceGradNet(nn.Cell):
         return self.trace(y_grad, x_shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_trace_grad_2d_int32():
     """
     Feature: Returns the result of trace grad of the int32 x_shape
@@ -50,7 +50,7 @@ def test_trace_grad_2d_int32():
         assert (x_grad.asnumpy() == grad_expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_trace_grad_2d_double():
     """
     Feature: Returns the result of trace grad of the double y_grad, int32 x_shape

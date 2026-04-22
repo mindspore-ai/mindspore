@@ -10,7 +10,7 @@ std:
     Calculates the standard deviation over the dimensions specified by `dim`. `dim` can be a single dimension, list of
     dimensions, or None to reduce over all dimensions.
 
-    The standard deviation (:math:`\sigma`) is calculated as:
+    The standard deviation ( :math:`\sigma` ) is calculated as:
 
     .. math::
         \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}
@@ -19,7 +19,9 @@ std:
     of samples and :math:`\delta N` is the `correction`.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        Non-backward-compatible change after version 2.9.0: the ``std(axis=None, ddof=0, keepdims=False)``
+        overload will be removed, and only ``std(dim=None, *, correction=1, keepdim=False)`` will be
+        supported (the default value of ``ddof`` changes from ``0`` to ``1``).
 
     Args:
         dim (None, int, tuple(int), optional): The dimension or dimensions to reduce. Defaults to ``None``.

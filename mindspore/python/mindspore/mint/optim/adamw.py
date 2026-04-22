@@ -107,7 +107,6 @@ class AdamW(Optimizer):
         - This is an experimental optimizer API that is subject to change.
           This module must be used with lr scheduler module in `LRScheduler Class
           <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
-        - For Ascend, it is only supported on platforms above Atlas A2.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
@@ -161,6 +160,7 @@ class AdamW(Optimizer):
                  weight_decay=1e-2, amsgrad=False, *, maximize=False):
         # The API definition and the validation of attributes below refers to PyTorch:
         # https://github.com/pytorch/pytorch/blob/v2.1.0/torch/optim/adamw.py
+        # check param value
         _check_param_value(betas, eps, weight_decay, lr, amsgrad, maximize, self.cls_name)
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -173,11 +173,11 @@ class AdamW(Optimizer):
         if weight_decay < 0.0:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, amsgrad=amsgrad,
-                        maximize=maximize)
+        defaults = {"lr": lr, "betas": betas, "eps": eps,
+                    "weight_decay": weight_decay, "amsgrad": amsgrad,
+                    "maximize": maximize}
         self.max_v_group = True
-        super(AdamW, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')

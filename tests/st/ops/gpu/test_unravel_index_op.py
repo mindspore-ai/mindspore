@@ -16,7 +16,7 @@ class UnravelIndex(nn.Cell):
         return self.unravel_index(indices, dims)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unravel_index_0d_graph():
     """
     Feature: UnravelIndex gpu TEST.
@@ -32,7 +32,7 @@ def test_unravel_index_0d_graph():
     assert (output_ms.asnumpy() == output_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_unravel_index_1d_pynative():
     """
     Feature: UnravelIndex gpu TEST.

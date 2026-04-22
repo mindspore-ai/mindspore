@@ -22,8 +22,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_implicit_cast_float16_float32():
     """
     Feature: test implicit conversion
@@ -43,8 +42,7 @@ def test_implicit_cast_float16_float32():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_auto_lifting_cast_float16_float32():
     """
     Feature: test auto lifting cast to kernel support attr

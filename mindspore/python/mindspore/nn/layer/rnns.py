@@ -592,6 +592,10 @@ class RNN(_RNNBase):
     :math:`W_{ih}` is the learnable input-hidden weights, and :math:`b_{ih}` is the learnable input-hidden bias.
     :math:`W_{hh}` is the learnable hidden-hidden weights, and :math:`b_{hh}` is the learnable hidden-hidden bias.
 
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, hx)``, and `has_bias` will be renamed to `bias`.
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
@@ -691,6 +695,10 @@ class GRU(_RNNBase):
     `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation
     <https://aclanthology.org/D14-1179.pdf>`_.
 
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, h_0)``, and `has_bias` will be renamed to `bias`.
+
     Note:
         When using GRU on Ascend, the hidden size only supports multiples of 16.
 
@@ -754,6 +762,10 @@ class LSTM(_RNNBase):
     Stacked LSTM (Long Short-Term Memory) layers.
 
     Apply LSTM layer to the input.
+
+    .. warning::
+        Starting after version 2.9.0, the forward inputs will be changed from ``(x, hx, seq_length)`` to
+        ``(input, h_0, c_0)``.
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.

@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_tuple():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -49,7 +49,7 @@ def test_jit_grad_with_grad_tensor_in_tuple():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_tuple_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -76,7 +76,7 @@ def test_jit_grad_with_grad_tensor_in_tuple_2():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_list():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -103,7 +103,7 @@ def test_jit_grad_with_grad_tensor_in_list():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_list_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -130,7 +130,7 @@ def test_jit_grad_with_grad_tensor_in_list_2():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_dict():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -157,7 +157,7 @@ def test_jit_grad_with_grad_tensor_in_dict():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_dict_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -184,7 +184,7 @@ def test_jit_grad_with_grad_tensor_in_dict_2():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_vargs():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -211,7 +211,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_vargs_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -238,7 +238,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs_2():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -265,7 +265,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -292,7 +292,7 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_2():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_invalid_input():
     """
     Feature: Test grad scene for tensor in container used as jit input.
@@ -317,7 +317,7 @@ def test_jit_grad_with_invalid_input():
     assert jcr["code"]["call_count_"] > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_jit_grad_with_invalid_input_2():
     """
     Feature: Test grad scene for tensor in container used as jit input.

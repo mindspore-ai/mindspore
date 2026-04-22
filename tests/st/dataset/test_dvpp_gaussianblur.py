@@ -31,8 +31,7 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=102.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=102.0)
 def test_dvpp_gaussianblur_operation_01():
     """
     Feature: GaussianBlur operation on device
@@ -134,8 +133,7 @@ def test_dvpp_gaussianblur_operation_01():
     assert np.allclose(gaussianblur_op, gaussianblur_op_cpu, rtol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=36.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=36.0)
 def test_dvpp_gaussianblur_operation_02():
     """
     Feature: GaussianBlur operation on device
@@ -242,8 +240,7 @@ def test_dvpp_gaussianblur_operation_02():
         assert (data1["image"] == data2["image"]).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_gaussianblur_exception_01():
     """
     Feature: GaussianBlur operation on device
@@ -351,8 +348,7 @@ def test_dvpp_gaussianblur_exception_01():
         v_trans.GaussianBlur([3, 3.0], 1.0).device(device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_gaussianblur_exception_02():
     """
     Feature: GaussianBlur operation on device

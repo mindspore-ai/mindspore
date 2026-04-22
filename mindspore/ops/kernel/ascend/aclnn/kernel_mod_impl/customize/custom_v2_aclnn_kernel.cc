@@ -16,6 +16,7 @@
 
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/custom_v2_aclnn_kernel.h"
 #include <algorithm>
+#include <string>
 #include <tuple>
 #include "kernel/ascend/acl_ir/custom/custom_op_api_exec.h"
 #include "kernel/ascend/acl_ir/custom/custom_op_api_cache.h"
@@ -25,6 +26,18 @@
 namespace mindspore {
 namespace kernel {
 namespace custom {
+
+namespace {
+template <typename TElem>
+void AppendOptionalAclArray(KernelTensor *input, std::vector<void *> *out) {
+  auto array_opt = input->GetOptionalValueWithCheck<std::vector<TElem>>();
+  if (!array_opt.has_value()) {
+    (void)out->emplace_back(nullptr);
+  } else {
+    (void)out->emplace_back(device::ascend::ConvertType(array_opt.value()));
+  }
+}
+}  // namespace
 
 void CustomV2AclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
@@ -105,16 +118,13 @@ std::vector<void *> CustomV2AclnnKernelMod::ConvertTypes(const std::vector<std::
   }
   std::vector<void *> convert_inputs;
   for (size_t i = 0; i < inputs.size(); i++) {
-    KernelTensor *input;
     auto dyn_input = inputs[i];
-    if (dyn_input.empty()) {
-      MS_LOG(EXCEPTION) << "Custom op [" << op_type_ << "] input-" << i << " is empty!";
-    } else {
-      input = dyn_input[0];
-      MS_EXCEPTION_IF_NULL(input);
-    }
+    MS_EXCEPTION_IF_CHECK_FAIL(!dyn_input.empty(),
+                               std::string("Custom op [") + op_type_ + "] input-" + std::to_string(i) + " is empty!");
+    KernelTensor *input = dyn_input[0];
+    MS_EXCEPTION_IF_NULL(input);
 
-    auto type = input_output_types_[i + offset];
+    const auto type = input_output_types_[i + offset];
     MS_LOG(INFO) << "Convert custom op [" << op_type_ << "] input-" << i
                  << ", input type: " << custom_supported_type_to_string.at(type);
     MS_VLOG(VL_CUSTOM_OP) << "Convert custom op [" << op_type_ << "] input-" << i
@@ -163,18 +173,15 @@ std::vector<void *> CustomV2AclnnKernelMod::ConvertTypes(const std::vector<std::
         break;
       }
       case CustomSupportType::kTypeIntArray: {
-        auto int_vector = device::ascend::ConvertKernelTensor<std::vector<int64_t>>(input);
-        (void)convert_inputs.emplace_back(device::ascend::ConvertType(int_vector));
+        AppendOptionalAclArray<int64_t>(input, &convert_inputs);
         break;
       }
       case CustomSupportType::kTypeBoolArray: {
-        auto bool_vector = device::ascend::ConvertKernelTensor<std::vector<uint8_t>>(input);
-        (void)convert_inputs.emplace_back(device::ascend::ConvertType(bool_vector));
+        AppendOptionalAclArray<uint8_t>(input, &convert_inputs);
         break;
       }
       case CustomSupportType::kTypeFloatArray: {
-        auto float_vector = device::ascend::ConvertKernelTensor<std::vector<float>>(input);
-        (void)convert_inputs.emplace_back(device::ascend::ConvertType(float_vector));
+        AppendOptionalAclArray<float>(input, &convert_inputs);
         break;
       }
       case CustomSupportType::kTypeDType: {
@@ -185,9 +192,8 @@ std::vector<void *> CustomV2AclnnKernelMod::ConvertTypes(const std::vector<std::
           (void)inputs_type_value_.emplace_back(device::ascend::ConvertType(type_id));
           (void)convert_inputs.emplace_back(&inputs_type_value_.back());
           break;
-        } else {
-          MS_LOG(EXCEPTION) << "Kernel tensor' value  is not Type, but is " << value->ToString();
         }
+        MS_LOG(EXCEPTION) << "Kernel tensor' value  is not Type, but is " << value->ToString();
       }
       default:
         MS_LOG(EXCEPTION) << "Custom unsupported input type: " << static_cast<int64_t>(type);
@@ -345,13 +351,10 @@ std::vector<std::vector<void *>> CustomV2AclnnKernelMod::GetTensorAddress(
   std::vector<std::vector<void *>> address_list;
   for (size_t i = 0; i < inputs_outputs.size(); i++) {
     auto dyn_input = inputs_outputs[i];
-    KernelTensor *input;
-    if (dyn_input.empty()) {
-      MS_LOG(EXCEPTION) << "Custom op [" << op_type_ << "] input-" << i << " is empty!";
-    } else {
-      input = dyn_input[0];
-      MS_EXCEPTION_IF_NULL(input);
-    }
+    MS_EXCEPTION_IF_CHECK_FAIL(!dyn_input.empty(),
+                               std::string("Custom op [") + op_type_ + "] input-" + std::to_string(i) + " is empty!");
+    KernelTensor *input = dyn_input[0];
+    MS_EXCEPTION_IF_NULL(input);
     auto type = input_output_types_[i];
     MS_LOG(DEBUG) << "Get custom op [" << op_type_ << "] input-" << i
                   << " tensor address, input type: " << custom_supported_type_to_string.at(type);
@@ -397,8 +400,7 @@ std::vector<std::vector<void *>> CustomV2AclnnKernelMod::GetTensorAddress(
       case CustomSupportType::kTypeIntArray:
       case CustomSupportType::kTypeBoolArray:
       case CustomSupportType::kTypeFloatArray: {
-        std::vector<void *> addr{nullptr};
-        address_list.emplace_back(addr);
+        (void)address_list.emplace_back(std::vector<void *>{nullptr});
         break;
       }
       case CustomSupportType::kTypeDType: {

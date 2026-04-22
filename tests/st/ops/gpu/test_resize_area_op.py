@@ -17,7 +17,7 @@ class NetResizeArea(nn.Cell):
         return self.resize_area(images, size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_area_float16():
     """
     Feature: Input type of float16
@@ -49,7 +49,7 @@ def test_resize_area_float16():
                            equal_nan=False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_area_float32():
     """
     Feature: Input type of float32

@@ -5,13 +5,13 @@ mindspore.Tensor.floor_divide\_
 
     按元素将 `self` Tensor除以 `other` Tensor，并向下取整。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     .. math::
         out_{i} = \text{floor}( \frac{self_i}{other_i})
 
     其中 :math:`floor` 表示Floor算子。有关更多详细信息，请参阅 :class:`mindspore.mint.floor` 算子。
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
 
     .. note::
         当 `self` 和 `other` 具有不同的shape时， `other` 必须能被广播成 `self` 。

@@ -9,6 +9,14 @@ mindspore.ops.range
         - 三个输入的数据类型必须全为整数或全为浮点数。
         - 当输入为tensor时，tensor中仅可包含一个元素，数据类型为数值型。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：
+
+        - `start` 将默认为 ``0`` ，`step` 将默认为 ``1`` 。
+        - 参数 `maxlen` 将被删除。
+
+        变更后的接口签名为 ``mindspore.ops.range(start=0, end, step=1)`` 。
+
     参数：
         - **start** (Union[Number, Tensor]) - 区间的起始值。
         - **end** (Union[Number, Tensor]) - 区间的末尾数。

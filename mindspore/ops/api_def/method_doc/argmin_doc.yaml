@@ -1,9 +1,12 @@
 argmin:
   description: |
     argmin(axis=None, keepdims=False) -> Tensor
-    
+
     Returns the indices of the minimum values along the given axis of the tensor.
- 
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `argmin(axis=None, keepdims=False)` will be removed, and only `argmin(dim=None, keepdim=False)` will be supported.
+
     Args:
         axis (Union[int, None], optional): Specify the axis for computation. If ``None`` , compute all elements in the
             tensor. Default ``None`` .
@@ -34,12 +37,12 @@ argmin:
         [[2],
          [1],
          [1]])
-    
+
     .. method:: Tensor.argmin(dim=None, keepdim=False) -> Tensor
         :noindex:
-    
+
     Returns the indices of the minimum values along the given axis of the tensor.
-   
+
     Args:
         dim (Union[int, None], optional): Specify the axis for computation. If ``None`` , compute all elements in the
             tensor.

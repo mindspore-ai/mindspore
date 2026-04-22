@@ -5,6 +5,9 @@ mindspore.Tensor.add
 
     `self` 和 `other` 逐元素相加。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始， ``add(other)`` 重载将被移除，仅支持 ``add(other, *, alpha=1)`` 。该变更与当前版本兼容，现有调用保持不变。
+
     .. math::
 
         out_{i} = self_{i} + other_{i}

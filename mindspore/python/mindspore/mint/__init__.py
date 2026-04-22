@@ -669,9 +669,6 @@ def cummax(input, dim):
             y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
-    .. note::
-        GE backend is not supported in Ascend.
-
     Args:
         input (Tensor): The input tensor.
         dim (int): The dimension to compute the cumulative maximum along.
@@ -1163,7 +1160,6 @@ def squeeze(input, dim):
         - Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
           and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
-        - In GE mode, only support remove dimensions of size 1 from the shape of input tensor.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

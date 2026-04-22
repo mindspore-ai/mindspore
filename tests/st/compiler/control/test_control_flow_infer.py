@@ -55,7 +55,7 @@ class Net(Cell):
         return x + y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_can_not_be_operator_err():
     """
     Feature: Control flow.
@@ -72,8 +72,7 @@ def test_can_not_be_operator_err():
     print('ms backward: ', fgrad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_analysis_fail_ir():
     """
     Feature: Control flow analysis fail ir.

@@ -5,6 +5,9 @@ mindspore.ops.binary_cross_entropy_with_logits
 
     输入经过sigmoid激活函数后作为预测值，`binary_cross_entropy_with_logits` 计算预测值和目标值之间的二值交叉熵损失。
 
+    .. warning::
+        2.9.0（不含）之后版本中，签名将调整为 ``binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None)`` ，其中 `pos_weight` 与 `reduction` 的位置互换。
+
     将输入 `input` 设置为 :math:`X` ，输入 `target` 设置为 :math:`Y` ，输入 `weight` 设置为 :math:`W` ，输出设置为 :math:`L` 。则，
 
     .. math::
@@ -41,10 +44,10 @@ mindspore.ops.binary_cross_entropy_with_logits
     :math:`P_c>1` 增大召回率， :math:`P_c<1` 增大精度。
 
     参数：
-        - **input** (Tensor) - 输入预测值。其数据类型为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **weight** (Tensor，可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认 ``None`` ，此时 `weight` 等价于值为 ``1`` 的Tensor。
-        - **pos_weight** (Tensor，可选) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认 ``None`` ，此时 `pos_weight` 等价于值为 ``1`` 的Tensor。
+        - **input** (Tensor) - 输入预测值。其数据类型为float16、float32或bfloat16。
+        - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16、float32或bfloat16。
+        - **weight** (Tensor，可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16。默认 ``None`` ，此时 `weight` 等价于值为 ``1`` 的Tensor。
+        - **pos_weight** (Tensor，可选) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16、float32或bfloat16。默认 ``None`` ，此时 `pos_weight` 等价于值为 ``1`` 的Tensor。
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
           - ``'none'``：不应用归约方法。

@@ -26,7 +26,7 @@ from tests.st.pi_jit.share.utils import pi_jit_with_config
 jit_cfg = {'compile_with_try': False}
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_nan_to_num():
     """
     Feature: ops.nan_to_num()
@@ -48,7 +48,7 @@ def test_nan_to_num():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_nan_to_num_with_default_params():
     """
     Feature: ops.nan_to_num()
@@ -70,7 +70,7 @@ def test_nan_to_num_with_default_params():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_NanToNum():
     """
     Feature: ops.NanToNum()
@@ -92,7 +92,7 @@ def test_NanToNum():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_NanToNum_with_default_params():
     """
     Feature: ops.NanToNum()

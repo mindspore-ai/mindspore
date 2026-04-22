@@ -42,8 +42,7 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.conv(x, self.w)
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=812.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=812.0)
 def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     x = np.random.randn(32, 3, 224, 224).astype(np.float32)

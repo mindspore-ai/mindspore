@@ -154,7 +154,6 @@ class COMMON_EXPORT TensorPy {
   TensorPtr GetTensor() const;
 
   /// \brief Set C++ Tensor.
-  ///
   /// \param[in] tensor [TensorPtr] The C++ Tensor.
   void SetTensor(const TensorPtr &tensor);
 
@@ -394,7 +393,6 @@ COMMON_EXPORT const py::handle ConvertToTensorPy(const py::handle &obj);
 COMMON_EXPORT TensorPtr ConvertToTensor(const py::handle &obj);
 
 /// \brief Set Tensor value for TensorPy.
-///
 /// \param[in] obj [py::handle] The python object.
 /// \param[in] tensor_value [TensorPtr] C++ Tensor.
 COMMON_EXPORT void SetTensorValue(const py::handle &obj, const TensorPtr &tensor_value);
@@ -408,39 +406,33 @@ COMMON_EXPORT const ValuePtr ConvertToValue(const py::handle &obj);
 COMMON_EXPORT const ValuePtr ConvertPyObjectToValue(PyObject *obj);
 
 /// \brief Create Tensor from a numpy array object.
-///
 /// \param[in] input [py::array] Data value of the tensor.
 /// \param[in] type_ptr [TypePtr] Data type of the tensor.
 /// \return A pointer address of C++ Tensor.
 COMMON_EXPORT TensorPtr MakeTensor(const py::array &input, const TypePtr &type_ptr = nullptr);
 
 /// \brief Create Tensor from a numpy array without copy.
-///
 /// \param[in] input [py::array] Data value of the tensor.
 /// \return A pointer address of C++ Tensor.
 COMMON_EXPORT TensorPtr MakeTensorOfNumpy(const py::array &input);
 
 /// \brief Create a tensor on meta device from numpy array.
-///
 /// \param[in] input [py::array] Data value of the tensor.
 /// \param[in] type_ptr [TypePtr] Data type of the tensor.
 /// \return A pointer address of C++ Tensor.
 COMMON_EXPORT TensorPtr MakeMetaTensor(const py::array &input, const TypePtr &type_ptr = nullptr);
 
 /// \brief Create a numpy array from tensor nonblocking.
-///
 /// \param[in] tensor_value [TensorPtr] C++ Tensor.
 /// \return [py::array] Data value of the tensor.
 COMMON_EXPORT py::array NumpyNonBlocking(const Tensor &tensor);
 
 /// \brief Create a numpy array from tensor.
-///
 /// \param[in] tensor_value [TensorPtr] C++ Tensor.
 /// \return [py::array] Data value of the tensor.
 COMMON_EXPORT py::array AsNumpy(const Tensor &tensor);
 
 /// \brief Get buffer info from a py array.
-///
 /// \param[in] input [py::array] Data value of the tensor.
 /// \return [py::buffer_info] Pybind buffer info.
 COMMON_EXPORT py::buffer_info GetPyBufferFromPyArray(const py::array &input);

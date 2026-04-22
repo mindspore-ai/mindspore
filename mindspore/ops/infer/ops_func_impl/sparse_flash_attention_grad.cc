@@ -51,6 +51,9 @@ constexpr size_t kSFAGradOutputDQueryRopeIndex = 3;
 constexpr size_t kSFAGradOutputDKeyRopeIndex = 4;
 constexpr size_t kSFAGradOutputsNum = 5;
 
+constexpr size_t kRank3 = 3;
+constexpr size_t kRank4 = 4;
+
 bool IsGradOptionalInputNone(const InferInfoPtr &input) { return input->IsNone(); }
 
 void CheckRank3Or4(const ShapeVector &shape, const std::string &name, const std::string &op_name) {
@@ -58,7 +61,7 @@ void CheckRank3Or4(const ShapeVector &shape, const std::string &name, const std:
     return;
   }
   const size_t rank = shape.size();
-  if (rank != 3 && rank != 4) {
+  if (rank != kRank3 && rank != kRank4) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', the shapes of the input " << name
                              << " should be 3 or 4 dimensional, but got " << rank << "-dimensional.";
   }

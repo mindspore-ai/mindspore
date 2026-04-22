@@ -121,8 +121,7 @@ def compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths
     assert np.allclose(loss.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("batch", [1, 10])
 @pytest.mark.parametrize("data_type", [np.float64])
 def test_ctc_loss_v2_un_padded(batch, data_type):
@@ -147,8 +146,7 @@ def test_ctc_loss_v2_un_padded(batch, data_type):
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ctc_loss_v2_un_padded_grad():
     """
     Feature: Test CTCLossV2.
@@ -243,8 +241,7 @@ def test_ctc_loss_v2_un_padded_grad():
     np.allclose(grad.asnumpy(), expected_grad)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("batch", [1, 10])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_ctc_loss_v2_padded(batch, data_type):
@@ -274,8 +271,7 @@ def test_ctc_loss_v2_padded(batch, data_type):
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_ctc_loss_v2_exception():
     """
     Feature: Test CTCLossV2 Exception Case.

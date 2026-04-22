@@ -95,8 +95,8 @@ class LPPool1d(Cell):
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
     Args:
         norm_type (Union[int, float]): Type of normalization, represents :math:`p` in the formula, can not be 0.
@@ -171,8 +171,8 @@ class LPPool2d(Cell):
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
     Args:
         norm_type(Union[int, float]): Type of normalization, represents :math:`p` in the formula, can not be 0.
@@ -294,8 +294,9 @@ class MaxPool3d(_PoolNd):
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    .. note::
-        For Atlas training series products, this interface is not supported.
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `pad_mode` will be removed,
+        and the default value of `stride` will follow `kernel_size`.
 
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the maximum value,
@@ -447,6 +448,11 @@ class MaxPool2d(_PoolNd):
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `pad_mode` and
+        `data_format` will be removed, and the default value of `stride` will
+        follow `kernel_size`.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
@@ -615,9 +621,6 @@ class MaxPool2dExt(Cell):
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
-    .. warning::
-        Only support on Atlas training series.
-
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
             is an int number or a single element tuple that represents height and width are both kernel_size,
@@ -708,6 +711,10 @@ class MaxPool1d(_PoolNd):
     .. math::
         \text{output}(N_i, C_j, l) = \max_{n=0, \ldots, l_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times l + n)
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `pad_mode` will be
+        removed, and the default value of `stride` will follow `kernel_size`.
 
     Args:
         kernel_size (int, optional): The size of kernel used to take the max value. Default: ``1`` .
@@ -892,15 +899,17 @@ class AvgPool3d(_PoolNd):
     is :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
     .. warning::
-        `kernel_size` is in the range [1, 255]. `stride` is in the range [1, 63].
+        - `kernel_size` is in the range [1, 255]. `stride` is in the range [1, 63].
+        - After version 2.9.0, the constructor signature will change to
+          ``AvgPool3d(kernel_size, stride=None, padding=0, ceil_mode=False,
+          count_include_pad=True, divisor_override=None)``.
+          The default value of `stride` will change from ``1`` to ``None``,
+          and the `pad_mode` parameter will be removed.
 
     .. math::
         \text{output}(N_i, C_j, d, h, w) =
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
-
-    Note:
-        This interface currently does not support Atlas A2 training series products.
 
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
@@ -1139,8 +1148,9 @@ class AvgPool2d(_PoolNd):
         \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
+    .. warning::
+        After version 2.9.0, the default value of `stride` will change from ``1`` to ``None``,
+        and the `pad_mode`/`data_format` behavior will be adjusted.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
@@ -1303,8 +1313,9 @@ class AvgPool1d(_PoolNd):
         \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times l + n)
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `pad_mode` will be removed, and the default `stride`
+        will follow `kernel_size`.
 
     Args:
         kernel_size (int, optional): The size of kernel window used to take the average value, Default: ``1`` .
@@ -1684,6 +1695,10 @@ class AdaptiveMaxPool1d(Cell):
     Note:
         :math:`L_{in}` must be divisible by `output_size`.
 
+    .. warning::
+        After version 2.9.0, the forward input parameter `x` will be renamed to `input`,
+        and the constructor will add a `return_indices` argument.
+
     Args:
         output_size (int): the target output size :math:`L_{out}`.
 
@@ -1769,7 +1784,6 @@ class AdaptiveMaxPool2d(Cell):
 
     Note:
         - In KBK mode, `output_size` does not support mutable.
-        - Atlas training series products do not support backward propagation.
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
@@ -2017,6 +2031,9 @@ class FractionalMaxPool3d(Cell):
     The input and output data format can be "NCDHW". N is the batch size, C is the number of channels,
     D the feature depth, H is the feature height, and W is the feature width.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value, is a positive int
             that represents depth, height and width of the kernel, or a tuple of three positive integers that represent
@@ -2112,11 +2129,13 @@ class MaxUnpool1d(Cell):
     is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
-
     .. math::
         \begin{array}{ll} \\
         H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
@@ -2190,6 +2209,9 @@ class MaxUnpool1d(Cell):
 class MaxUnpool2d(Cell):
     r"""
     Computes the inverse of :class:`mindspore.nn.MaxPool2d`.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     MaxUnpool2d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
@@ -2293,6 +2315,9 @@ class MaxUnpool3d(Cell):
         H_{out} = (H_{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
         W_{out} = (W_{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
         \end{array}
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,

@@ -31,7 +31,7 @@ class SincNet(nn.Cell):
         return self.sinc(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sinc_input_float32_output_float32():
     """
     Feature: Sinc gpu TEST.
@@ -48,7 +48,7 @@ def test_sinc_input_float32_output_float32():
     assert np.allclose(output_ms.asnumpy(), expect.astype(np.float32), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sinc_input_float64_output_float64():
     """
     Feature: Sinc gpu TEST.

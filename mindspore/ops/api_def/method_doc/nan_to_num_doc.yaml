@@ -1,8 +1,9 @@
 nan_to_num:
   description: |
     nan_to_num(nan=None, posinf=None, neginf=None) -> Tensor
-    
+
     For details, please refer to :func:`mindspore.ops.nan_to_num`.
+
 
     Supported Platforms:
         ``Ascend`` ``CPU``

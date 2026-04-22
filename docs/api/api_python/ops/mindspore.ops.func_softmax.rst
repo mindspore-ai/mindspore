@@ -3,8 +3,13 @@ mindspore.ops.softmax
 
 .. py:function:: mindspore.ops.softmax(input, axis=-1, *, dtype=None)
 
-    在指定轴上对输入Tensor执行Softmax激活函数做归一化操作。假设指定轴 :math:`axis` 上有切片，那么每个元素 :math:`input_i` 所对应的Softmax函数如下所示：
+    在指定轴上对输入Tensor执行Softmax激活函数做归一化操作。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `axis` 将重命名为 `dim`，默认值将由 ``-1`` 调整为 ``None`` 。
+
+    假设指定轴 :math:`axis` 上有切片，那么每个元素 :math:`input_i` 所对应的Softmax函数如下所示：
+    
     .. math::
         \text{output}(input_i) = \frac{\exp(input_i)}{\sum_{j = 0}^{N-1}\exp(input_j)},
 

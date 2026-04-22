@@ -22,9 +22,6 @@ mindspore.ops.lightning_indexer
     - N2: `key` 的 head 数。仅支持 1。
     - D: head 维度。仅支持 128。
 
-    .. warning::
-        仅支持 Atlas A2 推理系列产品（Ascend 平台）。
-
     .. note::
         - `query`、 `key` 和 `weights` 的数据类型必须一致。
         - 在非 PageAttention 场景下， `layout_key` 应与 `layout_query` 保持一致。

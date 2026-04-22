@@ -9,8 +9,8 @@ mindspore.nn.Conv3dTranspose
     当Conv3d和ConvTranspose3d使用相同的参数初始化时，且 `pad_mode` 设置为 ``"pad"``，它们会在输入的深度、高度和宽度方向上填充 :math:`dilation * (kernel\_size - 1) - padding` 个0，这种情况下它们的输入shape和输出shape是互逆的。
     然而，当 `stride` 大于1时，Conv3d会将多个输入的shape映射到同一个输出shape。反卷积网络的详细介绍可以参考论文： `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_ 。
 
-    .. note::
-        - Atlas A2训练系列产品暂不支持 `output_padding` 。
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True, dilation=1, padding_mode='zeros', dtype=None)`` 。其中参数名 `group` 将改为 `groups`，`has_bias` 将改为 `bias` 且默认值由 ``False`` 改为 ``True`` ；`pad_mode`、`weight_init`、`bias_init`、`data_format` 将被移除；新增参数 `padding_mode`。
 
     参数：
         - **in_channels** (int) - Conv3dTranspose层输入Tensor的空间维度。
@@ -75,7 +75,7 @@ mindspore.nn.Conv3dTranspose
 
     异常：
         - **TypeError** - `in_channels` 、 `out_channels` 或 `group` 不是int。
-        - **TypeError** - `kernel_size` 、 `stride` 、 `padding` 、 `dilation` 或 `output_padding` 既不是int也不是tuple。     
+        - **TypeError** - `kernel_size` 、 `stride` 、 `padding` 、 `dilation` 或 `output_padding` 既不是int也不是tuple。
         - **TypeError** - 输入数据类型不是要求的类型，即CPU/GPU不是float16或float32，Ascend不是float16。
         - **ValueError** - `in_channels` 、 `out_channels` 、 `kernel_size` 、 `stride` 或 `dilation` 小于1。
         - **ValueError** - `padding` 小于0。

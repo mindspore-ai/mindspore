@@ -4,6 +4,9 @@ index_add:
 
         Adds tensor `y` to specified axis and indices of tensor `self`. The axis should be in [-len(self.dim),  len(self.dim) - 1], and indices should be in [0, the size of `self` - 1] at the axis dimension.
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: overload `index_add(indices, y, axis, use_lock=True, check_index_bound=True)` will be removed, and only `index_add(dim, index, source, *, alpha=1)` will be supported. `check_index_bound` will be removed.
+
         Args:
             indices (Tensor): Add the value of `self` and `y` along the dimension of the `axis` according to the specified index value, with data type int32. The `indices` must be 1D with the same size as the size of `y` in the `axis` dimension. The values of `indices` should be in [0, b), where the b is the size of `self` in the `axis` dimension.
             y (Tensor): The input tensor with the value to add.
@@ -19,7 +22,7 @@ index_add:
             ValueError: If axis is out of the range of `self` shape.
             ValueError: If `self` rank is not the same as `y` rank.
             ValueError: If shape of `indices` is not 1D or size of `indices` is not equal to dimension of y[axis].
-            ValueError: If `y`'s shape is not the same as `self` except the `axis` th dimension.
+            ValueError: If `y` 's shape is not the same as `self` except the `axis` th dimension.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -5,6 +5,9 @@ mindspore.ops.lp_pool1d
 
     在输入Tensor上应用1D LP池化运算，可被视为组成一个1D输入平面。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`。
+
     通常，输入的shape为 :math:`(N, C, L_{in})` 或 :math:`(C, L_{in})`，输出的shape为 :math:`(N, C, L_{out})` 或 :math:`(C, L_{out})`。
 
     .. math::
@@ -14,9 +17,6 @@ mindspore.ops.lp_pool1d
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
-
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
 
     参数：
         - **x** (Tensor) - shape为 :math:`(N, C, L_{in})` 或 :math:`(C, L_{in})` 的Tensor。

@@ -94,11 +94,9 @@ def index_fill__binary_case2(input_binary_data=None, output_binary_data=None):
     allclose_nparray(output_binary_data[1], grads[0].asnumpy(), 1e-4, 1e-4)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='essential', mem_peak=2048.01)
+    card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_index_fill__normal(mode):
     """
@@ -115,11 +113,9 @@ def test_tensor_index_fill__normal(mode):
     index_fill__binary_case2()
 
 
-@arg_mark(
-    plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=2048.00)
+    card_mark='onecard', mem_peak=2048.00)
 def test_tensor_index_fill__dynamic():
     """
     Feature: tensor.index_fill_

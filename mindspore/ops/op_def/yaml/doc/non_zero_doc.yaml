@@ -5,7 +5,7 @@ non_zero:
         Inputs:
             - **input** (Tensor) - The input Tensor.
 
-              - Ascend: its rank can be equal to 0 except GE backend.
+              - Ascend: its rank can be equal to 0.
               - CPU/GPU: its rank should be greater than or eaqual to 1.
 
         Outputs:
@@ -14,7 +14,7 @@ non_zero:
 
         Raises:
             TypeError: If `input` is not Tensor.
-            RuntimeError: On GPU or CPU or Ascend GE backend, if dim of `input` is equal to 0.
+            RuntimeError: On GPU or CPU, if dim of `input` is equal to 0.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

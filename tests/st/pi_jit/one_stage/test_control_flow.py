@@ -18,7 +18,7 @@ from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_if_break_in_condition():
     """
     Feature: One stage basic operation.
@@ -38,7 +38,7 @@ def test_if_break_in_condition():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_for_break_in_condition():
     """
     Feature: One stage basic operation.
@@ -58,7 +58,7 @@ def test_for_break_in_condition():
     assert ret == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_while_break_in_condition():
     """
     Feature: One stage basic operation.

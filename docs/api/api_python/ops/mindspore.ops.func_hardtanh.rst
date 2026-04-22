@@ -19,6 +19,11 @@ mindspore.ops.hardtanh
     .. image:: ../images/Hardtanh.png
         :align: center
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `inplace` ，接口签名将变更为
+        ``mindspore.ops.hardtanh(input, min_val=-1.0, max_val=1.0, inplace=False)`` 。
+        该变更与当前版本兼容，不使用 `inplace` 参数时行为不变。
+
     参数：
         - **input** (Tensor) - 输入Tensor。
         - **min_val** (Union[int, float]，可选) - 线性区域范围的最小值。默认 ``-1.0`` 。

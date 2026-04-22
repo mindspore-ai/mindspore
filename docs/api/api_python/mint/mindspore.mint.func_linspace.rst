@@ -11,9 +11,6 @@ mindspore.mint.linspace
         &output = [start, start+step, start+2*step, ... , end]
         \end{aligned}
 
-    .. warning::
-        Atlas训练系列产品暂不支持int16数据类型。
-
     参数：
         - **start** (Union[float, int]) - 区间的起始值。
         - **end** (Union[float, int]) - 区间的末尾值。

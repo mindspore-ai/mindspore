@@ -8,6 +8,9 @@ mindspore.ops.coo_sqrt
     .. math::
         out_{i} = \sqrt{x_{i}}
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - 输入COOTensor，数据类型为number.Number。
 

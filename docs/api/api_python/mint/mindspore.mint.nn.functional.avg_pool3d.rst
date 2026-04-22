@@ -15,9 +15,6 @@ mindspore.mint.nn.functional.avg_pool3d
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
-
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 或 :math:`(C, D_{in}, H_{in}, W_{in})` 的Tensor。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 指定池化核尺寸大小，可以是单个整数、一个元组 :math:`(kD, kH, kW)` 或者一个列表 :math:`[kD, kH, kW]` 。

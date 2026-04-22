@@ -71,11 +71,9 @@ def masked_fill__backward_func_tensor(input_x, mask, value):
     return ms.grad(masked_fill__forward_func, (0, 1, 2))(input_x, mask, value)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=2048.01
+    card_mark="onecard", mem_peak=2048.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_masked_fill_normal(mode):
@@ -115,11 +113,9 @@ def test_ops_masked_fill_normal(mode):
     allclose_nparray(grads_tensor[2].asnumpy(), expect_value_grad, 1e-04, 1e-04)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 def test_tensor_masked_fill_tensor_dynamic():
     """
@@ -146,11 +142,9 @@ def test_tensor_masked_fill_tensor_dynamic():
     )
 
 
-@arg_mark(
-    plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=4.01
+    card_mark="onecard", mem_peak=4.01
 )
 def test_tensor_masked_fill_scalar_dynamic():
     """

@@ -11,7 +11,9 @@ avg_pool1d:
           \text{input}(N_i, C_j, s_0 \times l + n)
 
       .. warning::
-          This is an experimental API that is subject to change or deletion.
+          - `kernel_size` is in the range `[1, 255]`. `stride` is in the range `[1, 63]`.
+          - Non-backward-compatible change after version 2.9.0: the default value of ``stride``
+            will be changed from ``1`` to ``None``.
 
       Args:
           input (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.

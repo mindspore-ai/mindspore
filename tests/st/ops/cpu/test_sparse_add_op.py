@@ -124,8 +124,7 @@ def sparse_add_no_same_indices(value_type, thresh_type, np_type, thresh_value):
     assert np.allclose(sum_shape.asnumpy(), ground_truth_shape)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_dynamic_shape():
     """
     Feature: test SparseAdd op in cpu.
@@ -163,8 +162,7 @@ def test_sparse_add_dynamic_shape():
     assert sum_shape.asnumpy().shape == expect_sum_shape_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_float32():
     """
     Feature: Sparse add ops
@@ -184,8 +182,7 @@ def test_sparse_add_float32():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_float64():
     """
     Feature: Sparse add ops
@@ -205,8 +202,7 @@ def test_sparse_add_float64():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_int8():
     """
     Feature: Sparse add ops
@@ -226,8 +222,7 @@ def test_sparse_add_int8():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_int16():
     """
     Feature: Sparse add ops
@@ -247,8 +242,7 @@ def test_sparse_add_int16():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_int32():
     """
     Feature: Sparse add ops
@@ -268,8 +262,7 @@ def test_sparse_add_int32():
     sparse_add_no_same_indices(value_type, thresh_type, np_type, 1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_int64():
     """
     Feature: Sparse add ops

@@ -219,6 +219,9 @@ class ConstantPad1d(_ConstantPadNd):
     r"""
     Using a given constant value to pads the last dimensions of input tensor.
 
+    .. warning::
+        After version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Args:
         padding (Union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If is int, uses the same padding in both boundaries of input's last dimension.
@@ -289,6 +292,9 @@ class ConstantPad2d(_ConstantPadNd):
     r"""
     Using a given constant value to pads the last two dimensions of input tensor.
 
+    .. warning::
+        After version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Args:
         padding (Union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
             If is int, uses the same padding in boundaries of input's last two dimensions.
@@ -346,6 +352,9 @@ class ConstantPad2d(_ConstantPadNd):
 class ConstantPad3d(_ConstantPadNd):
     r"""
     Using a given constant value to pads the last three dimensions of input tensor.
+
+    .. warning::
+        After version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
         padding (Union[int, tuple]): The padding size to pad the last three dimensions of input tensor.
@@ -444,6 +453,9 @@ class ReflectionPad1d(_ReflectionPadNd):
     r"""
     Using a given padding to do reflection pad on the given tensor. 1d means the dimension of padding is 1-dimension.
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Args:
         padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If padding is an integer: all directions will be padded with the same size.
@@ -491,6 +503,9 @@ class ReflectionPad1d(_ReflectionPadNd):
 class ReflectionPad2d(_ReflectionPadNd):
     r"""
     Using a given padding to do reflection pad the given tensor. 2d means the dimension of padding is 2-dimension.
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
         padding (union[int, tuple]): The padding size to pad the input tensor.
@@ -549,6 +564,9 @@ class ReflectionPad3d(_ReflectionPadNd):
 
     Note:
         ReflectionPad3d has not supported 5D tensor yet.
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
         padding (union[int, tuple]): The padding size to pad the input tensor.
@@ -611,6 +629,9 @@ class ReflectionPad3d(_ReflectionPadNd):
 class ZeroPad2d(_ConstantPadNd):
     r"""
     Pads the last two dimensions of input tensor with zero.
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
         padding (Union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
@@ -705,6 +726,9 @@ class ReplicationPad1d(_ReplicationPadNd):
     r"""
     Pad on W dimension of input `x` according to `padding`.
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Args:
         padding (union[int, tuple]): The padding size to pad the last dimension of `x` .
 
@@ -759,6 +783,9 @@ class ReplicationPad1d(_ReplicationPadNd):
 class ReplicationPad2d(_ReplicationPadNd):
     r"""
     Pad on HW dimension of input `x` according to `padding`.
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
         padding (union[int, tuple]): The padding size to pad the last two dimension of `x` .
@@ -825,6 +852,9 @@ class ReplicationPad2d(_ReplicationPadNd):
 class ReplicationPad3d(_ReplicationPadNd):
     r"""
     Pad on DHW dimension of input `x` according to `padding`.
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
         padding (union[int, tuple]): The padding size to pad the last three dimension of `x` .

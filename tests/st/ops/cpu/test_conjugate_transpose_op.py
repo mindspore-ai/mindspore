@@ -47,8 +47,7 @@ def dyn_case():
     assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_conjugate_transpose_dyn():
     """
     Feature: test ConjugateTranspose in PyNative and Graph modes.

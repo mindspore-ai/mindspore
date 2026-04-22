@@ -154,8 +154,7 @@ def test_hook_backward_ops_graph_and_jit():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_hook_backward_ops():
     """
     Feature: Hook backward ops
@@ -169,8 +168,7 @@ def test_hook_backward_ops():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_hook_backward_ops_hook_return_error():
     """
     Feature: Hook backward ops

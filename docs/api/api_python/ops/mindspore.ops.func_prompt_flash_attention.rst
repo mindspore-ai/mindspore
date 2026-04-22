@@ -44,7 +44,6 @@ mindspore.ops.prompt_flash_attention
           - int8输出：
 
             - per-channel格式的 `quant_scale2` 和 `quant_offset2` 不支持有左填充、Ring Attention或D轴未对齐到32字节的情况。
-            - 在GE模式中，per-tensor格式的 `quant_scale2` 和 `quant_offset2` 不支持D轴未对齐到32字节的情况。
             - 不支持带有负值的带状稀疏和 `pre_tokens`/ `next_tokens` 。
 
           - `quant_scale2` 和 `quant_offset2` 只有在 `query` 为bfloat16时才可以是bfloat16。
@@ -55,9 +54,6 @@ mindspore.ops.prompt_flash_attention
           - `num_heads` 必须可以被 `num_key_value_heads` 整除，并且 `num_heads` 除以 `num_key_value_heads` 不得大于64。
           - 当 `query` 数据类型为bfloat16时，D轴应与16对齐。
           - `actual_seq_lengths` 的每个元素不得超过q_S， `actual_seq_lengths_kv` 的每个元素不得超过kv_S。
-
-    .. warning::
-        只支持 `Atlas A2` 训练系列产品。
 
     参数：
         - **query** (Tensor) - 公式中的输入Q，数据类型可以是int8、float16或bfloat16。shape为 :math:`(B, q_S, q_H)` 或 :math:`(B, q_N, q_S, q_D)` 。

@@ -31,7 +31,7 @@ class SparseDenseCwisemul(Cell):
         return self.sparsedensecwisemul(x1_indices, x1_values, x1_shape, x2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_dense_cwise_mul():
     """
     Feature:  SparseDenseCwiseMul 4 inputs and 1 output.

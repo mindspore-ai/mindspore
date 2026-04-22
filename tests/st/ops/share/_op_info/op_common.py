@@ -22,6 +22,7 @@ This module provides:
 import torch
 import numpy as np
 import mindspore as ms
+import math
 
 dtypes_as_torch = (
     ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8,
@@ -39,6 +40,96 @@ dtypes_integral = (
     ms.int8, ms.int16, ms.int32, ms.int64,
     ms.uint8, ms.uint16, ms.uint32, ms.uint64,
 )
+
+dtype_to_np_dtype = {
+                    ms.bool_: np.bool_,
+                    ms.int8: np.int8,
+                    ms.int16: np.int16,
+                    ms.int32: np.int32,
+                    ms.int64: np.int64,
+                    ms.uint8: np.uint8,
+                    ms.float16: np.float16,
+                    ms.float32: np.float32,
+                    ms.float64: np.float64,
+                    ms.bfloat16: np.float32,  # construct in fp32 then to bfloat16 by dtype=
+                    ms.complex64: np.complex64,
+                    ms.complex128: np.complex128,
+                }
+
+dtypes_extra_values = {
+    "_uint_small_values": (0, 1, 31, 63, 128, 195, 254),
+    "_int_small_values": (0, -1, 1, -63, 63, -127, 127, -128),
+    "_float_small_values":  (
+            0.0,
+            -0.0,
+            -1.0,
+            1.0,
+            -1.25e-1,
+            1.25e-1,
+            -1e-3,
+            1e-3,
+            -math.pi / 2,
+            math.pi / 2,
+            -math.pi + 1e-5,
+            math.pi - 1e-5,
+            -math.pi,
+            math.pi,
+            -math.pi - 1e-5,
+            math.pi + 1e-5,
+        ),
+        "_int_large_values": (-1023, 1023, -10922, 10922),
+        "_fp16_large_values": (-521, 521, -996.9, 996.9, -13141.5, 13141.5),
+        "_fp32_large_values": (-521, 521, -996.9, 996.9, -13141.5, 13141.5, -5062757.7, 5062757.7, -1e20, 1e20)
+}
+#for opers who has dtype extend-parameter
+op_dtype_need_convert ={
+    'Tensor.to': {
+                  ms.float32: [ms.uint8, ms.int32, ms.float64, ms.complex128],
+                  ms.float16: [ms.int8, ms.uint8, ms.float32, ms.bfloat16] ,
+                  ms.int32: [ms.int16, ms.float32],
+                  ms.int64: [ms.int32, ms.float32, ms.complex64],
+                  ms.complex128: ms.int64, ms.uint8: [ms.float32, ms.int32],
+                  ms.int16: ms.float64,
+                  ms.float64: ms.complex64,
+                  ms.int8: ms.complex128,
+                  ms.complex64: ms.bool_,
+                  ms.bool_: [ms.int16, ms.float32],
+                  ms.bfloat16: ms.float32
+    },
+
+    'Tensor.sum': {
+                  ms.float32: ms.float16,
+                  ms.float16: ms.float32,
+                  ms.int32: ms.float64,
+    },
+
+    'Tensor.mean': {
+                  ms.float32: ms.float64,
+                  ms.int32: ms.int16,
+                  ms.int64: ms.float32,
+    },
+
+    'mint.nansum': {
+                 ms.float16: ms.float32,
+                 ms.int32: ms.int64,
+                 ms.int64: ms.int32,
+    },
+    'mint.mean': {
+                  ms.int16:ms.complex128,
+                  ms.complex128: ms.complex64,
+                  ms.float32:ms.float16,
+    },
+    'mint.prod':{
+                  ms.float64:ms.float32,
+                  ms.int32:ms.float64,
+                  ms.float32:ms.int16,
+    },
+    'mint.sum': {
+                  ms.int64:ms.float64,
+                  ms.complex64:ms.float32,
+                  ms.bool:ms.float32,
+    },
+}
 
 dtypes_common = (
     int, float, complex, bool

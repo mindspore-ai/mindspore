@@ -47,7 +47,7 @@ class SinhGradNet(nn.Cell):
         return grad_out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sinh_fp16():
     """
     Feature: Sinh
@@ -67,7 +67,7 @@ def test_sinh_fp16():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sinh_fp32():
     """
     Feature: Sinh
@@ -87,7 +87,7 @@ def test_sinh_fp32():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sinh_fp64():
     """
     Feature: Sinh
@@ -107,7 +107,7 @@ def test_sinh_fp64():
     assert np.allclose(output_grad_ms[0].asnumpy(), expect_grad_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sinh_tensor_api_modes(mode):
     """

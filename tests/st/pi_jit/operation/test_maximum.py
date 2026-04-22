@@ -7,7 +7,7 @@ from mindspore import Tensor
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_512x1_512x1():
     """
     Feature: Ops.
@@ -20,7 +20,7 @@ def test_p_maximum_input_512x1_512x1():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_2x2_2x2():
     """
     Feature: Ops.
@@ -33,7 +33,7 @@ def test_p_maximum_input_2x2_2x2():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_3x3x3x3_3x3x3x3():
     """
     Feature: Ops.
@@ -46,7 +46,7 @@ def test_p_maximum_input_3x3x3x3_3x3x3x3():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_5d():
     """
     Feature: Ops.
@@ -59,7 +59,7 @@ def test_p_maximum_input_5d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_6d():
     """
     Feature: Ops.
@@ -72,7 +72,7 @@ def test_p_maximum_input_6d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_3dtensor_scalar_scalar():
     """
     Feature: Ops.
@@ -85,7 +85,7 @@ def test_p_maximum_input_3dtensor_scalar_scalar():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_scalar_3dtensor_scalar():
     """
     Feature: Ops.
@@ -98,7 +98,7 @@ def test_p_maximum_input_scalar_3dtensor_scalar():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_forward_input_1dtensor_2dtensor():
     """
     Feature: Ops.
@@ -112,7 +112,7 @@ def test_p_maximum_forward_input_1dtensor_2dtensor():
         fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_forward_input_32x128x1024_1():
     """
     Feature: Ops.
@@ -125,7 +125,7 @@ def test_p_maximum_forward_input_32x128x1024_1():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_tensor_bool_tensor_int32():
     """
     Feature: Ops.
@@ -140,7 +140,7 @@ def test_p_maximum_input_tensor_bool_tensor_int32():
     assert out_me.asnumpy().all() == out_np.all()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_randn_512x1_512x1_int32():
     """
     Feature: Ops.
@@ -153,7 +153,7 @@ def test_p_maximum_input_randn_512x1_512x1_int32():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_input_randint_8x1_8x1_int32():
     """
     Feature: Ops.
@@ -166,7 +166,7 @@ def test_p_maximum_input_randint_8x1_8x1_int32():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_maximum_performance_improve():
     """
     Feature: Ops.

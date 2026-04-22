@@ -51,8 +51,7 @@ class MaxPoolGrad(nn.Cell):
         return self.grad(self.forward)(x, sens)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool2d_valid():
     """
     Feature: test maxpool2d op.
@@ -84,8 +83,7 @@ def test_maxpool2d_valid():
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool2d_same():
     """
     Feature: test maxpool2d op.
@@ -117,8 +115,7 @@ def test_maxpool2d_same():
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
 def test_maxpool3d_1(dtype):
     """
@@ -162,8 +159,7 @@ def test_maxpool3d_1(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
 def test_maxpool3d_2(dtype):
     """
@@ -207,8 +203,7 @@ def test_maxpool3d_2(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
 def test_maxpool3d_3(dtype):
     """
@@ -249,8 +244,7 @@ def test_maxpool3d_3(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.float64])
 def test_maxpool3d_4(dtype):
     """
@@ -306,8 +300,7 @@ def test_maxpool3d_4(dtype):
     assert (actual_grad[0].asnumpy() == expect_dx).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_max_pool2d_vmap():
     """
     Feature: Test maxpool op.

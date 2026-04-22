@@ -33,7 +33,7 @@ class GeSwitch(PrimitiveWithInfer):
         - **pred** (Tensor) - It must be a scalar whose type is bool and shape is `()`, It is used as condition for
           switch control.
     Outputs:
-        tuple. Output is tuple(false_output, true_output). The Elements in the tuple has the same shape of input data.
+        tuple. Output is tuple(false_output, true_output). The Elements in the tuple with the same shape as input data.
         The false_output connects with the false_branch and the true_output connects with the true_branch.
 
     Raises:

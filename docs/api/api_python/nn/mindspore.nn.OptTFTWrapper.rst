@@ -5,6 +5,9 @@ mindspore.nn.OptTFTWrapper
 
     实现TFT优化器封装器。该封装器将在优化器更新前向MindIO TFT上报状态。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         该优化器依赖于MindIO TFT特性。当前只支持Ascend后端的图模式，并且sink_size的配置必须小于等于1。
 

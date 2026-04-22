@@ -45,8 +45,7 @@ class LogicNotSpec(nn.Cell):
         return not_v
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_int():
     """
     Feature: simple expression
@@ -58,8 +57,7 @@ def test_ms_syntax_operator_logic_not_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_float():
     """
     Feature: simple expression
@@ -71,8 +69,7 @@ def test_ms_syntax_operator_logic_not_float():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_ms_syntax_operator_logic_tensor_1_int():
     """
     Feature: simple expression
@@ -85,8 +82,7 @@ def test_ms_syntax_operator_logic_tensor_1_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_tensor_1_float():
     """
     Feature: simple expression
@@ -99,8 +95,7 @@ def test_ms_syntax_operator_logic_not_tensor_1_float():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_tensor_2x2_int():
     """
     Feature: simple expression
@@ -114,8 +109,7 @@ def test_ms_syntax_operator_logic_not_tensor_2x2_int():
         print(ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_tensor_2x2_float():
     """
     Feature: simple expression
@@ -129,8 +123,7 @@ def test_ms_syntax_operator_logic_not_tensor_2x2_float():
         print(ret)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_str():
     """
     Feature: simple expression
@@ -142,8 +135,7 @@ def test_ms_syntax_operator_logic_not_str():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_list_int():
     """
     Feature: simple expression
@@ -155,8 +147,7 @@ def test_ms_syntax_operator_logic_not_list_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_list_float():
     """
     Feature: simple expression
@@ -168,8 +159,7 @@ def test_ms_syntax_operator_logic_not_list_float():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_list_str():
     """
     Feature: simple expression
@@ -181,8 +171,7 @@ def test_ms_syntax_operator_logic_not_list_str():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_list_combine():
     """
     Feature: simple expression
@@ -194,8 +183,7 @@ def test_ms_syntax_operator_logic_not_list_combine():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_tuple_int():
     """
     Feature: simple expression
@@ -207,8 +195,7 @@ def test_ms_syntax_operator_logic_not_tuple_int():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_tuple_float():
     """
     Feature: simple expression
@@ -220,8 +207,7 @@ def test_ms_syntax_operator_logic_not_tuple_float():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_tuple_str():
     """
     Feature: simple expression
@@ -233,8 +219,7 @@ def test_ms_syntax_operator_logic_not_tuple_str():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_ms_syntax_operator_logic_not_tuple_combine():
     """
     Feature: simple expression

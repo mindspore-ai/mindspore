@@ -23,7 +23,7 @@ class CtrlWhileInForContinueX(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_continue_in_for_x():
     '''
     TEST_SUMMARY:
@@ -59,7 +59,7 @@ class CtrlWhileInForContinue(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_continue_in_for():
     '''
     TEST_SUMMARY:
@@ -93,7 +93,7 @@ class CtrlWhileInForContinueOne(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_in_while_param_continue_in_for():
     '''
     TEST_SUMMARY:
@@ -129,7 +129,7 @@ class CtrlWhileInForContinueAdd(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_continue_in_while_no_param():
     '''
     TEST_SUMMARY:
@@ -165,7 +165,7 @@ class CtrlWhileContinueInForX(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_continue_in_while_x():
     '''
     TEST_SUMMARY:
@@ -202,7 +202,7 @@ class CtrlWhileContinueInFor(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_in_for_continue_in_while():
     '''
     TEST_SUMMARY:

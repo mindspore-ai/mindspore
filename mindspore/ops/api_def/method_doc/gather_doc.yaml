@@ -4,15 +4,16 @@ gather:
 
     Gather data from a tensor by indices.
 
+    .. warning::
+        - Non-backward-compatible change after version 2.9.0: overload `gather(input_indices, axis, batch_dims=0)` including `batch_dims` will be removed, and only `gather(dim, index)` will be supported.
+        - On Ascend, the behavior is unpredictable in the following cases:
+
+          - the value of `index` is not in the range `[-self.shape[dim], self.shape[dim])` in forward;
+          - the value of `index` is not in the range `[0, self.shape[dim])` in backward.
+
     .. math::
         output[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)] =
         input[(i_0, i_1, ..., index[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)], i_{dim+1}, ..., i_n)]
-
-    .. warning::
-        On Ascend, the behavior is unpredictable in the following cases:
-
-        - the value of `index` is not in the range `[-self.shape[dim], self.shape[dim])` in forward;
-        - the value of `index` is not in the range `[0, self.shape[dim])` in backward.
 
     Args:
         dim (int): the axis to index along, must be in range `[-self.rank, self.rank)`.

@@ -5,6 +5,9 @@ mindspore.Tensor.argmin
 
     返回tensor在指定轴上的最小值索引。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `argmin(axis=None, keepdims=False)` 重载，仅支持 `argmin(dim=None, keepdim=False)`。
+
     参数：
         - **axis** (Union[int, None]，可选) - 指定计算轴。如果为 ``None`` ，计算tensor中的所有元素。默认 ``None`` 。
         - **keepdims** (bool，可选) - 输出tensor是否保留维度。默认 ``False`` 。

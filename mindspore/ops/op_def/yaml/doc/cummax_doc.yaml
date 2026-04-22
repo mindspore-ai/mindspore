@@ -6,11 +6,17 @@ cummax:
             \begin{array}{ll} \\
                 y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
             \end{array}
-    
+
+        .. warning::
+            Starting after version 2.9.0, this interface will undergo a non-compatible change:
+            The parameter `axis` will be renamed to `dim`.
+
+            The updated signature will be ``mindspore.ops.cummax(input, dim)``.
+
         Args:
             input (Tensor): The input tensor.
             axis (int): Specify the axis for computation.
-    
+
         Returns:
             Tuple(max, max_indices) of 2 tensors.
 
@@ -19,9 +25,9 @@ cummax:
 
         Examples:
             >>> import mindspore
-            >>> input = mindspore.tensor([[3, 4, 6, 10], 
-            ...                           [1, 6, 7, 9], 
-            ...                           [4, 3, 8, 7], 
+            >>> input = mindspore.tensor([[3, 4, 6, 10],
+            ...                           [1, 6, 7, 9],
+            ...                           [4, 3, 8, 7],
             ...                           [1, 3, 7, 9]])
             >>> mindspore.ops.cummax(input, axis=0)
             (Tensor(shape=[4, 4], dtype=Int64, value=

@@ -5,13 +5,13 @@ mindspore.ops.lp_pool2d
 
     在输入Tensor上应用2D LP池化运算，可被视为组成一个2D输入平面。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `x` 将重命名为 `input`。
+
     通常，输入的shape为 :math:`(N, C, H_{in}, W_{in})`，输出的shape为 :math:`(N, C, H_{out}, W_{out})`，输出与输入的shape一致，公式如下：
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
-
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
 
     参数：
         - **x** (Tensor) - shape为 :math:`(N, C, H_{in}, W_{in})` 的Tensor。

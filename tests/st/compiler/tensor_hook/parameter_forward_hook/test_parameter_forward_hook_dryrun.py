@@ -502,11 +502,9 @@ def count_pattern(saved_graphs_path, pattern, ir):
     return sum(count_in_file(fp, pattern) for fp in Path(saved_graphs_path).rglob(ir))
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=10.0)
 @pytest.mark.parametrize("hsdp_net_cls, expected_num_allgather", [
     (HsdpNetGlobalHook, 8),
@@ -561,11 +559,9 @@ def test_parameter_forward_hook_by_diff_hsdpnet(hsdp_net_cls, expected_num_allga
     assert num_all_gather == expected_num_allgather
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=10.0)
 @pytest.mark.parametrize("net_cls", [
     SequentialParamNet4,
@@ -659,11 +655,9 @@ def test_parameter_forward_hook_basic(net_cls, opt_level, expected_num_allgather
     assert num_all_gather == expected_num_allgather[net_cls][opt_level]
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=10.0)
 @pytest.mark.parametrize("net_cls", [
     SequentialParamNet4,
@@ -731,11 +725,9 @@ def test_parameter_forward_hook_hsdp_fwd_hook(net_cls, expected_num_allgather):
     assert num_all_gather == expected_num_allgather[net_cls]
 
 
-@arg_mark(
-    plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=10.0)
 @pytest.mark.parametrize("hsdp_grad_hook", [
     hsdp_grad_hook_with_acc_grad_first,

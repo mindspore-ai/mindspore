@@ -14,6 +14,10 @@ mindspore.nn.Softmax
 
     其中， :math:`input_{i}` 是输入Tensor在轴 `axis` 上的第 :math:`i` 个元素。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`axis` 将改为 `dim`，默认值也将调整为与新接口对齐。
+        接口签名将变更为 ``mindspore.nn.Softmax(dim=None)`` 。
+
     参数：
         - **axis** (int，可选) - 指定Softmax运算的轴axis，假设输入 `input` 的维度为input.ndim，则 `axis` 的范围为 `[-input.ndim, input.ndim)` ，-1表示最后一个维度。默认值： ``-1`` 。
 

@@ -18,6 +18,9 @@ mindspore.nn.MultilabelMarginLoss
 
     :math:`y` 和 :math:`x` shape必须相同。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     .. note::
         该算子仅考虑从前方开始的连续非负目标块。这允许不同的样本具有不同数量的目标类别。
 

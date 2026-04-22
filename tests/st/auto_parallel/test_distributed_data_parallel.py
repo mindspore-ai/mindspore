@@ -17,12 +17,9 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_full_batch_DDP_without_bucket_rebuilt():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -37,12 +34,9 @@ def test_full_batch_DDP_without_bucket_rebuilt():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_full_batch_DDP_with_bucket_rebuilt():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -57,12 +51,9 @@ def test_full_batch_DDP_with_bucket_rebuilt():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_accumulate_batch_DDP_with_bucket_rebuilt():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -77,12 +68,9 @@ def test_accumulate_batch_DDP_with_bucket_rebuilt():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_accumulate_batch_DDP_without_bucket_rebuilt():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -97,12 +85,9 @@ def test_accumulate_batch_DDP_without_bucket_rebuilt():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_full_batch_DDP_without_bucket_rebuilt_cpp():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -117,12 +102,9 @@ def test_full_batch_DDP_without_bucket_rebuilt_cpp():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_full_batch_DDP_with_bucket_rebuilt_cpp():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -137,12 +119,9 @@ def test_full_batch_DDP_with_bucket_rebuilt_cpp():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_accumulate_batch_DDP_with_bucket_rebuilt_cpp():
     """
     Feature: Distributed Data Parallel(DDP).
@@ -157,12 +136,9 @@ def test_accumulate_batch_DDP_with_bucket_rebuilt_cpp():
     assert ret == 0
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="allcards",
-    essential_mark="essential",
-)
+    card_mark="allcards")
 def test_accumulate_batch_DDP_without_bucket_rebuilt_cpp():
     """
     Feature: Distributed Data Parallel(DDP).

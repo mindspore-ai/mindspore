@@ -50,7 +50,7 @@ def run_bias_add(shape1, shape2, data_format, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_bias_add_gpu():
     """
     Feature: test graph kernel BiasAdd
@@ -62,8 +62,7 @@ def test_bias_add_gpu():
     run_bias_add((2, 3, 4, 5), (3,), "NCHW", np.float32)
     run_bias_add((2, 3, 4, 5), (5,), "NHWC", np.float32)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_bias_add_ascend():
     """
     Feature: test graph kernel BiasAdd

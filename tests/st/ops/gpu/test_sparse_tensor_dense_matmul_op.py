@@ -52,7 +52,7 @@ class GradNet(nn.Cell):
         return self.grad(self.network)(indices, values, dens_shape, dense)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int32_int32():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -76,7 +76,7 @@ def test_sparse_tensor_dense_matmul_int32_int32():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int32_int64():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -100,7 +100,7 @@ def test_sparse_tensor_dense_matmul_int32_int64():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int32_float16():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -124,7 +124,7 @@ def test_sparse_tensor_dense_matmul_int32_float16():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int32_float():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -148,7 +148,7 @@ def test_sparse_tensor_dense_matmul_int32_float():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int32_double():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -172,7 +172,7 @@ def test_sparse_tensor_dense_matmul_int32_double():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int64_int32():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -196,7 +196,7 @@ def test_sparse_tensor_dense_matmul_int64_int32():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int64_int64():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -220,7 +220,7 @@ def test_sparse_tensor_dense_matmul_int64_int64():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int64_float16():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -244,7 +244,7 @@ def test_sparse_tensor_dense_matmul_int64_float16():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int64_float():
     """
     Feature: Test sparse tensor dense matmul ops.
@@ -268,7 +268,7 @@ def test_sparse_tensor_dense_matmul_int64_float():
         assert (out_ms.asnumpy() == out_np).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sparse_tensor_dense_matmul_int64_double():
     """
     Feature: Test sparse tensor dense matmul ops.

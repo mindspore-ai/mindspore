@@ -36,7 +36,7 @@ def test_int_tensor_api():
     assert dtype_op(output) == ms.int32
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_int_tensor_api_modes():
     """
     Feature: test int tensor API for different modes.

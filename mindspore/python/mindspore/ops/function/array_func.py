@@ -360,6 +360,9 @@ def concat(tensors, axis=0):
     """
     Alias for :func:`mindspore.ops.cat()`.
 
+    .. warning::
+        After version 2.9.0, the `axis` argument will be renamed to `dim`.
+
     Tutorial Examples:
         - `Tensor - Tensor Operation <https://mindspore.cn/tutorials/en/master/beginner/tensor.html#tensor-operation>`_
         - `Vision Transformer Image Classification - Building ViT as a whole
@@ -478,6 +481,12 @@ def where(condition, input, other):
     .. math::
         output_i = \begin{cases} input_i,\quad &if\ condition_i \\ other_i,\quad &otherwise \end{cases}
 
+    .. warning::
+        Starting after version 2.9.0, a single-argument overload ``mindspore.ops.where(condition)``
+        will be supported, which returns the coordinates of non-zero elements, equivalent to
+        ``mindspore.ops.argwhere(condition)``.
+        This change is backward-compatible; the three-argument call remains unchanged.
+
     Args:
         condition (Tensor[bool]): If True, yield `input`, otherwise yield `other`.
         input (Union[Tensor, Scalar]): When `condition` is True, values to select from.
@@ -548,7 +557,7 @@ def matrix_band_part(x, lower, upper):
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -581,10 +590,11 @@ def matrix_band_part(x, lower, upper):
 @deprecated("2.8.0", "ops.pad", False, "ops.")
 def padding(x, pad_dim_size=8):
     r"""
-    `ops.padding` is deprecated from version 2.8.0 and will be removed in a
-    future version, please use :func:`mindspore.ops.pad` instead.
-
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+        Please use :func:`mindspore.ops.pad` instead.
 
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of `x` must be at least 2.
@@ -645,6 +655,10 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
     r"""
     Generate a new tensor, where the positions specified by `indices` are assigned `on_value`, and all
     other positions are assigned `off_value`.
+
+    .. warning::
+        After version 2.9.0, the parameters `depth`, `on_value`, `off_value` and `axis` will be replaced by
+        `num_classes`.
 
     Note:
         If the input `indices` has rank `N`, the output will have rank `N+1`.
@@ -709,6 +723,10 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 def fill(type, shape, value):  # pylint: disable=redefined-outer-name
     """
     Create a tensor filled with a specified value.
+
+    .. warning::
+        This API is deprecated and will be removed after version 2.9.0.
+        Please use :func:`mindspore.ops.full` instead.
 
     Args:
         type (mindspore.dtype): The data type specified.
@@ -897,6 +915,9 @@ def chunk(input, chunks, axis=0):
 
     Note:
         This function may return less than the specified number of chunks!
+
+    .. warning::
+        After version 2.9.0, the `axis` argument will be renamed to `dim`.
 
     Args:
         input (Tensor): A tensor to be split.
@@ -1271,7 +1292,9 @@ def unique(input):
     Remove duplicate elements from the input tensor.
 
     .. warning::
-        This is an experimental API that is subject to change or deletion.
+        Non-backward-compatible change after version 2.9.0: the current default
+        return `(output, indices)` will be changed so that only `output` is returned
+        by default.
 
     Args:
         input (Tensor): The input tensor.
@@ -1373,7 +1396,7 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
 def unique_with_pad(x, pad_num):
     """
     `ops.unique_with_pad` is deprecated from version 2.4.0 and will be removed
-    in a future version, please use :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
+    after version 2.9.0, please use :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
     the same function.
 
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
@@ -1595,6 +1618,9 @@ def dyn_shape(input_x):
     """
     Returns the shape of the input tensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         input_x (Tensor): The input tensor.
 
@@ -1617,6 +1643,9 @@ def dyn_shape(input_x):
 def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
     r"""
     Partially reverse the input sequence.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -1673,6 +1702,14 @@ def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
 def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     r"""
     Flatten a tensor along dimensions from `start_dim` to `end_dim`.
+
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The `order` argument will be removed.
+        - The default value of `start_dim` will change from ``1`` to ``0``.
+
+        The updated signature will be ``mindspore.ops.flatten(input, *, start_dim=0, end_dim=-1)``.
 
     Args:
         input (Tensor): The input Tensor.
@@ -1772,6 +1809,9 @@ def slice(input_x, begin, size):
     r"""
     Slice a tensor in the specified shape.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         `begin` is zero-based and `size` is one-based.
 
@@ -1817,6 +1857,9 @@ def stack(tensors, axis=0):
     r"""
     Stack input tensors in specified axis.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`.
+
     Args:
         tensors (Union[tuple, list]): The input tensors.
         axis (int): Axis to stack. Default ``0`` .
@@ -1843,6 +1886,9 @@ def stack(tensors, axis=0):
 def unstack(input_x, axis=0):
     r"""
     Unstack the input tensor along the specified axis.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input_x (Tensor): The input tensor.
@@ -1993,14 +2039,15 @@ def squeeze(input, axis=None):
     """
     Remove length one axes from input tensor.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed
+        to `dim`, and `axis=None` will be replaced by `dim=()` while tuple dimensions
+        remain supported.
+
     Note:
         - Please note that in dynamic graph mode, the output tensor will share data with the input tensor,
           and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
-        - In GE mode, only support removing dimensions of size 1 from the shape of input tensor.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): The input tensor.
@@ -2033,6 +2080,9 @@ def scatter_mul(input_x, indices, updates):
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{*}= \text{updates}[i, ..., j, :]
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2125,6 +2175,9 @@ def scatter_max(input_x, indices, updates):
         \text{input_x}[\text{indices}[i, ..., j], :]
         = \max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - Since Parameter objects do not support type conversion, an exception will be thrown when `input_x` is
@@ -2159,6 +2212,10 @@ def scatter_max(input_x, indices, updates):
 def scatter_add(input_x, indices, updates):
     r"""
     Perform an addition update on `input_x` based on the specified indices and update values.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: this interface will be reshaped into a
+        `dim/index/src`-style scatter add API.
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{+}= \text{updates}[i, ..., j, :]
@@ -2204,6 +2261,9 @@ def scatter_min(input_x, indices, updates):
         \text{input_x}[\text{indices}[i, ..., j], :]
         = \min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - Since Parameter objects do not support type conversion, an exception will be thrown when `input_x` is
@@ -2242,6 +2302,9 @@ def scatter_div(input_x, indices, updates):
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{/}= \text{updates}[i, ..., j, :]
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2312,6 +2375,9 @@ def scatter_update(input_x, indices, updates):
     r"""
     Updates the input tensor values using the given input indices and update values.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - Since Parameter objects do not support type conversion,
@@ -2357,6 +2423,9 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{+}= \text{updates}[i, ..., j]
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2418,6 +2487,9 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{-}= \text{updates}[i, ..., j]
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - The dimension of `indices` is at least 2, and its shape must be `indices.shape[-1] <= len(indices.shape)`.
@@ -2478,6 +2550,9 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{*}= \text{updates}[i, ..., j]
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - The dimension of `indices` is at least 2, and its shape must be `indices.shape[-1] <= len(indices.shape)`.
@@ -2537,6 +2612,9 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{/}= \text{updates}[i, ..., j]
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2600,6 +2678,9 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
         \text{input_x}[\text{indices}[i, ..., j]]
         = \max(\text{input_x}[\text{indices}[i, ..., j]], \text{updates}[i, ..., j])
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - The dimension of `indices` is at least 2, and its shape must be `indices.shape[-1] <= len(indices.shape)`.
@@ -2661,6 +2742,9 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
         \text{input_x}[\text{indices}[i, ..., j]]
         = \min(\text{input_x}[\text{indices}[i, ..., j]], \text{updates}[i, ..., j])
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - Support implicit type conversion and type promotion.
         - The dimension of `indices` is at least 2, and its shape must be `indices.shape[-1] <= len(indices.shape)`.
@@ -2717,6 +2801,12 @@ def sort(input_x, axis=-1, descending=False):
     r"""
     Sort the elements of the input tensor along the given axis.
 
+    .. warning::
+        - Non-backward-compatible change after version 2.9.0: ``axis`` will be
+          renamed to ``dim``, and a new ``stable`` parameter will be added.
+        - Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+          If using float32, it may cause loss of accuracy.
+
     .. note::
         The Ascend backend only supports sorting the last dimension.
 
@@ -2725,10 +2815,6 @@ def sort(input_x, axis=-1, descending=False):
         axis (int, optional): The axis to sort along. Default ``-1`` , means the last dimension.
         descending (bool, optional): Sorting method. ``True`` means the elements
             are sorted in descending order, or else sorted in ascending order. Default ``False`` .
-
-    .. warning::
-        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
-        If using float32, it may cause loss of accuracy.
 
     Returns:
         Tuple(sorted_tensor, indices) of 2 tensors.
@@ -2759,7 +2845,7 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
     Sort the elements of the input tensor along the given dimension.
 
     .. warning::
-        Currently, the data types of mindspore.float16, mindspore.uint8, mindspore.int8, 
+        Currently, the data types of mindspore.float16, mindspore.uint8, mindspore.int8,
         mindspore.int16, mindspore.int32, mindspore.int64 are well supported.
         If using mindspore.float32, it may cause loss of accuracy.
 
@@ -2801,6 +2887,10 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
 def argsort(input, axis=-1, descending=False):
     r"""
     Return the indices that sort the tensor along the specified axis.
+
+    .. warning::
+        After version 2.9.0, `axis` will be renamed to `dim` and a `stable` keyword argument will be added.
+        The signature will become `argsort(input, dim=-1, descending=False, *, stable=False)`.
 
     .. note::
         The Ascend backend only supports sorting the last dimension.
@@ -2844,15 +2934,17 @@ def gather_elements(input, dim, index):
     """
     Gathers elements along the specified dim and indices.
 
+    .. warning::
+        - After version 2.9.0, this interface will be aligned with `mindspore.ops.gather` semantics and additional
+          optional arguments such as `sparse_grad` will be introduced.
+        - On Ascend, the behavior is unpredictable in the following cases:
+
+          - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
+          - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
+
     .. note::
         `input` and `index` have the same length of dimensions, and `index.shape[axis] <= input.shape[axis]`
         where axis goes through all dimensions of `input` except `dim`.
-
-    .. warning::
-        On Ascend, the behavior is unpredictable in the following cases:
-
-        - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
-        - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
 
     Args:
         input (Tensor): The input tensor.
@@ -2885,6 +2977,9 @@ def tensor_scatter_sub(input_x, indices, updates):
 
     .. math::
         output[indices] = input\_x - updates
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -2925,6 +3020,9 @@ def tensor_scatter_max(input_x, indices, updates):
     .. math::
         output\left [indices \right ] = \max(input\_x, updates)
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
           the corresponding `updates` will not be updated to self tensor.
@@ -2963,6 +3061,9 @@ def tensor_scatter_min(input_x, indices, updates):
 
     .. math::
         output\left [indices  \right ] = \min(input\_x, updates)
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -3018,7 +3119,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
           nondeterministic.
         - On Ascend, the reduction only support set to "none" for now.
         - On Ascend, the data type of `input_x` must be float16 or float32.
-        - This is an experimental API that is subject to change or deletion.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         If some values of the `indices` exceed the upper or lower bounds of the index of `input_x`, instead of raising
@@ -3060,6 +3161,9 @@ def scatter(input, axis, index, src):
     """
     Update the value in `src` to `input` according to the specified index.
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`.
 
     .. note::
         If `src` is a tensor, the backward is supported only for the case `src.shape == index.shape`.
@@ -3202,6 +3306,9 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
     r"""
     Embed `src` into the sliced `input` along the specified `axis` .
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         input (Tensor): The input tensor.
         src (Tensor): The source tensor to be embedded into `input` .
@@ -3256,6 +3363,9 @@ def select_scatter(input, src, axis, index):
     r"""
     On the specified dimension `axis` of `input` , `src` is scattered into `input` on the specified `index` of `input` .
 
+    .. warning::
+        After version 2.9.0, the `axis` argument will be renamed to `dim`.
+
     Args:
         input (Tensor): The input tensor.
         src (Tensor): The source tensor.
@@ -3300,6 +3410,9 @@ def space_to_batch_nd(input_x, block_size, paddings):
             w'_i = (w_i + paddings[i][0] + paddings[i][1])//block\_size[i]
         \end{array}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - This operation divides the spatial dimensions [1, ..., M] of the input into blocks of size `block_size` and
           interleaves them into the batch dimension (default: dimension 0). Before splitting, the spatial dimensions are
@@ -3340,9 +3453,12 @@ def space_to_batch_nd(input_x, block_size, paddings):
 
 def batch_to_space_nd(input_x, block_shape, crops):
     r"""
-    Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+    Divides the batch dimension into blocks and interleaves these blocks back into spatial dimensions.
 
-    This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
+    This operation will divide the batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's :math:`w_1, ..., w_M` dimension is
     the product of original :math:`w_1, ..., w_M` dimension and block_shape with given amount to crop from dimension,
     respectively.
@@ -3357,15 +3473,16 @@ def batch_to_space_nd(input_x, block_shape, crops):
         \end{array}
 
     Args:
-        input_x (Tensor): The input tensor. It must be greater or equal to 2-D tensor(equal to 4-D tensor on Ascend),
-            batch dimension must be divisible by product of `block_shape`.
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+        input_x (Tensor): The input tensor. It must be at least a 2-D tensor (equal to 4-D tensor on Ascend),
+            the batch dimension must be divisible by product of `block_shape`.
+        block_shape (Union[list(int), tuple(int), int]): The block shape for dividing the batch
+            into blocks with all values greater
             than or equal to 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding
-            to the number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the
+            to the number of spatial dimensions. If `block_shape` is an int, the block sizes of M dimensions are the
             same, equal to `block_shape`. In this case of Ascend, M must be 2.
-        crops (Union[list(int), tuple(int)]): The crops values for spatial dimensions, containing M subtraction list.
+        crops (Union[list(int), tuple(int)]): The `crops` values for spatial dimensions, containing M subtraction list.
             Each contains 2 integer values. All values must be >= 0. crops[i] specifies the crops values for spatial
-            dimension i, which corresponds to input dimension i + offset,where offset = N-M, and N is the number of
+            dimension i, which corresponds to input dimension i + offset, where offset = N-M, and N is the number of
             input dimensions. It is required that
             :math:`input\_shape[i+offset]*block\_shape[i] > crops[i][0]+crops[i][1]`
 
@@ -3398,6 +3515,9 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
 
     `num_rows` and `num_cols` are tensors of type int32 with only one value, which is -1, indicating that the innermost
     matrix of the output tensor is a square.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -3464,6 +3584,9 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
 
     Input `k` and `padding_value` must be const tensor when taking graph mode.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor with rank r, where r >= 2.
         k (Union[int, Tensor], optional): Diagonal offsets. Positive value means superdiagonal, and negative value
@@ -3513,6 +3636,9 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
     r"""
     Return a tensor by replacing the elements on the k[0]-th to k[1]-th diagonals of the matrix `x` with the values
     from the input `diagonal` .
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor with rank r, where r >= 2.
@@ -3655,6 +3781,10 @@ def meshgrid(*inputs, indexing='xy'):
     """
     Creates grids of coordinates specified by the 1D inputs。
 
+    .. warning::
+        After version 2.9.0, the default value of `indexing` will change from ``'xy'`` to ``None``
+        (equivalent to ``'ij'``).
+
     .. note::
         - In graph mode, a tuple of N 1-D tensors and N should be greater than 1.
         - In pynative mode, a tuple of N 0-D or 1-D tensors and N should be greater than 0. The data type is Number.
@@ -3737,13 +3867,13 @@ def affine_grid(theta, size, align_corners=False):
         size (tuple[int]): The target output image size.
             The value of target output with format :math:`(N, C, H, W)` for 2D grid or :math:`(N, C, D, H, W)` for 3D
             grid.
-        align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
+        align_corners (bool, optional): Geometrically, each pixel of input is viewed as a square instead of dot.
             If ``True`` , consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
             The default value is ``False`` , extremum -1 and 1 refer to the corners of the pixels, so that sampling is
             irrelevant to resolution of the image. Default: ``False`` .
 
     Returns:
-        Tensor, a tensor whose data type is same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
+        Tensor, a tensor whose data type is the same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
         or :math:`(N, D, H, W, 3)` for 3D grid.
 
     Raises:
@@ -3790,6 +3920,9 @@ def unsorted_segment_min(x, segment_ids, num_segments):
 
     where :math:`min` over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
           the maximum value of the x's type.
@@ -3833,6 +3966,9 @@ def unsorted_segment_max(x, segment_ids, num_segments):
 
     where :math:`max` is taken over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
           the minimum value of the x's type.
@@ -3871,6 +4007,9 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
 
     .. image:: UnsortedSegmentProd.png
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 1.
         - The `segment_ids` must be a non-negative tensor.
@@ -3902,6 +4041,9 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
 def index_fill(x, axis, index, value):
     """
     Fills the elements of the input `x` with `value` along the given axis and indices.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor.
@@ -3997,6 +4139,9 @@ def index_select(input, axis, index):
     """
     Select the input tensor according to the specified axis and index and return a new tensor.
 
+    .. warning::
+        After version 2.9.0, the parameter `axis` will be renamed to `dim`.
+
     .. note::
         - The value of `index` must be in the range of `[0, input.shape[axis])`, the result is undefined out of range.
         - The returned tensor has the same number of dimensions as the input tensor. The `axis` dimension has the same
@@ -4041,6 +4186,9 @@ def population_count(input_x):
     r"""
     Calculate the number of 1 bits in the binary representation of each element in the input tensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         input_x (Tensor): The input tensor.
 
@@ -4068,6 +4216,9 @@ def population_count(input_x):
 def is_tensor(obj):
     r"""
     Check whether the input object is a :class:`mindspore.Tensor` .
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         obj (Object): The input object to be checked.
@@ -4129,6 +4280,9 @@ def tensor_scatter_mul(input_x, indices, updates):
     .. math::
         output\left [indices \right ] = input\_x\times updates
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Note:
         - If some values of the `indices` are out of bounds, instead of raising an index error,
           the corresponding `updates` will not be updated to `input_x`.
@@ -4163,6 +4317,9 @@ def tensor_scatter_div(input_x, indices, updates):
 
     .. math::
         output\left [indices \right ] = input\_x \div updates
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -4263,8 +4420,9 @@ def tuple_to_array(input_x):
 
 def diagflat(input, offset=0):
     r"""
-    If `input` is a vector (1-D tensor), then returns a 2-D square tensor with the elements of `input` as the diagonal,
-    If `input` is a tensor with more than one dimension, then returns a 2-D tensor with diagonal elements equal to a
+    If `input` is a vector (1-D tensor), then it returns a 2-D square tensor
+    with the elements of `input` as the diagonal.
+    If `input` is a tensor with more than one dimension, then it returns a 2-D tensor with diagonal elements equal to a
     flattened `input`.
 
     Args:
@@ -4327,20 +4485,23 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
     """
     Combines an array of sliding local blocks into a large containing tensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         input_x (Tensor): 4D tensor with data type float16 or float32.
         output_size (Tensor): 1D tensor with 2 elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
-            for height and width. If type is int, it means that height equal with width. Must be specified.
+            for height and width. If type is int, it means that height equals width. Must be specified.
         dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
         padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
         stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equal with width.
+            for height and width. If type is int, it means that height equals width.
 
     Returns:
-        A 4D Tensor, with same type as `input_x`.
+        A 4D Tensor, with the same type as `input_x`.
 
     Raises:
         TypeError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` data type is not in
@@ -4420,6 +4581,9 @@ def _split_sub_tensors(x, split_size_or_sections, axis):
 def split(tensor, split_size_or_sections, axis=0):
     """
     Split the tensor into chunks along the given axis.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`.
 
     Args:
         tensor (Tensor): The input tensor.
@@ -4832,6 +4996,15 @@ def tensor_split(input, indices_or_sections, axis=0):
     r"""
     Split the input tensor into multiple subtensors according to the specified indices or chunks.
 
+    .. warning::
+        Starting after version 2.9.0, this interface will undergo a non-compatible change:
+
+        - The parameter `indices_or_sections` will be renamed to `tensor_indices_or_sections`.
+        - The parameter `axis` will be renamed to `dim`.
+
+        The updated signature will be
+        ``mindspore.ops.tensor_split(input, tensor_indices_or_sections, dim=0)``.
+
     Args:
         input (Tensor): The input tensor.
         indices_or_sections (Union[int, tuple(int), list(int)]): The specified indices or chunks.
@@ -5082,6 +5255,10 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
     """
     Return the maximum values and their indices along the given axis of the tensor.
 
+    .. warning::
+        After version 2.9.0, when `axis` is ``None``, the return value will change from a tuple
+        to a single Tensor, and `initial` and `where` will no longer be supported.
+
     Args:
         input (Tensor): The input tensor.
         axis (int): Specify the axis for computation. If ``None`` , compute all elements in the `input` . Default:
@@ -5187,15 +5364,15 @@ def argmax(input, dim=None, keepdim=False):
         >>> input = mindspore.tensor([[9, 3, 4, 5],
         ...                           [5, 2, 7, 4],
         ...                           [8, 1, 3, 6]])
-        >>> # case 1: By default, compute the maximum indice of all elements.
+        >>> # case 1: By default, compute the maximum indices of all elements.
         >>> mindspore.ops.argmax(input)
         Tensor(shape=[], dtype=Int64, value= 0)
         >>>
-        >>> # case 2: Compute maximum indice along dim 1.
+        >>> # case 2: Compute maximum indices along dim 1.
         >>> mindspore.ops.argmax(input, dim=1)
         Tensor(shape=[3], dtype=Int64, value= [0, 2, 0])
         >>>
-        >>> # case 3: If keepdim=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdim=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.argmax(input, dim=1, keepdim=True)
         Tensor(shape=[3, 1], dtype=Int64, value=
         [[0],
@@ -5221,6 +5398,10 @@ def argmax(input, dim=None, keepdim=False):
 def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylint: disable=redefined-outer-name
     """
     Return the minimum values and their indices along the given axis of the tensor.
+
+    .. warning::
+        After version 2.9.0, when `axis` is ``None``, the return value will change from a tuple
+        to a single Tensor, and `initial` and `where` will no longer be supported.
 
     Args:
         input (Tensor): The input tensor.
@@ -5255,7 +5436,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         (Tensor(shape=[3], dtype=Int64, value= [ 1, -7, -4]),
          Tensor(shape=[3], dtype=Int64, value= [2, 1, 1]))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.min(input, axis=1, keepdims=True)
         (Tensor(shape=[3, 1], dtype=Int64, value=
          [[ 1],
@@ -5309,6 +5490,10 @@ def aminmax(input, *, axis=0, keepdims=False):
     """
     Return the minimum values and maximum values along the given axes of the tensor.
 
+    .. warning::
+        After version 2.9.0, this API will undergo an incompatible change: `axis` will be renamed to `dim` and
+        its default value will change from ``0`` to ``None``.
+
     Args:
         input (Tensor): The input tensor.
 
@@ -5342,7 +5527,7 @@ def aminmax(input, *, axis=0, keepdims=False):
         (Tensor(shape=[], dtype=Float32, value= 1),
          Tensor(shape=[], dtype=Float32, value= 9))
         >>>
-        >>> # case 3: If keepdims=True, the output shape will be same of that of the input.
+        >>> # case 3: If keepdims=True, the output shape will be the same as that of the input.
         >>> mindspore.ops.aminmax(input, axis=None, keepdims=True)
         (Tensor(shape=[1, 1], dtype=Float32, value=
          [[ 1.00000000e+00]]),
@@ -5366,6 +5551,9 @@ def aminmax(input, *, axis=0, keepdims=False):
 def narrow(input, axis, start, length):
     """
     Slice the tensor from the `start` position with a length of `length` along `axis` .
+
+    .. warning::
+        After version 2.9.0, the parameter `axis` will be renamed to `dim`.
 
     Args:
         input (Tensor): The input tensor.
@@ -5874,7 +6062,7 @@ def nonzero(input, *, as_tuple=False):
         input (Tensor): The input tensor.
 
     .. note::
-        - Ascend: Rank of Input tensor can be equal to 0 except GE backend.
+        - Ascend: Rank of Input tensor can be equal to 0.
         - CPU/GPU: Rank of Input tensor should be greater than or equal to 1.
         - Currently, only the Ascend backend is supported when `as_tuple` is ``True``.
 
@@ -6081,6 +6269,9 @@ def movedim(x, source, destination):
     """
     Swap two dimensions of the input tensor.
 
+    .. warning::
+        After version 2.9.0, `x` will be renamed to `input`.
+
     Args:
         x (Tensor): The input tensor.
         source (Union[int, sequence[int]]): Original dimensions.
@@ -6119,6 +6310,9 @@ def movedim(x, source, destination):
 def moveaxis(x, source, destination):
     """
     Move axis of an array from source to destination.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     Refer to :func:`mindspore.ops.movedim` for more detail.
 
@@ -6256,6 +6450,9 @@ def repeat_interleave(input, repeats, axis=None):
     """
     Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`.
+
     Args:
         input (Tensor): The input tensor.
         repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
@@ -6324,9 +6521,6 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
     r"""
     Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
 
-    .. warning::
-        Only support on Atlas A2 training series.
-
     Args:
         input (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.
@@ -6364,6 +6558,9 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
 def repeat_elements(x, rep, axis=0):
     """
     Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat` .
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         It is recommended to use :func:`mindspore.mint.repeat_interleave`, the dimension of input 'x' can support
@@ -6420,6 +6617,9 @@ def sequence_mask(lengths, maxlen=None):
 
     If `lengths` has shape :math:`(d_1, d_2, ..., d_n)`, then the resulting tensor mask has type and shape
     :math:`(d_1, d_2, ..., d_n, maxlen)`, with mask :math:`[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])`.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         lengths (Tensor): Tensor to calculate the mask for. All values in this tensor should be

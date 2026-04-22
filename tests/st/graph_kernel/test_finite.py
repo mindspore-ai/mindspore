@@ -42,7 +42,7 @@ def run(x):
     assert np.allclose(expect_np, out.asnumpy(), 1.e-4, 1.e-7)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_finite():
     """
     Feature: test nan/inf case in graph kernel

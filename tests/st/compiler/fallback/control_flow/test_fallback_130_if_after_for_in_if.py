@@ -20,8 +20,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_if_after_for_in_if_tensor():
     """
     Feature: JIT Fallback
@@ -44,8 +43,7 @@ def test_if_after_for_in_if_tensor():
     assert res == 5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_if_after_for_in_if_numpy():
     """
     Feature: JIT Fallback
@@ -68,8 +66,7 @@ def test_if_after_for_in_if_numpy():
     assert (res.asnumpy() == [6, 10]).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_if_after_for_in_if_tensor_2():
     """
     Feature: JIT Fallback
@@ -95,8 +92,7 @@ def test_if_after_for_in_if_tensor_2():
     assert (res.asnumpy() == [-1]).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_if_after_for_in_if_numpy_2():
     """
     Feature: JIT Fallback

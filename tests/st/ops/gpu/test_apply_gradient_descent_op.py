@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.apply_gradient_descent(self.var, alpha, delta)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_gradient_descent_float32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     var = Tensor(np.arange(10).reshape(2, 5).astype(np.float32) / 10)
@@ -58,7 +58,7 @@ def test_apply_gradient_descent_float32():
     np.testing.assert_almost_equal(net.var.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_gradient_descent_float16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     var = Tensor(np.arange(10).reshape(2, 5).astype(np.float16) / 10)

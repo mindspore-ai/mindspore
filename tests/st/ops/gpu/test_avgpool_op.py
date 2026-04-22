@@ -52,7 +52,7 @@ class AvgPoolGrad(nn.Cell):
         return self.grad(self.forward)(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool2d_valid():
     """
     Feature: test avgpool2d op.
@@ -83,7 +83,7 @@ def test_avgpool2d_valid():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool2d_same():
     """
     Feature: test avgpool2d op.
@@ -114,7 +114,7 @@ def test_avgpool2d_same():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_1():
     """
     Feature: test avgpool3d op.
@@ -157,7 +157,7 @@ def test_avgpool3d_1():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_2():
     """
     Feature: test avgpool3d op.
@@ -199,7 +199,7 @@ def test_avgpool3d_2():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_3():
     """
     Feature: test avgpool3d op.
@@ -238,7 +238,7 @@ def test_avgpool3d_3():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_4():
     """
     Feature: test avgpool3d op.
@@ -292,7 +292,7 @@ def test_avgpool3d_4():
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool_vmap():
     """
     Feature: test vmap function.
@@ -307,7 +307,7 @@ def test_avgpool_vmap():
     assert out.shape == (6, 3, 1, 1, 3, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool_grad_vmap():
     """
     Feature: test vmap function.
@@ -335,7 +335,7 @@ class DynamicShapeAvgPool3DGrad(nn.Cell):
         return self.net(x_shape)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avgpool3d_grad_dynamic_shape():
     """
     Feature: AvgPool3dGrad dynamic test.
@@ -381,7 +381,7 @@ def avg_pool1d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avg_pool1d_forward_float32_functional():
     """
     Feature: test avg_pool1d forward.
@@ -406,7 +406,7 @@ def avg_pool2d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avg_pool2d_forward_float32_functional():
     """
     Feature: test avg_pool2d forward.
@@ -431,7 +431,7 @@ def avg_pool3d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_avg_pool3d_forward_float32_functional():
     """
     Feature: test avg_pool3d forward.

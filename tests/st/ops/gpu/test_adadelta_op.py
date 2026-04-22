@@ -63,7 +63,7 @@ def main_test(var_np, accum_np, accum_update_np, lr_np, rho_np, epsilon_np, grid
         (expect_var_np, res_var_mindspore)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_adadelta_fff():
     """
     Feature: None
@@ -88,7 +88,7 @@ def test_apply_adadelta_fff():
     assert np.all(abs(var[0] - var[1]) < eps_f32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_apply_adadelta_ddd():
     """
     Feature: None

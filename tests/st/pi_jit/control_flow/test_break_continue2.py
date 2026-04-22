@@ -29,7 +29,7 @@ class CtrlWhileBC(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_break_continue():
     """
     TEST_SUMMARY:
@@ -67,7 +67,7 @@ class CtrlWhileBR(Cell):
         return y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_break_return():
     """
     TEST_SUMMARY:
@@ -105,7 +105,7 @@ class CtrlWhileCR(Cell):
         return y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_continue_return():
     """
     TEST_SUMMARY:
@@ -145,7 +145,7 @@ class CtrlWhileBCR(Cell):
         return y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_while_continue_return_break():
     """
     TEST_SUMMARY:
@@ -184,7 +184,7 @@ class CtrlForBC(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_break_continue():
     """
     TEST_SUMMARY:
@@ -227,7 +227,7 @@ class CtrlForCR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_continue_return():
     """
     TEST_SUMMARY:
@@ -272,7 +272,7 @@ class CtrlForBCR(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_for_continue_break_return():
     """
     TEST_SUMMARY:

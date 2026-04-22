@@ -42,7 +42,7 @@ class CatModule(torch.nn.Module):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_cat_dynamic_shape():
     """
     Feature: test cat operator.

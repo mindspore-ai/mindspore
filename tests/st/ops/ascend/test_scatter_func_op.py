@@ -318,7 +318,7 @@ def scatter_func_updates_nest_vmap():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_scatter_func_forward_float16():
     """
     Feature: test scatter_func forward.
@@ -331,7 +331,7 @@ def test_scatter_func_forward_float16():
     scatter_func_forward(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_scatter_func_forward_float32():
     """
     Feature: test scatter_func forward.
@@ -344,7 +344,7 @@ def test_scatter_func_forward_float32():
     scatter_func_forward(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
 def test_scatter_func_forward_int32():
     """
     Feature: test scatter_func forward.
@@ -357,7 +357,7 @@ def test_scatter_func_forward_int32():
     scatter_func_forward(np.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_scatter_func_dynamic_indices():
     """
     Feature: test scatter_func dynamic shape.
@@ -370,8 +370,7 @@ def test_scatter_func_dynamic_indices():
     scatter_func_dynamic_indices()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_scatter_func_dynamic_updates():
     """
     Feature: test scatter_func dynamic shape.
@@ -384,8 +383,7 @@ def test_scatter_func_dynamic_updates():
     scatter_func_dynamic_updates()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_scatter_func_grad_float16():
     """
     Feature: test scatter_func grad.
@@ -398,8 +396,7 @@ def test_scatter_func_grad_float16():
     scatter_func_grad(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_scatter_func_grad_float32():
     """
     Feature: test scatter_func grad.
@@ -412,8 +409,7 @@ def test_scatter_func_grad_float32():
     scatter_func_grad(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_scatter_func_grad_int32():
     """
     Feature: test scatter_func grad.
@@ -426,8 +422,7 @@ def test_scatter_func_grad_int32():
     scatter_func_grad(np.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=16.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=16.01)
 def test_scatter_func_indices_vmap():
     """
     Feature: test scatter_func vmap.
@@ -440,8 +435,7 @@ def test_scatter_func_indices_vmap():
     scatter_func_indices_vmap()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_scatter_func_updates_vmap():
     """
     Feature: test scatter_func vmap.
@@ -454,8 +448,7 @@ def test_scatter_func_updates_vmap():
     scatter_func_updates_vmap()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=16.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=16.01)
 def test_scatter_func_updates_nest_vmap():
     """
     Feature: test scatter_func nest vmap.

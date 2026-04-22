@@ -42,8 +42,7 @@ class GradNet(nn.Cell):
         return gradient_function(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_while_grad():
     """
     Feature: Control flow
@@ -68,8 +67,7 @@ class WhileSpecTwiceNet(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_while_header_spec_twice():
     """
     Feature: FuncGraph Cloner.

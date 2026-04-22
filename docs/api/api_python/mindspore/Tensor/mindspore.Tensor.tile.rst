@@ -5,6 +5,9 @@ mindspore.Tensor.tile
 
     按照给定的次数复制输入Tensor。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `tile(reps)` 重载，仅支持 `tile(dims)`。
+
     .. note::
         在Ascend平台上， `dims` 参数的个数不大于8，当前不支持超过4个维度同时做repeat的场景。
 

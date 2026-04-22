@@ -5,6 +5,9 @@ mindspore.ops.deformable_conv2d
 
     给定4D的Tensor输入 `x` ， `weight` 和 `offsets` ，计算一个2D的可变形卷积。可变形卷积运算可以表达如下：
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     可变形卷积v1：
 
     .. math::
@@ -47,6 +50,3 @@ mindspore.ops.deformable_conv2d
         - **ValueError** - 如果 `strides`， `padding`， `kernel_size` 或者 `dilations` 的元组不是期望的大小。
         - **ValueError** - 如果 `strides` 或者 `dilations` 对应N和C维度的值不为1。
         - **ValueError** - 如果 `modulated` 的值不是True。
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。

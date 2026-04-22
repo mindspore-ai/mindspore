@@ -107,8 +107,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_argmaxwithvalue_dyn():
     """
     Feature: test ArgmaxWithValue dynamic shape in cpu.
@@ -121,20 +120,17 @@ def test_argmaxwithvalue_dyn():
     dyn_case()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_argmaxwithvalue_base_float32():
     argmaxwithvalue_base(np.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_argmaxwithvalue_base_float16():
     argmaxwithvalue_base(np.float16)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_argmaxwithvalue_3d_float32():
     shape_x = (2, 32, 256)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
@@ -143,16 +139,14 @@ def test_argmaxwithvalue_3d_float32():
     argmaxwithvalue_3d(np.float32, shape_x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_argmaxwithvalue_3d_float16():
     shape_x = (2, 64, 128)
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     argmaxwithvalue_3d(np.float16, shape_x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_argmaxwithvalue_3d_big_float32():
     shape_x = (128, 1024, 1)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")

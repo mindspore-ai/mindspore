@@ -38,7 +38,7 @@ class Net1(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_with_for():
     """
     Feature: List iteration in for loop.
@@ -84,7 +84,7 @@ class Net2(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_using_index():
     """
     Feature: List indexing operation.
@@ -129,7 +129,7 @@ class Net4(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sliced_list_using_index():
     """
     Feature: List slice operation.
@@ -158,7 +158,7 @@ class Net3(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cell_list_with_for():
     """
     Feature: List of cells iteration in for loop.
@@ -185,7 +185,7 @@ class NetGet0001(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0001():
     """
     Feature: List element access using index 0.
@@ -230,7 +230,7 @@ class NetGet0002(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0002():
     """
     Feature: List element access using negative index.
@@ -270,7 +270,7 @@ class NetGet0003(Cell):
         return l[1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0003():
     """
     Feature: List element access returning nested list.
@@ -293,7 +293,7 @@ class NetGet0004(Cell):
         return self.list[1]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0004():
     """
     Feature: List element access returning nested list with float elements.
@@ -319,7 +319,7 @@ class NetGet0005(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0005():
     """
     Feature: List element access with string comparison.
@@ -364,7 +364,7 @@ class NetGet0006(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0006():
     """
     Feature: List element access with mixed type comparison.
@@ -410,7 +410,7 @@ class NetGet0007(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0007():
     """
     Feature: Nested list element access.
@@ -443,7 +443,7 @@ def test_list_get_0007():
     assert_equal(pynative_grad, jit_grad, decimal=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0008():
     """
     Feature: Nested list element access with tensor append.
@@ -472,7 +472,7 @@ def test_list_get_0008():
     net(input_me_x, input_me_y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0009():
     """
     Feature: Nested list element access with int32 tensor append.
@@ -501,7 +501,7 @@ def test_list_get_0009():
     net(input_me_x, input_me_y)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_0010():
     """
     Feature: Nested list element access with mixed tensor types.
@@ -544,7 +544,7 @@ class NetGetException0001(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_get_exception():
     """
     Feature: List index out of range exception.
@@ -574,7 +574,7 @@ class NetSlice0004(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0004():
     """
     Feature: List slice operation with step.
@@ -611,7 +611,7 @@ class NetSlice0005(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0005():
     """
     Feature: List slice operation with negative end index.
@@ -648,7 +648,7 @@ class NetSlice0006(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0006():
     """
     Feature: List slice operation with negative start index.
@@ -685,7 +685,7 @@ class NetSlice0007(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0007():
     """
     Feature: List slice operation with negative indices and step.
@@ -722,7 +722,7 @@ class NetSlice0008(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0008():
     """
     Feature: List slice operation with step greater than list size.
@@ -759,7 +759,7 @@ class NetSlice0009(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0009():
     """
     Feature: List slice operation with negative end index and large step.
@@ -796,7 +796,7 @@ class NetSlice0010(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0010():
     """
     Feature: List slice operation with negative start index and large step.
@@ -833,7 +833,7 @@ class NetSlice0013(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0013():
     """
     Feature: List slice operation with negative indices and large step.
@@ -870,7 +870,7 @@ class NetSlice0014(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0014():
     """
     Feature: List slice operation with start > end.
@@ -907,7 +907,7 @@ class NetSlice0016(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0016():
     """
     Feature: List slice operation with start > end using negative index.
@@ -944,7 +944,7 @@ class NetSlice0017(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0017():
     """
     Feature: List slice operation with start equal to end.
@@ -981,7 +981,7 @@ class NetSlice0018(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0018():
     """
     Feature: List slice operation with negative indices where start equals end.
@@ -1018,7 +1018,7 @@ class NetSlice0019(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0019():
     """
     Feature: List slice operation without start index.
@@ -1055,7 +1055,7 @@ class NetSlice0020(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0020():
     """
     Feature: List slice operation without start index and negative end index.
@@ -1092,7 +1092,7 @@ class NetSlice0021(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0021():
     """
     Feature: List slice operation without start index and large step.
@@ -1129,7 +1129,7 @@ class NetSlice0022(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0022():
     """
     Feature: List slice operation without start index, negative end index and large step.
@@ -1166,7 +1166,7 @@ class NetSlice0023(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0023():
     """
     Feature: List slice operation without start index and end out of range.
@@ -1203,7 +1203,7 @@ class NetSlice0024(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0024():
     """
     Feature: List slice operation without start index, negative end out of range.
@@ -1240,7 +1240,7 @@ class NetSlice0025(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0025():
     """
     Feature: List slice operation without start index, end out of range and large step.
@@ -1277,7 +1277,7 @@ class NetSlice0026(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0026():
     """
     Feature: List slice operation without start index, negative end out of range and large step.
@@ -1314,7 +1314,7 @@ class NetSlice0027(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0027():
     """
     Feature: List slice operation without end index.
@@ -1351,7 +1351,7 @@ class NetSlice0028(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0028():
     """
     Feature: List slice operation without end index and negative start index.
@@ -1388,7 +1388,7 @@ class NetSlice0029(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0029():
     """
     Feature: List slice operation without end index and large step.
@@ -1425,7 +1425,7 @@ class NetSlice0030(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0030():
     """
     Feature: List slice operation without end index, negative start index and large step.
@@ -1462,7 +1462,7 @@ class NetSlice0031(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0031():
     """
     Feature: List slice operation without end index and start out of range.
@@ -1499,7 +1499,7 @@ class NetSlice0032(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0032():
     """
     Feature: List slice operation without end index and negative start out of range.
@@ -1536,7 +1536,7 @@ class NetSlice0033(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0033():
     """
     Feature: List slice operation without end index, start out of range and large step.
@@ -1573,7 +1573,7 @@ class NetSlice0034(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0034():
     """
     Feature: List slice operation without end index, negative start out of range and large step.
@@ -1610,7 +1610,7 @@ class NetSlice0035(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0035():
     """
     Feature: List slice operation without step parameter.
@@ -1647,7 +1647,7 @@ class NetSlice0036(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0036():
     """
     Feature: List slice operation with empty step parameter.
@@ -1684,7 +1684,7 @@ class NetSlice0078(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0078():
     """
     Feature: List slice operation with negative end index.
@@ -1721,7 +1721,7 @@ class NetSlice0037(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0037():
     """
     Feature: List slice operation with negative start index.
@@ -1758,7 +1758,7 @@ class NetSlice0038(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0038():
     """
     Feature: List slice operation with start > end.
@@ -1795,7 +1795,7 @@ class NetSlice0039(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0039():
     """
     Feature: List slice operation with end out of range.
@@ -1832,7 +1832,7 @@ class NetSlice0040(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0040():
     """
     Feature: List slice operation with negative start and end out of range.
@@ -1869,7 +1869,7 @@ class NetSlice0041(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0041():
     """
     Feature: List slice operation with negative start and end out of range.
@@ -1906,7 +1906,7 @@ class NetSlice0042(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0042():
     """
     Feature: List slice operation with negative end out of range.
@@ -1943,7 +1943,7 @@ class NetSlice0043(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0043():
     """
     Feature: List slice operation with start out of range.
@@ -1980,7 +1980,7 @@ class NetSlice0044(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0044():
     """
     Feature: List slice operation with negative start out of range.
@@ -2017,7 +2017,7 @@ class NetSlice0045(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0045():
     """
     Feature: List slice operation with start out of range and negative end.
@@ -2054,7 +2054,7 @@ class NetSlice0046(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0046():
     """
     Feature: List slice operation with both indices out of range.
@@ -2091,7 +2091,7 @@ class NetSlice0047(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0047():
     """
     Feature: List slice operation with both negative indices out of range.
@@ -2128,7 +2128,7 @@ class NetSlice0048(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0048():
     """
     Feature: List slice operation with negative start and positive end out of range.
@@ -2165,7 +2165,7 @@ class NetSlice0049(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0049():
     """
     Feature: List slice operation with negative start and positive end out of range.
@@ -2202,7 +2202,7 @@ class NetSlice0050(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0050():
     """
     Feature: List slice operation with both positive indices out of range.
@@ -2239,7 +2239,7 @@ class NetSlice0051(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0051():
     """
     Feature: List slice operation with start > end, both out of range.
@@ -2276,7 +2276,7 @@ class NetSlice0052(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0052():
     """
     Feature: List slice operation without start and step parameters.
@@ -2313,7 +2313,7 @@ class NetSlice0053(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0053():
     """
     Feature: List slice operation without start and step parameters, negative end.
@@ -2350,7 +2350,7 @@ class NetSlice0054(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0054():
     """
     Feature: List slice operation without start and step parameters, end out of range.
@@ -2387,7 +2387,7 @@ class NetSlice0055(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0055():
     """
     Feature: List slice operation without start and step parameters, negative end out of range.
@@ -2424,7 +2424,7 @@ class NetSlice0056(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0056():
     """
     Feature: List slice operation without end and step parameters.
@@ -2461,7 +2461,7 @@ class NetSlice0057(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0057():
     """
     Feature: List slice operation without end and step parameters, negative start.
@@ -2498,7 +2498,7 @@ class NetSlice0058(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0058():
     """
     Feature: List slice operation without end and step parameters, start out of range.
@@ -2535,7 +2535,7 @@ class NetSlice0059(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0059():
     """
     Feature: List slice operation with negative step, no start and end.
@@ -2572,7 +2572,7 @@ class NetSlice0060(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0060():
     """
     Feature: List slice operation with negative step, no start and end.
@@ -2609,7 +2609,7 @@ class NetSlice0061(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0061():
     """
     Feature: List slice operation without start and end, large positive step.
@@ -2646,7 +2646,7 @@ class NetSlice0062(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0062():
     """
     Feature: List slice operation without start and end, positive step.
@@ -2683,7 +2683,7 @@ class NetSlice0063(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0063():
     """
     Feature: List slice operation without all parameters.
@@ -2721,7 +2721,7 @@ class NetSlice0064(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0064():
     """
     Feature: List index operation to get list from list.
@@ -2758,7 +2758,7 @@ class NetSlice0065(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0065():
     """
     Feature: List slice operation on nested list.
@@ -2795,7 +2795,7 @@ class NetSlice0066(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0066():
     """
     Feature: List slice operation on nested list with start > end.
@@ -2832,7 +2832,7 @@ class NetSlice0067(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0067():
     """
     Feature: List slice operation on nested list without start.
@@ -2869,7 +2869,7 @@ class NetSlice0068(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0068():
     """
     Feature: List slice operation on nested list without start.
@@ -2906,7 +2906,7 @@ class NetSlice0069(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0069():
     """
     Feature: List slice operation on nested list without step.
@@ -2943,7 +2943,7 @@ class NetSlice0070(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0070():
     """
     Feature: List slice operation on nested list with start out of range.
@@ -2980,7 +2980,7 @@ class NetSlice0071(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0071():
     """
     Feature: List slice operation on nested list without start and step.
@@ -3017,7 +3017,7 @@ class NetSlice0072(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0072():
     """
     Feature: List slice operation on nested list without all parameters.
@@ -3054,7 +3054,7 @@ class NetSlice0073(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0073():
     """
     Feature: List index operation on nested list with single element.
@@ -3091,7 +3091,7 @@ class NetSlice0074(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0074():
     """
     Feature: List slice operation on nested list with single element.
@@ -3128,7 +3128,7 @@ class NetSlice0075(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0075():
     """
     Feature: List slice operation on nested list with single element.
@@ -3165,7 +3165,7 @@ class NetSlice0076(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0076():
     """
     Feature: List slice operation on nested list with single element.
@@ -3202,7 +3202,7 @@ class NetSlice0077(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_slice_0077():
     """
     Feature: List slice operation on nested list with single element.
@@ -3241,7 +3241,7 @@ class NetAppend0001(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_append_0001():
     """
     Feature: List append operation with int.
@@ -3286,7 +3286,7 @@ class NetAppend0002(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_append_0002():
     """
     Feature: List append operation with float.
@@ -3331,7 +3331,7 @@ class NetAppend0003(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_append_0003():
     """
     Feature: List append operation with string.
@@ -3376,7 +3376,7 @@ class NetAppend0004(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_append_0004():
     """
     Feature: List append operation with bool.
@@ -3421,7 +3421,7 @@ class NetAppend0005(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_append_0005():
     """
     Feature: List append operation with list.
@@ -3466,7 +3466,7 @@ class NetAppend0006(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_append_0006():
     """
     Feature: List append operation with tuple.
@@ -3512,7 +3512,7 @@ class NetAssign0001(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_0001():
     """
     Feature: List assignment operation with int.
@@ -3557,7 +3557,7 @@ class NetAssign0002(Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_0002():
     """
     Feature: Nested list assignment operation.
@@ -3589,7 +3589,7 @@ class NetAssign0003(Cell):
         return l[0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_0003():
     """
     Feature: List assignment operation with bool.
@@ -3614,7 +3614,7 @@ class NetAssign0004(Cell):
         return l[0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_0004():
     """
     Feature: List assignment operation with string.
@@ -3627,7 +3627,7 @@ def test_list_assign_0004():
     assert out_me == "2020"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_0005():
     """
     Feature: List assignment with tensor unpacking.
@@ -3665,7 +3665,7 @@ def test_list_assign_0005():
     assert_equal(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_assign_0006():
     """
     Feature: List assignment with scalar unpacking.

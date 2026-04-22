@@ -5,6 +5,9 @@ mindspore.nn.PReLU
 
     逐元素计算PReLU（PReLU Activation Operator）激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `channel` 和 `w` 将分别重命名为 `num_parameters` 和 `init`。
+
     公式定义为：
 
     .. math::

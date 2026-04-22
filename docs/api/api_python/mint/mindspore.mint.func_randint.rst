@@ -13,7 +13,7 @@ mindspore.mint.randint
     关键字参数：
         - **generator** (:class:`mindspore.Generator`, 可选) - 伪随机数生成器。默认值： ``None`` ，使用默认伪随机数生成器。
         - **dtype** (:class:`mindspore.dtype`，可选) - 指定的Tensor dtype。如果是 ``None`` ，将会使用 `mindspore.int64` 。默认值： ``None`` 。
-        - **device** (str, 可选) - 指定Tensor使用的内存来源。仅支持 ``"Ascend"`` 、 ``"npu"``。如果为 ``None`` ，那么将会使用 :func:`mindspore.set_device` 设置的值。默认值： ``None`` 。
+        - **device** (str, 可选) - 指定Tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果为 ``None`` ，那么将会使用 :func:`mindspore.set_device` 设置的值。默认值： ``None`` 。
 
     返回：
         Tensor，shape和dtype被输入指定，其元素为 [ `low` , `high` ) 区间的随机整数。

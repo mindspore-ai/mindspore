@@ -21,8 +21,7 @@ from mindspore import Tensor
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 def test_tensor_print():
     """
     Feature: Tensor print

@@ -62,8 +62,7 @@ context.set_context(device_target="CPU", mode=context.GRAPH_MODE)
 dtypes = [mstype.float16, mstype.float32]
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight():
     """
     Feature: PReLU operator forward test.
@@ -85,8 +84,7 @@ def test_prelu_single_weight():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_prelu_multiple_weight():
     """
     Feature: PReLU operator forward test.
@@ -130,8 +128,7 @@ def test_prelu_multiple_weight():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight_scalar():
     """
     Feature: PReLU operator backward test.
@@ -153,8 +150,7 @@ def test_prelu_single_weight_scalar():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight_1d():
     """
     Feature: PReLU operator backward test.
@@ -176,8 +172,7 @@ def test_prelu_single_weight_1d():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_prelu_single_weight_2d():
     """
     Feature: PReLU operator backward test.
@@ -199,8 +194,7 @@ def test_prelu_single_weight_2d():
         prelu_test(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_prelu_multiple_weight_2d():
     """
     Feature: PReLU operator backward test.

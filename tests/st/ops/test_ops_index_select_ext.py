@@ -42,8 +42,7 @@ def generate_expect_forward_output(input_np, axis, index_np):
     return input_np[(slice(None),) * axis + (index_np,)]
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_func_index_select_ext_normal(context_mode):
     """
@@ -70,8 +69,7 @@ def test_func_index_select_ext_normal(context_mode):
     np.testing.assert_allclose(grad.asnumpy(), expect1, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_func_index_select_ext_scalar_index(context_mode):
     """
@@ -97,8 +95,7 @@ def test_func_index_select_ext_scalar_index(context_mode):
     np.testing.assert_allclose(grad2.asnumpy(), grad1.asnumpy(), rtol=0)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_func_index_select_ext_dynamic():
     """
     Feature: pyboost function.

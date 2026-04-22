@@ -35,8 +35,7 @@ class Net(nn.Cell):
         return self.multinomialwithreplacement(x, seed, offset)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_multinomial_with_replacement_net():
     """
     Feature: MultinomialWithReplacement cpu kernel
@@ -57,8 +56,7 @@ def test_multinomial_with_replacement_net():
     assert out2.asnumpy().shape == (10, 15)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_multinomial_with_replacement_functional():
     """
     Feature: MultinomialWithReplacement cpu kernel

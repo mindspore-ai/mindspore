@@ -41,8 +41,7 @@ class NetConstant(nn.Cell):
         return self.expand_dims(self.tensor, -1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type",
                          [np.bool_, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
                           np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
@@ -59,8 +58,7 @@ def test_net(data_type):
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_net_constant():
     """
     Feature: Test ExpandDims CPU.
@@ -74,8 +72,7 @@ def test_net_constant():
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_func():
     """
     Feature: Test ExpandDims CPU.
@@ -88,8 +85,7 @@ def test_func():
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_tensor():
     """
     Feature: Test ExpandDims CPU.

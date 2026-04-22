@@ -5,6 +5,9 @@ mindspore.Tensor.argsort
 
     按指定顺序对 `self` 沿给定维度进行排序，并返回排序后的索引。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 ``argsort(axis=-1, descending=False)`` 重载，仅支持 ``argsort(dim=-1, descending=False, stable=False)`` 。
+
     参数：
         - **axis** (int，可选) - 指定排序的轴。默认值： ``-1`` ，表示指定最后一维。当前Ascend后端只支持对最后一维进行排序。
         - **descending** (bool，可选) - 输出顺序。如果 `descending` 为 ``True`` ，按照元素值降序排序，否则升序排序。默认值： ``False`` 。

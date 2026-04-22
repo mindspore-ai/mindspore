@@ -18,7 +18,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_switch_nic_with_dp():
     """
     Feature: switch nic with dp.
@@ -31,7 +31,7 @@ def test_switch_nic_with_dp():
     )
     assert return_code == 0
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_switch_nic_with_tp():
     """
     Feature: switch nic with optimizer parallel.

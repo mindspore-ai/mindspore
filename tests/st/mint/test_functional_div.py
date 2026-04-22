@@ -247,7 +247,7 @@ def is_float_type(dtype):
     return dtype in (mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16)
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=68.00)
+          level_mark='level0', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype_x', DTYPE_MAP.keys())
 @pytest.mark.parametrize('dtype_y', DTYPE_MAP.keys())
@@ -273,7 +273,7 @@ def test_mint_div_mixed_precision_combinations(context_mode, dtype_x, dtype_y, r
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=5.00)
+          level_mark='level1', card_mark='onecard', mem_peak=5.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('rounding_mode', ['floor', 'trunc'])
 def test_mint_div_mixed_precision_combinations_fixed_inputs(context_mode, rounding_mode):
@@ -315,7 +315,7 @@ def test_mint_div_mixed_precision_combinations_fixed_inputs(context_mode, roundi
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=68.00)
+          level_mark='level1', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('shapes', [
     ((3, 1, 5), (1, 4, 5)), # Basic broadcast
@@ -340,7 +340,7 @@ def test_mint_div_broadcast(context_mode, shapes, rounding_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=68.00)
+          level_mark='level0', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype_x', DTYPE_MAP.keys())
 @pytest.mark.parametrize('scalar_y', [2.0, 2])
@@ -365,7 +365,7 @@ def test_mint_div_scalar_tensor_promotion(context_mode, dtype_x, scalar_y, round
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=68.00)
+          level_mark='level1', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('rounding_mode', [None, 'floor', 'trunc'])
 def test_mint_div_special_values(context_mode, rounding_mode):
@@ -388,7 +388,7 @@ def test_mint_div_special_values(context_mode, rounding_mode):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=68.00)
+          level_mark='level1', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('rounding_mode', [None, 'floor', 'trunc'])
 def test_mint_div_empty_tensor(context_mode, rounding_mode):
@@ -407,7 +407,7 @@ def test_mint_div_empty_tensor(context_mode, rounding_mode):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=68.00)
+          level_mark='level1', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('rounding_mode', [None, 'floor', 'trunc'])
 def test_mint_div_exception_shape_mismatch(context_mode, rounding_mode):
@@ -426,7 +426,7 @@ def test_mint_div_exception_shape_mismatch(context_mode, rounding_mode):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'],
-          level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=68.00)
+          level_mark='level0', card_mark='onecard', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('rounding_mode', [None, 'floor', 'trunc'])
 def test_mint_div_dynamic_shape_test_op(context_mode, rounding_mode):

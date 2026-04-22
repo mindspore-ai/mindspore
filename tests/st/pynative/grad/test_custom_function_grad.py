@@ -42,8 +42,7 @@ class MultiInputFunctionNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_input():
     """
     Feature: Custom autograd function.
@@ -73,8 +72,7 @@ class MutiInputFunctionErrorNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_input_grad_num_wrong():
     """
     Feature: Custom autograd function.
@@ -104,8 +102,7 @@ class MultiInputMultiOutputFunctionNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_input_multi_output():
     """
     Feature: Custom autograd function.
@@ -135,8 +132,7 @@ class MultiInputMultiOutputStarArgsFunctionNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_input_multi_output_star_args():
     """
     Feature: Custom autograd function.
@@ -166,8 +162,7 @@ class MultiInputMultiOutputNotTensorFunctionNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_input_multi_output_not_tensor():
     """
     Feature: Custom autograd function.
@@ -197,8 +192,7 @@ class MultiInputMultiOutputFunctionErrorNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_multi_backward_input_num_wrong():
     """
     Feature: Custom autograd function.
@@ -227,8 +221,7 @@ class MultiInputMultiOutputFunctionError1Net(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_no_tensor_grad_should_be_none():
     """
     Feature: Custom autograd function.
@@ -258,8 +251,7 @@ class MultiInputMultiOutputFunctionError2Net(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_grad_should_be_none_or_tensor():
     """
     Feature: Custom autograd function.
@@ -297,8 +289,7 @@ class CustomFunctionContextNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_context():
     """
     Feature: Custom autograd function.
@@ -330,8 +321,7 @@ class CustomFunctionNeedGradNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_need_grad():
     """
     Feature: Custom autograd function.
@@ -364,8 +354,7 @@ class CustomFunctionNeedGradForwardNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_need_grad_forward():
     """
     Feature: Custom autograd function.
@@ -395,8 +384,7 @@ class CustomFunctionDirtyTensorError1Net(_Function):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_custom_function_dirty_tensor_must_all_be_output():
     """
     Feature: Custom autograd function.
@@ -427,8 +415,7 @@ class CustomFunctionDirtyTensorError2Net(_Function):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_custom_function_dirty_tensor_is_need_grad_leaf():
     """
     Feature: Custom autograd function.
@@ -465,8 +452,7 @@ class CustomFunctionLeafNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_custom_function_dirty_tensor_not_leaf_no_grad():
     """
     Feature: Custom autograd function.
@@ -488,8 +474,7 @@ class CustomFunctionLeafNet1(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_custom_function_dirty_tensor_not_leaf_need_grad():
     """
     Feature: Custom autograd function.
@@ -522,8 +507,7 @@ class InplaceMulOp(_Function):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_custom_function_dirty_tensor_is_view():
     """
     Feature: Custom autograd function.
@@ -552,8 +536,7 @@ class CustomFunctionNotLeafNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_custom_function_dirty_view_multi_output_error():
     """
     Feature: Custom autograd function.
@@ -586,8 +569,7 @@ class CustomFunctionWrapOutIsInNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_output_is_input():
     """
     Feature: Custom autograd function.
@@ -603,8 +585,7 @@ def test_custom_function_output_is_input():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_custom_function_output_is_input_inplace_error():
     """
     Feature: Custom autograd function.
@@ -640,8 +621,7 @@ class CustomFunctionNonDiffNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_non_diff():
     """
     Feature: Custom autograd function.
@@ -670,8 +650,7 @@ class CustomFunctionNonDiffNet1(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_non_diff1():
     """
     Feature: Custom autograd function.
@@ -711,8 +690,7 @@ class CustomFunctionViewNotInAndDirtyWrapNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_custom_function_view_not_in_and_dirty():
     """
     Feature: Custom autograd function.
@@ -752,8 +730,7 @@ class CustomFunctionMultiDiffOutputWrapNet(nn.Cell):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_custom_function_multi_diff_output():
     """
     Feature: Custom autograd function.
@@ -790,8 +767,7 @@ class CustomFunctionMaterializeGradsWrap(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_materialize_grad():
     """
     Feature: Custom autograd function.
@@ -830,8 +806,7 @@ class CustomFunctionNotMaterializeGradsWrap(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_not_materialize_grad():
     """
     Feature: Custom autograd function.
@@ -864,8 +839,7 @@ class CustomFunctionWithAttr(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_with_attr():
     """
     Feature: Custom autograd function.
@@ -881,8 +855,7 @@ def test_custom_function_with_attr():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_auto_reduce_same_shape():
     """
     Feature: Custom autograd function same shape.
@@ -913,8 +886,7 @@ def test_custom_function_auto_reduce_same_shape():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_auto_reduce_not_same_shape():
     """
     Feature: Custom autograd function no same shape.
@@ -945,8 +917,7 @@ def test_custom_function_auto_reduce_not_same_shape():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_auto_reduce_zero_shape():
     """
     Feature: Custom autograd function zero shape.
@@ -987,8 +958,7 @@ class CustomFunctionAutoCastNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_auto_cast():
     """
     Feature: Custom autograd function.
@@ -1021,8 +991,7 @@ class CustomFunctionBroadcastExecptionNet(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_reduce_exception():
     """
     Feature: Custom autograd function.
@@ -1052,8 +1021,7 @@ class CustomFunctionSelfRequiresGrad(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_self_requires_grad():
     """
     Feature: Custom autograd function.
@@ -1082,8 +1050,7 @@ class CustomFunctionOutRequiresGrad(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_out_requires_grad_true():
     """
     Feature: Custom autograd function.
@@ -1099,8 +1066,7 @@ def test_custom_function_out_requires_grad_true():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_ctx_get_unset_attr():
     """
     Feature: Custom autograd function.
@@ -1136,8 +1102,7 @@ class CustomFunctionNotRaiseError(_Function):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_not_raise_error():
     """
     Feature: Custom autograd function.
@@ -1151,8 +1116,7 @@ def test_custom_function_not_raise_error():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_mark_non_differentiable_error():
     """
     Feature: Custom autograd function.
@@ -1172,8 +1136,7 @@ def test_custom_function_mark_non_differentiable_error():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_mark_dirty_error():
     """
     Feature: Custom autograd function.
@@ -1193,8 +1156,7 @@ def test_custom_function_mark_dirty_error():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_grad_node():
     """
     Feature: Custom autograd function.
@@ -1215,8 +1177,7 @@ def test_custom_function_grad_node():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_custom_function_add_saved_tensor_not_tensor_or_none():
     """
     Feature: Custom autograd function.

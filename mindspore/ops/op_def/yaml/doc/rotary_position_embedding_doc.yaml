@@ -4,7 +4,7 @@ rotary_position_embedding:
         Refer to paper `Enhanced Transformer with Rotary Position Embedding <https://arxiv.org/pdf/2104.09864.pdf>`_.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
             x (Tensor): 4D tensor, with float16, bfloat16 or float32 data type.

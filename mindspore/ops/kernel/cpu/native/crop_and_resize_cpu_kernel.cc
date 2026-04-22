@@ -157,10 +157,10 @@ void CropAndResizeCpuKernelMod::BilinearV2Resize(T *input_image, float y1, float
   const float y_lerp = y_point - top_y_index;
   const float x_lerp = x_point - left_x_index;
 
-  const int y_top_index = std::max(0, y1h + top_y_index);
-  const int y_bottom_index = std::max(0, y1h + bottom_y_index);
-  const int x_left_index = std::max(0, x1w + left_x_index);
-  const int x_right_index = std::max(0, x1w + right_x_index);
+  const int y_top_index = std::min(input_height_ - 1, std::max(0, y1h + top_y_index));
+  const int y_bottom_index = std::min(input_height_ - 1, std::max(0, y1h + bottom_y_index));
+  const int x_left_index = std::min(input_width_ - 1, std::max(0, x1w + left_x_index));
+  const int x_right_index = std::min(input_width_ - 1, std::max(0, x1w + right_x_index));
 
   const float top_left = static_cast<float>(
     input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_left_index) * channel_ + pos_channel]);

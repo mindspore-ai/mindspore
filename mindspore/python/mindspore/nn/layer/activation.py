@@ -79,6 +79,11 @@ class CELU(Cell):
     .. image:: ../images/CELU.png
         :align: center
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.CELU(alpha=1.0, inplace=False)``.
+
     Args:
         alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
 
@@ -111,7 +116,7 @@ class CELU(Cell):
 
     def __init__(self, alpha=1.0):
         """Initialize CELU."""
-        super(CELU, self).__init__()
+        super().__init__()
         self.celu = ops.CeLU(alpha=alpha)
 
     def construct(self, x):
@@ -125,6 +130,10 @@ class Softmin(Cell):
 
     Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
     normalized to lie in range [0, 1] and sum up to 1.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`, and the default value
+        will change.
 
     Softmin is defined as:
 
@@ -168,7 +177,7 @@ class Softmin(Cell):
 
     def __init__(self, axis=-1):
         """Initialize Softmin."""
-        super(Softmin, self).__init__()
+        super().__init__()
         self.axis = axis
 
     def construct(self, x):
@@ -180,6 +189,9 @@ class Softmax2d(Cell):
     Softmax function applied to 2D features data.
 
     Applies `Softmax` to each location with an input Tensor of shape :math:`(C, H, W)` .
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
@@ -210,7 +222,7 @@ class Softmax2d(Cell):
 
     def __init__(self):
         """Initialize Softmax2d."""
-        super(Softmax2d, self).__init__()
+        super().__init__()
         self.softmax = ops.Softmax(axis=-3)
         self.shape = ops.Shape()
 
@@ -241,6 +253,10 @@ class Softmax(Cell):
         \text{softmax}(input_{i}) =  \frac{\exp(input_i)}{\sum_{j=0}^{n-1}\exp(input_j)},
 
     where :math:`input_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
+
+    .. warning::
+        Starting after version 2.9.0, `axis` will be renamed to `dim`, and the default value will change
+        to align with the new interface. The signature will change to ``mindspore.nn.Softmax(dim=None)``.
 
     Args:
         axis (int, optional): The axis to apply Softmax operation, if the dimension of `input` is input.ndim,
@@ -274,7 +290,7 @@ class Softmax(Cell):
 
     def __init__(self, axis=-1):
         """Initialize Softmax."""
-        super(Softmax, self).__init__()
+        super().__init__()
         self.softmax = ops.Softmax(axis)
 
     def construct(self, input):
@@ -301,7 +317,7 @@ class SoftmaxExt(Cell):
 
     def __init__(self, dim=None):
         """Initialize Softmax."""
-        super(SoftmaxExt, self).__init__()
+        super().__init__()
         self.dim = dim
 
     def construct(self, input):
@@ -311,6 +327,10 @@ class SoftmaxExt(Cell):
 class LogSoftmax(Cell):
     r"""
     Applies the LogSoftmax function to n-dimensional input tensor element-wise.
+
+    .. warning::
+        After version 2.9.0, the constructor signature will change to ``LogSoftmax(dim=None)``, the parameter `axis`
+        will be renamed to `dim`, and the default value will change from ``-1`` to ``None``.
 
     The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
 
@@ -351,7 +371,7 @@ class LogSoftmax(Cell):
 
     def __init__(self, axis=-1):
         """Initialize LogSoftmax."""
-        super(LogSoftmax, self).__init__()
+        super().__init__()
         self.log_softmax = ops.LogSoftmax(axis)
 
     def construct(self, x):
@@ -390,7 +410,7 @@ class LogSoftmaxExt(Cell):
 
     def __init__(self, dim=None):
         """Initialize LogSoftmaxExt."""
-        super(LogSoftmaxExt, self).__init__()
+        super().__init__()
         self.log_softmax = ops.LogSoftmaxExt()
         self.dim = dim
 
@@ -417,6 +437,10 @@ class ELU(Cell):
 
     .. image:: ../images/ELU.png
         :align: center
+
+    .. warning::
+        After version 2.9.0, the forward input `input_x` will be renamed to `input`, and an `inplace` parameter will
+        be added to the constructor.
 
     Args:
         alpha (float): The alpha value of ELU, the data type is float. Default: ``1.0`` .
@@ -449,7 +473,7 @@ class ELU(Cell):
 
     def __init__(self, alpha=1.0):
         """Initialize ELU."""
-        super(ELU, self).__init__()
+        super().__init__()
         self.elu = ops.Elu(alpha)
 
     def construct(self, x):
@@ -494,7 +518,7 @@ class ReLU(Cell):
 
     def __init__(self):
         """Initialize ReLU."""
-        super(ReLU, self).__init__()
+        super().__init__()
         self.relu = ops.ReLU()
 
     def construct(self, input):
@@ -517,6 +541,11 @@ class ReLU6(Cell):
 
     .. image:: ../images/ReLU6.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.ReLU6(inplace=False)``.
 
     Inputs:
         - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32 and that
@@ -544,7 +573,7 @@ class ReLU6(Cell):
 
     def __init__(self):
         """Initialize ReLU6."""
-        super(ReLU6, self).__init__()
+        super().__init__()
         self.relu6 = ops.ReLU6()
 
     def construct(self, x):
@@ -570,6 +599,9 @@ class LeakyReLU(Cell):
 
     .. image:: ../images/LeakyReLU.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, the default value of `alpha` will change from ``0.2`` to ``0.01``.
 
     Args:
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: ``0.2`` .
@@ -600,7 +632,7 @@ class LeakyReLU(Cell):
 
     def __init__(self, alpha=0.2):
         """Initialize LeakyReLU."""
-        super(LeakyReLU, self).__init__()
+        super().__init__()
         self.alpha = alpha
 
     def construct(self, x):
@@ -622,6 +654,10 @@ class RReLU(Cell):
 
     Applies the RReLU function elementally, as described in the paper:
     `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
 
     Args:
         lower (Union[int, float]): Slope of the activation function at x < 0. Default: ``1 / 8`` .
@@ -656,7 +692,7 @@ class RReLU(Cell):
     """
 
     def __init__(self, lower=1 / 8, upper=1 / 3):
-        super(RReLU, self).__init__()
+        super().__init__()
         validator.check_value_type('upper', upper, [float, int], self.cls_name)
         validator.check_value_type('lower', lower, [float, int], self.cls_name)
         if lower > upper:
@@ -692,6 +728,10 @@ class SeLU(Cell):
 
     Refer to :func:`mindspore.ops.selu` for more details.
 
+    .. warning::
+        Starting after version 2.9.0, the API name will be changed to `SELU`, and the forward input
+        `input_x` will be renamed to `input`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -709,7 +749,7 @@ class SeLU(Cell):
 
     def __init__(self):
         """Initialize SeLU"""
-        super(SeLU, self).__init__()
+        super().__init__()
         self.selu = ops.SeLU()
 
     def construct(self, input_x):
@@ -734,6 +774,11 @@ class SiLU(Cell):
 
     .. image:: ../images/SiLU.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.SiLU(inplace=False)``.
+        This change is backward-compatible; behavior is unchanged when `inplace` is not specified.
 
     Inputs:
         - **input** (Tensor) - `input` is :math:`x` in the preceding formula.
@@ -761,7 +806,7 @@ class SiLU(Cell):
 
     def __init__(self):
         """Initialize SiLU."""
-        super(SiLU, self).__init__()
+        super().__init__()
 
     def construct(self, x):
         return ops.function.silu(x)
@@ -783,6 +828,9 @@ class Tanh(Cell):
 
     .. image:: ../images/Tanh.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Inputs:
         - **x** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
@@ -809,7 +857,7 @@ class Tanh(Cell):
 
     def __init__(self):
         """Initialize Tanh."""
-        super(Tanh, self).__init__()
+        super().__init__()
         self.tanh = ops.Tanh()
 
     def construct(self, x):
@@ -827,6 +875,9 @@ class Tanhshrink(Cell):
         = x_i-\frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input Tensor.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`.
 
     Inputs:
         - **x** (Tensor) - Tensor of any dimension.
@@ -853,7 +904,7 @@ class Tanhshrink(Cell):
 
     def __init__(self):
         """Initialize Tanhshrink."""
-        super(Tanhshrink, self).__init__()
+        super().__init__()
 
     def construct(self, x):
         return ops.tanhshrink(x)
@@ -879,6 +930,11 @@ class Hardtanh(Cell):
 
     Note:
         On Ascend, data type of float16 might lead to accidental accuracy problem.
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.Hardtanh(min_val=-1.0, max_val=1.0, inplace=False)``.
 
     Args:
         min_val (Union[int, float]): Minimum value of the linear region range. Default: ``-1.0`` .
@@ -914,7 +970,7 @@ class Hardtanh(Cell):
 
     def __init__(self, min_val=-1.0, max_val=1.0):
         """Initialize Hardtanh."""
-        super(Hardtanh, self).__init__()
+        super().__init__()
         self.min_val = min_val
         self.max_val = max_val
         if self.min_val >= self.max_val:
@@ -928,6 +984,10 @@ class Hardtanh(Cell):
 class GELU(Cell):
     r"""
     Applies GELU function to each element of the input. The input is a Tensor with any valid shape.
+
+    .. warning::
+        After version 2.9.0, the parameter `approximate` will change from a boolean to a string value, and
+        its default value will change.
 
     GELU is defined as:
 
@@ -994,7 +1054,7 @@ class GELU(Cell):
 
     def __init__(self, approximate=True):
         """Initialize GELU."""
-        super(GELU, self).__init__()
+        super().__init__()
         validator.check_bool(approximate, 'approximate', self.cls_name)
         self.approximate = 'tanh'
         if not approximate:
@@ -1020,6 +1080,9 @@ class FastGelu(Cell):
 
     .. image:: ../images/FastGelu.png
         :align: center
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Inputs:
         - **x** (Tensor) - The input of FastGelu with data type of float16 or float32.
@@ -1048,7 +1111,7 @@ class FastGelu(Cell):
 
     def __init__(self):
         """Initialize FastGelu."""
-        super(FastGelu, self).__init__()
+        super().__init__()
         self.fast_gelu = ops.FastGeLU()
 
     def construct(self, x):
@@ -1071,6 +1134,9 @@ class Sigmoid(Cell):
 
     .. image:: ../images/Sigmoid.png
         :align: center
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Inputs:
         - **input** (Tensor) - `input` is :math:`x` in the preceding formula. Tensor of any dimension,
@@ -1099,7 +1165,7 @@ class Sigmoid(Cell):
 
     def __init__(self):
         """Initialize Sigmoid."""
-        super(Sigmoid, self).__init__()
+        super().__init__()
         self.sigmoid = ops.Sigmoid()
 
     def construct(self, x):
@@ -1117,6 +1183,9 @@ class Softsign(Cell):
 
     Refer to :func:`mindspore.ops.softsign` for more details.
 
+    .. warning::
+        Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1133,7 +1202,7 @@ class Softsign(Cell):
 
     def __init__(self):
         """Initialize Softsign."""
-        super(Softsign, self).__init__()
+        super().__init__()
         self.softsign = ops.Softsign()
 
     def construct(self, x):
@@ -1143,6 +1212,9 @@ class Softsign(Cell):
 class PReLU(Cell):
     r"""
     Applies PReLU activation function element-wise.
+
+    .. warning::
+        After version 2.9.0, the parameters `channel` and `w` will be renamed to `num_parameters` and `init`.
 
     PReLU is defined as:
 
@@ -1200,7 +1272,7 @@ class PReLU(Cell):
     @cell_attr_register(attrs="")
     def __init__(self, channel=1, w=0.25):
         """Initialize PReLU."""
-        super(PReLU, self).__init__()
+        super().__init__()
         validator.check_positive_int(channel, 'channel', self.cls_name)
         if isinstance(w, (float, np.float32)):
             tmp = np.empty((channel,), dtype=np.float32)
@@ -1258,8 +1330,6 @@ class PReLUExt(Cell):
     .. note::
         - Channel dim is the 2nd dim of input. When input has dims < 2, then there
           is no channel dim and the number of channels = 1.
-        - In GE mode, the rank of the input tensor must be greater than 1;
-          otherwise, an error will be triggered.
 
     Args:
         num_parameters (int, optional): number of `w` to learn. Legitimate values are 1,
@@ -1290,7 +1360,7 @@ class PReLUExt(Cell):
 
     def __init__(self, num_parameters=1, init=0.25, dtype=None):
         """Initialize PReLUExt."""
-        super(PReLUExt, self).__init__()
+        super().__init__()
         tmp = np.empty((num_parameters,), dtype=np.float32)
         tmp.fill(init)
         w = Tensor(tmp, dtype=dtype)
@@ -1303,6 +1373,9 @@ class PReLUExt(Cell):
 class HSwish(Cell):
     r"""
     Applies the Hard Swish activation function element-wise.
+
+    .. warning::
+        After version 2.9.0, this interface will be renamed to `Hardswish`.
 
     Hard Swish is defined as:
 
@@ -1340,7 +1413,7 @@ class HSwish(Cell):
 
     def __init__(self):
         """Initialize HSwish."""
-        super(HSwish, self).__init__()
+        super().__init__()
         self.hswish = ops.HSwish()
 
     def construct(self, input):
@@ -1350,6 +1423,9 @@ class HSwish(Cell):
 class HSigmoid(Cell):
     r"""
     Applies the Hard Sigmoid activation function element-wise.
+
+    .. warning::
+        After version 2.9.0, this interface will be renamed to `Hardsigmoid`.
 
     Hard Sigmoid is defined as:
 
@@ -1387,7 +1463,7 @@ class HSigmoid(Cell):
 
     def __init__(self):
         """Initialize HSigmoid."""
-        super(HSigmoid, self).__init__()
+        super().__init__()
         self.hsigmoid = ops.HSigmoid()
 
     def construct(self, input):
@@ -1397,6 +1473,9 @@ class HSigmoid(Cell):
 class LogSigmoid(Cell):
     r"""
     Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `input`.
 
     Logsigmoid is defined as:
 
@@ -1436,7 +1515,7 @@ class LogSigmoid(Cell):
 
     def __init__(self):
         """Initialize LogSigmoid."""
-        super(LogSigmoid, self).__init__()
+        super().__init__()
         self.mul = ops.Mul()
         self.exp = ops.Exp()
         self.add = ops.Add()
@@ -1457,9 +1536,10 @@ class LRN(Cell):
     Local Response Normalization.
 
     .. warning::
-        LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
-        normalization methods, e.g. :class:`mindspore.nn.BatchNorm1d` ,
-        :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d`.
+        - This interface is deprecated and will be removed after version 2.9.0.
+        - LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+          normalization methods, e.g. :class:`mindspore.nn.BatchNorm1d` ,
+          :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d`.
 
     Refer to :func:`mindspore.ops.lrn` for more details.
 
@@ -1482,7 +1562,7 @@ class LRN(Cell):
 
     def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
         """Initialize LRN."""
-        super(LRN, self).__init__()
+        super().__init__()
         self.lrn_op = NN_OPS.LRN(depth_radius, bias, alpha, beta, norm_region)
 
     def construct(self, input_x):
@@ -1533,7 +1613,7 @@ class SoftShrink(Cell):
     """
 
     def __init__(self, lambd=0.5):
-        super(SoftShrink, self).__init__()
+        super().__init__()
         self.softshrink = ops.SoftShrink(lambd)
 
     def construct(self, input):
@@ -1544,6 +1624,9 @@ class SoftShrink(Cell):
 class HShrink(Cell):
     r"""
     Applies Hard Shrink activation function element-wise.
+
+    .. warning::
+        After version 2.9.0, this interface will be renamed to `Hardshrink`.
 
     The formula is defined as follows:
 
@@ -1587,7 +1670,7 @@ class HShrink(Cell):
     """
 
     def __init__(self, lambd=0.5):
-        super(HShrink, self).__init__()
+        super().__init__()
         self.hshrink = ops.HShrink(lambd)
 
     def construct(self, input):
@@ -1606,6 +1689,11 @@ class Threshold(Cell):
         x, &\text{ if } x > \text{threshold} \\
         \text{value}, &\text{ otherwise }
         \end{cases}
+
+    .. warning::
+        Starting after version 2.9.0, the forward input `input_x` will be renamed to `input`,
+        and an optional constructor parameter `inplace` will be added.
+        The signature will change to ``mindspore.nn.Threshold(threshold, value, inplace=False)``.
 
     Args:
         threshold (Union[int, float]): The value to threshold at.
@@ -1636,7 +1724,7 @@ class Threshold(Cell):
 
     def __init__(self, threshold, value):
         """Initialize Threshold."""
-        super(Threshold, self).__init__()
+        super().__init__()
         self.threshold = threshold
         self.value = value
 
@@ -1648,6 +1736,9 @@ class Mish(Cell):
     r"""
     Computes MISH (A Self Regularized Non-Monotonic Neural Activation Function)
     of input tensors element-wise.
+
+    .. warning::
+        After version 2.9.0, the parameter `input_x` will be renamed to `input`, and `inplace` will be added.
 
     Refer to :func:`mindspore.ops.mish` for more details.
 
@@ -1683,6 +1774,9 @@ class Mish(Cell):
 class GLU(Cell):
     r"""
     The gated linear unit function.
+
+    .. warning::
+        After version 2.9.0, the parameter `axis` will be renamed to `dim`.
 
     .. math::
         {GLU}(a, b)= a \otimes \sigma(b)
@@ -1760,6 +1854,9 @@ _activation = {
 def get_activation(name, prim_name=None):
     """
     Gets the activation function.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         name (str): The name of the activation function.

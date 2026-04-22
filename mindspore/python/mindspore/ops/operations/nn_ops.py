@@ -322,7 +322,7 @@ class Softplus(Primitive):
         TypeError: If the dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``  ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -1369,9 +1369,6 @@ class MaxPool3D(Primitive):
         \text{output}(N_i, C_j, d, h, w) =
         \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
-
-    .. note::
-        For Atlas training series products, this primitive is not supported.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
@@ -6269,9 +6266,6 @@ class AvgPool3D(Primitive):
         \frac{1}{d_{ker} * h_{ker} * w_{ker}} \sum_{l=0}^{d_{ker}-1} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
 
-    Note:
-        This interface currently does not support Atlas A2 training series products.
-
     Args:
         kernel_size (Union[int, tuple[int]], optional): The size of kernel used to take the average value,
             is an int number that represents depth, height and width are both kernel_size, or a tuple
@@ -7027,8 +7021,7 @@ class Conv3DTranspose(Primitive):
         \times (\text{kernel_size}[2] - 1) + \text{output_padding}[2] + 1
 
     Note:
-        - In Ascend, only support :math:`group=1`.
-        - For Atlas A2 training series products, `output_padding` is currently not supported.
+        In Ascend, only support :math:`group=1`.
 
     Args:
         in_channel (int): The channel of the input x.

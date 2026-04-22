@@ -21,8 +21,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_bool_tensor_asnumpy():
     """
     Feature: JIT Fallback
@@ -39,8 +38,7 @@ def test_fallback_bool_tensor_asnumpy():
 
 
 @pytest.mark.skip(reason="RebuildKernelSelectBackoffOp Unsupported op[Shape].")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_bool_asnumpy():
     """
     Feature: JIT Fallback
@@ -56,7 +54,7 @@ def test_fallback_bool_asnumpy():
     assert res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_bool_int():
     """
     Feature: JIT Fallback
@@ -74,7 +72,7 @@ def test_fallback_bool_int():
     assert x1 and x2 and not x3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_bool_empty():
     """
     Feature: JIT Fallback
@@ -89,7 +87,7 @@ def test_fallback_bool_empty():
     assert not func()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_bool_seq():
     """
     Feature: JIT Fallback
@@ -108,7 +106,7 @@ def test_fallback_bool_seq():
     assert x1 and x2 and not x3 and not x4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_bool_str():
     """
     Feature: JIT Fallback
@@ -125,7 +123,7 @@ def test_fallback_bool_str():
     assert not x and y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fallback_bool_none_and_complex():
     """
     Feature: JIT Fallback

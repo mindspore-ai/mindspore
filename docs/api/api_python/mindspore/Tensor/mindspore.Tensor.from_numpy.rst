@@ -8,6 +8,9 @@ mindspore.Tensor.from_numpy
 
     当数据为非C连续时，数据会被拷贝成C连续数据后创建张量，否则通过不复制数据的方式将NumPy数组转换为张量。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **array** (numpy.ndarray) - 输入数组。
 

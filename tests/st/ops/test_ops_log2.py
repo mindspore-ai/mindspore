@@ -58,11 +58,9 @@ def log2_backward_func(x):
     return ms.grad(log2_forward_func, (0))(x)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=2048.00
 )
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
@@ -89,11 +87,9 @@ def test_ops_log2_normal(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_backward, rtol=1e-4)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential',
     mem_peak=1024.00
 )
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
@@ -120,11 +116,9 @@ def test_ops_log2_complex(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_backward, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(
-    plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
     mem_peak=1024.00
 )
 def test_mint_log2_dynamic():

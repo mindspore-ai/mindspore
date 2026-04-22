@@ -98,8 +98,7 @@ def dynamic_fill_diagonal_pynative(nptype, fill_value, wrap):
     assert np.allclose(fill_diagonal_output, fill_diagonal_expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_fill_diagonal_graph_float32():
     """
     Feature: ALL To ALL
@@ -109,8 +108,7 @@ def test_fill_diagonal_graph_float32():
     fill_diagonal(np.float32, 5., True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_fill_diagonal_pynative_int32():
     """
     Feature: ALL To ALL
@@ -120,8 +118,7 @@ def test_fill_diagonal_pynative_int32():
     fill_diagonal_pynative(np.int32, 5., True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_fill_diagonal_graph_float32_dynamic():
     """
     Feature: ALL To ALL
@@ -131,8 +128,7 @@ def test_fill_diagonal_graph_float32_dynamic():
     dynamic_fill_diagonal_graph(np.float32, 5., True)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_fill_diagonal_pynative_int32_dynamic():
     """
     Feature: ALL To ALL

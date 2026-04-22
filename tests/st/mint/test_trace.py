@@ -31,8 +31,7 @@ def trace_backward_func(x):
     return ms.grad(trace_forward_func, (0))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_trace_ext_normal(mode):
     """
@@ -56,7 +55,7 @@ def test_mint_trace_ext_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
+        card_mark='onecard', mem_peak=2048.01)
 def test_mint_trace_ext_dynamic():
     """
     Feature: Test trace with dynamic shape in graph mode using TEST_OP.

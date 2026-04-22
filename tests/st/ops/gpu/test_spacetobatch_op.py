@@ -81,12 +81,12 @@ def SpaceToBatch_pynative(nptype, block_size=2, input_shape=(1, 1, 4, 4)):
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_spacetobatch_graph_float32():
     SpaceToBatch(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_spacetobatch_graph_float16():
     SpaceToBatch(np.float16)
 

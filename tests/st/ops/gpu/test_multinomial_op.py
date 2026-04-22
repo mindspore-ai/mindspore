@@ -38,7 +38,7 @@ class Net(nn.Cell):
         return C.multinomial(x, self.sample, self.replacement, self.seed)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multinomial_exception1():
     """
     Feature: test Multinomial exception case.
@@ -53,7 +53,7 @@ def test_multinomial_exception1():
         assert True
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multinomial__exception2():
     """
     Feature: test Multinomial exception case.
@@ -68,7 +68,7 @@ def test_multinomial__exception2():
         assert True
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multinomial():
     """
     Feature: test Multinomial common call.
@@ -101,7 +101,7 @@ def multinomial(prob, num_sample):
     return P.Multinomial(seed=5, seed2=6)(prob, num_sample)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_multinomial_vmap():
     """
     Feature: test Multinomial vmap feature.

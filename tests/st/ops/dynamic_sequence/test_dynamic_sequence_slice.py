@@ -26,8 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_slice():
     """
     Feature: test sequence_slice op
@@ -55,8 +54,7 @@ def test_seq_slice():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_slice_grad():
     """
     Feature: test sequence_slice grad
@@ -82,7 +80,7 @@ def test_seq_slice_grad():
     print("grad out1 = ", grad_func(seq, start, stop, step, dout))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_slice_mutable():
     """
     Feature: test sequence_slice mutable
@@ -127,7 +125,7 @@ start_stop_step_ = [
 ]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize("sequence_data", sequence_data_)
 @pytest.mark.parametrize("start_stop_step", start_stop_step_)
 def test_seq_slice_mutable_and_tensor(sequence_data, start_stop_step):
@@ -154,7 +152,7 @@ def test_seq_slice_mutable_and_tensor(sequence_data, start_stop_step):
             assert np.allclose(out_item.asnumpy(), ex_item.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_seq_slice_neg_step():
     """
     Feature: test sequence_slice negative step

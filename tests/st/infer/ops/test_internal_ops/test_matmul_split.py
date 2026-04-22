@@ -184,8 +184,7 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, mstype=ms.float16, is_dyn=False
     assert result, "compare correct."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=106.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=106.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('is_dynamic', [False, True])
 @pytest.mark.parametrize('dim_k', [128, 1024, 2048])
@@ -199,8 +198,7 @@ def test_matmul_qkv_out_num_3_with_diff_k(ms_dtype, is_dynamic, dim_k):
                      mstype=ms_dtype, is_dyn=is_dynamic)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=114.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=114.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('is_dynamic', [False, True])
 @pytest.mark.parametrize('dim_m', [32, 1024])
@@ -214,8 +212,7 @@ def test_matmul_qkv_out_num_3_with_diff_m(ms_dtype, is_dynamic, dim_m):
                      mstype=ms_dtype, is_dyn=is_dynamic)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=206.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=206.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('is_dynamic', [False, True])
 @pytest.mark.parametrize('dim_m', [32, 1024])
@@ -229,8 +226,7 @@ def test_matmul_qkv_out_num_2_with_diff_m(ms_dtype, is_dynamic, dim_m):
                      mstype=ms_dtype, is_dyn=is_dynamic)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=208.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=208.00)
 @pytest.mark.parametrize('input_shape', [(16, 8192, 2048, 256, 256),
                                          (32, 4096, 4096, 4096, 4096),
                                          (16, 12288, 1536, 1536, 1536)])
@@ -244,8 +240,7 @@ def test_dynamic_shape(input_shape):
     _test_matmul_qkv(m, k, n0, n1, n2, mstype=ms.float16, is_dyn=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=208.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=208.00)
 @pytest.mark.parametrize('m', [1, 16])
 @pytest.mark.parametrize('k_n_shape', [(8192, 1024, 128, 128), (8192, 2048, 256, 256),
                                        (4096, 4096, 4096, 4096), (12288, 1536, 1536, 1536)])
@@ -261,8 +256,7 @@ def test_matmul_qkv_bf16_0(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, n2, mstype, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=260.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=260.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(8192, 1024, 128, 128), (8192, 2048, 256, 256),
                                        (4096, 4096, 4096, 4096), (12288, 1536, 1536, 1536)])
@@ -278,8 +272,7 @@ def test_matmul_qkv_bf16_1(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, n2, mstype, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=208.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=208.00)
 @pytest.mark.parametrize('m', [1, 16])
 @pytest.mark.parametrize('k_n_shape', [(8192, 1024, 128, 128), (8192, 2048, 256, 256),
                                        (4096, 4096, 4096, 4096), (12288, 1536, 1536, 1536)])
@@ -295,8 +288,7 @@ def test_matmul_qkv_fp16_0(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, n2, mstype, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=260.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=260.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(8192, 1024, 128, 128), (8192, 2048, 256, 256),
                                        (4096, 4096, 4096, 4096), (12288, 1536, 1536, 1536)])
@@ -312,8 +304,7 @@ def test_matmul_qkv_fp16_1(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, n2, mstype, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=352.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=352.00)
 @pytest.mark.parametrize('m', [1, 16])
 @pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752),
                                        (12288, 5376, 5376)])
@@ -328,8 +319,7 @@ def test_matmul_ffn_bf16_0(m, k_n_shape, mstype, is_dyn):
     k, n0, n1 = k_n_shape
     _test_matmul_qkv(m, k, n0, n1, mstype=mstype, is_dyn=is_dyn)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=438.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=438.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752),
                                        (12288, 5376, 5376)])
@@ -345,8 +335,7 @@ def test_matmul_ffn_bf16_1(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, mstype=mstype, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=438.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=438.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752),
                                        (12288, 5376, 5376)])
@@ -362,8 +351,7 @@ def test_matmul_ffn_fp16_0(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, mstype=mstype, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=352.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=352.00)
 @pytest.mark.parametrize('m', [1, 16])
 @pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752),
                                        (12288, 5376, 5376)])

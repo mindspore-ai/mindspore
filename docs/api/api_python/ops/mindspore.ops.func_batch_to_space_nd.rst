@@ -5,6 +5,9 @@ mindspore.ops.batch_to_space_nd
 
     用块划分批次维度，并将这些块交错回空间维度。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     此函数会将批次维度 `N` 划分为具有 `block_shape` 的块，即输出张量的 `N` 维度是划分后对应的块数。
     输出张量的 :math:`w_1, ..., w_M` 维度是原始的 :math:`w_1, ..., w_M` 维度和 `block_shape` 的乘积从维度裁剪给定。
     若输入的shape为 :math:`(n, c_1, ... c_k, w_1, ..., w_M)`，则输出的shape为 :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)` 。

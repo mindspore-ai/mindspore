@@ -6,7 +6,7 @@ mindspore.ops.rotated_iou
     计算旋转矩形之间的重叠面积。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         Ascend平台支持的输入数据类型包括bfloat16、float16、float32。

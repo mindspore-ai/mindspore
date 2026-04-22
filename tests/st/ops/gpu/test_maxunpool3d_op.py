@@ -61,7 +61,7 @@ class NetMaxUnpool3DGradFiveDNDHWC(nn.Cell):
         return self.maxunpool3d_grad(x, grad, indices)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxunpool3d_5dinput_graph():
     """
     Feature: MaxUnpool3D
@@ -102,7 +102,7 @@ def test_maxunpool3d_5dinput_graph():
             assert output_grad_type == inout_type_i
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxunpool3d_5dinput_pynative():
     """
     Feature: MaxUnpool3D

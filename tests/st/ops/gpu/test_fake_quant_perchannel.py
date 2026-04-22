@@ -37,7 +37,7 @@ class Net(nn.Cell):
         return self.op(x, minq, maxq)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel1():
     # WithVarsPerChannel_ZeroMinAndMax
     x = np.array([0.0, 0.0, 0.0, 0.0]).astype(np.float32)
@@ -55,7 +55,7 @@ def test_fake_quant_perchannel1():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel2():
     # WithVarsPerChannelDim1NudgedDown_RegularRange
     # scale 1/4, zp 0.4, nudge 0. nudged ranges [0.0, 63.75]
@@ -74,7 +74,7 @@ def test_fake_quant_perchannel2():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel3():
     # WithVarsPerChannelDim1NudgedDown_NarrowRange
     # scale 1/4, zp 1.4, nudge 1. nudged ranges[0.0, 63.5]
@@ -93,7 +93,7 @@ def test_fake_quant_perchannel3():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel4():
     # WithVarsPerChannelDim1NudgedUp_RegularRange
     # [-0.125, 63.625]
@@ -113,7 +113,7 @@ def test_fake_quant_perchannel4():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel5():
     # WithVarsPerChannelDim1NudgedUp_NarrowRange
     # scale 1/4, zp: 1.5, nudge 2. nudged range [-0.25, 63.25]
@@ -132,7 +132,7 @@ def test_fake_quant_perchannel5():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel6():
     # WithVarsPerChannelDim2NudgedDown_RegularRange
     # scale 1/4, zp: 0.4, nudge 0. nudged range [-0.25, 63.75]
@@ -152,7 +152,7 @@ def test_fake_quant_perchannel6():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel7():
     # WithVarsPerChannelDim2NudgedDown_NarrowRange
     # scale 1/4, zp: 1.4, nudge 1. nudged range [-0.25, 63.5]
@@ -172,7 +172,7 @@ def test_fake_quant_perchannel7():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel8():
     # WithVarsPerChannelDim2NudgedUp_RegularRange
     # scale 1/4, zp: 0.5, nudge 1. nudged range [-0.25, 63.5]
@@ -193,7 +193,7 @@ def test_fake_quant_perchannel8():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel9():
     # WithVarsPerChannelDim2NudgedUp_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -214,7 +214,7 @@ def test_fake_quant_perchannel9():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel10():
     # WithVarsPerChannelDim4NudgedDown_RegularRange
     # scale 1/4, zp: 0.4, nudge 0. nudged range [-0.25, 63.25]
@@ -241,7 +241,7 @@ def test_fake_quant_perchannel10():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel11():
     # WithVarsPerChannelDim4NudgedDown_NarrowRange
     # scale 1/4, zp: 1.4, nudge 1. nudged range [0.0, 63.25]
@@ -266,7 +266,7 @@ def test_fake_quant_perchannel11():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel12():
     # WithVarsPerChannelDim4NudgedUp_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -293,7 +293,7 @@ def test_fake_quant_perchannel12():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel13():
     # WithVarsPerChannelDim4NudgedUp_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -320,7 +320,7 @@ def test_fake_quant_perchannel13():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel14():
     # WithVarsPerChannelDim1NudgedDown_4Bits_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -339,7 +339,7 @@ def test_fake_quant_perchannel14():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel15():
     # WithVarsPerChannelDim1NudgedDown_4Bits_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -358,7 +358,7 @@ def test_fake_quant_perchannel15():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel16():
     # WithVarsPerChannelDim1NudgedUp_4Bits_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -377,7 +377,7 @@ def test_fake_quant_perchannel16():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel17():
     # WithVarsPerChannelDim1NudgedUp_4Bits_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -396,7 +396,7 @@ def test_fake_quant_perchannel17():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel18():
     # WithVarsPerChannelDim2NudgedDown_4Bits_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -416,7 +416,7 @@ def test_fake_quant_perchannel18():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel19():
     # WithVarsPerChannelDim2NudgedDown_4Bits_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -436,7 +436,7 @@ def test_fake_quant_perchannel19():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel20():
     # WithVarsPerChannelDim2NudgedUp_4Bits_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -456,7 +456,7 @@ def test_fake_quant_perchannel20():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel21():
     # WithVarsPerChannelDim2NudgedUp_4Bits_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -476,7 +476,7 @@ def test_fake_quant_perchannel21():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel22():
     # WithVarsPerChannelDim4NudgedDown_4Bits_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -501,7 +501,7 @@ def test_fake_quant_perchannel22():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel23():
     # WithVarsPerChannelDim4NudgedDown_4Bits_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -526,7 +526,7 @@ def test_fake_quant_perchannel23():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel24():
     # WithVarsPerChannelDim4NudgedUp_4Bits_RegularRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]
@@ -551,7 +551,7 @@ def test_fake_quant_perchannel24():
     assert np.all(np.abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fake_quant_perchannel25():
     # WithVarsPerChannelDim4NudgedUp_4Bits_NarrowRange
     # scale 1/4, zp: 0.5, nudge 2. nudged range [-0.25, 63.25]

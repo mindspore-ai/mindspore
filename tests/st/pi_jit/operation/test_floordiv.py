@@ -9,7 +9,7 @@ from ..dynamic_shape_operations.floordiv import FloorDivDynamicShapeFactory
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_128x1024_fp32():
     """
     Description:
@@ -24,7 +24,7 @@ def test_p_floordiv_forward_input_128x1024_fp32():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_3d_fp16():
     """
     Description:
@@ -39,7 +39,7 @@ def test_p_floordiv_forward_input_3d_fp16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_int8():
     """
     Description:
@@ -54,7 +54,7 @@ def test_p_floordiv_forward_input_shape_dtype_int8():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_int16():
     """
     Description:
@@ -71,7 +71,7 @@ def test_p_floordiv_forward_input_shape_dtype_int16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_int64():
     """
     Description:
@@ -86,7 +86,7 @@ def test_p_floordiv_forward_input_shape_dtype_int64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_fp64():
     """
     Description:
@@ -101,7 +101,7 @@ def test_p_floordiv_forward_input_shape_dtype_fp64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_int32():
     """
     Description:
@@ -116,7 +116,7 @@ def test_p_floordiv_forward_input_shape_dtype_int32():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_uint16():
     """
     Description:
@@ -131,7 +131,7 @@ def test_p_floordiv_forward_input_shape_dtype_uint16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_input_shape_dtype_uint8():
     """
     Description:
@@ -146,7 +146,7 @@ def test_p_floordiv_forward_input_shape_dtype_uint8():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_right_input_int():
     """
     Description:
@@ -163,7 +163,7 @@ def test_p_floordiv_forward_right_input_int():
     assert "float32" in str(out.dtype).lower()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_forward_left_input_bool():
     """
     Description:
@@ -179,7 +179,7 @@ def test_p_floordiv_forward_left_input_bool():
     assert "float16" in str(out.dtype).lower()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_empty_tensor():
     """
     Description:
@@ -195,7 +195,7 @@ def test_p_floordiv_empty_tensor():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_floordiv_input_3d_int16():
     """
     Description:
@@ -214,7 +214,7 @@ def test_p_floordiv_input_3d_int16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_floordiv_input_2d_fp16():
     """
     Description:
@@ -233,7 +233,7 @@ def test_dynamic_shape_p_floordiv_input_2d_fp16():
     fact.grad_dynamic_shape_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_floordiv_input_1d_fp32():
     """
     Description:
@@ -252,7 +252,7 @@ def test_dynamic_shape_p_floordiv_input_1d_fp32():
     fact.grad_dynamic_shape_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_floordiv_params_double_2d():
     """
     Description:
@@ -268,7 +268,7 @@ def test_dynamic_shape_p_floordiv_params_double_2d():
     fact = FloorDivDynamicShapeFactory([input_x, input_y, indices])
     fact.forward_cmp()
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_floordiv_params_float32_2d():
     """
     Description:

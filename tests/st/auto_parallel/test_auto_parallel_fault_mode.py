@@ -41,7 +41,7 @@ def _get_device_ips():
     return device_ips
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_repeated_rank_id():
     '''
     Feature: Auto Parallel fault test case.
@@ -75,7 +75,7 @@ def test_repeated_rank_id():
     """)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_repeated_rank_id_ms_run():
     '''
     Feature: Auto Parallel fault test case.
@@ -118,7 +118,7 @@ def test_repeated_rank_id_ms_run():
     os.system("rm -rf repeated_rank_id rank_table_2p.json error_msg.log")
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_out_of_range_rank_id():
     '''
     Feature: Auto Parallel fault test case.
@@ -159,7 +159,7 @@ def test_out_of_range_rank_id():
     os.system("rm -rf out_of_range_rank_id rank_table_2p.json error_msg.log")
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_error_comm_order():
     '''
     Feature: Auto Parallel fault test case.

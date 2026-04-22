@@ -5,6 +5,9 @@
 
     逐元素计算CSRTensor的ReLU值，其上限为6。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. math::
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 

@@ -54,7 +54,7 @@ class DynamicShapeMaxPool3DWithArgmaxNet(Cell):
         return self.net(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool3d_withargmax_float32():
     """
     Feature: Test MaxPool3DWithArgmax.
@@ -70,7 +70,7 @@ def test_maxpool3d_withargmax_float32():
     assert argmax.shape == (5, 4, 1, 2, 1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool3d_withargmax_float16():
     """
     Feature: Test MaxPool3DWithArgmax.
@@ -86,7 +86,7 @@ def test_maxpool3d_withargmax_float16():
     assert argmax.shape == (5, 4, 1, 2, 1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool3d_withargmax_vmap():
     """
     Feature: Test vmap.
@@ -104,7 +104,7 @@ def test_maxpool3d_withargmax_vmap():
     assert indices.shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_maxpool3d_with_argmax():
     """
     Feature: MaxPool3DWithArgmax dynamic test.
@@ -122,7 +122,7 @@ def test_dynamic_maxpool3d_with_argmax():
     assert argmax.shape == (4, 4, 1, 2, 1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_maxpool3d_with_argmax_dynamic_shape():
     """
     Feature: MaxPool3DWithArgmax dynamic test.

@@ -24,6 +24,7 @@ This module provides:
 """
 # pylint: disable=R1705
 import warnings
+import pytest
 import torch
 import numpy as np
 import mindspore as ms
@@ -32,6 +33,7 @@ from mindspore._c_expression import MSContext
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore.graph.api import _pynative_executor
 from typing import Optional, Union, List, final
+
 from tests.st.utils.test_utils import single_golden_compare, double_golden_compare, OpTypes
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy, get_intersection_grad_position
@@ -495,19 +497,48 @@ class OpsFactory():
         torch_fn = self.ref
         out = []
 
+        #ms has type promotion while all inputs are tensors regardless whether shape is empty
+        def torch_empty_shape_unsqueeze(op_input_torch, op_input_ms):
+            if isinstance(op_input_torch, torch.Tensor):
+                if not op_input_torch.shape and isinstance(op_input_ms, ms.Tensor):
+                    return op_input_torch.unsqueeze(0)
+                return op_input_torch.clone()
+            return op_input_torch
+
+        def check_shape_squueze(op_input_torch):
+            if isinstance(op_input_torch, (tuple, list)):
+                for ipt in op_input_torch:
+                    if not check_shape_squueze(ipt):
+                        return False
+                return True
+            elif isinstance(op_input_torch, torch.Tensor):
+                if op_input_torch.shape:
+                    return False
+                return True
+            else:
+                return True
+
+        def squeeze_torch(out):
+            if isinstance(out, torch.Tensor):
+                return out.squeeze()
+            elif isinstance(out, (tuple, list)):
+                return tuple(squeeze_torch(o) for o in out)
+            return out
+
         for sample_input in self._sample_inputs:
             if self._inplace_op:
                 sample_input = sample_input.copy()
-            sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float,
+            sample_input_torch = sample_input.astorch(convert_half_to_float=self._convert_half_to_float,
                                                 convert_extra_uint=self._convert_extra_uint,
                             convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
-            op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
+            op_input, op_args, op_kwargs = sample_input_torch.op_input, \
+                        sample_input_torch.op_args, sample_input_torch.op_kwargs
             #type-promotion will not take effect while input/op_args has tensor with empty shape
-            if isinstance(op_input, torch.Tensor) and not op_input.shape:
-                op_input=op_input.unsqueeze(0)
-            op_args2=tuple(map(lambda x:x.unsqueeze(0) if
-                 (isinstance(x, torch.Tensor) and not x.shape) else x, op_args))
-            outi = torch_fn(op_input, *op_args2, **op_kwargs)
+            op_input2 = torch_empty_shape_unsqueeze(op_input, sample_input.op_input)
+            op_args2 = tuple(map(torch_empty_shape_unsqueeze,  op_args, sample_input.op_args))
+            outi = torch_fn(op_input2, *op_args2, **op_kwargs)
+            if check_shape_squueze(op_input) and check_shape_squueze(op_args):
+                outi =squeeze_torch(outi)
             out.append(outi)
 
         return out
@@ -1189,6 +1220,34 @@ class OpsFactory():
             if 'op_dynamic_input' in locals():
                 error_msg += f"\n{op_dynamic_input.op_compile_input.summary()}"
             print(error_msg)
+            raise e
+
+    def test_other_op_error(self):
+        '''
+        Test other op error cases.
+        '''
+        if self.op_error_inputs_func is None:
+            print(f"\nop_name: {self.op_name} has no op_error_inputs_func, "
+                  f"skip test_other_op_error.")
+            return
+
+        try:
+            print(f"\nop_name: {self.op_name}, mode:{self._context_mode}, test_other_op_error...")
+            for error_input in self.op_error_inputs_func(self.op_info, device=self._device):
+                _sample_input = error_input.op_sample_input
+                _error_type = error_input.op_error_type
+
+                with pytest.raises(_error_type):
+                    self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
+                    _pynative_executor.sync()
+        except Exception as e:
+            e_type = list(map(lambda x: x.__name__, _error_type if isinstance(_error_type,
+                                                                         (list, tuple)) else [_error_type]))
+            print(f"\ntest_other_op_error catch expect {e_type} failed, but got {type(e).__name__}:"
+                  f"\nop_name: {self.op_name}"
+                  f"\nmode: {self._context_mode}"
+                  f"\nsample_input: {_sample_input.summary()}"
+                  f"\nerror_info: {error_input.op_error_info}")
             raise e
 
     def forward_cmp(

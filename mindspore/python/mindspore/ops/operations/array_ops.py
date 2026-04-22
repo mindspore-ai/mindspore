@@ -39,7 +39,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from mindspore.ops.auto_generate import (
     ExpandDims, Reshape, TensorShape, Transpose, TransposeView, Gather, OnesLike, ZerosLike,
     Argmax, ArgMaxExt, ReverseV2, Diag, Eye, ScatterNd,
-    ResizeNearestNeighborV2, GatherNd, GatherD, Range, MaskedFill, RightShift,
+    ResizeNearestNeighborV2, GatherNd, GatherD, Range, MaskedFill, LeftShift, RightShift,
     NonZero, ResizeNearestNeighbor, Identity, Split, CumSum, CumProd,
     MaskedSelect, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, UniqueConsecutive,
     ScalarToTensor, Triu, BroadcastTo, StridedSlice, Select, TopkExt,
@@ -5264,58 +5264,6 @@ class SegmentSum(Primitive):
         """Initialize SegmentSum"""
         self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['input_x', 'segment_ids'], outputs=['output'])
-
-
-class LeftShift(Primitive):
-    r"""
-    Shift the value of each position of the tensor to the left several bits.
-    The inputs are two tensors, dtypes of them must be consistent, and the
-    shapes of them could be broadcast.
-    The output does not support implicit type conversion.
-
-    .. math::
-
-        \begin{aligned}
-        &out_{i} =x_{i} << y_{i}
-        \end{aligned}
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Inputs:
-        - **x1** (Tensor) - The target tensor whose dtype supports all int and uint type,
-          will be shifted to the left by `x2` in element-wise.
-        - **x2** (Tensor) - The tensor must have the same dtype as `x1`.
-          And the tensor must have the same shape as `x1` or could be broadcast with `x1`.
-
-    Outputs:
-        - **output** (Tensor) - The output tensor, has the same dtype as `x1`.
-          And the shape of the output tensor is the same shape as `x1`, or the same shape
-          as `x1` and `x2` after broadcasting.
-
-    Raises:
-        TypeError: If `x1` or `x2` has wrong type.
-        TypeError: If `x1` or `x2` is not tensor.
-        ValueError: If `x1` and `x2` could not be broadcast.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> left_shift = ops.LeftShift()
-        >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.int8))
-        >>> x2 = Tensor(np.array([0, 1, -1]).astype(np.int8))
-        >>> output = left_shift(x1, x2)
-        >>> print(output)
-        [1 4 0]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize LeftShift"""
-        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
 
 class FillDiagonal(Primitive):

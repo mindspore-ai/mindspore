@@ -22,8 +22,7 @@ import subprocess
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_true():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -53,8 +52,7 @@ def test_msrun_bind_core_true():
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c (\d+)-(\d+) .*", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_false():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -84,8 +82,7 @@ def test_msrun_bind_core_false():
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset -c).*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_manual_only_worker():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -116,8 +113,7 @@ def test_msrun_bind_core_manual_only_worker():
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c 20-29 .*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_manual_single_worker():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -151,8 +147,7 @@ def test_msrun_bind_core_manual_single_worker():
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset -c).*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_manual_only_worker_wrong_sequence():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -185,8 +180,7 @@ def test_msrun_bind_core_manual_only_worker_wrong_sequence():
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset).*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_manual_only_scheduler():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -219,8 +213,7 @@ def test_msrun_bind_core_manual_only_scheduler():
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset).*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards')
 def test_msrun_bind_core_manual_scheduler_and_worker():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -251,8 +244,7 @@ def test_msrun_bind_core_manual_scheduler_and_worker():
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c 20-29 .*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_manual_empty_list_and_single_core():
     """
     Feature: Runtime msrun --bind_core arg.
@@ -282,8 +274,7 @@ def test_msrun_bind_core_manual_empty_list_and_single_core():
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c 20-29,31 .*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 def test_msrun_bind_core_manual_wrong_key_value():
     """
     Feature: Runtime msrun --bind_core arg.

@@ -5,6 +5,9 @@ mindspore.nn.CosineEmbeddingLoss
 
     余弦相似度损失函数，用于测量两个Tensor之间的相似性。
 
+    .. warning::
+        2.9.0（不含）之后版本中，前向输入 `logits_x1`、`logits_x2` 和 `labels` 将分别改为 `input1`、`input2` 和 `target`。
+
     给定两个Tensor :math:`x1` 和 :math:`x2` ，以及一个Tensor标签 :math:`y` ，值为1或-1，公式如下：
 
     .. math::
@@ -33,5 +36,3 @@ mindspore.nn.CosineEmbeddingLoss
         - **TypeError** - `margin` 不是float。
         - **ValueError** - `reduction` 不为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` 。
         - **ValueError** - `margin` 的值不在范围[-1.0, 1.0]内。
-
-

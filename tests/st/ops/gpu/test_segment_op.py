@@ -75,7 +75,7 @@ class SegmentProdNet(Cell):
         return self.segmentprod(x, segment_ids)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_segment_max_fp():
     """
     Feature: SegmentMax operator.
@@ -95,7 +95,7 @@ def test_segment_max_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_segment_min_fp():
     """
     Feature: SegmentMin operator.
@@ -115,7 +115,7 @@ def test_segment_min_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_segment_sum_fp():
     """
     Feature: SegmentSum operator.
@@ -131,7 +131,7 @@ def test_segment_sum_fp():
     np.testing.assert_array_almost_equal(output_gr, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_segment_mean_fp():
     """
     Feature: SegmentMean operator.
@@ -151,7 +151,7 @@ def test_segment_mean_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_segment_prod_fp():
     """
     Feature: SegmentProd operator.
@@ -171,7 +171,7 @@ def test_segment_prod_fp():
     np.testing.assert_almost_equal(output_py, expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_segment_max_dyn():
     """
     Feature: test SegmentMax op in gpu.
@@ -195,7 +195,7 @@ def test_segment_max_dyn():
     assert expect_shape == output.asnumpy().shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_segment_min_dyn():
     """
     Feature: test SegmentMin op in gpu.
@@ -219,7 +219,7 @@ def test_segment_min_dyn():
     assert expect_shape == output.asnumpy().shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_segment_sum_dyn():
     """
     Feature: test SegmentSum op in gpu.
@@ -243,7 +243,7 @@ def test_segment_sum_dyn():
     assert expect_shape == output.asnumpy().shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_segment_mean_dyn():
     """
     Feature: test SegmentMean op in gpu.
@@ -267,7 +267,7 @@ def test_segment_mean_dyn():
     assert expect_shape == output.asnumpy().shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_segment_prod_dyn():
     """
     Feature: test SegmentProd op in gpu.

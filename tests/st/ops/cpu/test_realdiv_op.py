@@ -32,8 +32,7 @@ class NetRealDiv(nn.Cell):
         return self.divide(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.float16, np.uint32, np.uint16])
 def test_real_div(dtype):
     """

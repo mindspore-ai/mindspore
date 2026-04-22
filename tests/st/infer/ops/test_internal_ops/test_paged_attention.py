@@ -364,8 +364,7 @@ class PagedAttentionTest(PagedAttentionBase):
             writer.writerow(running_data)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=496.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=496.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_bnsd(ctx_mode):
     """
@@ -404,8 +403,7 @@ def test_paged_attention_bnsd(ctx_mode):
     PagedAttentionTest(i_test_dict)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1392.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1392.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_fd_long(ctx_mode):
     """
@@ -436,8 +434,7 @@ def test_paged_attention_fd_long(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=484.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=484.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_quant0(ctx_mode):
     """
@@ -469,8 +466,7 @@ def test_paged_attention_quant0(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=968.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=968.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_quant1(ctx_mode):
     """
@@ -502,8 +498,7 @@ def test_paged_attention_quant1(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1608.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1608.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_quant_pertoken(ctx_mode):
     """
@@ -535,8 +530,7 @@ def test_paged_attention_quant_pertoken(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=936.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=936.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_lookahead0(ctx_mode):
     """
@@ -567,8 +561,7 @@ def test_paged_attention_lookahead0(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=492.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=492.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_lookahead1(ctx_mode):
     """
@@ -608,8 +601,7 @@ def test_paged_attention_lookahead1(ctx_mode):
     PagedAttentionTest(i_test_dict)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=740.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=740.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_fake_lookahead(ctx_mode):
     """
@@ -640,8 +632,7 @@ def test_paged_attention_fake_lookahead(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=522.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=522.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_large_gsq(ctx_mode):
     """
@@ -672,8 +663,7 @@ def test_paged_attention_large_gsq(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=454.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=454.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method',
                          [QuantMethod.FP16_VEC, QuantMethod.INT_CUBE])
@@ -706,8 +696,7 @@ def test_paged_attention_quant_pertoken_bsh(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=484.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=484.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method',
                          [QuantMethod.FP16_VEC, QuantMethod.INT_CUBE])
@@ -740,8 +729,7 @@ def test_paged_attention_quant_pertoken_bnsd(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=684.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=684.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method',
                          [QuantMethod.FP16_VEC, QuantMethod.INT_CUBE])
@@ -776,8 +764,7 @@ def test_paged_attention_quant_pertoken_with_anti_shape(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=520.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=520.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method',
                          [QuantMethod.FP16_VEC, QuantMethod.INT_CUBE])
@@ -810,8 +797,7 @@ def test_paged_attention_large_gsq_pertoken(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1432.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1432.00)
 @pytest.mark.parametrize('ctx_mode', [context.PYNATIVE_MODE])
 def test_paged_attention_quant_no_quant_pangu38b_0(ctx_mode):
     """
@@ -841,8 +827,7 @@ def test_paged_attention_quant_no_quant_pangu38b_0(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1432.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1432.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE])
 def test_paged_attention_quant_no_quant_pangu38b_1(ctx_mode):
     """
@@ -872,8 +857,7 @@ def test_paged_attention_quant_no_quant_pangu38b_1(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1048.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1048.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE])
 @pytest.mark.parametrize('quant_method',[QuantMethod.FP16_VEC])
 def test_paged_attention_quant_pertoken_pangu38b_0(quant_method, ctx_mode):
@@ -905,8 +889,7 @@ def test_paged_attention_quant_pertoken_pangu38b_0(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1052.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1052.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE])
 @pytest.mark.parametrize('quant_method', [QuantMethod.INT_CUBE])
 def test_paged_attention_quant_pertoken_pangu38b_1(quant_method, ctx_mode):
@@ -938,8 +921,7 @@ def test_paged_attention_quant_pertoken_pangu38b_1(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1048.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1048.00)
 @pytest.mark.parametrize('ctx_mode', [context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method', [QuantMethod.FP16_VEC])
 def test_paged_attention_quant_pertoken_pangu38b_2(quant_method, ctx_mode):
@@ -971,8 +953,7 @@ def test_paged_attention_quant_pertoken_pangu38b_2(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1052.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=1052.00)
 @pytest.mark.parametrize('ctx_mode', [context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method', [QuantMethod.INT_CUBE])
 def test_paged_attention_quant_pertoken_pangu38b_3(quant_method, ctx_mode):
@@ -1004,8 +985,7 @@ def test_paged_attention_quant_pertoken_pangu38b_3(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=792.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=792.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_quant_no_quant_jiutian(ctx_mode):
     """
@@ -1035,8 +1015,7 @@ def test_paged_attention_quant_no_quant_jiutian(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=728.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=728.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('quant_method',
                          [QuantMethod.FP16_VEC, QuantMethod.INT_CUBE])
@@ -1069,8 +1048,7 @@ def test_paged_attention_quant_pertoken_jiutian(quant_method, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=728.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=728.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_quant_pertoken_antiquant_scale_int64_to_fp32(ctx_mode):
     """
@@ -1102,8 +1080,7 @@ def test_paged_attention_quant_pertoken_antiquant_scale_int64_to_fp32(ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=488.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=488.00)
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_paged_attention_quant_pertoken_antiquant_scale_int64_to_fp32_small(ctx_mode):
     """
@@ -1135,8 +1112,7 @@ def test_paged_attention_quant_pertoken_antiquant_scale_int64_to_fp32_small(ctx_
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2696.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2696.00)
 @pytest.mark.parametrize('dtype', ["float16", "float32"])
 @pytest.mark.parametrize('mask_mode', ["MASK_DEFAULT", "TRAPEZOIDAL"])
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -1168,8 +1144,7 @@ def test_paged_attention_trapezoidal(dtype, mask_mode, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=270.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=270.00)
 @pytest.mark.parametrize('blk_sz', [16, 128])
 @pytest.mark.parametrize('dtype', ["float16", "float32"])
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -1203,8 +1178,7 @@ def test_paged_attention_mla_combine_cache_norm(blk_sz, dtype, ctx_mode):
     PagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=22.00)
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', mem_peak=22.00)
 def test_paged_attention_swft():
     """
     Feature: test swft PagedAttention op in tp4 mode

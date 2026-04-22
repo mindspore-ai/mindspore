@@ -5,6 +5,9 @@ mindspore.Tensor.type
 
     将Tensor的dtype转换成 `dtype` 。如果 `dtype` 为 ``None`` ，则返回原类型。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口签名将调整为 ``type(dtype=None, non_blocking=False, **kwargs) -> str or Tensor`` ，对现有调用兼容。该变更与当前版本兼容，现有调用保持不变。
+
     参数：
         - **dtype** (mindspore.dtype，可选) - 指定输出Tensor的数据类型。默认值： ``None`` 。
 

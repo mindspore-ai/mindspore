@@ -158,7 +158,7 @@ def _bytecode_branching_with_psjit(a, b):
     return product * 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_nested_psjit_method():
     """
     Feature: Combine ms.jit capture modes.
@@ -177,7 +177,7 @@ def test_jit_nested_psjit_method():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_called_inside_psjit():
     """
     Feature: Combine ms.jit capture modes.
@@ -196,7 +196,7 @@ def test_jit_called_inside_psjit():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_with_single_op_pipeline():
     """
     Feature: ms.jit nested call.
@@ -215,7 +215,7 @@ def test_jit_with_single_op_pipeline():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_before_psjit_pipeline():
     """
     Feature: ms.jit mixed decorators.
@@ -234,7 +234,7 @@ def test_jit_before_psjit_pipeline():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_function_calls_psjit_cell():
     """
     Feature: Combine bytecode and default jit capture modes.
@@ -253,7 +253,7 @@ def test_bytecode_function_calls_psjit_cell():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_function_calls_psjit_function():
     """
     Feature: Combine bytecode and default jit capture modes.

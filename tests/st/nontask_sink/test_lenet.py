@@ -165,7 +165,7 @@ def test_ascend_lenet():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
-        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
+        card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet1():
     """
     Feature: Somas Ascend kernel by kernel.
@@ -180,7 +180,7 @@ def test_ascend_lenet1():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
-        card_mark="onecard", essential_mark="essential", mem_peak=2048.01)
+        card_mark="onecard", mem_peak=2048.01)
 def test_ascend_lenet2():
     """
     Feature: Somas Ascend kernel by kernel.
@@ -195,7 +195,7 @@ def test_ascend_lenet2():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
-        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
+        card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet3():
     """
     Feature: Somas Ascend kernel by kernel.
@@ -211,7 +211,7 @@ def test_ascend_lenet3():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
-        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
+        card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet4():
     """
     Feature: Ascend kernel by kernel and Ascend VMM.
@@ -227,7 +227,7 @@ def test_ascend_lenet4():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
-        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
+        card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet5():
     """
     Feature: Ascend kernel by kernel and Ascend VMM.
@@ -294,7 +294,7 @@ def test_ascend_lenet_grad_by_list_tuple():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level0",
-        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
+        card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet_grad_by_list_tuple1():
     """
     Feature: GradOperation get_by_list pass tuple/list
@@ -309,7 +309,7 @@ def test_ascend_lenet_grad_by_list_tuple1():
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
-        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
+        card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet_grad_by_list_tuple2():
     """
     Feature: GradOperation get_by_list pass tuple/list with Ascend kernel by kernel Somas.

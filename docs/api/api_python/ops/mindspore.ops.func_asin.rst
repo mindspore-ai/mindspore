@@ -13,4 +13,3 @@ mindspore.ops.asin
 
     返回：
         Tensor
-

@@ -56,6 +56,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer \
         -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 -DHALF_ENABLE_CPP11_USER_LITERALS=0 \
         -D_FORTIFY_SOURCE=2 -Wno-cpp ${MACOSX_CXX_WARNING_FLAGS}")
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-Wno-deprecated-builtins HAS_WNO_DEPRECATED_BUILTINS)
+    if(HAS_WNO_DEPRECATED_BUILTINS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-builtins")
+    endif()
 else()
     if(NOT MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer \
@@ -67,11 +72,6 @@ endif()
 if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include -std=c++17 \
     -Werror -Wall -Wno-deprecated-declarations -fPIC")
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-Wno-deprecated-builtins HAS_WNO_DEPRECATED_BUILTINS)
-if(HAS_WNO_DEPRECATED_BUILTINS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-builtins")
-endif()
 else()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif()

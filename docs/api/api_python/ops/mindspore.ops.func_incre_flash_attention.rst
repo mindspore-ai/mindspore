@@ -64,9 +64,6 @@ mindspore.ops.incre_flash_attention
           - 需要与 `attn_mask` 参数一同启用，并确保 `attn_mask` 的意义正确，即能正确隐藏无效数据，否则会引入精度问题。
           - `kv_padding_size` 不支持page attention场景。
 
-    .. warning::
-        只支持 `Atlas A2` 训练系列产品。
-
     参数：
         - **query** (Tensor) - 公式中的输入Q，数据类型float16或bfloat16。shape为 :math:`(B, 1, H)` / :math:`(B, N, 1, D)` 。
         - **key** (Union[tuple, list]) - 公式中的输入K，数据类型为float16、bfloat16或int8。shape为 :math:`(B, S, kvH)` / :math:`(B, kvN, S, D)` 。

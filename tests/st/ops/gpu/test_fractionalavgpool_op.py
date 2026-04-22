@@ -71,7 +71,7 @@ class NetFractionalAvgPoolGradOverlapping(nn.Cell):
                                              col_pooling_sequence)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fractionalavgpool_graph():
     """
     Feature: FractionalAvgPool
@@ -134,7 +134,7 @@ def test_fractionalavgpool_graph():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fractionalavgpool_pynative():
     """
     Feature: FractionalAvgPool

@@ -24,6 +24,9 @@ mindspore.nn.LSTMCell
     .. math::
         h^{'},c^{'} = LSTMCell(x, (h_0, c_0))
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``LSTMCell(input_size, hidden_size, bias=True, dtype=None)`` 。其中 `has_bias` 替换为 `bias`，`dtype` 默认值由 ``mstype.float32`` 改为 ``None`` 。
+
     参数：
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。

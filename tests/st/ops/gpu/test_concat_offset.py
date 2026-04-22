@@ -39,7 +39,7 @@ class ConcatOffsetNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_concat_offset_dynamic_gpu():
     """
     /// Feature: Concatoffset op dynamic shape

@@ -44,8 +44,7 @@ class ConcatOffsetNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_concat_offset_dynamic_cpu():
     """
     /// Feature: Concatoffset op dynamic shape
@@ -77,8 +76,7 @@ class SliceNet(nn.Cell):
         return self.slice(x, begin, size)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_begin_size_tensor_cpu():
     """
     /// Feature: Slice op dynamic shape
@@ -113,8 +111,7 @@ class GradSlice(nn.Cell):
         return self.grad(self.network)(input_x, begin, size)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_begin_size_tensor_grad():
     """
     /// Feature: Slice op dynamic shape
@@ -166,8 +163,7 @@ class GradReduceMean(nn.Cell):
         return self.grad(self.network)(input_x, shape)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_reducemean_dynamic_cpu():
     """
     /// Feature: ReduceMean op dynamic shape
@@ -184,8 +180,7 @@ def test_reducemean_dynamic_cpu():
     assert (out.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_reducemean_dynamic_grad_cpu():
     """
     /// Feature: ReduceMean op dynamic shape

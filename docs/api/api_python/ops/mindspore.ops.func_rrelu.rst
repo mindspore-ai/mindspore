@@ -15,6 +15,11 @@ mindspore.ops.rrelu
 
     更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `training` 和 `inplace` ，接口签名将变更为
+        ``mindspore.ops.rrelu(input, lower=1.0/8, upper=1.0/3, training=False, inplace=False)`` 。
+        该变更与当前版本兼容，不使用新增参数时行为不变。
+
     参数：
         - **input** (Tensor) - 计算RReLU的任意维度的Tensor。
         - **lower** (Union[int, float]) - `input` 中的数据小于0时激活函数的斜率的下界，默认 ``1.0 / 8`` 。

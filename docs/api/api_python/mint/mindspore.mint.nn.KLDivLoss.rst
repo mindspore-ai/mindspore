@@ -30,7 +30,7 @@ mindspore.mint.nn.KLDivLoss
         - **log_target** (bool，可选) - 指定输入 `target` 是否在对数空间内。默认值： ``False`` 。
 
     输入：
-        - **input** (Tensor) - 输入Tensor。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
+        - **input** (Tensor) - 输入Tensor。数据类型必须为float16、float32或bfloat16。
         - **target** (Tensor) - 目标Tensor，其数据类型与 `input` 相同。 `target` 的shape和 `input` 的shape能广播。
 
     输出：

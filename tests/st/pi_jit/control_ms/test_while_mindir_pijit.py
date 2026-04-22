@@ -33,7 +33,7 @@ class SingleWhileNet(nn.Cell):
 
 
 @pytest.mark.skip(reason="Jit pipeline only supports one stage while one stage do not support loading mindir.")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_while():
     """
     Features: Control flow.
@@ -74,7 +74,7 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_single_while_inline_export():
     """
     Feature: control flow .
@@ -94,7 +94,7 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_single_while_inline_load():
     """
     Feature: control flow .

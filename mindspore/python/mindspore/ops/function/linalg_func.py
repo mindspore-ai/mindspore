@@ -61,7 +61,7 @@ def cond(A, p=None):
         Currently, complex numbers are not supported.
 
     Args:
-        A (Tensor): The input tensor which is zero or more batch dimensions.
+        A (Tensor): The input tensor which has zero or more batch dimensions.
         p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): Norm's mode. Refer to the table above for
             behavior. Default ``None``.
 
@@ -168,6 +168,11 @@ def svd(input, full_matrices=False, compute_uv=True):
     """
     Computes the singular value decompositions of one or more matrices.
 
+    .. warning::
+        After version 2.9.0, the signature will change to ``svd(input, some=True, compute_uv=True)``; the current
+        `full_matrices` parameter will be replaced by `some`, with incompatible semantics
+        (`full_matrices=False` corresponds to `some=True`).
+
     If :math:`A` is a matrix, the svd returns the singular values :math:`S`, the left singular vectors :math:`U`
     and the right singular vectors :math:`V`. It satisfies:
 
@@ -221,6 +226,10 @@ def svd(input, full_matrices=False, compute_uv=True):
 def pinv(x, *, atol=None, rtol=None, hermitian=False):
     r"""
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
+
+    .. warning::
+        After version 2.9.0, the parameter `x` will be renamed to `A`, and an optional `out` parameter
+        will be added.
 
     This function is computed using SVD. If :math:`x=U*S*V^{T}` , then the pseudo-inverse of x is:
     :math:`x^{+}=V*S^{+}*U^{T}` , :math:`S^{+}` is the reciprocal of each non-zero element on

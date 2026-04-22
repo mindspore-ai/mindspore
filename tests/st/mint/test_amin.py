@@ -44,8 +44,7 @@ def amin_backward_func(x, dim=(), keepdim=False):
     return ms.grad(amin_forward_func, (0))(x, dim, keepdim=keepdim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_amin_normal(mode):
@@ -67,8 +66,7 @@ def test_ops_amin_normal(mode):
     assert np.allclose(output_grad.asnumpy(), expect_grad.asnumpy(), rtol=1.e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_amin_dynamic_shape():
     """
     Feature: Test operator amin.

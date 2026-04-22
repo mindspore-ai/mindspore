@@ -500,14 +500,27 @@ std::string Tensor::DataToString(bool use_comma) const {
   if (device_sync_ == nullptr) {
     return "<uninitialized>";
   }
+  // Non-CPU behavior must stay unchanged: just return a placeholder and
+  // never trigger a contiguous copy on device.
   if (device_sync_->GetDeviceType() != device::DeviceType::kCPU) {
     return "<" + device::GetDeviceNameByType(device_sync_->GetDeviceType()) + ">";
   }
-  if (device_sync_->has_data()) {
-    const auto &data = device_sync_->data();
+  // CPU path: for a view tensor (storage_info_ != nullptr), device_sync_ is
+  // shared with the parent tensor, so its cached TensorData and raw pointer
+  // reflect the parent's shape/offset. Materialize a contiguous copy that
+  // actually matches this view's shape before stringifying.
+  DeviceAddressPtr target_device_sync = device_sync_;
+  if (storage_info_ != nullptr) {
+    auto contiguous = CallContiguousCallback();
+    if (contiguous != nullptr) {
+      target_device_sync = contiguous;
+    }
+  }
+  if (target_device_sync->has_data()) {
+    const auto &data = target_device_sync->data();
     return data->ToString(data_type_, shape_, use_comma);
   }
-  return GetTensorDataString(data_type_, shape_, device_sync_->GetMutablePtr(), DataSize(), DataDim(), use_comma);
+  return GetTensorDataString(data_type_, shape_, target_device_sync->GetMutablePtr(), DataSize(), DataDim(), use_comma);
 }
 
 const void *Tensor::unsafe_data() const {

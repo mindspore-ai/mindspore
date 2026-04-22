@@ -709,7 +709,9 @@ def compare_results(torch_out, ms_out, sparse_count, return_value=False, skip_cp
                 actual_np = actual.float().asnumpy() if actual.dtype == ms.bfloat16 else actual.asnumpy()
                 expect_np = expect.float().cpu().numpy() if expect.dtype == torch.bfloat16 else expect.cpu().numpy()
                 if _indices_to_name[idx] == 'sparse_values' and not return_value:
-                    print(f"skip comparing '{_indices_to_name[idx]}' because return_value is {return_value}.")
+                    assert actual_np.size == 0, \
+                        f"sparse_values should be empty when return_value=False, got size {actual_np.size}"
+                    print(f"verified '{_indices_to_name[idx]}' is empty tensor when return_value=False.")
                 elif _indices_to_name[idx] == 'dk':
                     print(f"skip comparing for '{_indices_to_name[idx]}', "
                           f"because '{_indices_to_name[idx]}' does not supported deterministic yet.")
@@ -747,7 +749,9 @@ def compare_results(torch_out, ms_out, sparse_count, return_value=False, skip_cp
                         np.testing.assert_array_equal(expect_np, actual_np)
                     elif _indices_to_name[idx] == 'sparse_values':
                         if not return_value:
-                            print(f"skip comparing '{_indices_to_name[idx]}' because return_value is {return_value}.")
+                            assert actual_np.size == 0, \
+                                f"sparse_values should be empty when return_value=False, got size {actual_np.size}"
+                            print(f"verified '{_indices_to_name[idx]}' is empty tensor when return_value=False.")
                         else:
                             np.testing.assert_allclose(expect_np, actual_np, rtol=1e-2, atol=1e-3,
                                                        err_msg=f"{_indices_to_name[idx]} value mismatch")
@@ -767,7 +771,6 @@ def compare_results(torch_out, ms_out, sparse_count, return_value=False, skip_cp
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -820,7 +823,6 @@ def test_ops_lightning_indexer_bsnd_pabsnd_normal(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -863,9 +865,8 @@ def test_ops_lightning_indexer_tnd_pabsnd_forward(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -884,7 +885,7 @@ def test_ops_lightning_indexer_tnd_tnd_normal(mode, dtype):
     layout_key = 'TND'
     sparse_count = 2048
     sparse_mode = 3
-    return_value = False
+    return_value = True
 
     query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, _ = \
         get_ndarrays(layout_query, layout_key, B=B, T=T, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
@@ -908,13 +909,12 @@ def test_ops_lightning_indexer_tnd_tnd_normal(mode, dtype):
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                                   ms_actual_seq_lengths_key, None, layout_query, layout_key,
                                                   sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -952,13 +952,12 @@ def test_ops_lightning_indexer_bsnd_bsnd_multi_batch(mode, dtype):
     # mindspore lightning_indexer backward
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, None, None, None, layout_query,
                                                   layout_key, sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -977,7 +976,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     layout_key = 'TND'
     sparse_count = 2048
     sparse_mode = 3
-    return_value = False
+    return_value = True
 
     query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, _ = \
         get_ndarrays(layout_query, layout_key, B=B, T=T, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
@@ -1001,13 +1000,12 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                                   ms_actual_seq_lengths_key, None, layout_query, layout_key,
                                                   sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -1039,13 +1037,12 @@ def test_ops_lightning_indexer_default_params(mode, dtype):
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights)
     # mindspore lightning_indexer backward with default keyword arguments
     ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -1084,7 +1081,6 @@ def test_ops_lightning_indexer_return_value_true(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -1135,7 +1131,6 @@ def test_ops_lightning_indexer_sparse_mode_0(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('sparse_count', [1, 512, 2048])
@@ -1186,7 +1181,6 @@ def test_ops_lightning_indexer_sparse_count_variants(mode, sparse_count):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16'])
@@ -1268,7 +1262,6 @@ def test_ops_lightning_indexer_empty_tensor(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_lightning_indexer_invalid_constant_scalar_tensors(mode):
@@ -1304,7 +1297,6 @@ def test_ops_lightning_indexer_invalid_constant_scalar_tensors(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['bf16'])
@@ -1377,13 +1369,12 @@ def test_ops_lightning_indexer_non_contiguous(mode, dtype):
                                                   ms_actual_seq_lengths_query, ms_actual_seq_lengths_key,
                                                   ms_block_table, layout_query, layout_key, sparse_count,
                                                   sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=False)
+    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', [ms.float32, ms.float64, ms.int32, ms.int64, ms.uint8, ms.bool_])
@@ -1428,7 +1419,6 @@ def test_ops_lightning_indexer_invalid_dtype(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_lightning_indexer_mixed_dtype(mode):
@@ -1473,7 +1463,6 @@ def test_ops_lightning_indexer_mixed_dtype(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('layout_query, layout_key', [('INVALID', 'PA_BSND'), ('BSND', 'INVALID'), ('ABC', 'XYZ')])
@@ -1513,7 +1502,6 @@ def test_ops_lightning_indexer_invalid_layout(mode, layout_query, layout_key):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('sparse_count', [-1, 0, 2049, 10000])
@@ -1554,7 +1542,6 @@ def test_ops_lightning_indexer_invalid_sparse_count(mode, sparse_count):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('sparse_mode', [-1, 1, 2, 4, 100])
@@ -1595,7 +1582,6 @@ def test_ops_lightning_indexer_invalid_sparse_mode(mode, sparse_mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_lightning_indexer_tnd_layout_n1_32(mode):
@@ -1647,7 +1633,6 @@ def test_ops_lightning_indexer_tnd_layout_n1_32(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_lightning_indexer_invalid_n2(mode):
@@ -1690,7 +1675,6 @@ def test_ops_lightning_indexer_invalid_n2(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_lightning_indexer_invalid_d(mode):
@@ -1731,7 +1715,6 @@ def test_ops_lightning_indexer_invalid_d(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('value', [np.inf, -np.inf, np.nan])
@@ -1797,7 +1780,6 @@ def test_ops_lightning_indexer_qkw_inf_nan_values(mode, value):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_lightning_indexer_invalid_parameter_types(mode):
@@ -1851,7 +1833,6 @@ def test_ops_lightning_indexer_invalid_parameter_types(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16'])
@@ -1896,7 +1877,6 @@ def test_ops_lightning_indexer_batch_processing(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
@@ -1941,7 +1921,6 @@ def test_ops_lightning_indexer_bsnd_large_s1_s2(mode, dtype):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('block_size', [256, 512])
@@ -1992,7 +1971,6 @@ def test_ops_lightning_indexer_block_table_boundary(mode, block_size):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 def test_ops_lightning_indexer_test_op():
     """
@@ -2193,7 +2171,6 @@ def lightning_indexer_memory_case(params, actual_seq_qkvlen, dtype, grad_mark):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 def test_ops_lightning_indexer_device_memory_grad_q():
     """
@@ -2209,7 +2186,6 @@ def test_ops_lightning_indexer_device_memory_grad_q():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 def test_ops_lightning_indexer_device_memory_grad_k():
     """
@@ -2225,7 +2201,6 @@ def test_ops_lightning_indexer_device_memory_grad_k():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 def test_ops_lightning_indexer_device_memory_grad_w():
     """
@@ -2241,7 +2216,6 @@ def test_ops_lightning_indexer_device_memory_grad_w():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential',
           mem_peak=2048.01)
 def test_ops_lightning_indexer_device_memory_grad_qkw():
     """

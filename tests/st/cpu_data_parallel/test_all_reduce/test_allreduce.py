@@ -21,8 +21,7 @@ import sys
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_allreduce():
     """
     Feature: CPU data parallel.
@@ -40,8 +39,7 @@ def test_allreduce():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_allreduce_small_scale_data():
     """
     Feature: CPU data parallel.

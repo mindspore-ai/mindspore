@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CLAMP_TENSOR_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CLAMP_TENSOR_H_
 
+#include <string>
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
@@ -28,6 +29,17 @@ class OPS_API ClampTensorFuncImpl : public OpFuncImpl {
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   bool GeneralInferRegistered() const override { return true; }
 };
+
+// Computes the promoted output dtype for ClampTensor.
+//
+// Starts from `input_type` and folds in each non-None side via the shared `PromoteType` table,
+// so the result matches the full numerical-promotion rules (and raises `TypeError` for invalid
+// combinations, using `op_name` in the error message).
+//
+// Pass `kMetaTypeNone` for an absent `min` or `max` tensor. This helper does NOT raise for the
+// "both None" or "bool input" cases — callers that need those checks must perform them
+// separately (see ClampTensorFuncImpl::InferType).
+OPS_API TypeId ClampTensorPromoteType(TypeId input_type, TypeId min_type, TypeId max_type, const std::string &op_name);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -41,7 +41,7 @@ class NetFractionalMaxPoolGradWithFixedKsize(nn.Cell):
         return self.fractional_max_pool_grad_with_fixed_ksize(origin_input, out_backprop, argmax)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fractionalmaxpoolwithfixedksize():
     """
     Feature: FractionalMaxPoolWithFixedKsize

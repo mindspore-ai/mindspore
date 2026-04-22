@@ -21,7 +21,7 @@ from mindspore import jit, nn, Tensor, context
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_if_branch_have_two_return():
     """
     Feature: Test join failed in if with two return.
@@ -45,7 +45,7 @@ def test_if_branch_have_two_return():
     assert "return 0" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_if_branch_has_one_return():
     """
     Feature: Test join failed in if with one return.
@@ -69,7 +69,7 @@ def test_if_branch_has_one_return():
     assert "return 0" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_if_branch_has_no_return():
     """
     Feature: Test join failed in if with one return.
@@ -93,7 +93,7 @@ def test_if_branch_has_no_return():
     assert "a = 0" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_while_body_has_return():
     """
     Feature: Test join failed in while.
@@ -114,7 +114,7 @@ def test_while_body_has_return():
     assert "return 0" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_join_failed():
     """
     Feature: Test join failed in switch layer.
@@ -155,7 +155,7 @@ def test_switch_layer_join_failed():
     assert "return x**2" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_with_fix_length_input_1():
     """
     Feature: Control flow with fix length input.
@@ -180,7 +180,7 @@ def test_control_flow_with_fix_length_input_1():
         assert "return x, y, z" in str(TypeError.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_control_flow_with_fix_length_input_2():
     """
     Feature: Control flow with fix length input.
@@ -205,7 +205,7 @@ def test_control_flow_with_fix_length_input_2():
         assert "return x, y" in str(TypeError.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_type_join_error_msg():
     """
     Feature: Control flow with different type in two branches.
@@ -233,7 +233,7 @@ def test_type_join_error_msg():
     assert "if input_x > 1:" in error_info
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_type_join_difftype():
     """
     Feature: Control flow with different type in two branches.
@@ -254,7 +254,7 @@ def test_type_join_difftype():
     assert "Cannot join the return values of different branches" in error_info
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_type_join_mstype():
     """
     Feature: Control flow with different type in two branches.

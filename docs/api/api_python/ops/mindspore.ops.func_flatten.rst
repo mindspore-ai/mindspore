@@ -5,6 +5,14 @@ mindspore.ops.flatten
 
     沿着从 `start_dim` 到 `end_dim` 的维度，对输入Tensor进行展平。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：
+
+        - 参数 `order` 将被删除。
+        - 参数 `start_dim` 的默认值将从 ``1`` 调整为 ``0`` 。
+
+        变更后的接口签名为 ``mindspore.ops.flatten(input, *, start_dim=0, end_dim=-1)`` 。
+
     参数：
         - **input** (Tensor) - 输入Tensor。
         - **order** (str, 可选) - 仅支持 ``'C'`` 和 ``'F'`` 。 ``'C'`` 表示按行优先顺序 (C风格) 展平， ``'F'`` 表示按列优先顺序 (Fortran风格) 展平。默认 ``'C'`` 。

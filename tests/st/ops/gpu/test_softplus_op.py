@@ -39,7 +39,7 @@ def SoftplusCompute(x):
     return np.log(1 + np.exp(x))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_1d():
     x_np = np.random.random((50,)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
@@ -51,7 +51,7 @@ def test_softplus_1d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_2d():
     x_np = np.random.random((50, 40)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
@@ -63,7 +63,7 @@ def test_softplus_2d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_4d():
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
@@ -75,7 +75,7 @@ def test_softplus_4d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_neg():
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float32) * -1
     y_np = SoftplusCompute(x_np)
@@ -87,7 +87,7 @@ def test_softplus_neg():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_4d_fp16():
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float16)
     y_np = SoftplusCompute(x_np)
@@ -99,7 +99,7 @@ def test_softplus_4d_fp16():
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_fp32_overflow():
     """
     Feature: Softplus kernel
@@ -115,7 +115,7 @@ def test_softplus_fp32_overflow():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_softplus_fp16_overflow():
     """
     Feature: Softplus kernel

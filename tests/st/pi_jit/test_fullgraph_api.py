@@ -24,7 +24,7 @@ from tests.st.pi_jit.share.utils import pi_jit_with_config, match_array
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fullgraph_True_1():
     """
     Feature: @jit(fullgraph=True).
@@ -45,7 +45,7 @@ def test_fullgraph_True_1():
     assert "print('Graph break!', flush=True)" in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fullgraph_True_2():
     """
     Feature: @jit(fullgraph=True).
@@ -67,7 +67,7 @@ def test_fullgraph_True_2():
     assert 'for i in range(3):' in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fullgraph_True_3():
     """
     Feature: @jit(fullgraph=True).
@@ -93,7 +93,7 @@ def test_fullgraph_True_3():
     assert 'Hint: See https://docs.python.org/3/library/dis.html for bytecode semantics' in err_msg
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fullgraph_True_4():
     """
     Feature: @jit(fullgraph=True).
@@ -120,7 +120,7 @@ def test_fullgraph_True_4():
     assert err_msg.find("inner()") < err_msg.find("print('Graph break in inner function!', flush=True)")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fullgraph_True_5():
     """
     Feature: @jit(fullgraph=True).
@@ -144,7 +144,7 @@ def test_fullgraph_True_5():
     assert 'Hint: Unsupported iterable type: set' in err_msg
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fullgraph_True_and_compile_with_try_True():
     """
     Feature: @jit(fullgraph=True).
@@ -165,7 +165,7 @@ def test_fullgraph_True_and_compile_with_try_True():
     assert "print('Graph break!', flush=True)" in str(info.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_no_graph_break():
     """
     Feature: @jit(fullgraph=True).
@@ -209,7 +209,7 @@ def test_fullgraph_no_graph_break():
     match_array(pynative_grad, jit_grad, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_at_start():
     """
     Feature: @jit(fullgraph=True).
@@ -239,7 +239,7 @@ def test_fullgraph_break_at_start():
     assert "x = x.asnumpy()" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_at_middle():
     """
     Feature: @jit(fullgraph=True).
@@ -267,7 +267,7 @@ def test_fullgraph_break_at_middle():
     assert "y = x.asnumpy()" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_multiple_breaks_and_only_first_is_reported():
     """
     Feature: @jit(fullgraph=True).
@@ -298,7 +298,7 @@ def test_fullgraph_multiple_breaks_and_only_first_is_reported():
     assert "out.asnumpy()" not in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_in_for_if():
     """
     Feature: @jit(fullgraph=True).
@@ -329,7 +329,7 @@ def test_fullgraph_break_in_for_if():
     assert "out + Tensor(x.asnumpy() * 2)" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_in_method_call():
     """
     Feature: @jit(fullgraph=True).
@@ -364,7 +364,7 @@ def test_fullgraph_break_in_method_call():
     assert "x = x.asnumpy()" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_in_nested_function():
     """
     Feature: @jit(fullgraph=True).
@@ -391,7 +391,7 @@ def test_fullgraph_break_in_nested_function():
     assert "x = Tensor(x.asnumpy())" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_three_layer_nesting():
     """
     Feature: @jit(fullgraph=True).
@@ -422,7 +422,7 @@ def test_fullgraph_break_three_layer_nesting():
     assert "x.asnumpy()" in str(e.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fullgraph_break_in_if_condition():
     """
     Feature: @jit(fullgraph=True).

@@ -20,7 +20,7 @@ mindspore.RowTensor
          [0, 0]]
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **indices** (Tensor) - shape为 :math:`(d_0)` 的一维整数Tensor。默认值： ``None`` 。

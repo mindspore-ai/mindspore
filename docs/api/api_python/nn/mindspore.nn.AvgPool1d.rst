@@ -12,8 +12,8 @@ mindspore.nn.AvgPool1d
         \text{output}(N_i, C_j, l) = \frac{1}{l_{ker}} \sum_{n=0}^{l_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times l + n)
 
-    .. note::
-        该接口暂不支持Atlas A2 训练系列产品。
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`pad_mode` 将被移除，且默认 `stride` 将跟随 `kernel_size`。
 
     参数：
         - **kernel_size** (int，可选) - 指定池化核尺寸大小，数据类型为整型。默认值： ``1`` 。

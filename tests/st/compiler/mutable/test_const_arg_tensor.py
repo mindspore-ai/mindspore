@@ -23,7 +23,7 @@ from mindspore import jit, nn
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cal_constant_tensor():
     """
     Feature: Set mutable tensor input to constant.
@@ -50,7 +50,7 @@ def test_cal_constant_tensor():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cal_constant_tensor_jit_function():
     """
     Feature: Set mutable tensor input to constant.
@@ -72,7 +72,7 @@ def test_cal_constant_tensor_jit_function():
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_const_arg_tensor_to_mutable():
     """
     Feature: Set mutable tensor input to constant.
@@ -115,7 +115,7 @@ def test_grad_const_arg_tensor_to_mutable():
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_function_grad_const_arg_tensor_to_mutable():
     """
     Feature: Set mutable tensor input to constant.
@@ -154,7 +154,7 @@ def test_jit_function_grad_const_arg_tensor_to_mutable():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_mul_constant_tensor():
     """
     Feature: Set mutable tensor input to constant.

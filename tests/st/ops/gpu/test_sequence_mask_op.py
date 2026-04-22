@@ -27,7 +27,7 @@ def sequence_mask(x, maxlen):
     return C.sequence_mask(Tensor(x.astype(np.int32)), maxlen)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sequence_mask_1d():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([2, 3, 1])
@@ -39,7 +39,7 @@ def test_sequence_mask_1d():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sequence_mask_2d():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([[0, 1, 3, 2], [1, 4, 4, 2]])
@@ -56,7 +56,7 @@ def test_sequence_mask_2d():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sequence_mask_3d():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([[[2, 2], [1, 1]],
@@ -71,7 +71,7 @@ def test_sequence_mask_3d():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sequence_mask_maxlen_1():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([[[0, 1], [1, 1]],
@@ -86,7 +86,7 @@ def test_sequence_mask_maxlen_1():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sequence_mask_dynamic():
     class SequenceMaskDynamicNet1(nn.Cell):
         def __init__(self, maxlen):
@@ -146,7 +146,7 @@ def sequence_mask_optional(x):
     return C.sequence_mask(Tensor(x.astype(np.int32)))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_sequence_mask_optional_maxlen():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.array([2, 3, 1])

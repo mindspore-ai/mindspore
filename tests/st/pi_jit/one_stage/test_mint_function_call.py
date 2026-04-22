@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import assert_executed_by_graph_mode
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_with_tensor():
     """
     Feature: Functional.
@@ -38,7 +38,7 @@ def test_mint_clamp_with_tensor():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_with_scalar():
     """
     Feature: Functional.
@@ -56,7 +56,7 @@ def test_mint_clamp_with_scalar():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_default():
     """
     Feature: Functional.
@@ -73,7 +73,7 @@ def test_mint_clamp_default():
     assert_executed_by_graph_mode(func)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_mint_clamp_keyword():
     """
     Feature: Functional.

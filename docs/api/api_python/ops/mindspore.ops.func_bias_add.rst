@@ -5,6 +5,9 @@ mindspore.ops.bias_add
 
     返回输入Tensor `input_x` 与偏置Tensor `bias` 之和。相加前会把偏置Tensor广播成与输入Tensor的shape一致。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **input_x** (Tensor) - 输入Tensor。shape可以有2~5个维度。支持数据类型：
 

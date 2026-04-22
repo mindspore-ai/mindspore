@@ -3,18 +3,21 @@ sqrt:
         Return sqrt of a tensor element-wise.
 
         .. math::
-        
+
             out_{i} = \sqrt{x_{i}}
-    
+
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: parameter `x` will be renamed to `input`.
+
         Args:
             x (Tensor): The input tensor.
-        
+
         Returns:
             Tensor
-    
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> x = mindspore.tensor([1.0, 4.0, 9.0], mindspore.float32)

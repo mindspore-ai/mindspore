@@ -122,7 +122,7 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
             check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '3', '5'])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @security_off_wrap
 def test_GPU_e2e_multi_root_graph_dump():
     """

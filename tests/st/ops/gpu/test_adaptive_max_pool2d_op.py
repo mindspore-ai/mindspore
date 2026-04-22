@@ -37,7 +37,7 @@ class NetP(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_net_normal():
     """
     Feature: test adaptivemaxpool2d op.
@@ -51,7 +51,7 @@ def test_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_h_none():
     """
     Feature: test adaptivemaxpool2d op.
@@ -65,7 +65,7 @@ def test_net_h_none():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_hxh():
     """
     Feature: test adaptivemaxpool2d op.
@@ -89,7 +89,7 @@ class NetWithIndices(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_with_indices():
     """
     Feature: test adaptivemaxpool2d op.
@@ -103,7 +103,7 @@ def test_net_with_indices():
     assert output[1].asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_f():
     """
     Feature: test adaptivemaxpool2d op.
@@ -126,7 +126,7 @@ class Netnn(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_net_nn():
     """
     Feature: test adaptivemaxpool2d op.
@@ -140,7 +140,7 @@ def test_net_nn():
     assert output.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dynamic_shape():
     """
     Feature: test adaptivemaxpool2d op.

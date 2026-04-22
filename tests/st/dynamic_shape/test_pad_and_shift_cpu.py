@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.pad_and_shift(x, y, self.shift_idx)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pad_and_shift_cpu():
     """
     Feature: Dynamic shape.

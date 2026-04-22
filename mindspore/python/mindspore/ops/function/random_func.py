@@ -69,6 +69,10 @@ def random_gamma(shape, alpha, seed=None):
     r"""
     Generate random numbers from the Gamma distribution(s).
 
+    .. warning::
+        After version 2.9.0, this sampling interface will change to a distribution object form.
+        Please use the corresponding distribution class instead.
+
     Args:
         shape (Tensor): The shape of the random tensor to be generated.
         alpha (Tensor): The :math:`\alpha` distribution parameter.
@@ -112,8 +116,10 @@ def standard_laplace(shape, seed=None):
         \text{f}(x) = \frac{1}{2}\exp(-|x|)
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - In the next version, this interface will undergo a non-compatible change: this sampling interface
+          will be changed to a distribution object form. Please use the corresponding distribution class instead.
 
     Args:
         shape (Union[tuple, Tensor]): The shape of returned tensor.
@@ -149,8 +155,9 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     Generates random samples from a given categorical distribution tensor.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         logits (Tensor): The input tensor. 2-D Tensor with shape :math:`(batch\_size, num\_classes)`.
@@ -191,6 +198,9 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
 def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False):
     r"""
     Generate a tensor from a multinomial distribution.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - The rows of input do not need to sum to one (in which case we use the values as weights),
@@ -327,6 +337,10 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.
 
+    .. warning::
+        After version 2.9.0, this sampling interface will be changed to a distribution object form.
+        Please use the corresponding distribution class interface.
+
     Note:
         The number in tensor minval should be strictly less than maxval at any position after broadcasting.
 
@@ -406,8 +420,9 @@ def standard_normal(shape, seed=None):
         f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         shape (Union[tuple, Tensor]): The shape of the returned tensor.
@@ -449,12 +464,13 @@ def uniform_candidate_sampler(true_classes,
     Uniform candidate sampler.
 
     This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
-    If unique=True, candidates are drawn without replacement, else unique=False with replacement.
+    If `unique` is ``True``, candidates are drawn without replacement, else `unique` is ``False`` with replacement.
 
     .. warning::
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
         - The Ascend backend does not support dynamic shape scenarios currently.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         true_classes (Tensor): A Tensor. The target classes with a Tensor shape of :math:`(batch\_size, num\_true)` .
@@ -523,8 +539,11 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - Starting after version 2.9.0, this API will undergo an incompatible change:
+          the signature will be adjusted to ``poisson(input, generator=None)``.
+          The current `shape` parameter semantics is incompatible with the new signature.
 
     Args:
         shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D integer tensor.
@@ -568,6 +587,9 @@ def shuffle(x, seed=None):
     r"""
     Randomly shuffle a tensor along its first dimension.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Args:
         x (Tensor): The input tensor.
         seed (int, optional): Random seed. Default ``None`` , which is equivalent to 0.
@@ -601,8 +623,9 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         true_classes (Tensor): The target classes. With data type of int64 and
@@ -655,7 +678,7 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
 @_function_forbid_reuse
 def choice_with_mask(input_x, count=256, seed=None):
     """
-    Generates a random sample as index tensor with a mask tensor from a given tensor.
+    Generates a random sample as an index tensor with a mask tensor from a given tensor.
 
     The `input_x` must be a tensor whose dimension is not less than 1. If its dimension is greater than or equal to 2,
     the first dimension specifies the number of samples.
@@ -663,18 +686,20 @@ def choice_with_mask(input_x, count=256, seed=None):
     sample, the mask tensor denotes which elements in the index tensor are valid.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         input_x (Tensor[bool]): The input tensor.
             The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
         count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
-        seed (int, optional): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
+        seed (int, optional): Seed is used as an entropy source for random number engines
+            generating pseudo-random numbers.
             Default: ``None`` .
 
     Returns:
-        Two tensors, the first one is the index tensor and the other one is the mask tensor.
+        Two tensors. The first one is the index tensor and the other one is the mask tensor.
 
         - **index** (Tensor) - The output shape is 2-D.
         - **mask** (Tensor) - The output shape is 1-D.
@@ -897,8 +922,10 @@ def normal(shape, mean, stddev, seed=None):
     Return a random tensor that conforms to the normal (Gaussian) distribution.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: this interface will switch to the
+          `mean` , `std` and `size` calling style, and `shape` will no longer be accepted.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         shape (tuple): The shape of returned tensor.
@@ -965,8 +992,11 @@ def laplace(shape, mean, lambda_param, seed=None):
     representing `lambda_param`.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - Starting after version 2.9.0, this API will undergo an incompatible change:
+          this sampling interface will be changed to a distribution object form.
+          Please use the corresponding distribution class instead.
 
     Args:
         shape (tuple): The shape specified.
@@ -1012,8 +1042,11 @@ def gamma(shape, alpha, beta, seed=None):
     Support broadcasting.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+        - Starting after version 2.9.0, this API will undergo an incompatible change:
+          this sampling interface will be changed to a distribution object form.
+          Please use the corresponding distribution class instead.
 
     Args:
         shape (tuple): The shape specified.
@@ -1108,8 +1141,10 @@ def rand(*size, dtype=None, seed=None):
     based on the given `size` and `dtype`.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: parameter `seed` will be removed, parameter
+          `generator` will be added, and the `*size` form will be adjusted to `size`.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         size (Union[int, tuple(int), list(int)]): The shape of the output tensor.
@@ -1150,8 +1185,10 @@ def rand_like(input, seed=None, *, dtype=None):
     on the interval :math:`[0, 1)`.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: `seed` will be removed and random numbers will be
+          controlled by `generator`.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         input (Tensor): The input tensor.
@@ -1204,8 +1241,8 @@ def rand_ext(*size, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.float32` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
-            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. 
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+            are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
     Returns:
@@ -1246,7 +1283,7 @@ def rand_like_ext(input, *, dtype=None, device=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
             the same dtype of `input` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"``
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"``
             are supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
 
     Returns:
@@ -1287,8 +1324,8 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.float32` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. ``"Ascend"`` and ``"npu"`` are supported.
-            If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
+            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
@@ -1331,8 +1368,8 @@ def randn_like_ext(input, *, dtype=None, device=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated Tensor dtype, it must be float type. If ``None``,
             the same dtype of `input` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. ``"Ascend"`` and ``"npu"`` are supported.
-            If `device = None`, the device of `input` will be used. Default ``None``.
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
+            supported. If `device = None`, the device of `input` will be used. Default ``None``.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
@@ -1376,8 +1413,8 @@ def randint_ext(*args, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             `mindspore.int64` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
-            supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. 
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+            are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
     Returns:
@@ -1428,7 +1465,7 @@ def randint_like_ext(*args, dtype=None, device=None):
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
             the same dtype of `input` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"`` and ``"npu"`` are
+        device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
             supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
 
     Returns:
@@ -1514,8 +1551,10 @@ def randn(*size, dtype=None, seed=None):
     from the standard normal distribution.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: parameter `seed` will be removed, parameter
+          `generator` will be added, and the `*size` form will be adjusted to `size`.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         size (Union[int, tuple(int), list(int)]): Shape of the output tensor.
@@ -1557,8 +1596,10 @@ def randn_like(input, seed=None, *, dtype=None):
     distribution.
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: `seed` will be removed, and `generator` and
+          `device` parameters will be added.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         input (Tensor): The input tensor.
@@ -1602,8 +1643,10 @@ def randint(low, high, size, seed=None, *, dtype=None):
     Return a tensor whose elements are random integers in the range of [ `low` , `high` ) .
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: the signature will change to
+          ``randint(low=0, high, size, *, generator=None, dtype=None)``, and `seed` will be removed.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         low (int): Start value of interval.
@@ -1657,8 +1700,11 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
     of [ `low` , `high` ) .
 
     .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
+        - Non-backward-compatible change after version 2.9.0: the signature will change to
+          ``randint_like(input, low=0, high, *, dtype=None)``, `seed` will be removed, and `low` will become
+          optional with a default value of ``0``.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
 
     Args:
         input (Tensor): The input tensor.
@@ -1832,14 +1878,16 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     In case 3 of the sample code, we extend the input to 2 dimensions, and the sampling results
     in each dimension also match our sampling expectations.
 
+    .. warning::
+        - After version 2.9.0, the default value of `replacement` will change from ``True`` to ``False``,
+          and `seed` will be replaced by `generator`.
+        - The Ascend backend does not support the reproducibility of random numbers, so
+          the `seed` parameter has no effect.
+
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
         but must be non-negative, finite and have a non-zero sum. When using values as weights, it can be understood as
         normalizing the input along the last dimension.
-
-    .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
 
     Args:
         input (Tensor): The input tensor containing probabilities.

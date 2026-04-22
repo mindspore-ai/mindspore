@@ -18,7 +18,7 @@ class Net(nn.Cell):
         return out1, out2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('x_train', [Tensor(np.array([3.1415926]), dtype=ms.float32)])
 @pytest.mark.parametrize('y_train', [Tensor(np.array([3.1415926]), dtype=ms.float32)])
 @pytest.mark.parametrize('Net1', [Net])

@@ -11,6 +11,9 @@ mindspore.Tensor.remainder
 
         remainder(input, other) == input - input.div(other, rounding_mode="floor") * other
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更： ``remainder(divisor)`` 重载将被移除，仅支持 ``remainder(other)`` 。使用 ``divisor=`` 关键字传参的调用将不兼容。
+
     .. note::
         输入不支持复数类型。至少一个输入为Tensor，且不能都为bool型Tensor。
         被除数 `self` 是数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。

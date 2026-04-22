@@ -50,8 +50,7 @@ class Add_LayerNorm(nn.Cell):
         return y, meanOut, rstdOut, res
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('tensor_type', [mstype.float32, mstype.float16, mstype.bfloat16])
 def test_add_layer_norm(tensor_type):
     """
@@ -83,8 +82,7 @@ def test_add_layer_norm(tensor_type):
     os.unsetenv("MS_DISABLE_INTERNAL_KERNELS_LIST")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('tensor_type', [mstype.float32, mstype.float16, mstype.bfloat16])
 def test_add_layer_norm_dynamic_shape(tensor_type):
     """

@@ -47,7 +47,7 @@ def strided_slice_test(is_dyn_rank):
     tester.test_dynamic_grad_net([input_x, begin, end, strides], is_dyn_rank)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_strided_slice_dyn_shape():
     """
     Feature: StridedSlice Grad DynamicShape.
@@ -57,7 +57,7 @@ def test_strided_slice_dyn_shape():
     strided_slice_test(False)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_strided_slice_dyn_rank():
     """
     Feature: StridedSlice Grad DynamicRank.
@@ -83,8 +83,7 @@ class StridedSliceNet(Cell):
         return op.add(out, out)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_strided_slice_insert_cast_for_tuple_input():
     """
     Feature: StridedSlice Grad DynamicShape in pynative mode.

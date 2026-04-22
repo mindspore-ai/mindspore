@@ -46,7 +46,7 @@ def fusion_net_get_output(x, y, z, enable_auto_tensor_inplace=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def fusion_net_compare_result():
     """
     Feature: graph kernel testcase for auto tensor inplace

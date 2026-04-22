@@ -7,6 +7,9 @@ mindspore.ops.matrix_diag
 
     `num_rows` 和 `num_cols` 为int32类型的单值tensor，若为-1，则表示输出tensor的最内层矩阵是一个方阵。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (Tensor) - 输入tensor。
         - **k** (Union[int, Tensor], 可选) - 对角线偏移。正值表示超对角线，负值表示次对角线。当k是2个整数，表示子对角线的上界和下界。默认 ``0`` 。

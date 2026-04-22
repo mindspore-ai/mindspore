@@ -4,3 +4,5 @@ where:
 
     For details, please refer to :func:`mindspore.ops.where`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: parameter name `y` will be renamed to `other`.

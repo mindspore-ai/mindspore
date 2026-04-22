@@ -54,8 +54,7 @@ def unique_forward_func(x):
     return ms.ops.unique(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 def test_normal_op(mode):
     """
@@ -71,8 +70,7 @@ def test_normal_op(mode):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 def test_op_with_existing_cpu_kernelmod(mode):
     """
@@ -91,8 +89,7 @@ def test_op_with_existing_cpu_kernelmod(mode):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 def test_inplace_op(mode):
     """
@@ -106,8 +103,7 @@ def test_inplace_op(mode):
     inplace_relu_forward_func(x)
     assert np.allclose(x.asnumpy(), expect)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_view_op(mode):
     """
@@ -140,8 +136,7 @@ def test_view_op(mode):
     output_grad = grad_fn(x).asnumpy()
     assert np.allclose(output_grad, [0., 1., 0., 1., 0., 1.])
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_noncontiguous_input_op(mode):
     """
@@ -160,8 +155,7 @@ def test_noncontiguous_input_op(mode):
     output = logical_and_forward_func(x_noncontiguous, y_noncontiguous)
     assert np.allclose(output.asnumpy(), expect)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_scalar_tuple_input(mode):
     """
@@ -184,8 +178,7 @@ def test_scalar_tuple_input(mode):
     x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
     sum_ext_func(x) # should not raise any exception
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_tensor_tuple_input(mode):
     """
@@ -203,8 +196,7 @@ def test_tensor_tuple_input(mode):
     output = stack_func(inputs)
     assert np.allclose(output.asnumpy(), expect)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_py_method_dispatch(mode):
     """
@@ -229,8 +221,7 @@ def test_py_method_dispatch(mode):
     assert np.allclose(output_tensor.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_dynamic_output_shape(mode):
     """

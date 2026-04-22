@@ -28,8 +28,7 @@ from tests.mark_utils import arg_mark
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_add_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -52,8 +51,7 @@ def test_fallback_add_meta():
     assert ret == (1, 2, 3, 4, 5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_add_meta_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -77,8 +75,7 @@ def test_fallback_add_meta_2():
     assert ret == 7
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_aug_assign_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -104,8 +101,7 @@ def test_fallback_aug_assign_meta():
     assert ret == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)
 def test_fallback_add_meta_3():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -128,8 +124,7 @@ def test_fallback_add_meta_3():
     assert np.allclose(ret.asnumpy(), Tensor([5, 6, 7]).asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_add_meta_4():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -153,8 +148,7 @@ def test_fallback_add_meta_4():
     assert np.allclose(ret.asnumpy(), Tensor([-3, -2, -1]).asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_add_meta_5():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -177,8 +171,7 @@ def test_fallback_add_meta_5():
     assert ret == (Tensor(1), Tensor(2), Tensor(3), Tensor(4), Tensor(5))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_mul_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -201,8 +194,7 @@ def test_fallback_mul_meta():
     assert np.all(ret.asnumpy() == np.array([10, 20, 30]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_negative_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -225,8 +217,7 @@ def test_fallback_negative_meta():
     assert ret == -100
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_negative_meta_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -249,8 +240,7 @@ def test_fallback_negative_meta_2():
     assert np.allclose(ret.asnumpy(), Tensor([-11, -12, -13]).asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_compare_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -274,8 +264,7 @@ def test_fallback_compare_meta():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_fallback_compare_meta_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -307,8 +296,7 @@ def test_fallback_compare_meta_2():
     assert ret == [True, True, True, True]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_getitem_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -331,8 +319,7 @@ def test_fallback_getitem_meta():
     assert ret == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_getitem_meta_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -356,8 +343,7 @@ def test_fallback_getitem_meta_2():
     assert ret == (2, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_fallback_in_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -384,8 +370,7 @@ def test_fallback_in_meta():
     assert ret == (True, True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_in_1():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -400,8 +385,7 @@ def test_fallback_meta_fg_not_support_type_in_1():
     assert net()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_in_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -416,8 +400,7 @@ def test_fallback_meta_fg_not_support_type_in_2():
     assert not net()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_in_3():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -432,8 +415,7 @@ def test_fallback_meta_fg_not_support_type_in_3():
     assert net()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_add():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -452,8 +434,7 @@ def test_fallback_meta_fg_not_support_type_add():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_bitwise_and():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -472,8 +453,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_and():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_bitwise_or():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -492,8 +472,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_or():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_bitwise_xor():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -512,8 +491,7 @@ def test_fallback_meta_fg_not_support_type_bitwise_xor():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_div():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -532,8 +510,7 @@ def test_fallback_meta_fg_not_support_type_div():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_equal():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -551,8 +528,7 @@ def test_fallback_meta_fg_not_support_type_equal():
     assert res
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_floordiv():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -571,8 +547,7 @@ def test_fallback_meta_fg_not_support_type_floordiv():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_greater_equal_1():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -592,8 +567,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_1():
     assert "'>=' not supported between instances of 'list' and 'tuple'" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_greater_equal_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -612,8 +586,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_2():
     assert "'>=' not supported between" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_less_equal():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -632,8 +605,7 @@ def test_fallback_meta_fg_not_support_type_less_equal():
     assert "'<=' not supported between" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_aug_assign():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -653,8 +625,7 @@ def test_fallback_meta_fg_not_support_type_aug_assign():
     assert "Failed calling sub with" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_less():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -673,8 +644,7 @@ def test_fallback_meta_fg_not_support_type_less():
     assert "'<' not supported between" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_or():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -692,8 +662,7 @@ def test_fallback_meta_fg_not_support_type_or():
     assert res == [1, 2]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_mod():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -712,8 +681,7 @@ def test_fallback_meta_fg_not_support_type_mod():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_pow():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -732,8 +700,7 @@ def test_fallback_meta_fg_not_support_type_pow():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_right_shift():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -752,8 +719,7 @@ def test_fallback_meta_fg_not_support_type_right_shift():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_sub():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -772,8 +738,7 @@ def test_fallback_meta_fg_not_support_type_sub():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_uadd():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -792,8 +757,7 @@ def test_fallback_meta_fg_not_support_type_uadd():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_not():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -810,8 +774,7 @@ def test_fallback_meta_fg_not_support_type_not():
     assert res
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_meta_fg_not_support_type_and():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -829,8 +792,7 @@ def test_fallback_meta_fg_not_support_type_and():
     assert res == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_meta_fg_not_support_type_not_equal():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -849,8 +811,7 @@ def test_fallback_meta_fg_not_support_type_not_equal():
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_setitem_meta():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -876,8 +837,7 @@ def test_fallback_setitem_meta():
 
 
 @pytest.mark.skip(reason="do not support inplace operation yet.")
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_setitem_meta_2():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -901,8 +861,7 @@ def test_fallback_setitem_meta_2():
     assert ret == [10, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_shift_operator_error_list_input():
     """
     Feature: shift operator
@@ -926,8 +885,7 @@ def test_shift_operator_error_list_input():
     assert "unsupported operand type" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_user_made_meta_fg():
     """
     Feature: shift operator
@@ -955,8 +913,7 @@ def test_user_made_meta_fg():
     assert res == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_user_made_meta_fg_with_error():
     """
     Feature: shift operator
@@ -984,8 +941,7 @@ def test_user_made_meta_fg_with_error():
     assert "cannot find fn match given args." in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_user_made_meta_fg_with_hyper_map():
     """
     Feature: shift operator
@@ -1013,8 +969,7 @@ def test_user_made_meta_fg_with_hyper_map():
     assert res == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_getitem_with_no_script():
     """
     Feature: shift operator
@@ -1034,8 +989,7 @@ def test_getitem_with_no_script():
     assert res == (1, 2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_multitype_with_cache():
     """
     Feature: shift operator
@@ -1054,8 +1008,7 @@ def test_multitype_with_cache():
     assert np.allclose(ret.asnumpy(), np.array([4.0, 8.0, 12.0]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_multitype_as_input_hyper_map():
     """
     Feature: user made multitypefuncgraph
@@ -1078,8 +1031,7 @@ def test_multitype_as_input_hyper_map():
         net(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_multitype_generated_by_inner_method_1():
     """
     Feature: multitype_generated_by_inner_method
@@ -1098,8 +1050,7 @@ def test_multitype_generated_by_inner_method_1():
     assert res == [0, 0]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multitype_generated_by_inner_method_2():
     """
     Feature: multitype_generated_by_inner_method
@@ -1118,8 +1069,7 @@ def test_multitype_generated_by_inner_method_2():
     assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multitype_funcgraph_with_slice_in_tuple():
     """
     Feature: multitype_funcgraph_with_slice_in_tuple
@@ -1144,8 +1094,7 @@ def test_multitype_funcgraph_with_slice_in_tuple():
     assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_setitem_meta_dict():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -1168,8 +1117,7 @@ def test_fallback_setitem_meta_dict():
     assert ret == {'Name': 'a', 'Age': 7, 'country': 'china'}
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_pow_error_tuple_input():
     """
     Feature: power

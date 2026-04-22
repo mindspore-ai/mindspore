@@ -5,6 +5,9 @@ mindspore.nn.MSELoss
 
     用于计算预测值与标签值之间的均方误差。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `logits` 和 `labels` 将分别重命名为 `input` 和 `target`。
+
     假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，则计算 :math:`x` 和 :math:`y` 的unreduced loss（即reduction参数设置为 ``'none'``）的公式如下：
 
     .. math::

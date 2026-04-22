@@ -34,7 +34,7 @@ class NetOnesLike(nn.Cell):
         return self.ones_like(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("nptype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
                                     np.uint8, np.uint16, np.uint32, np.uint64,
                                     np.float16, np.float32, np.float64,

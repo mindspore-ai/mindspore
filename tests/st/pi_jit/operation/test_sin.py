@@ -5,7 +5,7 @@ from ..share.ops.primitive.sin_ops import SinMock
 from ..dynamic_shape_operations.sin import SinDynamicShapeFactory
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_32x1024x1269():
     """
     Feature: ALL TO ALL
@@ -18,7 +18,7 @@ def test_p_sin_32x1024x1269():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_x1269():
     """
     Feature: ALL TO ALL
@@ -31,7 +31,7 @@ def test_p_sin_x1269():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_2x4x8():
     """
     Feature: ALL TO ALL
@@ -44,7 +44,7 @@ def test_p_sin_2x4x8():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_2x4x8x16():
     """
     Feature: ALL TO ALL
@@ -57,7 +57,7 @@ def test_p_sin_2x4x8x16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_2x4x8x16_fp64():
     """
     Feature: ALL TO ALL
@@ -70,7 +70,7 @@ def test_p_sin_2x4x8x16_fp64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_1x2x4x8x16():
     """
     Feature: ALL TO ALL
@@ -83,7 +83,7 @@ def test_p_sin_1x2x4x8x16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_2x4x8x16x1x16():
     """
     Feature: ALL TO ALL
@@ -96,7 +96,7 @@ def test_p_sin_2x4x8x16x1x16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_input_4d_cp64():
     """
     Feature: ALL TO ALL
@@ -112,7 +112,7 @@ def test_p_sin_input_4d_cp64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_input_5d_cp128():
     """
     Feature: ALL TO ALL
@@ -128,7 +128,7 @@ def test_p_sin_input_5d_cp128():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_input_2d_cp128():
     """
     Feature: ALL TO ALL
@@ -144,7 +144,7 @@ def test_p_sin_input_2d_cp128():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_input_7d_cp64():
     """
     Feature: ALL TO ALL
@@ -160,7 +160,7 @@ def test_p_sin_input_7d_cp64():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_sin_input_type_not_support():
     """
     Feature: ALL TO ALL
@@ -184,7 +184,7 @@ def test_p_sin_input_type_not_support():
         fact3.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_sin_input_float32():
     """
     Feature: ALL TO ALL
@@ -197,7 +197,7 @@ def test_dynamic_shape_p_sin_input_float32():
     fact.grad_dynamic_shape_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_sin_float32():
     """
     Feature: ALL TO ALL
@@ -210,7 +210,7 @@ def test_dynamic_shape_p_sin_float32():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_dynamic_shape_p_sin_float16():
     """
     Feature: ALL TO ALL
@@ -223,7 +223,7 @@ def test_dynamic_shape_p_sin_float16():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_sin():
     """
     Feature: ALL TO ALL

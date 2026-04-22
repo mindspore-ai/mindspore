@@ -127,7 +127,7 @@ def run_multi_actor_fusion(net_name, net, input1, input2, input3, input4, expect
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend', 'platform_gpu'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_non_concurrent():
     """
     Feature: Multi actor fusion with non concurrent.
@@ -141,7 +141,7 @@ def test_non_concurrent():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_non_concurrent_with_while():
     """
     Feature: Multi actor fusion with non concurrent and while.
@@ -156,7 +156,7 @@ def test_non_concurrent_with_while():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend', 'platform_gpu'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_concurrent():
     """
     Feature: Multi actor fusion with concurrent.
@@ -173,7 +173,7 @@ def test_concurrent():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2', card_mark='onecard', essential_mark='unessential')
+          level_mark='level2', card_mark='onecard')
 def test_concurrent_with_while():
     """
     Feature: Multi actor fusion with concurrent and while.
@@ -190,7 +190,7 @@ def test_concurrent_with_while():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard')
 def test_parameter_set_data():
     """
     Feature: Runtime performance optimize of data prepare.

@@ -19,8 +19,7 @@ from mindspore.nn import Cell
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_hyper_param():
     """
     Feature: Resolve parameter.
@@ -50,8 +49,7 @@ def test_hyper_param():
     assert output == output_expect
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_hyper_param_with_control_sink():
     """
     Feature: Resolve parameter.

@@ -46,8 +46,7 @@ def dir_data():
     return data_list
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_dvpp_decode_operation_01():
     """
     Feature: Decode operation on device
@@ -114,8 +113,7 @@ def test_dvpp_decode_operation_01():
         _ = decode_op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_decode_exception_01():
     """
     Feature: Decode operation on device

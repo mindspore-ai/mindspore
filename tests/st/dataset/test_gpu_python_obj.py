@@ -66,7 +66,7 @@ def create_model():
     return model_
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("needs_batch", (False, True))
 def test_python_dict_in_pipeline(needs_batch):
     """

@@ -34,7 +34,7 @@ class NetResizeBilinear(nn.Cell):
         return self.op(inputs, self.size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_integer_ratio_half(datatype=np.float16):
     input_tensor = Tensor(np.array(
         [[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]]]]).astype(datatype))
@@ -142,7 +142,7 @@ def test_resize_nn_grayscale_integer_ratio_half(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_integer_ratio_float(datatype=np.float32):
     input_tensor = Tensor(np.array(
         [[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]]]]).astype(datatype))
@@ -244,7 +244,7 @@ def test_resize_nn_grayscale_integer_ratio_float(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_not_integer_ratio_half(datatype=np.float16):
     input_tensor = Tensor(np.array([[[[0.1, 0.2, 0.3, 0.4],
                                       [0.5, 0.6, 0.7, 0.8],
@@ -350,7 +350,7 @@ def test_resize_nn_grayscale_not_integer_ratio_half(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_not_integer_ratio_float(datatype=np.float32):
     input_tensor = Tensor(np.array([[[[0.1, 0.2, 0.3, 0.4],
                                       [0.5, 0.6, 0.7, 0.8],
@@ -460,7 +460,7 @@ def test_resize_nn_grayscale_not_integer_ratio_float(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_multiple_images_half(datatype=np.float16):
     input_tensor = Tensor(np.array([[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]]],
                                     [[[0.4, 0.5, 0.6], [0.7, 0.8, 0.9], [0.1, 0.2, 0.3]]],
@@ -480,7 +480,7 @@ def test_resize_nn_grayscale_multiple_images_half(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_multiple_images_float(datatype=np.float32):
     input_tensor = Tensor(np.array([[[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6], [0.7, 0.8, 0.9]]],
                                     [[[0.4, 0.5, 0.6], [0.7, 0.8, 0.9], [0.1, 0.2, 0.3]]],
@@ -501,7 +501,7 @@ def test_resize_nn_grayscale_multiple_images_float(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_align_corners_half(datatype=np.float16):
     input_tensor = Tensor(
         np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(datatype))
@@ -527,7 +527,7 @@ def test_resize_nn_grayscale_align_corners_half(datatype=np.float16):
     assert np.all(abs(diff_align) < error)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_grayscale_align_corners_float(datatype=np.float32):
     input_tensor = Tensor(
         np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(datatype))
@@ -566,7 +566,7 @@ class NetResizeBilinearFunc(nn.Cell):
         return ops.ResizeBilinearV2(align_corners=False, half_pixel_centers=True)(inputs, size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_func_half_pixel_centers(datatype=np.float32):
     """
     Feature: Test resize_bilinear on GPU.
@@ -586,7 +586,7 @@ def test_resize_nn_func_half_pixel_centers(datatype=np.float32):
     assert np.allclose(output.asnumpy(), expected_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_resize_nn_func_half_pixel_centers_fp64(datatype=np.float64):
     """
     Feature: Test resize_bilinear on GPU with fp64.

@@ -328,8 +328,7 @@ class TorchViewInplaceHasBprop(torch.autograd.Function):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_view_copy():
     """
     Feature: Test view inplace grad.
@@ -364,8 +363,7 @@ def test_view_copy():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_tensor_slice_copy():
     """
     Feature: Test tensor slice inplace grad.
@@ -398,8 +396,7 @@ def test_tensor_slice_copy():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_common_view_copy():
     """
     Feature: Test common view inplace grad.
@@ -448,8 +445,7 @@ def test_common_view_copy():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_multi_view_copy():
     """
     Feature: Test view inplace grad.
@@ -526,8 +522,7 @@ def test_multi_view_copy():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_view_multi_copy():
     """
     Feature: Test view inplace grad.
@@ -553,8 +548,7 @@ def test_view_multi_copy():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_no_grad_copy():
     """
     Feature: Test view inplace grad.
@@ -574,8 +568,7 @@ def test_no_grad_copy():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2.00)
+          card_mark='onecard', mem_peak=2.00)
 def test_as_strided_overlap_grad():
     """
     Feature: Test as strided grad.
@@ -615,8 +608,7 @@ def test_as_strided_overlap_grad():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.0)
+          card_mark='onecard', mem_peak=1024.0)
 def test_view_inplace_with_bprop():
     """
     Feature: Test view inplace grad with bprop.
@@ -643,8 +635,7 @@ def test_view_inplace_with_bprop():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_view_inplace_grad_check_exception():
     """
     Feature: Test view inplace valid.
@@ -706,8 +697,7 @@ def test_view_inplace_grad_check_exception():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_view_inplace_triggers_requires_grad_propagation():
     """
     Feature: Test view inplace valid.
@@ -729,8 +719,7 @@ def test_view_inplace_triggers_requires_grad_propagation():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2.00)
+          card_mark='onecard', mem_peak=2.00)
 def test_view_inplace_on_view_base():
     """
     Feature: Test view inplace valid.
@@ -753,8 +742,7 @@ def test_view_inplace_on_view_base():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_view_inplace_with_unsafe_view():
     """
     Feature: Test view inplace valid.
@@ -778,8 +766,7 @@ def test_view_inplace_with_unsafe_view():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_view_inplace_with_multiout_view_and_version_update():
     """
     Feature: Test view inplace valid.
@@ -802,8 +789,7 @@ def test_view_inplace_with_multiout_view_and_version_update():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_view_inplace_view_rebase_error():
     """
     Feature: Test view inplace valid.
@@ -843,8 +829,7 @@ def test_view_inplace_view_rebase_error():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_view_inplace_base_tensor_is_no_requires_grad_and_view_tensor_is_leaf():
     """
     Feature: Test view inplace valid.
@@ -864,8 +849,7 @@ def test_view_inplace_base_tensor_is_no_requires_grad_and_view_tensor_is_leaf():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_view_inplace_base_tensor_is_no_requires_grad_and_view_tensor_is_non_leaf():
     """
     Feature: Test view inplace valid.
@@ -891,8 +875,7 @@ def test_view_inplace_base_tensor_is_no_requires_grad_and_view_tensor_is_non_lea
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.00)
+          card_mark='onecard', mem_peak=1024.00)
 def test_view_grad_node_record_ouptuts_tensor_meta_data():
     """
     Feature: Test view grad valid.

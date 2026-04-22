@@ -15,6 +15,9 @@ mindspore.nn.WarmUpLR
     .. math::
         tmp\_step= \min(current\_step, warmup\_steps)
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **learning_rate** (float) - 学习率的初始值， `learning_rate` 的值必须大于0。
         - **warmup_steps** (int) - 学习率warmup的step数， `warmup_steps` 的值必须大于或等于1。

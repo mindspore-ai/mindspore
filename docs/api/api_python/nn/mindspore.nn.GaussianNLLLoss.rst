@@ -23,6 +23,9 @@ mindspore.nn.GaussianNLLLoss
           - ``"mean"``：计算输出元素的平均值。
           - ``"sum"``：计算输出元素的总和。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向参数名 `logits` 和 `labels` 将分别改为 `input` 和 `target`。
+
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。 :math:`*` 代表着任意数量的额外维度。
         - **labels** (Tensor) - shape为 :math:`(N, *)` 或 :math:`(*)`。和 `logits` 具有相同shape，或者相同shape但有一个维度为1（以允许广播）。

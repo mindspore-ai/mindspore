@@ -44,7 +44,7 @@ class NetRelu6Dynamic(nn.Cell):
         return self.relu6(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_relu6():
     """
     Feature: template
@@ -69,7 +69,7 @@ def test_relu6():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_relu6_dynamic():
     """
     Feature: template

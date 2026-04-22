@@ -29,8 +29,7 @@ ms.set_context(mode=ms.GRAPH_MODE)
 ms.set_context(jit_level="O0")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_tensor_with_wrong_attr():
     """
     Feature: Syntax getattr.
@@ -48,8 +47,7 @@ def test_getattr_tensor_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_getattr_list_with_wrong_attr():
     """
     Feature: Syntax getattr.
@@ -67,8 +65,7 @@ def test_getattr_list_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_tuple_with_wrong_attr():
     """
     Feature: Syntax getattr.
@@ -86,8 +83,7 @@ def test_getattr_tuple_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_getattr_dict_with_wrong_attr():
     """
     Feature: Syntax getattr.
@@ -105,8 +101,7 @@ def test_getattr_dict_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_pyexecute_with_scalar_input():
     """
     Feature: Fallback runtime.
@@ -130,8 +125,7 @@ def test_pyexecute_with_scalar_input():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_pyexecute_with_scalar_input_2():
     """
     Feature: Fallback runtime.
@@ -152,8 +146,7 @@ def test_pyexecute_with_scalar_input_2():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_pyexecute_with_scalar_input_3():
     """
     Feature: Fallback runtime.
@@ -174,8 +167,7 @@ def test_pyexecute_with_scalar_input_3():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_pyexecute_with_scalar_input_4():
     """
     Feature: Fallback runtime.
@@ -196,8 +188,7 @@ def test_pyexecute_with_scalar_input_4():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_pyexecute_as_multitype_fg_input():
     """
     Feature: Fallback runtime.
@@ -235,8 +226,7 @@ def reduce_user_mul(x):
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_pyexecute_with_func_graph_input():
     """
     Feature: Fallback runtime.
@@ -252,8 +242,7 @@ def test_pyexecute_with_func_graph_input():
 
 
 @pytest.mark.skip('backend not support different type in value tuple')
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_fallback_anytype():
     """
     Feature: Fallback runtime.
@@ -288,8 +277,7 @@ class CreateDynTensor(nn.Cell):
         return output1 + output2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_dynamic_shape_tensor():
     """
     Feature: Fallback runtime.
@@ -315,8 +303,7 @@ class CreateNotDynTensor(nn.Cell):
 
 
 @pytest.mark.skip('ops.shape(x) is constant, not mutable.')
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_not_dynamic_shape_tensor():
     """
     Feature: Fallback runtime.
@@ -340,8 +327,7 @@ class CreateDynTensorWithInputDtype(nn.Cell):
         return output1 + output2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_dynamic_shape_dtype_tensor():
     """
     Feature: Fallback runtime.
@@ -364,8 +350,7 @@ class MakeTensorAsConstant(ms.nn.Cell):
         return output1 + output2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_make_tensor_as_constant():
     """
     Feature: Fallback runtime.
@@ -389,8 +374,7 @@ class MakeTensorWithShapeDtype(nn.Cell):
         return output1 + output2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_make_tensor_with_dynamic_shape_dtype():
     """
     Feature: Fallback runtime.
@@ -404,8 +388,7 @@ def test_make_tensor_with_dynamic_shape_dtype():
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_gelu():
     """
     Feature: Fallback runtime.
@@ -445,8 +428,7 @@ def test_gelu():
     assert np.all(res1.asnumpy() == res3.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_save():
     """
     Feature: Fallback runtime.
@@ -465,8 +447,7 @@ def test_np_save():
     os.remove("x_data.npy")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_np_save_with_args():
     """
     Feature: Fallback runtime.
@@ -491,8 +472,7 @@ def test_np_save_with_args():
     os.remove("data_from_args.npy")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_save_with_call_kw1():
     """
     Feature: Fallback runtime.
@@ -516,8 +496,7 @@ def test_np_save_with_call_kw1():
     os.remove("data_from_kw.npy")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_np_save_with_call_kw2():
     """
     Feature: Fallback runtime.
@@ -542,8 +521,7 @@ def test_np_save_with_call_kw2():
     os.remove("data_from_kw_with_if.npy")
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_pyexecute_raise_error_with_dynamic_length_sequence():
     """
     Feature: Fallback runtime.
@@ -571,8 +549,7 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence():
     assert np.allclose(ret.asnumpy(), np.array([0.0, 3.0, 4.0, 5.0]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     """
     Feature: Fallback runtime.
@@ -600,8 +577,7 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     assert "does not match the shape" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_parse_subscript():
     """
     Feature: JIT Fallback
@@ -620,7 +596,7 @@ def test_parse_subscript():
     assert out.asnumpy() == 66
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_func():
     """
     Feature: JIT Fallback
@@ -660,8 +636,7 @@ def test_tensor_func():
     assert result_ms_np.dtype == exp_np.dtype
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_fallback_self_variable_as_func_args():
     """
     Feature: JIT Fallback
@@ -686,8 +661,7 @@ def test_fallback_self_variable_as_func_args():
 
 
 @pytest.mark.skip(reason="ParseCall convert whole script to pyexecute")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_tensor_with_variable_input():
     """
     Feature: JIT Fallback
@@ -705,8 +679,7 @@ def test_fallback_tensor_with_variable_input():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_fallback_map_with_variable_input():
     """
     Feature: JIT Fallback

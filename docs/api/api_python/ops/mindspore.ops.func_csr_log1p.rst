@@ -8,6 +8,9 @@ mindspore.ops.csr_log1p
     .. math::
         out_i = \text{log_e}(x_i + 1)
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (CSRTensor) - 输入CSRTensor。数据类型为float16或float32。
           该值必须大于-1。

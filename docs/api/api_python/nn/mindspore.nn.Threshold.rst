@@ -14,6 +14,10 @@ mindspore.nn.Threshold
         \text{value}, &\text{ otherwise }
         \end{cases}
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `input_x` 将改为 `input`，并新增可选构造参数 `inplace`。
+        接口签名将变更为 ``mindspore.nn.Threshold(threshold, value, inplace=False)`` 。
+
     参数：
         - **threshold** (Union[int, float]) - 阈值。
         - **value** (Union[int, float]) - 输入Tensor中元素小于阈值时的填充值。

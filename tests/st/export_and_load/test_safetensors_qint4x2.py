@@ -65,7 +65,7 @@ def remove_ckpt(file_name):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=20.0)
+        level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_load_sft_qint4x2_graph(mode):
     """
@@ -93,7 +93,7 @@ def test_save_load_sft_qint4x2_graph(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=20.0)
+        level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_load_sft_qint4x2_with_no_init_parameters(mode):
     """
@@ -121,8 +121,7 @@ def test_save_load_sft_qint4x2_with_no_init_parameters(mode):
     remove_ckpt(ckpt_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=18.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=18.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_and_load_sft_qint4x2_pynative(mode):
     """
@@ -149,8 +148,7 @@ def test_save_and_load_sft_qint4x2_pynative(mode):
     remove_ckpt(ckpt_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_and_load_sft_qint4x2_with_crc(mode):
     """
@@ -177,8 +175,7 @@ def test_save_and_load_sft_qint4x2_with_crc(mode):
     remove_ckpt(ckpt_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_safetensors_to_ckpt_with_qint4x2(mode):
     """
@@ -201,8 +198,7 @@ def test_safetensors_to_ckpt_with_qint4x2(mode):
     remove_ckpt("./checkpoint_111.ckpt")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_ckpt_to_safetensors_with_qint4x2(mode):
     """
@@ -225,8 +221,7 @@ def test_ckpt_to_safetensors_with_qint4x2(mode):
     remove_ckpt("./checkpoint_111.safetensors")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_and_load_ckpt_qint4x2(mode):
     """
@@ -255,7 +250,7 @@ def test_save_and_load_ckpt_qint4x2(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_and_load_sft_qint4x2_with_strict_load(mode):
     """
@@ -279,7 +274,7 @@ def test_save_and_load_sft_qint4x2_with_strict_load(mode):
     assert "For 'load_param_into_net', weight in the argument 'net' should have the same type" in str(error_info.value)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_save_unified_load_sft_qint4x2():
     '''
     Feature: train, unified, save load distribute sf with qint4x2
@@ -304,7 +299,7 @@ def test_save_unified_load_sft_qint4x2():
     assert predict_ret == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_save_unified_load_sft_qint4x2_with_remove_redundancy():
     '''
     Feature: train, unified, save load distribute sf with qint4x2

@@ -49,8 +49,7 @@ def run_case():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pad_dyn_cpu():
     """
     Feature: test Pad dynamic shape on CPU.
@@ -63,7 +62,7 @@ def test_pad_dyn_cpu():
     run_case()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_pad_dyn_gpu():
     """
     Feature: test Pad dynamic shape on GPU.

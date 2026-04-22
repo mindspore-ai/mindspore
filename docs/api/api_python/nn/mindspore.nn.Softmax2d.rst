@@ -7,6 +7,9 @@ mindspore.nn.Softmax2d
 
     将 `Softmax` 应用于具有shape :math:`(C, H, W)` 的输入Tensor的每个位置。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     输入：
         - **x** (Tensor) - Tensor的shape :math:`(N, C_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, H_{in}, W_{in})`。
           数据类型可以是float16或者float32。

@@ -33,7 +33,7 @@ class AssignSub(nn.Cell):
         return res
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_sub():
     """
     Feature: assign sub kernel
@@ -74,7 +74,7 @@ def test_assign_sub():
     assert (output2.asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_assign_sub_float16():
     """
     Feature: None
@@ -141,7 +141,7 @@ def use_build_train_network_check_primitive_out(network, level, input_x, label,
     return out_me
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_assignsub():
     """
     Feature: AssignSub bprop.

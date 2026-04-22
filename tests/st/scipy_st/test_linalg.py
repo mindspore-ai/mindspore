@@ -34,8 +34,7 @@ onp.random.seed(0)
 context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('args', [(), (1,), (7, -1), (3, 4, 5),
                                   (onp.ones((3, 4), dtype=onp.float32), 5, onp.random.randn(5, 2).astype(onp.float32))])
 def test_block_diag(args):
@@ -51,8 +50,7 @@ def test_block_diag(args):
     match_array(ms_res.asnumpy(), scipy_res)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 @pytest.mark.parametrize('shape', [(4, 4), (50, 50)])
 def test_inv(data_type, shape):
@@ -71,8 +69,7 @@ def test_inv(data_type, shape):
     match_array(ms_res.asnumpy(), scipy_res, error=3)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
@@ -94,8 +91,7 @@ def test_cholesky(n: int, lower: bool, data_type: Generic):
     assert onp.allclose(osp_c, msp_c.asnumpy(), rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
@@ -124,8 +120,7 @@ def test_cho_factor(n: int, lower: bool, data_type: Generic):
     assert onp.allclose(osp_c, msp_c.asnumpy(), rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 5, 6])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('data_type', [onp.float64])
@@ -151,8 +146,7 @@ def test_cholesky_solve(n: int, lower: bool, data_type):
     assert onp.allclose(onp.dot(a, osp_x), mnp.dot(tensor_a, msp_x).asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 6, 9, 20])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('data_type, rtol, atol',
@@ -178,8 +172,7 @@ def test_eigh(n: int, lower, data_type, rtol, atol):
     assert onp.allclose(w.asnumpy(), w0.asnumpy(), rtol, atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 6, 9, 20])
 @pytest.mark.parametrize('data_type', [(onp.complex64, "f"), (onp.complex128, "d")])
 def test_eigh_complex(n: int, data_type):
@@ -217,8 +210,7 @@ def test_eigh_complex(n: int, data_type):
     assert onp.allclose(msp_wu.asnumpy() - msp_wu0.asnumpy(), onp.zeros((n, n)), rtol, atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
 @pytest.mark.parametrize('argname', ['lower', 'eigvals_only', 'overwrite_a', 'overwrite_b', 'turbo', 'check_finite'])
 @pytest.mark.parametrize('wrong_argvalue', [5.0, None])
@@ -237,8 +229,7 @@ def test_eigh_error_type(dtype, argname, wrong_argvalue):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [onp.float16, onp.int8, onp.int16])
 def test_eigh_error_tensor_dtype(dtype):
     """
@@ -252,8 +243,7 @@ def test_eigh_error_tensor_dtype(dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [1, 3, 4, 6])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64, onp.int32, onp.int64])
 def test_eigh_error_dims(n: int, dtype):
@@ -273,8 +263,7 @@ def test_eigh_error_dims(n: int, dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level2', card_mark='onecard')
 def test_eigh_error_not_implemented():
     """
     Feature: ALL TO ALL
@@ -296,8 +285,7 @@ def test_eigh_error_not_implemented():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(4, 4), (4, 5), (5, 10), (20, 20)])
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 def test_lu(shape: (int, int), data_type):
@@ -317,8 +305,7 @@ def test_lu(shape: (int, int), data_type):
     assert onp.allclose(m_u.asnumpy(), s_u, rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 def test_lu_factor(n: int, data_type):
@@ -337,8 +324,7 @@ def test_lu_factor(n: int, data_type):
     assert onp.allclose(m_pivots.asnumpy(), s_pivots, rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', [4, 5, 10, 20])
 @pytest.mark.parametrize('data_type', [onp.float32, onp.float64])
 def test_lu_solve(n: int, data_type):
@@ -367,8 +353,7 @@ def test_lu_solve(n: int, data_type):
     assert onp.allclose(msp_x.asnumpy(), osp_x, rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(3, 3), (5, 5), (10, 10), (20, 20)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_det(shape, dtype):
@@ -386,8 +371,7 @@ def test_det(shape, dtype):
     assert onp.allclose(ms_det.asnumpy(), sp_det, rtol=rtol, atol=atol)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('args', [(), (1,), (7, -1), (3, 4, 5),
                                   (onp.ones((3, 4), dtype=onp.float32), 5, onp.random.randn(5, 2).astype(onp.float32))])
 def test_block_diag_graph(args):
@@ -409,8 +393,7 @@ def test_block_diag_graph(args):
     match_array(ms_res.asnumpy(), scipy_res)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(3, 3), (5, 5), (10, 10), (20, 20)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_det_graph(shape, dtype):

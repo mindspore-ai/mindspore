@@ -6,7 +6,7 @@ dense:
         output = input * weight^{T} + bias
 
     .. warning::
-        - This is an experimental API that is subject to change or deletion.
+        - After version 2.9.0, the interface will be renamed to `linear`.
         - On the Ascend platform, if `bias` is not 1D, the `input` cannot be greater than 6D in PYNATIVE or KBK mode.
 
     Args:
@@ -15,7 +15,7 @@ dense:
         weight (Tensor): The weight applied to the input.
             The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
         bias (Tensor, optional): Additive biases to the output.
-            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
+            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, which means the `bias` is 0.
 
     Returns:
         Output whose shape is determined by the shape of the input and the weight.
@@ -27,7 +27,7 @@ dense:
         RuntimeError: On the Ascend platform, if `bias` is not 1D and `input` is greater than 6D in PYNATIVE or KBK mode.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np

@@ -36,7 +36,7 @@ class RandomShuffleNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
+        card_mark='onecard', mem_peak=1.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
                                    np.uint32, np.uint64, np.bool_, np.complex64, np.complex128,
@@ -57,7 +57,7 @@ def test_random_shuffle_op_dtype(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=1025.00)
+        card_mark='onecard', mem_peak=1025.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("shape", [(5,), (2, 3), (12, 3, 5)])
 def test_random_shuffle_op_tensor(mode, shape):
@@ -76,7 +76,7 @@ def test_random_shuffle_op_tensor(mode, shape):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_random_shuffle_op_scalar(mode):
     """
@@ -92,7 +92,7 @@ def test_random_shuffle_op_scalar(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_random_shuffle_op_dynamic_shape(mode):
     """
@@ -111,8 +111,7 @@ def test_random_shuffle_op_dynamic_shape(mode):
     assert (output_dyn.asnumpy() == out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_random_shuffle_op_exception(mode):
     """

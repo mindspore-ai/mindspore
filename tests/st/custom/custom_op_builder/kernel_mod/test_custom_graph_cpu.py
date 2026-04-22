@@ -21,7 +21,7 @@ from mindspore.ops import CustomOpBuilder
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_cpu_string():
     """
     Feature: CustomOpBuilder auto-generation verification.
@@ -54,7 +54,7 @@ def test_custom_cpu_string():
             assert os.path.getsize(fpath) > 0, f"{fname} is empty."
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_cpu_list():
     """
     Feature: CustomOpBuilder auto-generation verification.
@@ -88,7 +88,7 @@ def test_custom_cpu_list():
             assert os.path.getsize(fpath) > 0, f"{fname} is empty."
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_cpu_tuple():
     """
     Feature: CustomOpBuilder auto-generation verification.
@@ -122,7 +122,7 @@ def test_custom_cpu_tuple():
             assert os.path.getsize(fpath) > 0, f"{fname} is empty."
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_custom_cpu_mixed():
     """
     Feature: CustomOpBuilder auto-generation verification.

@@ -3,7 +3,8 @@ cholesky:
         Performs the Cholesky decomposition on a single or a batch of symmetric positive-definite matrices.
 
         .. warning::
-            This is an experimental API that is subject to change or deletion.
+            - After version 2.9.0, the parameter `input_x` will be renamed to `input`.
+            - This is an experimental API that is subject to change or deletion.
 
         Refer to :func:`mindspore.ops.cholesky` for more details.
 
@@ -14,7 +15,7 @@ cholesky:
         Inputs:
             - **input_x**  (Tensor) - Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
               consisting of symmetric positive-definite matrices, with float32 or float64 data type.
-        
+
         Outputs:
             Tensor, has the same shape and data type as `input_x`.
 

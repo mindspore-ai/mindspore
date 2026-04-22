@@ -9,7 +9,7 @@ mindspore.ops.Round
         out_i \approx input_i
 
     .. note::
-        Ascend平台支持的输入数据类型包括bfloat16（Atlas训练系列产品不支持）、float16、float32、float64、int32、int64。
+        Ascend平台支持的输入数据类型包括bfloat16、float16、float32、float64、int32、int64。
 
     输入：
         - **input** (Tensor) - 输入Tensor。

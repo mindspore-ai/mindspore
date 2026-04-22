@@ -53,7 +53,7 @@ def assert_executed_by_graph_mode(func):
                 break
         assert checked
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_make_tuple():
     """
     Feature: One stage basic operation.
@@ -77,7 +77,7 @@ def test_make_tuple():
     assert ret[2] == Tensor([3])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_make_list():
     """
     Feature: One stage basic operation.
@@ -101,7 +101,7 @@ def test_make_list():
     assert ret[2] == Tensor([3])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_return_add_result_tuple():
     """
     Feature: One stage basic operation.
@@ -122,7 +122,7 @@ def test_return_add_result_tuple():
     assert ret == (1, 2, 3, 4, 5, 6)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_return_add_result_list():
     """
     Feature: One stage basic operation.
@@ -143,7 +143,7 @@ def test_return_add_result_list():
     assert ret == [1, 2, 3, 4, 5, 6]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_empty_tuple_input():
     """
     Feature: One stage basic operation.
@@ -167,7 +167,7 @@ def test_empty_tuple_input():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_empty_list_input():
     """
     Feature: One stage basic operation.
@@ -191,7 +191,7 @@ def test_empty_list_input():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_empty_dict_input():
     """
     Feature: One stage basic operation.
@@ -215,7 +215,7 @@ def test_empty_dict_input():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tuple_slice():
     """
     Feature: One stage basic operation.
@@ -239,7 +239,7 @@ def test_tuple_slice():
     assert ret[1] == Tensor([2])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_slice():
     """
     Feature: One stage basic operation.
@@ -263,7 +263,7 @@ def test_list_slice():
     assert ret[1] == Tensor([2])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_slice_with_default_parameter():
     """
     Feature: One stage basic operation.
@@ -287,7 +287,7 @@ def test_list_slice_with_default_parameter():
     assert ret[1] == Tensor([2])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_list_slice_with_default_parameter_2():
     """
     Feature: One stage basic operation.
@@ -312,7 +312,7 @@ def test_list_slice_with_default_parameter_2():
     assert ret[2] == Tensor([3])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_slice_with_default_parameter_3():
     """
     Feature: One stage basic operation.
@@ -337,7 +337,7 @@ def test_list_slice_with_default_parameter_3():
     assert ret[2] == Tensor([3])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_variable_number_in_container():
     """
     Feature: One stage basic operation.
@@ -357,7 +357,7 @@ def test_variable_number_in_container():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_variable_number_in_container_2():
     """
     Feature: One stage basic operation.
@@ -379,7 +379,7 @@ def test_variable_number_in_container_2():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_make_dict():
     """
     Feature: One stage basic operation.
@@ -400,7 +400,7 @@ def test_make_dict():
     assert ret == Tensor([1])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_make_dict_2():
     """
     Feature: One stage basic operation.
@@ -422,7 +422,7 @@ def test_make_dict_2():
     assert ret == Tensor([1])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_make_dict_3():
     """
     Feature: One stage basic operation.
@@ -443,7 +443,7 @@ def test_make_dict_3():
     assert ret == Tensor([2])
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_tuple_input():
     """
     Feature: One stage basic operation.
@@ -465,7 +465,7 @@ def test_tuple_input():
     assert np.allclose(ret.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_list_input():
     """
     Feature: One stage basic operation.
@@ -487,7 +487,7 @@ def test_list_input():
     assert np.allclose(ret.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_handle_constant():
     """
     Feature: One stage basic operation.
@@ -508,7 +508,7 @@ def test_handle_constant():
     assert ret == (1, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_handle_constant_2():
     """
     Feature: One stage basic operation.
@@ -529,7 +529,7 @@ def test_handle_constant_2():
     assert ret == (1, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_handle_mutable_kwargs_args():
     """
     Feature: One stage basic operation.
@@ -548,7 +548,7 @@ def test_handle_mutable_kwargs_args():
     assert ret == 1012
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_handle_mutable_kwargs_args_2():
     """
     Feature: One stage basic operation.
@@ -567,7 +567,7 @@ def test_handle_mutable_kwargs_args_2():
     assert ret == 12
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_use_free_variable():
     """
     Feature: One stage basic operation.
@@ -592,7 +592,7 @@ def test_use_free_variable():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_use_free_variable_2():
     """
     Feature: One stage basic operation.
@@ -613,7 +613,7 @@ def test_use_free_variable_2():
     assert not net(input2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_guard_for_getattr():
     """
     Feature: One stage basic operation.
@@ -642,7 +642,7 @@ def test_guard_for_getattr():
     assert ret2 == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_guard_for_getattr_2():
     """
     Feature: One stage basic operation.
@@ -671,7 +671,7 @@ def test_guard_for_getattr_2():
     assert ret2 == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_env_get():
     """
     Feature: One stage basic operation.
@@ -696,7 +696,7 @@ def test_env_get():
     assert len(jcr['code']['phase_']) > 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_cycle_container_structure():
     """
     Feature: One stage basic operation.
@@ -716,7 +716,7 @@ def test_cycle_container_structure():
     assert ret == a
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_cycle_container_structure_2():
     """
     Feature: One stage basic operation.
@@ -736,7 +736,7 @@ def test_cycle_container_structure_2():
     assert ret == a
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_cycle_container_structure_3():
     """
     Feature: One stage basic operation.
@@ -760,7 +760,7 @@ def test_cycle_container_structure_3():
     assert ret2 == b
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_guard_parameter():
     """
     Feature: One stage basic operation.
@@ -790,7 +790,7 @@ def test_guard_parameter():
     assert np.allclose(ret2.asnumpy(), (net2.w * m).asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_dict_items_call_in_control_flow():
     """
     Feature: One stage basic operation.
@@ -815,7 +815,7 @@ def test_dict_items_call_in_control_flow():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_method_by_ast():
     """
     Feature: One stage basic operation.
@@ -835,7 +835,7 @@ def test_tensor_method_by_ast():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_method_by_ast_2():
     """
     Feature: One stage basic operation.
@@ -855,7 +855,7 @@ def test_tensor_method_by_ast_2():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_method_by_ast_3():
     """
     Feature: One stage basic operation.
@@ -875,7 +875,7 @@ def test_tensor_method_by_ast_3():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_method_by_ast_4():
     """
     Feature: One stage basic operation.
@@ -895,7 +895,7 @@ def test_tensor_method_by_ast_4():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_parse_by_ast():
     """
     Feature: One stage basic operation.
@@ -914,7 +914,7 @@ def test_function_parse_by_ast():
     jcr = get_code_extra(Net.construct.__wrapped__)
     assert jcr["break_count_"] == 0
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_parse_by_ast_2():
     """
     Feature: One stage basic operation.
@@ -934,7 +934,7 @@ def test_function_parse_by_ast_2():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_function_parse_by_ast_3():
     """
     Feature: One stage basic operation.
@@ -955,7 +955,7 @@ def test_function_parse_by_ast_3():
     assert jcr["break_count_"] == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_constant_flod_for_variable():
     """
     Feature: One stage basic operation.
@@ -979,7 +979,7 @@ def test_constant_flod_for_variable():
     assert np.all(ret.asnumpy() == np.array([4, 6, 8]))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs():
     """
     Feature: One stage basic operation.
@@ -1004,7 +1004,7 @@ def test_attr_as_inputs():
     assert_graph_compile_status(Net.construct.__wrapped__, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_2():
     """
     Feature: One stage basic operation.
@@ -1031,7 +1031,7 @@ def test_attr_as_inputs_2():
     assert_graph_compile_status(Net.construct.__wrapped__, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_3():
     """
     Feature: One stage basic operation.
@@ -1057,7 +1057,7 @@ def test_attr_as_inputs_3():
     assert_graph_compile_status(Net.construct.__wrapped__, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_4():
     """
     Feature: One stage basic operation.
@@ -1079,7 +1079,7 @@ def test_attr_as_inputs_4():
     assert_graph_compile_status(Net.construct.__wrapped__, 0, 8, 3)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_5():
     """
     Feature: One stage basic operation.
@@ -1116,7 +1116,7 @@ def test_attr_as_inputs_5():
     assert_graph_compile_status(pijit_model.construct, 0, 8, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_6():
     """
     Feature: One stage basic operation.
@@ -1139,7 +1139,7 @@ def test_attr_as_inputs_6():
     assert_graph_compile_status(Net.construct.__wrapped__, 0, 9, 2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_7():
     """
     Feature: Dynamic attribute support.
@@ -1162,7 +1162,7 @@ def test_attr_as_inputs_7():
     assert_graph_compile_status(Net.construct, 0, 1, 4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_8():
     """
     Feature: Dynamic attribute support.
@@ -1194,7 +1194,7 @@ def test_attr_as_inputs_8():
     assert_graph_compile_status(Net.construct, 0, 1, 9)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_symbolic_input_1():
     """
     Feature: Dynamic scalar mutable.
@@ -1215,7 +1215,7 @@ def test_symbolic_input_1():
     assert_graph_compile_status(Net.construct, 0, 8, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_symbolic_input_2():
     """
     Feature: Dynamic shape input.
@@ -1244,7 +1244,7 @@ def test_symbolic_input_2():
     assert_graph_compile_status(Net.construct, 0, 1, 8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_attr_as_inputs_config():
     """
     Feature: One stage basic operation.
@@ -1267,7 +1267,7 @@ def test_attr_as_inputs_config():
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_global_as_inputs_1():
     """
     Feature: One stage basic operation.
@@ -1291,7 +1291,7 @@ def test_global_as_inputs_1():
     assert_graph_compile_status(Net.construct.__wrapped__, 0, 8, 3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_unpack_sequence_with_variable():
     """
     Feature: One stage basic operation.
@@ -1316,7 +1316,7 @@ def test_unpack_sequence_with_variable():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_unpack_sequence_with_variable_2():
     """
     Feature: One stage basic operation.
@@ -1341,7 +1341,7 @@ def test_unpack_sequence_with_variable_2():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_unpack_sequence_with_variable_3():
     """
     Feature: One stage basic operation.
@@ -1366,7 +1366,7 @@ def test_unpack_sequence_with_variable_3():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_empty_container_input():
     """
     Feature: One stage basic operation.
@@ -1389,7 +1389,7 @@ def test_empty_container_input():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_empty_container_input_2():
     """
     Feature: One stage basic operation.
@@ -1411,7 +1411,7 @@ def test_empty_container_input_2():
     assert np.all(ret[1].asnumpy() == np.array([2, 3, 4]))
     assert_executed_by_graph_mode(foo)
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_empty_container_input_3():
     """
     Feature: One stage basic operation.
@@ -1434,7 +1434,7 @@ def test_empty_container_input_3():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_subgraph_with_primitive_output():
     """
     Feature: One stage basic operation.
@@ -1458,7 +1458,7 @@ def test_subgraph_with_primitive_output():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_subgraph_with_primitive_output_2():
     """
     Feature: One stage basic operation.
@@ -1481,7 +1481,7 @@ def test_subgraph_with_primitive_output_2():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_function_decorated_with_PSJIT_run_ast():
     """
     Feature: One stage basic operation.
@@ -1506,7 +1506,7 @@ def test_function_decorated_with_PSJIT_run_ast():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_function_decorated_with_PSJIT_run_ast_2():
     """
     Feature: One stage basic operation.
@@ -1533,7 +1533,7 @@ def test_function_decorated_with_PSJIT_run_ast_2():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_function_decorated_with_PSJIT_run_ast_3():
     """
     Feature: One stage basic operation.
@@ -1560,7 +1560,7 @@ def test_function_decorated_with_PSJIT_run_ast_3():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_function_decorated_with_PSJIT_run_ast_4():
     """
     Feature: One stage basic operation.
@@ -1587,7 +1587,7 @@ def test_function_decorated_with_PSJIT_run_ast_4():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_function_decorated_with_PSJIT_run_ast_5():
     """
     Feature: One stage basic operation.
@@ -1616,7 +1616,7 @@ def test_function_decorated_with_PSJIT_run_ast_5():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_function_decorated_with_PSJIT_run_ast_6():
     """
     Feature: One stage basic operation.
@@ -1645,7 +1645,7 @@ def test_function_decorated_with_PSJIT_run_ast_6():
     assert_executed_by_graph_mode(foo)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_sync_constant_stub_tensor():
     """
     Feature: One stage basic operation.
@@ -1671,7 +1671,7 @@ def test_sync_constant_stub_tensor():
     assert np.all(ret.asnumpy() == np.array([0, 1, 2]))
     assert_executed_by_graph_mode(net.construct)
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_unpack_for_variable_tensor():
     """
     Feature: One stage basic operation.
@@ -1699,7 +1699,7 @@ def test_unpack_for_variable_tensor():
     assert len(jcr['code']['phase_']) > 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_return_function():
     """
     Feature: ms.jit returning function closure.
@@ -1740,7 +1740,7 @@ def test_jit_return_function():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_return_bool():
     """
     Feature: ms.jit returning boolean branch.
@@ -1780,7 +1780,7 @@ def test_jit_return_bool():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jit_return_none():
     """
     Feature: ms.jit returning None helper.
@@ -1819,7 +1819,7 @@ def test_jit_return_none():
     # match_array(pynative_net.p, jit_net.p)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_to_float_preserves_dtype():
     """
     Feature: Bytecode JIT with to_float conversion.

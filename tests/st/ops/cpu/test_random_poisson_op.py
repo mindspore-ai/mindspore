@@ -23,8 +23,7 @@ from mindspore import Tensor
 from mindspore.graph.api import _pynative_executor
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16, ms.int64, ms.int32])
 @pytest.mark.parametrize("shape_dtype", [ms.int64, ms.int32])
 @pytest.mark.parametrize("rate_dtype", [ms.float64, ms.float32, ms.float16, ms.int64, ms.int32])
@@ -50,8 +49,7 @@ def test_poisson_function(dtype, shape_dtype, rate_dtype):
     assert output.dtype == dtype
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_shape_type_error():
     """
     Feature: Poisson functional interface
@@ -69,8 +67,7 @@ def test_poisson_function_shape_type_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_shape_dim_error():
     """
     Feature: Poisson functional interface
@@ -88,8 +85,7 @@ def test_poisson_function_shape_dim_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_shape_dtype_error():
     """
     Feature: Poisson functional interface
@@ -107,8 +103,7 @@ def test_poisson_function_shape_dtype_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_shape_value_error():
     """
     Feature: Poisson functional interface
@@ -126,8 +121,7 @@ def test_poisson_function_shape_value_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_rate_type_error():
     """
     Feature: Poisson functional interface
@@ -145,8 +139,7 @@ def test_poisson_function_rate_type_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_rate_dtype_error():
     """
     Feature: Poisson functional interface
@@ -164,8 +157,7 @@ def test_poisson_function_rate_dtype_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_seed_type_error():
     """
     Feature: Poisson functional interface
@@ -183,8 +175,7 @@ def test_poisson_function_seed_type_error():
     assert False
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_poisson_function_out_dtype_error():
     """
     Feature: Poisson functional interface
@@ -256,8 +247,7 @@ class PoissonDSFactory:
         return output.shape, output.dtype
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("max_dims", [2, 3, 4, 5, 6])
 @pytest.mark.parametrize("rate_dims", [1, 2, 3, 4, 5, 6])
 def test_poisson_function_dynamic_shape(max_dims, rate_dims):

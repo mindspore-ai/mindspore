@@ -27,7 +27,7 @@ from tests.st.compiler.utils import OpsFactory, allclose_nparray
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_x():
     """
     Feature: ALL TO ALL
@@ -61,7 +61,7 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_x():
                "Multiply values for specific argument: x" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_y():
     """
     Feature: ALL TO ALL
@@ -95,7 +95,7 @@ def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_y():
                "Multiply values for specific argument: y" in str(ex.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_z():
     """
     Feature: ALL TO ALL
@@ -205,7 +205,7 @@ class NetPartial0011(nn.Cell):
         return f(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_partial_0011():
     """
     Feature: Partial
@@ -244,7 +244,7 @@ class NetPartial0014(nn.Cell):
         return f(0)(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_partial_0014():
     """
     Feature: Partial
@@ -275,7 +275,7 @@ class NetPartial0016(nn.Cell):
         return f(self.y, self.z)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_partial_0016():
     """
     Feature: Partial
@@ -301,7 +301,7 @@ def test_parser_partial_0016():
     fact.backward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_partial_0021_1():
     """
     Feature: Partial
@@ -323,7 +323,7 @@ def test_parser_partial_0021_1():
         net()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parser_partial_0023_1():
     """
     Feature: Partial

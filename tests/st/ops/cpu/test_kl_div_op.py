@@ -34,8 +34,7 @@ class Net(nn.Cell):
         return self.kl_div_loss(x, y)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_none_and_dtype_with_static_input(mode, dtype):
@@ -54,8 +53,7 @@ def test_mode_none_and_dtype_with_static_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_mean_and_dtype_with_static_input(mode, dtype):
@@ -74,8 +72,7 @@ def test_mode_mean_and_dtype_with_static_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_sum_and_dtype_with_static_input(mode, dtype):
@@ -94,8 +91,7 @@ def test_mode_sum_and_dtype_with_static_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_batchmean_and_dtype_with_static_input(mode, dtype):
@@ -114,8 +110,7 @@ def test_mode_batchmean_and_dtype_with_static_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_mode_none_and_dtype_with_dynamic_input(mode, dtype):
@@ -137,8 +132,7 @@ def test_mode_none_and_dtype_with_dynamic_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_mode_mean_and_dtype_with_dynamic_input(mode, dtype):
@@ -160,8 +154,7 @@ def test_mode_mean_and_dtype_with_dynamic_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_mode_sum_and_dtype_with_dynamic_input(mode, dtype):
@@ -183,8 +176,7 @@ def test_mode_sum_and_dtype_with_dynamic_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float32])
 def test_mode_batchmean_and_dtype_with_dynamic_input(mode, dtype):
@@ -206,8 +198,7 @@ def test_mode_batchmean_and_dtype_with_dynamic_input(mode, dtype):
     assert np.allclose(loss.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
 def test_mode_batchmean_with_nn_interface(mode, dtype):

@@ -8,6 +8,9 @@ mindspore.ops.coo_asin
     .. math::
         out_i = \sin^{-1}(x_i)
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - 输入的COOTensor。COOTensor的shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型应该是以下类型之一：float16、float32、float64、complex64、complex128。
 

@@ -17,6 +17,11 @@ silu:
         .. image:: ../images/SiLU.png
             :align: center
 
+        .. warning::
+            Starting after version 2.9.0, an optional parameter `inplace` will be added.
+            The signature will change to ``mindspore.ops.silu(input, inplace=False)``.
+            This change is backward-compatible; behavior is unchanged when `inplace` is not specified.
+
         Args:
             input (Tensor): `input` is :math:`x` in the preceding formula. Input with the data type of
                 float16 or float32.

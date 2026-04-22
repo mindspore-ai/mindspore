@@ -5,6 +5,9 @@ mindspore.nn.LogSoftmax
 
     按元素计算Log Softmax激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，构造签名将调整为 ``LogSoftmax(dim=None)`` ，参数 `axis` 重命名为 `dim`，默认值由 ``-1`` 改为 ``None`` 。
+
     输入经Softmax函数、Log函数转换后，值的范围在[-inf,0)。
 
     Log Softmax定义如下：

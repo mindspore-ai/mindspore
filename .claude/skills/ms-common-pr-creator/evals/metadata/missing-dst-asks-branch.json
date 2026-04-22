@@ -1,0 +1,20 @@
+{
+  "eval_id": 7,
+  "eval_name": "missing-dst-asks-branch",
+  "prompt": "User invokes /ms-pr-creator without --dst; the agent should ask which target branch to use before continuing.",
+  "output_file": "assistant_reply.md",
+  "assertions": [
+    "chinese-content",
+    "no-yaml-frontmatter",
+    "no-llm-sentinels",
+    "asks-target-branch",
+    "no-pr-body-generated",
+    "no-english-filler"
+  ],
+  "key_entities": ["目标分支"],
+  "min_chinese_chars": 6,
+  "file_count": 0,
+  "template": "workflow",
+  "expected_kind": "none",
+  "accepted_kinds": []
+}

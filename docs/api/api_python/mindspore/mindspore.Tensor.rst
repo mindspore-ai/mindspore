@@ -7,7 +7,7 @@ mindspore.Tensor
 
     .. note::
         - 当使用 `init` 参数来初始化 `Tensor` 时，需要使用 `Tensor.init_data` 来加载 `Tensor` 的数据。
-        - CPU、GPU 的所有模式，以及 Atlas 训练系列产品的 `图模式(mode=mindspore.GRAPH_MODE) <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html>`_ 尚不支持in-place操作。
+        - CPU、GPU 的所有模式尚不支持in-place操作。
         - `input_data` 的默认值 ``None`` 只作为一个占位符，并不意味着可以创建一个 NoneType 的 Tensor 。
         - 当前对 `shape` 中包含0的 Tensor 支持的不完善。
 
@@ -143,6 +143,7 @@ mindspore.Tensor
     mindspore.Tensor.exponential_
     mindspore.Tensor.fill_
     mindspore.Tensor.fill_diagonal
+    mindspore.Tensor.fill_diagonal_
     mindspore.Tensor.flatten
     mindspore.Tensor.flip
     mindspore.Tensor.fliplr

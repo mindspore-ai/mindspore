@@ -117,8 +117,7 @@ def decrypt_func(cipher_file, key):
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_export_lenet_grad_mindir():
     """
     Feature: export LeNet to MindIR file
@@ -138,8 +137,7 @@ def test_export_lenet_grad_mindir():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+          card_mark='onecard', mem_peak=2048.00)
 def test_load_mindir_and_run():
     """
     Feature: Load LeNet to MindIR
@@ -164,7 +162,7 @@ def test_load_mindir_and_run():
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_load_mindir_and_run_with_encryption():
     """
     Feature: Load encrypted LeNet to MindIR with decryption
@@ -191,7 +189,7 @@ def test_load_mindir_and_run_with_encryption():
     os.remove(mindir_name)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_load_mindir_generated_from_old_version():
     """
     Feature: Load MindIR generated from old version
@@ -208,7 +206,7 @@ def test_load_mindir_generated_from_old_version():
     assert np.allclose(output.asnumpy(), output_from_load.asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_load_mindir_generated_from_old_version_with_wrong_dtype():
     """
     Feature: Load MindIR generated from old version with wrong dtype

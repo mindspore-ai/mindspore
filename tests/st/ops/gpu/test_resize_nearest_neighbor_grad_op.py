@@ -41,7 +41,7 @@ class ResizeNearestNeighborGradAlignCornerF(nn.Cell):
         return self.ResizeNearestNeighborGradAlignCornerF(dy, size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ResizeNearestNeighborGradAlignCornerT():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     dy = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
@@ -64,7 +64,7 @@ def test_ResizeNearestNeighborGradAlignCornerT():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ResizeNearestNeighborGradAlignCornerF():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     dy = np.array([[[[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]]]).astype(np.float32)

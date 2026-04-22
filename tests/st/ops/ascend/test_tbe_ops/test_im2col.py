@@ -39,7 +39,7 @@ class Im2ColNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
         mem_peak=1024.05)
 def test_im2col():
     """

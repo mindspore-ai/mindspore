@@ -19,6 +19,11 @@ mindspore.ops.silu
     .. image:: ../images/SiLU.png
         :align: center
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将新增可选参数 `inplace` ，接口签名将变更为
+        ``mindspore.ops.silu(input, inplace=False)`` 。
+        该变更与当前版本兼容，不使用 `inplace` 参数时行为不变。
+
     参数：
         - **input** (Tensor) - `input` 即为上述公式中的 :math:`x`。数据类型为float16或float32的输入。
 

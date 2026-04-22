@@ -5,6 +5,9 @@ mindspore.ops.strided_slice
 
     对输入tensor根据步长和索引进行切片提取。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         - `begin` 、 `end` 和 `strides` 的shape必须相同。
         - `begin` 、 `end` 和 `strides` 是一维tensor，且shape小于或等于 `input_x` 的维度。
@@ -22,7 +25,7 @@ mindspore.ops.strided_slice
     - `begin_mask` 和 `end_mask`
 
       如果 `begin_mask` 的第i位为1，则忽略 `begin[i]`，第i维从索引0开始取；若 `end_mask` 的第i位为1，则忽略 `end[i]`，结束的位置为可以取到的最大范围。
-      对于shape为 :math:`(5, 6, 7, 8)` 的tensor，若 `begin_mask` 为0b110，`end_mask` 为0b011，将得到切片 `input_x[0:3, 0:6, 2:7:2]` 。
+      对于shape为 :math:`(5, 6, 7, 8)` 的tensor，设 `begin` 为(1, 1, 2, 1)， `end` 为(3, 4, 6, 5)， `strides` 为(1, 1, 2, 1)，若 `begin_mask` 为0b110，`end_mask` 为0b011，将得到切片 `input_x[0:3, 0:6, 2:7:2, 1:5]` 。
 
     - `ellipsis_mask`
 
@@ -55,4 +58,3 @@ mindspore.ops.strided_slice
 
     返回：
         Tensor
-

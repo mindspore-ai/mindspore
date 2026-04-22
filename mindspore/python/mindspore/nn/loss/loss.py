@@ -157,7 +157,7 @@ class _Loss(LossBase):
     def __init__(self, reduction='mean'):
         """Initialize _Loss."""
         log.warning("'_Loss' is deprecated from version 1.3 and "
-                    "will be removed in a future version, use 'LossBase' instead.")
+                    "will be removed after version 2.9.0, use 'LossBase' instead.")
         super().__init__(reduction)
 
     def construct(self, logits, labels):
@@ -175,6 +175,9 @@ def _check_is_tensor(param_name, input_data, cls_name):
 class L1Loss(LossBase):
     r"""
     L1Loss is used to calculate the mean absolute error between the predicted value and the target value.
+
+    .. warning::
+        After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, then calculate the loss of :math:`x` and
     :math:`y` without dimensionality reduction (the reduction parameter is set to "none"). The formula is as follows:
@@ -323,6 +326,9 @@ class MSELoss(LossBase):
     r"""
     Calculates the mean squared error between the predicted value and the label value.
 
+    .. warning::
+        After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
+
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
@@ -411,6 +417,9 @@ class RMSELoss(LossBase):
     .. math::
         loss = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{(x_i-y_i)^2}}
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
           additional dimensions.
@@ -481,6 +490,9 @@ class MAELoss(LossBase):
             \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
             \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -650,6 +662,10 @@ class SmoothL1Loss(LossBase):
           often leads to faster convergence but it is less
           robust to outliers, and the loss function has better robustness.
 
+    .. warning::
+        Starting after version 2.9.0, the constructor arguments will be reordered to
+        ``(reduction, beta)``, and the default `reduction` will change from ``none`` to ``mean``.
+
     Args:
         beta (number, optional): The loss function calculates the threshold of the transformation
             between L1Loss and L2Loss. Default: ``1.0`` .
@@ -726,6 +742,10 @@ class SoftMarginLoss(LossBase):
 
     :math:`x.nelement()` represents the number of element of `x` .
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward parameter
+        names `logits` and `labels` will be renamed to `input` and `target`.
+
     Args:
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -735,10 +755,8 @@ class SoftMarginLoss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
     Inputs:
-        - **logits** (Tensor) - Predict data. Data type must be float16, float32,
-          bfloat16 (Among them, the Atlas training series products do not support bfloat16).
+        - **logits** (Tensor) - Predict data. Data type must be float16, float32, bfloat16.
         - **labels** (Tensor) - Ground truth data, with the same shape as `logits`.
-          In GE mode, the data type should be the same as `logits`.
 
     Outputs:
         Tensor or Scalar, if `reduction` is ``'none'``, its shape is the same as `logits`.
@@ -746,8 +764,7 @@ class SoftMarginLoss(LossBase):
 
     Raises:
         TypeError: If `logits` or `labels` is not a Tensor.
-        TypeError: If dtype of `logits` or `labels` is not float16, float32,
-                   bfloat16 (Among them, the Atlas training series products do not support bfloat16).
+        TypeError: If dtype of `logits` or `labels` is not float16, float32, bfloat16.
         ValueError: If shape of `logits` is not the same as `labels`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
@@ -794,6 +811,9 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         =  -x_i[c] + \log\left(\sum_j \exp(x_i[j])\right)
 
     where :math:`x_i` is a 1D score Tensor, :math:`c` is the index of 1 in one-hot.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         While the labels classes are mutually exclusive, i.e., only one class is positive in the labels, the predicted
@@ -888,10 +908,13 @@ def _check_label_dtype(labels_dtype, cls_name):
 
 class DiceLoss(LossBase):
     r"""
-    `nn.DiceLoss` is deprecated from version 2.8.0 and will be removed in a future version.
+    The Dice coefficient is a set similarity loss, which is used to calculate the similarity between two samples.
 
-    The Dice coefficient is a set similarity loss, which is used to calculate the similarity between two samples. The
-    value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
+    .. warning::
+        This interface has been deprecated since version 2.8 and will be removed in versions 2.9.0 and later.
+
+    The value of the Dice coefficient is 1 when the segmentation result is the best and is 0
+    when the segmentation result
     is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
     The function is shown as follows:
 
@@ -984,13 +1007,13 @@ def _check_weights(weight_shape, label_shape, prim_name=None):
 
 class MultiClassDiceLoss(LossBase):
     r"""
-    `nn.MultiClassDiceLoss` is deprecated from version 2.8.0 and will be
-    removed in a future version.
-
     When there are multiple classifications, label is transformed into multiple binary classifications by one hot.
     For each channel section in the channel, it can be regarded as a binary classification problem, so it can be
     obtained through the binary :class:`mindspore.nn.DiceLoss` losses of each category,
     and then the average value of the binary losses.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         weights (Union[Tensor, None]): Tensor of shape :math:`(num\_classes, dim)`. The weight shape[0] should be
@@ -1080,11 +1103,11 @@ class MultiClassDiceLoss(LossBase):
 
 class SampledSoftmaxLoss(LossBase):
     r"""
-    `nn.SampledSoftmaxLoss` is deprecated from version 2.8.0 and will be
-    removed in a future version.
-
     Computes the sampled softmax training loss. This operator can accelerate the training of the softmax classifier
     over a large number of classes. It is generally an underestimate of the full softmax loss.
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         num_sampled (int): The number of classes to randomly sample per batch.
@@ -1539,6 +1562,9 @@ class MultiLabelSoftMarginLoss(LossBase):
     For a multi-label classification task, each sample may have multiple labels with a value of 1 in the binary
     label :math:`y`. `weight` will multiply to the loss of each class if given.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
+
     Args:
         weight (Union[Tensor, int, float]): The manual rescaling weight given to each class. Default: ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -1598,6 +1624,9 @@ class MultiMarginLoss(LossBase):
 
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
     and :math:`i \neq y`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
 
     Args:
         p (int, optional): The norm degree for pairwise distance. Should be 1 or 2. Default: ``1`` .
@@ -1673,6 +1702,9 @@ class MultiMarginLoss(LossBase):
 class BCELoss(LossBase):
     r"""
     BCELoss creates a criterion to measure the binary cross entropy between the true labels and predicted labels.
+
+    .. warning::
+        After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
 
     Set the predicted labels as :math:`x`, true labels as :math:`y`, the output loss as :math:`\ell(x, y)`.
     The formula is as follow:
@@ -1750,6 +1782,10 @@ class BCELoss(LossBase):
 class CosineEmbeddingLoss(LossBase):
     r"""
     CosineEmbeddingLoss creates a criterion to measure the similarity between two tensors using cosine distance.
+
+    .. warning::
+        After version 2.9.0, the forward inputs `logits_x1`, `logits_x2`, and `labels` will be renamed to `input1`,
+        `input2`, and `target`.
 
     Given two tensors :math:`x1`, :math:`x2`, and a Tensor label :math:`y` with values 1 or -1:
 
@@ -1850,6 +1886,9 @@ class MultilabelMarginLoss(LossBase):
 
     Furthermore, both :math:`y` and :math:`x` should have identical sizes.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
+
     Note:
         For this operator, only a contiguous sequence of non-negative targets that starts at
         the beginning is taken into consideration, which means that different samples can have different
@@ -1937,16 +1976,15 @@ class BCEWithLogitsLoss(LossBase):
 
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not None, it can be broadcast to a tensor with shape of `input`,
-            data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+            data type must be float16, float32 or bfloat16.
             Default: ``None`` .
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
-            must be float16, float32 or bfloat16(only Atlas A2 series products are supported). Default: ``None`` .
+            must be float16, float32 or bfloat16. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+          of additional dimensions. The data type must be float16, float32 or bfloat16.
         - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
@@ -1964,7 +2002,7 @@ class BCEWithLogitsLoss(LossBase):
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``  ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -2031,13 +2069,16 @@ def _check_input_dtype(labels_dtype, cls_name):
 
 class FocalLoss(LossBase):
     r"""
-    `nn.FocalLoss` is deprecated from version 2.8.0 and will be removed in a future version.
-
     It is a loss function to solve the imbalance of categories and the difference of
     classification difficulty.
+
+    .. warning::
+        This interface has been deprecated since version 2.8.0 and will be removed in versions 2.9.0 and later.
+
     The loss function proposed by Kaiming team in their paper
     `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ improves the
     effect of image object detection.
+
     The function is shown as follows:
 
     .. math::
@@ -2178,6 +2219,10 @@ class HuberLoss(LossBase):
             \operatorname{sum}(L),  & \text{if reduction} = \text{"sum".}
         \end{cases}
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward parameter
+        names `logits` and `labels` will be renamed to `input` and `target`.
+
     Args:
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -2267,6 +2312,10 @@ class TripletMarginLoss(LossBase):
     .. math::
         d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the constructor
+        parameter order will be changed to `margin, p, eps, swap, ...`.
+
     Args:
         p (int, optional): The degree of norm for pairwise distance. Default: ``2`` .
         eps (float, optional): Add small value to avoid division by zero. Default: ``1e-06`` .
@@ -2343,6 +2392,9 @@ class TripletMarginLoss(LossBase):
 class NLLLoss(LossBase):
     r"""
     Gets the negative log likelihood loss between logits and labels.
+
+    .. warning::
+        After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
 
     The nll loss with :math:`reduction = none` can be described as:
 
@@ -2455,6 +2507,9 @@ def _check_cross_entropy_inputs(logits_shape, label_shape,
 class CrossEntropyLoss(LossBase):
     r"""
     The cross entropy loss between input and target.
+
+    .. warning::
+        After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
 
     The CrossEntropyLoss support two kind of targets:
 
@@ -2587,6 +2642,10 @@ class CrossEntropyLoss(LossBase):
 class KLDivLoss(LossBase):
     r"""
     Computes the Kullback-Leibler divergence between the `logits` and the `labels`.
+
+    .. warning::
+        After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`,
+        and `log_target` will be added.
 
     For tensors of the same shape :math:`x` and :math:`target`,
     the updating formulas of KLDivLoss algorithm are as follows,
@@ -2802,6 +2861,10 @@ class GaussianNLLLoss(LossBase):
             - ``'mean'``: compute and return the mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward parameter
+        names `logits` and `labels` will be renamed to `input` and `target`.
+
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` or :math:`(*)` where :math:`*` means any number of
           additional dimensions.
@@ -2884,6 +2947,10 @@ class HingeEmbeddingLoss(LossBase):
         \end{cases}
 
     where :math:`L = \{l_1,\dots,l_N\}^\top`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the forward parameter
+        names `logits` and `labels` will be renamed to `input` and `target`.
 
     Args:
         margin (float, int, optional): Threshold defined by Hinge Embedding Loss :math:`margin`.

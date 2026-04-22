@@ -27,7 +27,7 @@ class ReverseNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_rewrite_ops_reverse(mode):
     """
@@ -51,7 +51,7 @@ class CovNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_rewrite_ops_cov(mode):
     """
@@ -75,7 +75,7 @@ class DsplitNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_rewrite_ops_dsplit(mode):
     """

@@ -35,7 +35,7 @@ def generate_data(input_type="float32"):
     return data
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('input_type', ["int8", "uint8", "int16", "uint16",
                                         "int32", "int64", "float16", "float32", "float64"])
 def test_sparse_slice(input_type):

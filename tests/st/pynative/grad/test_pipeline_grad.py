@@ -45,8 +45,7 @@ class Net(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_set_grad():
     """
     Feature: Test pipeline_grad
@@ -86,8 +85,7 @@ def test_network_pipeline_set_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_set_grad_mix_order():
     """
     Feature: Test pipeline_grad
@@ -127,8 +125,7 @@ def test_network_pipeline_set_grad_mix_order():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_grad_first():
     """
     Feature: Test pipeline_grad
@@ -164,8 +161,7 @@ def test_network_pipeline_grad_first():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_with_grad_first_high_grad():
     """
     Feature: Test pipeline_grad
@@ -219,8 +215,7 @@ class HighNet(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_with_set_grad_high_grad():
     """
     Feature: Test pipeline_grad with high grad
@@ -268,8 +263,7 @@ class OneInputBprop(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_with_bprop():
     """
     Feature: Test pipeline_grad
@@ -320,8 +314,7 @@ class MEMul1(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_with_bprop_high_grad():
     """
     Feature: Test pipeline_grad
@@ -355,8 +348,7 @@ def test_network_pipeline_with_bprop_high_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_mix_other_grad_bprop():
     """
     Feature: Test pipeline_grad
@@ -408,8 +400,7 @@ def test_network_pipeline_mix_other_grad_bprop():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_mix_other_forward_and_grad():
     """
     Feature: Test pipeline_grad
@@ -454,8 +445,7 @@ def test_network_pipeline_mix_other_forward_and_grad():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_same_input():
     """
     Feature: Test pipeline_grad
@@ -495,8 +485,7 @@ def test_network_pipeline_same_input():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_network_pipeline_forward_and_backward_with_different_input():
     """
     Feature: Test pipeline_grad
@@ -532,8 +521,7 @@ def test_network_pipeline_forward_and_backward_with_different_input():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_pipeline_simulate_machine_01():
     """
     Feature: Test pipeline_grad

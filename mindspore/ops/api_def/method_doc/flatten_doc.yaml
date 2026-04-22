@@ -4,6 +4,9 @@ flatten:
 
     Flatten a tensor along dimensions from `start_dim` to `end_dim`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: the ``flatten(order='C', *, start_dim=0, end_dim=-1)`` overload will be removed, and only ``flatten(start_dim=0, end_dim=-1)`` will be supported. The ``order`` parameter will be dropped.
+
     Args:
         start_dim (int, optional): The first dimension to flatten. Default: ``0`` .
         end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
@@ -28,7 +31,7 @@ flatten:
         >>> output = input_x.flatten(0, -1)
         >>> print(output.shape)
         (24,)
-    
+
     .. method:: Tensor.flatten(order='C', *, start_dim=0, end_dim=-1) -> Tensor
         :noindex:
 

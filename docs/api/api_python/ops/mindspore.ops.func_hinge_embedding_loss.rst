@@ -5,6 +5,9 @@ mindspore.ops.hinge_embedding_loss
 
     Hinge Embedding 损失函数，衡量输入 `inputs` 和标签 `targets` （包含1或-1）之间的损失值。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，参数 `inputs` 和 `targets` 将分别重命名为 `input` 和 `target`。
+
     mini-batch中的第 :math:`n` 个样例的损失函数为：
 
     .. math::

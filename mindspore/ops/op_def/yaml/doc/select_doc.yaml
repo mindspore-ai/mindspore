@@ -12,6 +12,9 @@ select:
             other_i, & \text{otherwise}
             \end{cases}
 
+        .. warning::
+            Non-backward-compatible change after version 2.9.0: this interface currently has where-style conditional selection semantics, and will be changed to slice-along-dimension semantics. The new signature will be ``select(input, dim, index)``.
+
         Args:
             condition (Tensor[bool]): The condition tensor.
             input (Union[Tensor, int, float]): The first tensor or number to be selected.
@@ -22,7 +25,7 @@ select:
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-        
+
         Examples:
             >>> import mindspore
             >>> # case1: Both `input` and `other` are tensor

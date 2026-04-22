@@ -13,6 +13,9 @@ mindspore.ops.coo_isinf
 
     其中 :math:`Inf` 表示正负无穷大。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - 任意维度的COOTensor。
 

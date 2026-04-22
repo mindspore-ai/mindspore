@@ -26,7 +26,7 @@ context.set_context(mode=context.PYNATIVE_MODE)
 
 
 @run_in_subprocess({'GLOG_v': '1', 'MS_SUBMODULE_LOG_v': '{PI:0}'})
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_Cell_1():
     """
     Feature: Test guard for nn.Cell.
@@ -89,7 +89,7 @@ class MLP(nn.Cell):
             return x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_CellList_1():
     """
     Feature: Test guard for CellList.
@@ -111,7 +111,7 @@ def test_guard_for_CellList_1():
     assert_no_graph_break(net.construct, call_count=2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="Need Fixed")
 def test_guard_for_CellList_2():
     """
@@ -137,7 +137,7 @@ def test_guard_for_CellList_2():
     assert_no_graph_break(net.construct, call_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="Need Fixed")
 def test_guard_for_CellList_3():
     """
@@ -161,7 +161,7 @@ def test_guard_for_CellList_3():
     assert_no_graph_break(net.construct, call_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.skip(reason="Need Fixed")
 def test_guard_for_CellList_4():
     """
@@ -185,7 +185,7 @@ def test_guard_for_CellList_4():
     assert_no_graph_break(net.construct, call_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_CellList_5():
     """
     Feature: Test guard for CellList.
@@ -218,7 +218,7 @@ class AddBias(nn.Cell):
         return x + self._bias
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_CellList_6():
     """
     Feature: Test guard for CellList.
@@ -242,7 +242,7 @@ def test_guard_for_CellList_6():
     assert_no_graph_break(net.construct, call_count=1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_guard_for_CellList_7():
     """
     Feature: Test guard for CellList.

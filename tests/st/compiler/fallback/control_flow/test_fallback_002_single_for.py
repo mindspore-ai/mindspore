@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_single_for_1():
     """
     Feature: JIT Fallback
@@ -42,8 +41,7 @@ def test_single_for_1():
     assert res == 21
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_single_for_2():
     """
     Feature: JIT Fallback
@@ -62,8 +60,7 @@ def test_single_for_2():
         control_flow_for()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_single_for_zip():
     """
     Feature: JIT Fallback
@@ -82,8 +79,7 @@ def test_single_for_zip():
     assert res == 9
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_single_for_builtin_function_int():
     """
     Feature: JIT Fallback
@@ -100,7 +96,7 @@ def test_single_for_builtin_function_int():
     assert res == 8.1
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_single_for_iter_object():
     """
     Feature: JIT Fallback

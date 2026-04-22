@@ -9,7 +9,7 @@ mindspore.ops.csr_atanh
         out_i = \tanh^{-1}(x_{i})
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (CSRTensor) - CSRTensor的shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型支持：float16、float32。

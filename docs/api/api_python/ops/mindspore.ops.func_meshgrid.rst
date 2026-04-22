@@ -5,6 +5,9 @@ mindspore.ops.meshgrid
 
     从一维输入生成多维坐标网格。
 
+    .. warning::
+        2.9.0（不含）之后版本中， `indexing` 默认值将从 ``'xy'`` 改为 ``None`` （等同于 ``ij`` ）。
+
     .. note::
         - graph mode下的 `inputs` 为N个一维tensor，N应大于1。
         - pynative mode下的 `inputs` 为N个零维或一维tensor，N应大于0。数据类型为Number。

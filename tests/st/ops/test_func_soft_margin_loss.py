@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return ops.soft_margin_loss(x, y, self.reduction)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_soft_margin_loss(mode, reduction):

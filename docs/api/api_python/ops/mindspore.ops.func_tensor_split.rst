@@ -5,6 +5,14 @@ mindspore.ops.tensor_split
 
     根据指定索引或份数，将输入tensor拆分成多个子tensor。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：
+
+        - 参数 `indices_or_sections` 将重命名为 `tensor_indices_or_sections` 。
+        - 参数 `axis` 将重命名为 `dim` 。
+
+        变更后的接口签名为 ``mindspore.ops.tensor_split(input, tensor_indices_or_sections, dim=0)`` 。
+
     参数：
         - **input** (Tensor) - 输入tensor。
         - **indices_or_sections** (Union[int, tuple(int), list(int)]) - 指定索引或份数。

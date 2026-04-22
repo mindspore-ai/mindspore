@@ -8,6 +8,9 @@ mindspore.ops.csr_abs
     .. math::
         out_i = |x_i|
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (CSRTensor) - 输入CSRTensor。
 

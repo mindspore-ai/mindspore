@@ -34,8 +34,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_single_while():
     """
     Feature: Control flow
@@ -63,8 +62,7 @@ def test_single_while():
     assert origin_out == outputs_after_load
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_jit_function_while():
     """
     Features: Control flow.
@@ -108,8 +106,7 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_single_while_inline_export():
     """
     Feature: Control flow
@@ -128,8 +125,7 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_single_while_inline_load():
     """
     Feature: Control flow
@@ -149,8 +145,7 @@ def test_single_while_inline_load():
     load(mindir_name)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_single_while_inline():
     """
     Feature: Control flow

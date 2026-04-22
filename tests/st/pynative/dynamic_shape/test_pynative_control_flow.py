@@ -35,8 +35,7 @@ class GradofAllInputsAndParams(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_sit_pynative_diff_shape_with_while_in_construct():
     class WhileNetMs(nn.Cell):
         def __init__(self):

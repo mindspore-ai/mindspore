@@ -33,7 +33,7 @@ class LgammaNet(nn.Cell):
         return self.lgamma(input_x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lgamma_graph_float16():
     """
     Feature: ALL To ALL
@@ -47,7 +47,7 @@ def test_lgamma_graph_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lgamma_graph_float32():
     """
     Feature: ALL To ALL
@@ -62,7 +62,7 @@ def test_lgamma_graph_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lgamma_graph_float64():
     """
     Feature: ALL To ALL
@@ -77,7 +77,7 @@ def test_lgamma_graph_float64():
     assert np.allclose(z_ms.asnumpy(), expect, 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_lgamma_invalid_input():
     """
     Feature: ALL To ALL

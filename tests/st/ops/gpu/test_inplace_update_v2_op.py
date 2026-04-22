@@ -43,7 +43,7 @@ class NetInplaceUpdateV2(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_update_fp16():
     """
     Feature: InplaceUpdateV2
@@ -62,7 +62,7 @@ def test_inplace_update_fp16():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_update_tensor():
     """
     Feature: InplaceUpdateV2
@@ -78,7 +78,7 @@ def test_inplace_update_tensor():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_update_functional():
     """
     Feature: InplaceUpdateV2
@@ -94,7 +94,7 @@ def test_inplace_update_functional():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_update_functional_tuple_indices():
     """
     Feature: InplaceUpdateV2
@@ -110,7 +110,7 @@ def test_inplace_update_functional_tuple_indices():
     assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_inplace_update_functional_scalar_index():
     """
     Feature: InplaceUpdateV2

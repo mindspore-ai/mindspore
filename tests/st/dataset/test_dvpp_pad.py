@@ -39,8 +39,7 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "gif.gif")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=1020.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=1020.0)
 def test_dvpp_pad_operation_01():
     """
     Feature: Pad operation on device
@@ -142,8 +141,7 @@ def test_dvpp_pad_operation_01():
         break
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 def test_dvpp_pad_operation_02():
     """
     Feature: Pad operation on device
@@ -244,8 +242,7 @@ def test_dvpp_pad_operation_02():
         break
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 def test_dvpp_pad_operation_03():
     """
     Feature: Pad operation on device
@@ -346,8 +343,7 @@ def test_dvpp_pad_operation_03():
         break
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=28.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
 def test_dvpp_pad_operation_04():
     """
     Feature: Pad operation on device
@@ -451,8 +447,7 @@ def test_dvpp_pad_operation_04():
         break
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=30.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=30.0)
 def test_dvpp_pad_operation_05():
     """
     Feature: Pad operation on device
@@ -556,8 +551,7 @@ def test_dvpp_pad_operation_05():
     assert (pad_op == pad_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 def test_dvpp_pad_operation_06():
     """
     Feature: Pad operation on device
@@ -670,8 +664,7 @@ def test_dvpp_pad_operation_06():
     assert (pad_op == pad_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=3074.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=3074.0)
 def test_dvpp_pad_exception_01():
     """
     Feature: Pad operation on device
@@ -780,8 +773,7 @@ def test_dvpp_pad_exception_01():
         pad_op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_pad_exception_02():
     """
     Feature: Pad operation on device

@@ -48,7 +48,7 @@ def grad_partial_dyn_case(is_dynamic_rank):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_grad_dynamic_shape():
     """
     Feature: test Lerp grad dynamic shape.
@@ -64,7 +64,7 @@ def test_grad_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_grad_dynamic_rank():
     """
     Feature: test Lerp grad dynamic rank.
@@ -80,7 +80,7 @@ def test_grad_dynamic_rank():
 
 
 @pytest.mark.skip(reason="Ascend does not support dynamic shape")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_ascend_grad_dynamic_shape():
     """
     Feature: test Lerp grad dynamic rank on Ascend.
@@ -96,7 +96,7 @@ def test_ascend_grad_dynamic_shape():
 
 
 @pytest.mark.skip(reason="Ascend does not support dynamic shape")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_ascend_grad_dynamic_rank():
     """
     Feature: test Lerp grad dynamic rank on Ascend.

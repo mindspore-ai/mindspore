@@ -32,7 +32,7 @@ class AffineGridNet(nn.Cell):
         return self.affine_grid(theta, size)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_affine_grid_corner_case():
     """
     Feature: gpu backend of operator AffineGrid
@@ -49,7 +49,7 @@ def test_affine_grid_corner_case():
     assert np.allclose(output.asnumpy(), expected, atol=0.001, rtol=0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('align', [False, True])
 @pytest.mark.parametrize('dtype', [ms.float32, ms.float16])
@@ -70,7 +70,7 @@ def test_affine_grid_4d_normal(mode, align, dtype):
     assert np.allclose(output.asnumpy(), expected_output, atol=0.001, rtol=0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('align', [False, True])
 @pytest.mark.parametrize('dtype', [ms.float32, ms.float16])

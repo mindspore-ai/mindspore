@@ -40,9 +40,9 @@ conv3d:
         :math:`kw` are the depth, height and width of the kernel, respectively.
         If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
         will be :math:`(C_{out}, C_{in} / \text{group}, kd, kh, kw)`,
-        where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
+        where `group` is the number of groups dividing `input`'s input channel when applying group convolution.
 
-        For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
+        For more details about convolution layers, please refer to `Gradient Based Learning Applied to Document Recognition
         <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
         The following lists some of the limitations of the parameters.
@@ -78,9 +78,6 @@ conv3d:
           and width dimension.
         - If `padding` is ``'same'``, `stride` must be 1.
 
-        .. warning::
-            It is only supported on Atlas A2 Training Series Products.
-
         Args:
             input (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
             weight (Tensor): Set size of kernel is :math:`(kd, kh,
@@ -89,18 +86,18 @@ conv3d:
                 When bias is ``None`` , zeros will be used. Default: ``None`` .
             stride (Union(int, tuple[int], list[int]), optional): The distance of kernel moving, an int
                 number that represents the depth, the height and width of movement are both strides, or a
-                tuple of triple int numbers that
+                tuple/list of triple int numbers that
                 represent the depth, height and width of movement respectively. Default: ``1`` .
-            padding (Union(int, tuple[int], list[int], str), optional): Implicit paddings on both sides of the input `x`.
+            padding (Union(int, tuple[int], list[int], str), optional): Implicit paddings on both sides of the input `input`.
                 Can be a string, one integer or a tuple/list with 3 integers.
                 If `padding` is a string, the optional values are ``"same"`` , ``"valid"``.
 
-                - same: Adopts the way of completion. The height and width of the output will be equal to
-                  the input `x` divided by stride. The padding will be evenly calculated in top and bottom,
-                  left and right possiblily. Otherwise, the last extra padding will be calculated from the bottom
-                  and the right side. If this mode is set, `stride` must be 1.
+                - ``"same"``: Adopts the way of completion. The height and width of the output will be equal to
+                  the input `input` divided by stride. The padding will be evenly calculated in top and bottom,
+                  left and right possibly. Otherwise, the last extra padding will be calculated from the bottom
+                  and the right side. If this mode is set, `stride` must be ``1``.
 
-                - valid: Adopts the way of discarding. The possible largest height and width of output will be returned
+                - ``"valid"``: Adopts the way of discarding. The possible largest height and width of output will be returned
                   without padding. Extra pixels will be discarded.
 
                 If `padding` is one integer, the paddings of top, bottom, left and right are the same, equal to padding.
@@ -115,7 +112,7 @@ conv3d:
             or :math:`(C_{out}, D_{out}, H_{out}, W_{out})`.
 
         Raises:
-            TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+            TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple nor a list.
             TypeError: `groups` is not an int.
             TypeError: If `bias` is not a Tensor.
 

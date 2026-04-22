@@ -62,19 +62,19 @@ def reverse_v2_1d(nptype):
     reverse_v2(x_numpy, (-1,))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_float16():
     reverse_v2_1d(np.float16)
     reverse_v2_3d(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_float32():
     reverse_v2_1d(np.float32)
     reverse_v2_3d(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_float64():
     """
     Feature: test ReverseV2 with using float64.
@@ -85,13 +85,13 @@ def test_reverse_v2_float64():
     reverse_v2_3d(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_uint8():
     reverse_v2_1d(np.uint8)
     reverse_v2_3d(np.uint8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_uint16():
     """
     Feature: test ReverseV2 with using uint16.
@@ -102,7 +102,7 @@ def test_reverse_v2_uint16():
     reverse_v2_3d(np.uint16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_int8():
     """
     Feature: test ReverseV2 with using int8.
@@ -113,25 +113,25 @@ def test_reverse_v2_int8():
     reverse_v2_3d(np.int8)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_int16():
     reverse_v2_1d(np.int16)
     reverse_v2_3d(np.int16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_int32():
     reverse_v2_1d(np.int32)
     reverse_v2_3d(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_int64():
     reverse_v2_1d(np.int64)
     reverse_v2_3d(np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_invalid_axis():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.arange(60).reshape(1, 2, 3, 2, 5).astype(np.int32))
@@ -149,7 +149,7 @@ def test_reverse_v2_invalid_axis():
     assert "'axis' cannot contain duplicate dimensions" in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_tensor_api():
     """
     Feature: ReverseV2 GPU operation
@@ -163,7 +163,7 @@ def test_reverse_v2_tensor_api():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reverse_v2_functional_api():
     """
     Feature: ReverseV2 GPU operation

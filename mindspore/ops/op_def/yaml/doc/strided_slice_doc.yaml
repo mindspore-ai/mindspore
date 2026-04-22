@@ -2,6 +2,9 @@ strided_slice:
     description: |
         Extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
 
+        .. warning::
+            This interface is deprecated and will be removed after version 2.9.0.
+
         Note:
             - `begin` , `end` and `strides` must have the same shape.
             - `begin` , `end` and `strides` are all 1-D Tensor, and their shape size
@@ -35,8 +38,10 @@ strided_slice:
 
           If the ith bit of `begin_mask` is 1, `begin[i]` is ignored and the fullest
           possible range in that dimension is used instead. `end_mask` is analogous,
-          except with the end range. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`, if `begin_mask`
-          is 0b110, `end_mask` is 0b011, the slice `input_x[0:3, 0:6, 2:7:2]` is produced.
+          except with the end range. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,
+          given `begin` = (1, 1, 2, 1), `end` = (3, 4, 6, 5), `strides` = (1, 1, 2, 1),
+          if `begin_mask` is 0b110, `end_mask` is 0b011, the slice `input_x[0:3, 0:6, 2:7:2, 1:5]`
+          is produced.
 
         - `ellipsis_mask`
 

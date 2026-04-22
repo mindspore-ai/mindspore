@@ -59,42 +59,42 @@ def split_basic(nptype):
         assert (out.asnumpy() == x[i]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_float16():
     split_basic(np.float16)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_float32():
     split_basic(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_float64():
     split_basic(np.float64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_int32():
     split_basic(np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_uint32():
     split_basic(np.uint32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_int64():
     split_basic(np.int64)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_basic_bool():
     split_basic(np.bool_)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_4d():
     x_np = np.random.randn(2, 6, 4, 4).astype(np.float32)
     y = np.split(x_np, 3, axis=1)
@@ -106,7 +106,7 @@ def test_split_4d():
         assert (out.asnumpy() == y[i]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_dynamic():
     x = np.array([[[1, -1, 1], [2, -2, 2]],
                   [[3, -3, 3], [4, -4, 4]],
@@ -118,7 +118,7 @@ def test_split_dynamic():
         assert (out.asnumpy() == x[i]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_dynamic_axis1():
     x = np.array([[[1, -1, 1], [2, -2, 2]],
                   [[3, -3, 3], [4, -4, 4]],
@@ -131,7 +131,7 @@ def test_split_dynamic_axis1():
         assert (out.asnumpy() == y[i]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_dynamic_axis2():
     x = np.array([[[1, -1, 1], [2, -2, 2]],
                   [[3, -3, 3], [4, -4, 4]],
@@ -144,7 +144,7 @@ def test_split_dynamic_axis2():
         assert (out.asnumpy() == y[i]).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_split_invalid_input():
     x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32)
     x_tensor = Tensor(x)

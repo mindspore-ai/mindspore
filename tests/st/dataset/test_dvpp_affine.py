@@ -38,8 +38,7 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "xiaoji.gif")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=58.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=58.0)
 def test_dvpp_affine_operation_01():
     """
     Feature: Affine operation on device
@@ -130,8 +129,7 @@ def test_dvpp_affine_operation_01():
         assert np.allclose(data1["image"], data2["image"], rtol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 def test_dvpp_affine_operation_02():
     """
     Feature: Affine operation on device
@@ -231,8 +229,7 @@ def test_dvpp_affine_operation_02():
         assert np.allclose(data1["image"], data2["image"], rtol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 def test_dvpp_affine_operation_03():
     """
     Feature: Affine operation on device
@@ -327,8 +324,7 @@ def test_dvpp_affine_operation_03():
         pass
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=16.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=16.0)
 def test_dvpp_affine_operation_04():
     """
     Feature: Affine operation on device
@@ -427,8 +423,7 @@ def test_dvpp_affine_operation_04():
     assert (affine_op_cpu == affine_op).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_affine_exception_01():
     """
     Feature: Affine operation on device
@@ -532,8 +527,7 @@ def test_dvpp_affine_exception_01():
             device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_affine_exception_02():
     """
     Feature: Affine operation on device
@@ -632,8 +626,7 @@ def test_dvpp_affine_exception_02():
             image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_affine_exception_03():
     """
     Feature: Affine operation on device
@@ -740,8 +733,7 @@ def test_dvpp_affine_exception_03():
             device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_affine_exception_04():
     """
     Feature: Affine operation on device
@@ -840,8 +832,7 @@ def test_dvpp_affine_exception_04():
             device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_affine_exception_05():
     """
     Feature: Affine operation on device
@@ -949,8 +940,7 @@ def test_dvpp_affine_exception_05():
             device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_affine_exception_06():
     """
     Feature: Affine operation on device

@@ -36,7 +36,7 @@ def test_elu_functional_api():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_elu_functional_api_modes():
     """
     Feature: test elu functional API for different modes.

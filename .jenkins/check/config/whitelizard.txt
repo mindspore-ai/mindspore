@@ -117,6 +117,7 @@ mindspore/mindspore/python/mindspore/context.py:set_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/nn/optim/sgd.py:__init__
 mindspore/mindspore/python/mindspore/nn/layer/thor_layer.py:__init__
+mindspore/mindspore/python/mindspore/nn/layer/embedding.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py:get_bprop_fft_with_size.bprop
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape

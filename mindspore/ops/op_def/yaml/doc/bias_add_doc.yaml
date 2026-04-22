@@ -2,7 +2,7 @@ bias_add:
     description: |
         Returns the sum of the input Tensor and the bias Tensor. Before adding, the bias Tensor will be broadcasted to be
         consistent with the shape of the input Tensor.
-    
+
         Args:
             data_format (str, optional): The format of input and output data.
                 It should be ``"NHWC"`` , ``"NCHW"`` or ``"NCDHW"`` .

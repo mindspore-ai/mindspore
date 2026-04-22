@@ -197,8 +197,7 @@ def test_with_stream_event_with_morph_inner():
     profiler.analyse()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=3718.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=3718.00)
 def test_with_stream_event_with_morph_prof_mem_track():
     """
     Feature: runtime with stream and res limit.

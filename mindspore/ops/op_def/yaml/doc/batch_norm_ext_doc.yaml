@@ -19,8 +19,7 @@ batch_norm_ext:
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, *)`, where :math:`*` means, any number of additional
-            dimensions. with bfloat16, float16 or float32 data type. For Atlas training products, the shape must be
-            2-4 dimensions currently.
+            dimensions. with bfloat16, float16 or float32 data type.
         weight (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
         bias (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
         running_mean (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.

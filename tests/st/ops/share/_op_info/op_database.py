@@ -47,6 +47,7 @@ from tests.st.ops.share._op_info.op_info import (
     dynamic_inputs_binary_op_common_func,
     extra_reference_inputs_binary_op_common_func,
     extra_reference_inputs_reduction_op_common_func,
+    error_inputs_shape_not_match_func,
 )
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
@@ -60,7 +61,14 @@ from tests.st.ops.share._op_info.op_common import  (
     dtypes_as_torch,
     dtypes_integral,
     dtypes_extra_uint,
+    dtype_to_np_dtype,
+    op_dtype_need_convert,
+    dtypes_extra_values
 )
+from tests.st.ops.share._internal.overload_decorator import (
+    wrap_op, wrap_op_with_dtype, wrap_reduction_op_overload, wrap_reduction_op_overload_with_dtype
+)
+
 
 # =====================================wrap tensor/nn method====================================
 
@@ -339,73 +347,80 @@ def tensor_abs_torch(op_input):
 def tensor_floor_divide_torch(op_input, other):
     return op_input.floor_divide(other)
 
-# wrap tensor method for to
-def tensor_to_ms(op_input, dtype=ms.uint8):
+def tensor_to_ms(op_input, dtype=ms.float32):
     return op_input.to(dtype=dtype)
 
-def tensor_to_torch(op_input, dtype=torch.uint8):
+# tensor.to has keyword parameter
+def tensor_to_torch(op_input, dtype=torch.float32):
     return op_input.to(dtype=dtype)
 
 def tensor_div_ms(op_input, other, rounding_mode=None):
     return mint.div(op_input, other, rounding_mode=rounding_mode)
 
-
 # wrap method for empty
-def empty_ms(op_input):
-    return mint.empty(op_input.shape, dtype=op_input.dtype).shape
+def empty_ms(op_input, dtype=None, device=None, pin_memory=False):
+    return mint.empty(op_input.shape, dtype=dtype, device=device, pin_memory=pin_memory).shape
 
-def empty_torch(op_input):
-    return torch.empty(op_input.shape, dtype=op_input.dtype).shape
+def empty_torch(op_input, dtype=None, device=None, pin_memory=False):
+    return torch.empty(op_input.shape, dtype=dtype).shape
 
 # wrap method for empty_like
-def empty_like_ms(op_input):
-    return mint.empty_like(op_input).shape
+def empty_like_ms(op_input, dtype=None, device=None, pin_memory=False):
+    return mint.empty_like(op_input, dtype=dtype, device=device, pin_memory=pin_memory).shape
 
-def empty_like_torch(op_input):
-    return torch.empty_like(op_input).shape
+def empty_like_torch(op_input, dtype=None, device=None, pin_memory=False):
+    return torch.empty_like(op_input, dtype=dtype).shape
 
 # wrap nn method for batchnorm1d
-def nn_batchnorm1d_ms(op_input):
+def nn_batchnorm1d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm1d(
-        num_features=9, eps=2.0, momentum=-2.0, affine=True, track_running_stats=False, dtype=ms.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )
     op.set_train()
     return op(op_input)
 
-def nn_batchnorm1d_torch(op_input):
+def nn_batchnorm1d_torch(op_input, num_features=9, eps=2.0, momentum=-2.0, affine=True,
+                         track_running_stats=False, dtype=None):
     return torch.nn.BatchNorm1d(
-        num_features=9, eps=2.0, momentum=-2.0, affine=True, track_running_stats=False, dtype=torch.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )(op_input)
 
 # wrap nn method for batchnorm2d
-def nn_batchnorm2d_ms(op_input):
+def nn_batchnorm2d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm2d(
-        num_features=3, eps=565.73012560178, momentum=-2.0, affine=False, track_running_stats=True, dtype=ms.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )
     op.set_train()
     return op(op_input)
 
-def nn_batchnorm2d_torch(op_input):
+def nn_batchnorm2d_torch(op_input, num_features=3, eps=565.73012560178, momentum=-2.0, affine=True,
+                         track_running_stats=False, dtype=None):
     return torch.nn.BatchNorm2d(
-        num_features=3, eps=565.73012560178, momentum=-2.0, affine=False, track_running_stats=True, dtype=torch.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )(op_input)
 
 # wrap nn method for batchnorm3d
-def nn_batchnorm3d_ms(op_input):
+def nn_batchnorm3d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm3d(
-        num_features=3, eps=121.30250066286163, momentum=-2.0, affine=False, track_running_stats=True, dtype=ms.float32
+        num_features=num_features, eps=eps, momentum=momentum, affine=affine,
+        track_running_stats=track_running_stats, dtype=dtype
     )
     op.set_train()
     return op(op_input)
 
-def nn_batchnorm3d_torch(op_input):
+def nn_batchnorm3d_torch(op_input, num_features=3, eps=121.30250066286163, momentum=-2.0,
+                         affine=True, track_running_stats=False, dtype=None):
     return torch.nn.BatchNorm3d(
-        num_features=3,
-        eps=121.30250066286163,
-        momentum=-2.0,
-        affine=False,
-        track_running_stats=True,
-        dtype=torch.float32,
+        num_features=num_features,
+        eps=eps,
+        momentum=momentum,
+        affine=affine,
+        track_running_stats=track_running_stats,
+        dtype=dtype,
     )(op_input)
 
 # wrap nn method for gelu
@@ -705,6 +720,40 @@ def tensor_torch_nansum(input, dim=None, keepdim=False, dtype=None):
 
 # ====================================custom sample inputs functions===================================
 
+def basic_reference_inputs_empty(op_info, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    if device and device.lower() == "ascend":
+        formatted_device = "Ascend"
+    else:
+        formatted_device = device
+    yield OpSampleInput(
+        op_input=ms.Tensor([[1, 2, 3], [4, 5, 6]]),
+        op_args=(),
+        op_kwargs={'dtype': dtype, 'device': formatted_device, 'pin_memory': False},
+        sample_name=f"{op_info.name}_{dtype}_{device}_empty_like"
+    )
+
+def error_inputs_unary_op_mint_empty_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        # input, dtype, device,pin_memory
+        ("1", dtype, device, False),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), "0", device, False),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), dtype, "1", False),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), dtype, device, "True"),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), dtype, "Ascend", True)
+    ]
+    for op_inputs, dtypes, devices, pin_memory in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_inputs,
+                op_args=(),
+                op_kwargs={'dtype': dtypes, 'device': devices, 'pin_memory': pin_memory},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError),
+            op_error_info=f"{op_info.name}_{dtype}_{device}_error_empty"
+        )
+
 # op_basic_reference_inputs_func for ops
 def basic_sample_inputs_add_sub_ext(
     op_info: OpInfo,
@@ -853,12 +902,53 @@ def error_inputs_binary_op_ext_func(op_info: OpInfo, dtype=None, device=None, **
         op_sample_input=OpSampleInput(
             op_input=make_tensor(shape=(2,), dtype=ms.float32),
             op_args=((1, 2),),
-            op_kwargs={},
+            op_kwargs={'alpha':1},
             sample_name=op_info.name,
         ),
         op_error_type=TypeError,
         op_error_info='other is not tensor or number',
     )
+
+# op_error_inputs_func for ops with alpha
+def error_inputs_binary_op_with_alpha(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2,), dtype=ms.int32),
+            op_args=(make_tensor(shape=(2,), dtype=ms.int32),),
+            op_kwargs={'alpha': 1.2},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='if alpha is of the float type,but input and other are not of the float type',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2,), dtype=ms.int32),
+            op_args=(make_tensor(shape=(2,), dtype=ms.int32),),
+            op_kwargs={'alpha': True},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='if alpha is of the bool type,but input and other are not of the bool type',
+    )
+
+# op_error_inputs_func for ops mint div
+def error_inputs_binary_op_mint_div(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    rounding_mode = ['floor', 'trunc']
+    for error_dtype  in [ms.complex64, ms.complex128]:
+        for value in rounding_mode:
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=make_tensor(shape=(2,), dtype=error_dtype),
+                    op_args=(make_tensor(shape=(2,), dtype=error_dtype),),
+                    op_kwargs={'rounding_mode': value},
+                    sample_name=op_info.name
+                ),
+                op_error_type=RuntimeError,
+                op_error_info=f'dtype {dtype} not supported in rounding_mode {value} ',
+            )
 
 # op_error_inputs_func for ops
 def error_inputs_glu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -886,6 +976,169 @@ def error_inputs_glu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         ),
         op_error_type=RuntimeError,
         op_error_info='dim size is not even while dim is not default',
+    )
+    # dim is not int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2, 1, 2, 3), dtype=ms.float32),
+            op_args=(1.0,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'dim error type is not supported for {op_info.name}',
+    )
+    # dim is not in [-r, r): like [-5, 5)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2, 1, 2, 3), dtype=ms.float32),
+            op_args=(5,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=IndexError,
+        op_error_info=f'dim is out range, error input is not supported for {op_info.name}',
+    )
+
+# op_error_inputs_func for ops
+def error_inputs_unary_op_prelu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error inputs for prelu ops.
+    '''
+    # num_parameters not supported float
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=ms.tensor(np.array([1, 2, 3, 4, 5])),
+            op_args=(),
+            op_kwargs={'num_parameters': 1.0},
+            sample_name=f"{op_info.name}_num_parameters_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'num_parameters error input is not supported for {op_info.name}',
+    )
+
+    # init not supported int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=ms.tensor(np.array([1, 2, 3, 4, 5])),
+            op_args=(),
+            op_kwargs={'init': (1, 0.25)},
+            sample_name=f"{op_info.name}_init_type_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'init error input is not supported for {op_info.name}',
+    )
+
+# op_error_inputs_func for ops
+def error_inputs_unary_op_leaky_relu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error inputs for leaky_relu ops.
+    '''
+    # negative_slope not float or int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2, 1, 2, 3), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'negative_slope': (1, 1.0)},
+            sample_name=f"{op_info.name}_negative_slope_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'negative_slope error tpye is not supported for {op_info.name}',
+    )
+
+def error_inputs_gelu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error approximate for gelu ops.
+
+    Return:
+        List[OpErrorInput]: add approximate kwargs error type
+    '''
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor((2, 2,), dtype=ms.float32, device=device, ),
+            op_kwargs={'approximate': 2},
+            sample_name=f'{op_info.name}_{dtype}_approximate_error-dim_2_2',
+        ),
+        op_error_type=(TypeError, ValueError),
+        op_error_info='gelu ops approximate not support int type',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor((2, 2,), dtype=ms.float32, device=device, ),
+            op_kwargs={'approximate': 'tab'},
+            sample_name=f'{op_info.name}_{dtype}_approximate_error-dim_2_2',
+        ),
+        op_error_type=(TypeError, ValueError),
+        op_error_info='gelu ops approximate not support tab value',
+    )
+
+def error_inputs_reduction_keepdim_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error keepdim/dim for reduction ops.
+
+    Return:
+        List[OpErrorInput]: add approximate kwargs error type
+    '''
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(1,), dtype=ms.float32, device=device),
+            op_args=(),
+            op_kwargs={'keepdim': 2},
+            sample_name=f'{op_info.name}_{dtype}_keepdim_error',
+        ),
+        op_error_type=(TypeError, RuntimeError),
+        op_error_info='reductions ops keepdim not support int type',
+    )
+    # dim isnot int, tuple(int), list(int)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'dim': (1, 1.0)},
+            sample_name=f"{op_info.name}_dim_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'dim error tpye is not supported for {op_info.name}',
+    )
+
+# op_error_inputs_func for ops
+def error_inputs_reduction_op_normal(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate error inputs for mint.normal ops.
+    '''
+    # mean isnot float, Tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'mean': (1, 1.0)},
+            sample_name=f"{op_info.name}_mean_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'mean error tpye is not supported for {op_info.name}',
+    )
+    # std isnot float, Tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'mean': 1.0, 'std': '1'},
+            sample_name=f"{op_info.name}_std_type_error",
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'std error tpye is not supported for {op_info.name}',
+    )
+    # std is less than 0
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 2), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={'std': -1.0},
+            sample_name=f"{op_info.name}_std_value_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'std error value is not supported for {op_info.name}',
     )
 
 def basic_sample_inputs_mint_repeat_interleave(
@@ -956,6 +1209,91 @@ def basic_sample_inputs_mint_repeat_interleave(
         sample_name=f"{op_info.name}_1d_rand_repeats_tensor_dim0"
     )
 
+def error_inputs_other_op_mint_repeat_interleave_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, repeats, dim, output_size
+        ("1", (2,), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("0", 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (2, "true"), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (2,), {"output_size": '1'})]
+    for op_inputs, args, kwargs in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_inputs,
+                op_args=args,
+                op_kwargs=kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.repeat_interleave error values'
+        )
+
+def error_inputs_func_tensor_flatten(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim":1, "end_dim":0},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='start_dim can not come after end_dim',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": -4, "end_dim": 2},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='start_dim not in [-dim , dim-1]',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": 0, "end_dim": 3},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='end_dim not in [-dim , dim-1]',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": 1.1, "end_dim": 2},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='start_dim not int',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"start_dim": 0, "end_dim": 1.5},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='end_dim not int',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3, 4), dtype=ms.float32),
+            op_args=(),
+            op_kwargs={"order": "D" ,"start_dim": 0, "end_dim": 1.5},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='order is not C or F',
+    )
 
 def basic_sample_inputs_mint_arange(
     op_info: OpInfo,
@@ -1026,6 +1364,24 @@ def basic_sample_inputs_mint_arange(
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_arange_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        ("0", 1, 2, None),
+        (0, "1", 2, None),
+        (0, 1, "2", None),
+        (0, 1, 2, "float32")]
+    for start, end, step, dtypes in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=(),
+                op_args=(start, end, step),
+                op_kwargs={'dtype': dtypes},
+                sample_name=op_info.name,
+            ),
+            op_error_type=TypeError,
+            op_error_info='other ops mint.arange error values'
+        )
+
 
 # NOTE: customize_op_func, used by gradient comparison only when there are kwargs in op!
 def add_ext_func_grad_without_kwargs(x, y, alpha=1):
@@ -1094,6 +1450,25 @@ def sample_inputs_broadcast_to(op_info, dtype, device, **kwargs):
             op_args=(shape,),
             sample_name=op_info.name,
         ) for size, shape in test_cases)
+
+
+def error_inputs_other_op_mint_broadcast_to_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, shape,
+        ("1", (1,)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('0',)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ((-1, -2),))]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.broadcast_to error values'
+        )
 
 def sample_inputs_binary_cross_entropy(op_info, dtype, device, logits=False, **kwargs):
     S = SMALL_DIM_SIZE
@@ -1241,33 +1616,109 @@ def sample_inputs_matmul(op_info, dtype, device, is_rmatmul=False, **kwargs):
 
 def sample_inputs_batchnorm1d(op_info, dtype, device, **kwargs):
     make_func = functools.partial(make_tensor, device=device, dtype=dtype)
-    input_shape = (5, 9)
 
-    yield OpSampleInput(
-        make_func(input_shape),
-        op_args=(),
-        sample_name=op_info.name,
-    )
+
+    param_configs = [
+        {"num_features": 9, "eps":1e-5, "momentum":0.1, "affine":True, "track_running_stats":True, "dtype":dtype},
+        {"num_features": 9, "eps":0.001, "momentum":0.2, "affine":False, "track_running_stats":True, "dtype":dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": 0.3, "affine": True, "track_running_stats": False,
+         "dtype": dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": None, "affine": False, "track_running_stats": False,
+         "dtype": None}
+    ]
+    input_shapes = [
+        (5, 9),
+        (5, 9, 3),
+        (3, 4, 1),
+        (3, 4)
+    ]
+    for i, (shape, params) in enumerate(zip(input_shapes, param_configs)):
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=tuple(params.values()),
+            sample_name=f"{op_info.name}_case{i+1}")
+
 
 def sample_inputs_batchnorm2d(op_info, dtype, device, **kwargs):
     make_func = functools.partial(make_tensor, device=device, dtype=dtype)
-    input_shape = (8, 3, 5, 4)
-
-    yield OpSampleInput(
-        make_func(input_shape),
-        op_args=(),
-        sample_name=op_info.name,
-    )
+    param_configs = [
+        {"num_features": 4, "eps": 1e-5, "momentum": 0.1, "affine": True, "track_running_stats": True, "dtype": dtype},
+        {"num_features": 3, "eps": 0.001, "momentum": 0.2, "affine": False, "track_running_stats": True,
+         "dtype": dtype},
+        {"num_features": 2, "eps": 0.001, "momentum": 0.3, "affine": True, "track_running_stats": False,
+         "dtype": dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": None, "affine": False, "track_running_stats": False,
+         "dtype": None}
+    ]
+    input_shapes = [
+        (8, 4, 5, 3),
+        (1, 3, 3, 4)
+    ]
+    for i, (shape, params) in enumerate(zip(input_shapes, param_configs)):
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=tuple(params.values()),
+            sample_name=f"{op_info.name}_case{i + 1}")
 
 def sample_inputs_batchnorm3d(op_info, dtype, device, **kwargs):
     make_func = functools.partial(make_tensor, device=device, dtype=dtype)
-    input_shape = (8, 3, 4, 8, 5)
+    param_configs = [
+        {"num_features": 3, "eps": 1e-5, "momentum": 0.1, "affine": True, "track_running_stats": True, "dtype": dtype},
+        {"num_features": 3, "eps": 0.001, "momentum": 0.2, "affine": False, "track_running_stats": True,
+         "dtype": dtype},
+        {"num_features": 2, "eps": 0.001, "momentum": 0.3, "affine": True, "track_running_stats": False,
+         "dtype": dtype},
+        {"num_features": 4, "eps": 0.001, "momentum": None, "affine": False, "track_running_stats": False,
+         "dtype": None}
+    ]
+    input_shapes = [
+        (8, 3, 4, 8, 5),
+        (1, 3, 3, 4, 5)
+    ]
+    for i, (shape, params) in enumerate(zip(input_shapes, param_configs)):
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=tuple(params.values()),
+            sample_name=f"{op_info.name}_case{i + 1}")
 
-    yield OpSampleInput(
-        make_func(input_shape),
-        op_args=(),
-        sample_name=op_info.name,
-    )
+def error_inputs_other_op_mint_nn_batchnorm_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    base_params={
+        'num_features': 4,
+        'eps': 1e-5,
+        'momentum': 0.1,
+        'affine': True,
+        'track_running_stats': True,
+        'dtype': None
+    }
+    error_cases=[
+        #
+        ('op_input', ["1"], True),
+        ('num_features', ["4"], False),
+        ('eps', ["1e-5"], False),
+        ('momentum', ["0.1"], False),
+        # ('affine', ["True"], False),
+        # ('track_running_stats', ["True"], False), affine, track_running_stats set not bool type, not raise error
+        ('dtype', ['none', ms.complex128, ms.complex64, ms.int8], False),
+    ]
+    for param_name, error_values, is_op_input in error_cases:
+        for error_value in error_values:
+            test_params = base_params.copy()
+            if is_op_input:
+                op_input = error_value
+            else:
+                op_input = ms.tensor([[0.7, 0.5, 0.5, 0.6], [0.5, 0.4, 0.6, 0.9]])
+                test_params[param_name] = error_value
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=op_input,
+                    op_args=(test_params['num_features'], test_params['eps'], test_params['momentum'],
+                             test_params['affine'], test_params['track_running_stats'], test_params['dtype']),
+                    op_kwargs={},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=(TypeError, ValueError),
+                op_error_info='other ops mint.nn.batchnorm error values'
+            )
 
 def sample_inputs_batch_norm(op_info, dtype, device, **kwargs):
     S = SMALL_DIM_SIZE
@@ -1421,18 +1872,6 @@ def _generate_glu_tensors_sample_inputs_func(
             op_kwargs={},
             sample_name=f"{op_info.name}_tensor_inputs",
         )
-
-def tensor_mint_sum(op_input, dim=None, keepdim=False, dtype=None):
-    return mint.sum(op_input, dim=dim, keepdim=keepdim, dtype=dtype)
-
-def tensor_torch_sum(op_input, dim=None, keepdim=False, dtype=None):
-    return torch.sum(op_input, dim=dim, keepdim=keepdim, dtype=dtype)
-
-def tensor_mint_mean(op_input, dim=None, keepdim=False, dtype=None):
-    return mint.mean(op_input, dim=dim, keepdim=keepdim, dtype=dtype)
-
-def tensor_torch_mean(op_input, dim=None, keepdim=False, dtype=None):
-    return torch.mean(op_input, dim=dim, keepdim=keepdim, dtype=dtype)
 
 def _generate_glu_discontiguous_tensor_inputs_func(
     op_info: OpInfo,
@@ -1907,6 +2346,12 @@ def basic_sample_inputs_mint_nn_conv1d(op_info: OpInfo, dtype=None, device=None,
         ((8, 5), (8, 4, 2), {'stride': 1, 'padding': (12,), 'dilation': 3, 'groups': 2, 'bias': True,
                               'padding_mode': 'zeros', 'dtype': dtype, 'weight_init': make_arg((4, 4, 2)),
                               'bias_init': make_arg((4,))}),
+        ((5, 8, 4), (8, 4, 1), {'stride': 1, 'padding': 'same', 'dilation': 6, 'groups': 4, 'bias': True,
+                                'padding_mode': 'replicate', 'dtype': dtype, 'weight_init': make_arg((4, 2, 1)),
+                                'bias_init': make_arg((4,))}),
+        ((8, 9, 7), (9, 3, 4), {'stride': 1, 'padding': 'valid', 'dilation': 1, 'groups': 3, 'bias': True,
+                                'padding_mode': 'reflect', 'dtype': dtype, 'weight_init': make_arg((3, 3, 4)),
+                                'bias_init': make_arg((3,))})
     )
 
     for input_shape, (in_channels, out_channels, kernel_size), case_kwargs in cases:
@@ -1935,6 +2380,60 @@ def basic_sample_inputs_mint_nn_conv1d(op_info: OpInfo, dtype=None, device=None,
             op_kwargs=op_kwargs,
             sample_name=op_info.name,
         )
+
+def error_inputs_other_op_mint_nn_conv1d_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    base_params = {
+        'in_channels': 120,
+        'out_channels': 240,
+        'kernel_size': 4,
+        'stride': 1,
+        'padding': "same",
+        'dilation': 1,
+        'groups': 1,
+        'bias': True,
+        'padding_mode': "zeros",
+        'dtype': ms.float32,
+        'weight': make_tensor(shape=(240, 120, 4), dtype=ms.float32),
+        'bias_init': make_tensor(shape=(240,), dtype=ms.float32),
+    }
+
+    error_configs={
+        'op_input':{"1"},
+        'in_channels': {"120", -1},
+        'out_channels': {"240", -2},
+        'kernel_size': {"4", -3},
+        'stride': {"1", -1},
+        'padding': {True, -1},
+        'dilation': {"1", -1},
+        'groups': {"1", -1},
+        'bias': {"True", 1},
+        'padding_mode': {True, -1},
+        'dtype': {"float32"},
+        'weight': {"1"},
+        'bias_init': {"1"},
+    }
+    for param_name, error_values in error_configs.items():
+        for error_value in error_values:
+            test_params = base_params.copy()
+            if param_name == "op_input":
+                op_input = error_value
+            else:
+                op_input = ms.Tensor(np.random.randn(2,120,10).astype(np.float32))
+                test_params[param_name] = error_value
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=op_input,
+                    op_args=(test_params['in_channels'], test_params['out_channels'], test_params['kernel_size'],
+                             test_params['stride'], test_params['padding'], test_params['dilation'],
+                             test_params['groups'], test_params['bias'], test_params['padding_mode'],
+                             test_params['dtype']),
+                    op_kwargs={'weight': test_params['weight'], 'bias_init': test_params['bias_init']},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=(TypeError, ValueError),
+                op_error_info='other ops mint.nn.conv1d error values',
+            )
+
 
 # wrapper function for mindspore.mint.nn.Linear
 def mint_nn_linear_ms(op_input, in_features, out_features, bias=True, weight_init=None, bias_init=None, dtype=None):
@@ -2004,6 +2503,58 @@ def basic_sample_inputs_mint_nn_linear(op_info: OpInfo, dtype=None, device=None,
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_nn_linear_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    base_params = {
+        'in_features': 3,
+        'out_features': 4,
+        'bias': True,
+        'weight_init': None,
+        'bias_init': None,
+        'dtype': dtype
+    }
+    base_input = ms.tensor([[180, 234, 154], [244, 48, 247]], ms.float32)
+    error_configs={
+        'op_input':{
+            'values': ['1'],
+        },
+        'in_features': {
+            'values': ['3', -1],
+        },
+        'out_features': {
+            'values': ['4', -2],
+        },
+        'bias': {
+            'values': ['False', 1],
+        },
+        'weight_init': {
+            'values': ['InvalidInitializer'],
+        },
+        'bias_init': {
+            'values': ['InvalidInitializer'],
+        },
+        'dtype': {
+            'values': ['float32'],
+        }
+    }
+    for param_name, config in error_configs.items():
+        for error_value in config['values']:
+            test_params = base_params.copy()
+            if param_name == "op_input":
+                op_input = error_value
+            else:
+                op_input = base_input
+                test_params[param_name] = error_value
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=op_input,
+                    op_args=(test_params['in_features'], test_params['out_features'], test_params['bias'],
+                             test_params['weight_init'], test_params['bias_init'], test_params['dtype']),
+                    op_kwargs={},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=(TypeError, ValueError),
+                op_error_info='other ops mint.nn.linear error values'
+            )
 
 # sample inputs functions for mint.nn.functional.linear
 def basic_sample_inputs_mint_linear(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -2332,6 +2883,25 @@ def dynamic_sample_inputs_mint_chunk(op_info: OpInfo, dtype=None, device=None, *
             ),
         )
 
+def error_inputs_other_op_mint_chunk_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim,dtype
+        ("1", (1, 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1', 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "0"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.chunk error values'
+        )
+
 def extra_reference_inputs_operator_eq_common_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from extra_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
     # non-tensor case
@@ -2340,6 +2910,15 @@ def extra_reference_inputs_operator_eq_common_func(op_info: OpInfo, dtype=None, 
         op_args=([1, 2, 3],),
         op_kwargs={},
         sample_name=op_info.name + "_non_tensor",
+    )
+    # 0-d float64 tensor equality: guards against scalar-path precision loss
+    # where a 0-d tensor is misrouted to EqScalar and truncated to float32.
+    scalar_val = np.array(3.1415926, dtype=np.float64)
+    yield OpSampleInput(
+        op_input=make_tensor_with_np_array(scalar_val, dtype=ms.float64, device=device),
+        op_args=(make_tensor_with_np_array(scalar_val, dtype=ms.float64, device=device),),
+        op_kwargs={},
+        sample_name=op_info.name + "_0d_float64_eq",
     )
 
 def error_inputs_tensor_operator_eq(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -2432,20 +3011,7 @@ def basic_sample_inputs_mint_unique(op_info: OpInfo, dtype=None, device=None, **
                 unique_args = (sorted_flag, ret_inv, ret_cnt, dim)
 
                 # (1) all-zero tensor
-                zero_np_dtype = {
-                    ms.bool_: np.bool_,
-                    ms.int8: np.int8,
-                    ms.int16: np.int16,
-                    ms.int32: np.int32,
-                    ms.int64: np.int64,
-                    ms.uint8: np.uint8,
-                    ms.float16: np.float16,
-                    ms.float32: np.float32,
-                    ms.float64: np.float64,
-                    ms.bfloat16: np.float32,  # construct in fp32 then to bfloat16 by dtype=
-                    ms.complex64: np.complex64,
-                    ms.complex128: np.complex128,
-                }[dtype]
+                zero_np_dtype = dtype_to_np_dtype[dtype]
                 zeros_np = np.zeros(shape, dtype=zero_np_dtype)
                 zeros_ms = make_tensor_with_np_array(zeros_np, dtype=dtype, device=device)
                 yield OpSampleInput(
@@ -2473,6 +3039,40 @@ def basic_sample_inputs_mint_unique(op_info: OpInfo, dtype=None, device=None, **
                     sample_name=op_info.name,
                 )
 
+
+def error_inputs_other_op_mint_unique_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    base_params = {
+        'sorted': True,
+        'return_inverse': False,
+        'return_counts': False,
+        'dim': 0}
+    base_input=make_tensor(shape=(2,), dtype=ms.float32)
+    error_configs={
+        'op_input': 1,
+        'sorted': "true",
+        'return_inverse': "false",
+        'return_counts': "false",
+        'dim': '0'
+    }
+
+    for param_name, error_value in error_configs.items():
+        test_params = base_params.copy()
+        if param_name == "op_input":
+            op_input = error_value
+        else:
+            op_input = base_input
+            test_params[param_name] = error_value
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(test_params['sorted'], test_params['return_inverse'], test_params['return_counts'],
+                         test_params['dim']),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.unique error values',
+        )
 
 def basic_sample_inputs_mint_clamp(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -2519,6 +3119,23 @@ def basic_sample_inputs_mint_clamp(op_info: OpInfo, dtype=None, device=None, **k
         sample_name=op_info.name,
     )
 
+def error_inputs_other_op_mint_clamp_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        ("1", 0, 1),
+        (make_tensor(shape=(2,), dtype=ms.float32), None, None),
+        (make_tensor(shape=(2,), dtype=ms.float32), "None", None),
+        (make_tensor(shape=(2,), dtype=ms.float32), 0, "None")]
+    for op_input, min_val, max_val in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(min_val, max_val),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.clamp error values'
+        )
 
 def basic_sample_inputs_mint_stack(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -2761,6 +3378,25 @@ def dynamic_sample_inputs_mint_gather(op_info: OpInfo, dtype=None, device=None, 
             ),
         )
 
+def error_inputs_other_op_mint_gather_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,index(tensor)
+        ("1", (1, make_tensor(shape=(1,), dtype=ms.int32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", make_tensor(shape=(1,), dtype=ms.int32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1")),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, make_tensor(shape=(1,), dtype=ms.float32))),
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.gather error values'
+        )
 
 # sample inputs functions for mint.nn.functional.interpolate
 def _normalize_mode_and_ranks(mode: str):
@@ -3069,17 +3705,21 @@ def basic_sample_inputs_prelu_func(
                 sample_name=op_info.name,
             )
 
-def tensor_sum_ms(op_input, *op_args, **op_kwargs):
-    return op_input.sum(*op_args, **op_kwargs)
+#tensor.sum has keyword parameter dtype
+def tensor_sum_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.sum(dim, keepdim, dtype=dtype)
 
-def tensor_sum_torch(op_input, *op_args, **op_kwargs):
-    return op_input.sum(*op_args, **op_kwargs)
+#tensor.sum has keyword parameter dtype
+def tensor_sum_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.sum(dim, keepdim, dtype=dtype)
 
-def tensor_mean_ms(op_input, *op_args, **op_kwargs):
-    return op_input.mean(*op_args, **op_kwargs)
+#tensor.mean has keyword parameter dtype
+def tensor_mean_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.mean(dim, keepdim, dtype=dtype)
 
-def tensor_mean_torch(op_input, *op_args, **op_kwargs):
-    return op_input.mean(*op_args, **op_kwargs)
+#tensor.mean has keyword parameter dtype
+def tensor_mean_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.mean(dim, keepdim, dtype=dtype)
 
 def tensor_argmax_ms(op_input, *op_args, **op_kwargs):
     return op_input.argmax(*op_args, **op_kwargs)
@@ -3441,6 +4081,25 @@ def dynamic_sample_inputs_mint_select(op_info: OpInfo, dtype=None, device=None, 
             ),
         )
 
+def error_inputs_other_op_mint_select_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,index
+        ("1", (1, 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1")),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, -1))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.select error values'
+        )
 
 def basic_sample_inputs_mint_one_hot(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
@@ -3491,7 +4150,9 @@ def extra_sample_inputs_mint_one_hot(op_info: OpInfo, dtype=None, device=None, *
 
 def basic_sample_inputs_mint_flatten(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
-    shapes = ((S, S, S), (S, S), (S,), (),)
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    shapes = ((M, S, L), (M, S), (S,), (),)
     make_tensor_partial = functools.partial(make_tensor, dtype=dtype, device=device)
     for shape in shapes:
         yield OpSampleInput(make_tensor_partial(shape))
@@ -3502,6 +4163,19 @@ def basic_sample_inputs_mint_flatten(op_info: OpInfo, dtype=None, device=None, *
                 op_kwargs={"start_dim": 1, "end_dim": -1},
                 sample_name=op_info.name,
             )
+            yield OpSampleInput(
+                op_input=make_tensor_partial(shape),
+                op_args=(),
+                op_kwargs={"start_dim": 0, "end_dim": len(shape)-1},
+                sample_name=op_info.name,
+            )
+        else:
+            yield OpSampleInput(
+                op_input=make_tensor_partial(shape),
+                op_args=(),
+                op_kwargs={"start_dim": -1, "end_dim": -1},
+                sample_name=op_info.name,
+            )
 
 
 def extra_sample_inputs_mint_flatten(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -3510,12 +4184,13 @@ def extra_sample_inputs_mint_flatten(op_info: OpInfo, dtype=None, device=None, *
         ((5, 4, 0, 1, 3, 7), 1, 3),
         ((5, 4, 0, 1, 3, 7), 4, 5),
         ((5, 4, 1, 1, 3, 7), 2, 3),
-        ((), 0, -1),
+        ((), 0, 0),
         ((1,), 0, -1),
         ((3, 7, 5), 1, 2),
         ((4, 5), 1, 1),
         ((1, 5, 5, 1, 5, 1, 5, 1), 0, 2),
         ((1, 5, 5, 1, 5, 1, 5, 1), 3, -1),
+        ((1, 5, 5, 1, 5, 1, 5, 1), -8, -1),
         ((1, 5, 5, 1, 5, 7, 5, 1), -2, -1),
         ((2, 4, 2), 0, 1),
         ((4, 2, 2), 1, 2),
@@ -3540,6 +4215,24 @@ def extra_sample_inputs_mint_flatten(op_info: OpInfo, dtype=None, device=None, *
             sample_name=op_info.name
         )
 
+def error_inputs_other_op_mint_flatten_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, start_dim, end_dim,
+        ("1", (0, -1)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("0", -1)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (0, "1")),
+        (make_tensor(shape=(2,), dtype=ms.float32), (5, -1))]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.flatten error values'
+        )
 
 def basic_sample_inputs_mint_reshape(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
@@ -3831,6 +4524,24 @@ def extra_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None):
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_cumsum_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim,dtype
+        ("1", (1, None)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1', None)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "float32"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.cumsum error values'
+        )
 
 # sample inputs functions for index_select
 def basic_sample_inputs_mint_index_select(op_info: OpInfo, dtype=None, device=None):
@@ -3878,6 +4589,24 @@ def extra_sample_inputs_mint_index_select(op_info: OpInfo, dtype=None, device=No
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_index_select_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,index(tensor)
+        ("1", (1, make_tensor(shape=(1,), dtype=ms.float32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", make_tensor(shape=(1,), dtype=ms.float32))),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.index_select error values'
+        )
 
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_masked_select(op_info: OpInfo, dtype=None, device=None):
@@ -3924,6 +4653,24 @@ def extra_sample_inputs_mint_masked_select(op_info: OpInfo, dtype=None, device=N
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_masked_select_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, mask
+        ("1", ms.tensor([1, 0, 1, 0], ms.bool_)),
+        (ms.tensor([1, 2, 3, 4], ms.int8), 1),
+        (ms.tensor([1, 2, 3, 4], ms.int8), ms.tensor([1, 0, 1, 0], ms.int8))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.masked_select error values'
+        )
 
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_nonzero(op_info: OpInfo, dtype=None, device=None):
@@ -3971,6 +4718,23 @@ def extra_sample_inputs_mint_nonzero(op_info: OpInfo, dtype=None, device=None):
             sample_name=op_info.name,
         )
 
+def error_inputs_other_op_mint_nonzero_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, as_tuple
+        ("1", {"as_tuple": False}),
+        (make_tensor(shape=(2,), dtype=ms.float32), {"as_tuple": "False"})
+    ]
+    for op_input, kwargs in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(),
+                op_kwargs=kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.nonzero error values'
+        )
 
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_split(op_info: OpInfo, dtype=None, device=None):
@@ -3990,6 +4754,27 @@ def basic_sample_inputs_mint_split(op_info: OpInfo, dtype=None, device=None):
             op_input=make_input(shape),
             op_kwargs={'split_size_or_sections': args},
             sample_name=op_info.name,
+        )
+
+
+def error_inputs_other_op_mint_split_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, split_size_or_sections,dim
+        ("1", (1, 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1', 0)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "0")),
+        (make_tensor(shape=(2,), dtype=ms.float32), ((-1, -2), "0")),
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.split error values'
         )
 
 # sample inputs functions for chunk
@@ -4050,50 +4835,6 @@ def basic_reference_inputs_mint_mean(op_info, dtype=None, device=None, **kwargs)
                   ms.int64, ms.uint64, ms.int16, ms.uint16, ms.bool_]:
             yield OpSampleInput(
                 op_input=make_tensor((3,), dtype=dtype, device=device, ),
-                op_kwargs={'dim': 0, 'keepdim': True, 'dtype': i},
-                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_0'
-            )
-
-# Todo: mint.sum scalar tensor test case runtime error, need to fix.
-def basic_sample_inputs_mint_sum(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    skip_zero_dim = _is_ascend910(device)
-    for sample_input in basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
-        if skip_zero_dim:
-            op_input = sample_input.op_input
-            if isinstance(op_input, ms.Tensor) and op_input.shape == ():
-                continue
-        yield sample_input
-    #loss error: when input dtype is float64, set output dtype is float16
-    if dtype == ms.float64:
-        for i in [ms.float32, ms.float64]:
-            yield OpSampleInput(
-                op_input=make_tensor((4, 5, 4, 9, 5, 4,), dtype=dtype, device=device,),
-                op_kwargs={'dim': (0, 2), 'keepdim': True, 'dtype': i},
-                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_0_2'
-            )
-    #not support int dtype, complex ..
-    elif dtype in [ms.float32, ms.float16, ms.bfloat16]:
-        for i in [ms.float32, ms.float64, ms.float16]:
-            yield OpSampleInput(
-                op_input=make_tensor((3, 7,), dtype=dtype, device=device,),
-                op_kwargs={'dim': 0, 'keepdim': True, 'dtype': i},
-                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_0'
-            )
-    #not support uint32/64/.. dtype output
-    elif dtype in [ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128]:
-        for i in [ms.float32, ms.float64, ms.float16, ms.int8, ms.int32, ms.int64, ms.int16,
-                  ms.bool_]:
-            yield OpSampleInput(
-                op_input=make_tensor((5, 8,), dtype=dtype, device=device,),
-                op_kwargs={'dim': 1, 'keepdim': True, 'dtype': i},
-                sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_1'
-            )
-    else:
-        #other type
-        for i in [ms.float32, ms.float64, ms.float16, ms.int8, ms.uint8, ms.int32, ms.uint32, ms.uint64,
-                  ms.int64, ms.int16, ms.bool_]:
-            yield OpSampleInput(
-                op_input=make_tensor((7, 3, 4,), dtype=dtype, device=device, ),
                 op_kwargs={'dim': 0, 'keepdim': True, 'dtype': i},
                 sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_0'
             )
@@ -4171,44 +4912,162 @@ def basic_sample_inputs_tile(op_info, dtype, device=None, **kwargs):
             sample_name=f"shape{shape}_dims{dims}"
         )
 
-# adjust namsum has keyword parameters：dim
-def basic_op_reduct_func_with_extended_params_mint_nansum(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    if dtype.is_floating_point:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d.is_floating_point]
-    elif dtype in dtypes_integral and dtype != ms.bool_:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d != ms.bool_]
-    else:
-        dtypeNeedConvert = op_info.get_supported_dtypes(device)
+#convert tensor for op
+def convert_tensor_for_op(op_sample_input, op_info):
+    if isinstance(op_info, BinaryOpInfo):
+        op_sample_input.op_args = (op_sample_input.op_input,)
+    elif isinstance(op_info, ReductionOpInfo):
+        op_sample_input.op_kwargs = {"dim": None, "keepdim": False} | op_sample_input.op_kwargs
+        op_sample_input.sample_name = f"{op_sample_input.sample_name}_default"
+    return  op_sample_input
+
+#basic func with keyword parameter dtype
+def structure_basic_op_func_with_dtype_arg(op_info, dtype, device=None, **kwargs):
+    dtypes_dict = next((dtypes for name, dtypes in op_dtype_need_convert.items()
+                        if op_info.name.startswith(name)), {})
+    if dtype in dtypes_dict:
+        dtype_list = [dtypes_dict[dtype]] if not isinstance(dtypes_dict[dtype],list) else dtypes_dict[dtype]
+        dtype_list = list(set(dtype_list) & set(op_info.get_supported_dtypes(device)))
+        for to_dtype in dtype_list:
+            op_sample_input = OpSampleInput(
+                op_input=make_tensor((5, 5), dtype=dtype, device=device),
+                op_args=(),
+                op_kwargs={"dtype": to_dtype},
+                sample_name=f"{op_info.name}_{dtype}_to_{to_dtype}",
+                grad_position=() if dtype.is_floating_point and not to_dtype.is_floating_point else None
+            )
+            yield convert_tensor_for_op(op_sample_input, op_info)
+
+#extra func with keyword parameter dtype
+def structure_extra_op_func_with_dtype_arg(op_info, dtype, device=None, **kwargs):
+    dtypes_dict = next((dtypes for name, dtypes in op_dtype_need_convert.items()
+                        if op_info.name.startswith(name)), {})
+    _uint_values = dtypes_extra_values['_uint_small_values']
+    _int_values = dtypes_extra_values['_int_small_values']
+    _float_vals = dtypes_extra_values['_float_small_values']
+    tensor = None
+    if dtype in dtypes_dict:
+        dtype_list = [dtypes_dict[dtype]] if not isinstance(dtypes_dict[dtype],list) else dtypes_dict[dtype]
+        dtype_list = list(set(dtype_list) & set(op_info.get_supported_dtypes(device)))
+        for to_dtype in dtype_list:
+            if dtype == ms.uint8 :
+                tensor = make_tensor_with_np_array(np.array(_uint_values), dtype=dtype, device=device)
+            elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
+                tensor = make_tensor_with_np_array(np.array(_int_values) , dtype=dtype, device=device)
+            elif dtype.is_floating_point:
+                tensor = make_tensor_with_np_array(np.array(_float_vals), dtype=dtype, device=device)
+            if tensor is not None:
+                op_sample_input = OpSampleInput(
+                        op_input=tensor,
+                        op_args=(),
+                        op_kwargs={"dtype": to_dtype},
+                        sample_name=f"{op_info.name}_extra_{dtype}_convert_to_{to_dtype}",
+                    )
+                yield convert_tensor_for_op(op_sample_input, op_info)
+
+            if dtype.is_floating_point and device=="ascend":
+                op_sample_input = OpSampleInput( op_input=ms.Tensor([np.inf, -np.inf, np.nan]),
+                        op_args=(),
+                        op_kwargs={"dtype": to_dtype},
+                        sample_name=f"{op_info.name}_extra_inf_{dtype}_convert_to_{to_dtype}"
+                    )
+                yield convert_tensor_for_op(op_sample_input, op_info)
+
+#basic reduction func with keyword parameter dtype
+def basic_reduction_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
     yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)
-    for dtypeParameter in dtypeNeedConvert:
-        for sample_input in basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
-            if 'dim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(dim=None)
-            if 'keepdim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(keepdim=False)
-            sample_input.op_kwargs.update(dtype=dtypeParameter)
-            sample_input.sample_name = sample_input.sample_name + f'_{dtype}_covert_to_{dtypeParameter}'
-            yield sample_input
+    yield from structure_basic_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
 
-# adjust namsum has keyword parameters：dim
-def extra_op_reduct_func_with_extended_params_mint_nansum(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    if dtype.is_floating_point:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d.is_floating_point]
-    elif dtype in dtypes_integral and dtype != ms.bool_:
-        dtypeNeedConvert = [d for d in op_info.get_supported_dtypes(device) if d != ms.bool_]
-    else:
-        dtypeNeedConvert = op_info.get_supported_dtypes(device)
+#extra reduction func with keyword parameter dtype
+def extra_reduction_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
     yield from extra_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)
-    for dtypeParameter in dtypeNeedConvert:
-        for sample_input in extra_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
-            if 'dim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(dim=None)
-            if 'keepdim' not in sample_input.op_kwargs.keys():
-                sample_input.op_kwargs.update(keepdim=False)
-            sample_input.op_kwargs.update(dtype=dtypeParameter)
-            sample_input.sample_name = sample_input.sample_name + f'_dype{dtypeParameter}'
-            yield sample_input
+    yield from structure_extra_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
 
+#basic unary func with keyword parameter dtype
+def basic_unary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_basic_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+#extra unary func with keyword parameter dtype
+def extra_unary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from extra_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_extra_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+#basic binary func with keyword parameter dtype
+def basic_binary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from basic_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_basic_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+#extra binary func with keyword parameter dtype
+def extra_binary_op_func_with_dtype_arg(op_info, dtype, device, **kwargs):
+    yield from extra_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs)
+    yield from structure_extra_op_func_with_dtype_arg(op_info, dtype, device, **kwargs)
+
+def basic_sample_inputs_mint_unique_consecutive(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate basic sample inputs for mint.unique op.
+    Reference torch's sample_inputs_unique:
+      - sizes: (), (S,), (S, S), (S, S, S), (S, 1, S), (S, 0, S)
+      - flags: sorted/return_inverse/return_counts in {False, True}
+      - dims: None, -2, -1, 0, 1, 2 with validity checks
+      - inputs: all-zeros, mixed 0/1, random values
+    '''
+    S = SMALL_DIM_SIZE
+    make_x = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    sizes = ((), (S,), (S, S, S), (S, 1, S), (S, 0, S))
+    flag_cases = [(ret_inv, ret_cnt) for ret_inv in (False, True) for ret_cnt in (False, True)]
+    #TODO: mint.unique has different behavior when dim is None or -1, skip it temporarily.
+    dim_cases = (-2, 0, 2)
+
+    for shape in sizes:
+        rank = len(shape)
+        for ret_inv, ret_cnt in flag_cases:
+            for dim in dim_cases:
+                # skip invalid dim per rank
+                if rank == 0 and dim is not None:
+                    continue
+                if dim is not None and (dim < -rank or dim >= rank):
+                    continue
+                # for shapes with a zero dimension, if dim selects a different axis than the zero axis, skip
+                if 0 in shape and dim is not None:
+                    zero_axis = shape.index(0)
+                    dim_norm = dim if dim >= 0 else dim + rank
+                    if dim_norm != zero_axis:
+                        continue
+
+                # Use positional args as per API (no keyword args for unique)
+                # Order: (sorted, return_inverse, return_counts, dim)
+                unique_kwargs = {'return_inverse':ret_inv, 'return_counts':ret_cnt, 'dim':dim}
+
+                # (1) all-zero tensor
+                zero_np_dtype=dtype_to_np_dtype[dtype]
+                zeros_np = np.zeros(shape, dtype=zero_np_dtype)
+                zeros_ms = make_tensor_with_np_array(zeros_np, dtype=dtype, device=device)
+                yield OpSampleInput(
+                    op_input=zeros_ms,
+                    op_args=(),
+                    op_kwargs=unique_kwargs,
+                    sample_name=op_info.name,
+                )
+
+                # (2) mixed 0/1 values (then cast to dtype)
+                ones_zeros_np = np.random.randint(0, 2, size=shape).astype(zero_np_dtype)
+                mixed_ms = make_tensor_with_np_array(ones_zeros_np, dtype=dtype, device=device)
+                yield OpSampleInput(
+                    op_input=mixed_ms,
+                    op_args=(),
+                    op_kwargs=unique_kwargs,
+                    sample_name=op_info.name,
+                )
+
+                # (3) many random values
+                yield OpSampleInput(
+                    op_input=make_x(shape),
+                    op_args=(),
+                    op_kwargs=unique_kwargs,
+                    sample_name=op_info.name,
+                )
 def basic_sample_inputs_GroupNorm(
     op_info: OpInfo,
     dtype,
@@ -4479,6 +5338,25 @@ def basic_sample_inputs_mint_permute(op_info: OpInfo, dtype=None, device=None, *
         yield OpSampleInput(a, op_args=(permutation,), op_kwargs={}, sample_name=op_info.name)
 
 
+def error_inputs_other_op_mint_permute_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim(tuple)
+        ("1", ((0, 1),)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('1',)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ((-1, -2),)),
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.permute error values'
+        )
+
 def basic_sample_inputs_mint_unsqueeze(op_info: OpInfo, dtype=None, device=None, **kwargs):
     shapes_and_axes = [
         ((3, 4, 5), 0),
@@ -4496,6 +5374,23 @@ def basic_sample_inputs_mint_unsqueeze(op_info: OpInfo, dtype=None, device=None,
         tensor = make_tensor(shape, dtype=dtype, device=device, low=None, high=None,)
         yield OpSampleInput(tensor, op_args=(axis, ))
 
+def error_inputs_other_op_mint_unsqueeze_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, dim,
+        ("1", (1,)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ('0',)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (True,))]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.unsqueeze error values'
+        )
 
 def basic_sample_inputs_mint_transpose(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE
@@ -4514,6 +5409,27 @@ def basic_sample_inputs_mint_transpose(op_info: OpInfo, dtype=None, device=None,
     for shape, args in cases:
         yield OpSampleInput(make_arg(shape), op_args=args, op_kwargs={}, sample_name=op_info.name)
 
+
+def error_inputs_other_op_mint_transpose_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #tensor, dim0,dim1,dtype
+        ("1", (0, 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (-1, 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (0, "1"), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (4, 1), {}),
+        (make_tensor(shape=(2,), dtype=ms.float32), (0, 1), {"dtype": "float32"}),
+    ]
+    for op_input, args, kwargs in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs=kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.transpose error values'
+        )
 
 def basic_sample_inputs_mint_topk(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE
@@ -4538,6 +5454,27 @@ def basic_sample_inputs_mint_topk(op_info: OpInfo, dtype=None, device=None, **kw
     yield OpSampleInput(get_tensor_input((S, M, S)), op_args=(3, 1, True, True))
     yield OpSampleInput(get_tensor_input((S, M, S)), op_args=(3, -2, True, True))
 
+
+def error_inputs_other_op_mint_topk_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        #input, k,dim,largest,sorted
+        ("1", (1, 1, True, True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), ("1", 1, True, True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, "1", True, True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, 1, "True", True)),
+        (make_tensor(shape=(2,), dtype=ms.float32), (1, 1, True, "True"))
+    ]
+    for op_input, args in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=args,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.topk error values'
+        )
 
 def basic_sample_inputs_mint_normal(op_info: OpInfo, dtype=None, device=None, **kwargs):
     # S = SMALL_DIM_SIZE
@@ -4705,7 +5642,7 @@ def basic_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
 
     # Add kwarg rounding_mode
     rounding_mode = ['floor', 'trunc']
-    if dtype is not ms.bool_:
+    if dtype  is not ms.bool_:
         for value in rounding_mode:
             yield OpSampleInput(
                 op_input=_input,
@@ -4772,7 +5709,7 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_is_contiguous_ms,
         ref=tensor_is_contiguous_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,#Non-differentiable opertor,gradients are not supported
@@ -4807,16 +5744,17 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.to',
         op=tensor_to_ms,
         ref=tensor_to_torch,
-        domain=(0, None),
-        # int32, int64, float32, float64 and complex have precision issue
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64 and d != ms.bfloat16)),
-        # float64 and complex have precision issue
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
-        op_extra_reference_inputs_func=extra_reference_inputs_unary_op_common_func,
+        domain=(0,None),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint8)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.uint8),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_unary_op_func_with_dtype_arg,
+            ['Complex64_small_value_tensor_inputs_1d','Complex64_large_value_tensor_inputs_1d',
+            'Complex128_small_value_tensor_inputs_1d','Complex128_large_value_tensor_inputs_1d','extra_inf'],skip=True),
         exclude_value=(10922,),
+        disable_discontiguous_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
-        is_differentiable=False,
     ),
     'mint.add': BinaryOpInfo(
         name='mint.add',
@@ -4830,7 +5768,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_add_sub_ext,
         convert_half_to_float=False,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
-        op_error_inputs_func=error_inputs_binary_op_ext_func,
+        op_error_inputs_func=(error_inputs_binary_op_with_alpha,error_inputs_shape_not_match_func),
     ),
     'mint.all':ReductionOpInfo(
         name='mint.all',
@@ -4845,6 +5783,8 @@ op_db: Dict[str, OpInfo] = {
             basic_reference_inputs_reduction_op_common_func, '_default_keepdim', skip=True
         ),
         supports_multiple_dims=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.broadcast_to': OpInfo(
         name='mint.broadcast_to',
@@ -4863,6 +5803,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_broadcast_to,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_broadcast_to_func,
     ),
     'mint.clone': UnaryOpInfo(
         name='mint.clone',
@@ -4880,6 +5821,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=(ms.float16, ms.float32, ),
         dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ),
         ascend_forward_loss_override={ms.float32:1.e+20},
+        not_support_dtypes=(ms.bool, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float64,
+                            ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -4889,6 +5832,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.expm1,
         dtypes_ascend=(ms.float16, ms.float32, ms.bool_, ms.int64),
         dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ms.bool_, ms.int64,),
+        not_support_dtypes=(ms.int8, ms.int16, ms.int32, ms.uint8, ms.float64,  ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -4913,6 +5857,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in (ms.int8, ms.uint8, ms.int16, ms.bfloat16)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in (ms.int8, ms.uint8, ms.int16)),
         disable_extremal_value_tensor_inputs=True,
+        not_support_dtypes=(ms.int8, ms.uint8, ms.int16),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -4921,7 +5866,7 @@ op_db: Dict[str, OpInfo] = {
         op=mint.square,
         ref=torch.square,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -4931,6 +5876,8 @@ op_db: Dict[str, OpInfo] = {
         ref=empty_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        op_basic_reference_inputs_func=basic_reference_inputs_empty,
+        op_error_inputs_func=error_inputs_unary_op_mint_empty_func,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -4941,6 +5888,8 @@ op_db: Dict[str, OpInfo] = {
         ref=empty_like_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        op_basic_reference_inputs_func=basic_reference_inputs_empty,
+        op_error_inputs_func=error_inputs_unary_op_mint_empty_func,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -4970,6 +5919,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_batchnorm1d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_batchnorm_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nn.BatchNorm2d': OpInfo(
         name='mint.nn.BatchNorm2d',
@@ -4982,6 +5933,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_batchnorm2d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_batchnorm_func,
+       not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nn.BatchNorm3d': OpInfo(
         name='mint.nn.BatchNorm3d',
@@ -4994,6 +5947,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=sample_inputs_batchnorm3d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_batchnorm_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nn.functional.batch_norm': OpInfo(
         name='mint.nn.functional.batch_norm',
@@ -5046,8 +6001,10 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=(ms.float16, ms.float32),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         op_basic_reference_inputs_func=basic_reference_inputs_gelu,
+        op_error_inputs_func=error_inputs_gelu_func,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int64, ms.int16, ms.int8, ms.uint8, ms.bool_),
     ),
     'mint.nn.GELU': UnaryOpInfo(
         name='mint.nn.GELU',
@@ -5056,8 +6013,10 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=(ms.float16, ms.float32),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         op_basic_reference_inputs_func=basic_reference_inputs_gelu,
+        op_error_inputs_func=error_inputs_gelu_func,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int64, ms.int16, ms.int8, ms.bool_),
     ),
     'mint.nn.functional.glu': UnaryOpInfo(
         name='mint.nn.functional.glu',
@@ -5070,11 +6029,13 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         ascend910b_forward_loss_override={ms.bfloat16: 0.005},
+        ascend910b_backward_loss_override={ms.bfloat16: 0.006},
         ascend_forward_loss_override={ms.float16: 8e-3},
         op_basic_reference_inputs_func=basic_sample_inputs_glu_func,
         op_extra_reference_inputs_func=extra_sample_inputs_glu_func,
         op_dynamic_inputs_func=dynamic_sample_inputs_glu_func,
         op_error_inputs_func=error_inputs_glu_func,
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.GLU': UnaryOpInfo(
         name='mint.nn.GLU',
@@ -5089,6 +6050,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_glu_func,
         op_extra_reference_inputs_func=extra_sample_inputs_glu_func,
         op_dynamic_inputs_func=dynamic_sample_inputs_glu_func,
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.hardsigmoid': UnaryOpInfo(
         name='mint.nn.functional.hardsigmoid',
@@ -5099,6 +6061,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.bool_, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.hardswish': UnaryOpInfo(
         name='mint.nn.functional.hardswish',
@@ -5109,6 +6072,7 @@ op_db: Dict[str, OpInfo] = {
         exclude_value=(-3.0,3.0,),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.bool_, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.l1_loss': OpInfo(
         name='mint.nn.functional.l1_loss',
@@ -5132,6 +6096,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reference_inputs_leaky_relu,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_error_inputs_func=error_inputs_unary_op_leaky_relu_func,
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128,),
     ),
     'mint.nn.functional.log_softmax': OpInfo(
         name='mint.nn.functional.log_softmax',
@@ -5153,6 +6119,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.nn.functional.logsigmoid,
         dtypes_ascend=(ms.float16, ms.float32),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32)),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5200,6 +6167,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32)),
     ),
     'mint.nn.PReLU': UnaryOpInfo(
         name='mint.nn.PReLU',
@@ -5210,6 +6178,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_prelu_func,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32)),
+        op_error_inputs_func=error_inputs_unary_op_prelu_func,
     ),
     'mint.nn.functional.relu': UnaryOpInfo(
         name='mint.nn.functional.relu',
@@ -5217,6 +6187,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.nn.functional.relu,
         dtypes_ascend=(ms.float16, ms.float32, ms.int8, ms.int32, ms.int64, ms.uint8),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.int8, ms.int32, ms.int64, ms.uint8),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_, ms.float64, ms.int16,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5239,6 +6210,8 @@ op_db: Dict[str, OpInfo] = {
             basic_reference_inputs_unary_op_common_func, ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        #inplace Kwargs, not TypeError
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_),
     ),
     'mint.nn.ReLU6': UnaryOpInfo(
         name='mint.nn.ReLU6',
@@ -5251,6 +6224,7 @@ op_db: Dict[str, OpInfo] = {
             basic_reference_inputs_unary_op_common_func, ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
     ),
     'Tensor.add': BinaryOpInfo(
         name='Tensor.add',
@@ -5262,12 +6236,14 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.sub': BinaryOpInfo(
         name='mint.sub',
         op=mint.sub,
         customize_op_func=sub_ext_func_grad_without_kwargs,
         ref=torch.sub,
+        #torch don't support bool.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.bool_),
         dtypes_cpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
@@ -5279,7 +6255,7 @@ op_db: Dict[str, OpInfo] = {
         convert_half_to_float=False,
         op_basic_reference_inputs_func=basic_sample_inputs_add_sub_ext,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
-        op_error_inputs_func=error_inputs_binary_op_ext_func,
+        op_error_inputs_func=(error_inputs_binary_op_with_alpha,error_inputs_shape_not_match_func),
     ),
     'mint.equal': BinaryOpInfo(
         name='mint.equal',
@@ -5287,6 +6263,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.equal,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
@@ -5314,6 +6291,7 @@ op_db: Dict[str, OpInfo] = {
         ),
         convert_half_to_float=False,
         ascend910b_backward_loss_override={ms.float16: 0.004},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16)),
     ),
     'mint.eq': BinaryOpInfo(
         name='mint.eq',
@@ -5328,7 +6306,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
@@ -5342,17 +6320,16 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(
             [d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16] + list(dtypes_extra_uint)),
         dtypes_ascend910b=tuple([d for d in dtypes_as_torch if not d.is_complex] + list(dtypes_extra_uint)),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        promotion_dtypes_exclude=(ms.uint8,),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
-        supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
-        supports_both_python_scalar=False,
     ),
     'mint.greater': BinaryOpInfo(
         name='mint.greater',
@@ -5361,16 +6338,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(
             [d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16] + list(dtypes_extra_uint)),
         dtypes_ascend910b=tuple([d for d in dtypes_as_torch if not d.is_complex] + list(dtypes_extra_uint)),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
-        supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
-        supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
     ),
     'mint.remainder': BinaryOpInfo(
         name='mint.remainder',
@@ -5380,6 +6356,7 @@ op_db: Dict[str, OpInfo] = {
                             d != ms.int8 and d != ms.int16 and d != ms.uint8  and d != ms.float16 and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_ and
                                 d != ms.int8 and d != ms.int16 and d != ms.uint8  and d != ms.float16),
+        not_support_dtypes=(ms.bool_, ms.uint8, ms.int8, ms.int16),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         #torch not support divided by zero
@@ -5401,6 +6378,7 @@ op_db: Dict[str, OpInfo] = {
         #the input[input] supports types:float16, float32, bfloat16
         dtypes_ascend=(ms.float32, ms.float16),
         dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         #input tensor, other tensor only
@@ -5416,14 +6394,13 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
-        supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
-        supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
     ),
     'mint.less': BinaryOpInfo(
         name='mint.less',
@@ -5433,15 +6410,16 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        promotion_dtypes_exclude=(ms.uint8,),
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         convert_ref_scalar_to_tensor=True,
-        is_differentiable=False,
         supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        is_differentiable=False,
     ),
     'mint.ne': BinaryOpInfo(
         name='mint.ne',
@@ -5454,11 +6432,9 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
         op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
         op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=False,
-        supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
-        supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
     ),
     'mint.maximum': BinaryOpInfo(
         name='mint.maximum',
@@ -5468,10 +6444,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float64),
         dtypes_ascend910b=tuple(
             d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float64),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         convert_ref_scalar_to_tensor=True,
         promotion_dtypes_exclude=(ms.uint8,),
     ),
@@ -5495,7 +6472,7 @@ op_db: Dict[str, OpInfo] = {
         customize_op_func=div_func_grad,
         ref=torch.div,
         op_basic_reference_inputs_func=basic_sample_inputs_mint_div,
-        op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
+        op_error_inputs_func=(error_inputs_binary_op_mint_div, error_inputs_shape_not_match_func),
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
@@ -5505,24 +6482,24 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         # div has precision problem when comparing with torch_cpu, but its result matches torch_npu bitwise.
-        ascend910b_forward_loss_override={ms.float32: 4e-3},
+        ascend910b_forward_loss_override={ms.float32: 5e-3, ms.bfloat16:0.065},
     ),
     'mint.mul': BinaryOpInfo(
         name='mint.mul',
         op=mint.mul,
         ref=torch.mul,
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.float16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.float16),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude = (ms.uint8,),
         convert_ref_scalar_to_tensor=True,
         disable_large_value_tensor_inputs=True,
         # mul has precision problem when comparing with torch_cpu, but its result matches torch_npu bitwise.
-        ascend910b_forward_loss_override={ms.float32: 4e-3},
+        ascend910b_forward_loss_override={ms.float32: 5e-3, ms.bfloat16:0.0069},
     ),
     'mint.repeat_interleave': OpInfo(
         name='mint.repeat_interleave',
@@ -5535,7 +6512,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_repeat_interleave,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_repeat_interleave_func,
     ),
     'mint.arange': OpInfo(
         name='mint.arange',
@@ -5547,7 +6524,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_arange,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_arange_func,
         is_differentiable=False,
     ),
     'Tensor.repeat_interleave': OpInfo(
@@ -5586,10 +6563,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
         supports_left_python_scalar=False,
-        supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'Tensor.minimum': BinaryOpInfo(
         name='Tensor.minimum',
@@ -5601,10 +6579,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         supports_left_python_scalar=False,
-        supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'Tensor.mul': BinaryOpInfo(
         name='Tensor.mul',
@@ -5612,7 +6591,7 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_mul_torch,
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.float16),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
@@ -5631,7 +6610,9 @@ op_db: Dict[str, OpInfo] = {
         # ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8: Error message EH9999.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d!=ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d!=ms.bool_ ),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         exclude_value=(None, (0, )),
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         ascend910b_forward_loss_override={ms.float16:0.1, ms.int8:0.02, ms.float64:0.01, ms.bfloat16:0.007},
         ascend_forward_loss_override={ms.float16:0.25, ms.int8:0.02, ms.float32:1.1, ms.float64:0.01},
         promotion_dtypes_exclude=(ms.uint8,),
@@ -5645,8 +6626,10 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.pow,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d !=ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!= ms.bool_),
+        not_support_dtypes=(ms.bool_,),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_pow,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_pow,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude = (ms.complex64, ms.complex128, ms.uint8, ms.float16, ms.bfloat16, ),
         op_dynamic_inputs_func=None,
         domain=((-4,4),(0, 4)),
@@ -5661,12 +6644,14 @@ op_db: Dict[str, OpInfo] = {
         name='mint.xlogy',
         op=mint.xlogy,
         ref=torch.xlogy,
-        dtypes_ascend=tuple((ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bool_)),
-        dtypes_ascend910b=tuple((ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bfloat16, ms.bool_)),
+        dtypes_ascend=(ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bool_),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d!=ms.float64),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64,),
         op_dynamic_inputs_func=None,
         supports_both_python_scalar = False,
         domain=((None, None), (1e-4, None)),
         ascend910b_forward_loss_override={ms.bfloat16: 1e-2},
+        ascend910b_backward_loss_override={ms.float16: 1e-2},
         disable_extremal_value_tensor_inputs = True,
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -5682,6 +6667,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
         convert_half_to_float = False,
+        op_error_inputs_func=error_inputs_binary_op_ext_func,
     ),
     'mint.bitwise_and': BinaryOpInfo(
         name='mint.bitwise_and',
@@ -5689,8 +6675,10 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.bitwise_and,
         dtypes_ascend=tuple(d for d in dtypes_integral if d != ms.bfloat16 and d not in dtypes_extra_uint),
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        not_support_dtypes=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.bitwise_or': BinaryOpInfo(
         name='mint.bitwise_or',
@@ -5700,8 +6688,10 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
         # List of supported data types (Ascend 910B, excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        not_support_dtypes=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.bitwise_xor': BinaryOpInfo(
         name='mint.bitwise_xor',
@@ -5709,8 +6699,10 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.bitwise_xor,
         dtypes_ascend=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
         dtypes_ascend910b=tuple(d for d in dtypes_integral if d not in dtypes_extra_uint),
+        not_support_dtypes=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.logical_and': BinaryOpInfo(
         name='mint.logical_and',
@@ -5724,6 +6716,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.logical_and': BinaryOpInfo(
         name='Tensor.logical_and',
@@ -5731,12 +6724,15 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_logical_and_torch,
         # 0+1j problem: torch.logical_and(1j, 1j) != ms.logical_and(1j, 1j)
         # Issue ID: #IB99TS
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
+        op_extra_reference_inputs_func = wrap_sample_inputs(extra_reference_inputs_binary_op_common_func,
+                            ['Complex64_1d_x_1d_small_value','Complex128_1d_x_1d_small_value'],skip=True),
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.logical_not': UnaryOpInfo(
         name='mint.logical_not',
@@ -5747,6 +6743,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         is_differentiable=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'Tensor.logical_not': UnaryOpInfo(
         name='Tensor.logical_not',
@@ -5757,6 +6754,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         is_differentiable=False,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.logical_or': BinaryOpInfo(
         name='mint.logical_or',
@@ -5764,12 +6762,15 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.logical_or,
         # 0+1j problem: torch.logical_or(1j, 1j) != ms.logical_or(1j, 1j)
         # Issue ID: #IB99TS
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
+        op_extra_reference_inputs_func = wrap_sample_inputs(extra_reference_inputs_binary_op_common_func,
+                            ['Complex64_1d_x_1d_small_value','Complex128_1d_x_1d_small_value'],skip=True),
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.logical_or': BinaryOpInfo(
         name='Tensor.logical_or',
@@ -5785,6 +6786,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.logical_xor': BinaryOpInfo(
         name='mint.logical_xor',
@@ -5792,12 +6794,13 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.logical_xor,
         # 0+1j problem: torch.logical_xor(1j, 1j) != ms.logical_xor(1j, 1j)
         # Issue ID: #IB99TS
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'mint.atan2': BinaryOpInfo(
         name='mint.atan2',
@@ -5808,14 +6811,13 @@ op_db: Dict[str, OpInfo] = {
                             and d != ms.complex128),
         # List of supported data types (Ascend 910B), excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.complex64 and d != ms.complex128),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         op_dynamic_inputs_func=None,
         # Disable parameter with a value of 0 (Ascend 910A)
         exclude_value=((0,), (0)),
         convert_ref_scalar_to_tensor=True,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude=(ms.uint8,),
-        supports_left_python_scalar=False,
-        supports_both_python_scalar=False,
         ascend_backward_loss_override={ms.float16:3e-3},
         ascend910b_backward_loss_override={ms.float16:0.01},
     ),
@@ -5828,10 +6830,11 @@ op_db: Dict[str, OpInfo] = {
         # List of supported data types (Ascend 910B), excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.complex64 and d != ms.complex128),
         op_dynamic_inputs_func=None,
+        not_support_dtypes=(ms.complex64, ms.complex128),
         # Disable parameter with a value of 0 (Ascend 910A)
         exclude_value=((0,), (0)),
         convert_ref_scalar_to_tensor=True,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         promotion_dtypes_exclude=(ms.uint8,),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
@@ -5860,6 +6863,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.float_power,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and not d.is_complex),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_both_python_scalar=False,
@@ -5952,6 +6956,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.float16:0.02344},
         ascend910b_backward_loss_override={ms.float16:0.0157, ms.bfloat16:0.0157},
         ascend_backward_loss_override={ms.float16:0.0234},
+        not_support_dtypes=(ms.complex64, ms.complex128,),
     ),
     'mint.cosh': UnaryOpInfo(
         name='mint.cosh',
@@ -5979,9 +6984,10 @@ op_db: Dict[str, OpInfo] = {
         name='mint.frac',
         op=mint.frac,
         ref=torch.frac,
-        dtypes_ascend=(ms.float16, ms.float32,),
-        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32,),
+        dtypes_ascend=(ms.float16, ms.float32),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
         exclude_value=(-1.0e+20, 1.0e+20),
+        not_support_dtypes=(ms.float64, ms.complex64, ms.complex128, ms.bool_),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5991,6 +6997,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.log10,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        domain=(0,None),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6000,6 +7007,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.log1p,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6008,8 +7016,10 @@ op_db: Dict[str, OpInfo] = {
         op=mint.log2,
         ref=torch.log2,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
+        domain=(0,None),
         dtypes_cpu=(),
+
         dtypes_gpu=(),
     ),
     'mint.negative': UnaryOpInfo(
@@ -6018,6 +7028,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.negative,
         dtypes_ascend=(ms.int8, ms.int32, ms.int64, ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.bool_ and d!=ms.int16 and d!=ms.uint8),
+        not_support_dtypes=(ms.bool_, ms.int16, ms.uint8),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6030,6 +7041,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64),
     ),
     'mint.imag': UnaryOpInfo(
         name='mint.imag',
@@ -6037,6 +7049,8 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.imag,
         dtypes_ascend=(ms.complex64, ms.complex128),
         dtypes_ascend910b=(ms.complex64, ms.complex128),
+        not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8,
+                            ms.float16, ms.float32, ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6044,8 +7058,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.real',
         op=mint.real,
         ref=torch.real,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and  d!=ms.float16)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d !=ms.float16 and d!=ms.bfloat16)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d!=ms.bfloat16 and d!=ms.float16)),
+        dtypes_ascend910b=tuple(d for d in  dtypes_as_torch if (d!=ms.bfloat16 and d!=ms.float16)),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6063,10 +7077,12 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.reciprocal',
         op=tensor_reciprocal_ms,
         ref=tensor_reciprocal_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d!= ms.complex64 and  d != ms.bfloat16  ),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.complex64 ),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if  d != ms.bfloat16 ),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                        ['Complex64_inf','Complex64_neginf'],skip=True),
         ascend_backward_loss_override = {ms.float16:0.008},
         ascend910b_backward_loss_override = {ms.float16:0.2},
     ),
@@ -6074,10 +7090,12 @@ op_db: Dict[str, OpInfo] = {
         name='mint.reciprocal',
         op=mint.reciprocal,
         ref=torch.reciprocal,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d!= ms.complex64 and d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.complex64 ),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                        ['Complex64_inf','Complex64_neginf'],skip=True),
         ascend_backward_loss_override = {ms.float16:0.008},
         ascend910b_backward_loss_override = {ms.float16:0.2},
     ),
@@ -6091,6 +7109,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         # tanh has precision problem when converting input from half(fp16) to float
         convert_half_to_float=False,
+        not_support_dtypes=(ms.float64, ms.complex64, ms.complex128,),
     ),
     'mint.tan': UnaryOpInfo(
         name='mint.tan',
@@ -6138,6 +7157,7 @@ op_db: Dict[str, OpInfo] = {
         # For bfloat16 inputs, standard 2 is satisfied. Use 0.1 on backward according to CCB conclusions.
         ascend_backward_loss_override={ms.float32: 0.0005, ms.float16: 0.06, ms.bfloat16:0.1},
         ascend910b_backward_loss_override={ms.float32: 0.0005, ms.float16: 0.06, ms.bfloat16:0.1},
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.bfloat16': UnaryOpInfo(
         name='Tensor.bfloat16',
@@ -6172,8 +7192,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.float',
         op=tensor_float_ms,
         ref=tensor_float_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.float),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6181,8 +7201,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.half',
         op=tensor_half_ms,
         ref=tensor_half_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 ),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6190,19 +7210,21 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.int',
         op=tensor_int_ms,
         ref=tensor_int_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.bfloat16 and d != ms.int)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.int),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 ),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          'Complex128_large_value',skip=True),
         disable_extremal_value_tensor_inputs=True,
     ),
     'Tensor.long': UnaryOpInfo(
         name='Tensor.long',
         op=tensor_long_ms,
         ref=tensor_long_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.long)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.long),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -6218,6 +7240,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_chunk,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_chunk,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_chunk, # mint.chunk limitedly supports dynamic cases
+        op_error_inputs_func=error_inputs_other_op_mint_chunk_func
     ),
     'mint.gather': OpInfo(
         name='mint.gather',
@@ -6230,6 +7253,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_gather,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_gather,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_gather,
+        op_error_inputs_func=error_inputs_other_op_mint_gather_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.gather': OpInfo(
         name='Tensor.gather',
@@ -6331,10 +7356,10 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=functools.partial(dynamic_sample_inputs_mint_interpolate, mode="nearest3d"),
     ),
-    'mint.mean': ReductionOpInfo(
-        name='mint.mean',
-        op=tensor_mint_mean,
-        ref=tensor_torch_mean,
+    'mint.mean(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.mean(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.mean),
+        ref=wrap_op_with_dtype(torch.mean),
         # Todo: MindSpore additionally supports int dtype, while PyTorch does not.
         dtypes_ascend=tuple(
             d for d in dtypes_as_torch
@@ -6347,17 +7372,64 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         # Todo: empty tensor case result not correct.
-        op_basic_reference_inputs_func=basic_reference_inputs_mint_mean,
-        op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
-        ),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        #torch return wrong value (327.68) at large tensor with complex128
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                        ['Complex128_large','Complex64_empty', 'Complex128_empty'],skip=True),
+        not_support_dtypes=(ms.bool_,),
         ascend910b_forward_loss_override={ms.bfloat16: 0.03125},
-        convert_half_to_float=True,
+        convert_half_to_float=False,
     ),
-    'mint.argmax': ReductionOpInfo(
-        name='mint.argmax',
-        op=mint.argmax,
-        ref=torch.argmax,
+    'mint.mean(input, dim, keepdim=False, *, dtype=None)': ReductionOpInfo(
+        name='mint.mean(input, dim, keepdim=False, *, dtype=None)',
+        op=wrap_reduction_op_overload_with_dtype(mint.mean),
+        ref=wrap_reduction_op_overload_with_dtype(torch.mean),
+        # Todo: MindSpore additionally supports int dtype, while PyTorch does not.
+        dtypes_ascend=tuple(
+            d for d in dtypes_as_torch
+            if (d.is_floating_point or d.is_complex) and d != ms.bfloat16
+        ),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch
+            if d.is_floating_point or d.is_complex
+        ),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # Todo: empty tensor case result not correct.
+        op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reduction_op_func_with_dtype_arg,
+                                                    ['Complex64_empty_dim1', 'Complex64_empty_dim0',
+                                                    'Complex128_empty_dim0', 'Complex128_empty_dim1'],skip=True),
+        not_support_dtypes=(ms.bool_,),
+        ascend910b_forward_loss_override={ms.bfloat16: 0.03125},
+        convert_half_to_float=False,
+    ),
+    'mint.argmax(input)': UnaryOpInfo(
+        name='mint.argmax(input)',
+        op=wrap_op(mint.argmax),
+        ref=wrap_op(torch.argmax),
+        dtypes_ascend=tuple(
+            d for d in dtypes_as_torch
+            if d not in (ms.bfloat16, ms.bool_, ms.complex64, ms.complex128)
+        ),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch
+            if d not in (ms.bool_, ms.complex64, ms.complex128)
+        ),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # Todo: When dim is default or empty tensor cases, results are not correct.
+        op_basic_reference_inputs_func=basic_reference_inputs_unary_op_common_func,
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func,'empty',skip=True),
+        op_dynamic_inputs_func=None,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
+        is_differentiable=False,
+    ),
+    'mint.argmax(input, dim, keepdim=False)': ReductionOpInfo(
+        name='mint.argmax(input, dim, keepdim=False)',
+        op=wrap_reduction_op_overload(mint.argmax),
+        ref=wrap_reduction_op_overload(torch.argmax),
         dtypes_ascend=tuple(
             d for d in dtypes_as_torch
             if d not in (ms.bfloat16, ms.bool_, ms.complex64, ms.complex128)
@@ -6378,8 +7450,10 @@ op_db: Dict[str, OpInfo] = {
             skip=True
         ),
         op_dynamic_inputs_func=None,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
         supports_multiple_dims=False,
         is_differentiable=False,
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.argmin': ReductionOpInfo(
         name='mint.argmin',
@@ -6408,6 +7482,8 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
         is_differentiable=False,
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_),
     ),
     'mint.count_nonzero': ReductionOpInfo(
         name='mint.count_nonzero',
@@ -6437,6 +7513,7 @@ op_db: Dict[str, OpInfo] = {
         #910b backward loss exceeds the error range
         ascend910b_forward_loss_override={ms.bfloat16: 0.007},
         ascend910b_backward_loss_override={ms.bfloat16: 0.04, ms.float16:0.008},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'mint.std': ReductionOpInfo(
         name='mint.std',
@@ -6457,6 +7534,7 @@ op_db: Dict[str, OpInfo] = {
         convert_half_to_float=False,
         ascend910b_forward_loss_override={ms.bfloat16: 0.007, ms.float16:0.003},
         ascend910b_backward_loss_override={ms.float16:0.005, ms.bfloat16: 0.014},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'mint.std_mean': ReductionOpInfo(
         name='mint.std_mean',
@@ -6484,6 +7562,7 @@ op_db: Dict[str, OpInfo] = {
         #910b forward and backward loss exceeds the error range
         ascend910b_forward_loss_override={ms.bfloat16: 0.04},
         ascend910b_backward_loss_override={ms.float16: 0.02, ms.bfloat16:0.5},
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
     ),
     'Tensor.argmax': ReductionOpInfo(
         name='Tensor.argmax',
@@ -6545,6 +7624,8 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
         is_differentiable=False,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'Tensor.sum': ReductionOpInfo(
         name='Tensor.sum',
@@ -6555,34 +7636,38 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        # On Ascend 910A, the large-shape input case has about a 3% chance of
-        # failing the accuracy check, so set loss to 0.001 temporarily.
-        ascend910b_forward_loss_override={ms.bfloat16:4e-1},
-        op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, ['dim0_keepdim', 'dim_last'], skip=True
-        ),
-        op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'large',
-            loss={"ascend": 0.001}
-        ),
+        #shape=(5,5,5,5，5) loss
+        ascend910b_forward_loss_override={ms.bfloat16: 8e-2},
+        ascend_forward_loss_override={ms.float32: 2e-4},
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reduction_op_func_with_dtype_arg,
+            ['dim0_keepdim', 'dim_last'],skip=True),
+        op_extra_reference_inputs_func=extra_reduction_op_func_with_dtype_arg,
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'Tensor.mean': ReductionOpInfo(
         name='Tensor.mean',
         op=tensor_mean_ms,
         ref=tensor_mean_torch,
         op_dynamic_inputs_func=None,
-        dtypes_ascend=(ms.float16, ms.float32, ms.float64,),
-        dtypes_ascend910b=(ms.float16, ms.float32, ms.float64, ms.bfloat16,),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        #torch only support float and complex
+        ascend910b_forward_loss_override={ms.bfloat16: 7e-3},
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex)),
+        op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reduction_op_func_with_dtype_arg,
+        ['Complex64_empty_dim1','Complex64_empty_dim0','Complex128_empty_dim0','Complex128_empty_dim1'],
+    skip=True),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
-    'mint.sum': ReductionOpInfo(
-        name='mint.sum',
-        op=tensor_mint_sum,
-        ref=tensor_torch_sum,
-        op_basic_reference_inputs_func=basic_sample_inputs_mint_sum,
+    'mint.sum(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.sum(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.sum),
+        ref=wrap_op_with_dtype(torch.sum),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
+            extra_unary_op_func_with_dtype_arg, ['Complex128_large','empty'], skip=True
         ),
         ascend_forward_loss_override={ms.float32: 0.0005},
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
@@ -6591,21 +7676,52 @@ op_db: Dict[str, OpInfo] = {
                                 and d != ms.float64 and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        convert_half_to_float=True,
     ),
-    'mint.max': ReductionOpInfo(
-        name='mint.max',
-        op=mint.max,
-        ref=torch.max,
+    'mint.sum(input, dim, keepdim=False, *, dtype=None)': ReductionOpInfo(
+        name='mint.sum(input, dim, keepdim=False, *, dtype=None)',
+        op=wrap_reduction_op_overload_with_dtype(mint.sum),
+        ref=wrap_reduction_op_overload_with_dtype(torch.sum),
+        op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reduction_op_func_with_dtype_arg,'empty',skip=True
+        ),
+        ascend_forward_loss_override={ms.float32: 0.0005},
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        # float64 not support 0 dim tensor
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex
+                                and d != ms.float64 and d != ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.max(input)': UnaryOpInfo(
+        name='mint.max(input)',
+        op=wrap_op(mint.max),
+        ref=wrap_op(torch.max),
+        op_basic_reference_inputs_func=basic_reference_inputs_unary_op_common_func,
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func, 'empty', skip=True),
+        op_dynamic_inputs_func=None,
+        #float64 is cannot be implemented for backward
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in (ms.float64, ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d!=ms.float64),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.max(input, dim, keepdim=False)': ReductionOpInfo(
+        name='mint.max(input, dim, keepdim=False)',
+        op=wrap_reduction_op_overload(mint.max),
+        ref=wrap_reduction_op_overload(torch.max),
         op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, 'default_keepdim', skip=True
+            basic_reference_inputs_reduction_op_common_func, '_default', skip=True
         ),
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
+            extra_reference_inputs_reduction_op_common_func, ['empty','_default'], skip=True
         ),
         op_dynamic_inputs_func=None,
-        dtypes_ascend=(ms.bool_,ms.float16,ms.float32,ms.int64),
-        dtypes_ascend910b=(ms.bool_,ms.float16,ms.float32,ms.int64,ms.bfloat16),
+        dtypes_ascend=(ms.bool_, ms.float16, ms.float32, ms.int64),
+        dtypes_ascend910b=(ms.bool_, ms.float16, ms.float32, ms.int64, ms.bfloat16),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.uint8, ms.int8, ms.int16, ms.int32,),
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
@@ -6626,53 +7742,83 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
-    'mint.min': ReductionOpInfo(
-        name='mint.min',
-        op=mint.min,
-        customize_op_func=mint_min_func_grad_without_kwargs,
-        ref=torch.min,
+    'mint.min(input)': UnaryOpInfo(
+        name='mint.min(input)',
+        op=wrap_op(mint.min),
+        ref=wrap_op(torch.min),
+        op_basic_reference_inputs_func=basic_reference_inputs_unary_op_common_func,
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func, 'empty', skip=True
+        ),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in (ms.float64, ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.min(input, dim, keepdim=False)': ReductionOpInfo(
+        name='mint.min(input, dim, keepdim=False)',
+        op=wrap_reduction_op_overload(mint.min),
+        ref=wrap_reduction_op_overload(torch.min),
         op_basic_reference_inputs_func=wrap_sample_inputs(
             basic_reference_inputs_reduction_op_common_func, '_default', skip=True
         ),
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
+            extra_reference_inputs_reduction_op_common_func, ['empty','_default'], skip=True
         ),
-        dtypes_ascend=(ms.bool_, ms.int64, ms.float16, ms.float32),
-        dtypes_ascend910b=(ms.bool_, ms.int64, ms.float16, ms.float32, ms.bfloat16),
+        op_dynamic_inputs_func=None,
+        dtypes_ascend=(ms.bool_, ms.float16, ms.float32, ms.int64),
+        dtypes_ascend910b=(ms.bool_, ms.float16, ms.float32, ms.int64, ms.bfloat16),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.uint8, ms.int8, ms.int16, ms.int32,),
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
-        is_differentiable=False,
     ),
-    'mint.prod': ReductionOpInfo(
-        name='mint.prod',
-        op=mint.prod,
-        ref=torch.prod,
-        op_basic_reference_inputs_func=wrap_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func,
-            ['_dim_last_0d', '_default_keepdim'],
-            skip=True
-        ),
+    'mint.prod(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.prod(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.prod),
+        ref=wrap_op_with_dtype(torch.prod),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
+            extra_unary_op_func_with_dtype_arg, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
+        ascend910b_forward_loss_override={ms.bfloat16:0.1},
         dtypes_cpu=(),
         dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'mint.prod(input, dim, keepdim=False, *, dtype=None)': ReductionOpInfo(
+        name='mint.prod(input, dim, keepdim=False, *, dtype=None)',
+        op=wrap_reduction_op_overload_with_dtype(mint.prod),
+        ref=wrap_reduction_op_overload_with_dtype(torch.prod),
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reduction_op_func_with_dtype_arg,['_dim_last_0d', '_default'], skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reduction_op_func_with_dtype_arg,
+            ['empty', '_default'],
+            skip=True
+        ),
+        op_dynamic_inputs_func=None,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend910b_forward_loss_override={ms.bfloat16:0.1},
         supports_multiple_dims=False,
-        ascend910b_forward_loss_override={ms.bfloat16: 6.6e+12},
-        ascend910b_backward_loss_override={ms.bfloat16: 1.41e+14},
         is_differentiable=False,
     ),
     'mint.tile': UnaryOpInfo(
         name='mint.tile',
         op=mint.tile,
         ref=torch.tile,
-        dtypes_ascend=(ms.float32,),
-        dtypes_ascend910b=(ms.float32,),
+        dtypes_ascend=(ms.float32, ms.float16, ms.uint8, ms.int8, ms.complex64),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.uint8, ms.int8, ms.complex64),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_tile,
@@ -6707,6 +7853,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     '==': BinaryOpInfo(
         name='==',
@@ -6733,6 +7880,8 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_greater_equal_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        promotion_dtypes_exclude=(ms.uint8,),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         is_differentiable=False,
@@ -6740,6 +7889,7 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.greater': BinaryOpInfo(
         name='Tensor.greater',
@@ -6747,12 +7897,14 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_greater_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64,ms.complex128),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
     'Tensor.less_equal': BinaryOpInfo(
         name='Tensor.less_equal',
@@ -6766,6 +7918,8 @@ op_db: Dict[str, OpInfo] = {
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.less': BinaryOpInfo(
         name='Tensor.less',
@@ -6775,11 +7929,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        #promotion does not alian with torch
+        promotion_dtypes_exclude=(ms.uint8,),
         #element 0 of tensors does not require grad and does not have a grad_fn
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     '<': BinaryOpInfo(
         name='<',
@@ -6821,6 +7979,8 @@ op_db: Dict[str, OpInfo] = {
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.le': BinaryOpInfo(
         name='Tensor.le',
@@ -6834,6 +7994,8 @@ op_db: Dict[str, OpInfo] = {
         is_differentiable=False,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.lt': BinaryOpInfo(
         name='Tensor.lt',
@@ -6843,11 +8005,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
+        #promotion cannot alin with torch
+        promotion_dtypes_exclude=(ms.uint8,),
         is_differentiable=False,
         convert_ref_scalar_to_tensor=True,
         supports_left_python_scalar=False,
         supports_right_python_scalar=True,
         supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.floor': UnaryOpInfo(
         name='mint.floor',
@@ -6861,6 +8027,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         convert_half_to_float=True,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_),
     ),
     'mint.ceil': UnaryOpInfo(
         name='mint.ceil',
@@ -6871,13 +8038,15 @@ op_db: Dict[str, OpInfo] = {
         disable_large_value_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int16, ms.int64, ms.int8, ms.uint8, ms.bool_),
     ),
     'mint.erf': UnaryOpInfo(
         name='mint.erf',
         op=mint.erf,
         ref=torch.erf,
-        dtypes_ascend=(ms.double, ms.float16, ms.int64, ms.bool_),
-        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.int64, ms.bool_),
+        dtypes_ascend=(ms.double, ms.float16, ms.float32, ms.int64, ms.bool_),
+        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.float32, ms.int64, ms.bool_),
+        not_support_dtypes=(ms.uint8, ms.int8, ms.int16, ms.int32, ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6885,8 +8054,9 @@ op_db: Dict[str, OpInfo] = {
         name='mint.erfc',
         op=mint.erfc,
         ref=torch.erfc,
-        dtypes_ascend=(ms.double, ms.float16, ms.int64, ms.bool_),
-        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.int64, ms.bool_),
+        dtypes_ascend=(ms.double, ms.float16, ms.float32, ms.int64, ms.bool_),
+        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.float32, ms.int64, ms.bool_),
+        not_support_dtypes=(ms.uint8, ms.int8, ms.int16, ms.int32, ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6899,6 +8069,7 @@ op_db: Dict[str, OpInfo] = {
         domain=(-1, 1),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.double, ms.complex64, ms.complex128),
         # issue id IBGPZZ
         ascend_backward_loss_override={ms.float16: 0.096, ms.float32: 0.08},
         ascend910b_backward_loss_override={ms.float16: 0.03125, ms.float32: 0.0231781, ms.bfloat16: 0.0625},
@@ -6907,10 +8078,11 @@ op_db: Dict[str, OpInfo] = {
         name='mint.exp2',
         op=mint.exp2,
         ref=torch.exp2,
-        dtypes_ascend=(ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.int16, ms.bool_),
-        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8,
+        dtypes_ascend=(ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.uint8, ms.int16, ms.bool_),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.uint8,
                            ms.int16, ms.bool_),
         convert_half_to_float=False,
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
         ascend_backward_loss_override={ms.float16: 0.25},
@@ -6926,6 +8098,7 @@ op_db: Dict[str, OpInfo] = {
         ),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.uint8, ms.int8, ms.int32, ms.int16),
     ),
     'mint.log': UnaryOpInfo(
         name='mint.log',
@@ -6945,6 +8118,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d not in [ms.int16, ms.uint8, ms.bool_])),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.int16, ms.uint8, ms.bool_),
     ),
     'mint.sigmoid': UnaryOpInfo(
         name='mint.sigmoid',
@@ -6975,6 +8149,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bool_)),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.floor': UnaryOpInfo(
         name='Tensor.floor',
@@ -6983,6 +8158,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bool_, ms.bfloat16]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
         disable_large_value_tensor_inputs=True,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6993,6 +8169,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=(ms.float16, ms.float32, ms.float64),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64),
         disable_large_value_tensor_inputs=True,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7004,6 +8181,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(
             ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ms.int64, ms.bool_
         ),
+        not_support_dtypes=( ms.int8,  ms.int16,  ms.int32,  ms.uint8),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7012,7 +8190,7 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_log_ms,
         ref=tensor_log_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend910b=dtypes_as_torch,
         domain=(1e-5, None),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -7023,8 +8201,11 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_flatten_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=dtypes_as_torch,
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_flatten,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_flatten,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_error_inputs_func=error_inputs_func_tensor_flatten,
     ),
     'Tensor.neg': UnaryOpInfo(
         name='Tensor.neg',
@@ -7032,6 +8213,7 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_neg_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.bfloat16, ms.bool_, ms.int16, ms.uint8]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.int16, ms.uint8]),
+        not_support_dtypes=(ms.bool_, ms.int16, ms.uint8),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7062,6 +8244,7 @@ op_db: Dict[str, OpInfo] = {
         # torch donen't support bool_
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d not in [ms.bool_, ms.bfloat16])),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bool_)),
+        not_support_dtypes=(ms.complex128, ms.complex64,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7097,6 +8280,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128, ms.bfloat16,
                                                                     ]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128, ]),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
         exclude_value=(None, (0,)),
@@ -7107,13 +8292,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
-    'mint.ones_like': UnaryOpInfo(
-        name='mint.ones_like',
-        op=mint.ones_like,
-        ref=torch.ones_like,
+    'mint.ones_like(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.ones_like(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.ones_like),
+        ref=wrap_op_with_dtype(torch.ones_like),
         is_differentiable=False,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        not_support_dtypes=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7128,14 +8315,17 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_permute,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_permute_func,
     ),
-    'mint.zeros_like': UnaryOpInfo(
-        name='mint.zeros_like',
-        op=mint.zeros_like,
-        ref=torch.zeros_like,
+    'mint.zeros_like(input, *, dtype=None)': UnaryOpInfo(
+        name='mint.zeros_like(input, *, dtype=None)',
+        op=wrap_op_with_dtype(mint.zeros_like),
+        ref=wrap_op_with_dtype(torch.zeros_like),
         is_differentiable=False,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.uint32, ms.uint64, ms.bfloat16]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.uint32, ms.uint64]),
+        op_basic_reference_inputs_func=basic_unary_op_func_with_dtype_arg,
+        not_support_dtypes=(ms.uint32, ms.uint64),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7150,17 +8340,20 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_select,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        op_error_inputs_func=error_inputs_other_op_mint_select_func,
     ),
     'mint.cumsum': OpInfo(
         name='mint.cumsum',
         op=mint.cumsum,
         ref=torch.cumsum,
+        #input complex not error
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_cumsum,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_cumsum,
+        op_error_inputs_func=error_inputs_other_op_mint_cumsum_func,
         op_dynamic_inputs_func=None,
         # issue ID ICWZN8: cumsum has accumulation bias problem.
         ascend_forward_loss_override={ms.float16: 1e-2},
@@ -7180,6 +8373,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_index_select,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_index_select,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_index_select_func,
     ),
     'Tensor.index_select': OpInfo(
         name='Tensor.index_select',
@@ -7192,6 +8386,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_index_select,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_index_select,
         op_dynamic_inputs_func=None,
+
     ),
     'mint.masked_select': OpInfo(
         name='mint.masked_select',
@@ -7204,6 +8399,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_masked_select,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_masked_select,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_masked_select_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.nonzero': OpInfo(
         name='mint.nonzero',
@@ -7217,6 +8414,8 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=extra_sample_inputs_mint_nonzero,
         op_dynamic_inputs_func=None,
         is_differentiable=False,
+        op_error_inputs_func=error_inputs_other_op_mint_nonzero_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.flatten': OpInfo(
         name='mint.flatten',
@@ -7226,6 +8425,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_flatten,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_flatten,
+        op_error_inputs_func=error_inputs_other_op_mint_flatten_func,
         op_dynamic_inputs_func=None,
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -7303,6 +8503,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_unsqueeze,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_unsqueeze_func,
     ),
     'mint.transpose': OpInfo(
         name='mint.transpose',
@@ -7315,18 +8516,21 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_transpose,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_transpose_func,
     ),
     'mint.topk': OpInfo(
         name='mint.topk',
         op=mint.topk,
         ref=torch.topk,
-        dtypes_ascend=(ms.float32, ),
-        dtypes_ascend910b=(ms.float32, ),
+        dtypes_ascend=(ms.float32, ms.int8, ms.uint8, ms.int16, ms.uint16, ms.float16),
+        dtypes_ascend910b=(ms.float32, ms.int8, ms.uint8, ms.int16, ms.uint16, ms.float16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_topk,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_topk_func,
+         not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'mint.normal': OpInfo(
         name='mint.normal',
@@ -7340,6 +8544,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
         skip_forward_comparison=True,
+        op_error_inputs_func=error_inputs_reduction_op_normal,
     ),
     'mint.nn.functional.adaptive_avg_pool3d': OpInfo(
         name='mint.nn.functional.adaptive_avg_pool3d',
@@ -7478,14 +8683,16 @@ op_db: Dict[str, OpInfo] = {
         name='mint.unique',
         op=mint.unique,
         ref=torch.unique,
-        dtypes_ascend=(ms.float32, ms.float16),
-        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_ascend=(ms.float32, ms.float16, ms.bool_, ms.int8, ms.uint8, ms.int16),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16, ms.bool_, ms.int8, ms.uint8, ms.int16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_unique,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
         is_differentiable=False,
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        op_error_inputs_func=error_inputs_other_op_mint_unique_func,
     ),
     'Tensor.unique': OpInfo(
         name='Tensor.unique',
@@ -7504,13 +8711,15 @@ op_db: Dict[str, OpInfo] = {
         name='mint.clamp',
         op=mint.clamp,
         ref=torch.clamp,
-        dtypes_ascend=(ms.float32, ms.float16),
-        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_ascend=(ms.float32, ms.float16, ms.int8, ms.uint8, ms.int16),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16, ms.uint8, ms.int16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_clamp,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_clamp_func,
+        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.clamp': OpInfo(
         name='Tensor.clamp',
@@ -7609,6 +8818,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_split,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_split_func,
     ),
     'Tensor.split': OpInfo(
         name='Tensor.split',
@@ -7633,8 +8843,9 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_conv1d,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_conv1d_func,
         is_differentiable=True,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int8, ms.uint8, ms.int16, ms.uint16),
     ),
     'mint.nn.functional.conv1d': OpInfo(
         name='mint.nn.functional.conv1d',
@@ -7710,7 +8921,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_linear,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_other_op_mint_nn_linear_func,
         is_differentiable=True,
     ),
     'Tensor.masked_scatter': OpInfo(
@@ -7773,6 +8984,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple([ms.bfloat16, ms.float16, ms.float32,]),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int64, ms.int16, ms.int8, ms.bool_),
     ),
     'mint.nn.functional.layer_norm': OpInfo(
         name='mint.nn.functional.layer_norm',
@@ -7826,6 +9038,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.bfloat16: 7e-3},
         ascend910b_backward_loss_override={ms.bfloat16: 4e-2,ms.float16: 2e-3},
         ascend_backward_loss_override={ms.float16: 2e-3},
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64),
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
                                             'default',skip=True),
     ),
@@ -7840,6 +9053,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         supports_multiple_dims=False,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64, ms.bool_),
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
                 ['default_keepdim','dim0_keepdim_0d','BFloat16_dim_last_0d'],skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
@@ -7857,6 +9071,8 @@ op_db: Dict[str, OpInfo] = {
         supports_multiple_dims=False,
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,
                                             'default_keepdim',skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.amin': ReductionOpInfo(
         name='mint.amin',
@@ -7870,6 +9086,8 @@ op_db: Dict[str, OpInfo] = {
                         ['default_keepdim', 'dim0_keepdim_0d', 'dim_last_0d',], skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
                                                           'empty', skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
     'mint.amax': ReductionOpInfo(
         name='mint.amax',
@@ -7883,6 +9101,8 @@ op_db: Dict[str, OpInfo] = {
                         ['default_keepdim','dim0_keepdim_0d', 'dim_last_0d',], skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func,
                                                           'empty', skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_error_inputs_func=error_inputs_reduction_keepdim_func,
     ),
    'mint.logaddexp2': BinaryOpInfo(
         name='mint.logaddexp2',
@@ -7890,6 +9110,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.logaddexp2,
         dtypes_ascend=(ms.float16, ms.float32),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_scalar_inputs=True,
@@ -7906,8 +9127,9 @@ op_db: Dict[str, OpInfo] = {
         op=mint.fmod,
         customize_op_func=op_func_grad_without_kwargs(mint.fmod),
         ref=torch.fmod,
-        dtypes_ascend=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64,),
+        dtypes_ascend=tuple(),
         dtypes_ascend910b=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64, ms.bfloat16,),
+        not_support_dtypes=(ms.int16, ms.bool_, ms.complex64, ms.complex128,),
         exclude_value=(None, (0,)),
         promotion_dtypes_exclude=(ms.uint8, ),
         ascend_backward_loss_override={ms.float16: 1.e-2},
@@ -7931,14 +9153,25 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        #large numbers nansum float16 covert to bfloat16 loss 0.05,float16 covert to bfloat16 loss 0.02
-        ascend910b_forward_loss_override={ms.float16: 3e-2,ms.bfloat16: 6e-2},
-        op_basic_reference_inputs_func=wrap_sample_inputs(basic_op_reduct_func_with_extended_params_mint_nansum,
-                        ['default_keepdim_0d','dim0_keepdim_0d', 'dim_last_0d',], skip=True),
-        op_extra_reference_inputs_func=wrap_sample_inputs(extra_op_reduct_func_with_extended_params_mint_nansum,
-                                                          'empty', skip=True),
+        #large numbers nansum get large loss
+        ascend910b_forward_loss_override={ms.bfloat16: 0.053},
+        op_basic_reference_inputs_func=basic_reduction_op_func_with_dtype_arg,
+        op_extra_reference_inputs_func=extra_reduction_op_func_with_dtype_arg,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.float64),
+),
+    'mint.unique_consecutive': ReductionOpInfo(
+        name='mint.unique_consecutive',
+        op=mint.unique_consecutive,
+        ref=torch.unique_consecutive,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_unique_consecutive,
+        op_extra_reference_inputs_func= None,
+        is_differentiable=False,
+        supports_multiple_dims=False,
     ),
-
 }
 
 all_op_db = list(op_db.keys())
@@ -7958,7 +9191,7 @@ binary_op_db = [
     'Tensor.logical_or',
     'Tensor.add',
     'Tensor.sub',
-    #'mint.equal',
+    'mint.equal',
     'mint.eq',
     'mint.greater_equal',
     'mint.greater',
@@ -8034,7 +9267,7 @@ unary_op_db = [
     'mint.log',
     'mint.neg',
     'mint.sigmoid',
-    #'mint.sqrt',
+    'mint.sqrt',
     'mint.abs',
     'Tensor.floor',
     'Tensor.ceil',
@@ -8042,11 +9275,11 @@ unary_op_db = [
     'Tensor.log',
     'Tensor.neg',
     'Tensor.sigmoid',
-    #'Tensor.sqrt',
+    'Tensor.sqrt',
     'Tensor.abs',
     'Tensor.square',
-    'mint.ones_like',
-    'mint.zeros_like',
+    'mint.ones_like(input, *, dtype=None)',
+    'mint.zeros_like(input, *, dtype=None)',
     'mint.tan',
     'mint.sin',
     'mint.sinc',
@@ -8080,15 +9313,21 @@ unary_op_db = [
     'mint.trunc',
     'mint.frac',
     'mint.expm1',
-    #'mint.rsqrt',
+    'mint.rsqrt',
     'mint.sign',
+    'mint.prod(input, *, dtype=None)',
+    'mint.argmax(input)',
+    'mint.mean(input, *, dtype=None)',
+    'mint.max(input)',
+    'mint.min(input)',
+    'mint.sum(input, *, dtype=None)'
 ]
 
 other_op_db = [
     'mint.chunk',
     'mint.gather',
     'mint.cat',
-    #'mint.cumsum',
+    'mint.cumsum',
     'mint.index_select',
     'Tensor.index_select',
     'mint.masked_select',
@@ -8167,21 +9406,21 @@ other_op_db = [
 ]
 
 reduction_op_db = [
-    'mint.mean',
+    'mint.mean(input, dim, keepdim=False, *, dtype=None)',
     'mint.var',
     'mint.std',
     'mint.std_mean',
-    'mint.argmax',
+    'mint.argmax(input, dim, keepdim=False)',
     'mint.argmin',
     'mint.count_nonzero',
     'Tensor.mean',
     'Tensor.sum',
     'Tensor.argmax',
     'Tensor.argmin',
-    'mint.sum',
-    'mint.max',
-    'mint.min',
-    'mint.prod',
+    'mint.sum(input, dim, keepdim=False, *, dtype=None)',
+    'mint.max(input, dim, keepdim=False)',
+    'mint.min(input, dim, keepdim=False)',
+    'mint.prod(input, dim, keepdim=False, *, dtype=None)',
     'Tensor.max',
     'mint.all',
     'mint.var_mean',
@@ -8214,39 +9453,34 @@ unary_op_kbk_db = [
     'Tensor.contiguous',
 ]
 
-unary_op_error_db = [
-    'mint.tanh',
-    'mint.acos',
-    'mint.atan',
-    'mint.nn.functional.glu'
-]
-
 other_op_kbk_db = [
     'mint.chunk',
     'mint.gather',
 ]
 
 reduction_op_kbk_db = [
-    'mint.mean',
+    'mint.mean(input, dim, keepdim=False, *, dtype=None)',
     'mint.std',
-    'mint.argmax',
+    'mint.argmax(input, dim, keepdim=False)',
     'mint.count_nonzero',
-    'Tensor.sum',
     'Tensor.argmax',
     'Tensor.argmin',
-    'mint.min',
+    'mint.min(input, dim, keepdim=False)',
     'Tensor.max',
     'mint.all',
 ]
 
-binary_op_error_db = [
-    'mint.add',
-    'mint.sub',
-    'mint.equal',
-    '==',
-    '<',
-    'mint.fmod'
-]
+unary_op_error_db = [ o for o in unary_op_db if o not in ['mint.empty', 'mint.nn.Identity'] ]
+
+unary_op_error_kbk_db = unary_op_kbk_db
+
+binary_op_error_db = binary_op_db
+
+binary_op_error_kbk_db = binary_op_kbk_db
+
+reduction_op_error_db = reduction_op_db
+
+reduction_op_error_kbk_db = reduction_op_kbk_db
 
 def get_op_info(op_name: str, *, op_database: Optional[Dict[str, OpInfo]] = None) -> OpInfo:
     """Return `OpInfo` by name from the provided or default database."""

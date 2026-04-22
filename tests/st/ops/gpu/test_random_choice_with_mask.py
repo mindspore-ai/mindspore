@@ -58,7 +58,7 @@ class RCWM_1D(nn.Cell):
         return self.RCWM_1D(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_RCWM_3D():
     """
     Feature: RandomChoiceWithMask gpu kernel
@@ -75,7 +75,7 @@ def test_RCWM_3D():
     assert output2.shape == expect2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_RCWM_count_out():
     """
     Feature: RandomChoiceWithMask gpu kernel
@@ -93,7 +93,7 @@ def test_RCWM_count_out():
     assert output2.shape == expect2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_RCWM_count_in():
     """
     Feature: RandomChoiceWithMask gpu kernel
@@ -111,7 +111,7 @@ def test_RCWM_count_in():
     assert output2.shape == expect2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_RCWM_1D():
     """
     Feature: RandomChoiceWithMask gpu kernel

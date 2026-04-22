@@ -113,8 +113,7 @@ def to_np(x):
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu'],
           level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+          card_mark='onecard')
 @pytest.mark.parametrize("mode", [context.PYNATIVE_MODE, context.GRAPH_MODE])
 @pytest.mark.parametrize("tensor_type_a", ["Tensor", "CSRTensor"])
 @pytest.mark.parametrize("tensor_type_m", ["Tensor", "CSRTensor"])

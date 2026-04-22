@@ -8,6 +8,9 @@ mindspore.ops.csr_acosh
     .. math::
         out_i = \cosh^{-1}(input_i)
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (CSRTensor) - 需要计算反双曲余弦函数的输入CSRTensor，即 :math:`input_i`，其每个元素的取值范围必须在[1, inf]。
 

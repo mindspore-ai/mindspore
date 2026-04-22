@@ -15,7 +15,7 @@ def mul(a, b):
 def jit_mul(a, b):
     return a * b
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[11]])
@@ -32,7 +32,7 @@ def test_standard_mul_list(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[10.0]])
@@ -49,7 +49,7 @@ def test_standard_mul_list1(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[20]])
@@ -66,7 +66,7 @@ def test_standard_mul_list2(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[2.0]])
@@ -83,7 +83,7 @@ def test_standard_mul_list3(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[Tensor(ops.fill(np.float32, (2, 3), 8))]])
@@ -100,7 +100,7 @@ def test_standard_mul_Tensor1(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[Tensor(ops.fill(np.float32, (2, 3), 8))]])
@@ -118,7 +118,7 @@ def test_standard_mul_Tensor2(func, ms_func, a, b):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[(1.0, 2.0, 3.0)]])
@@ -135,7 +135,7 @@ def test_standard_mul_tuple_list(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[2]])
@@ -152,7 +152,7 @@ def test_standard_mul_list_tuple(func, ms_func, a, b):
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [["Hello"]])
@@ -169,7 +169,7 @@ def test_special_mul_operations(func, ms_func, a, b):
     ms_res = a[0] * b[0]
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [mul])
 @pytest.mark.parametrize('ms_func', [jit_mul])
 @pytest.mark.parametrize('a', [[3]])

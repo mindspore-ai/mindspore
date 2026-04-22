@@ -50,11 +50,11 @@ def embeddinglookup_testcase(nptype):
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_embeddinglookup_float32():
     embeddinglookup_testcase(np.float32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_embeddinglookup_float16():
     embeddinglookup_testcase(np.float16)

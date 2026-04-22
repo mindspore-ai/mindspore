@@ -93,8 +93,7 @@ class Dropout2DNet(nn.Cell):
         return self.drop(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("func_name", ["dropout2d", "dropout3d"])
 @pytest.mark.parametrize("keep_prob", [0.0, 0.4, 1.0])
 @pytest.mark.parametrize("data_type", [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64])
@@ -119,8 +118,7 @@ def test_dropout_nd(func_name, data_type, keep_prob):
     check_dropout_nd_by_keep_prob(func_name, input_data, output.asnumpy(), mask.asnumpy(), keep_prob)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("func_name", ["dropout2d", "dropout3d"])
 def test_dropout_nd_vmap(func_name):
     """
@@ -144,8 +142,7 @@ def test_dropout_nd_vmap(func_name):
     check_dropout_nd_by_keep_prob(func_name, input_x, output.asnumpy(), mask.asnumpy(), keep_prob)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("func_name", ["dropout2d", "dropout3d"])
 def test_dropout_nd_dy_shape(func_name):
     """
@@ -177,8 +174,7 @@ def test_dropout_nd_dy_shape(func_name):
     check_dropout_nd_by_keep_prob(func_name, input_x, output.asnumpy(), mask.asnumpy(), keep_prob)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_dropout_nd_zero_shape():
     """
     Feature: Test dropout3d Zero Shape.

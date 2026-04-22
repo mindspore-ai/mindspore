@@ -12,6 +12,9 @@ mindspore.nn.MaxUnpool1d
         H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，若取值为 ``None`` ， `stride` 值与 `kernel_size`

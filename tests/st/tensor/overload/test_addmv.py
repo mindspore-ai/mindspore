@@ -30,11 +30,9 @@ class Net(nn.Cell):
     def construct(self, x, mat, vec, beta=1, alpha=1):
         return x.addmv(mat, vec, beta=beta, alpha=alpha)
 
-@arg_mark(
-    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
     level_mark='level1',
-    card_mark='onecard',
-    essential_mark='unessential', mem_peak=4.0)
+    card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_addmv(mode):
     """

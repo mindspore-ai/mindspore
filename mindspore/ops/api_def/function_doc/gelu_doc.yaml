@@ -8,7 +8,7 @@ gelu:
         And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
         <https://arxiv.org/abs/1810.04805>`_.
 
-        When `approximate` argument is `none`, GELU is defined as follows:
+        When `approximate` argument is ``'none'``, GELU is defined as follows:
 
         .. math::
             GELU(x_i) = x_i*P(X < x_i),
@@ -16,10 +16,10 @@ gelu:
         where :math:`P` is the cumulative distribution function of the standard Gaussian distribution,
         :math:`x_i` is the input element.
 
-        When `approximate` argument is `tanh`, GELU is estimated with:
+        When `approximate` argument is ``'tanh'``, GELU is estimated with:
 
         .. math::
-            GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
+            GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt{\frac{2}{\pi}} * (x_i + 0.044715 * x_i^3)))
 
         GELU Activation Function Graph:
 
@@ -27,14 +27,14 @@ gelu:
             :align: center
 
         .. note::
-            On the Ascend platform, when `input` is -inf, its gradient is 0,
-            and when `input` is inf, its gradient is `dout`.
+            On the Ascend platform, when `input` is :math:`-\infty`, its gradient is 0;
+            when `input` is :math:`+\infty`, its gradient is `dout`.
 
         Args:
-            input (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
+            input (Tensor): The input of the activation function GeLU.
 
         Keyword Args:
-            approximate (str, optional): the gelu approximation algorithm to use. Acceptable vaslues are ``'none'`` and ``'tanh'`` .
+            approximate (str, optional): the gelu approximation algorithm to use. Acceptable values are ``'none'`` and ``'tanh'`` .
                 Default: ``'none'`` .
 
         Returns:
@@ -42,8 +42,7 @@ gelu:
 
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not bfloat16, float16, float32 or float64.
-            ValueError: If `approximate` value is neither `none` nor `tanh`.
+            ValueError: If `approximate` value is neither ``'none'`` nor ``'tanh'``.
 
         Supported Platforms:
             ``Ascend``

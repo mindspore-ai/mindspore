@@ -5,6 +5,9 @@ mindspore.nn.GELU
 
     高斯误差线性单元激活函数（Gaussian error linear unit activation function）。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，`approximate` 将从布尔值改为字符串，默认值也将调整。
+
     对输入的每个元素计算GELU，输入可以是任意有效shape的Tensor。
 
     GELU的定义如下：

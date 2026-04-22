@@ -33,7 +33,7 @@ class SparseGatherNet(nn.Cell):
         return self.gather(x, indices, 1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather0():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float32).reshape(2, 3, 4, 5))
     indices = Tensor(np.ones((2, 2, 4, 5), dtype=np.int32))
@@ -696,7 +696,7 @@ class SparseGatherNet1(nn.Cell):
         return self.gather(x, indices, -1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather1():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float32).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype=np.int32))
@@ -743,7 +743,7 @@ class SparseGatherNet2(nn.Cell):
         return self.gather(x, indices, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather2():
     x = Tensor(np.array([[4., 5., 4., 1., 5., ],
                          [4., 9., 5., 6., 4., ],
@@ -781,7 +781,7 @@ class SparseGatherDynamicNet(nn.Cell):
         return self.gather(out, indices, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.array([[4., 5., 4., 1., 5., ],
@@ -823,7 +823,7 @@ class SparseGatherDynamicNet2(nn.Cell):
         return (out_1, out_2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gather_d_two_inputs():
     x_1 = Tensor(np.array([[4., 5., 4., 1., 5., ],
                            [4., 9., 5., 6., 4., ],

@@ -5,6 +5,9 @@ mindspore.ops.slice_scatter
 
     沿指定轴将源tensor嵌入到切片后的目标tensor。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **input** (Tensor) - 输入tensor。
         - **src** (Tensor) - 用于嵌入到 `input` 的源tensor。

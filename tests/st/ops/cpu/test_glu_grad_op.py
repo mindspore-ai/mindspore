@@ -28,8 +28,7 @@ def _autograd(x: Tensor, dim: int, *sens) -> Tensor:
     return GradOperation(sens_param=bool(sens))(GLU(dim))(x, *sens)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard')
 def test_glu_grad_op():
     """
     Feature: GluGrad CPU ops.
@@ -39,8 +38,7 @@ def test_glu_grad_op():
     _test_glu_grad_main(np.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_glu_grad_op_types():
     """
     Feature: GluGrad CPU ops.

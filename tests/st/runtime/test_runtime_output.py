@@ -42,7 +42,7 @@ class NetSubGraphOutputWithLoad(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_value_node_with_depend():
     """
     Feature: Runtime special output.
@@ -57,7 +57,7 @@ def test_value_node_with_depend():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
+          card_mark='onecard', mem_peak=2048.00)
 def test_subgraph_output_with_load():
     """
     Feature: Runtime special subgraph output.
@@ -75,7 +75,7 @@ def test_subgraph_output_with_load():
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_runtime_heter():
     """
     Feature: Runtime heter.
@@ -97,7 +97,7 @@ def test_runtime_heter():
     assert ret
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_runtime_multigraphs():
     """
     Feature: Runtime multi graphs.
@@ -120,7 +120,7 @@ def test_runtime_multigraphs():
     foo(data2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @test_utils.run_test_with_On
 def test_runtime_fallback_heter():
     """
@@ -139,7 +139,7 @@ def test_runtime_fallback_heter():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_runtime_value_tuple_output():
     """
     Feature: Runtime tuple output to make tuple.

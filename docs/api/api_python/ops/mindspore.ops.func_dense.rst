@@ -9,7 +9,7 @@ mindspore.ops.dense
         output = input * weight^{T} + bias
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        - 从2.9.0（不含）之后版本开始，接口将重命名为 `linear`。
         - 在Ascend硬件平台下，设置PYNATIVE或KBK模式时，如果 `bias` 不是1D， `input` 不可以大于6D。
 
     参数：

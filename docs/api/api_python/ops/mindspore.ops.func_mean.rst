@@ -5,6 +5,9 @@ mindspore.ops.mean
 
     计算tensor在指定轴上的均值。
 
+    .. warning::
+        2.9.0（不含）之后版本中，参数 `x` 、 `axis` 和 `keep_dims` 将重命名为 `input` 、 `dim` 和 `keepdim`，并新增 `dtype`。
+
     参数：
         - **x** (Tensor[Number]) - 输入tensor。
         - **axis** (Union[int, tuple(int), list(int), Tensor]) - 指定轴。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None`` 。

@@ -71,11 +71,11 @@ def asinh_grad_grad_base(dtype, loss):
     assert np.allclose(dgrad_ms.asnumpy(), dgrad_np, loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinh_grad_grad_float16():
     asinh_grad_grad_base(np.float16, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_asinh_grad_grad_float32():
     asinh_grad_grad_base(np.float32, 1e-4)

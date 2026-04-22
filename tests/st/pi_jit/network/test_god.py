@@ -6,7 +6,7 @@ from tests.mark_utils import arg_mark
 
 from tests.st.pi_jit.share.utils import assert_no_graph_break, assert_equal
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_tensor_is_contiguous():
     """
     Feature: ALL TO ALL
@@ -27,7 +27,7 @@ def test_tensor_is_contiguous():
 
 condition = not (sys.version_info.major == 3 and sys.version_info.minor in [9,10])
 @pytest.mark.skipif(condition, reason="Only support python 3.9, 3.10")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_bytecode_LIST_EXTEND():
     """
     Feature: ALL TO ALL

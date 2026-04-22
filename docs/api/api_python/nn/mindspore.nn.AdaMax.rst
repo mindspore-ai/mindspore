@@ -18,6 +18,9 @@ mindspore.nn.AdaMax
 
     :math:`m` 代表第一个动量矩阵，:math:`v` 代表第二个动量矩阵，:math:`g` 代表梯度 `gradients` ，:math:`\beta_1, \beta_2` 代表衰减速率 `beta1` 和 `beta2` ，:math:`t` 代表当前step，:math:`beta_1^t` 代表 `beta1` 的t次方 ， :math:`l` 代表学习率 `learning_rate` ，:math:`w` 代表 `params` ， :math:`\epsilon` 代表 `eps` 。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，`beta1` 和 `beta2` 将合并为 `betas`，`loss_scale` 将被移除，且默认学习率将由 `0.001` 调整为 `0.002`。
+
     .. note::
 
         .. include:: mindspore.nn.optim_note_weight_decay.rst

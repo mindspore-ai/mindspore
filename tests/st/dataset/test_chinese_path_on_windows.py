@@ -78,7 +78,7 @@ def write_read_mindrecord(mindrecord):
     assert count == 100
 
 
-@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard')
 def test_chinese_path_on_windows():
     """
     Feature: test chinese path on windows platform
@@ -149,7 +149,7 @@ def test_chinese_path_on_windows():
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
 
-@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard')
 def test_backslash_path_on_windows():
     """
     Feature: test path on windows platform which contains both slash and backslash

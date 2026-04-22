@@ -650,13 +650,14 @@ if sys.version_info >= (3, 8):
             cfg_path (str): (Ascend only) Dynamic profiler json config file directory. The requirement is a shared path
                 that can be accessed by all nodes. The parameters of the json configuration file are as follows:
 
-                - start_step (int, required) - Sets the step number at which the Profiler starts collecting data.
-                  It is a relative value, with the first step of training being 1. The default value is -1, indicating
-                  that data collection will not start during the entire training process.
+                - start_step (int, required) - Sets the step number at which the Profiler starts collecting data. It is
+                  a relative value, with the first step of training being ``1`` . When modifying `start_step` , the new
+                  `start_step` must be greater than the `stop_step` set during the previous collection. The default
+                  value is ``-1`` , indicating that data collection will not start during the entire training process.
                 - stop_step (int, required) - Sets the step number at which the Profiler stops collecting data. It is
-                  a relative value, with the first step of training being 1. The stop_step must be greater than or
-                  equal to start_step. The default value is -1, indicating that data collection will not start during
-                  the entire training process.
+                  a relative value, with the first step of training being ``1`` . The `stop_step` must be greater than
+                  or equal to `start_step` . The default value is ``-1`` , indicating that data collection will not
+                  start during the entire training process.
                 - aic_metrics (int/str, optional) - Set the collection of AI Core metric data. The current version can
                   pass in either type int or str. Later, it will be updated to only pass in the str type.
                   Here, ``0`` and ``"PipeUtilization"`` represent PipeUtilization; ``1`` and ``"ArithmeticUtilization"``

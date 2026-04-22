@@ -107,11 +107,9 @@ def set_mode(mode):
         context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="essential", mem_peak=20.01
+    card_mark="onecard", mem_peak=20.01
 )
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 def test_ring_attention_update(mode):
@@ -150,11 +148,9 @@ def ring_attention_update_func(prev_attn_out, prev_softmax_max, prev_softmax_sum
     return ops.ring_attention_update(prev_attn_out, prev_softmax_max, prev_softmax_sum,
                                      cur_attn_out, cur_softmax_max, cur_softmax_sum, actual_seq_qlen, layout)
 
-@arg_mark(
-    plat_marks=["platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
-    card_mark="onecard",
-    essential_mark="unessential", mem_peak=60.01
+    card_mark="onecard", mem_peak=60.01
 )
 def test_permute_dynamic():
     """

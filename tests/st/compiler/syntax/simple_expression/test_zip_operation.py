@@ -25,8 +25,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_zip_operation_args_size():
     """
     Feature: Check the size of inputs of ZipOperation.
@@ -58,8 +57,7 @@ def test_zip_operation_args_size():
         assert np.all(out.asnumpy() == 1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_zip_operation_args_type():
     """
     Feature: Check the type of inputs of ZipOperation.
@@ -92,7 +90,7 @@ def test_zip_operation_args_type():
         assert np.all(out.asnumpy() == 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_zip_operation_with_tensor_input():
     """
     Feature: Check the type of inputs of ZipOperation.
@@ -107,7 +105,7 @@ def test_zip_operation_with_tensor_input():
     assert ret == ((Tensor([1]), Tensor([2])), (Tensor([2]), Tensor([3])), (Tensor([3]), Tensor([4])))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_zip_operation_with_tensor_input_2():
     """
     Feature: Check the type of inputs of ZipOperation.
@@ -122,7 +120,7 @@ def test_zip_operation_with_tensor_input_2():
     assert ret == ((Tensor([1]), 1), (Tensor([2]), 2), (Tensor([3]), 3))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_fallback_zip_with_numpy_and_tensor():
     """
     Feature: JIT Fallback

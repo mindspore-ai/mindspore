@@ -31,8 +31,7 @@ def setup_module():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_staging_together():
     """
     Feature: Pynative stage
@@ -92,8 +91,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_ms_func_decorate_forward():
     """
     Feature: Auto diff for jit.

@@ -7,6 +7,12 @@ cdist:
             - On CPU, the supported dtypes are float16 and float32.
             - On GPU, the supported dtypes are float32 and float64.
 
+        .. warning::
+            Starting after version 2.9.0, an optional parameter `compute_mode` will be added.
+            The signature will change to
+            ``mindspore.ops.cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary')``.
+            This change is backward-compatible; behavior is unchanged when `compute_mode` is not specified.
+
         Args:
             x1 (Tensor): Input tensor of shape :math:`(B, P, M)`.
                 Letter :math:`B` represents 0 or positive int number.
@@ -17,7 +23,7 @@ cdist:
                 vector pair, P >= 0. Default: ``2.0`` .
 
         Returns:
-            Tensor, p-norm distance, has the same dtype as `x1`, its shape is :math:`(B, P, R)`.
+            Tensor, p-norm distance, with the same dtype as `x1`, its shape is :math:`(B, P, R)`.
 
         Raises:
             TypeError: If `x1` or `x2` is not Tensor.

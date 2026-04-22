@@ -79,8 +79,7 @@ def test_ops_max_pool2d_forward_without_return_indices(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_out, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_max_pool2d_backward_return_indices(mode):
     """
@@ -103,8 +102,7 @@ def test_ops_max_pool2d_backward_return_indices(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_max_pool2d_backward_without_return_indices(mode):
     """
@@ -127,8 +125,7 @@ def test_ops_max_pool2d_backward_without_return_indices(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=20.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
 def test_ops_max_pool2d_dynamic():
     """
     Feature: Pyboost function.

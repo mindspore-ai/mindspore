@@ -4,7 +4,7 @@ from ..share.ops.primitive.dense_ops import DenseFactory
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_102x44_in_44_out_32_2d_fp32():
     '''
     Description:
@@ -19,7 +19,7 @@ def test_p_dense_input_102x44_in_44_out_32_2d_fp32():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_1_in_248_out_100_1d_fp16():
     '''
     Description:
@@ -34,7 +34,7 @@ def test_p_dense_input_1_in_248_out_100_1d_fp16():
     fact.grad_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_128_496_out_124_6d_int32():
     '''
     Description:
@@ -50,7 +50,7 @@ def test_p_dense_input_128_496_out_124_6d_int32():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_out_2_7d():
     '''
     Description:
@@ -66,7 +66,7 @@ def test_p_dense_input_out_2_7d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_3d_in_3_out_4_uint8():
     '''
     Description:
@@ -87,7 +87,7 @@ def test_p_dense_input_3d_in_3_out_4_uint8():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_inf():
     '''
     Description:
@@ -108,7 +108,7 @@ def test_p_dense_input_inf():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_nan():
     '''
     Description:
@@ -129,7 +129,7 @@ def test_p_dense_input_nan():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_n_np_2d():
     '''
     Description:
@@ -144,7 +144,7 @@ def test_p_dense_n_np_2d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_x_1d_w_2d():
     '''
     Description:
@@ -159,7 +159,7 @@ def test_p_dense_x_1d_w_2d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_2d_w_3d():
     '''
     Description:
@@ -174,7 +174,7 @@ def test_p_dense_input_2d_w_3d():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_1_1000_in_1000_out_1024_bias_1000_1_abnormal():
     '''
     Description:
@@ -189,7 +189,7 @@ def test_p_dense_input_1_1000_in_1000_out_1024_bias_1000_1_abnormal():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_forward_input_type_not_same():
     '''
     Description:
@@ -205,7 +205,7 @@ def test_p_dense_forward_input_type_not_same():
     fact.forward_cmp()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_p_dense_input_56x28x16x28x3_in_4_out_3_abnormal():
     '''
     Description:

@@ -93,7 +93,7 @@ class TOOLS_EXPORT ErrorHandler {
   void SetForceStopFlag(bool val) { force_stop_flag_ = val; }
 
   static uint64_t ExtractUceTime(const char *error_msg);
-  bool HasThrownError() const { return force_stop_flag_ || GetUceFlag() || is_reboot_node_ || GetSuspectRemoteFlag(); }
+  bool HasThrownError() const { return force_stop_flag_ || is_reboot_node_ || (error_type_ != ErrorType::kNoneError); }
 
   bool GetUceFlag() const {
     return error_type_ == ErrorType::kDeviceMemError || error_type_ == ErrorType::kHbmMultBitEccError;

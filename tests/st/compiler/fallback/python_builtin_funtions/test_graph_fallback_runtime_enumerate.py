@@ -22,8 +22,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_enumerate_asnumpy():
     """
     Feature: JIT Fallback
@@ -44,8 +43,7 @@ def test_enumerate_asnumpy():
     assert ret == (6, 110)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_enumerate_string():
     """
     Feature: JIT Fallback
@@ -66,7 +64,7 @@ def test_enumerate_string():
     assert ret == (6, "abcd")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_enumerate_check_start():
     """
     Feature: JIT Fallback
@@ -96,8 +94,7 @@ def test_enumerate_check_start():
     assert "'For 'enumerate', the 'start' should be a const int number, but got [1, 2, 3].'" in str(error_info.value)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_parser_construct_no_tensor_035():
     """
     Feature: JIT Fallback

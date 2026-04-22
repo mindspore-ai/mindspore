@@ -8,6 +8,9 @@ mindspore.ops.csr_ceil
     .. math::
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (CSRTensor) - Ceil的输入。其数据类型为float16或float32。
 

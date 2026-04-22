@@ -237,10 +237,10 @@ class _NetStrategyInfo:
         for axis, value in enumerate(dev_mat):
             if used_dev_mat_mask[axis]:
                 continue
-            info.counter = axis
             if info.real_remain_dev_num == info.remain_dev_num:
-                return dev_mat, axis, tensor_map, False
+                return dev_mat, info.counter, tensor_map, False
             if info.real_remain_dev_num < info.remain_dev_num:
+                info.counter = axis
                 info.real_remain_dev_num *= value
                 continue
             # info.real_remain_dev_num > info.remain_dev_num，split axis.

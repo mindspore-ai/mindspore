@@ -17,6 +17,9 @@ mindspore.Tensor.scatter_add
 
         self[i][j][index[i][j][k]] += src[i][j][k]  # if dim == 2
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：删除 `scatter_add(indices, updates)` 重载，仅支持 `scatter_add(dim, index, src)`。
+
     .. note::
         输入Tensor `self` 的rank必须大于等于1。
 

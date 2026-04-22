@@ -5,6 +5,10 @@ mindspore.ops.smooth_l1_loss
 
     计算平滑L1损失，该L1损失函数有稳健性。
 
+    .. warning::
+        - 从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：`beta` 和 `reduction` 的参数顺序与默认值将调整。
+        - 该API在CPU上性能较差，推荐在Ascend/GPU上运行。
+
     平滑L1损失是一种类似于MSELoss的损失函数，但对异常值相对不敏感，可以参阅论文 `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ 。
 
     给定长度为 :math:`N` 的两个输入 :math:`x,\  y` ，平滑L1损失的计算如下：
@@ -26,9 +30,6 @@ mindspore.ops.smooth_l1_loss
         \end{cases}
 
     其中， :math:`\text{beta}` 控制损失函数在线性与二次间变换的阈值， :math:`\text{beta}>0` ，默认值是 ``1.0`` 。 :math:`N` 为batch size。
-
-    .. warning::
-        该API在CPU上性能较差，推荐在Ascend/GPU上运行。
 
     参数：
         - **input** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。支持数据类型：

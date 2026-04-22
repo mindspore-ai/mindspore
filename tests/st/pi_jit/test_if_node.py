@@ -157,7 +157,7 @@ def return_branch_5(x, y):
             return x * 10
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [single_branch])
 def test_single_branch(jit_func):
     """
@@ -172,7 +172,7 @@ def test_single_branch(jit_func):
     x = Tensor(0, mstype.float32)
     assert jit_func(x, y) == Tensor(0, mstype.float32)
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [repeat_single_branch])
 def test_repeat_single_branch(jit_func):
     """
@@ -188,7 +188,7 @@ def test_repeat_single_branch(jit_func):
     assert jit_func(x, y) == Tensor(20, mstype.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [nest_single_branch])
 def test_nest_single_branch(jit_func):
     """
@@ -204,7 +204,7 @@ def test_nest_single_branch(jit_func):
     assert jit_func(x, y) == Tensor(0, mstype.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [full_branch])
 def test_full_branch(jit_func):
     """
@@ -220,7 +220,7 @@ def test_full_branch(jit_func):
     assert jit_func(x, y) == Tensor(-10, mstype.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [repeat_full_branch])
 def test_repeat_full_branch(jit_func):
     """
@@ -236,7 +236,7 @@ def test_repeat_full_branch(jit_func):
     assert jit_func(x, y) == Tensor(-20, mstype.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [nest_full_branch])
 def test_nest_full_branch(jit_func):
     """
@@ -252,7 +252,7 @@ def test_nest_full_branch(jit_func):
     assert jit_func(x, y) == Tensor(-60, mstype.float32)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [multi_branch])
 def test_multi_branch(jit_func):
     """
@@ -269,8 +269,7 @@ def test_multi_branch(jit_func):
     x = Tensor(-6, mstype.float32)
     assert jit_func(x, y) == Tensor(-16, mstype.float32)
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [return_branch_1])
 def test_return_branch_1(jit_func):
     """
@@ -285,8 +284,7 @@ def test_return_branch_1(jit_func):
     x = Tensor(-6, mstype.float32)
     assert jit_func(x, y) == Tensor(-6, mstype.float32)
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [return_branch_2])
 def test_return_branch_2(jit_func):
     """
@@ -301,8 +299,7 @@ def test_return_branch_2(jit_func):
     x = Tensor(-6, mstype.float32)
     assert jit_func(x, y) == Tensor(-16, mstype.float32)
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [return_branch_3])
 def test_return_branch_3(jit_func):
     """
@@ -317,8 +314,7 @@ def test_return_branch_3(jit_func):
     x = Tensor(-6, mstype.float32)
     assert jit_func(x, y) == Tensor(-16, mstype.float32)
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [return_branch_4])
 def test_return_branch_4(jit_func):
     """
@@ -333,8 +329,7 @@ def test_return_branch_4(jit_func):
     x = Tensor(-6, mstype.float32)
     assert jit_func(x, y) == Tensor(-6, mstype.float32)
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('jit_func', [return_branch_5])
 def test_return_branch_5(jit_func):
     """

@@ -40,8 +40,7 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "gif.gif")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=74.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=74.0)
 def test_dvpp_rotate_operation_01():
     """
     Feature: Rotate operation on device
@@ -103,8 +102,7 @@ def test_dvpp_rotate_operation_01():
     assert (img_transformed_ascend == image2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=34.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
 def test_dvpp_rotate_operation_02():
     """
     Feature: Rotate operation on device
@@ -157,8 +155,7 @@ def test_dvpp_rotate_operation_02():
         assert (image == image_aug).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dvpp_rotate_exception_01():
     """
     Feature: Rotate operation on device
@@ -268,7 +265,7 @@ def test_dvpp_rotate_exception_01():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_dvpp_rotate_exception_02():
     """
     Feature: Rotate operation on device
@@ -374,8 +371,7 @@ def test_dvpp_rotate_exception_02():
         rotate_op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
 def test_dvpp_rotate_exception_03():
     """
     Feature: Rotate operation on device

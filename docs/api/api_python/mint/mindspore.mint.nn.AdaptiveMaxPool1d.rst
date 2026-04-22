@@ -11,9 +11,6 @@ mindspore.mint.nn.AdaptiveMaxPool1d
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
-    .. note::
-        Atlas训练系列产品不支持反向传播。
-
     参数：
         - **output_size** (Union[int, tuple]) - 目标输出大小 :math:`L_{out}`。
         - **return_indices** (bool，可选) - 如果为 ``True``，输出最大值的索引。默认 ``False``。

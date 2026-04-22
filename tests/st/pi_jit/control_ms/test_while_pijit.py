@@ -41,7 +41,7 @@ def const_branch(y):
     return 2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_const_branch():
     """
     Feature: control flow .
@@ -58,7 +58,7 @@ def test_const_branch():
     assert "join" in str(exc.value)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_net():
     """
     Feature: control flow .

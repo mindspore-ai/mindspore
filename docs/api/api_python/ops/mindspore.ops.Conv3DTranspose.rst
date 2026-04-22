@@ -20,8 +20,7 @@ mindspore.ops.Conv3DTranspose
         \times (\text{kernel_size}[2] - 1) + \text{output_padding}[2] + 1
 
     .. note::
-        - 在Ascend平台上，目前只支持 :math:`group=1` 。
-        - Atlas A2训练系列产品暂不支持 `output_padding` 。
+        在Ascend平台上，目前只支持 :math:`group=1` 。
 
     参数：
         - **in_channel** (int) - 输入 `dout` 的通道数。

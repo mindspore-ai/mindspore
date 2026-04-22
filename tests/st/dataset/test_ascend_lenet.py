@@ -79,7 +79,7 @@ def create_model():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
+        card_mark='onecard', mem_peak=0.01)
 def test_net_build_then_train_sink_size_1():
     """
     Feature: Test model.build and model.train in graph mode under Ascend platform
@@ -95,8 +95,7 @@ def test_net_build_then_train_sink_size_1():
     trainer.train(130, train_dataset, dataset_sink_mode=True, sink_size=1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=10.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=10.00)
 def test_net_train_sink_with_time_monitor():
     """
     Feature: Test model.train in graph mode under Ascend platform

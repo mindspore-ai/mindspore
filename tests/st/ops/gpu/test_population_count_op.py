@@ -34,7 +34,7 @@ class PopulationCount(Cell):
         return self.populationcount(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_1x2_int8():
     """
     Feature: PopulationCount
@@ -48,7 +48,7 @@ def test_populationcount_1x2_int8():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_2x2x2_uint8():
     """
     Feature: PopulationCount
@@ -64,7 +64,7 @@ def test_populationcount_2x2x2_uint8():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_1x2_int16():
     """
     Feature: PopulationCount
@@ -78,7 +78,7 @@ def test_populationcount_1x2_int16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_2x2x2_uint16():
     """
     Feature: PopulationCount
@@ -94,7 +94,7 @@ def test_populationcount_2x2x2_uint16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_1x2_int32():
     """
     Feature: PopulationCount
@@ -108,7 +108,7 @@ def test_populationcount_1x2_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_2x2x2_uint32():
     """
     Feature: PopulationCount
@@ -124,7 +124,7 @@ def test_populationcount_2x2x2_uint32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_1x2_int64():
     """
     Feature: PopulationCount
@@ -138,7 +138,7 @@ def test_populationcount_1x2_int64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_populationcount_2x2x2_uint64():
     """
     Feature: PopulationCount

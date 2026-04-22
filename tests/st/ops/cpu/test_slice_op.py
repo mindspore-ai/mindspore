@@ -36,8 +36,7 @@ class Slice(nn.Cell):
         return self.slice(x, (0, 1, 0), (2, 1, 3))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice():
     x = Tensor(
         np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]), mstype.float32)
@@ -58,8 +57,7 @@ class Slice2(nn.Cell):
         return self.slice(x, (1, 0, 0), (1, 2, 3))
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice2():
     x = Tensor(np.arange(3 * 2 * 3).reshape(3, 2, 3), mstype.float32)
     expect = [[[6., 7., 8.],
@@ -89,8 +87,7 @@ class Slice3(nn.Cell):
         return (x[..., -1], x[..., 2:1:-1], x[1:3:1, 0, ...], x[-1, 0, ...])
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice3():
     inputx = np.random.rand(4, 4, 4, 4).astype(np.float32)
     x = Tensor(inputx)
@@ -111,8 +108,7 @@ class Slice4(nn.Cell):
         return x[:10:1, :, 2:3:1]
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice4():
     inputx = np.random.rand(4, 4, 4).astype(np.float32)
     x = Tensor(inputx)
@@ -133,8 +129,7 @@ class Slice5(nn.Cell):
         return self.slice(x, self.begin, self.size)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice5():
     inputx = np.arange(3 * 5 * 4).reshape(3, 5, 4).astype(np.float32)
     x = Tensor(inputx)
@@ -154,8 +149,7 @@ class Slice6(nn.Cell):
         return (x[-10:], x[-5:10:2, :, :], x[-10:10:1, :, -10:10:1])
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice6():
     inputx = np.random.rand(4, 4, 4).astype(np.float32)
     x = Tensor(inputx)
@@ -178,8 +172,7 @@ class StridedSlice(nn.Cell):
         return self.stride_slice(x, self.begin, self.end, self.stride)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_strided_slice_bool_type():
     input_x = Tensor([[[False, False, True], [False, True, False]], [[False, True, False], [True, False, False]],
                       [[False, True, True], [True, False, True]]], mstype.bool_)
@@ -192,8 +185,7 @@ def test_strided_slice_bool_type():
     assert (output.asnumpy() == expected_output).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_functional():
     """
     Feature: test_slice_functional
@@ -234,8 +226,7 @@ def vmap_1_batch():
     assert np.all(-diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_slice_vmap():
     """
     Feature: Slice

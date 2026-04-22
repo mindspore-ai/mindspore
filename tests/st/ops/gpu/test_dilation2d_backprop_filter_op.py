@@ -32,7 +32,7 @@ class NetDilation2DBackpropFilter(nn.Cell):
         return self.dilation2dbackpropfilter(x, fil, out_backprop)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dilation2dbackpropfilter_graph():
     """
     Feature: dilation2dbackpropfilter
@@ -55,7 +55,7 @@ def test_dilation2dbackpropfilter_graph():
         assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dilation2dbackpropfilter_pynative():
     """
     Feature: dilation2dbackpropfilter

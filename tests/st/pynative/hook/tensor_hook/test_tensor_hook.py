@@ -368,8 +368,7 @@ def test_tensor_backward_hook_print_and_return_self():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tensor_backward_hook():
     """
     Feature: Tensor backward hook.
@@ -392,8 +391,7 @@ def test_tensor_backward_hook():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tensor_backward_hook_leaf_error():
     """
     Feature: Tensor backward hook.
@@ -409,8 +407,7 @@ def test_tensor_backward_hook_leaf_error():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tensor_backward_hook_return_non_tensor():
     """
     Feature: Tensor backward hook.
@@ -429,8 +426,7 @@ def test_tensor_backward_hook_return_non_tensor():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tensor_backward_hook_register_error():
     """
     Feature: Tensor backward hook.
@@ -444,8 +440,7 @@ def test_tensor_backward_hook_register_error():
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential', mem_peak=2.00)
+          card_mark='onecard', mem_peak=2.00)
 def test_tensor_backward_hook_inplace():
     """
     Feature: Tensor backward hook.
@@ -470,8 +465,7 @@ def test_tensor_backward_hook_inplace():
 
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
-          card_mark='allcards',
-          essential_mark='essential')
+          card_mark='allcards')
 def test_tensor_hook_with_reduce_scatter():
     """
     Feature: mpi run 8P case of 'reduce_scatter' communication operator for pynative tensor hook.
@@ -484,8 +478,7 @@ def test_tensor_hook_with_reduce_scatter():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_tensor_backward_hook_with_jit():
     """
     Feature: Tensor hook

@@ -64,7 +64,7 @@ def _run_function(function, *base_inputs):
 
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unary_ops():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -93,7 +93,7 @@ def test_bytecode_unary_ops():
 
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_inplace_ops():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -119,7 +119,7 @@ def test_bytecode_inplace_ops():
     match_array(pynative_result, np.array([1, 6], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_async_function_call():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -153,7 +153,7 @@ def test_bytecode_async_function_call():
     assert jit_result is None
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_comprehension_operations():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -181,7 +181,7 @@ def test_bytecode_comprehension_operations():
     match_array(pynative_result, np.array([2, 4], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_build_class():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -212,7 +212,7 @@ def test_bytecode_build_class():
     match_array(pynative_result, np.array([2, 8], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_sequence_unpack():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -240,7 +240,7 @@ def test_bytecode_sequence_unpack():
     match_array(pynative_result, np.array([5, 12], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_load_method():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -266,7 +266,7 @@ def test_bytecode_load_method():
     match_array(pynative_result, np.array([0, 3], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_function_call_unpack():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -299,7 +299,7 @@ def test_bytecode_function_call_unpack():
     match_array(pynative_result, np.array([4, 16], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_import_from_math():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -322,7 +322,7 @@ def test_bytecode_import_from_math():
     match_array(pynative_result, base_input.asnumpy() * pi, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_build_str():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -347,7 +347,7 @@ def test_bytecode_build_str():
     assert pynative_result[1] == jit_result[1] == "(2,),Int32"
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_shift_operations():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -372,7 +372,7 @@ def test_bytecode_shift_operations():
     match_array(pynative_result, np.array([4, 8], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_load_closure():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -403,7 +403,7 @@ def test_bytecode_load_closure():
     match_array(pynative_result, np.array([3, 6], np.int32))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_load_deref():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -437,7 +437,7 @@ def test_bytecode_load_deref():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_try_except_single_graph():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -471,7 +471,7 @@ def test_bytecode_try_except_single_graph():
     check_ir_num('graph_before_compile', 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_try_in_try_raise_outer():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -501,7 +501,7 @@ def test_bytecode_try_in_try_raise_outer():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_try_in_try_no_match_inner():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -531,7 +531,7 @@ def test_bytecode_try_in_try_no_match_inner():
     match_array(pynative_result, jit_result, error=5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_try_in_try_raise_in_finally():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -564,7 +564,7 @@ def test_bytecode_try_in_try_raise_in_finally():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_try_with_graph_break():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -599,7 +599,7 @@ def test_bytecode_try_with_graph_break():
     check_ir_num('graph_before_compile', 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_with_context_manager_try():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -637,7 +637,7 @@ def test_bytecode_with_context_manager_try():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unpack_build_list():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -666,7 +666,7 @@ def test_bytecode_unpack_build_list():
     check_ir_num('graph_before_compile', 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unpack_build_tuple():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -688,7 +688,7 @@ def test_bytecode_unpack_build_tuple():
     match_value(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unpack_build_map():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -710,7 +710,7 @@ def test_bytecode_unpack_build_map():
     match_value(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unpack_build_tuple_container():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -729,7 +729,7 @@ def test_bytecode_unpack_build_tuple_container():
     match_value(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unpack_build_map_with_call():
     """
     Feature: ms.jit capture_mode='bytecode'.
@@ -754,7 +754,7 @@ def test_bytecode_unpack_build_map_with_call():
     match_value(pynative_result, jit_result)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bytecode_unpack_build_tuple_with_call():
     """
     Feature: ms.jit capture_mode='bytecode'.

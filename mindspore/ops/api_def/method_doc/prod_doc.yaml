@@ -6,6 +6,9 @@ prod:
     reduce a dimension of `self` along the `dim`. Determine whether the dimensions of the output and self are the
     same by controlling `keepdim`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: overload `prod(axis=None, keep_dims=False, dtype=None)` will be removed, and only `prod(dim=None, keepdim=False, dtype=None)` will be supported.
+
     Args:
         dim (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. Default: ``None`` , reduce all dimensions.
             Only constant value is allowed. Assume the rank of `self` is r, and the value range is [-r,r).

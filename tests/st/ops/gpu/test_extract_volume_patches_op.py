@@ -33,7 +33,7 @@ class NetExtractVolumePatches(nn.Cell):
         return self.extractvolumepatches(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extractvolumepatches_graph():
     """
     Feature: extractvolumepatches
@@ -60,7 +60,7 @@ def test_extractvolumepatches_graph():
         assert output.shape == expect_output.shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_extractvolumepatches_pynative():
     """
     Feature: extractvolumepatches

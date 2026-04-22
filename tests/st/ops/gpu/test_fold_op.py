@@ -51,7 +51,7 @@ def test_fold_tensor_api():
     assert output.shape == expected_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_fold_tensor_functional_api_modes():
     """
     Feature: test fold tensor and functional APIs for different modes.

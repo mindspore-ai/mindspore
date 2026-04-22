@@ -3,6 +3,8 @@ if(ENABLE_D OR ENABLE_ACL)
     set_property(SOURCE ${_TRANSFORM_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
       SUBMODULE_ID=mindspore::SubModuleId::SM_GE_ADPT)
 
+    # avoid cpp error as CANN is deprecating current version of ops protos by Dec 2026
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=cpp")
     # mindspore_graph_ir is used by GE and lite.
     if(TARGET mindspore_ascend_res_manager)
         add_library(mindspore_graph_ir SHARED ${_TRANSFORM_SRC_LIST})

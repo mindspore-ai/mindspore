@@ -34,7 +34,7 @@ class ReduceMean(nn.Cell):
         return self.reduce_mean(x, axis)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 @pytest.mark.parametrize('shape, axis, keep_dims',
                          [((2, 3, 4, 4), 3, True), ((2, 3, 4, 4), 3, False), ((2, 3, 1, 4), 2, True),
@@ -77,7 +77,7 @@ class ReduceMeanDynamic(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32])
 @pytest.mark.parametrize('shape, axis, keep_dims',
                          [((2, 3, 4, 4), 3, True), ((1, 1, 1, 1), (), True), ((2, 3, 4, 4, 5, 6), -2, False)])
@@ -111,7 +111,7 @@ class ReduceMeanNegativeNet(nn.Cell):
         return self.mean1(t, (-1,))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_reduce_mean_negative():
     """
     Feature: ALL To ALL

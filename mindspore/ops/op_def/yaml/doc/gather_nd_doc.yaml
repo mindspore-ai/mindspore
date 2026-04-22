@@ -2,6 +2,9 @@ gather_nd:
   description: |
       Gathers slices from the input tensor by specified indices.
 
+      .. warning::
+          This interface is deprecated and will be removed after version 2.9.0.
+
       Suppose `indices` is a K-dimensional integer tensor, follow the formula below:
 
       .. math::

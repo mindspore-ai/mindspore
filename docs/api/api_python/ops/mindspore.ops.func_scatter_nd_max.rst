@@ -9,6 +9,9 @@ mindspore.ops.scatter_nd_max
         \text{input_x}[\text{indices}[i, ..., j]]
         = \max(\text{input_x}[\text{indices}[i, ..., j]], \text{updates}[i, ..., j])
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         - 支持隐式类型转换、类型提升。
         - `indices` 的维度至少为2，并且 `indices.shape[-1] <= len(indices.shape)` 。

@@ -33,7 +33,7 @@ class NetReciprocal(nn.Cell):
         return self.reciprocal(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("data_type", [np.bool_, np.int8, np.int16, np.int32, np.int64,
                                        np.float16, np.float32, np.float64,
                                        np.complex64, np.complex128])

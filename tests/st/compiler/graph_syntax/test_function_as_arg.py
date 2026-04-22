@@ -38,7 +38,7 @@ class MyClass:
         return args[0]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_call_interpret_obj_in_jit_function():
     """
     Feature: Support input args as function.
@@ -54,7 +54,7 @@ def test_call_interpret_obj_in_jit_function():
     assert a == ms.int64
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_callable_in_unpack_args():
     """
     Feature: Support input args as function.
@@ -71,7 +71,7 @@ def test_jit_function_input_a_callable_in_unpack_args():
     assert a == ms.int64
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_callable_obj():
     """
     Feature: Support input args as function.
@@ -90,7 +90,7 @@ def test_jit_function_input_a_callable_obj():
     assert a == ms.int64
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_callable_obj_1():
     """
     Feature: Support input args as function.
@@ -108,7 +108,7 @@ def test_jit_function_input_a_callable_obj_1():
     assert np.allclose(a.asnumpy(), np.array([1, 2]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_callable_obj_2():
     """
     Feature: Support input args as function.
@@ -128,7 +128,7 @@ def test_jit_function_input_a_callable_obj_2():
 
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_primitive():
     """
     Feature: Support input args as function.
@@ -145,7 +145,7 @@ def test_jit_function_input_a_primitive():
     assert np.allclose(a.asnumpy(), np.array([1, 2]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_cannot_compile_func():
     """
     Feature: Support input args as function.
@@ -163,7 +163,7 @@ def test_jit_function_input_a_cannot_compile_func():
     assert np.allclose(a.asnumpy(), np.array([1, 2]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_func_with_fallback():
     """
     Feature: Support input args as function.
@@ -185,7 +185,7 @@ def test_jit_function_input_a_func_with_fallback():
     assert np.allclose(a.asnumpy(), np.array([2, 4]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_jit_function_input_a_user_def_func():
     """
     Feature: Support input args as function.

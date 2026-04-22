@@ -28,7 +28,7 @@ def run_test_case_common(test_file_name, test_case_name, log_config):
     return data
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_guard():
     """
     Feature: Test pijit log
@@ -44,7 +44,7 @@ def test_pijit_log_guard():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_bytecode():
     """
     Feature: Test pijit log
@@ -60,7 +60,7 @@ def test_pijit_log_bytecode():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_graph_break():
     """
     Feature: Test pijit log
@@ -76,7 +76,7 @@ def test_pijit_log_graph_break():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_all():
     """
     Feature: Test pijit log
@@ -94,7 +94,7 @@ def test_pijit_log_all():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_mix_guard_bytecode():
     """
     Feature: Test pijit log
@@ -112,7 +112,7 @@ def test_pijit_log_mix_guard_bytecode():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_mix_guard_bytecode_2():
     """
     Feature: Test pijit log
@@ -130,7 +130,7 @@ def test_pijit_log_mix_guard_bytecode_2():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pijit_log_mix_guard_all():
     """
     Feature: Test pijit log
@@ -148,7 +148,7 @@ def test_pijit_log_mix_guard_all():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_graph_break_content():
     """
     Feature: Test pijit log
@@ -166,7 +166,7 @@ def test_pijit_log_graph_break_content():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_trace_content():
     """
     Feature: Test pijit log
@@ -184,7 +184,7 @@ def test_pijit_log_trace_content():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_recompiles_content():
     """
     Feature: Test pijit log
@@ -201,7 +201,7 @@ def test_pijit_log_recompiles_content():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_dynamic_content():
     """
     Feature: Test pijit log
@@ -219,7 +219,7 @@ def test_pijit_log_dynamic_content():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_bytecode_graph_split_case():
     """
     Feature: Test pijit log (bytecode only).
@@ -237,7 +237,7 @@ def test_pijit_log_bytecode_graph_split_case():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_graph_break_and_guard_graph_split_case():
     """
     Feature: Test pijit log (graph_break and guard).
@@ -258,7 +258,7 @@ def test_pijit_log_graph_break_and_guard_graph_split_case():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_all_graph_split_case():
     """
     Feature: Test pijit log (all).
@@ -289,7 +289,7 @@ def run_pytest(test_file_name, test_case_name, log_config):
     return data
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_print_after_all_graph_split_for():
     """
     Feature: print_after_all logging for graph break in loop.
@@ -306,7 +306,7 @@ def test_pijit_log_print_after_all_graph_split_for():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_print_after_all_try_finally():
     """
     Feature: print_after_all logging for try/finally graph break.
@@ -324,7 +324,7 @@ def test_pijit_log_print_after_all_try_finally():
     os.remove(f"{test_case_name}_log.txt")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pijit_log_print_after_all_before_psjit():
     """
     Feature: print_after_all logging before psjit execution.

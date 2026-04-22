@@ -25,7 +25,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_make_coo():
     """
     Feature: Test COOTensor Constructor in Graph and PyNative.
@@ -47,8 +47,7 @@ def test_make_coo():
     compare_coo(coo3, coo2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_coo_tensor_with_control_if():
     """
     Feature: Test COOTensor in if.
@@ -98,8 +97,7 @@ def test_coo_tensor_with_control_if():
     assert out[2] == shape
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_coo_tensor_in_while():
     """
     Feature: Test COOTensor in while loop.
@@ -131,7 +129,7 @@ def test_coo_tensor_in_while():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_method():
     """
     Feature: Test coo tensor methods.
@@ -168,7 +166,7 @@ def test_coo_method():
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_coo_coalesce():
     """
     Feature: Test coo tensor coalesce methods.
@@ -199,7 +197,7 @@ def test_coo_coalesce():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dtype_coo_tensor():
     """
     Feature: Test F.dtype with COOTensor.
@@ -226,7 +224,7 @@ def test_dtype_coo_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+          card_mark='onecard', mem_peak=1024.01)
 def test_coo_attr():
     """
     Feature: Test COOTensor GetAttr in Graph and PyNative.
@@ -277,7 +275,7 @@ def test_coo_attr():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_bprop():
     """
     Feature: Test back-propagation with COO-related Ops.
@@ -367,7 +365,7 @@ def test_coo_bprop():
     compare_res(test_coo_to_dense(indices, values, dense_shape), values_on)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_dense_to_coo():
     """
     Feature: Test dense tensor to coo methods.
@@ -391,7 +389,7 @@ def test_dense_to_coo():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_coo_magic_methods():
     """
     Feature: Test coo magic methods.

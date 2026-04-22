@@ -308,8 +308,7 @@ def _test_internal_asd_flash_attention_score(parma_dict, in_layout, ms_dtype, is
         assert err_ratio < 0.05, "err_ratio is " + str(err_ratio)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=304.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=304.00)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('enable_alibi', [False])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -332,8 +331,7 @@ def test_internal_asd_flash_attention_score_bsh_bf16(ms_dtype, enable_alibi, mod
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=276.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=276.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16])
 @pytest.mark.parametrize('enable_alibi', [True])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -356,8 +354,7 @@ def test_internal_asd_flash_attention_score_bsh_fp16(ms_dtype, enable_alibi, mod
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=324.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=324.00)
 @pytest.mark.parametrize('enable_alibi', [False])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_internal_asd_flash_attention_score_bsh_bf16_dyn_0(enable_alibi, mode):
@@ -380,8 +377,7 @@ def test_internal_asd_flash_attention_score_bsh_bf16_dyn_0(enable_alibi, mode):
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=332.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=332.00)
 @pytest.mark.parametrize('enable_alibi', [False])
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_internal_asd_flash_attention_score_bsh_bf16_dyn_1(enable_alibi, mode):
@@ -404,8 +400,7 @@ def test_internal_asd_flash_attention_score_bsh_bf16_dyn_1(enable_alibi, mode):
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=428.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=428.00)
 @pytest.mark.parametrize('enable_alibi', [True])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_internal_asd_flash_attention_score_bsh_bf16_dyn_alibi_0(enable_alibi, mode):
@@ -428,8 +423,7 @@ def test_internal_asd_flash_attention_score_bsh_bf16_dyn_alibi_0(enable_alibi, m
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=374.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=374.00)
 @pytest.mark.parametrize('enable_alibi', [True])
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_internal_asd_flash_attention_score_bsh_bf16_dyn_alibi_1(enable_alibi, mode):
@@ -452,8 +446,7 @@ def test_internal_asd_flash_attention_score_bsh_bf16_dyn_alibi_1(enable_alibi, m
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=284.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=284.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('enable_alibi', [False, True])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -476,8 +469,7 @@ def test_internal_asd_flash_attention_score_th(ms_dtype, enable_alibi, mode):
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=350.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=350.00)
 @pytest.mark.parametrize('enable_alibi', [False])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_internal_asd_flash_attention_score_th_fp16_dyn_0(enable_alibi, mode):
@@ -500,8 +492,7 @@ def test_internal_asd_flash_attention_score_th_fp16_dyn_0(enable_alibi, mode):
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=348.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=348.00)
 @pytest.mark.parametrize('enable_alibi', [False])
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_internal_asd_flash_attention_score_th_fp16_dyn_1(enable_alibi, mode):
@@ -524,8 +515,7 @@ def test_internal_asd_flash_attention_score_th_fp16_dyn_1(enable_alibi, mode):
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=368.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=368.00)
 @pytest.mark.parametrize('enable_alibi', [True])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_internal_asd_flash_attention_score_th_fp16_dyn_alibi_0(enable_alibi, mode):
@@ -547,8 +537,7 @@ def test_internal_asd_flash_attention_score_th_fp16_dyn_alibi_0(enable_alibi, mo
     _test_internal_asd_flash_attention_score(
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=366.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=366.00)
 @pytest.mark.parametrize('enable_alibi', [True])
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_internal_asd_flash_attention_score_th_fp16_dyn_alibi_1(enable_alibi, mode):
@@ -571,8 +560,7 @@ def test_internal_asd_flash_attention_score_th_fp16_dyn_alibi_1(enable_alibi, mo
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=284.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=284.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('enable_alibi', [False, True])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -595,8 +583,7 @@ def test_internal_asd_flash_attention_score_tnd(ms_dtype, enable_alibi, mode):
         param_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
-        essential_mark='unessential', mem_peak=206.00)
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', mem_peak=206.00)
 @pytest.mark.parametrize('is_dyn', [False])
 def test_internal_asd_flash_attention_score_bsh_310p(is_dyn):
     """

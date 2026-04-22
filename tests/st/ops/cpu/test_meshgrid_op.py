@@ -38,8 +38,7 @@ class NetMeshgrid(nn.Cell):
         return self.meshgrid(inputs)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_meshgrid_dshape():
     """
     Feature: Test meshgrid dynamic shape.
@@ -59,8 +58,7 @@ def test_meshgrid_dshape():
     assert output[1].asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype',
                          [np.bool_, np.uint8, np.uint16, np.uint32, np.uint64, np.int8, np.int16, np.int32, np.int64,
                           np.float16, np.float32, np.float64])
@@ -98,8 +96,7 @@ def test_meshgrid(dtype, indexing):
     assert np.array_equal(output[2].asnumpy(), np_output[2])
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [2])
 def test_meshgrid_vmap_cpu(axis):
     """
@@ -132,8 +129,7 @@ def test_meshgrid_vmap_cpu(axis):
     assert np.array_equal(output_vmap1.asnumpy(), output_manually1)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis0', [2])
 @pytest.mark.parametrize('axis1', [2])
 def test_meshgrid_vmap_cpu_2(axis0, axis1):

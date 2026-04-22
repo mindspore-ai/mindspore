@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for Tensor untyped_storage and related storage APIs."""
 import mindspore as ms
-from mindspore import Tensor, default_generator
+from mindspore import Tensor, Parameter, default_generator
 import pytest
 import numpy as np
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_get_storage():
     """
     Feature: get_storage
@@ -34,8 +34,7 @@ def test_get_storage():
     assert storage.nbytes() == 4
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_resize():
     """
     Feature: storage resize
@@ -66,8 +65,7 @@ def test_storage_resize():
     assert storage.data_ptr() != 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_copy():
     """
     Feature: storage copy
@@ -87,8 +85,7 @@ def test_storage_copy():
     assert b.item() == 6.0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_init_tensor():
     """
     Feature: init
@@ -99,8 +96,7 @@ def test_storage_init_tensor():
     assert a.untyped_storage().size() == 4
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_cpu_and_npu_copy():
     """
     Feature: copy between cpu and npu
@@ -129,8 +125,7 @@ def test_storage_cpu_and_npu_copy():
     assert b.sum().item() == 1000
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_view():
     """
     Feature: view of storage
@@ -145,8 +140,7 @@ def test_storage_view():
     assert b.item() == 3.0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_copy_exception():
     """
     Feature: Exception when two storage size not equal
@@ -159,7 +153,7 @@ def test_storage_copy_exception():
         a.untyped_storage().copy_(b.untyped_storage())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_storage_cpu_after_compute():
     """
     Feature: cpu storage
@@ -173,7 +167,7 @@ def test_storage_cpu_after_compute():
     assert a.untyped_storage().size() == 4
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_storage_resize_cpu():
     """
     Feature: resize storage
@@ -205,7 +199,7 @@ def test_storage_resize_cpu():
     assert storage.data_ptr() != 0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_storage_copy_cpu():
     """
     Feature: storage copy
@@ -226,7 +220,7 @@ def test_storage_copy_cpu():
     assert b.item() == 6.0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_storage_copy_cpu_big_size():
     """
     Feature: storage copy over size
@@ -246,8 +240,7 @@ def test_storage_copy_cpu_big_size():
     assert c.sum().item() == 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-        essential_mark='essential', mem_peak=2.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
 def test_storage_copy_after_rng():
     """
     Feature: storage copy
@@ -272,3 +265,75 @@ def test_storage_copy_after_rng():
     storage_b.copy_(storage_c)
 
     assert b.item() == 6.0
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+def test_storage_update_after_set_data():
+    """
+    Feature: untyped_storage invalidation
+    Description: Verify untyped_storage is refreshed after Parameter.set_data
+    Expectation: data_ptr changes to reflect the new underlying data
+    """
+    ms.set_device("CPU")
+    x = Tensor(np.array([1., 2., 3.], dtype=np.float32))
+    y = Tensor(np.array([4., 5., 6.], dtype=np.float32))
+    param = Parameter(x, name="test_set_data")
+    old_ptr = param.untyped_storage().data_ptr()
+    param.set_data(y)
+    new_ptr = param.untyped_storage().data_ptr()
+    assert old_ptr != new_ptr
+    assert np.allclose(param.asnumpy(), [4., 5., 6.])
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+def test_storage_update_after_data_assign():
+    """
+    Feature: untyped_storage invalidation
+    Description: Verify untyped_storage is refreshed after Parameter.data assignment
+    Expectation: data_ptr changes to reflect the new underlying data
+    """
+    ms.set_device("CPU")
+    x = Tensor(np.array([1., 2., 3.], dtype=np.float32))
+    y = Tensor(np.array([4., 5., 6.], dtype=np.float32))
+    param = Parameter(x, name="test_data_assign")
+    old_ptr = param.untyped_storage().data_ptr()
+    param.data = y
+    new_ptr = param.untyped_storage().data_ptr()
+    assert old_ptr != new_ptr
+    assert np.allclose(param.asnumpy(), [4., 5., 6.])
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+def test_storage_update_after_update_data():
+    """
+    Feature: untyped_storage invalidation
+    Description: Verify untyped_storage is refreshed after Parameter._update_data
+    Expectation: data_ptr changes to reflect the new underlying data
+    """
+    ms.set_device("CPU")
+    x = Tensor(np.array([1., 2., 3.], dtype=np.float32))
+    y = Tensor(np.array([4., 5., 6.], dtype=np.float32))
+    param = Parameter(x, name="test_update_data")
+    old_ptr = param.untyped_storage().data_ptr()
+    param._update_data(y)  # pylint: disable=protected-access
+    new_ptr = param.untyped_storage().data_ptr()
+    assert old_ptr != new_ptr
+    assert np.allclose(param.asnumpy(), [4., 5., 6.])
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+def test_storage_update_multiple_reassigns():
+    """
+    Feature: untyped_storage invalidation
+    Description: Verify untyped_storage stays correct across multiple data updates
+    Expectation: data_ptr and values are correct after each update
+    """
+    ms.set_device("CPU")
+    param = Parameter(Tensor(np.array([1.], dtype=np.float32)), name="test_multi")
+    ptrs = [param.untyped_storage().data_ptr()]
+    for i in range(2, 5):
+        param.set_data(Tensor(np.array([float(i)], dtype=np.float32)))
+        ptrs.append(param.untyped_storage().data_ptr())
+        assert param.asnumpy()[0] == float(i)
+    # Verify we collected a pointer after each update (pointers may be reused by the allocator)
+    assert len(ptrs) == 4

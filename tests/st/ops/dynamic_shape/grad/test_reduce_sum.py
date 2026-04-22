@@ -43,7 +43,7 @@ class NetReduceSumOther(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_reducesum_shape():
     """
     Feature: ReduceSum Grad DynamicShape.
@@ -57,7 +57,7 @@ def test_dynamic_reducesum_shape():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_reducesum_rank():
     """
     Feature: ReduceSum Grad DynamicRank.
@@ -71,7 +71,7 @@ def test_dynamic_reducesum_rank():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard')
 def test_dynamic_reducesum_shape_for_dynamic_axis():
     """
     Feature: ReduceSum Grad DynamicShape.

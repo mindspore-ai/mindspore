@@ -8,6 +8,9 @@ mindspore.ops.coo_inv
     .. math::
         out_i = \frac{1}{x_{i} }
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - 任意维度的COOTensor。其数据类型为float16、float32或int32。
 

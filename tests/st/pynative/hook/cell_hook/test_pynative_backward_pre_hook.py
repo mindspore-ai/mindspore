@@ -62,8 +62,7 @@ class Net(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 @pytest.mark.parametrize('hook', [backward_pre_hook_fn_with_no_return, backward_pre_hook_fn_with_old_return])
 def test_pynative_backward_pre_hook_on_net(hook):
     """
@@ -315,8 +314,7 @@ def test_pynative_backward_pre_hook_with_backward_hook_multi_register():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_pynative_cell_backward_pre_hook_test_suite():
     """
     Feature: PyNative cell backward hook.
@@ -335,8 +333,7 @@ def test_pynative_cell_backward_pre_hook_test_suite():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_jit_backward_pre_hook_with_wrong_number_of_output():
     """
     Feature: PyNative hook function with jit.

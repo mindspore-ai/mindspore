@@ -15,6 +15,9 @@ mindspore.nn.MaxUnpool3d
         W_{out} = (W_{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
         \end{array}
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：前向输入 `x` 将改为 `input`。
+
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。int类型表示池化核的深度、长和宽相同。
           tuple类型中的三个值分别代表池化核的深度、长和宽。

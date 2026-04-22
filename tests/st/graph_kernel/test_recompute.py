@@ -160,7 +160,7 @@ def run_basic3(net):
     assert np.allclose(expect1_np, output1_np, 1.e-3, 1.e-3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_1():
     """
     Feature: todo
@@ -171,7 +171,7 @@ def test_gpu_1():
     run_basic1(Net1)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_2():
     """
     Feature: todo
@@ -182,7 +182,7 @@ def test_gpu_2():
     run_basic2(Net2)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_3():
     """
     Feature: todo
@@ -193,7 +193,7 @@ def test_gpu_3():
     run_basic2(Net3)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_4():
     """
     Feature: todo
@@ -204,7 +204,7 @@ def test_gpu_4():
     run_basic1(Net4)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gpu_5():
     """
     Feature: todo

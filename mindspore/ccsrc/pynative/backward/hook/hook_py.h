@@ -28,12 +28,10 @@ namespace mindspore::pynative::autograd {
 namespace py = pybind11;
 struct RegisterHook {
   /// \brief Register a backward hook
-  ///
   /// \ void
   static uint64_t RegisterTensorBackwardHook(const tensor::TensorPtr &tensor, const py::function &hook);
 
   /// \brief Remove a backward hook
-  ///
   /// \ void
   static void RemoveTensorBackwardHook(uint64_t handle_id);
   static py::list GetHooks(const tensor::TensorPtr &tensor);

@@ -34,8 +34,7 @@ sparse_flash_attention:
     :math:`d_k` is the head dimension of :math:`Q, \tilde{K}`.
 
     .. warning::
-        - This is an experimental API that may be changed or deleted.
-        - Only supported on `Atlas A2/A3` inference series products.
+        This is an experimental API that may be changed or deleted.
 
     Args:
         query (Tensor): The query tensor, corresponding to Q in the formula. Dtype is bfloat16 or float16.
@@ -70,7 +69,9 @@ sparse_flash_attention:
             Required when attention_mode=2 (MLA-absorb mode). Shape is same as key but last
             dimension D is replaced with D_rope (64). Default: ``None``.
         sparse_block_size (int, optional): Block size for sparse stage, used in importance score calculation.
-            Range is [1, 128] and must be a power of 2. Default: ``1``.
+            Range is [1, 64] and must be a power of 2. It is not recommended that
+            K * sparse_block_size exceeds 100k, as hardware limitations may cause OOM.
+            Default: ``1``.
         layout_query (str, optional): Data layout format for query. Supports ``"BSND"`` and ``"TND"``.
             Default: ``"BSND"``.
         layout_kv (str, optional): Data layout format for key. Supports ``"TND"``, ``"BSND"`` and ``"PA_BSND"``.

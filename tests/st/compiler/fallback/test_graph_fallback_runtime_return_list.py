@@ -26,8 +26,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list():
     """
     Feature: Return list in graph
@@ -43,8 +42,7 @@ def test_return_constant_list():
     assert res == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list_2():
     """
     Feature: Return list in graph
@@ -60,8 +58,7 @@ def test_return_constant_list_2():
     assert res == ["a", "b", "c", "d"]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list_3():
     """
     Feature: Return list in graph
@@ -77,8 +74,7 @@ def test_return_constant_list_3():
     assert res == [True, False, False, True]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list_4():
     """
     Feature: Return list in graph
@@ -97,8 +93,7 @@ def test_return_constant_list_4():
     assert np.all(res[2].asnumpy() == np.array([2, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list_5():
     """
     Feature: Return list in graph
@@ -114,8 +109,7 @@ def test_return_constant_list_5():
     assert res == [None, None, None]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list_6():
     """
     Feature: Return list in graph
@@ -135,8 +129,7 @@ def test_return_constant_list_6():
     assert res[2] == 1
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_constant_list_7():
     """
     Feature: Return list in graph
@@ -152,8 +145,7 @@ def test_return_constant_list_7():
     assert res == [1, "a", True, None, Tensor([2])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_make_list_node():
     """
     Feature: Return list in graph
@@ -170,8 +162,7 @@ def test_return_make_list_node():
     assert res == [1, 2, 3, 1]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_make_list_node_2():
     """
     Feature: Return list in graph
@@ -187,8 +178,7 @@ def test_return_make_list_node_2():
     assert res == [Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_make_list_node_3():
     """
     Feature: Return list in graph
@@ -205,8 +195,7 @@ def test_return_make_list_node_3():
 
 
 @pytest.mark.skip('backend not support different type in value tuple')
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_make_list_node_4():
     """
     Feature: Return list in graph
@@ -229,8 +218,7 @@ def test_return_make_list_node_4():
     assert res[2] == (0, 1.0)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_list_with_nest():
     """
     Feature: Return list in graph
@@ -246,8 +234,7 @@ def test_return_list_with_nest():
     assert res == [[1, 2, 3], [4, 5, 6]]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_list_with_nest_2():
     """
     Feature: Return list in graph
@@ -263,8 +250,7 @@ def test_return_list_with_nest_2():
     assert res == [([1, 1], [2, 2], (3, [4, 4])), [4, 5, 6]]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_list_with_nest_3():
     """
     Feature: Return list in graph
@@ -280,8 +266,7 @@ def test_return_list_with_nest_3():
     assert res == (([1, 1], [2, 2], (3, [4, 4])), [4, 5, 6])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_make_list_with_nest():
     """
     Feature: Return list in graph
@@ -297,8 +282,7 @@ def test_return_make_list_with_nest():
     assert res == [[Tensor([0]), Tensor([0])], (Tensor([1]), Tensor([2]))]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_make_list_with_nest_2():
     """
     Feature: Return list in graph
@@ -314,8 +298,7 @@ def test_return_make_list_with_nest_2():
     assert res == ([Tensor([0]), ([Tensor([0]), 1],)], (Tensor([1]), Tensor([2])))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_return_buildin_list_func():
     """
     Feature: Return list in graph
@@ -331,8 +314,7 @@ def test_return_buildin_list_func():
     assert res == [1, "2", None, Tensor([1])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_return_buildin_list_func_2():
     """
     Feature: Return list in graph
@@ -348,8 +330,7 @@ def test_return_buildin_list_func_2():
     assert res == [Tensor([1]), Tensor([2]), Tensor([3])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_dynamic_length_list():
     """
     Feature: Return list in graph
@@ -366,8 +347,7 @@ def test_return_dynamic_length_list():
     assert res == [1, 2, 3]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_dynamic_length_list_2():
     """
     Feature: Return list in graph
@@ -384,8 +364,7 @@ def test_return_dynamic_length_list_2():
     assert res == [Tensor([0]), Tensor([1])]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_return_list_from_third_party():
     """
     Feature: Return list in graph
@@ -403,8 +382,7 @@ def test_return_list_from_third_party():
     assert res == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_list_from_third_party_2():
     """
     Feature: Return list in graph
@@ -421,8 +399,7 @@ def test_return_list_from_third_party_2():
     assert res == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_list_from_third_party_3():
     """
     Feature: Return list in graph
@@ -439,8 +416,7 @@ def test_return_list_from_third_party_3():
     assert res == [0, 2, 4, 6, 8]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_return_list_from_dict_attribute():
     """
     Feature: Return list in graph
@@ -459,8 +435,7 @@ def test_return_list_from_dict_attribute():
     assert res[1] == [Tensor([1]), 2]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_return_list_from_dict_attribute_2():
     """
     Feature: Return list in graph
@@ -479,8 +454,7 @@ def test_return_list_from_dict_attribute_2():
     assert res[2] == [Tensor([1]), 2]
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_grad_for_return_list_graph():
     """
     Feature: Return list in graph
@@ -498,7 +472,7 @@ def test_grad_for_return_list_graph():
     assert np.allclose(res.asnumpy(), np.array([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]).astype(np.float32))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_grad_for_graph_with_list_input():
     """
     Feature: Return list in graph
@@ -526,8 +500,7 @@ def test_grad_for_graph_with_list_input():
     assert np.allclose(output[1].asnumpy(), expect[1])
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
 def test_fallback_sorted_return_list():
     """
     Feature: Return list in graph.
@@ -543,7 +516,7 @@ def test_fallback_sorted_return_list():
     assert list(foo()) == [1, 2, 3, 4, 5]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_list_construct_inner():
     """
     Feature: Return list in graph.
@@ -563,7 +536,7 @@ def test_parser_fallback_set_list_construct_inner():
     assert y == [0, 1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_list_construct_outer():
     """
     Feature: Return list in graph.
@@ -582,7 +555,7 @@ def test_parser_fallback_set_list_construct_outer():
     assert ms_forward == list(x)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_list_from_numpy():
     """
     Feature: Return list in graph.
@@ -599,7 +572,7 @@ def test_parser_fallback_set_list_from_numpy():
     assert out == [1, 2, 3, 4]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_list_nest():
     """
     Feature: Return list in graph.
@@ -624,7 +597,7 @@ def test_parser_fallback_set_list_nest():
     assert out[2] == (0, 1.0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_list_control_flow():
     """
     Feature: Return list in graph.
@@ -661,7 +634,7 @@ def test_parser_fallback_set_list_control_flow():
     assert ret == [x, x * 2, x * 3]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_set_dict_nest():
     """
     Feature: Return list in graph.
@@ -681,7 +654,7 @@ def test_parser_fallback_set_dict_nest():
     assert y == [1.0, 2.0, 3.0]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_list_pop_exception():
     """
     Feature: Test list pop in graph.
@@ -708,7 +681,7 @@ def test_parser_fallback_list_pop_exception():
 global_list_for_insert = [1, 2, 3, 4, 5]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_list_insert():
     """
     Feature: Test list insert in graph.
@@ -740,7 +713,7 @@ def test_parser_fallback_list_insert():
     assert z == [-1, 0, 1, 2]
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_list_python_index():
     """
     Feature: Test list index.
@@ -775,7 +748,7 @@ def test_parser_fallback_list_python_index():
         assert np.allclose(t, m, 0, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_list_python_func():
     """
     Feature: Test list count, index and compare in graph.
@@ -813,7 +786,7 @@ def test_parser_fallback_list_python_func():
         assert np.allclose(t, m, 0, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_parser_fallback_list_control_flow():
     """
     Feature: Test list pop with control flow in graph.

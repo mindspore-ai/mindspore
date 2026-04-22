@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -80,8 +80,7 @@ def _run_new_process(file_name, output_dir=None, dump_as_text=False, only_dvm=Fa
     _delete_dir(output_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=622.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=622.00)
 def test_op():
     """
     Feature: test dvm op precision
@@ -92,7 +91,7 @@ def test_op():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+          card_mark='onecard', mem_peak=0.01)
 def test_matmul():
     """
     Feature: test dvm matmul op precision
@@ -102,8 +101,7 @@ def test_matmul():
     _run_new_process("dvm_matmul_pynative.py", "dvm_matmul")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=158.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
 def test_fuse():
     """
     Feature: test dvm fuse op precision
@@ -113,8 +111,7 @@ def test_fuse():
     _run_new_process("dvm_fuse_pynative.py", "dvm_fuse")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=158.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
 def test_matmul_fuse():
     """
     Feature: test dvm matmul fuse op precision
@@ -124,8 +121,7 @@ def test_matmul_fuse():
     _run_new_process("dvm_matmul_fuse_pynative.py", "dvm_matmul_fuse")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=158.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
 def test_dump():
     """
     Feature: test dvm fuse op dump
@@ -135,8 +131,7 @@ def test_dump():
     _run_new_process("dvm_fuse_pynative.py::test_elemwise", "dvm_dump", True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=158.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
 def test_deterministic():
     """
     Feature: test dvm deterministic
@@ -146,8 +141,7 @@ def test_deterministic():
     _run_new_process("dvm_deterministic.py", only_dvm=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential', mem_peak=158.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
 def test_frontend_boundary():
     """
     Feature: test dvm frontend boundary correctness
@@ -155,3 +149,13 @@ def test_frontend_boundary():
     Expectation: the result match with the expected result
     """
     _run_new_process("dvm_frontend_boundary_pynative.py", "dvm_frontend_boundary")
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=158.00)
+def test_shape_input_reuse():
+    """
+    Feature: test dvm shape-input cache and reuse correctness
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+    _run_new_process("dvm_shape_input_reuse_pynative.py", "dvm_shape_input_reuse")

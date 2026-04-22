@@ -14,12 +14,9 @@ def skip_if_python_version_too_high():
 
 
 @pytest.mark.skip(reason='fix it later')
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_pijit_bytecode_build_inner_class():
     """
     Feature: Test of parser inner class

@@ -22,7 +22,7 @@ from mindspore import Tensor, context
 from mindspore.ops.operations.sparse_ops import SparseSplit
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_ops_sparse_split_vs_tf_output_int64():
     """
     Feature: Test function sparse_split.

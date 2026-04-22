@@ -27,7 +27,7 @@ from mindspore.dataset.dataloader._utils.bit_generator import seed_sequence
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
 @pytest.mark.parametrize("worker_id", tuple(range(4)))
 def test_seed_sequence(worker_id):
     """
@@ -74,7 +74,7 @@ class WorkerInitFnDataset(IterableDataset):  # pylint: disable=abstract-method
 class TestWorker:
     """Test Worker."""
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_worker_init_fn(self):
         """
         Feature: Test worker init function.
@@ -95,7 +95,7 @@ class TestWorker:
         for index, data in enumerate(data_loader):
             assert data == ms.tensor([index])
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("num_workers", (1, 2))
     def test_worker_info(self, num_workers):
         """
@@ -121,7 +121,7 @@ class TestWorker:
             assert itr.data_workers[worker_id].pid == worker_pid
         assert not hasattr(dataset, "result")
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_worker_info_repr(self):
         """
         Feature: Test worker info repr.
@@ -131,7 +131,7 @@ class TestWorker:
         worker_info = WorkerInfo(id=0, num_workers=4, seed=0, dataset=None)
         assert str(worker_info) == "WorkerInfo: {id: 0, num_workers: 4, seed: 0, dataset: None}"
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     def test_worker_info_unmodifiable(self):
         """
         Feature: Test worker info unmodifiable.
@@ -144,7 +144,7 @@ class TestWorker:
         ):
             worker_info.id = 2
 
-    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
     @pytest.mark.parametrize("exc_type", (ValueError, TypeError, RuntimeError, OSError))
     def test_worker_exception(self, exc_type):
         """

@@ -19,9 +19,10 @@ mindspore.nn.ASGD
 
     :math:`\lambda` 代表衰减项， :math:`\mu` 和 :math:`\eta` 被跟踪以更新 :math:`ax` 和 :math:`w` ， :math:`t0` 代表开始平均的点， :math:`\alpha` 代表 :math:`\eta` 更新的系数， :math:`ax` 表示平均参数值， :math:`t` 表示当前步数（step）， :math:`g` 表示 `gradients` ， :math:`w` 表示 `params` 。
 
-    .. note::
-        此优化器不支持GE后端。
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 将改为 `lr`，且默认学习率将由 `0.1` 调整为 `0.01`。
 
+    .. note::
         如果参数未分组，则优化器中的 `weight_decay` 将应用于名称中没有"beta"或"gamma"的参数。用户可以对参数进行分组，以更改权重衰减策略。当参数分组时，每个组都可以设置 `weight_decay` ，如果没有，将应用优化器中的 `weight_decay` 。
 
     参数：

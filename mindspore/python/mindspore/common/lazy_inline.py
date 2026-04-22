@@ -16,6 +16,18 @@
 """lazy_inline"""
 
 from __future__ import absolute_import
+import sys
+import types
 from mindspore.graph._mark_deprecated import mark_deprecated
 
 mark_deprecated(__name__, 'mindspore.graph.lazy_inline')
+
+
+class _CallableLazyInlineModule(types.ModuleType):
+    """Keep the deprecated module import usable as a decorator."""
+
+    def __call__(self, *args, **kwargs):
+        return self.lazy_inline(*args, **kwargs)
+
+
+sys.modules[__name__].__class__ = _CallableLazyInlineModule

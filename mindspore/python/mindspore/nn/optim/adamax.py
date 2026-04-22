@@ -69,6 +69,12 @@ class AdaMax(Optimizer):
     :math:`l` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: `learning_rate` will be
+        renamed to `lr`, `beta1` and `beta2` will be merged into `betas`, `loss_scale`
+        will be removed, and the default learning rate will change from `0.001` to
+        `0.002`.
+
     Note:
         If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
         'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When

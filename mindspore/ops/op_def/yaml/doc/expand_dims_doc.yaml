@@ -2,6 +2,9 @@ expand_dims:
   description: |
     Adds an additional axis to input tensor.
 
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
     .. note::
         - The dimension of `input_x` should be greater than or equal to 1.
         - If the specified axis is a negative number, the index is counted

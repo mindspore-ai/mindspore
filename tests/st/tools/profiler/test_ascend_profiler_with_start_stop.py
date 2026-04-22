@@ -35,8 +35,7 @@ def train(add):
     add(Tensor(x), Tensor(y))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_dynamic_start_stop_kbk_profiler():
     """
     Feature: Dynamic Start-Stop Profiler
@@ -65,8 +64,7 @@ def test_dynamic_start_stop_kbk_profiler():
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_dynamic_start_stop_graph_profiler():
     """
     Feature: Dynamic Start-Stop Profiler
@@ -95,8 +93,7 @@ def test_dynamic_start_stop_graph_profiler():
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-        essential_mark='unessential', mem_peak=1024.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.00)
 def test_dynamic_start_stop_py_native_profiler():
     """
     Feature: Dynamic Start-Stop Profiler

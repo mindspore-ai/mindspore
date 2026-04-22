@@ -12,12 +12,9 @@ def skip_if_python_version_too_high():
         pytest.skip("Skipping tests on Python 3.11 and higher.")
 
 
-@arg_mark(
-    plat_marks=["cpu_linux"],
+@arg_mark(plat_marks=["cpu_linux"],
     level_mark="level0",
-    card_mark="onecard",
-    essential_mark="essential",
-)
+    card_mark="onecard")
 def test_parser_tensor_fancy_index_bool_list_in_2d_001():
     """
     Feature: Test of pijit parser

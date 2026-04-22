@@ -11,6 +11,9 @@ mindspore.ops.coo_sigmoid
 
     其中， :math:`x_i` 是x的一个元素。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (COOTensor) - 任意维度的COOTensor，数据类型为float16、float32、float64、complex64或complex128。
 

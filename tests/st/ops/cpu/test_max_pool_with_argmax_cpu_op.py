@@ -35,8 +35,7 @@ class MaxPoolWithArgmaxOp(nn.Cell):
         return self.max_pool_op(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool_with_argmax_valid():
     """
     Feature: test maxPoolWithArgmax cpu op.
@@ -61,8 +60,7 @@ def test_maxpool_with_argmax_valid():
     assert (argmax.asnumpy() == expect_argmax).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool_with_argmax_same():
     """
     Feature: test maxPoolWithArgmax cpu.
@@ -87,8 +85,7 @@ def test_maxpool_with_argmax_same():
     assert (argmax.asnumpy() == expect_argmax).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool_with_argmax_tensorflow():
     """
     Feature: test maxPoolWithArgmax op.
@@ -130,8 +127,7 @@ def test_maxpool_with_argmax_tensorflow():
     assert np.allclose(actual_output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_maxpool_with_argmax_dynamic_shape():
     """
     Feature: test maxPoolWithArgmax op with dynamic shapes.

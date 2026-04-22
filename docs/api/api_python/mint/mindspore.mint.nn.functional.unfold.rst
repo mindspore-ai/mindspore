@@ -23,7 +23,6 @@ mindspore.mint.nn.functional.unfold
 
     .. warning::
         - 目前，只支持4-D（包含批维度）的类图像Tensor。
-        - 对于Ascend，仅Atlas A2以上平台支持。
 
     参数：
         - **input** (Tensor) - 四维Tensor。

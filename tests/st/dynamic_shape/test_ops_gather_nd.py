@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST cases for gathernd."""
 
 import pytest
 import numpy as np
@@ -31,8 +32,7 @@ def gather_nd_backward_func(input_x, indices):
     return ops.grad(gather_nd_forward_func, (0,))(input_x, indices)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_gather_nd_forward(mode):
     """
@@ -48,8 +48,7 @@ def test_gather_nd_forward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_gather_nd_backward(mode):
     """
@@ -65,8 +64,7 @@ def test_gather_nd_backward(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential', mem_peak=1024.5)
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.5)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_gather_nd_backward_1d(mode):
     """

@@ -12,6 +12,9 @@ mindspore.nn.BiDense
 
     其中  :math:`x_{1}` 是第一个输入Tensor，:math:`x_{2}` 是第二个输入Tensor，:math:`A` 是一个权重矩阵，其数据类型与 :math:`x_{*}` 相同， :math:`b` 是一个偏置向量，其数据类型与 :math:`x_{*}` 相同（仅当has_bias为 ``True`` 时）。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **in1_channels** (int) - BiDense层第一个输入Tensor的空间维度。
         - **in2_channels** (int) - BiDense层第二个输入Tensor的空间维度。

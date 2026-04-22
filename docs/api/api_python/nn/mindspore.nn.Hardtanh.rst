@@ -22,6 +22,10 @@ mindspore.nn.Hardtanh
     .. note::
         在Ascend硬件上，float16数据类型场景下会有偶现的精度误差较大的问题。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`，并新增可选构造参数 `inplace`。
+        接口签名将变更为 ``mindspore.nn.Hardtanh(min_val=-1.0, max_val=1.0, inplace=False)`` 。
+
     参数：
         - **min_val** (Union[int, float]) - 线性区域范围的最小值。默认值： ``-1.0`` 。
         - **max_val** (Union[int, float]) - 线性区域范围的最大值。默认值： ``1.0`` 。

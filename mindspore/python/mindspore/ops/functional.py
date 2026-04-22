@@ -328,7 +328,6 @@ setattr(tensor_operator_registry, 'squeeze', squeeze)
 setattr(tensor_operator_registry, 'unsqueeze', unsqueeze)
 setattr(tensor_operator_registry, 'expand_dims', expand_dims)
 setattr(tensor_operator_registry, 'contiguous', auto_generate.contiguous)
-# support GE backend for no compare operators
 setattr(tensor_operator_registry, 'cast', _cast)
 setattr(tensor_operator_registry, 'shape_mul', shape_mul)
 setattr(tensor_operator_registry, 'concatenate', concat)

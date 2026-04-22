@@ -43,7 +43,7 @@ class PropertyNet(nn.Cell):
         return self.get_parameter * x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_param_property():
     """
     Feature: Support property decorator in graph mode.
@@ -59,7 +59,7 @@ def test_param_property():
     assert res2 == 20
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_param_property_in_graph_jit():
     """
     Feature: Support property decorator in graph mode.
@@ -76,7 +76,7 @@ def test_param_property_in_graph_jit():
     assert out == 22
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_param_property_in_outer_net():
     """
     Feature: Support property decorator in graph mode.
@@ -94,7 +94,7 @@ def test_param_property_in_outer_net():
     assert out == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_param_property_in_construct_init():
     """
     Feature: Support property decorator in graph mode.
@@ -115,7 +115,7 @@ def test_param_property_in_construct_init():
     assert out == 3
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_param_property_outer():
     """
     Feature: Support property decorator in graph mode.

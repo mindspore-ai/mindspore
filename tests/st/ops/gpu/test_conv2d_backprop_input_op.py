@@ -51,7 +51,7 @@ class Conv2dInput(nn.Cell):
         return self.conv_input(out, w, self.get_shape(x))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('algo', ["normal", "performance", "algo_0", "algo_1", "fft", "fft_tiling", "winograd",
                                   "winograd_nonfused"])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -91,7 +91,7 @@ def test_conv2d_backprop_input(algo, mode, conv_allow_tf32):
     assert (abs(output.asnumpy() - expect) < np.ones(shape=[1, 1, 6, 6]) * 1.0e-4).all()
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_conv2d_backprop_input_vmap():
     """
     Feature: Conv2DBackpropInput op

@@ -24,7 +24,7 @@ from tests.st.pi_jit.one_stage.test_utils import save_graph_ir, check_ir_num
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_abs():
     """
     Feature: One stage basic operation.
@@ -46,7 +46,7 @@ def test_abs():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_len():
     """
     Feature: One stage basic operation.
@@ -65,7 +65,7 @@ def test_len():
     assert o == 5
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_pow():
     """
     Feature: One stage basic operation.
@@ -87,7 +87,7 @@ def test_pow():
     assert_executed_by_graph_mode(fn)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_builtin_function_type_v1():
     """
     Feature: python builtin type().
@@ -119,7 +119,7 @@ def test_builtin_function_type_v1():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_builtin_all_control_flow():
     """
     Feature: Python builtin all in PIJit.
@@ -149,7 +149,7 @@ def test_builtin_all_control_flow():
 
 
 @save_graph_ir(ir_name='graph_before_compile')
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_builtin_abs_len_max_min():
     """
     Feature: Python builtin abs/len/max/min in PIJit.
@@ -180,7 +180,7 @@ def test_builtin_abs_len_max_min():
     check_ir_num('graph_before_compile', 1)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_builtin_pow_round_sum():
     """
     Feature: Python builtin pow/round/sum in PIJit.
@@ -216,7 +216,7 @@ def func2(x):
     return x * x
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_builtin_eval_dispatch_function():
     """
     Feature: Python eval inside JIT compiled function.

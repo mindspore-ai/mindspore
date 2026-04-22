@@ -5,6 +5,9 @@ mindspore.Tensor.min
 
     返回输入Tensor的最小值。
 
+    .. warning::
+        2.9.0（不含）之后版本非兼容性变更：接口将仅支持 `min(dim=None, keepdim=False)` 形式，不再保留当前的 `axis/keepdims/initial/where/return_indices` 重载。
+
     返回：
         Tensor，值为输入Tensor的最小值，类型与输入Tensor相同。
 

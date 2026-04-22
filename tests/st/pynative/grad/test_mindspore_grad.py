@@ -24,8 +24,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_basic():
     """
     Feature: Test grad by position.
@@ -46,8 +45,7 @@ def test_grad_basic():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_weights():
     """
     Feature: Test grad by weights.
@@ -72,8 +70,7 @@ def test_grad_weights():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_both():
     """
     Feature: Test grad by both input and weights.
@@ -100,8 +97,7 @@ def test_grad_both():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_multiple_positions():
     """
     Feature: Test grad by multiple positions.
@@ -124,8 +120,7 @@ def test_grad_multiple_positions():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_has_aux():
     """
     Feature: Test grad with auxiliary output.
@@ -146,8 +141,7 @@ def test_grad_has_aux():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_return_ids():
     """
     Feature: Test grad with return IDs.
@@ -178,8 +172,7 @@ def test_grad_return_ids():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_multiple_weights():
     """
     Feature: Test grad with multiple weights.
@@ -205,8 +198,7 @@ def test_grad_multiple_weights():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_none_arguments():
     """
     Feature: Test grad with none arguments.
@@ -225,8 +217,7 @@ def test_grad_none_arguments():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_invalid_grad_position_type():
     """
     Feature: Test grad with invalid grad_position type.
@@ -245,8 +236,7 @@ def test_grad_invalid_grad_position_type():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_invalid_weights_type():
     """
     Feature: Test grad with invalid weights type.
@@ -265,8 +255,7 @@ def test_grad_invalid_weights_type():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_invalid_has_aux_type():
     """
     Feature: Test grad with invalid has_aux type.
@@ -285,8 +274,7 @@ def test_grad_invalid_has_aux_type():
 
 @arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
+          card_mark='onecard')
 def test_grad_invalid_return_ids_type():
     """
     Feature: Test grad with invalid return_ids type.

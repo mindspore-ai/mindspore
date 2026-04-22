@@ -12,6 +12,9 @@ mindspore.ops.csr_isfinite
           & \text{ if } x_{i} \ne \text{Finite},\ \ False
         \end{cases}
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     参数：
         - **x** (CSRTensor) - IsFinite的输入，任意维度的CSRTensor。
 

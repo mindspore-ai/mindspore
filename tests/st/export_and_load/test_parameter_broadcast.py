@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 
 os.environ['HCCL_IF_BASE_PORT'] = '30001'
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_parameter_broadcast(mode):
     """

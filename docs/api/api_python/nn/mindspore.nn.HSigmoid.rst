@@ -5,6 +5,9 @@ mindspore.nn.HSigmoid
 
     逐元素应用Hard Sigmoid激活函数。
 
+    .. warning::
+        从2.9.0（不含）之后版本开始，该接口将重命名为 `Hardsigmoid`。
+
     Hard Sigmoid定义为：
 
     .. math::

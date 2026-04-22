@@ -21,7 +21,7 @@ from utils import parse_log, init_env
 
 
 class TestQWENSFT:
-    # @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+    # @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
     def test_mindspore_qwen_sft_determinstic(self):
         """
         Feature: test mindspore pretrain_glm
@@ -37,7 +37,7 @@ class TestQWENSFT:
         ret = os.system(cmd)
         assert ret == 0, f"msrun failed, please check ms_det.log"
 
-    # @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
+    # @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
     def test_compare_res(self):
         """
         Feature: test_compare_res

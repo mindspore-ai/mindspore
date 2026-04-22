@@ -97,8 +97,7 @@ def compiler_cache():
     print(f"[TEARDOWN] Removed temp dir and unset MS_COMPILER_CACHE_PATH")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_custom_concat_py_infer(context_mode, params):
@@ -120,8 +119,7 @@ def test_custom_concat_py_infer(context_mode, params):
     assert np.allclose(out.asnumpy(), expected_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_custom_concat_aclnn_cpp_infer(context_mode, params):
@@ -143,8 +141,7 @@ def test_custom_concat_aclnn_cpp_infer(context_mode, params):
     assert np.allclose(out.asnumpy(), expected_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_custom_concat_aclnn_cpp_infer_shape_py_infer_type(context_mode, params):
@@ -166,8 +163,7 @@ def test_custom_concat_aclnn_cpp_infer_shape_py_infer_type(context_mode, params)
     assert np.allclose(out.asnumpy(), expected_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_custom_concat_aclnn_cpp_infer_type_py_infer_shape(context_mode, params):
@@ -189,8 +185,7 @@ def test_custom_concat_aclnn_cpp_infer_type_py_infer_shape(context_mode, params)
     assert np.allclose(out.asnumpy(), expected_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1)])
 def test_custom_concat_aclnn_bprop(context_mode, params):
@@ -214,8 +209,7 @@ def test_custom_concat_aclnn_bprop(context_mode, params):
     assert np.allclose(grads[1].asnumpy(), expect_grad2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1)])
 def test_custom_concat_aclnn_dynamic_shape(context_mode, params):
@@ -240,8 +234,7 @@ def test_custom_concat_aclnn_dynamic_shape(context_mode, params):
     assert np.allclose(out.asnumpy(), expected_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
-        essential_mark='essential', mem_peak=4.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_split_aclnn(context_mode):
     """

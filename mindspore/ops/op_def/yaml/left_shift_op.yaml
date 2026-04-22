@@ -1,0 +1,15 @@
+#operator left_shift
+left_shift:
+  args:
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: LeftShiftAscend

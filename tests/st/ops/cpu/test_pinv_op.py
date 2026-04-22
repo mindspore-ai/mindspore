@@ -24,8 +24,7 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_pinv(dtype):
     """

@@ -22,6 +22,9 @@ mindspore.nn.Momentum
 
     其中，:math:`grad` 、:math:`lr` 、:math:`p` 、:math:`v` 和 :math:`u` 分别表示梯度、学习率、参数、矩（Moment）和动量（Momentum）。
 
+    .. warning::
+        该接口已废弃，2.9.0（不含）之后版本将删除。
+
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 

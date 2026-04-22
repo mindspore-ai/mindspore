@@ -18,7 +18,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_st_ms_join_error_0003():
     """
     Feature: Error info and trace info for join error.
@@ -57,7 +57,7 @@ def test_st_ms_join_error_0003():
     os.remove(f"abnormal_code_000{case_num}.log")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_st_ms_join_error_0004():
     """
     Feature: Error info and trace info for join error.
@@ -95,7 +95,7 @@ def test_st_ms_join_error_0004():
     os.remove(f"abnormal_code_000{case_num}.log")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_st_ms_join_error_0005():
     """
     Feature: Error info and trace info for join error.
@@ -134,7 +134,7 @@ def test_st_ms_join_error_0005():
     os.remove(f"abnormal_code_000{case_num}.log")
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_st_ms_join_error_0007():
     """
     Feature: Join error for list comprehension.
