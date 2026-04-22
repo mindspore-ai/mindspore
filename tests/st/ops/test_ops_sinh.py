@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST cases for sinh."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -59,7 +60,7 @@ def sinh_vmap_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_sinh_forward_backward(mode):
     """
@@ -90,7 +91,7 @@ def test_ops_sinh_forward_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_sinh_complex(mode):
     """
@@ -116,7 +117,7 @@ def test_ops_sinh_complex(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_sinh_vmap(mode):
     """
@@ -138,7 +139,7 @@ def test_ops_sinh_vmap(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 def test_ops_sinh_dynamic_shape():
     """
     Feature: pyboost function.

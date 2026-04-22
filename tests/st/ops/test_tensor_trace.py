@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST cases for tensor trace."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -67,7 +68,7 @@ def generate_expect_backward_output(a, offset=0, axis1=0, axis2=1, dout=None):
     return da
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', mem_peak=3072.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_ops_trace_forward(mode):
@@ -105,7 +106,7 @@ def test_ops_trace_forward(mode):
         grad.asnumpy(), expect, rtol=1e-3, atol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', mem_peak=3072.00)
 def test_ops_trace_dynamic():
     """
