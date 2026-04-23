@@ -17,7 +17,6 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
     endif()
 
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/securec_arm.cmake)
-    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/protobuf_arm.cmake)
 
     string(REGEX REPLACE "-B.*mold" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 

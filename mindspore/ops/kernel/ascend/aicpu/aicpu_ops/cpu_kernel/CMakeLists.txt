@@ -48,7 +48,6 @@ target_link_libraries(mindspore_cpu_kernels PRIVATE
     -Wl,--no-whole-archive
     -Wl,-Bsymbolic
     -rdynamic
-    mindspore::protobuf_arm
     -pthread
     )
 
