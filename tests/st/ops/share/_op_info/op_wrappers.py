@@ -656,6 +656,18 @@ def tensor_clamp_ms(op_input, *op_args, **op_kwargs):
 def tensor_clamp_torch(op_input, *op_args, **op_kwargs):
     return op_input.clamp(*op_args, **op_kwargs)
 
+def mint_clamp_ms(op_input, min=None, max=None):
+    return mint.clamp(op_input, min=min, max=max)
+
+def mint_clamp_torch(op_input, min=None, max=None):
+    return torch.clamp(op_input, min=min, max=max)
+
+def mint_flatten_ms(op_input, start_dim=0, end_dim=-1):
+    return mint.flatten(op_input, start_dim=start_dim, end_dim=end_dim)
+
+def mint_flatten_torch(op_input, start_dim=0, end_dim=-1):
+    return torch.flatten(op_input, start_dim=start_dim, end_dim=end_dim)
+
 def mint_eq_with_explicit_args(input, other):
     return mint.eq(input, other)
 
