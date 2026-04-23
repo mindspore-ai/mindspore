@@ -60,6 +60,45 @@ using GapRange = std::pair<size_t, size_t>;
 using GapRangeList = std::vector<GapRange>;
 using CandidateGapRangeMap = std::map<size_t, GapRangeList>;
 
+struct PeakSelectionInputs {
+  const std::vector<PeakEstimateCandidate> &all_candidates;
+  const CNodePtrList &index_order;
+  const std::map<AnfNodePtr, size_t> &node_to_index;
+  size_t profile_size;
+  size_t max_mem_bytes;
+  const CandidateGapRangeMap &candidate_gap_ranges;
+  const std::vector<size_t> &sorted_indices_by_creation;
+};
+
+struct PeakSelectionOutputs {
+  std::vector<size_t> *working_profile;
+  UserInfoList *selected_user_infos;
+  std::vector<std::optional<size_t>> *selected_producer_anchors;
+  std::set<KernelWithIndex> *successfully_offloaded;
+  std::set<KernelWithIndex> *excluded_from_selection;
+};
+
+struct PeakCoverageContext {
+  const std::vector<PeakEstimateCandidate> &all_candidates;
+  const std::set<KernelWithIndex> &excluded_from_selection;
+  const CandidateGapRangeMap &candidate_gap_ranges;
+};
+
+struct PeakSelectionLoopInputs {
+  const std::vector<PeakEstimateCandidate> &all_candidates;
+  const CNodePtrList &index_order;
+  const std::map<AnfNodePtr, size_t> &node_to_index;
+  size_t profile_size;
+  size_t max_mem_bytes;
+};
+
+struct PeakSelectionLoopOutputs {
+  std::vector<size_t> *working_profile;
+  UserInfoList *selected_user_infos;
+  std::vector<std::optional<size_t>> *selected_producer_anchors;
+  std::set<KernelWithIndex> *successfully_offloaded;
+};
+
 void BuildNodeToIndexMap(const CNodePtrList &execution_order, std::map<AnfNodePtr, size_t> *node_to_index) {
   MS_EXCEPTION_IF_NULL(node_to_index);
   for (size_t i = 0; i < execution_order.size(); ++i) {
@@ -354,20 +393,29 @@ bool HasCoveringCandidate(const std::vector<PeakEstimateCandidate> &all_candidat
   return false;
 }
 
-size_t EffectivePeakIndexForSelection(const std::vector<size_t> &working_profile, size_t right_peak_idx,
-                                      size_t peak_value, const std::vector<PeakEstimateCandidate> &all_candidates,
-                                      const std::set<KernelWithIndex> &excluded_from_selection,
-                                      const CandidateGapRangeMap &candidate_gap_ranges) {
+size_t FindPeakPlateauStart(const std::vector<size_t> &working_profile, size_t right_peak_idx, size_t peak_value) {
   size_t left_plateau = right_peak_idx;
   while (left_plateau > 0 && working_profile[left_plateau - 1] == peak_value) {
     left_plateau--;
   }
+  return left_plateau;
+}
+
+size_t FindEffectivePeakIndexInPlateau(const PeakCoverageContext &coverage_context, size_t left_plateau,
+                                       size_t right_peak_idx) {
   size_t effective = right_peak_idx;
   while (effective > left_plateau &&
-         !HasCoveringCandidate(all_candidates, excluded_from_selection, effective, candidate_gap_ranges)) {
+         !HasCoveringCandidate(coverage_context.all_candidates, coverage_context.excluded_from_selection, effective,
+                               coverage_context.candidate_gap_ranges)) {
     effective--;
   }
   return effective;
+}
+
+size_t EffectivePeakIndexForSelection(const std::vector<size_t> &working_profile, size_t right_peak_idx,
+                                      size_t peak_value, const PeakCoverageContext &coverage_context) {
+  const size_t left_plateau = FindPeakPlateauStart(working_profile, right_peak_idx, peak_value);
+  return FindEffectivePeakIndexInPlateau(coverage_context, left_plateau, right_peak_idx);
 }
 
 std::optional<size_t> SelectBestCandidateIdx(const std::vector<PeakEstimateCandidate> &all_candidates,
@@ -464,23 +512,33 @@ OffloadInfoList MergeOffloadInfosByDataNode(const OffloadInfoList &list) {
   return merged_offload_info_list;
 }
 
-bool ApplySingleOffload(const PeakEstimateCandidate &best_cand, const CNodePtrList &index_order,
-                        const std::map<AnfNodePtr, size_t> &node_to_index, std::vector<size_t> *working_profile,
-                        UserInfoList *selected_user_infos,
-                        std::vector<std::optional<size_t>> *selected_producer_anchors) {
+void ReduceWorkingProfileForGaps(const GapRangeList &gap_ranges, size_t reduce_size,
+                                 std::vector<size_t> *working_profile) {
   MS_EXCEPTION_IF_NULL(working_profile);
+  for (const auto &[gap_start, gap_end] : gap_ranges) {
+    hyper_offload::ReduceMemoryProfile(gap_start, gap_end, reduce_size, working_profile);
+  }
+}
+
+void RecordSelectedOffload(const PeakEstimateCandidate &candidate, UserInfoList *selected_user_infos,
+                           std::vector<std::optional<size_t>> *selected_producer_anchors) {
   MS_EXCEPTION_IF_NULL(selected_user_infos);
-  const auto gap_ranges = GetCandidateOffloadGaps(best_cand, index_order, node_to_index);
+  selected_user_infos->push_back(candidate.user_info);
+  if (selected_producer_anchors != nullptr) {
+    selected_producer_anchors->push_back(candidate.creation_index);
+  }
+}
+
+bool ApplySingleOffload(const PeakEstimateCandidate &best_cand, const PeakSelectionInputs &inputs,
+                        const PeakSelectionOutputs &outputs) {
+  MS_EXCEPTION_IF_NULL(outputs.working_profile);
+  MS_EXCEPTION_IF_NULL(outputs.selected_user_infos);
+  const auto gap_ranges = GetCandidateOffloadGaps(best_cand, inputs.index_order, inputs.node_to_index);
   if (!gap_ranges.has_value()) {
     return false;
   }
-  for (const auto &[gap_start, gap_end] : gap_ranges.value()) {
-    hyper_offload::ReduceMemoryProfile(gap_start, gap_end, best_cand.size, working_profile);
-  }
-  selected_user_infos->push_back(best_cand.user_info);
-  if (selected_producer_anchors != nullptr) {
-    selected_producer_anchors->push_back(best_cand.creation_index);
-  }
+  ReduceWorkingProfileForGaps(gap_ranges.value(), best_cand.size, outputs.working_profile);
+  RecordSelectedOffload(best_cand, outputs.selected_user_infos, outputs.selected_producer_anchors);
   return true;
 }
 
@@ -492,68 +550,88 @@ size_t EffectiveMemoryThresholdBytes(size_t configured_max_bytes) {
   return configured_max_bytes - peak_modeled_headroom_bytes;
 }
 
-bool RunPeakOffloadSelectionRound(const std::vector<PeakEstimateCandidate> &all_candidates,
-                                  const CNodePtrList &index_order, const std::map<AnfNodePtr, size_t> &node_to_index,
-                                  size_t profile_size, size_t max_mem_bytes,
-                                  const CandidateGapRangeMap &candidate_gap_ranges,
-                                  const std::vector<size_t> &sorted_indices_by_creation,
-                                  std::vector<size_t> *working_profile, UserInfoList *selected_user_infos,
-                                  std::vector<std::optional<size_t>> *selected_producer_anchors,
-                                  std::set<KernelWithIndex> *successfully_offloaded,
-                                  std::set<KernelWithIndex> *excluded_from_selection) {
-  MS_EXCEPTION_IF_NULL(working_profile);
-  MS_EXCEPTION_IF_NULL(selected_user_infos);
-  MS_EXCEPTION_IF_NULL(selected_producer_anchors);
-  MS_EXCEPTION_IF_NULL(successfully_offloaded);
-  MS_EXCEPTION_IF_NULL(excluded_from_selection);
+void ValidatePeakSelectionOutputs(const PeakSelectionOutputs &outputs) {
+  MS_EXCEPTION_IF_NULL(outputs.working_profile);
+  MS_EXCEPTION_IF_NULL(outputs.selected_user_infos);
+  MS_EXCEPTION_IF_NULL(outputs.selected_producer_anchors);
+  MS_EXCEPTION_IF_NULL(outputs.successfully_offloaded);
+  MS_EXCEPTION_IF_NULL(outputs.excluded_from_selection);
+}
 
-  auto peak_info_opt = FindGlobalPeak(*working_profile);
-  if (!peak_info_opt.has_value() || peak_info_opt->second <= max_mem_bytes) {
+std::optional<size_t> FindPeakIndexForSelection(const PeakSelectionInputs &inputs,
+                                                const PeakSelectionOutputs &outputs) {
+  const auto peak_info_opt = FindGlobalPeak(*outputs.working_profile);
+  if (!peak_info_opt.has_value() || peak_info_opt->second <= inputs.max_mem_bytes) {
+    return std::nullopt;
+  }
+  const PeakCoverageContext coverage_context{inputs.all_candidates, *outputs.excluded_from_selection,
+                                             inputs.candidate_gap_ranges};
+  return EffectivePeakIndexForSelection(*outputs.working_profile, peak_info_opt->first, peak_info_opt->second,
+                                        coverage_context);
+}
+
+std::optional<size_t> SelectBestCandidateForPeak(const PeakSelectionInputs &inputs, const PeakSelectionOutputs &outputs,
+                                                 size_t peak_index) {
+  return SelectBestCandidateIdx(inputs.all_candidates, *outputs.excluded_from_selection,
+                                *outputs.successfully_offloaded, peak_index, inputs.profile_size,
+                                inputs.candidate_gap_ranges, inputs.sorted_indices_by_creation);
+}
+
+void ApplySelectedPeakCandidate(size_t best_candidate_idx, const PeakSelectionInputs &inputs,
+                                const PeakSelectionOutputs &outputs) {
+  const auto &best_candidate = inputs.all_candidates[best_candidate_idx];
+  if (ApplySingleOffload(best_candidate, inputs, outputs)) {
+    (void)outputs.successfully_offloaded->insert(best_candidate.user_info.node);
+  }
+  (void)outputs.excluded_from_selection->insert(best_candidate.user_info.node);
+}
+
+bool RunPeakOffloadSelectionRound(const PeakSelectionInputs &inputs, const PeakSelectionOutputs &outputs) {
+  ValidatePeakSelectionOutputs(outputs);
+  const auto peak_index = FindPeakIndexForSelection(inputs, outputs);
+  if (!peak_index.has_value()) {
     return false;
   }
-  const size_t right_peak_index = peak_info_opt->first;
-  const size_t peak_value = peak_info_opt->second;
-  const size_t peak_index = EffectivePeakIndexForSelection(
-    *working_profile, right_peak_index, peak_value, all_candidates, *excluded_from_selection, candidate_gap_ranges);
-
-  auto best_candidate_idx =
-    SelectBestCandidateIdx(all_candidates, *excluded_from_selection, *successfully_offloaded, peak_index, profile_size,
-                           candidate_gap_ranges, sorted_indices_by_creation);
+  const auto best_candidate_idx = SelectBestCandidateForPeak(inputs, outputs, peak_index.value());
   if (!best_candidate_idx.has_value()) {
     return false;
   }
-
-  const auto &best_candidate = all_candidates[*best_candidate_idx];
-  if (ApplySingleOffload(best_candidate, index_order, node_to_index, working_profile, selected_user_infos,
-                         selected_producer_anchors)) {
-    (void)successfully_offloaded->insert(best_candidate.user_info.node);
-  }
-  (void)excluded_from_selection->insert(best_candidate.user_info.node);
+  ApplySelectedPeakCandidate(best_candidate_idx.value(), inputs, outputs);
   return true;
 }
 
-// Runs iterative peak reduction; returns selected UserInfo entries and updated working_profile.
-void RunPeakOffloadSelectionLoop(const std::vector<PeakEstimateCandidate> &all_candidates,
-                                 const CNodePtrList &index_order, const std::map<AnfNodePtr, size_t> &node_to_index,
-                                 size_t profile_size, size_t max_mem_bytes, std::vector<size_t> *working_profile,
-                                 UserInfoList *selected_user_infos,
-                                 std::vector<std::optional<size_t>> *selected_producer_anchors,
-                                 std::set<KernelWithIndex> *successfully_offloaded) {
-  MS_EXCEPTION_IF_NULL(working_profile);
-  MS_EXCEPTION_IF_NULL(selected_user_infos);
-  MS_EXCEPTION_IF_NULL(selected_producer_anchors);
-  MS_EXCEPTION_IF_NULL(successfully_offloaded);
-
-  const auto candidate_gap_ranges = BuildCandidateGapRangeMap(all_candidates, index_order, node_to_index);
-  const auto sorted_indices_by_creation = BuildSortedIndicesByCreation(all_candidates);
-
-  std::set<KernelWithIndex> excluded_from_selection;
-
-  while (RunPeakOffloadSelectionRound(all_candidates, index_order, node_to_index, profile_size, max_mem_bytes,
-                                      candidate_gap_ranges, sorted_indices_by_creation, working_profile,
-                                      selected_user_infos, selected_producer_anchors, successfully_offloaded,
-                                      &excluded_from_selection)) {
+void RunPeakOffloadSelectionRounds(const PeakSelectionInputs &inputs, const PeakSelectionOutputs &outputs) {
+  while (RunPeakOffloadSelectionRound(inputs, outputs)) {
   }
+}
+
+void ValidatePeakSelectionLoopOutputs(const PeakSelectionLoopOutputs &outputs) {
+  MS_EXCEPTION_IF_NULL(outputs.working_profile);
+  MS_EXCEPTION_IF_NULL(outputs.selected_user_infos);
+  MS_EXCEPTION_IF_NULL(outputs.selected_producer_anchors);
+  MS_EXCEPTION_IF_NULL(outputs.successfully_offloaded);
+}
+
+void RunPeakOffloadSelectionWithCaches(const PeakSelectionInputs &inputs,
+                                       const PeakSelectionLoopOutputs &loop_outputs) {
+  std::set<KernelWithIndex> excluded_from_selection;
+  const PeakSelectionOutputs outputs{loop_outputs.working_profile, loop_outputs.selected_user_infos,
+                                     loop_outputs.selected_producer_anchors, loop_outputs.successfully_offloaded,
+                                     &excluded_from_selection};
+  RunPeakOffloadSelectionRounds(inputs, outputs);
+}
+
+// Runs iterative peak reduction; returns selected UserInfo entries and updated working_profile.
+void RunPeakOffloadSelectionLoop(const PeakSelectionLoopInputs &loop_inputs,
+                                 const PeakSelectionLoopOutputs &loop_outputs) {
+  ValidatePeakSelectionLoopOutputs(loop_outputs);
+  const auto candidate_gap_ranges =
+    BuildCandidateGapRangeMap(loop_inputs.all_candidates, loop_inputs.index_order, loop_inputs.node_to_index);
+  const auto sorted_indices_by_creation = BuildSortedIndicesByCreation(loop_inputs.all_candidates);
+  const PeakSelectionInputs inputs{loop_inputs.all_candidates, loop_inputs.index_order,   loop_inputs.node_to_index,
+                                   loop_inputs.profile_size,   loop_inputs.max_mem_bytes, candidate_gap_ranges,
+                                   sorted_indices_by_creation};
+  RunPeakOffloadSelectionWithCaches(inputs, loop_outputs);
 }
 
 void LogPeakReductionFailureIfNeeded(const std::optional<std::pair<size_t, size_t>> &initial_peak_opt,
@@ -620,8 +698,10 @@ OffloadInfoList MemoryPeakBasedHyperOffloadStrategy::Run(const CNodePtrList &exe
   std::vector<std::optional<size_t>> selected_producer_anchors;
   std::set<KernelWithIndex> successfully_offloaded;
 
-  RunPeakOffloadSelectionLoop(all_candidates, execution_order, node_to_index, profile_size, max_mem, &working_profile,
-                              &selected_user_infos, &selected_producer_anchors, &successfully_offloaded);
+  const PeakSelectionLoopInputs selection_inputs{all_candidates, execution_order, node_to_index, profile_size, max_mem};
+  const PeakSelectionLoopOutputs selection_outputs{&working_profile, &selected_user_infos, &selected_producer_anchors,
+                                                   &successfully_offloaded};
+  RunPeakOffloadSelectionLoop(selection_inputs, selection_outputs);
 
   const auto final_peak_opt = FindGlobalPeak(working_profile);
   LogPeakReductionFailureIfNeeded(initial_peak_opt, final_peak_opt, max_mem, execution_order, selected_user_infos);

@@ -23,6 +23,7 @@
 #include <limits>
 #include <map>
 #include <numeric>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -37,6 +38,7 @@
 #include "ir/dtype/type.h"
 #include "utils/anf_utils.h"
 #include "utils/compile_config.h"
+#include "utils/file_utils.h"
 #include "utils/shape_utils.h"
 #ifndef _WIN32
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
@@ -51,6 +53,17 @@ namespace hyper_offload {
 
 using NodeFirstLastMap = std::map<AnfNodePtr, std::pair<size_t, size_t>>;
 using OutputLastUsageMap = std::map<std::pair<AnfNodePtr, size_t>, size_t>;
+
+struct HorizonSearchContext {
+  const UserInfoList &user_info_list;
+  const std::map<AnfNodePtr, size_t> &node_to_index;
+  const OutputLastUsageMap &base_last;
+};
+
+struct HorizonSearchState {
+  std::unordered_map<AnfNodePtr, size_t> *memo;
+  std::unordered_set<AnfNodePtr> *rec_stack;
+};
 
 namespace {
 constexpr size_t kCsvSizeColumnIndex = 5;
@@ -368,7 +381,11 @@ static bool LoadMemoryBlockCsv(const std::string &path, const CNodePtrList &inde
   g_name_to_g_column_bytes.clear();
   g_name_to_workspace_pulse_bytes.clear();
   g_csv_baseline_bytes = 0;
-  std::ifstream in(path);
+  const auto real_path = FileUtils::GetRealPath(common::SafeCStr(path));
+  if (!real_path.has_value()) {
+    return false;
+  }
+  std::ifstream in(real_path.value());
   if (!in.is_open()) {
     return false;
   }
@@ -639,6 +656,29 @@ static bool TryResolveExplicitCsvRowBinding(const std::string &explicit_key, siz
   return false;
 }
 
+static bool TryResolveOutputZeroCsvRowBinding(const std::string &fullname, size_t output_index, size_t output_count,
+                                              std::string *map_key, size_t *row_in_vector) {
+  if (output_count <= 1U || output_index == 0) {
+    return false;
+  }
+  const std::string output_zero_key = MemoryBlockTableKeyForOutput(fullname, 0);
+  const std::vector<size_t> *output_zero_rows = FindCsvRowsByKey(output_zero_key);
+  if (output_zero_rows == nullptr) {
+    return false;
+  }
+  if (output_zero_rows->size() == output_count) {
+    *map_key = output_zero_key;
+    *row_in_vector = output_index;
+    return true;
+  }
+  if (output_zero_rows->size() < output_count && output_index < output_zero_rows->size()) {
+    *map_key = output_zero_key;
+    *row_in_vector = output_index;
+    return true;
+  }
+  return false;
+}
+
 // Bind one `(node, output_index)` pair to a concrete CSV row.
 // Multi-output nodes prefer exact row counts, tolerate short tables by zero-filling
 // later outputs, and skip ambiguous oversized tables.
@@ -657,24 +697,7 @@ static bool ResolveCsvRowBinding(const AnfNodePtr &node, size_t output_index, st
   if (TryResolveExplicitCsvRowBinding(explicit_key, output_index, output_count, map_key, row_in_vector)) {
     return true;
   }
-
-  if (output_count > 1U && output_index > 0) {
-    const std::string output_zero_key = MemoryBlockTableKeyForOutput(fullname, 0);
-    const std::vector<size_t> *output_zero_rows = FindCsvRowsByKey(output_zero_key);
-    if (output_zero_rows != nullptr) {
-      if (output_zero_rows->size() == output_count) {
-        *map_key = output_zero_key;
-        *row_in_vector = output_index;
-        return true;
-      }
-      if (output_zero_rows->size() < output_count && output_index < output_zero_rows->size()) {
-        *map_key = output_zero_key;
-        *row_in_vector = output_index;
-        return true;
-      }
-    }
-  }
-  return false;
+  return TryResolveOutputZeroCsvRowBinding(fullname, output_index, output_count, map_key, row_in_vector);
 }
 
 size_t LookupOperatorMemorySize(const AnfNodePtr &node, size_t exec_order_index, size_t output_index) {
@@ -816,11 +839,11 @@ static size_t ProducerLastInBase(const AnfNodePtr &producer, const OutputLastUsa
 // Return true when every scheduled user of the producer can be found in the CSV.
 static bool AllScheduledUsersListedInCsvNColumn(const AnfNodePtr &producer, const UserInfoList &user_info_list,
                                                 const std::map<AnfNodePtr, size_t> &node_to_index) {
-  return std::all_of(user_info_list.begin(), user_info_list.end(), [&](const auto &info) {
+  return std::all_of(user_info_list.begin(), user_info_list.end(), [&producer, &node_to_index](const auto &info) {
     if (info.node.first != producer) {
       return true;
     }
-    return std::all_of(info.users.begin(), info.users.end(), [&](const auto &uk) {
+    return std::all_of(info.users.begin(), info.users.end(), [&node_to_index](const auto &uk) {
       const auto &un = uk.first;
       if (un == nullptr || node_to_index.find(un) == node_to_index.end()) {
         return true;
@@ -830,104 +853,141 @@ static bool AllScheduledUsersListedInCsvNColumn(const AnfNodePtr &producer, cons
   });
 }
 
+static size_t NodeExecIndexOrZero(const AnfNodePtr &node, const std::map<AnfNodePtr, size_t> &node_to_index) {
+  const auto node_exec_it = node_to_index.find(node);
+  return (node_exec_it != node_to_index.end()) ? node_exec_it->second : 0;
+}
+
+static void ValidateHorizonSearchState(const HorizonSearchState &state) {
+  MS_EXCEPTION_IF_NULL(state.memo);
+  MS_EXCEPTION_IF_NULL(state.rec_stack);
+}
+
+static size_t HorizonFromMissingTableConsumer(const AnfNodePtr &node, const HorizonSearchContext &context,
+                                              const HorizonSearchState &state);
+
+static size_t MissingTableUserHorizon(const AnfNodePtr &user_node, const HorizonSearchContext &context,
+                                      const HorizonSearchState &state);
+
+static std::optional<size_t> MissingTableNextUserHorizon(const AnfNodePtr &next_user,
+                                                         const HorizonSearchContext &context,
+                                                         const HorizonSearchState &state) {
+  if (next_user == nullptr) {
+    return std::nullopt;
+  }
+  const auto next_exec_it = context.node_to_index.find(next_user);
+  if (next_exec_it == context.node_to_index.end()) {
+    return std::nullopt;
+  }
+  if (NodeNameListedInCsvNColumn(next_user)) {
+    return next_exec_it->second;
+  }
+  return HorizonFromMissingTableConsumer(next_user, context, state);
+}
+
+static size_t ComputeMissingTableConsumerHorizon(const AnfNodePtr &node, const HorizonSearchContext &context,
+                                                 const HorizonSearchState &state) {
+  if (AllScheduledUsersListedInCsvNColumn(node, context.user_info_list, context.node_to_index)) {
+    return ProducerLastInBase(node, context.base_last, context.node_to_index);
+  }
+  return MissingTableUserHorizon(node, context, state);
+}
+
 // Walk through missing-table consumers until a schedulable horizon can be recovered.
 // `memo` avoids repeated work and `rec_stack` protects against cycles.
-static size_t HorizonFromMissingTableConsumer(const AnfNodePtr &node, const UserInfoList &user_info_list,
-                                              const std::map<AnfNodePtr, size_t> &node_to_index,
-                                              const OutputLastUsageMap &base_last,
-                                              std::unordered_map<AnfNodePtr, size_t> *memo,
-                                              std::unordered_set<AnfNodePtr> *rec_stack) {
-  MS_EXCEPTION_IF_NULL(memo);
-  MS_EXCEPTION_IF_NULL(rec_stack);
+static size_t HorizonFromMissingTableConsumer(const AnfNodePtr &node, const HorizonSearchContext &context,
+                                              const HorizonSearchState &state) {
+  ValidateHorizonSearchState(state);
   if (node == nullptr) {
     return 0;
   }
-  auto memo_it = memo->find(node);
-  if (memo_it != memo->end()) {
+  auto memo_it = state.memo->find(node);
+  if (memo_it != state.memo->end()) {
     return memo_it->second;
   }
-  auto n_exec_it = node_to_index.find(node);
-  const size_t n_exec = (n_exec_it != node_to_index.end()) ? n_exec_it->second : 0;
-  if (rec_stack->count(node) != 0) {
-    return ProducerLastInBase(node, base_last, node_to_index);
+  if (state.rec_stack->count(node) != 0) {
+    return ProducerLastInBase(node, context.base_last, context.node_to_index);
   }
-  rec_stack->insert(node);
-  size_t result;
-  if (AllScheduledUsersListedInCsvNColumn(node, user_info_list, node_to_index)) {
-    result = ProducerLastInBase(node, base_last, node_to_index);
-  } else {
-    size_t acc = n_exec;
-    for (const auto &info : user_info_list) {
-      if (info.node.first != node) {
-        continue;
-      }
-      for (const auto &uk : info.users) {
-        const auto &un = uk.first;
-        auto u_it = node_to_index.find(un);
-        if (u_it == node_to_index.end()) {
-          continue;
-        }
-        const size_t u_exec = u_it->second;
-        if (un == nullptr) {
-          continue;
-        }
-        if (NodeNameListedInCsvNColumn(un)) {
-          acc = std::max(acc, u_exec);
-        } else {
-          acc = std::max(
-            acc, HorizonFromMissingTableConsumer(un, user_info_list, node_to_index, base_last, memo, rec_stack));
-        }
-      }
-    }
-    result = acc;
-  }
-  (void)rec_stack->erase(node);
-  (*memo)[node] = result;
+  state.rec_stack->insert(node);
+  const size_t result = ComputeMissingTableConsumerHorizon(node, context, state);
+  (void)state.rec_stack->erase(node);
+  (*state.memo)[node] = result;
   return result;
 }
 
-static size_t HorizonFromAliasConsumer(const AnfNodePtr &node, const UserInfoList &user_info_list,
-                                       const std::map<AnfNodePtr, size_t> &node_to_index,
-                                       const OutputLastUsageMap &base_last,
-                                       std::unordered_map<AnfNodePtr, size_t> *memo,
-                                       std::unordered_set<AnfNodePtr> *rec_stack) {
-  MS_EXCEPTION_IF_NULL(memo);
-  MS_EXCEPTION_IF_NULL(rec_stack);
-  if (node == nullptr) {
-    return 0;
-  }
-  auto memo_it = memo->find(node);
-  if (memo_it != memo->end()) {
-    return memo_it->second;
-  }
-  if (rec_stack->count(node) != 0) {
-    return ProducerLastInBase(node, base_last, node_to_index);
-  }
-  rec_stack->insert(node);
-  size_t result = ProducerLastInBase(node, base_last, node_to_index);
-  if (IsViewOrInplaceNode(node)) {
-    for (const auto &info : user_info_list) {
-      if (info.node.first != node) {
-        continue;
-      }
-      for (const auto &uk : info.users) {
-        const auto &user_node = uk.first;
-        auto user_it = node_to_index.find(user_node);
-        if (user_node == nullptr || user_it == node_to_index.end()) {
-          continue;
-        }
-        if (IsViewOrInplaceNode(user_node)) {
-          result = std::max(
-            result, HorizonFromAliasConsumer(user_node, user_info_list, node_to_index, base_last, memo, rec_stack));
-        } else {
-          result = std::max(result, user_it->second);
-        }
+static size_t MissingTableUserHorizon(const AnfNodePtr &user_node, const HorizonSearchContext &context,
+                                      const HorizonSearchState &state) {
+  size_t result = NodeExecIndexOrZero(user_node, context.node_to_index);
+  for (const auto &info : context.user_info_list) {
+    if (info.node.first != user_node) {
+      continue;
+    }
+    for (const auto &uk : info.users) {
+      const auto next_horizon = MissingTableNextUserHorizon(uk.first, context, state);
+      if (next_horizon.has_value()) {
+        result = std::max(result, next_horizon.value());
       }
     }
   }
-  (void)rec_stack->erase(node);
-  (*memo)[node] = result;
   return result;
+}
+
+static size_t HorizonFromAliasConsumer(const AnfNodePtr &node, const HorizonSearchContext &context,
+                                       const HorizonSearchState &state);
+
+static size_t AliasUserHorizon(const AnfNodePtr &user_node, const HorizonSearchContext &context,
+                               const HorizonSearchState &state);
+
+static size_t ComputeAliasConsumerHorizon(const AnfNodePtr &node, const HorizonSearchContext &context,
+                                          const HorizonSearchState &state) {
+  size_t result = ProducerLastInBase(node, context.base_last, context.node_to_index);
+  if (!IsViewOrInplaceNode(node)) {
+    return result;
+  }
+  for (const auto &info : context.user_info_list) {
+    if (info.node.first != node) {
+      continue;
+    }
+    for (const auto &uk : info.users) {
+      result = std::max(result, AliasUserHorizon(uk.first, context, state));
+    }
+  }
+  return result;
+}
+
+static size_t HorizonFromAliasConsumer(const AnfNodePtr &node, const HorizonSearchContext &context,
+                                       const HorizonSearchState &state) {
+  ValidateHorizonSearchState(state);
+  if (node == nullptr) {
+    return 0;
+  }
+  auto memo_it = state.memo->find(node);
+  if (memo_it != state.memo->end()) {
+    return memo_it->second;
+  }
+  if (state.rec_stack->count(node) != 0) {
+    return ProducerLastInBase(node, context.base_last, context.node_to_index);
+  }
+  state.rec_stack->insert(node);
+  const size_t result = ComputeAliasConsumerHorizon(node, context, state);
+  (void)state.rec_stack->erase(node);
+  (*state.memo)[node] = result;
+  return result;
+}
+
+static size_t AliasUserHorizon(const AnfNodePtr &user_node, const HorizonSearchContext &context,
+                               const HorizonSearchState &state) {
+  if (user_node == nullptr) {
+    return 0;
+  }
+  const auto user_it = context.node_to_index.find(user_node);
+  if (user_it == context.node_to_index.end()) {
+    return 0;
+  }
+  if (IsViewOrInplaceNode(user_node)) {
+    return HorizonFromAliasConsumer(user_node, context, state);
+  }
+  return user_it->second;
 }
 
 // Extend last-use indices across missing-table consumers when the producer itself is tracked.
@@ -941,6 +1001,7 @@ void ExtendOutputLastUsageForBufferAliasing(const UserInfoList &user_info_list,
   }
   const bool use_memory_block_csv = !g_name_to_sizes.empty();
   const OutputLastUsageMap base_last = *out_last_usage;
+  const HorizonSearchContext horizon_context{user_info_list, node_to_index, base_last};
   for (const auto &info : user_info_list) {
     const auto &prod_ki = info.node;
     const AnfNodePtr &producer = prod_ki.first;
@@ -960,19 +1021,19 @@ void ExtendOutputLastUsageForBufferAliasing(const UserInfoList &user_info_list,
     std::unordered_map<AnfNodePtr, size_t> memo;
     for (const auto &user_ki : info.users) {
       const AnfNodePtr &user_node = user_ki.first;
+      if (user_node == nullptr) {
+        continue;
+      }
       auto u_exec_it = node_to_index.find(user_node);
       if (u_exec_it == node_to_index.end()) {
         continue;
       }
       const size_t u_exec = u_exec_it->second;
-      if (user_node == nullptr) {
-        continue;
-      }
       if (!use_memory_block_csv) {
         if (IsViewOrInplaceNode(user_node)) {
           std::unordered_set<AnfNodePtr> rec_stack;
-          ext = std::max(
-            ext, HorizonFromAliasConsumer(user_node, user_info_list, node_to_index, base_last, &memo, &rec_stack));
+          const HorizonSearchState horizon_state{&memo, &rec_stack};
+          ext = std::max(ext, HorizonFromAliasConsumer(user_node, horizon_context, horizon_state));
         }
         continue;
       }
@@ -980,8 +1041,8 @@ void ExtendOutputLastUsageForBufferAliasing(const UserInfoList &user_info_list,
         ext = std::max(ext, u_exec);
       } else {
         std::unordered_set<AnfNodePtr> rec_stack;
-        ext = std::max(
-          ext, HorizonFromMissingTableConsumer(user_node, user_info_list, node_to_index, base_last, &memo, &rec_stack));
+        const HorizonSearchState horizon_state{&memo, &rec_stack};
+        ext = std::max(ext, HorizonFromMissingTableConsumer(user_node, horizon_context, horizon_state));
       }
     }
     (*out_last_usage)[prod_ki] = ext;

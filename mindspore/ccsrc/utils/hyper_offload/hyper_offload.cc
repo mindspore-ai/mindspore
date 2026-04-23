@@ -47,6 +47,13 @@ namespace hyper_offload {
 namespace {
 constexpr size_t kPrimaryDataInputIndex = 1;
 
+struct ActivationOperationContext {
+  const FuncGraphPtr &graph;
+  const HandleNewNodeCallback &callback;
+  const CNodePtrList &exec_order;
+  HyperOffloadOperations *operations;
+};
+
 std::optional<size_t> FindNodeIndex(const CNodePtrList &exec_order, const AnfNodePtr &target_node) {
   auto iter = std::find(exec_order.begin(), exec_order.end(), target_node);
   if (iter == exec_order.end()) {
@@ -201,7 +208,7 @@ bool ReplaceGraphOutputSubtree(const AnfNodePtr &node, const KernelWithIndex &ta
     return false;
   }
 
-  auto try_replace_input = [&](size_t input_index) -> bool {
+  auto try_replace_input = [&cnode, &target, &replacement](size_t input_index) -> bool {
     if (input_index >= cnode->inputs().size()) {
       return false;
     }
@@ -230,6 +237,27 @@ bool ReplaceGraphOutputSubtree(const AnfNodePtr &node, const KernelWithIndex &ta
     return try_replace_input(kUpdateStateStateInput);
   }
   return false;
+}
+
+bool IsGraphOutputWrapperForSubtreeReplacement(const AnfNodePtr &output) {
+  return IsOneOfPrimitiveCNode(output, {prim::kPrimDepend, prim::kPrimLoad}) ||
+         IsPrimitiveCNode(output, prim::kPrimUpdateState);
+}
+
+bool ReplaceActivationGraphOutput(const FuncGraphPtr &graph, const AnfNodePtr &output,
+                                  const KernelWithIndex &data_node_info, const CNodePtr &to_device_node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(output);
+  MS_EXCEPTION_IF_NULL(to_device_node);
+  if (!NodeResolvesToSingleSemanticOutput(output, data_node_info)) {
+    return ReplaceGraphOutputSubtree(output, data_node_info, to_device_node);
+  }
+  const auto output_cnode = output->cast_ptr<CNode>();
+  if (output_cnode != nullptr && IsGraphOutputWrapperForSubtreeReplacement(output)) {
+    return ReplaceGraphOutputSubtree(output, data_node_info, to_device_node);
+  }
+  graph->set_output(to_device_node);
+  return true;
 }
 
 AnfNodePtr BuildActivationDataNodeForOffload(const FuncGraphPtr &graph, const HandleNewNodeCallback &callback,
@@ -261,47 +289,77 @@ AnfNodePtr BuildActivationDataNodeForOffload(const FuncGraphPtr &graph, const Ha
   return tuple_item_node;
 }
 
-CNodePtr AddActivationD2HOperation(const FuncGraphPtr &graph, const HandleNewNodeCallback &callback,
-                                   const CNodePtrList &exec_order, HyperOffloadOperations *operations,
-                                   const OffloadInfo &offload_info, const AnfNodePtr &data_node,
-                                   bool is_peak_strategy) {
-  MS_EXCEPTION_IF_NULL(graph);
+AnfNodePtr GetActivationD2HInsertAfterNode(const OffloadInfo &offload_info, bool is_peak_strategy) {
+  if (is_peak_strategy && !offload_info.replace_info_list.empty()) {
+    return offload_info.replace_info_list[0].replace_start_node.first;
+  }
+  return offload_info.data_node.first;
+}
+
+void AddActivationD2HAfterNode(const CNodePtrList &exec_order, HyperOffloadOperations *operations,
+                               const AnfNodePtr &d2h_after_node, const CNodePtr &to_remote_node) {
   MS_EXCEPTION_IF_NULL(operations);
-  auto to_remote_node = BuildToHostNode(graph, data_node, callback);
-  const auto &data_node_info = offload_info.data_node;
-  const AnfNodePtr &d2h_after_node = (is_peak_strategy && !offload_info.replace_info_list.empty())
-                                       ? offload_info.replace_info_list[0].replace_start_node.first
-                                       : data_node_info.first;
+  MS_EXCEPTION_IF_NULL(to_remote_node);
   const auto d2h_after_index_opt = FindNodeIndex(exec_order, d2h_after_node);
   MS_EXCEPTION_IF_CHECK_FAIL(d2h_after_index_opt.has_value(), "Fail to find D2H insertion node in execution order.");
   operations->AddOperationAfter(d2h_after_index_opt.value(), to_remote_node);
+}
+
+CNodePtr AddActivationD2HOperation(const ActivationOperationContext &context, const OffloadInfo &offload_info,
+                                   const AnfNodePtr &data_node, bool is_peak_strategy) {
+  MS_EXCEPTION_IF_NULL(context.graph);
+  MS_EXCEPTION_IF_NULL(context.operations);
+  auto to_remote_node = BuildToHostNode(context.graph, data_node, context.callback);
+  const auto d2h_after_node = GetActivationD2HInsertAfterNode(offload_info, is_peak_strategy);
+  AddActivationD2HAfterNode(context.exec_order, context.operations, d2h_after_node, to_remote_node);
   return to_remote_node;
 }
 
-void AddActivationReplacementOperations(const FuncGraphPtr &graph, const HandleNewNodeCallback &callback,
-                                        const CNodePtrList &exec_order, HyperOffloadOperations *operations,
-                                        const ReplaceInfoList &replace_info_list, const CNodePtr &to_remote_node) {
-  MS_EXCEPTION_IF_NULL(graph);
+AnfNodePtr GetFirstActivationReplaceNode(const ReplaceInfo &replace_info) {
+  const auto &change_nodes_infos = replace_info.replace_rest_nodes;
+  MS_EXCEPTION_IF_CHECK_FAIL(!change_nodes_infos.empty(), "change_nodes should not be empty");
+  auto first_change_node = change_nodes_infos[0].first;
+  MS_EXCEPTION_IF_NULL(first_change_node);
+  return first_change_node;
+}
+
+void ReplaceActivationUserInputs(const ReplaceInfo &replace_info, const CNodePtr &to_device_node) {
+  MS_EXCEPTION_IF_NULL(to_device_node);
+  for (const auto &change_node_info : replace_info.replace_rest_nodes) {
+    MS_EXCEPTION_IF_NULL(change_node_info.first);
+    auto change_node = change_node_info.first->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(change_node);
+    MS_EXCEPTION_IF_CHECK_FAIL(change_node_info.second < change_node->inputs().size(),
+                               "Input index out of range when replacing activation user.");
+    change_node->set_input(change_node_info.second, to_device_node);
+  }
+}
+
+void AddActivationToDeviceBeforeFirstUser(const CNodePtrList &exec_order, HyperOffloadOperations *operations,
+                                          const AnfNodePtr &first_change_node, const CNodePtr &to_device_node) {
   MS_EXCEPTION_IF_NULL(operations);
+  const auto change_node_index_opt = FindNodeIndex(exec_order, first_change_node);
+  if (change_node_index_opt.has_value()) {
+    operations->AddOperationBefore(change_node_index_opt.value(), to_device_node);
+  }
+}
+
+void AddSingleActivationReplacementOperation(const ActivationOperationContext &context, const ReplaceInfo &replace_info,
+                                             const CNodePtr &to_remote_node) {
+  const auto first_change_node = GetFirstActivationReplaceNode(replace_info);
+  auto to_device_node =
+    BuildToDeviceNode(context.graph, to_remote_node, CreateContextCallback(context.callback, first_change_node));
+  ReplaceActivationUserInputs(replace_info, to_device_node);
+  AddActivationToDeviceBeforeFirstUser(context.exec_order, context.operations, first_change_node, to_device_node);
+}
+
+void AddActivationReplacementOperations(const ActivationOperationContext &context,
+                                        const ReplaceInfoList &replace_info_list, const CNodePtr &to_remote_node) {
+  MS_EXCEPTION_IF_NULL(context.graph);
+  MS_EXCEPTION_IF_NULL(context.operations);
   MS_EXCEPTION_IF_NULL(to_remote_node);
   for (const auto &replace_info : replace_info_list) {
-    const auto &change_nodes_infos = replace_info.replace_rest_nodes;
-    MS_EXCEPTION_IF_CHECK_FAIL(!change_nodes_infos.empty(), "change_nodes should not be empty");
-    auto first_change_node = change_nodes_infos[0].first;
-    MS_EXCEPTION_IF_NULL(first_change_node);
-    auto to_device_node = BuildToDeviceNode(graph, to_remote_node, CreateContextCallback(callback, first_change_node));
-    for (const auto &change_node_info : change_nodes_infos) {
-      MS_EXCEPTION_IF_NULL(change_node_info.first);
-      auto change_node = change_node_info.first->cast_ptr<CNode>();
-      MS_EXCEPTION_IF_NULL(change_node);
-      MS_EXCEPTION_IF_CHECK_FAIL(change_node_info.second < change_node->inputs().size(),
-                                 "Input index out of range when replacing activation user.");
-      change_node->set_input(change_node_info.second, to_device_node);
-    }
-    const auto change_node_index_opt = FindNodeIndex(exec_order, first_change_node);
-    if (change_node_index_opt.has_value()) {
-      operations->AddOperationBefore(change_node_index_opt.value(), to_device_node);
-    }
+    AddSingleActivationReplacementOperation(context, replace_info, to_remote_node);
   }
 }
 
@@ -339,50 +397,53 @@ void AppendActivationOutputToExecOrder(const CNodePtrList &exec_order, HyperOffl
   operations->AddOperationAfter(exec_order.size() - 1, to_device_node);
 }
 
-void AddPeakActivationOutputOperation(const FuncGraphPtr &graph, const HandleNewNodeCallback &callback,
-                                      const CNodePtrList &exec_order, HyperOffloadOperations *operations,
-                                      const KernelWithIndex &data_node_info, const CNodePtr &to_remote_node) {
-  MS_EXCEPTION_IF_NULL(graph);
-  const auto &output = graph->output();
+void AddPeakActivationOutputOperation(const ActivationOperationContext &context, const KernelWithIndex &data_node_info,
+                                      const CNodePtr &to_remote_node) {
+  MS_EXCEPTION_IF_NULL(context.graph);
+  const auto &output = context.graph->output();
   MS_EXCEPTION_IF_NULL(output);
-  auto to_device_node = BuildToDeviceNode(graph, to_remote_node, CreateContextCallback(callback, output));
-  bool output_replaced = false;
-  if (NodeResolvesToSingleSemanticOutput(output, data_node_info)) {
-    const auto output_cnode = output->cast_ptr<CNode>();
-    if (output_cnode != nullptr && IsOneOfPrimitiveCNode(output, {prim::kPrimDepend, prim::kPrimLoad})) {
-      output_replaced = ReplaceGraphOutputSubtree(output, data_node_info, to_device_node);
-    } else if (output_cnode != nullptr && IsPrimitiveCNode(output, prim::kPrimUpdateState)) {
-      output_replaced = ReplaceGraphOutputSubtree(output, data_node_info, to_device_node);
-    } else {
-      graph->set_output(to_device_node);
-      output_replaced = true;
-    }
-  } else {
-    output_replaced = ReplaceGraphOutputSubtree(output, data_node_info, to_device_node);
-  }
-  MS_EXCEPTION_IF_CHECK_FAIL(output_replaced, "Fail to remap graph output for activation offload.");
-  AppendActivationOutputToExecOrder(exec_order, operations, to_device_node);
+  auto to_device_node =
+    BuildToDeviceNode(context.graph, to_remote_node, CreateContextCallback(context.callback, output));
+  MS_EXCEPTION_IF_CHECK_FAIL(ReplaceActivationGraphOutput(context.graph, output, data_node_info, to_device_node),
+                             "Fail to remap graph output for activation offload.");
+  AppendActivationOutputToExecOrder(context.exec_order, context.operations, to_device_node);
 }
 
-void AddDistanceActivationOutputOperation(const FuncGraphPtr &graph, const HandleNewNodeCallback &callback,
-                                          const CNodePtrList &exec_order, HyperOffloadOperations *operations,
-                                          const AnfNodePtr &data_node, const CNodePtr &to_remote_node) {
+size_t FindActivationOutputInputIndex(const CNodePtr &output, const AnfNodePtr &data_node) {
+  MS_EXCEPTION_IF_NULL(output);
+  for (size_t i = 1; i < output->inputs().size(); ++i) {
+    if (output->input(i) == data_node) {
+      return i;
+    }
+  }
+  MS_LOG(EXCEPTION) << "Fail to find index";
+}
+
+CNodePtr GetMakeTupleGraphOutput(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_output = graph->output();
   MS_EXCEPTION_IF_NULL(graph_output);
   auto output = graph_output->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(output);
   MS_EXCEPTION_IF_CHECK_FAIL(IsPrimitiveCNode(output, prim::kPrimMakeTuple), "output not make tuple");
-  int index = -1;
-  for (size_t i = 1; i < output->inputs().size(); ++i) {
-    if (output->input(i) == data_node) {
-      index = SizeToInt(i);
-      break;
-    }
-  }
-  MS_EXCEPTION_IF_CHECK_FAIL(index > 0, "Fail to find index");
-  auto to_device_node = BuildToDeviceNode(graph, to_remote_node, CreateContextCallback(callback, output));
-  UpdateNodeInput(output, IntToSize(index), to_device_node);
-  AppendActivationOutputToExecOrder(exec_order, operations, to_device_node);
+  return output;
+}
+
+void AddDistanceActivationOutputOperation(const ActivationOperationContext &context, const AnfNodePtr &data_node,
+                                          const CNodePtr &to_remote_node) {
+  auto output = GetMakeTupleGraphOutput(context.graph);
+  const size_t index = FindActivationOutputInputIndex(output, data_node);
+  auto to_device_node =
+    BuildToDeviceNode(context.graph, to_remote_node, CreateContextCallback(context.callback, output));
+  UpdateNodeInput(output, index, to_device_node);
+  AppendActivationOutputToExecOrder(context.exec_order, context.operations, to_device_node);
+}
+
+void RaiseMinAttachIndex(size_t candidate_attach_index, std::optional<size_t> *min_after_exec_idx) {
+  MS_EXCEPTION_IF_NULL(min_after_exec_idx);
+  *min_after_exec_idx = min_after_exec_idx->has_value()
+                          ? std::make_optional(std::max(min_after_exec_idx->value(), candidate_attach_index))
+                          : std::make_optional(candidate_attach_index);
 }
 }  // namespace
 
@@ -396,19 +457,19 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
     MS_LOG(INFO) << "Skip HyperOffload activation candidate because all replace ranges touch ref inputs.";
     return;
   }
+  const ActivationOperationContext context{graph_, callback_, exec_order_, &operations_};
   auto data_node = BuildActivationDataNodeForOffload(graph_, callback_, data_node_info);
   auto filtered_offload_info = OffloadInfo{data_node_info, replace_info_list};
-  auto to_remote_node = AddActivationD2HOperation(graph_, callback_, exec_order_, &operations_, filtered_offload_info,
-                                                  data_node, is_peak_strategy);
-  AddActivationReplacementOperations(graph_, callback_, exec_order_, &operations_, replace_info_list, to_remote_node);
+  auto to_remote_node = AddActivationD2HOperation(context, filtered_offload_info, data_node, is_peak_strategy);
+  AddActivationReplacementOperations(context, replace_info_list, to_remote_node);
   if (!IsActivationGraphOutput(outputs, data_node_info, data_node, is_peak_strategy)) {
     return;
   }
   if (is_peak_strategy) {
-    AddPeakActivationOutputOperation(graph_, callback_, exec_order_, &operations_, data_node_info, to_remote_node);
+    AddPeakActivationOutputOperation(context, data_node_info, to_remote_node);
     return;
   }
-  AddDistanceActivationOutputOperation(graph_, callback_, exec_order_, &operations_, data_node, to_remote_node);
+  AddDistanceActivationOutputOperation(context, data_node, to_remote_node);
 }
 
 void HyperOffloadOptimizer::AddEventNodes() {
@@ -551,7 +612,8 @@ void HyperOffloadOptimizer::AssignHyperOffloadIds(const CNodePtrList &exec_order
   std::unordered_map<AnfNodePtr, std::string> node_to_key_cache;
   std::unordered_map<size_t, std::string> id_to_key_map;
 
-  std::function<std::string(const AnfNodePtr &)> get_key = [&](const AnfNodePtr &node) -> std::string {
+  std::function<std::string(const AnfNodePtr &)> get_key = [&get_key,
+                                                            &node_to_key_cache](const AnfNodePtr &node) -> std::string {
     if (node == nullptr) {
       return "";
     }
@@ -619,9 +681,7 @@ void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
                                                  : std::nullopt;
     const auto branch_start_attach_idx = GetInlineBranchStartAttachIndex(graph_, exec_order_, h2d_node);
     if (branch_start_attach_idx.has_value()) {
-      min_after_exec_idx = min_after_exec_idx.has_value()
-                             ? std::make_optional(std::max(*min_after_exec_idx, *branch_start_attach_idx))
-                             : branch_start_attach_idx;
+      RaiseMinAttachIndex(branch_start_attach_idx.value(), &min_after_exec_idx);
     }
     operations_.MoveAhead(h2d_node, prefetch_req, nullptr, min_after_exec_idx);
   }
