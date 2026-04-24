@@ -18,7 +18,7 @@
 import numpy as np
 import pytest
 import mindspore as ms
-from mindspore import _Function
+from mindspore import _Function, recompute
 from mindspore import Tensor, jit, _no_grad
 from mindspore.graph.api import _pynative_executor, _GradientEdge
 from mindspore.ops import stop_gradient
@@ -502,6 +502,27 @@ def test_backward_output_nr():
     assert output[1].output_nr == 1
 
 
+def test_backward_with_recompute_non_use_reentrant():
+    """
+    Feature: Test backward api
+    Description: Test backward api with non-reentrant recompute
+    Expectation: Success.
+    """
+    def fn(x, y):
+        z1 = x + 2.0
+        z2 = y + 1.0
+        return z1 * z2
+
+    x = Tensor([2.0, 1.0], ms.float32)
+    y = Tensor([1.0, 3.0], ms.float32)
+    x.requires_grad = True
+    y.requires_grad = True
+    res = recompute(fn, x, y, use_reentrant=False)
+    res.sum().backward()
+    assert np.allclose(x.grad.asnumpy(), np.array([2.0, 4.0], dtype=np.float32), 0.00001, 0.00001)
+    assert np.allclose(y.grad.asnumpy(), np.array([4.0, 3.0], dtype=np.float32), 0.00001, 0.00001)
+
+
 class ReturnSelfOps(_Function):
     @staticmethod
     def forward(ctx, *args):
@@ -732,6 +753,7 @@ def test_backward_cpu_cases_suit():
     test_backward_set_requires_grad_register_hook()
     test_backward_is_leaf()
     test_backward_output_nr()
+    test_backward_with_recompute_non_use_reentrant()
     test_backward_grad_fn_register_pre_hook()
     test_backward_grad_fn_register_post_hook_leaf()
     test_backward_with_gradient_edge_outputs()
