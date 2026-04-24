@@ -66,18 +66,15 @@ static const map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
 
 /* Correspondence between reduce str and enum in hcom  */
 static const std::unordered_map<std::string, HcclReduceOp> kConstOpHcomReduceOpTypeMap = {
-  {"min", HCCL_REDUCE_MIN},
-  {"max", HCCL_REDUCE_MAX},
-  {"prod", HCCL_REDUCE_PROD},
-  {"sum", HCCL_REDUCE_SUM},
+  {"min", HCCL_REDUCE_MIN}, {"max", HCCL_REDUCE_MAX}, {"prod", HCCL_REDUCE_PROD},
+  {"sum", HCCL_REDUCE_SUM}, {"avg", HCCL_REDUCE_SUM},
 };
 
 /* Correspondence between reduce str and enum in collective op  */
 static const std::unordered_map<std::string, device::CollectiveOpReduceType> kConstOpCollectiveOpReduceTypeMap = {
-  {"min", device::CollectiveOpReduceType::Reduce_Min},
-  {"max", device::CollectiveOpReduceType::Reduce_Max},
-  {"prod", device::CollectiveOpReduceType::Reduce_Prod},
-  {"sum", device::CollectiveOpReduceType::Reduce_Sum},
+  {"min", device::CollectiveOpReduceType::Reduce_Min},   {"max", device::CollectiveOpReduceType::Reduce_Max},
+  {"prod", device::CollectiveOpReduceType::Reduce_Prod}, {"sum", device::CollectiveOpReduceType::Reduce_Sum},
+  {"avg", device::CollectiveOpReduceType::Reduce_Mean},
 };
 
 class HcomUtil {

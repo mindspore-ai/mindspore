@@ -38,7 +38,8 @@ static const std::map<CollectiveOpReduceType, HcclReduceOp> kHcomOpReduceTypeMap
   {device::CollectiveOpReduceType::Reduce_Max, HCCL_REDUCE_MAX},
   {device::CollectiveOpReduceType::Reduce_Min, HCCL_REDUCE_MIN},
   {device::CollectiveOpReduceType::Reduce_Prod, HCCL_REDUCE_PROD},
-  {device::CollectiveOpReduceType::Reduce_Sum, HCCL_REDUCE_SUM}};
+  {device::CollectiveOpReduceType::Reduce_Sum, HCCL_REDUCE_SUM},
+  {device::CollectiveOpReduceType::Reduce_Mean, HCCL_REDUCE_SUM}};
 
 class EXPORT_WRAPPER AscendCollectiveCommLib : public CollectiveCommunicationLib {
  public:

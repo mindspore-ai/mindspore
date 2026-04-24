@@ -843,3 +843,30 @@ def test_cpu_all_reduce_dtype():
     types = [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32]
     for type_i in types:
         test_cpu_all_reduce_dtype_inner(type_i)
+
+
+@log_function_entry_exit
+def test_cpu_all_reduce_avg():
+    """
+    Feature: test CPU mccl all_reduce with ReduceOp.AVG.
+    Description: AVG = SUM / world_size on CPU; exercises the Reduce_Mean path
+                 in collective_ops_impl.cc (calculate_mean).
+    Expectation: success
+    """
+    name = "mccl_" + str(size) + "_" + hashlib.sha1(bytes("_".join(map(str, range(size))), "utf-8")).hexdigest()
+    group = new_group(list(range(size)), backend="mccl")
+    assert group == name
+
+    input_tensor = ms.Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
+    avg_input_tensor = input_tensor * (rank + 1)
+    avg_output_handle = all_reduce(avg_input_tensor, op=ReduceOp.AVG, group=group)
+    assert avg_output_handle is None
+    except_avg_output = input_tensor * (sum(list(range(1, size + 1))) / size)
+    assert np.allclose(avg_input_tensor.asnumpy(), except_avg_output.asnumpy())
+
+    # async path
+    async_input_tensor = input_tensor * (rank + 1)
+    handle = all_reduce(async_input_tensor, op=ReduceOp.AVG, group=group, async_op=True)
+    assert handle is not None
+    handle.wait()
+    assert np.allclose(async_input_tensor.asnumpy(), except_avg_output.asnumpy())

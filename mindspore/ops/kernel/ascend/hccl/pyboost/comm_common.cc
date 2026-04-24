@@ -33,6 +33,7 @@
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "utils/ms_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -76,9 +77,56 @@ void CommonCommRunTask(const std::function<void(void)> &run_func) {
   }
 }
 
+namespace {
+void DispatchCommLaunchTask(const std::shared_ptr<OpRunner> &op, const HcclComm &hccl_comm, size_t comm_stream_id,
+                            const std::function<void(const HcclComm &, void *)> &launch_func,
+                            const std::string &group_str, const TensorPtr &avg_div_tensor) {
+  static auto sync = runtime::RuntimeConf::GetInstance()->launch_blocking();
+  const auto &op_name = op->primitive()->name();
+  const auto &comm_handle = op->comm_handle();
+  const auto *device_context = op->device_context();
+  const auto op_stream_id = op->stream_id();
+
+  auto func = [device_context, op_stream_id, hccl_comm, comm_stream_id, op_name, launch_func]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
+                                       op_name, false);
+
+    device::tracker::CALL_MEMORY_TRACKER(UpdateTask, "PyNative",
+                                         {{device::tracker::kStreamId, std::to_string(comm_stream_id)}});
+    device::tracker::CALL_MEMORY_TRACKER(CacheLastTask);
+    CommUtils::GetInstance().SyncOpStream(device_context, op_stream_id, comm_stream_id);
+    device::tracker::CALL_MEMORY_TRACKER(EmptyCache);
+
+    auto comm_stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(comm_stream_id);
+
+    if (launch_func) {
+      launch_func(hccl_comm, comm_stream_ptr);
+      if (sync) {
+        if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
+          MS_LOG(EXCEPTION) << "SyncStream failed for op " << op_name;
+        }
+      }
+    }
+  };
+
+  if (MS_UNLIKELY(avg_div_tensor != nullptr)) {
+    runtime::OpExecutor::DispatchLaunchTask(func);
+    InplaceDivByGroupSize(device_context, comm_stream_id, avg_div_tensor, group_str);
+    runtime::OpExecutor::DispatchLaunchTask(
+      [comm_handle, comm_stream_id]() { comm_handle->RecordEvent(comm_stream_id); });
+  } else {
+    runtime::OpExecutor::DispatchLaunchTask([func, comm_handle, comm_stream_id]() {
+      func();
+      comm_handle->RecordEvent(comm_stream_id);
+    });
+  }
+}
+}  // namespace
+
 void CommonCommAscendFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const StringImmPtr &group,
                           const std::function<void(const HcclComm &, void *)> &launch_func,
-                          const std::function<void(const DeviceEventPtr &, size_t)> &post_func, int64_t rank) {
+                          const std::function<void(const DeviceEventPtr &, size_t)> &post_func, int64_t rank,
+                          const TensorPtr &avg_div_tensor) {
   const auto &op_name = op->primitive()->name();
   MS_LOG(DEBUG) << "Run device task " << op_name << " end";
 
@@ -105,36 +153,12 @@ void CommonCommAscendFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     comm_stream_id = device_context->device_res_manager_->GetCommunicationStreamIDByGroup(group_str);
   }
 
-  auto func = [device_context, group_str, op_stream_id = op->stream_id(), comm_handle, hccl_comm, comm_stream_id,
-               op_name, launch_func]() {
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
-                                       op_name, false);
-
-    device::tracker::CALL_MEMORY_TRACKER(UpdateTask, "PyNative",
-                                         {{device::tracker::kStreamId, std::to_string(comm_stream_id)}});
-    device::tracker::CALL_MEMORY_TRACKER(CacheLastTask);
-    CommUtils::GetInstance().SyncOpStream(device_context, op_stream_id, comm_stream_id);
-    device::tracker::CALL_MEMORY_TRACKER(EmptyCache);
-
-    auto comm_stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(comm_stream_id);
-
-    if (launch_func) {
-      launch_func(hccl_comm, comm_stream_ptr);
-      if (sync) {
-        if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
-          MS_LOG(EXCEPTION) << "SyncStream failed for op " << op_name;
-        }
-      }
-    }
-    comm_handle->RecordEvent(comm_stream_id);
-  };
-
   static bool dry_run = common::IsExecuteSimulation();
   if (MS_UNLIKELY(dry_run)) {
     SimuExecSetOutput(op->output(0), op->primitive()->name());
   }
 
-  runtime::OpExecutor::DispatchLaunchTask(func);
+  DispatchCommLaunchTask(op, hccl_comm, comm_stream_id, launch_func, group_str, avg_div_tensor);
 
   static runtime::KernelCache &cache = runtime::KernelCache::GetInstance();
   if (MS_UNLIKELY(cache.need_add)) {
@@ -162,6 +186,13 @@ void CommonCommAscendFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     }
   }
   MS_LOG(DEBUG) << "Run device task " << op_name << " end";
+}
+
+void InplaceDivByGroupSize(const device::DeviceContext *device_context, size_t stream_id, const TensorPtr &tensor,
+                           const std::string &group_name) {
+  auto group_size = distributed::collective::CollectiveManager::instance()->GetGroupSize(group_name);
+  ScalarPtr other = std::make_shared<FP32Imm>(static_cast<float>(group_size));
+  LAUNCH_ACLNN(aclnnInplaceDivs, device_context, stream_id, tensor, other);
 }
 
 void *GetDevicePtrFromTensor(const std::string &op_name, const tensor::TensorPtr &tensor) {

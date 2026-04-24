@@ -323,7 +323,7 @@ bool MsCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size
   }
   static const std::set<CollectiveOpReduceType> valid_ops = {
     CollectiveOpReduceType::Reduce_Sum, CollectiveOpReduceType::Reduce_Max, CollectiveOpReduceType::Reduce_Min,
-    CollectiveOpReduceType::Reduce_Prod};
+    CollectiveOpReduceType::Reduce_Prod, CollectiveOpReduceType::Reduce_Mean};
   if (valid_ops.count(reduce_op) == 0) {
     MS_LOG(EXCEPTION) << "AllReduce only support reduce sum, max and min.";
   }

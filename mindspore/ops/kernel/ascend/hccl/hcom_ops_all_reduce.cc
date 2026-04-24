@@ -17,6 +17,10 @@
 #include "kernel/ascend/hccl/hcom_ops_all_reduce.h"
 #include <string>
 #include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "kernel/ascend/acl_ir/op_api_exec.h"
+#include "kernel/ascend/acl_ir/op_api_convert.h"
+#include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_mod.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,7 +35,9 @@ int InnerCommAllReduceKernel::Resize(const std::vector<KernelTensor *> &inputs,
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl InnerCommAllReduceKernel input size " << inputs.size();
   }
   auto op_type = inputs[kIndex1]->GetValueWithCheck<std::string>();
-  op_type_enum_ = HcomUtil::GetHcomReduceOpType(op_type);
+  is_avg_ = (op_type == "avg");
+  auto real_op_type = is_avg_ ? "sum" : op_type;
+  op_type_enum_ = HcomUtil::GetHcomReduceOpType(real_op_type);
   group_ = inputs[kIndex2]->GetValueWithCheck<std::string>();
   data_type_ = HcomUtil::ConvertHcclType(inputs[0]->dtype_id());
   const std::optional<int64_t> rank_size_opt;
@@ -49,10 +55,25 @@ int InnerCommAllReduceKernel::Resize(const std::vector<KernelTensor *> &inputs,
     output_size_list_.push_back(size);
   }
 
+  workspace_size_list_.clear();
+  if (is_avg_) {
+    auto group_size = distributed::collective::CollectiveManager::instance()->GetGroupSize(group_);
+    avg_div_scalar_ = std::make_shared<FP32Imm>(static_cast<float>(group_size));
+    const std::string aclnn_api_name = "aclnnInplaceDivs";
+    auto [ws_size, executor, cache, repeat_ret] = GEN_EXECUTOR_FOR_RESIZE(aclnn_api_name, outputs[0], avg_div_scalar_);
+    (void)executor;
+    (void)cache;
+    (void)repeat_ret;
+    if (ws_size != 0) {
+      workspace_size_list_.push_back(ws_size);
+    }
+  }
+
   return KRET_OK;
 }
 
-bool InnerCommAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+bool InnerCommAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &workspace,
                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[0]);
@@ -63,6 +84,17 @@ bool InnerCommAllReduceKernel::Launch(const std::vector<KernelTensor *> &inputs,
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
     return false;
+  }
+  if (is_avg_) {
+    const std::string aclnn_api_name = "aclnnInplaceDivs";
+    size_t ws_size = 0;
+    device::ascend::aclOpExecutor *executor = nullptr;
+    std::function<void()> release_func = nullptr;
+    uint64_t hash_id = 0;
+    std::tie(ws_size, executor, release_func, hash_id, std::ignore) =
+      GEN_EXECUTOR_BOOST(aclnn_api_name, hash_id, outputs[0], avg_div_scalar_);
+    void *ws_ptr = (ws_size != 0 && !workspace.empty()) ? workspace[0]->device_ptr() : nullptr;
+    RUN_OP_API_ASYNC(aclnn_api_name, ws_ptr, ws_size, executor, stream_ptr, release_func);
   }
   return true;
 }

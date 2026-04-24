@@ -801,6 +801,101 @@ def test_hccl_reduce():
 
 
 @log_function_entry_exit
+def test_hccl_all_reduce_avg():
+    """
+    Feature: test mint.distributed all_reduce with ReduceOp.AVG.
+    Description: AVG = SUM / world_size, exercises dist_comm_all_reduce avg path.
+    Expectation: success
+    """
+    input_tensor = ms.Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
+    avg_input_tensor = input_tensor * (rank + 1)
+    handle = all_reduce(avg_input_tensor, op=ReduceOp.AVG)
+    assert handle is None
+    except_avg_output = input_tensor * (sum(list(range(1, size + 1))) / size)
+    assert np.allclose(avg_input_tensor.asnumpy(), except_avg_output.asnumpy())
+
+
+@log_function_entry_exit
+def test_hccl_reduce_avg():
+    """
+    Feature: test mint.distributed reduce with ReduceOp.AVG.
+    Description: AVG = SUM / world_size on dst rank.
+    Expectation: success
+    """
+    input_tensor = ms.Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
+    avg_input_tensor = input_tensor * (rank + 1)
+    handle = reduce(avg_input_tensor, dst=0, op=ReduceOp.AVG)
+    assert handle is None
+    if rank == 0:
+        except_avg_output = input_tensor * (sum(list(range(1, size + 1))) / size)
+        assert np.allclose(avg_input_tensor.asnumpy(), except_avg_output.asnumpy())
+
+
+@log_function_entry_exit
+def test_hccl_reduce_scatter_tensor_avg():
+    """
+    Feature: test mint.distributed reduce_scatter_tensor with ReduceOp.AVG.
+    Description: AVG = SUM / world_size on each chunk.
+    Expectation: success
+    """
+    input_tensor = ms.Tensor(np.ones([3 * size, 3]).astype(np.float32)) * (rank + 1)
+    output_tensor = ms.Tensor(np.zeros([3, 3]).astype(np.float32))
+    handle = reduce_scatter_tensor(output_tensor, input_tensor, op=ReduceOp.AVG)
+    assert handle is None
+    expect_output = ms.Tensor(np.ones([3, 3]).astype(np.float32)) * (sum(list(range(1, size + 1))) / size)
+    assert np.allclose(output_tensor.asnumpy(), expect_output.asnumpy())
+
+
+@log_function_entry_exit
+def test_hccl_reduce_scatter_tensor_uneven_avg():
+    """
+    Feature: test mint.distributed reduce_scatter_tensor_uneven with ReduceOp.AVG.
+    Description: AVG = SUM / world_size on the chunk owned by current rank.
+    Expectation: success
+    """
+    input_tensor = ms.Tensor(np.concatenate([np.ones([r + 1, 2]) * r for r in range(size)]).astype(np.float32))
+    output_tensor = ms.Tensor(np.zeros([rank + 1, 2]).astype(np.float32))
+    input_split_sizes = [r + 1 for r in range(size)]
+    handle = reduce_scatter_tensor_uneven(
+        output_tensor, input_tensor, input_split_sizes=input_split_sizes, op=ReduceOp.AVG
+    )
+    assert handle is None
+    expected_output = np.ones([rank + 1, 2]).astype(np.float32) * rank
+    assert np.allclose(output_tensor.asnumpy(), expected_output)
+
+
+@log_function_entry_exit
+def test_hccl_reduce_scatter_avg():
+    """
+    Feature: test mint.distributed reduce_scatter with ReduceOp.AVG.
+    Description: AVG = SUM / world_size, exercises inner_comm_reduce_scatter avg path.
+    Expectation: success
+    """
+    input_list = [ms.Tensor(np.ones([3, 3]).astype(np.float32)) * (r + 1) for r in range(size)]
+    output_tensor = ms.Tensor(np.zeros([3, 3]).astype(np.float32))
+    handle = reduce_scatter(output_tensor, input_list, op=ReduceOp.AVG)
+    assert handle is None
+    expect_output = np.ones([3, 3]).astype(np.float32) * (rank + 1)
+    assert np.allclose(output_tensor.asnumpy(), expect_output)
+
+
+@log_function_entry_exit
+def test_hccl_all_reduce_avg_async():
+    """
+    Feature: test mint.distributed all_reduce async with ReduceOp.AVG.
+    Description: async path for AVG.
+    Expectation: success
+    """
+    input_tensor = ms.Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
+    avg_input_tensor = input_tensor * (rank + 1)
+    handle = all_reduce(avg_input_tensor, op=ReduceOp.AVG, async_op=True)
+    assert handle is not None
+    handle.wait()
+    except_avg_output = input_tensor * (sum(list(range(1, size + 1))) / size)
+    assert np.allclose(avg_input_tensor.asnumpy(), except_avg_output.asnumpy())
+
+
+@log_function_entry_exit
 def test_hccl_batch_isend_irecv():
     """
     Feature: test distributed op

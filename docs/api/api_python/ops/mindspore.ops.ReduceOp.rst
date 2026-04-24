@@ -11,13 +11,15 @@ mindspore.ops.ReduceOp
     - MAX：ReduceOp.MAX.
     - MIN：ReduceOp.MIN.
     - PROD：ReduceOp.PROD.
+    - AVG：ReduceOp.AVG.
 
-    有四种操作选项，"SUM"、"MAX"、"MIN"和"PROD"。
+    有五种操作选项，"SUM"、"MAX"、"MIN"、"PROD"和"AVG"。
 
     - SUM：求和。
     - MAX：求最大值。
     - MIN：求最小值。
     - PROD：求乘积。
+    - AVG：求均值（先求和再除以组内设备数）。
 
     样例：
 

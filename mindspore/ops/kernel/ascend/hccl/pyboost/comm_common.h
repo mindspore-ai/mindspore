@@ -22,6 +22,7 @@
 #include <string>
 #include "ir/tensor.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "hccl/hccl.h"
 
 namespace mindspore {
@@ -30,10 +31,15 @@ namespace pyboost {
 void CommonCommRunTask(const std::function<void(void)> &run_func);
 void CommonCommAscendFunc(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const StringImmPtr &group,
                           const std::function<void(const HcclComm &, void *)> &launch_func,
-                          const std::function<void(const DeviceEventPtr &, size_t)> &post_func, int64_t rank = -1);
+                          const std::function<void(const DeviceEventPtr &, size_t)> &post_func, int64_t rank = -1,
+                          const TensorPtr &avg_div_tensor = nullptr);
 
 // Get device mutable ptr from tensor
 void *GetDevicePtrFromTensor(const std::string &op_name, const tensor::TensorPtr &tensor);
+
+// In-place divide tensor by group_size on the op stream, used for AVG reduce.
+void InplaceDivByGroupSize(const device::DeviceContext *device_context, size_t stream_id, const TensorPtr &tensor,
+                           const std::string &group_name);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
