@@ -17,7 +17,6 @@
 #include "utils/hyper_offload/hyper_offload_event.h"
 
 #include <algorithm>
-#include <functional>
 #include <limits>
 #include <map>
 #include <unordered_map>
@@ -295,11 +294,9 @@ void AppendH2DUsersFromFuncGraphOutput(const FuncGraphPtr &graph, const CNodePtr
                                        std::unordered_map<AnfNodePtr, std::pair<size_t, size_t>> *h2d_user_indices) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(h2d_user_indices);
-  const size_t anchor = exec_order.size();
 
   std::vector<AnfNodePtr> h2d_from_output;
-  std::function<void(const AnfNodePtr &)> visit;
-  visit = [&visit, &h2d_from_output](const AnfNodePtr &node) {
+  auto visit = [&h2d_from_output](const auto &self, const AnfNodePtr &node) -> void {
     if (node == nullptr) {
       return;
     }
@@ -314,23 +311,24 @@ void AppendH2DUsersFromFuncGraphOutput(const FuncGraphPtr &graph, const CNodePtr
     MS_EXCEPTION_IF_NULL(cnode);
     if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
       for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-        visit(cnode->input(i));
+        self(self, cnode->input(i));
       }
       return;
     }
     if (IsOneOfPrimitiveCNode(node, {prim::kPrimDepend, prim::kPrimLoad})) {
       MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kRealInputIndexInDepend, "Depend/Load inputs invalid.");
-      visit(cnode->input(kRealInputIndexInDepend));
+      self(self, cnode->input(kRealInputIndexInDepend));
       return;
     }
     if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
       MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kUpdateStateStateInput, "UpdateState inputs invalid.");
-      visit(cnode->input(kUpdateStateStateInput));
+      self(self, cnode->input(kUpdateStateStateInput));
       return;
     }
   };
-  visit(graph->output());
+  visit(visit, graph->output());
 
+  const size_t anchor = exec_order.size();
   for (const auto &h2d : h2d_from_output) {
     auto it = h2d_user_indices->find(h2d);
     if (it == h2d_user_indices->end()) {

@@ -99,7 +99,11 @@ std::optional<ConditionSwitchBranchNames> GetConditionSwitchBranchNames(const CN
   if (inline_sub_graph_names == nullptr || !inline_sub_graph_names->isa<ValueTuple>()) {
     return std::nullopt;
   }
-  const auto &tuple_name = inline_sub_graph_names->cast<ValueTuplePtr>()->value();
+  const auto tuple_value = inline_sub_graph_names->cast<ValueTuplePtr>();
+  if (tuple_value == nullptr) {
+    return std::nullopt;
+  }
+  const auto &tuple_name = tuple_value->value();
   if (tuple_name.size() != kSwitchBranchNameTupleSize) {
     return std::nullopt;
   }
