@@ -413,26 +413,76 @@ def _extract_affinity_from_bind_file(bind_file):
 
 def _get_available_numas():
     """
-    Get available NUMA node IDs from sysfs.
+    Get NUMA node IDs that can be used by numactl from sysfs.
+
+    A NUMA node may have CPUs but no local memory. Such memoryless nodes cannot
+    be used by numactl safely, so only nodes with both CPU and memory resources
+    are returned when sysfs exposes the resource masks.
     
     Returns:
         list[int]: Sorted list of NUMA node IDs (empty list if failed)
     """
     numa_node_path = "/sys/devices/system/node/"
-    available_numas = []
 
     if not (os.path.isdir(numa_node_path) and os.access(numa_node_path, os.R_OK)):
         return []
 
+    all_numas = _get_sysfs_numa_node_ids(numa_node_path)
+    if not all_numas:
+        return []
+
+    cpu_numas = _get_sysfs_numa_range_ids(os.path.join(numa_node_path, "has_cpu"))
+    memory_numas = _get_sysfs_numa_range_ids(os.path.join(numa_node_path, "has_memory"))
+
+    # Keep old behavior on systems that do not expose resource masks.
+    if cpu_numas is None and memory_numas is None:
+        return all_numas
+
+    all_numa_set = set(all_numas)
+    cpu_numa_set = set(cpu_numas) if cpu_numas is not None else all_numa_set
+    memory_numa_set = set(memory_numas) if memory_numas is not None else all_numa_set
+    memoryless_numas = sorted((all_numa_set & cpu_numa_set) - memory_numa_set)
+    if memoryless_numas:
+        logger.warning(f"Detected memoryless NUMA nodes {memoryless_numas}. These nodes have CPUs but no "
+                       "local memory, cannot be used by numactl, and will be excluded from NUMA binding.")
+
+    return sorted(all_numa_set & cpu_numa_set & memory_numa_set)
+
+
+def _get_sysfs_numa_node_ids(numa_node_path):
+    """
+    Get existing NUMA node IDs from sysfs node directories.
+    """
+    numa_nodes = []
     try:
         for dir_name in os.listdir(numa_node_path):
             if re.fullmatch(r"node\d+", dir_name):
                 node_id = int(dir_name.replace("node", ""))
-                available_numas.append(node_id)
+                numa_nodes.append(node_id)
     except OSError as e:
         logger.warning(f"Failed to read NUMA node directory {numa_node_path}: {e}")
 
-    return sorted(available_numas)
+    return sorted(numa_nodes)
+
+
+def _get_sysfs_numa_range_ids(range_file):
+    """
+    Read a sysfs node range file such as has_cpu or has_memory.
+
+    Returns:
+        list[int] or None: Parsed node IDs, or None when the range file cannot be read or parsed.
+    """
+    try:
+        with open(range_file, "r", encoding="utf-8") as fp:
+            content = fp.read().strip()
+    except OSError:
+        return None
+
+    try:
+        return _expand_ranges(content)
+    except (TypeError, ValueError) as e:
+        logger.warning(f"Failed to parse NUMA node range file {range_file}: {e}")
+        return None
 
 
 class DeviceInfo:
@@ -795,17 +845,31 @@ def _auto_generate_bind_numa_strategy(device_count, available_numas):
             }
             return device_to_numa_map
 
-        # Build non-affinity pool (-1) from NUMA nodes that have no direct affinity.
-        affinity_numas = set(temp_device_to_numa_map.values())
+        available_numa_set = set(available_numas)
+        invalid_affinity_map = {
+            device: numa for device, numa in temp_device_to_numa_map.items()
+            if numa not in available_numa_set
+        }
+        if invalid_affinity_map:
+            logger.warning(f"Device affinity NUMA nodes {invalid_affinity_map} are unavailable or memoryless. "
+                           f"Only usable NUMA nodes {available_numas} will be used for numactl binding.")
+
+        # Build non-affinity pool (-1) from usable NUMA nodes that have no direct affinity.
+        affinity_numas = {
+            numa for numa in temp_device_to_numa_map.values()
+            if numa in available_numa_set
+        }
         numa_to_device_map[-1] = [numa for numa in available_numas if numa not in affinity_numas]
 
-        # If multiple devices share the same affinity NUMA, reassign to non-affinity pool (already ordered and enough).
+        # If affinity NUMA is unavailable or duplicated, reassign from the non-affinity pool.
         unaffinity_numa_pool = iter(numa_to_device_map.get(-1, []))
         used_numas = set()
 
         for device, numa in temp_device_to_numa_map.items():
-            if numa in used_numas:
-                numa = next(unaffinity_numa_pool, numa)
+            if numa not in available_numa_set:
+                numa = next(unaffinity_numa_pool)
+            elif numa in used_numas:
+                numa = next(unaffinity_numa_pool)
             used_numas.add(numa)
             device_to_numa_map[device] = [numa]
     except RuntimeError as e:
