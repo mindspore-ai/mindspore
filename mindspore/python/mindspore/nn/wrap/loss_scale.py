@@ -369,9 +369,10 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         self.allreduce = ops.AllReduce()
         self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
         self.gpu_target = context.get_context("device_target") == "GPU"
-        self.ascend_910a_target = MSContext.get_instance().get_ascend_soc_version() == 'ascend910'
-        self.ascend_910b_target = MSContext.get_instance().get_ascend_soc_version() in [
-            'ascend910b', 'ascend910_93', "ascend950"]
+        self.ascend_910a_target = MSContext.get_instance().ascend_soc_supports_feature(
+            "amp_loss_scale_train_classic_target")
+        self.ascend_910b_target = MSContext.get_instance().ascend_soc_supports_feature(
+            "train_hq_dtype_line")
         self.loss_scaling_manager = None
         self._ascend_check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
 

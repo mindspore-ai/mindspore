@@ -33,6 +33,7 @@
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/runtime/memory/mem_pool/mem_dynamic_allocator.h"
 #include "include/utils/utils.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/ms_context.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 
@@ -127,8 +128,7 @@ class AscendVmmAdapter {
       return false;
     }
 
-    const auto &soc_version = ctx->ascend_soc_version();
-    if (!(soc_version == "ascend910b" || soc_version == "ascend910_93" || soc_version == "ascend950")) {
+    if (!ctx->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMemoryVmmDefaultEnabledSocLine)) {
       MS_LOG(INFO) << "Soc is neither ascend910b, ascend910_93 nor ascend950, vmm is disabled by default.";
       return false;
     }

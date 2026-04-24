@@ -21,6 +21,7 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
@@ -32,8 +33,7 @@ bool EnableDvmComm() {
   // 1. Jit level is set to O1
   // 2. At least one of the collective communication primitives is included in `enable_cluster_ops` or
   // `enable_cluster_ops_only` of graph kernel flags
-  auto ascend_soc_version = MsContext::GetInstance()->ascend_soc_version();
-  if (ascend_soc_version != "ascend910b") {
+  if (!ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureDvmCommCollective910bNormalizedPath)) {
     return false;
   }
 

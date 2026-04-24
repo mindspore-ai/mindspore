@@ -38,6 +38,7 @@
 #include "primitive/structure_op_name.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "ir/func_graph_flag.h"
@@ -243,8 +244,9 @@ bool IsDisableGeKernel() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   // do not use ge_kernel in 910
-  static bool use_ascend910 = context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
-                              context->ascend_soc_version() == kAscendVersion910;
+  static bool use_ascend910 =
+    context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
+    context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureRuntimeDisableGeKernelTrainClassic);
   return config_disable_ge_kernel || use_hccl_rank_table || use_ascend910;
 }
 
@@ -414,8 +416,9 @@ std::string GetFormatMode() {
     // default set "0" for 910a graph sink, otherwise "1"
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->ascend_soc_version() == "ascend910" && ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) &&
-        GraphPipelineCompiling() && ms_context->GetBackend() == kBackendGE) {
+    if (ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureGeFormatModeGraphSinkDefaultTrainClassic) &&
+        ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) && GraphPipelineCompiling() &&
+        ms_context->GetBackend() == kBackendGE) {
       format_mode = "0";
     } else {
       format_mode = "1";

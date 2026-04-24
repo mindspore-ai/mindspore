@@ -23,6 +23,8 @@
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "utils/ms_utils.h"
+#include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 
@@ -84,13 +86,13 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
     {"Ascend950DT_950x", 24.0f},  {"Ascend950DT_950y", 16.0f},
   };
 
-  if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910_93) {
+  if (context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMemoryDefault64gLine)) {
     total_device_memory = 64.0f;
   }
-  if (context->ascend_soc_version() == kAscendVersion310p) {
+  if (context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMemoryTotalInfer310pLine)) {
     total_device_memory = 43.0f;
   }
-  if (context->ascend_soc_version() == kAscendVersion950) {
+  if (context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMemoryTotalDevice950SkuTable)) {
     const char *soc_name_c = "";
     if (!UseSimulationApi()) {
       soc_name_c = CALL_ASCEND_API(aclrtGetSocName);

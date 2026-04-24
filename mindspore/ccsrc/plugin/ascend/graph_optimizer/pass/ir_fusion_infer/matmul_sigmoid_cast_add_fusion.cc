@@ -25,6 +25,7 @@
 #include "primitive/nn_ops.h"
 #include "primitive/math_ops.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/phase.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
@@ -93,7 +94,8 @@ const AnfNodePtr MatMulSigmoidCastAddFusion::Process(const FuncGraphPtr &func_gr
     return nullptr;
   }
   auto const &soc_ver = ms_context->ascend_soc_version();
-  if (!soc_ver.empty() && soc_ver != "ascend910b" && soc_ver != "ascend910_93") {
+  if (!soc_ver.empty() &&
+      !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureInferBoost910bFamilyFusionMatmulSigmoidCastAdd)) {
     return nullptr;
   }
 

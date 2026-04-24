@@ -32,6 +32,7 @@
 #include "primitive/math_ops.h"
 #include "primitive/nn_ops.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
 
@@ -196,9 +197,8 @@ const AnfNodePtr TransposeExtMatmulExtTranspose::Process(const FuncGraphPtr &fun
     return nullptr;
   }
   auto const &soc_version = ms_context->ascend_soc_version();
-  const std::vector<std::string> valid_soc_version{"ascend910b", "ascend910_93", "ascend310p"};
   if (!soc_version.empty() &&
-      (std::find(valid_soc_version.begin(), valid_soc_version.end(), soc_version) == valid_soc_version.end())) {
+      !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureFusionMatmulElemwiseTransposeExtPass)) {
     MS_LOG(INFO) << "TransposeExtMatmulExtTranspose failed because soc is not support: " << soc_version;
     return nullptr;
   }

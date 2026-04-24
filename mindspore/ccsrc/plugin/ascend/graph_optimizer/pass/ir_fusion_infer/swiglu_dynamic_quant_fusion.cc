@@ -22,6 +22,7 @@
 
 #include "backend/common/pass/common/gllo_utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/nn_ops.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/utils/anfalgo.h"
@@ -117,7 +118,8 @@ const AnfNodePtr SwiGLUDynamicQuantFusion::Process(const FuncGraphPtr &graph, co
   }
 
   auto soc = ms_context->ascend_soc_version();
-  if (!soc.empty() && soc.find("ascend910_93") == std::string::npos && soc.find("ascend910b") == std::string::npos) {
+  if (!soc.empty() &&
+      !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureInferBoost910bFamilyFusionSwigluDynamicQuant)) {
     MS_LOG(INFO) << "SwiGLUDynamicQuant does not support " << soc;
     return nullptr;
   }

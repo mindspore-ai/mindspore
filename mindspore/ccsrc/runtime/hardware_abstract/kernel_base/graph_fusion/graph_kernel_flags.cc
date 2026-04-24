@@ -24,6 +24,7 @@
 #include <utility>
 #include "nlohmann/json.hpp"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/ms_utils.h"
 #include "utils/file_utils.h"
 #include "ops_utils/op_constants.h"
@@ -280,7 +281,7 @@ void GraphKernelFlags::CheckSupport() const {
     if (is_ascend) {
       if (const_cast<GraphKernelFlags *>(this)->kernel_generator == "DVM") {
         auto const &soc_version = context->ascend_soc_version();
-        if (!soc_version.empty() && soc_version != "ascend910b" && soc_version != "ascend910_93") {
+        if (!soc_version.empty() && !context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureGraphKernelDvm)) {
           MS_LOG(WARNING) << "DVM does not support " << soc_version << ".";
           const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
           return;
@@ -321,8 +322,8 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   bool is_910a{true};
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr != nullptr) {
-    auto const &soc_version = context_ptr->ascend_soc_version();
-    is_910a = soc_version == "ascend910";
+    is_910a =
+      context_ptr->AscendSocSupportsFeature(ascend_soc::kAscendFeatureGraphKernelStitchFusionDefaultTrainClassic);
     is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   }
 

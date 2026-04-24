@@ -87,6 +87,7 @@ constexpr auto kAscendVersion910 = "ascend910";
 constexpr auto kAscendVersion910b = "ascend910b";
 constexpr auto kAscendVersion910_93 = "ascend910_93";
 constexpr auto kAscendVersion310p = "ascend310p";
+constexpr auto kAscendVersion310b = "ascend310b";
 constexpr auto kAscendVersion950 = "ascend950";
 
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
@@ -246,6 +247,7 @@ class MS_CORE_API MsContext {
   bool set_backend_policy(const std::string &policy);
   std::string ascend_soc_version() const;
   void set_ascend_soc_version(const std::string &soc_version);
+  bool AscendSocSupportsFeature(const std::string &feature_name) const;
   std::string ascend_soc_name() const;
   void set_ascend_soc_name(const std::string &soc_name);
   void set_ascend_soc_func(const std::function<void(MsContext *)> &ascend_soc_func);
@@ -323,6 +325,7 @@ class MS_CORE_API MsContext {
 
   void set_graph_pipeline_compiled(bool graph_pipeline_compiled) { graph_pipeline_compiled_ = graph_pipeline_compiled; }
   bool graph_pipeline_compiled() const { return graph_pipeline_compiled_; }
+  std::function<void(MsContext *)> ascend_soc_func() const { return ascend_soc_func_; }
 
  private:
   void RefreshExecutionMode();
@@ -336,8 +339,6 @@ class MS_CORE_API MsContext {
   void InitBoolTypeDefaultValue();
   void InitStringTypeDefaultValue();
   void InitDigitalTypeDefaultValue();
-
-  std::function<void(MsContext *)> ascend_soc_func() const { return ascend_soc_func_; }
 
   static DeviceSeter seter_;
   static std::shared_ptr<MsContext> inst_context_;

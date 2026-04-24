@@ -23,6 +23,7 @@
 #include "ops/ops_func_impl/simple_infer.h"
 #include "ops_utils/op_constants.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
@@ -128,7 +129,7 @@ BaseShapePtr RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &prim
                                                         const std::vector<AbstractBasePtr> &input_args) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->ascend_soc_version() == kAscendVersion910) {
+  if (ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureRepeatInterleaveOpTrainClassicConstraint)) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', Only support on Atlas A2 training series.";
   }
 
@@ -187,7 +188,7 @@ ShapeArray RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &primit
                                                       const ValuePtrList &input_values) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->ascend_soc_version() == kAscendVersion910) {
+  if (ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureRepeatInterleaveOpTrainClassicConstraint)) {
     MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', Only support on Atlas A2 training series.";
   }
 

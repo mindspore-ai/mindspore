@@ -22,6 +22,7 @@
 #include <nlohmann/json.hpp>
 #include "utils/phase.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/ms_utils.h"
 #include "backend/backend_manager/visible.h"
 
@@ -43,7 +44,7 @@ struct BackendJitConfig {
       if (jit_backend.empty()) {
         auto context = MsContext::GetInstance();
         if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
-            context->ascend_soc_version() == kAscendVersion910) {
+            context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureJitConfigBackendGeDefaultEmptyJit)) {
           backend_jit_config.backend = "GE";
         } else {
           backend_jit_config.backend = "ms_backend";

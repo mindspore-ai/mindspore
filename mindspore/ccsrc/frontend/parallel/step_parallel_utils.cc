@@ -57,6 +57,7 @@
 #include "frontend/parallel/parallel_node_check.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
@@ -3446,7 +3447,7 @@ size_t GetDeviceCapacity() {
   size_t size_from_context;
   auto max_device_memory = runtime::RuntimeConf::GetInstance()->mem_max_size();
   float total_device_memory = 32.0f;
-  if (context->ascend_soc_version() == kAscendVersion910b || context->ascend_soc_version() == kAscendVersion910_93) {
+  if (context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureDeviceCapacity64gLine)) {
     total_device_memory = 64.0f;
   }
   if (max_device_memory <= total_device_memory) {

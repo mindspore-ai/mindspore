@@ -17,6 +17,7 @@
 #include <pybind11/chrono.h>
 #include <memory>
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/log_adapter.h"
 #include "pybind_api/utils/utils_api.h"
 
@@ -80,6 +81,8 @@ void RegMsContextDefs(const py::module *m) {
     .def("get_backend_policy", &mindspore::MsContext::backend_policy, "Get backend policy.")
     .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.")
     .def("get_ascend_soc_version", &mindspore::MsContext::ascend_soc_version, "Get ascend soc version.")
+    .def("ascend_soc_supports_feature", &mindspore::MsContext::AscendSocSupportsFeature,
+         "Whether current normalized Ascend SOC supports a named feature (see ascend_soc_traits.h string constants).")
     .def("enable_dump_ir", &mindspore::MsContext::enable_dump_ir, "Get the ENABLE_DUMP_IR.")
     .def("is_ascend_plugin_loaded", &mindspore::MsContext::IsAscendPluginLoaded,
          "Get the status that has ascend plugin been loaded.")

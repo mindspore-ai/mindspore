@@ -23,6 +23,7 @@
 #include "include/utils/anfalgo.h"
 #include "include/utils/utils.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
 #include "primitive/auto_generate/gen_ops_primitive_f.h"
@@ -91,9 +92,8 @@ const AnfNodePtr MatmulElemFusion::Process(const FuncGraphPtr &func_graph, const
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto const &soc_version = ms_context->ascend_soc_version();
-  const std::vector<std::string> valid_soc_version{"ascend910b", "ascend910_93", "ascend310p"};
   if (!soc_version.empty() &&
-      (std::find(valid_soc_version.begin(), valid_soc_version.end(), soc_version) == valid_soc_version.end())) {
+      !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureFusionMatmulElemwiseMatmulElemwisePass)) {
     return nullptr;
   }
   auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
@@ -114,8 +114,8 @@ const AnfNodePtr MatmulElemFusion::Process(const FuncGraphPtr &func_graph, const
   MS_CHECK_TRUE_RET(matmul_cnode->func_graph() == elemwise_node->func_graph(), {});
   std::string elemwise_type = GetElemwiseType(elemwise_node);
   const std::string fastgelu_str = "fastgelu";
-  if (elemwise_type != fastgelu_str && !soc_version.empty() && soc_version != "ascend910b" &&
-      soc_version != "ascend910_93") {
+  if (elemwise_type != fastgelu_str && !soc_version.empty() &&
+      !ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureFusionMatmulElemwiseNonFastgeluSuccessor)) {
     return nullptr;
   }
   const std::string bias_add_str = "bias_add";

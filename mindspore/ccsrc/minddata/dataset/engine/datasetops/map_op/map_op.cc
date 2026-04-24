@@ -41,6 +41,7 @@
 #if defined(ENABLE_D)
 #include "minddata/dataset/vision/kernels/dvpp/acl_adapter.h"
 #include "minddata/dataset/vision/kernels/dvpp/utils/ErrorCode.h"
+#include "utils/ascend_soc_traits.h"
 #endif
 #include "minddata/dataset/util/thread_bind_core_utils.h"
 
@@ -269,8 +270,7 @@ Status MapOp::InitResource(const std::vector<std::vector<std::shared_ptr<TensorO
       if (ret != APP_ERR_OK) {
         RETURN_STATUS_UNEXPECTED("Get Soc Version failed.");
       }
-      if (soc_version.find("Ascend910B") == std::string::npos &&
-          soc_version.find("Ascend910_93") == std::string::npos && soc_version.find("Ascend950") == std::string::npos) {
+      if (!ms_context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMindDataDvppSupportedSocLine)) {
         std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B / Ascend910_93 / Ascend950";
         RETURN_STATUS_UNEXPECTED(err_msg);
       }

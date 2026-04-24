@@ -26,6 +26,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/temp_file_manager.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_debug_conf.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_symbol.h"
@@ -210,8 +211,7 @@ void AscendHalManager::InitializeAcl() {
 }
 
 bool AscendHalManager::EnableLccl() {
-  auto ascend_soc_version = MsContext::GetInstance()->ascend_soc_version();
-  if (ascend_soc_version != "ascend910b" && ascend_soc_version != "ascend910_93") {
+  if (!MsContext::GetInstance()->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMc2Lccl)) {
     return false;
   }
   auto enable_infer_boost = MsContext::GetInstance()->IsEnableInferBoost();

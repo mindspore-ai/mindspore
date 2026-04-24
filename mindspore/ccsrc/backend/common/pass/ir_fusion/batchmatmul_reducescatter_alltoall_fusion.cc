@@ -24,6 +24,7 @@
 #include "backend/common/pass/ir_fusion/mc2_fusion.h"
 #include "include/utils/anfalgo.h"
 #include "utils/log_adapter.h"
+#include "utils/ascend_soc_traits.h"
 #include "utils/ms_context.h"
 #include "primitive/math_ops.h"
 #include "primitive/other_ops.h"
@@ -75,8 +76,7 @@ bool IsBpropNode(const AnfNodePtr &node) {
 
 namespace {
 bool EnableLccl() {
-  auto ascend_soc_version = MsContext::GetInstance()->ascend_soc_version();
-  if (ascend_soc_version != "ascend910b" && ascend_soc_version != "ascend910_93") {
+  if (!MsContext::GetInstance()->AscendSocSupportsFeature(ascend_soc::kAscendFeatureMc2Lccl)) {
     return false;
   }
   auto enable_infer_boost = MsContext::GetInstance()->IsEnableInferBoost();
@@ -111,8 +111,7 @@ bool IsKbkAclnnMode() {
 bool IsAscendVerison93() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &soc_version = ms_context->ascend_soc_version();
-  return soc_version == "ascend910_93";
+  return ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureMc2Lccl91093Variant);
 }
 
 bool GetExpectedInput(const AnfNodePtr &node, const PrimitivePtr expect_prim,

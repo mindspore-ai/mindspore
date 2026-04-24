@@ -28,6 +28,7 @@
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/pass_manager/helper.h"
 #include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
@@ -72,9 +73,10 @@ bool MatMulAllReduceAddRmsNormFusion::IsSupport(const AnfNodePtr &node, const Fu
     return false;
   }
 
-  // only support ascend910b
+  // only support normalized ascend910b line (see ascend_soc_traits for classification)
   auto soc_version = ms_context->ascend_soc_version();
-  if (soc_version != kAscendVersion910b) {
+  if (!ms_context->AscendSocSupportsFeature(
+        ascend_soc::kAscendFeatureMatmulAllreduceAddRmsnormFusion910bNormalizedLine)) {
     MS_LOG(INFO) << "MatMulAllReduceAddRmsNorm does not support soc version " << soc_version;
     return false;
   }

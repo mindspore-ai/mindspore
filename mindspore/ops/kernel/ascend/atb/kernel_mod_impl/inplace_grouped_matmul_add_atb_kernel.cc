@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "mindspore/ops/ops_utils/op_constants.h"
-#include "utils/ms_context.h"
+#include "utils/ascend_soc_traits.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,8 +46,7 @@ void InplaceGroupedMatmulAddATBKernelMod::SetTensorStorageInfo(const KernelTenso
 
 void InplaceGroupedMatmulAddATBKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                            const std::vector<KernelTensor *> &outputs) {
-  auto ascend_soc_version = MsContext::GetInstance()->ascend_soc_version();
-  if (ascend_soc_version == "ascend950") {
+  if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureAtbInplaceGroupedMatmulSkipWorkspaceInit)) {
     return;
   }
   atb::infer::GroupedMatmulInplaceAddParam param;
@@ -75,8 +74,7 @@ void InplaceGroupedMatmulAddATBKernelMod::GetWorkSpaceInfo(const std::vector<Ker
 bool InplaceGroupedMatmulAddATBKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &workspace,
                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-  auto ascend_soc_version = MsContext::GetInstance()->ascend_soc_version();
-  if (ascend_soc_version != "ascend950") {
+  if (ascend_soc::SocSupportsAscendFeature(ascend_soc::kAscendFeatureAtbInplaceGroupedMatmulRunOperatorLaunch)) {
     out_tensor_->set_device_ptr(inputs[kIndex3]->device_ptr());
     const auto &out_tensor = out_tensor_.get();
 
