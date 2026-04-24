@@ -1160,7 +1160,7 @@ size_t AbstractDynamicMemPool::MaxMemReservedStatistics() const { return mem_sta
 
 size_t AbstractDynamicMemPool::ActualPeakStatistics() const {
   if (IsEnableVmm()) {
-    return GetVmmUsedMemSize() + mem_stat_ptr_->custom_alloc_size_;
+    return MaxMemReservedStatistics();
   }
 
   size_t peak_size = 0;
