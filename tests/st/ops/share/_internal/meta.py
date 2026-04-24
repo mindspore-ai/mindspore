@@ -24,7 +24,6 @@ This module provides:
 """
 # pylint: disable=R1705
 import warnings
-import pytest
 import torch
 import numpy as np
 import mindspore as ms
@@ -1231,24 +1230,42 @@ class OpsFactory():
                   f"skip test_other_op_error.")
             return
 
-        try:
-            print(f"\nop_name: {self.op_name}, mode:{self._context_mode}, test_other_op_error...")
-            for error_input in self.op_error_inputs_func(self.op_info, device=self._device):
-                _sample_input = error_input.op_sample_input
-                _error_type = error_input.op_error_type
+        _error_type = None
+        _sample_input = None
+        error_input = None
+        print(f"\nop_name: {self.op_name}, mode:{self._context_mode}, test_other_op_error...")
+        for error_input in self.op_error_inputs_func(self.op_info, device=self._device):
+            _sample_input = error_input.op_sample_input
+            _error_type = error_input.op_error_type
+            expected_types = tuple(_error_type) if isinstance(_error_type, (list, tuple)) else (_error_type,)
 
-                with pytest.raises(_error_type):
-                    self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
-                    _pynative_executor.sync()
-        except Exception as e:
-            e_type = list(map(lambda x: x.__name__, _error_type if isinstance(_error_type,
-                                                                         (list, tuple)) else [_error_type]))
-            print(f"\ntest_other_op_error catch expect {e_type} failed, but got {type(e).__name__}:"
-                  f"\nop_name: {self.op_name}"
-                  f"\nmode: {self._context_mode}"
-                  f"\nsample_input: {_sample_input.summary()}"
-                  f"\nerror_info: {error_input.op_error_info}")
-            raise e
+            got_expected = False
+            try:
+                self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
+                _pynative_executor.sync()
+            except expected_types:
+                got_expected = True
+            except Exception as e:
+                e_type = [t.__name__ for t in expected_types]
+                raise AssertionError(
+                    f"\ntest_other_op_error failed for case: {error_input.op_error_info}"
+                    f"\n  expected: {e_type}"
+                    f"\n  got unexpected: {type(e).__name__}: {e}"
+                    f"\n  op_name: {self.op_name}"
+                    f"\n  mode: {self._context_mode}"
+                    f"\n  sample_input: {_sample_input.summary()}"
+                ) from e
+
+            if not got_expected:
+                e_type = [t.__name__ for t in expected_types]
+                raise AssertionError(
+                    f"\ntest_other_op_error failed for case: {error_input.op_error_info}"
+                    f"\n  expected: {e_type}"
+                    f"\n  got: no exception raised"
+                    f"\n  op_name: {self.op_name}"
+                    f"\n  mode: {self._context_mode}"
+                    f"\n  sample_input: {_sample_input.summary()}"
+                )
 
     def forward_cmp(
             self,

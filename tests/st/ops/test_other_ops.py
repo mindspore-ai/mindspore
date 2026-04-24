@@ -19,7 +19,8 @@ Tests for other operations (non-unary/binary), e.g., chunk/gather.
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.ops.share._internal.meta import OpsFactory
-from tests.st.ops.share._op_info.op_database import get_op_info, other_op_db, other_op_kbk_db
+from tests.st.ops.share._op_info.op_database import get_op_info, other_op_db, other_op_kbk_db,\
+                                                    other_op_error_db, other_op_error_kbk_db
 
 ops_params_dict = {
     'test_other_op_reference_forward' : (['pynative'], other_op_db),
@@ -28,8 +29,8 @@ ops_params_dict = {
     'test_other_op_reference_backward_kbk' : (['kbk'], other_op_kbk_db),
     'test_other_op_dynamic_forward': (['kbk'], other_op_kbk_db),
     'test_other_op_dynamic_backward': (['kbk'], other_op_kbk_db),
-    'test_other_op_error': (['pynative'], other_op_db),
-    'test_other_op_error_kbk': (['kbk'], other_op_kbk_db),
+    'test_other_op_error': (['pynative'], other_op_error_db),
+    'test_other_op_error_kbk': (['kbk'], other_op_error_kbk_db),
 }
 
 @arg_mark(plat_marks=['platform_ascend'],
