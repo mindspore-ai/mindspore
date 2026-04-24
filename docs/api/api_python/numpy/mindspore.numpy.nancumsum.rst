@@ -14,7 +14,7 @@ mindspore.numpy.nancumsum
     参数：
         - **a** (Tensor) - 输入Tensor。
         - **axis** (int, 可选) - 计算累积和所沿轴。若取默认值(None)，将在展平的数组上计算累积和。
-        - **dtype** (mindspore.dtype, 可选) - 如果未指定，则与 `a` 相同，除非 `a` 具有精度低于默认平台整数的整数 `dtype` 。 在这种情况下，使用默认平台整数。默认值: `None` 。
+        - **dtype** (mindspore.dtype, 可选) - 如果未指定，则与 `a` 相同，除非 `a` 具有精度低于默认平台整数的整数 `dtype` 。在这种情况下，使用默认平台整数。默认值: ``None`` 。
 
     返回：
         Tensor。

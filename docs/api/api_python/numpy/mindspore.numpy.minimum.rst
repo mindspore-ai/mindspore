@@ -13,7 +13,7 @@ mindspore.numpy.minimum
     参数：
         - **x1** (Tensor) - 第一个需比较的输入数组。
         - **x2** (Tensor) - 第二个需比较的输入数组。
-        - **dtype** (mindspore.dtype, 可选) - 默认值: `None` 。 覆盖输出Tensor的dtype。
+        - **dtype** (mindspore.dtype, 可选) - 默认值: ``None`` 。覆盖输出Tensor的dtype。
 
     返回：
         Tensor或标量，逐元素返回 `x1` 和 `x2` 中的最小值。

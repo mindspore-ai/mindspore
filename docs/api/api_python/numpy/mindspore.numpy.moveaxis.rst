@@ -7,7 +7,7 @@ mindspore.numpy.moveaxis
     其他轴保持原始顺序不变。
 
     参数：
-        - **a** (Tensor) - 原数组，返回数组的shape和数据类型与 ``a`` 相同。待修改
+        - **a** (Tensor) - 原数组，返回数组的shape和数据类型与 `a` 相同。
         - **source** (int, ints的序列) - 要移动的轴的原始位置。这些位置必须唯一。
         - **destination** (int, ints的序列) - 每个原始轴的新位置。这些位置也必须唯一。
 
