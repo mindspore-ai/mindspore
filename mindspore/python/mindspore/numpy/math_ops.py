@@ -595,7 +595,7 @@ def mean(a, axis=None, keepdims=False, dtype=None):
     axis.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
@@ -616,8 +616,8 @@ def mean(a, axis=None, keepdims=False, dtype=None):
         Tensor or scalar, an array containing the mean values.
 
     Raises:
-        ValueError: If axes are out of the range of ``[-a.ndim, a.ndim)``, or
-            if the axes contain duplicates.
+        ValueError: If `axis` is out of the range of ``[-a.ndim, a.ndim)``, or
+            if `axis` contains duplicates.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -775,10 +775,10 @@ def outer(a, b):
     ``[aM*b0            aM*bN ]]``
 
     Note:
-        Numpy argument ``out`` is not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, and
-        np.float64.
+        - Numpy argument ``out`` is not supported.
+        - On GPU, the supported dtypes are np.float16, and np.float32.
+        - On CPU, the supported dtypes are np.float16, np.float32, and
+          np.float64.
 
     Args:
         a (Tensor): first input vector. Input is flattened if not
@@ -2491,7 +2491,7 @@ def nanmax(a, axis=None, dtype=None, keepdims=False):
     Return the maximum of an array or maximum along an axis, ignoring any NaNs.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
         For all NaN slices, a very small negative number is returned instead of NaN.
 
     Args:
@@ -2539,7 +2539,7 @@ def nanmin(a, axis=None, dtype=None, keepdims=False):
     Returns the minimum of array elements over a given axis, ignoring any NaNs.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
         For all-NaN slices, a very large number is returned instead of NaN.
         On Ascend, since checking for NaN is currently not supported, it is not recommended to
         use np.nanmin. If the array does not contain NaN, np.min should be used instead.
@@ -2654,7 +2654,7 @@ def nanmean(a, axis=None, dtype=None, keepdims=False):
     return values are used for integer inputs.
 
     Note:
-        Numpy arguments `out` is not supported.
+        Numpy argument `out` is not supported.
 
     Args:
         a (Union[int, float, list, tuple, Tensor]): Array containing numbers
@@ -3165,7 +3165,7 @@ def nancumsum(a, axis=None, dtype=None):
     Args:
         a (Tensor): Input tensor.
         axis (int, optional): Axis along which the cumulative sum is computed. The
-            default (None) is to compute the cumsum over the flattened array.
+            default ( ``None`` ) is to compute the cumsum over the flattened array.
         dtype (:class:`mindspore.dtype`, optional): If not specified, stay the same as `a`,
             unless `a` has an integer dtype with a precision less than that of the
             default platform integer. In that case, the default platform integer
@@ -4157,7 +4157,7 @@ def multi_dot(arrays):
         Tensor, the dot product of the supplied arrays.
 
     Raises:
-        ValueError: arrays are not 2-D.
+        ValueError: If arrays are not 2-D.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4954,7 +4954,7 @@ def matrix_power(a, n):
 
     For positive integers `n`, the power is computed by repeated matrix squarings and
     matrix multiplications.
-    If :math:`n == 0`, the identity matrix of the same shape as `M` is returned.
+    If :math:`n == 0`, the identity matrix of the same shape as `a` is returned.
 
     Note:
         Stacks of object matrices are not currently supported and
