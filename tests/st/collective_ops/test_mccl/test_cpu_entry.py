@@ -26,14 +26,39 @@ from tests.mark_utils import arg_mark
 def test_hccl_mint_cpu_ops():
     """
     Feature: mpi run 8P case
-    Description: mpi run 8P case
-    Expectation: success
+    Description: mpi run 8P case without async mccl init
+    Expectation: success and worker log contains sync start log
     """
+    log_dir = "test_cpu_sync_mccl_init"
     return_code = os.system(
-        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10666 --join=True "\
-        "pytest -s test_comm_cpu.py"
+        "export GLOG_v=2; msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10666 "
+        f"--join=True --log_dir={log_dir} pytest -s test_comm_cpu.py"
     )
     assert return_code == 0
+    result = subprocess.getoutput(
+        f"grep -rn 'The worker node start sync start' ./{log_dir}/worker_0.log"
+    )
+    assert result.find("The worker node start sync start") != -1
+
+
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
+def test_hccl_mint_cpu_ops_async():
+    """
+    Feature: mpi run 8P case with async mccl init
+    Description: test async mccl initialization by setting MS_DEV_RUNTIME_CONF
+    Expectation: success and worker log contains async start log
+    """
+    log_dir = "test_cpu_async_mccl_init"
+    return_code = os.system(
+        "export GLOG_v=2; export MS_DEV_RUNTIME_CONF=async_mccl_init_comm:true; "
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10666 "
+        f"--join=True --log_dir={log_dir} pytest -s test_comm_cpu.py"
+    )
+    assert return_code == 0
+    result = subprocess.getoutput(
+        f"grep -rn 'The worker node start async start' ./{log_dir}/worker_0.log"
+    )
+    assert result.find("The worker node start async start") != -1
 
 
 def _create_worker_process(worker_id, cmd_list, log_dir, base_env, env):

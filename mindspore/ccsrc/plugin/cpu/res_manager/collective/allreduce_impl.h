@@ -36,6 +36,7 @@ class AllReduceLauncher {
   bool Finalize();
 
   const std::shared_ptr<ps::core::CollectiveNode> &collective_node() const;
+  std::unique_ptr<std::thread> run_thread_{nullptr};
 
  private:
   size_t rank_id_{0};

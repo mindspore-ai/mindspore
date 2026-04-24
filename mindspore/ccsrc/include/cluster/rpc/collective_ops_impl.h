@@ -100,6 +100,8 @@ class CLUSTER_EXPORT CollectiveOpsImpl {
   bool Broadcast(const void *sendbuff, void *recvbuff, size_t count, uint32_t root,
                  const ps::core::AbstractNodePtr &node, const CommunicationGroupInfo &group_info);
 
+  size_t GetCommOpTimeout() const { return comm_op_timeout_; }
+
  private:
   CollectiveOpsImpl()
       : rank_id_(0), server_num_(0), node_(nullptr), node_role_(ps::core::NodeRole::WORKER), rank_size_(0) {

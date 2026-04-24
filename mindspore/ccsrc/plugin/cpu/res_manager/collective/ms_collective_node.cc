@@ -97,6 +97,7 @@ bool CollectiveNode::Start(const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(client_node_);
   node_info_.rank_id_ = client_node_->rank_id();
   MS_LOG(INFO) << "The cpu collective rank " << node_info_.rank_id_ << " has been started successfully.";
+  is_initialized_.store(true);
   return true;
 }
 
@@ -112,6 +113,7 @@ bool CollectiveNode::InitClientToScheduler() {
 
 bool CollectiveNode::Finish(const uint32_t &timeout) {
   MS_LOG(INFO) << "Begin to finish the cpu collective node.";
+  is_initialized_.store(false);
   is_already_finished_ = true;
   if (is_already_stopped_) {
     return true;
