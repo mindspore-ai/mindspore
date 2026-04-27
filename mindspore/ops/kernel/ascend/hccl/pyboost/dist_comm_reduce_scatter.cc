@@ -162,8 +162,7 @@ void DistCommReduceScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, c
       comm_handle->UpdateMemoryStreamId(input_tensor, op->output(0), scatter_tensors);
     };
 
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, /*rank=*/-1,
-                         /*avg_div_tensor=*/is_avg ? other_tensor : nullptr);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, -1, is_avg ? other_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }

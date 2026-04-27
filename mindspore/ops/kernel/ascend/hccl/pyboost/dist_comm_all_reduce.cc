@@ -58,8 +58,7 @@ void DistCommAllReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, const
       auto comm_handle = op->comm_handle();
       comm_handle->UpdateMemoryStreamId(input_tensor);
     };
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, /*rank=*/-1,
-                         /*avg_div_tensor=*/is_avg ? input_tensor : nullptr);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, -1, is_avg ? input_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }

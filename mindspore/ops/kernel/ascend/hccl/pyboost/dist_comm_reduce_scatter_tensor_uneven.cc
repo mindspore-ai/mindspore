@@ -115,8 +115,7 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
       }
     };
 
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, /*rank=*/-1,
-                         /*avg_div_tensor=*/is_avg ? other_tensor : nullptr);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, -1, is_avg ? other_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }
