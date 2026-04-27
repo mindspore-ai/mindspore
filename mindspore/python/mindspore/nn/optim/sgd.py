@@ -167,7 +167,7 @@ class SGD(Optimizer):
     def __init__(self, params, learning_rate=0.1, momentum=0.0, dampening=0.0, weight_decay=0.0, nesterov=False,
                  loss_scale=1.0):
 
-        super(SGD, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
 
         if isinstance(momentum, int):
             momentum = float(momentum)

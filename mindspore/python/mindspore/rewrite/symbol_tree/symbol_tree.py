@@ -95,12 +95,12 @@ class FieldFinder(AstFinder):
         """Visit a node of type ast.Attribute."""
         value = node.value
         if not isinstance(value, ast.Name):
-            return super(FieldFinder, self).generic_visit(node)
+            return super().generic_visit(node)
         if value.id != "self":
-            return super(FieldFinder, self).generic_visit(node)
+            return super().generic_visit(node)
         if node.attr == self._field_name:
             self._result = True
-        return super(FieldFinder, self).generic_visit(node)
+        return super().generic_visit(node)
 
     def check(self, field) -> bool:
         """
@@ -337,7 +337,7 @@ class SymbolTree(Observer, Observable, NodeManager):
                 return import_module
             # test import ast failed, try upper level
             level_count += 1
-            logger.info(f"Try upper level.")
+            logger.info("Try upper level.")
         # try codes with all level failed
         logger.info(f"Test import code: {astunparse.unparse(import_node).strip()} failed, ignore this import code.")
         return None
@@ -346,7 +346,7 @@ class SymbolTree(Observer, Observable, NodeManager):
     def insert_to_ast_while_insert_input(new_node: Node, node_manager: NodeManager):
         """update ast when inserting NodeType.Input node"""
         if not isinstance(node_manager, (SymbolTree, CallFunction)):
-            raise ValueError(f"Only support insert Input node into a SymbolTree or a node with type of "
+            raise ValueError("Only support insert Input node into a SymbolTree or a node with type of "
                              f"CallFunction, but get {type(node_manager)}")
         # insert a new input
         node_manager.get_input_nodes().append(new_node)
@@ -437,7 +437,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         """ insert_to_ast_while_insert_node. """
         stree = new_node.get_belong_symbol_tree()
         if not stree:
-            raise ValueError(f"When inserting node to ast, the belonging symbol tree of new_node is None.")
+            raise ValueError("When inserting node to ast, the belonging symbol tree of new_node is None.")
         node_manager = new_node.get_node_manager()
         if not isinstance(node_manager, (SymbolTree, CallFunction, ControlFlow)):
             raise ValueError(f"When inserting node to ast, the node_manager of new_node {new_node.get_name()} can "
@@ -451,7 +451,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             SymbolTree.insert_to_ast_while_insert_function(new_node, base_node, before_node, node_manager, stree)
         else:
             raise ValueError(f"When insert node '{new_node.get_name()}' into ast, the type of node can only be "
-                             f"one of [Input, CallCell, CallPrimitive, CallFunction, Tree], but got "
+                             "one of [Input, CallCell, CallPrimitive, CallFunction, Tree], but got "
                              f"{new_node.get_node_type()}.")
 
     @staticmethod
@@ -1492,7 +1492,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             for n in upper_node_manager.nodes():
                 if has_return:
                     logger.warning(f"Node {n.get_name()} which is behind the flatten return node is "
-                                   f"automatically erased.")
+                                   "automatically erased.")
                     self.erase_node(n)
                 elif n.get_node_type() == NodeType.Output:
                     has_return = True

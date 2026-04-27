@@ -320,7 +320,7 @@ class SummaryLandscape:
                 summary_record.close()
                 raise FileNotFoundError(f'For "{self.__class__.__name__}", '
                                         f'train_metadata.json file path of {json_path} not exists.')
-            with open(json_path, 'r') as file:
+            with open(json_path, 'r', encoding='utf-8') as file:
                 data = json.load(file)
             for key, value in collect_landscape.items():
                 if key in data.keys():
@@ -329,7 +329,7 @@ class SummaryLandscape:
             if "intervals" in collect_landscape.keys():
                 self._create_epoch_group(collect_landscape.get("intervals"))
                 data["epoch_group"] = self._epoch_group
-            with open(json_path, 'w') as file:
+            with open(json_path, 'w', encoding='utf-8') as file:
                 json.dump(data, file)
             os.chmod(json_path, stat.S_IRUSR)
 
@@ -347,13 +347,16 @@ class SummaryLandscape:
             raise FileNotFoundError(f'For "{self.__class__.__name__}", train_metadata.json file does not exist '
                                     f'under the path, please use summary_collector to collect information to '
                                     f'create the json file')
-        with open(os.path.join(self._ckpt_dir, 'train_metadata.json'), 'r') as file:
+        with open(os.path.join(self._ckpt_dir, 'train_metadata.json'), 'r', encoding='utf-8') as file:
             data = json.load(file)
         self._check_json_file_data(data)
 
         self._epoch_group = data['epoch_group']
         self._model_params_file_map = data['model_params_file_map']
-        kwargs = dict(proz=0.2, landscape_size=data['landscape_size'], device_ids=device_ids, callback_fn=callback_fn)
+        kwargs = {"proz": 0.2,
+                "landscape_size": data['landscape_size'],
+                "device_ids": device_ids,
+                "callback_fn": callback_fn}
 
         start = time.time()
         kwargs['executor'] = executor
@@ -455,7 +458,7 @@ class SummaryLandscape:
                              max(coefs_y[0]) + proz * (max(coefs_y[0]) - min(coefs_y[0])), landscape_size)
         x_points, y_points = np.meshgrid(x_axis, y_axis)
 
-        test_final_params = dict()
+        test_final_params = {}
         for param in final_params:
             test_final_params[param.name] = param.data.asnumpy()
 
@@ -507,7 +510,7 @@ class SummaryLandscape:
                            v_ndarray, w_ndarray, x_points, y_points, coefs=None):
         """Compute loss wrapper."""
         model, network, valid_dataset, metrics = callback_fn()
-        with open(os.path.join(self._ckpt_dir, 'train_metadata.json'), 'r') as file:
+        with open(os.path.join(self._ckpt_dir, 'train_metadata.json'), 'r', encoding='utf-8') as file:
             data = json.load(file)
         self._check_json_file_data(data)
         num_samples = data['num_samples']
@@ -527,13 +530,13 @@ class SummaryLandscape:
                 print("Drawing landscape path total progress is %s/%s, landscape path loss is %s."
                       % (i+1, len(coefs), loss_data[0]))
         # Start to calc loss landscape
-        z_points = list()
+        z_points = []
 
         # Compute loss landscape
-        for i, _ in enumerate(y_points):
+        for i, y_point in enumerate(y_points):
             print("Drawing landscape total progress: %s/%s." % (i+1, len(y_points)))
             vals = self._cont_loss(valid_dataset, network, model, metrics, final_params,
-                                   final_params_numpy, x_points[i], y_points[i][0],
+                                   final_params_numpy, x_points[i], y_point[0],
                                    v_ndarray, w_ndarray)
             z_points.append(vals)
 
@@ -558,7 +561,7 @@ class SummaryLandscape:
         x_axis = np.linspace(-proz * boundaries_x, proz * boundaries_x, landscape_size)
         y_axis = np.linspace(-proz * boundaries_y, proz * boundaries_y, landscape_size)
         x_points, y_points = np.meshgrid(x_axis, y_axis)
-        test_final_params = dict()
+        test_final_params = {}
         for param in final_params:
             test_final_params[param.name] = param.data.asnumpy()
         if executor is not None:
@@ -607,7 +610,7 @@ class SummaryLandscape:
     @staticmethod
     def _reshape_vector(vector, parameters):
         """Reshape vector into model shape."""
-        ndarray = list()
+        ndarray = []
         index = 0
         for param in parameters:
             data = param.data.asnumpy()
@@ -623,7 +626,7 @@ class SummaryLandscape:
     @staticmethod
     def _reshape_random_vector(vector, params_numpy):
         """Reshape random vector into model shape."""
-        ndarray = list()
+        ndarray = []
         index = 0
         for param in params_numpy:
             len_p = np.size(param)
@@ -669,9 +672,9 @@ class SummaryLandscape:
         matris = matris.T
 
         pas = self._flat_ndarray(final_param_ndarray)
-        coefs = list()
+        coefs = []
         for parameters in parameter_group:
-            testi = list()
+            testi = []
             for param in parameters:
                 # Here as MindSpore ckpt has hyperparameters,
                 # we should skip them to make sure PCA calculation is correct
@@ -693,13 +696,13 @@ class SummaryLandscape:
         Changes the internal state of model. Executes model.
         """
         logger.info("start to cont loss")
-        vals = list()
+        vals = []
 
         al_item = 0
         for i, _ in enumerate(alph):
             # calculate new parameters for model
 
-            parameters_dict = dict()
+            parameters_dict = {}
             for j, param in enumerate(parameters):
                 parameters_dict[param.name] = self._change_parameter(j, param, final_params_numpy,
                                                                      alph[al_item], beta,
@@ -761,7 +764,7 @@ class SummaryLandscape:
 
     def _get_metrics(self):
         """Get metrics local values."""
-        metrics = dict()
+        metrics = {}
         for key, value in self._metric_fns.items():
             metrics[key] = value.eval()
         return metrics

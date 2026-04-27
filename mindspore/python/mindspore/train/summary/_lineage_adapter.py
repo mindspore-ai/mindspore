@@ -38,4 +38,4 @@ def _get_lineage_content(name, event):
         return event.train_lineage
     if name == 'custom_lineage_data':
         return event.user_defined_info
-    raise KeyError(f'No such field in LineageEvent')
+    raise KeyError('No such field in LineageEvent')

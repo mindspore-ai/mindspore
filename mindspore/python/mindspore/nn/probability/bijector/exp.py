@@ -54,7 +54,7 @@ class Exp(PowerTransform):
 
     def __init__(self,
                  name='Exp'):
-        super(Exp, self).__init__(name=name)
+        super().__init__(name=name)
 
     def extend_repr(self):
         """Display instance object as string."""

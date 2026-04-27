@@ -55,7 +55,7 @@ class History(Callback):
         {'net_output': [1.607877, 1.6033841]}
     """
     def __init__(self):
-        super(History, self).__init__()
+        super().__init__()
         self.history = {}
         self.epoch = None
 

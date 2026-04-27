@@ -80,7 +80,7 @@ class GumbelCDF(Bijector):
         """
         param = dict(locals())
         param['param_dict'] = {'loc': loc, 'scale': scale}
-        super(GumbelCDF, self).__init__(name=name, param=param)
+        super().__init__(name=name, param=param)
 
         self._loc = self._add_parameter(loc, 'loc')
         self._scale = self._add_parameter(scale, 'scale')

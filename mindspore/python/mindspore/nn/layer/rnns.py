@@ -661,7 +661,7 @@ class RNN(_RNNBase):
         else:
             mode = 'RNN_TANH'
 
-        super(RNN, self).__init__(mode, *args, **kwargs)
+        super().__init__(mode, *args, **kwargs)
 
 
 class GRU(_RNNBase):
@@ -754,7 +754,7 @@ class GRU(_RNNBase):
 
     def __init__(self, *args, **kwargs):
         mode = 'GRU'
-        super(GRU, self).__init__(mode, *args, **kwargs)
+        super().__init__(mode, *args, **kwargs)
 
 
 class LSTM(_RNNBase):
@@ -859,4 +859,4 @@ class LSTM(_RNNBase):
 
     def __init__(self, *args, **kwargs):
         mode = 'LSTM'
-        super(LSTM, self).__init__(mode, *args, **kwargs)
+        super().__init__(mode, *args, **kwargs)

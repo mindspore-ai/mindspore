@@ -76,7 +76,7 @@ class ScalarAffine(Bijector):
         """
         param = dict(locals())
         param['param_dict'] = {'scale': scale, 'shift': shift}
-        super(ScalarAffine, self).__init__(
+        super().__init__(
             is_constant_jacobian=True,
             is_injective=True,
             name=name,

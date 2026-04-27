@@ -53,7 +53,7 @@ class Fbeta(Metric):
         [0.66666667 0.66666667]
     """
     def __init__(self, beta):
-        super(Fbeta, self).__init__()
+        super().__init__()
         self.eps = sys.float_info.min
         if not beta > 0:
             raise ValueError("For 'Fbeta', the argument 'beta' must be greater than 0, but got {}.".format(beta))
@@ -164,4 +164,4 @@ class F1(Fbeta):
         [0.66666667 0.66666667]
     """
     def __init__(self):
-        super(F1, self).__init__(1.0)
+        super().__init__(1.0)

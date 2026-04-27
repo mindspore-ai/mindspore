@@ -79,7 +79,7 @@ class ProfilerContext:
         if self._on_trace_ready_output_path:
             final_path = self._on_trace_ready_output_path
             if "output_path" in kwargs:
-                logger.warning(f"Both on_trace_ready path and output_path are provided. "
+                logger.warning("Both on_trace_ready path and output_path are provided. "
                                f"The on_trace_ready path takes effect. Final path is {final_path}")
             kwargs["output_path"] = final_path
         if kwargs.get("experimental_config"):
@@ -331,7 +331,7 @@ class ProfilerContext:
     def data_simplification(self, value: bool) -> None:
         """Set data simplification value."""
         if not isinstance(value, bool):
-            logger.warning(f"For profiler, the type of data_simplification should be bool, "
+            logger.warning("For profiler, the type of data_simplification should be bool, "
                            f"but got {type(value)}, reset to True.")
             value = True
         self._profiler_params_mgr.data_simplification = value
@@ -390,17 +390,17 @@ class ProfilerContext:
     def step_list(self, value: Optional[List[int]]) -> None:
         """Set step list for profiling."""
         if value is not None and not isinstance(value, list):
-            logger.error(f"For profiler, the parameter step_list must be a list, "
+            logger.error("For profiler, the parameter step_list must be a list, "
                          f"but got type {type(value)}, step_list reset to None.")
             return
         if value:
             if not all(isinstance(step_id, int) for step_id in value):
-                logger.error(f"For profiler, the elements of the parameter step_list "
+                logger.error("For profiler, the elements of the parameter step_list "
                              "must be integers, step_list reset to None.")
                 return
             value.sort()
             if value[-1] - value[0] != len(value) - 1:
-                logger.error(f"For profiler, the elements of the parameter step_list "
+                logger.error("For profiler, the elements of the parameter step_list "
                              "must be continuous integers, step_list reset to None.")
                 return
         self._step_list = value
@@ -413,7 +413,7 @@ class ProfilerContext:
     def pretty(self, value: bool) -> None:
         """Set pretty print value."""
         if not isinstance(value, bool):
-            logger.warning(f"For profiler, the parameter pretty must be bool, "
+            logger.warning("For profiler, the parameter pretty must be bool, "
                            f"but got {type(value)}, reset to False.")
             value = False
         self._pretty = value
@@ -427,7 +427,7 @@ class ProfilerContext:
     def mode(self, mode: str) -> None:
         """Set analysis mode value."""
         if not isinstance(mode, str):
-            logger.warning(f"For Profiler.analyse(), the parameter mode must be str, "
+            logger.warning("For Profiler.analyse(), the parameter mode must be str, "
                            f"but got {type(mode)}, reset to {AnalysisMode.SYNC_MODE.value}.")
             self._mode = AnalysisMode.SYNC_MODE.value
             return
@@ -464,7 +464,7 @@ class ProfilerContext:
     def jit_level(self, value: str) -> None:
         """Set jit level value."""
         if not isinstance(value, str):
-            logger.warning(f"For profiler, the parameter jit_level must be str, "
+            logger.warning("For profiler, the parameter jit_level must be str, "
                            f"but got {type(value)}, reset to ''.")
             value = ""
         self._jit_level = value

@@ -47,13 +47,7 @@ class StructType(Enum):
     @classmethod
     def sizeof(cls, cpp_type):
         """Given a Cpp type list or dict or a StructType value, and return a python struct format size."""
-        size_map = dict(
-            CHAR=1,
-            UINT8=1,
-            UINT16=2,
-            UINT32=4,
-            UINT64=8
-        )
+        size_map = {"CHAR": 1, "UINT8": 1, "UINT16": 2, "UINT32": 4, "UINT64": 8}
         if isinstance(cpp_type, dict):
             cpp_type = cpp_type.values()
         if isinstance(cpp_type, StructType):

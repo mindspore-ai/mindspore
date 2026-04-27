@@ -115,7 +115,7 @@ class _Conv(Cell):
                  padding_mode,
                  dtype=mstype.float32):
         """Initialize _Conv."""
-        super(_Conv, self).__init__()
+        super().__init__()
         self.padding = padding
         self.stride = stride
         self.transposed = transposed
@@ -227,7 +227,7 @@ class Conv1d(_Conv):
         dilation (Union[int, tuple[int], list[int]], optional): Specifies the dilation
             rate to use for dilated convolution.
             It can be a single int or a tuple/list of 1 integer. 
-            Assuming :math:`dilation=(d)`, the convolutional kernel samples the input with a
+            Assuming :math:`dilation= d`, the convolutional kernel samples the input with a
             spacing of :math:`d-1` elements in the length direction.
             Default: ``1`` .
         groups (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
@@ -327,7 +327,7 @@ class Conv1d(_Conv):
         dilation_ = once_sequence(dilation)
         if not dtype:
             dtype = mstype.float32
-        super(Conv1d, self).__init__(in_channels, out_channels, kernel_size_, stride_, padding_, dilation_, False,
+        super().__init__(in_channels, out_channels, kernel_size_, stride_, padding_, dilation_, False,
                                      once_sequence(0), groups, bias, padding_mode, dtype)
         if isinstance(padding, str) and padding_mode == "zeros":
             self.conv1d = conv1d_padding_op
@@ -523,7 +523,7 @@ class Conv2d(_Conv):
         dilation_ = twice_sequence(dilation)
         if not dtype:
             dtype = mstype.float32
-        super(Conv2d, self).__init__(in_channels, out_channels, kernel_size_, stride_, padding_, dilation_, False,
+        super().__init__(in_channels, out_channels, kernel_size_, stride_, padding_, dilation_, False,
                                      twice_sequence(0), groups, bias, padding_mode, dtype)
         if isinstance(padding, str) and padding_mode == "zeros":
             self.conv2d = conv2d_padding_op
@@ -716,7 +716,7 @@ class Conv3d(_Conv):
         dilation_ = triple_sequence(dilation)
         if not dtype:
             dtype = mstype.float32
-        super(Conv3d, self).__init__(in_channels, out_channels, kernel_size_, stride_, padding_, dilation_, False,
+        super().__init__(in_channels, out_channels, kernel_size_, stride_, padding_, dilation_, False,
                                      triple_sequence(0), groups, bias, padding_mode, dtype)
         if isinstance(padding, str) and padding_mode == "zeros":
             self.conv3d = conv3d_padding_op
@@ -757,14 +757,14 @@ class _ConvTranspose(_Conv):
             raise ValueError(
                 f'Only "zeros" padding mode is supported for {self.__class__.__name__}'
             )
-        super(_ConvTranspose, self).__init__(in_channels, out_channels, kernel_size,
+        super().__init__(in_channels, out_channels, kernel_size,
                                              stride, padding, dilation, transposed,
                                              output_padding, groups, bias, padding_mode, dtype)
 
     def _check_output_size(self, output_size, min_sizes, max_sizes, input_shape):
         if isconstant(output_size) and isconstant(min_sizes)\
             and isconstant(max_sizes) and isconstant(input_shape):
-            for i in range(len(output_size)):
+            for i, _ in enumerate(output_size):
                 size = output_size[i]
                 min_size = min_sizes[i]
                 max_size = max_sizes[i]
@@ -931,7 +931,7 @@ class ConvTranspose2d(_ConvTranspose):
         padding = _pair(padding, "kernel_size", "ConvTranspose2d")
         dilation = _pair(dilation, "kernel_size", "ConvTranspose2d")
         output_padding = _pair(output_padding, "kernel_size", "ConvTranspose2d")
-        super(ConvTranspose2d, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             kernel_size,

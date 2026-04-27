@@ -104,7 +104,7 @@ class ReduceLogSumExp(Cell):
 
     def __init__(self, axis, keep_dims=False):
         """Initialize ReduceLogSumExp."""
-        super(ReduceLogSumExp, self).__init__()
+        super().__init__()
         validator.check_value_type('axis', axis, [int, list, tuple], self.cls_name)
         validator.check_value_type('keep_dims', keep_dims, [bool], self.cls_name)
         self.axis = axis
@@ -129,7 +129,7 @@ class Range(Cell):
 
     def __init__(self, start, limit=None, delta=1):
         """Initialize Range."""
-        super(Range, self).__init__()
+        super().__init__()
         logger.warning("The Range class will be deprecated in the future,"
                        "this function can be replaced by :func:`ops.range`")
         if delta == 0:
@@ -200,7 +200,7 @@ class LGamma(Cell):
 
     def __init__(self):
         """Initialize LGamma."""
-        super(LGamma, self).__init__()
+        super().__init__()
         # const numbers
         self.k_lanczos_gamma = 7
         self.k_base_lanczos_coeff = _BASE_LANCZOS_COEFF
@@ -318,7 +318,7 @@ class DiGamma(Cell):
 
     def __init__(self):
         """Initialize DiGamma."""
-        super(DiGamma, self).__init__()
+        super().__init__()
         # const numbers
         self.k_lanczos_gamma = 7
         self.k_base_lanczos_coeff = _BASE_LANCZOS_COEFF
@@ -581,7 +581,7 @@ class IGamma(Cell):
 
     def __init__(self):
         """Initialize IGamma."""
-        super(IGamma, self).__init__()
+        super().__init__()
         # const numbers
         # If more data types are supported, this float max value need to be selected.
         self.log_maxfloat32 = Tensor(np.log(np.finfo(np.float32).max), mstype.float32)
@@ -670,7 +670,7 @@ class LBeta(Cell):
 
     def __init__(self):
         """Initialize LBeta."""
-        super(LBeta, self).__init__()
+        super().__init__()
         # const numbers
         self.log_2pi = np.log(2 * np.pi)
         self.minimax_coeff = [-0.165322962780713e-02,
@@ -829,7 +829,7 @@ class MatMul(Cell):
     @deprecated('1.2', 'ops.matmul', False)
     def __init__(self, transpose_x1=False, transpose_x2=False):
         """Initialize MatMul."""
-        super(MatMul, self).__init__()
+        super().__init__()
 
         validator.check_value_type('transpose_x1', transpose_x1, [bool], self.cls_name)
         validator.check_value_type('transpose_x2', transpose_x2, [bool], self.cls_name)
@@ -946,7 +946,7 @@ class Moments(Cell):
 
     def __init__(self, axis=None, keep_dims=None):
         """Initialize Moments."""
-        super(Moments, self).__init__()
+        super().__init__()
         logger.warning("The Moments class will be deprecated in the future,"
                        "this function can be replaced by :func:`ops.var_mean`")
         if axis is None:
@@ -1011,7 +1011,7 @@ class MatInverse(Cell):
 
     def __init__(self):
         """Initialize MatInverse."""
-        super(MatInverse, self).__init__()
+        super().__init__()
         self.dtype = ops.DType()
         self.choleskytrsm = ops.operations.CholeskyTrsm()
         self.matmul = MatMul(transpose_x1=True)
@@ -1053,7 +1053,7 @@ class MatDet(Cell):
 
     def __init__(self):
         """Initialize MatDet."""
-        super(MatDet, self).__init__()
+        super().__init__()
         self.dtype = ops.DType()
         self.cholesky = ops.Cholesky()
         self.det_triangle = ops.operations.DetTriangle()

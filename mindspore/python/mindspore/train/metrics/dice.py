@@ -55,7 +55,7 @@ class Dice(Metric):
     """
 
     def __init__(self, smooth=1e-5):
-        super(Dice, self).__init__()
+        super().__init__()
 
         self.smooth = validator.check_positive_float(smooth, "smooth")
         self._dice_coeff_sum = 0

@@ -62,7 +62,7 @@ class Distribution(Cell):
         """
         Constructor of distribution class.
         """
-        super(Distribution, self).__init__()
+        super().__init__()
         if seed is None:
             seed = 0
         validator.check_value_type('name', name, [str], type(self).__name__)
@@ -81,7 +81,7 @@ class Distribution(Cell):
                 self._parameters[k] = param[k]
 
         # if not a transformed distribution, set the following attribute
-        if 'distribution' not in self.parameters.keys():
+        if 'distribution' not in self.parameters:
             self.parameter_type = set_param_type(
                 self.parameters.get('param_dict', {}), dtype)
             self._batch_shape = self._calc_batch_shape()
@@ -249,7 +249,7 @@ class Distribution(Cell):
                 broadcast_shape_tensor = cast_to_tensor(value)
             else:
                 value = cast_to_tensor(value)
-                broadcast_shape_tensor = (value + broadcast_shape_tensor)
+                broadcast_shape_tensor = value + broadcast_shape_tensor
         return broadcast_shape_tensor.shape
 
     def _set_prob(self):

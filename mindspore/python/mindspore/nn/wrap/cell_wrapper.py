@@ -113,7 +113,7 @@ class WithLossCell(Cell):
     """
 
     def __init__(self, backbone, loss_fn):
-        super(WithLossCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._backbone = backbone
         self._loss_fn = loss_fn
         self._get_attr_from_cell(backbone)
@@ -188,11 +188,11 @@ class WithGradCell(Cell):
     """
 
     def __init__(self, network, loss_fn=None, sens=None):
-        super(WithGradCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.loss_fn = loss_fn
         self.weights = ParameterTuple(network.trainable_params())
-        self.grad = ops.GradOperation(get_by_list=True, sens_param=(sens is not None))
+        self.grad = ops.GradOperation(get_by_list=True, sens_param=sens is not None)
         self.sens = sens
         if loss_fn is None:
             self.network_with_loss = network
@@ -253,7 +253,7 @@ class ForwardValueAndGrad(Cell):
         >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self):
-        ...        super(Net, self).__init__()
+        ...        super().__init__()
         ...        self.weight = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="weight")
         ...        self.matmul = ops.MatMul()
         ...
@@ -278,7 +278,7 @@ class ForwardValueAndGrad(Cell):
     """
 
     def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False):
-        super(ForwardValueAndGrad, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         if not isinstance(network, (Cell, FunctionType, MethodType)):
             raise TypeError(f"For 'ForwardValueAndGrad', "
                             f"the argument 'network' must be cell, function type or method type, "
@@ -360,7 +360,7 @@ class TrainOneStepCell(Cell):
         >>> #2) Using user-defined WithLossCell
         >>> class MyWithLossCell(nn.Cell):
         ...    def __init__(self, backbone, loss_fn):
-        ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
+        ...        super().__init__(auto_prefix=False)
         ...        self._backbone = backbone
         ...        self._loss_fn = loss_fn
         ...
@@ -377,7 +377,7 @@ class TrainOneStepCell(Cell):
     """
 
     def __init__(self, network, optimizer, sens=None, return_grad=False):
-        super(TrainOneStepCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
         self.optimizer = optimizer
@@ -491,7 +491,7 @@ class GetNextSingleOp(Cell):
     """
 
     def __init__(self, dataset_types, dataset_shapes, queue_name):
-        super(GetNextSingleOp, self).__init__()
+        super().__init__()
         self.get_next = ops.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
 
     def construct(self):
@@ -518,7 +518,7 @@ class _VirtualDatasetCell(Cell):
     """
 
     def __init__(self, backbone):
-        super(_VirtualDatasetCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._backbone = backbone
         self._virtual_dataset = _VirtualDataset()
         self._get_attr_from_cell(backbone)
@@ -559,7 +559,7 @@ class _MicroBatch(Cell):
        params (micro_size): The number of micro-batch.
     """
     def __init__(self, micro_size):
-        super(_MicroBatch, self).__init__()
+        super().__init__()
         self.shape = ops.Shape()
         self.micro_size = micro_size
         self.strided_slice = ops.StridedSlice()
@@ -606,7 +606,7 @@ class GradAccumulationCell(Cell):
         >>> net = nn.GradAccumulationCell(net, 4)
     """
     def __init__(self, network, micro_size):
-        super(GradAccumulationCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
@@ -645,7 +645,7 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
     Wraps the network with an optimizer in pipeline mode.
     """
     def __init__(self, network, optimizer, sens=None):
-        super(_TrainGradAccuStepCell, self).__init__(network, optimizer, sens)
+        super().__init__(network, optimizer, sens)
         self.accu_grads = self.weights.clone(prefix="accu_grads", init="zeros")
         self.hyper_map = ops.HyperMap()
         self.opt_shard = _get_enable_parallel_optimizer()
@@ -697,7 +697,7 @@ class AllreduceGraph(Cell):
     A allreduce graph to broadcast parameters.
     """
     def __init__(self, inputs, group_name):
-        super(AllreduceGraph, self).__init__()
+        super().__init__()
         self.input_num = len(inputs)
         self.inputs = inputs
         self.allreduces = []
@@ -737,7 +737,7 @@ class VirtualDatasetCellTriple(Cell):
     """
 
     def __init__(self, backbone):
-        super(VirtualDatasetCellTriple, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         logger.warning("WARN_DEPRECATED: The usage of VirtualDatasetCellTriple is deprecated.")
         self._backbone = backbone
         self._get_attr_from_cell(backbone)
@@ -781,7 +781,7 @@ class WithEvalCell(Cell):
     """
 
     def __init__(self, network, loss_fn, add_cast_fp32=False):
-        super(WithEvalCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._network = network
         self._loss_fn = loss_fn
         self.add_cast_fp32 = validator.check_value_type("add_cast_fp32", add_cast_fp32, [bool], self.cls_name)
@@ -835,7 +835,7 @@ class ParameterUpdate(Cell):
     """
 
     def __init__(self, param):
-        super(ParameterUpdate, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         if not isinstance(param, Parameter):
             raise TypeError("For 'ParameterUpdate', 'param' must be 'Parameter', but got {}.".format(type(param)))
         self._param = param
@@ -854,13 +854,13 @@ class _BroadCastCell(Cell):
     """
 
     def __init__(self, params):
-        super(_BroadCastCell, self).__init__()
+        super().__init__()
         from mindspore.communication.management import get_group_size, create_group
         from mindspore import context
         self.map_ = ops.Map()
         self.params = tuple(params)
         if context.get_context("device_target") == "Ascend":
-            rank_list = [id for id in range(0, get_group_size())]
+            rank_list = list(range(0, get_group_size()))
             create_group("BroadcastWorldGroup", rank_list)
             self.broadcast = ops.Broadcast(0, group="BroadcastWorldGroup")
         else:
@@ -902,7 +902,7 @@ class PipelineCell(Cell):
         >>> net = nn.PipelineCell(net, 4)
     """
     def __init__(self, network, micro_size, stage_config=None, segment_config=None):
-        super(PipelineCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
@@ -1032,7 +1032,7 @@ class MicroBatchInterleaved(Cell):
         >>> net = nn.MicroBatchInterleaved(net, 2)
     """
     def __init__(self, network, interleave_num=2):
-        super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         if not isinstance(interleave_num, int):
             raise TypeError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be integer, "
                             "but got the type : {}.".format(type(interleave_num)))

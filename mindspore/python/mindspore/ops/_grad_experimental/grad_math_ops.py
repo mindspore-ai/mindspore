@@ -64,7 +64,7 @@ def cholesky_transpose(a):
 def renew_dim(shape, dim):
     """ Re-new dims"""
     new_dim = dim if dim >= 0 else len(shape) + dim
-    tmp = [i for i in range(len(shape))]
+    tmp = list(range(len(shape)))
     _ = tmp.pop(new_dim)
     return tuple(tmp)
 

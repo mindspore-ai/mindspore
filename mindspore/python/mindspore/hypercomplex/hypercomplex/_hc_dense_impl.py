@@ -62,7 +62,7 @@ class _DenseImpl(nn.Cell):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number],
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
-        super(_DenseImpl, self).__init__()
+        super().__init__()
 
     def construct(self,
                   x: Tensor,
@@ -102,7 +102,7 @@ class _BaseDenseImpl(_DenseImpl):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number],
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
-        super(_BaseDenseImpl, self).__init__(weight_init,
+        super().__init__(weight_init,
                                              weight_shape,
                                              **factory_kwargs)
         if isinstance(weight_init, Tensor):

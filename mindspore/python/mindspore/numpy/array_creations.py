@@ -388,6 +388,7 @@ def full(shape, fill_value, dtype=None):
 @_primexpr
 def _generate_shapes(shape):
     """Generate shapes for randn and rand."""
+    size = None
     if not shape:
         size = (1,)
     elif len(shape) == 1:
@@ -1628,7 +1629,7 @@ class MGridClass(NdGrid):
     """
 
     def __init__(self):
-        super(MGridClass, self).__init__(sparse=False)
+        super().__init__(sparse=False)
 
 
 class OGridClass(NdGrid):
@@ -1671,7 +1672,7 @@ class OGridClass(NdGrid):
     """
 
     def __init__(self):
-        super(OGridClass, self).__init__(sparse=True)
+        super().__init__(sparse=True)
 
 
 mgrid = MGridClass()
@@ -2575,7 +2576,7 @@ def _pad_func(arr, pad_width, func, **kwargs):
 @_primexpr
 def _make_stat_length(shape):
     """converts the stat_length values."""
-    return tuple((shape[i], shape[i]) for i, _ in enumerate(shape))
+    return tuple((v, v) for i, v in enumerate(shape))
 
 
 @_primexpr

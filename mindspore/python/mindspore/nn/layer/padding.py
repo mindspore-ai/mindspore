@@ -46,7 +46,7 @@ def _check_padding_dimension(dimension, padding):
     _check_padding(dimension, padding)
     # add place holders
     if dimension > len(padding):
-        padding = [(0, 0) for _ in range(dimension - len(padding))] + [x for x in padding]
+        padding = [(0, 0) for _ in range(dimension - len(padding))] + list(padding)
     return padding
 
 
@@ -96,7 +96,7 @@ def _check(input_shape, padding, name):
         if len(padding) == 2 and isinstance(padding[0], int):
             padding = [(0, 0) for i in range(len(input_shape) - 1)] + [padding]
         else:
-            padding = [(0, 0) for i in range(len(input_shape) - len(padding))] + [x for x in padding]
+            padding = [(0, 0) for i in range(len(input_shape) - len(padding))] + list(padding)
     for index, item in enumerate(padding):
         if index == 0:
             dim_name = '1st'
@@ -117,9 +117,9 @@ def _check(input_shape, padding, name):
 def _get_new_padding(padding):
     """get non-negative padding and make negative position."""
     new_padding = [[item[0], item[1]] for item in padding]
-    start = [0 for i in range(len(new_padding))]
-    end = [0 for i in range(len(new_padding))]
-    for index in range(len(new_padding)):
+    start = [0 for i, _ in enumerate(new_padding)]
+    end = [0 for i, _ in enumerate(new_padding)]
+    for index, _ in enumerate(new_padding):
         item = new_padding[index]
         if item[0] < 0:
             start[index] = item[0]
@@ -134,8 +134,8 @@ def _get_new_padding(padding):
 @_primexpr
 def _get_begin_size(shape, begin, end):
     """Calculate begin and size for ops.Slice."""
-    size = tuple([shape[i] + begin[i] + end[i] for i in range(len(shape))])
-    begin = tuple([int(-i) for i in begin])
+    size = tuple(v + begin[i] + end[i] for i, v in enumerate(shape))
+    begin = tuple(int(-i) for i in begin)
     return begin, size
 
 
@@ -170,7 +170,7 @@ class _ConstantPadNd(Cell):
 
     def __init__(self, padding, value, name='ConstantPadNd'):
         """Initialize Pad."""
-        super(_ConstantPadNd, self).__init__()
+        super().__init__()
         if isinstance(padding, int):
             if name == 'ConstantPad1d':
                 padding = (padding, padding)
@@ -285,7 +285,7 @@ class ConstantPad1d(_ConstantPadNd):
     """
 
     def __init__(self, padding, value):
-        super(ConstantPad1d, self).__init__(padding, value, name='ConstantPad1d')
+        super().__init__(padding, value, name='ConstantPad1d')
 
 
 class ConstantPad2d(_ConstantPadNd):
@@ -346,7 +346,7 @@ class ConstantPad2d(_ConstantPadNd):
     """
 
     def __init__(self, padding, value):
-        super(ConstantPad2d, self).__init__(padding, value, name='ConstantPad2d')
+        super().__init__(padding, value, name='ConstantPad2d')
 
 
 class ConstantPad3d(_ConstantPadNd):
@@ -413,7 +413,7 @@ class ConstantPad3d(_ConstantPadNd):
     """
 
     def __init__(self, padding, value):
-        super(ConstantPad3d, self).__init__(padding, value, name='ConstantPad3d')
+        super().__init__(padding, value, name='ConstantPad3d')
 
 
 class _ReflectionPadNd(Cell):
@@ -423,7 +423,7 @@ class _ReflectionPadNd(Cell):
     """
 
     def __init__(self, padding, name="ReflectionPadNd"):
-        super(_ReflectionPadNd, self).__init__()
+        super().__init__()
         self.name = name
         # check if padding and its elements are valid
         if not isinstance(padding, tuple):
@@ -497,7 +497,7 @@ class ReflectionPad1d(_ReflectionPadNd):
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding)
-        super(ReflectionPad1d, self).__init__(padding, 'ReflectionPad1d')
+        super().__init__(padding, 'ReflectionPad1d')
 
 
 class ReflectionPad2d(_ReflectionPadNd):
@@ -554,7 +554,7 @@ class ReflectionPad2d(_ReflectionPadNd):
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding, padding, padding)
-        super(ReflectionPad2d, self).__init__(padding, 'ReflectionPad2d')
+        super().__init__(padding, 'ReflectionPad2d')
 
 
 class ReflectionPad3d(_ReflectionPadNd):
@@ -623,7 +623,7 @@ class ReflectionPad3d(_ReflectionPadNd):
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding, padding, padding, padding, padding)
-        super(ReflectionPad3d, self).__init__(padding, 'ReflectionPad3d')
+        super().__init__(padding, 'ReflectionPad3d')
 
 
 class ZeroPad2d(_ConstantPadNd):
@@ -682,7 +682,7 @@ class ZeroPad2d(_ConstantPadNd):
 
     def __init__(self, padding):
         value = 0
-        super(ZeroPad2d, self).__init__(padding, value, name='ZeroPad2d')
+        super().__init__(padding, value, name='ZeroPad2d')
 
 
 class _ReplicationPadNd(Cell):
@@ -692,7 +692,7 @@ class _ReplicationPadNd(Cell):
     """
 
     def __init__(self, padding, name="ReplicationPadNd"):
-        super(_ReplicationPadNd, self).__init__()
+        super().__init__()
         self.name = name
         if not isinstance(padding, tuple):
             raise TypeError(f"For '{self.name}' the input 'padding' must be an integer or tuple, "
@@ -773,7 +773,7 @@ class ReplicationPad1d(_ReplicationPadNd):
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding)
-        super(ReplicationPad1d, self).__init__(padding, name="ReplicationPad1d")
+        super().__init__(padding, name="ReplicationPad1d")
 
     def _need_expend_dim(self, x):
         input_shape = x.shape
@@ -842,7 +842,7 @@ class ReplicationPad2d(_ReplicationPadNd):
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding, padding, padding)
-        super(ReplicationPad2d, self).__init__(padding, name="ReplicationPad2d")
+        super().__init__(padding, name="ReplicationPad2d")
 
     def _need_expend_dim(self, x):
         input_shape = x.shape
@@ -911,7 +911,7 @@ class ReplicationPad3d(_ReplicationPadNd):
     def __init__(self, padding):
         if isinstance(padding, int):
             padding = (padding, padding, padding, padding, padding, padding)
-        super(ReplicationPad3d, self).__init__(padding, name="ReplicationPad3d")
+        super().__init__(padding, name="ReplicationPad3d")
 
     def _need_expend_dim(self, x):
         input_shape = x.shape

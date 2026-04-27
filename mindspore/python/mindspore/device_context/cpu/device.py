@@ -33,11 +33,11 @@ def is_available():
     # MindSpore will try to load plugins in "import mindspore", and availability status will be stored.
     context = MSContext.get_instance()
     if not context.is_pkg_support_device("CPU"):
-        logger.warning(f"The CPU device is not available.")
+        logger.warning("The CPU device is not available.")
         load_plugin_error = context.load_plugin_error()
         if load_plugin_error != "":
             logger.warning(
-                f"Here's error when loading plugin for MindSpore package."
+                "Here's error when loading plugin for MindSpore package."
                 f"Error message: {load_plugin_error}"
             )
         return False

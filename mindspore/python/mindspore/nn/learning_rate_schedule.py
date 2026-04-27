@@ -28,7 +28,7 @@ class LearningRateSchedule(Cell):
     """Basic class of learning rate schedule."""
 
     def __init__(self):
-        super(LearningRateSchedule, self).__init__()
+        super().__init__()
 
     def construct(self, global_step):
         """
@@ -116,7 +116,7 @@ class ExponentialDecayLR(LearningRateSchedule):
     """
 
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
-        super(ExponentialDecayLR, self).__init__()
+        super().__init__()
         _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, self.cls_name)
         self.learning_rate = learning_rate
         self.decay_rate = decay_rate
@@ -190,7 +190,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
     """
 
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
-        super(NaturalExpDecayLR, self).__init__()
+        super().__init__()
         _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, self.cls_name)
         self.learning_rate = learning_rate
         self.decay_rate = decay_rate
@@ -267,7 +267,7 @@ class InverseDecayLR(LearningRateSchedule):
     """
 
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
-        super(InverseDecayLR, self).__init__()
+        super().__init__()
         _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, self.cls_name)
         self.learning_rate = learning_rate
         self.decay_rate = decay_rate
@@ -331,7 +331,7 @@ class CosineDecayLR(LearningRateSchedule):
     """
 
     def __init__(self, min_lr, max_lr, decay_steps):
-        super(CosineDecayLR, self).__init__()
+        super().__init__()
         if not isinstance(min_lr, float):
             raise TypeError("For 'CosineDecayLR', the argument 'min_lr' must be type of float, "
                             "but got 'min_lr' type: {}.".format(type(min_lr)))
@@ -421,7 +421,7 @@ class PolynomialDecayLR(LearningRateSchedule):
     """
 
     def __init__(self, learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False):
-        super(PolynomialDecayLR, self).__init__()
+        super().__init__()
         validator.check_positive_float(learning_rate, 'learning_rate')
         validator.check_is_float(learning_rate, 'learning_rate')
         if not isinstance(end_learning_rate, float):
@@ -509,7 +509,7 @@ class WarmUpLR(LearningRateSchedule):
     """
 
     def __init__(self, learning_rate, warmup_steps):
-        super(WarmUpLR, self).__init__()
+        super().__init__()
         if not isinstance(learning_rate, float):
             raise TypeError("For 'WarmUpLR', the argument 'learning_rate' must be type of float, "
                             "but got 'learning_rate' type: {}.".format(type(learning_rate)))

@@ -255,7 +255,7 @@ class FTRL(Optimizer):
     @opt_init_args_register
     def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
-        super(FTRL, self).__init__(learning_rate, params, weight_decay, loss_scale=loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale=loss_scale)
         if self.dynamic_lr or self.is_group_lr:
             raise ValueError(f"For 'FTRL', dynamic learning rate and group learning rate are currently not supported "
                              f"in FTRL, they should all be false, but got dynamic learning rate {self.dynamic_lr} and"
@@ -268,7 +268,7 @@ class FTRL(Optimizer):
         self.lr = learning_rate
         self.lr_power = lr_power
         if not self.is_group:
-            self.decay_flags = tuple((lambda: True)() for x in self._parameters)
+            self.decay_flags = tuple(True for x in self._parameters)
         self.opt = P.ApplyFtrl(use_locking=use_locking)
         self.use_locking = use_locking
         self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)

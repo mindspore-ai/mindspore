@@ -137,7 +137,7 @@ class Poisson(Distribution):
         if isinstance(rate, (int, float)):
             raise TypeError("Input rate can't be scalar")
 
-        super(Poisson, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._rate = self._add_parameter(rate, 'rate')
         if self.rate is not None:

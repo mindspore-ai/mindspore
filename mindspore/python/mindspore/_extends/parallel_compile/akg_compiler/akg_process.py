@@ -207,7 +207,7 @@ class AkgProcess(AkgProcessBase):
             process_num: int. processes number
             wait_time: int. max time the function blocked
         """
-        super(AkgProcess, self).__init__("AKG", process_num, wait_time, platform)
+        super().__init__("AKG", process_num, wait_time, platform)
 
     def compile(self, attrs=None):
         """
@@ -244,7 +244,7 @@ class AkgV2Process(AkgProcessBase):
             process_num: int. processes number
             wait_time: int. max time the function blocked
         """
-        super(AkgV2Process, self).__init__("AKG V2", process_num, wait_time, platform)
+        super().__init__("AKG V2", process_num, wait_time, platform)
 
     def compile(self, attrs=None):
         """

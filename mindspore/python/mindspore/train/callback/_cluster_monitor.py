@@ -110,7 +110,7 @@ class ClusterMonitor(Callback):
     """
 
     def __init__(self):
-        super(ClusterMonitor, self).__init__()
+        super().__init__()
         self.perf_config = _parse_perf_config()
         self.enabled = self.perf_config.get("enable")
         self.enable_step_time = self.perf_config.get("steptime")
@@ -141,7 +141,7 @@ class ClusterMonitor(Callback):
             if os.path.exists(self.full_path):
                 os.chmod(self.full_path, stat.S_IWUSR)
                 os.remove(self.full_path)
-            with open(self.full_path, 'w') as file:
+            with open(self.full_path, 'w', encoding='utf-8') as file:
                 log_message = f'UUID:{self.uuid_value}\nFRAMEWORK:{self.frame_work}\nGLOBAL RANKID:{self.global_rank}\n'
                 file.write(log_message)
             os.chmod(self.full_path, stat.S_IRUSR)
@@ -180,7 +180,7 @@ class ClusterMonitor(Callback):
 
             with _perf_mutex:
                 os.chmod(self.full_path, stat.S_IWUSR)
-                with open(self.full_path, 'a') as file:
+                with open(self.full_path, 'a', encoding='utf-8') as file:
                     for _, split_pp_list in enumerate(split_pp_lists):
                         file.write(f'PP:{split_pp_list}\n')
                     for dp_value in dp:
@@ -192,6 +192,6 @@ class ClusterMonitor(Callback):
         if self.enabled and self.enable_step_time:
             with _perf_mutex:
                 os.chmod(self.full_path, stat.S_IWUSR)
-                with open(self.full_path, 'a') as file:
+                with open(self.full_path, 'a', encoding='utf-8') as file:
                     file.write(f"STEPTIME:{int(self.data_time_start * 1000)},{int(self.data_time_end * 1000)}\n")
                 os.chmod(self.full_path, stat.S_IRUSR)

@@ -240,7 +240,7 @@ class SummaryCollector(Callback):
         if security.enable_security():
             raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
 
-        super(SummaryCollector, self).__init__()
+        super().__init__()
 
         self._summary_dir = _make_directory(summary_dir, "summary_dir")
         self._record = None
@@ -437,7 +437,7 @@ class SummaryCollector(Callback):
         if specified_data is None:
             if action:
                 return dict(self._DEFAULT_SPECIFIED_DATA)
-            return dict()
+            return {}
 
         for param_name in specified_data:
             check_value_type(param_name, param_name, [str])
@@ -610,7 +610,7 @@ class SummaryCollector(Callback):
         meta_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
         if platform.system() != "Linux":
             try:
-                with open(meta_path, 'w') as file:
+                with open(meta_path, 'w', encoding='utf-8') as file:
                     json.dump(data, file)
                 os.chmod(meta_path, stat.S_IRUSR)
             except OSError as e:
@@ -620,9 +620,9 @@ class SummaryCollector(Callback):
         lock_file = f"{meta_path}.lock"
         try:
             with os.fdopen(os.open(lock_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR), 'w') as f:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)  # pylint: disable=E0606
                 if not os.path.isfile(meta_path):
-                    with open(meta_path, 'w') as file:
+                    with open(meta_path, 'w', encoding='utf-8') as file:
                         json.dump(data, file)
                     os.chmod(meta_path, stat.S_IRUSR)
         except OSError as e:
@@ -641,10 +641,7 @@ class SummaryCollector(Callback):
             param.init_data()
             param_data = param.data if isinstance(param.data, Tensor) else Tensor(param.data)
 
-            param_list.append(dict(
-                name=param.name,
-                data=param_data
-            ))
+            param_list.append({"name": param.name, "data": param_data})
 
         ckpt_file_name = f"{type(backbone).__name__}_{cur_num}_{unit}.ckpt"
         file_path = os.path.join(self._ckpt_dir, ckpt_file_name)
@@ -659,7 +656,7 @@ class SummaryCollector(Callback):
         lock_file = f"{file_path}.lock"
         try:
             with os.fdopen(os.open(lock_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR), 'w') as f:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)  # pylint: disable=E0606
                 if not os.path.isfile(file_path):
                     save_checkpoint(param_list, file_path)
         except OSError as e:
@@ -976,7 +973,7 @@ class SummaryCollector(Callback):
         train_lineage[LineageMetadata.device_num] = cb_params.device_number
 
         ckpt_file_path = self._get_ckpt_file_path(cb_params)
-        train_lineage[LineageMetadata.model_path] = json.dumps(dict(ckpt=ckpt_file_path))
+        train_lineage[LineageMetadata.model_path] = json.dumps({"ckpt": ckpt_file_path})
 
         model_size = os.path.getsize(ckpt_file_path) if ckpt_file_path else 0
         train_lineage[LineageMetadata.model_size] = model_size
@@ -1184,7 +1181,7 @@ class SummaryCollector(Callback):
         """Collect eval lineage data, the detail refer to lineage_pb2.EvaluationLineage."""
         if not self._collect_specified_data.get('collect_eval_lineage'):
             return
-        eval_lineage = dict()
+        eval_lineage = {}
         try:
             eval_lineage[LineageMetadata.metrics] = json.dumps(cb_params.metrics)
         except TypeError as exc:

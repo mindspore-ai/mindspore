@@ -268,7 +268,7 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
             model.ParseFromString(pb_content)
     except BaseException as e:
         logger.critical(f"Failed to phase the file: {file_name} as format: {proto_format},"
-                        f" please check the correct file and format.")
+                        " please check the correct file and format.")
         raise ValueError(e.__str__()) from e
     finally:
         pass
@@ -331,8 +331,8 @@ def _get_strategy_opt_shard(param_redundancy_dict, parameter_layout_opt_shard):
             elif param_redundancy_ranks:
                 opt_para_num = len(param_redundancy_ranks) * len(param_redundancy_ranks[0]) // value[0]
             else:
-                raise ValueError(f"For get_parameter_redundancy, the format of the parallel communication domain for "
-                                 f"the optimizer is incorrect.")
+                raise ValueError("For get_parameter_redundancy, the format of the parallel communication domain for "
+                                 "the optimizer is incorrect.")
             res = []
             for param_ranks in param_redundancy_ranks:
                 if len(param_ranks) % opt_para_num == 0:

@@ -23,7 +23,7 @@ class _HalCPU(_HalBase):
     Hal cpu interfaces.
     """
     def __init__(self):
-        super(_HalCPU, self).__init__("CPU")
+        super().__init__("CPU")
 
     def device_count(self):
         """

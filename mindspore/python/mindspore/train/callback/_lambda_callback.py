@@ -64,7 +64,7 @@ class LambdaCallback(Callback):
                  on_train_step_end=None, on_train_begin=None, on_train_end=None,
                  on_eval_epoch_begin=None, on_eval_epoch_end=None, on_eval_step_begin=None,
                  on_eval_step_end=None, on_eval_begin=None, on_eval_end=None):
-        super(LambdaCallback, self).__init__()
+        super().__init__()
         self.on_train_epoch_begin = on_train_epoch_begin if on_train_epoch_begin else lambda run_context: None
         self.on_train_epoch_end = on_train_epoch_end if on_train_epoch_end else lambda run_context: None
         self.on_train_step_begin = on_train_step_begin if on_train_step_begin else lambda run_context: None

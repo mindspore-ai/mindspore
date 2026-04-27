@@ -53,7 +53,7 @@ class GroupLossScaleManager(Cell):
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, enhanced_amp, num_class=10, num_channel=1):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
         ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
         ...         self.fc1 = nn.Dense(16*5*5, 120, weight_init='ones')
@@ -99,7 +99,7 @@ class GroupLossScaleManager(Cell):
         >>> model.train(2, dataset)
     """
     def __init__(self, init_loss_scale, loss_scale_groups):
-        super(GroupLossScaleManager, self).__init__()
+        super().__init__()
         self._loss_scale = init_loss_scale
         self.loss_scale_groups = loss_scale_groups
         self.loss_scale_number = 0

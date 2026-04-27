@@ -114,7 +114,7 @@ class ModelThor(Model):
 
     def __init__(self, network, loss_fn=None, optimizer=None, metrics=None, eval_network=None,
                  eval_indexes=None, amp_level="O0", **kwargs):
-        super(ModelThor, self).__init__(network, loss_fn, optimizer, metrics, eval_network,
+        super().__init__(network, loss_fn, optimizer, metrics, eval_network,
                                         eval_indexes, amp_level, **kwargs)
         if isinstance(network, nn.TrainOneStepCell):
             self._frequency = network.optimizer.get_frequency()

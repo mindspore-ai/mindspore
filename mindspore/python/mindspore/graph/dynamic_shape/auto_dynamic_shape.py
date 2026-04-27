@@ -136,16 +136,16 @@ class _AutoDynamicShapeManager:
         """update compile args and phase"""
 
         if phase in self.real_phase_and_compile_args_dict:
-            logger.debug(f'phase=%r is in real phase and compile args dict.', phase)
+            logger.debug('phase=%r is in real phase and compile args dict.', phase)
             return
 
         if phase in self.generalize_phase_and_compile_args_dict:
-            logger.debug(f'phase=%r is in generalize phase and compile args dict.', phase)
+            logger.debug('phase=%r is in generalize phase and compile args dict.', phase)
             return
 
         if len(self.real_shape_cache) < 2:
             logger.debug(f'The real shape cache number is {len(self.real_shape_cache)}, is less than 2,'
-                         f'phase=%r should be saved in real shape cache.', phase)
+                         'phase=%r should be saved in real shape cache.', phase)
             self.real_phase_and_compile_args_dict[phase] = compile_args
             self.real_shape_cache.append(compile_args)
             return
@@ -233,7 +233,7 @@ class _AutoIdentifyDynamicShape:
             if isinstance(arg, Tensor) and isinstance(cache, Tensor):
                 if arg.dtype != cache.dtype:
                     logger.debug((f'input tensor type = {arg.dtype}, cache tensor type = {cache.dtype}, '
-                                  f'tensor types are not same.'))
+                                  'tensor types are not same.'))
                     return False
             elif isinstance(arg, (tuple, list)) and isinstance(cache, (tuple, list)):
                 res = self._check_input_tensor_type(arg, cache)

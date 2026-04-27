@@ -173,7 +173,7 @@ class SequentialCell(Cell):
     """
     def __init__(self, *args):
         """Initialize SequentialCell."""
-        super(SequentialCell, self).__init__()
+        super().__init__()
         self._is_dynamic_name = []
         if len(args) == 1:
             cells = args[0]
@@ -365,7 +365,7 @@ class CellList(_CellListBase, Cell):
     """
     def __init__(self, *args, **kwargs):
         """Initialize CellList."""
-        auto_prefix = kwargs["auto_prefix"] if "auto_prefix" in kwargs.keys() else True
+        auto_prefix = kwargs["auto_prefix"] if "auto_prefix" in kwargs else True
         _CellListBase.__init__(self)
         Cell.__init__(self, auto_prefix)
         if len(args) == 1:
@@ -584,7 +584,7 @@ class CellDict(_CellDictBase, Cell):
     """
     def __init__(self, *args, **kwargs):
         """Initialize CellDict."""
-        auto_prefix = kwargs["auto_preifx"] if "auto_prefix" in kwargs.keys() else True
+        auto_prefix = kwargs["auto_prefix"] if "auto_prefix" in kwargs else True
         _CellDictBase.__init__(self)
         Cell.__init__(self, auto_prefix)
         if len(args) == 1:

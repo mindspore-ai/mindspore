@@ -48,7 +48,7 @@ class ReLU(nn.Cell):
 
     def __init__(self):
         """Initialize ReLU."""
-        super(ReLU, self).__init__()
+        super().__init__()
 
     def construct(self, u: Tensor) -> Tensor:
         if u.dtype == mindspore.complex64:

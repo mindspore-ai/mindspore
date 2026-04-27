@@ -159,7 +159,7 @@ _amp_cast_op = amp_cast
 class _OutputTo16(nn.Cell):
     """Wrap cell for amp. Cast network output back to float16."""
     def __init__(self, backbone, dtype=mstype.float16):
-        super(_OutputTo16, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._backbone = backbone
         self.dtype = dtype
         self._get_attr_from_cell(backbone)
@@ -171,7 +171,7 @@ class _OutputTo16(nn.Cell):
 class _OutputTo32(nn.Cell):
     """Wrap loss for amp. Cast network output back to float32."""
     def __init__(self, backbone):
-        super(_OutputTo32, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self._backbone = backbone
         self._get_attr_from_cell(backbone)
 
@@ -311,7 +311,7 @@ def _need_removed_cast_pair(node, dtype):
         # If ControlFlow node(e.g. if, for, while) exists between current node and user node,
         # cast pair should not be removed.
         middle_nodes = all_nodes[all_nodes.index(node): all_nodes.index(user)]
-        if any([n.get_node_type() == ms.rewrite.NodeType.ControlFlow for n in middle_nodes]):
+        if any(n.get_node_type() == ms.rewrite.NodeType.ControlFlow for n in middle_nodes):
             return False
         if user.get_instance_type() != _amp_cast_op:
             return False
@@ -567,7 +567,7 @@ def _do_keep_batchnorm_fp32(network):
         subcell = cells[name]
         if subcell == network:
             continue
-        elif isinstance(subcell, nn.Cell) and isinstance(subcell, tuple(AMP_BLACK_LIST)):
+        if isinstance(subcell, nn.Cell) and isinstance(subcell, tuple(AMP_BLACK_LIST)):
             network._cells[name] = _OutputTo16(subcell.to_float(mstype.float32))
             change = True
         else:
@@ -638,7 +638,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
     class WithLossCell(nn.Cell):
         """Wrap loss for amp. Cast network output back to float32."""
         def __init__(self, backbone, loss_fn):
-            super(WithLossCell, self).__init__(auto_prefix=False)
+            super().__init__(auto_prefix=False)
             self._backbone = backbone
             self._loss_fn = loss_fn
             self._get_attr_from_cell(backbone)

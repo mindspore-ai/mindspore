@@ -82,15 +82,15 @@ class ContiguousTensorsHandle:
         if isinstance(tensor_list, (list, tuple)):
             for tensor in tensor_list:
                 if not isinstance(tensor, (Tensor, Tensor_)):
-                    raise TypeError(f"input list must be [Tensor, ...].")
+                    raise TypeError("input list must be [Tensor, ...].")
             if isinstance(tensor_list, list):
                 self.tensor_list = tuple(tensor_list)
             else:
                 self.tensor_list = tensor_list
         else:
-            raise TypeError(f"input list must be [Tensor, ...].")
+            raise TypeError("input list must be [Tensor, ...].")
         if not isinstance(enable_mem_align, bool):
-            raise TypeError(f"enable_mem_align must be bool.")
+            raise TypeError("enable_mem_align must be bool.")
         padding_sizes_pair = combine_tensor_list(self.tensor_list, enable_mem_align)
         self.before_padding_sizes = padding_sizes_pair[0]
         self.after_padding_sizes = padding_sizes_pair[1]
@@ -112,16 +112,16 @@ class ContiguousTensorsHandle:
             if item.stop is not None:
                 end = item.stop
             if not isinstance(start, int) or not isinstance(end, int):
-                raise TypeError(f"slice input error.")
+                raise TypeError("slice input error.")
             if start < 0 or end > self.handle_shape or start >= end:
-                raise ValueError(f"slice input error.")
+                raise ValueError("slice input error.")
             return _convert_python_data(slice_by_padding_shape(self.tensor_list[0], start, end))
         if not isinstance(item, int):
-            raise TypeError(f"slice input must be "
-                            f"1.index -> int."
-                            f"2.[start: end: step] -> [int: int: int].")
+            raise TypeError("slice input must be "
+                            "1.index -> int."
+                            "2.[start: end: step] -> [int: int: int].")
         if item < 0 or item > self.handle_shape:
-            raise ValueError(f"slice input is out of tensor_list size.")
+            raise ValueError("slice input is out of tensor_list size.")
         return _convert_python_data(slice_by_padding_shape(self.tensor_list[0], item, item + 1))
 
     def __str__(self):
@@ -163,9 +163,9 @@ class ContiguousTensorsHandle:
         if end is not None:
             index_end = end
         if not isinstance(index_start, int) or not isinstance(index_end, int):
-            raise TypeError(f"slice input error.")
+            raise TypeError("slice input error.")
 
         if index_start < 0 or index_end > len(self.tensor_list) or index_start >= index_end:
-            raise ValueError(f"slice input error.")
+            raise ValueError("slice input error.")
         return _convert_python_data(slice_by_tensor_index(self.tensor_list, self.before_padding_sizes,
                                                           self.after_padding_sizes, index_start, index_end))

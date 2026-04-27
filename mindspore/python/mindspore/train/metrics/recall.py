@@ -57,7 +57,7 @@ class Recall(EvaluationBase):
         [1. 0.5]
     """
     def __init__(self, eval_type='classification'):
-        super(Recall, self).__init__(eval_type)
+        super().__init__(eval_type)
         self.eps = sys.float_info.min
         self.clear()
 

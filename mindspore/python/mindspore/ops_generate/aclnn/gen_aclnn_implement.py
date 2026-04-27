@@ -157,7 +157,7 @@ def get_registed_ops(file_path=f'{MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_im
     try:
         for root_path, _, files in os.walk(search_path):
             for file_name in files:
-                with open(os.path.join(root_path, file_name), "r") as f:
+                with open(os.path.join(root_path, file_name), "r", encoding='utf-8') as f:
                     file_context = f.read()
                     search_re = re.search(
                         r"(?<=KERNEL_FACTORY_REG\()\w+(?=,)", file_context)
@@ -185,7 +185,7 @@ def generate_aclnn_reg_code(yaml_data):
     ops_yaml_path = os.path.join(K.WORK_DIR, K.PY_OPS_GEN_PATH, "ops.yaml")
     yaml_str = gen_utils.safe_load_yaml(ops_yaml_path)
 
-    reg_code = f"""
+    reg_code = """
 #include "{MS_OPS_KERNEL_PATH}/ascend/aclnn/kernel_mod_impl/aclnn_kernel_mod.h"
 
 namespace mindspore {{
@@ -220,7 +220,7 @@ namespace kernel {{
         aclnn_name = AclnnUtils.get_aclnn_interface(class_name)
         reg_code += f"""
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG({class_name}, {aclnn_name}, {inputs_outputs_num});"""
-    reg_code += f"""
+    reg_code += """
 }}  // namespace kernel
 }}  // namespace mindspore
 """

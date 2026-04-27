@@ -128,10 +128,10 @@ class PrimLib:
                 for _ in range(0, delta):
                     axis_relation.append(None)
                     elem_relation.append(None)
-            for i, _ in enumerate(in_shape):
+            for i, v in enumerate(in_shape):
                 axis_relation.append(i)
                 elem_relation.append(
-                    PrimLib.ELEMWISE if out_shape[i + delta] == in_shape[i] else PrimLib.BROADCAST)
+                    PrimLib.ELEMWISE if out_shape[i + delta] == v else PrimLib.BROADCAST)
             return axis_relation, elem_relation
 
         def default_reduce_relation(self, op, input_idx):
@@ -529,7 +529,7 @@ class AlignShape(GraphVisitor):
     """Align shape"""
 
     def __init__(self):
-        super(AlignShape, self).__init__()
+        super().__init__()
 
     @staticmethod
     def visit(op):
@@ -539,8 +539,7 @@ class AlignShape(GraphVisitor):
             out_dim = len(op.output.shape)
             align_dim = out_dim
             for t in op.inputs:
-                if len(t.shape) > align_dim:
-                    align_dim = len(t.shape)
+                align_dim = max(align_dim, len(t.shape))
             if align_dim > out_dim:
                 op.output.shape = [1] * (align_dim - out_dim) + op.output.shape
 
@@ -549,5 +548,5 @@ class GraphKernelUnsupportedException(Exception):
     """"GraphKernel Unsupported Exception"""
 
     def __init__(self, message):
-        super(GraphKernelUnsupportedException, self).__init__()
+        super().__init__()
         self.message = message

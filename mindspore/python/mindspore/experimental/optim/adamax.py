@@ -114,14 +114,8 @@ class Adamax(Optimizer):
         validator.check_float_range(betas[0], 0., 1., validator.INC_LEFT, "betas[0]", self.cls_name)
         validator.check_float_range(betas[1], 0., 1., validator.INC_LEFT, "betas[1]", self.cls_name)
 
-        defaults = dict(
-            lr=lr,
-            betas=betas,
-            eps=eps,
-            weight_decay=weight_decay,
-            maximize=maximize,
-        )
-        super(Adamax, self).__init__(params, defaults)
+        defaults = {"lr": lr, "betas": betas, "eps": eps, "weight_decay": weight_decay, "maximize": maximize,}
+        super().__init__(params, defaults)
 
         self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
@@ -136,7 +130,7 @@ class Adamax(Optimizer):
         start_id = self.group_start_id[group_id]
         end_id = self.group_start_id[group_id + 1]
         params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = tuple(grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id])
         grads = self._decay_weight(weight_decay, params, grads)
         exp_avg = self.exp_avg[start_id: end_id]
         exp_inf = self.exp_inf[start_id: end_id]

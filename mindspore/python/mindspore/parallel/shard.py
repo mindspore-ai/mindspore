@@ -132,7 +132,7 @@ class Layout:
         if not isinstance(alias_name, tuple):
             raise TypeError(f'alias_name must be tuple type, but got:{type(alias_name)}')
         if len(device_matrix) != len(alias_name):
-            raise ValueError(f'device_matrix length should be equal to alias_name length')
+            raise ValueError('device_matrix length should be equal to alias_name length')
         for in_ele in device_matrix:
             if not isinstance(in_ele, int):
                 raise TypeError(f'The element of device_matrix must be int type, but got:{type(in_ele)}')
@@ -140,15 +140,15 @@ class Layout:
             if not isinstance(in_ele, str):
                 raise TypeError(f'The element of alias_name must be str type, but got:{type(in_ele)}')
             if not in_ele:
-                raise ValueError(f"The element of alias_name can not be empty.")
+                raise ValueError("The element of alias_name can not be empty.")
             if in_ele == "None":
-                raise ValueError(f"The element of alias_name can not set 'None', because 'None' means no sharding.")
+                raise ValueError("The element of alias_name can not set 'None', because 'None' means no sharding.")
         if len(set(alias_name)) != len(alias_name):
             raise ValueError(f'Each element of alias_name {alias_name} should be different')
         inter_key = "interleaved_parallel"
         if inter_key in alias_name and alias_name.index(inter_key) != len(alias_name) - 1:
             raise ValueError(f"When alias_name {alias_name} contains keyword 'interleaved_parallel',"
-                             f" it should be at the last dim of alias_name, which means the virtual sharding.")
+                             " it should be at the last dim of alias_name, which means the virtual sharding.")
         self._device_shape = device_matrix
         self._alias_name = alias_name
         self._tensor_map = None
@@ -163,7 +163,7 @@ class Layout:
                 raise ValueError(
                     f"The rank_list should be a 1-D list, but got {len(np.array(rank_list).shape)}-D list.")
             if len(rank_list) != np.prod(np.array(self._device_shape)):
-                raise ValueError(f"The length of rank_list should be equal to the product of device_matrix, "
+                raise ValueError("The length of rank_list should be equal to the product of device_matrix, "
                                  f"but got {len(rank_list)} and {np.prod(np.array(self._device_shape))}.")
             self._rank_list = rank_list
 
@@ -233,7 +233,7 @@ class Shard(Shard_):
             in_strategy = self._extract_layout_value(in_strategy, "in_strategy")
 
         if not isinstance(out_strategy, (type(None), tuple)):
-            raise TypeError(f"For 'Shard', the 'out_strategy' should be None or tuple, "
+            raise TypeError("For 'Shard', the 'out_strategy' should be None or tuple, "
                             f"but got {type(out_strategy).__name__}.")
         if not isinstance(out_strategy, type(None)):
             logger.warning("Out_strategy is not in use currently, will be ignored in the following procedures.")
@@ -242,10 +242,10 @@ class Shard(Shard_):
                 out_strategy = self._extract_layout_value(out_strategy, "out_strategy")
 
         if not isinstance(device, str):
-            raise TypeError(f"For 'Shard', the 'device' should be a string, "
+            raise TypeError("For 'Shard', the 'device' should be a string, "
                             f"but got {type(device).__name__}")
         if not isinstance(level, int):
-            raise TypeError(f"For 'Shard', the 'level' should be an integer, "
+            raise TypeError("For 'Shard', the 'level' should be an integer, "
                             f"but got {type(level).__name__}")
 
         if ms.get_algo_parameters("fully_use_devices") is True:
@@ -310,10 +310,10 @@ class Shard(Shard_):
             for k in parameter_plan.keys():
                 v = parameter_plan[k]
                 if not isinstance(k, str) or not isinstance(v, (tuple, Layout)):
-                    raise TypeError(f"For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
+                    raise TypeError("For 'Shard', the type of each key and value in 'parameter_plan' must be str and "
                                     f"tuple/Layout, but got {type(k).__name__} and {type(v).__name__}")
         else:
-            raise TypeError(f"For 'Shard', the 'parameter_plan' should be a dict or None, "
+            raise TypeError("For 'Shard', the 'parameter_plan' should be a dict or None, "
                             f"but got {type(parameter_plan).__name__}")
 
         for param_name in parameter_plan.keys():
@@ -334,7 +334,7 @@ class Shard(Shard_):
                                f"{param.param_info.param_strategy}, current setting will be ignored.")
             elif has_set == "layout":
                 logger.warning(f"The layout of parameter '{param_name}' has been set, "
-                               f"current setting will be ignored.")
+                               "current setting will be ignored.")
             else:
                 if isinstance(param_strategy, tuple):
                     self._check_layout_is_valid(param_name, param.shape, param_strategy)
@@ -365,7 +365,7 @@ class Shard(Shard_):
                 self._check_tuple_strategy(stra)
         if len(strategy_set) != 1:
             raise TypeError(
-                f"For 'Shard', the strategy can only pass in consistent type for all dimensions.")
+                "For 'Shard', the strategy can only pass in consistent type for all dimensions.")
         return strategy_set.pop()
 
     def _extract_layout_value(self, layout, log_info):
@@ -384,7 +384,7 @@ class Shard(Shard_):
     def _check_tuple_strategy(self, dim_strategy):
         if not all(isinstance(x, int) for x in dim_strategy):
             raise TypeError(
-                f"The tuple strategy for each dimension should be tuple(int).")
+                "The tuple strategy for each dimension should be tuple(int).")
 
 
 def shard(fn, in_strategy, out_strategy=None, parameter_plan=None):

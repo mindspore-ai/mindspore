@@ -56,7 +56,7 @@ class GradientAccumulation(Cell):
         optimizer (Cell): Optimizer used.
     """
     def __init__(self, max_accumulation_step, optimizer):
-        super(GradientAccumulation, self).__init__()
+        super().__init__()
         self._max_accumulation_step = max_accumulation_step
         self.optimizer = optimizer
         self.weights = optimizer.parameters

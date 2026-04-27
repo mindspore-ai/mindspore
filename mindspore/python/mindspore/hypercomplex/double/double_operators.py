@@ -241,7 +241,7 @@ class Conv2d(_UniformOperator):
                  data_format: str = 'NCHW',
                  has_diagonal_form: bool = False) -> None:
         if has_diagonal_form:
-            super(Conv2d, self).__init__(HConv2d,
+            super().__init__(HConv2d,
                                          J1J2ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -256,7 +256,7 @@ class Conv2d(_UniformOperator):
                                          bias_init=bias_init,
                                          data_format=data_format)
         else:
-            super(Conv2d, self).__init__(HConv2d,
+            super().__init__(HConv2d,
                                          ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -436,7 +436,7 @@ class Conv1d(_UniformOperator):
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  has_diagonal_form: bool = False) -> None:
         if has_diagonal_form:
-            super(Conv1d, self).__init__(HConv1d,
+            super().__init__(HConv1d,
                                          J1J2ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -450,7 +450,7 @@ class Conv1d(_UniformOperator):
                                          weight_init=weight_init,
                                          bias_init=bias_init)
         else:
-            super(Conv1d, self).__init__(HConv1d,
+            super().__init__(HConv1d,
                                          ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -670,7 +670,7 @@ class Conv3d(_UniformOperator):
                  data_format: str = 'NCDHW',
                  has_diagonal_form: bool = False) -> None:
         if has_diagonal_form:
-            super(Conv3d, self).__init__(HConv3d,
+            super().__init__(HConv3d,
                                          J1J2ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -685,7 +685,7 @@ class Conv3d(_UniformOperator):
                                          bias_init=bias_init,
                                          data_format=data_format)
         else:
-            super(Conv3d, self).__init__(HConv3d,
+            super().__init__(HConv3d,
                                          ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -821,7 +821,7 @@ class BatchNorm1d(_UniformOperator):
                  use_batch_statistics: bool = True,
                  has_diagonal_form: bool = False) -> None:
         if has_diagonal_form:
-            super(BatchNorm1d, self).__init__(HBatchNorm1d,
+            super().__init__(HBatchNorm1d,
                                               J1J2BatchNormImpl,
                                               num_features=num_features,
                                               eps=eps,
@@ -833,7 +833,7 @@ class BatchNorm1d(_UniformOperator):
                                               moving_var_init=moving_var_init,
                                               use_batch_statistics=use_batch_statistics)
         else:
-            super(BatchNorm1d, self).__init__(HBatchNorm1d,
+            super().__init__(HBatchNorm1d,
                                               BatchNormImpl,
                                               num_features=num_features,
                                               eps=eps,
@@ -970,7 +970,7 @@ class BatchNorm2d(_UniformOperator):
                  has_diagonal_form: bool = False,
                  data_format='NCHW') -> None:
         if has_diagonal_form:
-            super(BatchNorm2d, self).__init__(HBatchNorm2d,
+            super().__init__(HBatchNorm2d,
                                               J1J2BatchNormImpl,
                                               num_features=num_features,
                                               eps=eps,
@@ -983,7 +983,7 @@ class BatchNorm2d(_UniformOperator):
                                               use_batch_statistics=use_batch_statistics,
                                               data_format=data_format)
         else:
-            super(BatchNorm2d, self).__init__(HBatchNorm2d,
+            super().__init__(HBatchNorm2d,
                                               BatchNormImpl,
                                               num_features=num_features,
                                               eps=eps,
@@ -1120,7 +1120,7 @@ class BatchNorm3d(_UniformOperator):
                  has_diagonal_form: bool = False,
                  data_format='NCDHW') -> None:
         if has_diagonal_form:
-            super(BatchNorm3d, self).__init__(HBatchNorm3d,
+            super().__init__(HBatchNorm3d,
                                               J1J2BatchNormImpl,
                                               num_features=num_features,
                                               eps=eps,
@@ -1133,7 +1133,7 @@ class BatchNorm3d(_UniformOperator):
                                               use_batch_statistics=use_batch_statistics,
                                               data_format=data_format)
         else:
-            super(BatchNorm3d, self).__init__(HBatchNorm3d,
+            super().__init__(HBatchNorm3d,
                                               BatchNormImpl,
                                               num_features=num_features,
                                               eps=eps,
@@ -1244,7 +1244,7 @@ class Dense(_UniformOperator):
                  has_bias: bool = True,
                  has_diagonal_form: bool = False) -> None:
         if has_diagonal_form:
-            super(Dense, self).__init__(HDense,
+            super().__init__(HDense,
                                         J1J2DenseImpl,
                                         in_channels=in_channels,
                                         out_channels=out_channels,
@@ -1252,7 +1252,7 @@ class Dense(_UniformOperator):
                                         bias_init=bias_init,
                                         has_bias=has_bias)
         else:
-            super(Dense, self).__init__(HDense,
+            super().__init__(HDense,
                                         DenseImpl,
                                         in_channels=in_channels,
                                         out_channels=out_channels,
@@ -1321,7 +1321,7 @@ class ReLU(nn.Cell):
     """
 
     def __init__(self, has_diagonal_form: bool = False) -> None:
-        super(ReLU, self).__init__()
+        super().__init__()
         if has_diagonal_form:
             self.relu = J1J2ReLU()
         else:

@@ -218,7 +218,7 @@ class RMSProp(Optimizer):
     @opt_init_args_register
     def __init__(self, params, learning_rate=0.1, decay=0.9, momentum=0.0, epsilon=1e-10,
                  use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0):
-        super(RMSProp, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         validator.check_value_type("decay", decay, [float], self.cls_name)
         validator.check_non_negative_float(decay, "decay", self.cls_name)
         validator.check_value_type("momentum", momentum, [float], self.cls_name)

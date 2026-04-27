@@ -156,7 +156,7 @@ class Adadelta(Optimizer):
         >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self):
-        ...        super(Net, self).__init__()
+        ...        super().__init__()
         ...        self.conv = nn.Conv1d(120, 240, 4)
         ...        self.fc = nn.Dense(4, 1)
         ...    def construct(self, x):
@@ -186,7 +186,7 @@ class Adadelta(Optimizer):
 
     @opt_init_args_register
     def __init__(self, params, learning_rate=1.0, rho=0.9, epsilon=1e-6, loss_scale=1.0, weight_decay=0.0):
-        super(Adadelta, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(rho, epsilon, self.cls_name)
         self.accum = self.parameters.clone(prefix="accum", init=0)
         self.accum_update = self.parameters.clone(prefix="accum_update", init=0)

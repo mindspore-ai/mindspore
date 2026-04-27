@@ -44,7 +44,7 @@ class Loss(Metric):
         0.20000000298023224
     """
     def __init__(self):
-        super(Loss, self).__init__()
+        super().__init__()
         self.clear()
 
     def clear(self):

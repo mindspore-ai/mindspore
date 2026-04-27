@@ -43,7 +43,7 @@ class AugmentLagrangeMethod(Cell):
 
     def __init__(self, objective_func, param, lower, upper, obj_weight, cons_num, constraints, coincide_fun, bound_val):
         """Initialize Minimize lagrange."""
-        super(AugmentLagrangeMethod, self).__init__()
+        super().__init__()
         self.objective_func = objective_func
         self.cons_num = cons_num
         self.sigmoid = ops.Sigmoid()
@@ -139,7 +139,7 @@ class Loss(Cell):
     """compute loss from data and label"""
     def __init__(self):
         """Initialize the loss."""
-        super(Loss, self).__init__()
+        super().__init__()
 
     def construct(self, data, label):
         diff = data - label

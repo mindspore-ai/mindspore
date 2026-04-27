@@ -76,7 +76,7 @@ class Softplus(Bijector):
         """
         param = dict(locals())
         param['param_dict'] = {'sharpness': sharpness}
-        super(Softplus, self).__init__(name=name, dtype=None, param=param)
+        super().__init__(name=name, dtype=None, param=param)
         self._sharpness = self._add_parameter(sharpness, 'sharpness')
 
         self.exp = exp_generic

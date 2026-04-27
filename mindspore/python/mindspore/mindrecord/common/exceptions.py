@@ -27,51 +27,49 @@ Error rule:
 from .enums import LogRuntime, ErrorCodeType, ErrorLevel
 from .constant import SYS_ID
 
-EXCEPTIONS = dict(
+EXCEPTIONS = {
     # the format of list is [exception No, base error message]
-    UnknownError=[0, 'Unknown Error.'],
-    ParamTypeError=[1, 'Param type is error.'],
-    ParamValueError=[2, 'Param value is error.'],
-    ParamMissError=[3, 'Param missing.'],
-    PathNotExistsError=[4, 'Path does not exist.'],
-    DbConnectionError=[5, 'Db connection is error.'],
+    'UnknownError': [0, 'Unknown Error.'],
+    'ParamTypeError': [1, 'Param type is error.'],
+    'ParamValueError': [2, 'Param value is error.'],
+    'ParamMissError': [3, 'Param missing.'],
+    'PathNotExistsError': [4, 'Path does not exist.'],
+    'DbConnectionError': [5, 'Db connection is error.'],
 
     # MindRecord error 100-199 for shard*
-    MRMOpenError=[100, 'MindRecord could not open.'],
-    MRMOpenForAppendError=[101, 'MindRecord could not open for append.'],
-    MRMInvalidPageSizeError=[102, 'Failed to set page size.'],
-    MRMInvalidHeaderSizeError=[103, 'Failed to set header size.'],
-    MRMSetHeaderError=[104, 'Failed to set header.'],
-    MRMWriteDatasetError=[105, 'Failed to write dataset.'],
-    MRMCommitError=[107, 'Failed to commit.'],
+    'MRMOpenError': [100, 'MindRecord could not open.'],
+    'MRMOpenForAppendError': [101, 'MindRecord could not open for append.'],
+    'MRMInvalidPageSizeError': [102, 'Failed to set page size.'],
+    'MRMInvalidHeaderSizeError': [103, 'Failed to set header size.'],
+    'MRMSetHeaderError': [104, 'Failed to set header.'],
+    'MRMWriteDatasetError': [105, 'Failed to write dataset.'],
+    'MRMCommitError': [107, 'Failed to commit.'],
 
-    MRMLaunchError=[108, 'Failed to launch.'],
-    MRMFinishError=[109, 'Failed to finish.'],
-    MRMCloseError=[110, 'Failed to close.'],
+    'MRMLaunchError': [108, 'Failed to launch.'],
+    'MRMFinishError': [109, 'Failed to finish.'],
+    'MRMCloseError': [110, 'Failed to close.'],
 
-    MRMAddSchemaError=[111, 'Failed to add schema.'],
-    MRMAddIndexError=[112, 'Failed to add index field.'],
-    MRMBuildSchemaError=[113, 'Failed to build schema.'],
-    MRMGetMetaError=[114, 'Failed to get meta info.'],
+    'MRMAddSchemaError': [111, 'Failed to add schema.'],
+    'MRMAddIndexError': [112, 'Failed to add index field.'],
+    'MRMBuildSchemaError': [113, 'Failed to build schema.'],
+    'MRMGetMetaError': [114, 'Failed to get meta info.'],
 
-    MRMIndexGeneratorError=[115, 'Failed to create index generator.'],
-    MRMGenerateIndexError=[116, 'Failed to generate index.'],
+    'MRMIndexGeneratorError': [115, 'Failed to create index generator.'],
+    'MRMGenerateIndexError': [116, 'Failed to generate index.'],
 
-    MRMInitSegmentError=[117, 'Failed to initialize segment.'],
-    MRMFetchCandidateFieldsError=[118, 'Failed to fetch candidate category fields.'],
-    MRMReadCategoryInfoError=[119, 'Failed to read category information.'],
-    MRMFetchDataError=[120, 'Failed to fetch data by category.'],
-
+    'MRMInitSegmentError': [117, 'Failed to initialize segment.'],
+    'MRMFetchCandidateFieldsError': [118, 'Failed to fetch candidate category fields.'],
+    'MRMReadCategoryInfoError': [119, 'Failed to read category information.'],
+    'MRMFetchDataError': [120, 'Failed to fetch data by category.'],
 
     # MindRecord error 200-299 for File* and MindPage
-    MRMInvalidSchemaError=[200, 'Schema is error.'],
-    MRMValidateDataError=[201, 'Raw data is valid.'],
-    MRMDefineIndexError=[202, 'Index field is error.'],
-    MRMDefineBlobError=[203, 'Blob field is error.'],
-    MRMUnsupportedSchemaError=[204, 'Schema is not supported.'],
-    MRMDefineCategoryError=[205, 'Category field is error.'],
-
-)
+    'MRMInvalidSchemaError': [200, 'Schema is error.'],
+    'MRMValidateDataError': [201, 'Raw data is valid.'],
+    'MRMDefineIndexError': [202, 'Index field is error.'],
+    'MRMDefineBlobError': [203, 'Blob field is error.'],
+    'MRMUnsupportedSchemaError': [204, 'Schema is not supported.'],
+    'MRMDefineCategoryError': [205, 'Category field is error.'],
+}
 
 
 class MindRecordException(Exception):
@@ -79,7 +77,7 @@ class MindRecordException(Exception):
 
     def __init__(self):
         """Initialize an error which may occurs in mindrecord."""
-        super(MindRecordException, self).__init__()
+        super().__init__()
         class_name = self.__class__.__name__
         error_item = EXCEPTIONS.get(class_name) if class_name in EXCEPTIONS else EXCEPTIONS.get('UnknownError')
         self._error_msg = error_item[1]
@@ -143,7 +141,7 @@ class ParamValueError(MindRecordException):
     """
 
     def __init__(self, error_detail):
-        super(ParamValueError, self).__init__()
+        super().__init__()
         self.error_msg = 'Invalid parameter value. {}'.format(error_detail)
 
 
@@ -153,7 +151,7 @@ class ParamTypeError(MindRecordException):
     """
 
     def __init__(self, param_name, expected_type):
-        super(ParamTypeError, self).__init__()
+        super().__init__()
         self.error_msg = "Invalid parameter type. '{}' expect {} type." \
                          "".format(param_name, expected_type)
 
@@ -164,7 +162,7 @@ class ParamMissError(MindRecordException):
     """
 
     def __init__(self, param_name):
-        super(ParamMissError, self).__init__()
+        super().__init__()
         self.error_msg = "Param missing. '{}' is required.".format(param_name)
 
 
@@ -173,7 +171,7 @@ class PathNotExistsError(MindRecordException):
     invalid path.
     """
     def __init__(self, error_path):
-        super(PathNotExistsError, self).__init__()
+        super().__init__()
         self.error_msg = 'Invalid path. {}'.format(error_path)
 
 
@@ -182,7 +180,7 @@ class DbConnectionError(MindRecordException):
     Database connection error.
     """
     def __init__(self, error_detail):
-        super(DbConnectionError, self).__init__()
+        super().__init__()
         self.error_msg = 'Db connection is error. Detail: {}'.format(error_detail)
 
 
@@ -191,7 +189,7 @@ class MRMOpenError(MindRecordException):
     Raised when could not open mind record file successfully.
     """
     def __init__(self):
-        super(MRMOpenError, self).__init__()
+        super().__init__()
         self.error_msg = 'MindRecord File could not open successfully.'
 
 
@@ -200,7 +198,7 @@ class MRMOpenForAppendError(MindRecordException):
     Raised when could not open mind record file successfully for append.
     """
     def __init__(self):
-        super(MRMOpenForAppendError, self).__init__()
+        super().__init__()
         self.error_msg = 'MindRecord File could not open successfully for append.'
 
 
@@ -278,35 +276,35 @@ class MRMFetchDataError(MindRecordException):
 
 class MRMInvalidSchemaError(MindRecordException):
     def __init__(self, error_detail):
-        super(MRMInvalidSchemaError, self).__init__()
+        super().__init__()
         self.error_msg = 'Schema format is error. Detail: {}'.format(error_detail)
 
 
 class MRMValidateDataError(MindRecordException):
     def __init__(self, error_detail):
-        super(MRMValidateDataError, self).__init__()
+        super().__init__()
         self.error_msg = 'Raw data do not match the schema. Detail: {}'.format(error_detail)
 
 
 class MRMDefineIndexError(MindRecordException):
     def __init__(self, error_detail):
-        super(MRMDefineIndexError, self).__init__()
+        super().__init__()
         self.error_msg = 'Failed to define index field. Detail: {}'.format(error_detail)
 
 
 class MRMDefineBlobError(MindRecordException):
     def __init__(self, error_detail):
-        super(MRMDefineBlobError, self).__init__()
+        super().__init__()
         self.error_msg = 'Failed to define blob field. Detail: {}'.format(error_detail)
 
 
 class MRMUnsupportedSchemaError(MindRecordException):
     def __init__(self, error_detail):
-        super(MRMUnsupportedSchemaError, self).__init__()
+        super().__init__()
         self.error_msg = 'Schema is not supported. Detail: {}'.format(error_detail)
 
 
 class MRMDefineCategoryError(MindRecordException):
     def __init__(self, error_detail):
-        super(MRMDefineCategoryError, self).__init__()
+        super().__init__()
         self.error_msg = 'Failed to define category field. Detail: {}'.format(error_detail)

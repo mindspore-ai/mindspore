@@ -139,8 +139,8 @@ def _infer_out_shape(*shapes):
         if any(item not in (1, max_size) for item in items):
             raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
 
-    shape_out = list()
-    max_len = max([len(it) for it in shapes])
+    shape_out = []
+    max_len = max(len(it) for it in shapes)
     for i in range(max_len):
         items = [
             it[i - max_len + len(it)] if i - max_len + len(it) >= 0 else 1 for it in shapes]
@@ -155,7 +155,7 @@ def _can_broadcast(*shapes):
     """
     Returns Ture if shapes can broadcast, False if they cannot.
     """
-    max_len = max([len(it) for it in shapes])
+    max_len = max(len(it) for it in shapes)
     for i in range(max_len):
         items = [
             it[i - max_len + len(it)] if i - max_len + len(it) >= 0 else 1 for it in shapes]
@@ -383,7 +383,7 @@ def _canonicalize_axis(axis, ndim):
 
         return merge(left, right)
 
-    axis = tuple([canonicalizer(axis) for axis in axis])
+    axis = tuple(canonicalizer(axis) for axis in axis)
     _check()
     return tuple(_sort_axis(axis)) if len(axis) > 1 else axis[0]
 
@@ -419,7 +419,7 @@ def _expanded_shape(ndim, axis_size, axis):
     Returns a shape with size = 1 for all dimensions
     except at axis.
     """
-    return tuple([axis_size if i == axis else 1 for i in range(ndim)])
+    return tuple(axis_size if i == axis else 1 for i in range(ndim))
 
 
 @_primexpr

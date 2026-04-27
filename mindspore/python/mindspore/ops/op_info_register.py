@@ -317,7 +317,7 @@ class CpuRegOp(RegOp):
     """Class for Cpu op info register"""
 
     def __init__(self, op_name):
-        super(CpuRegOp, self).__init__(op_name)
+        super().__init__(op_name)
         self.imply_type = "CPU"
 
     def input(self, index=None, name=None, param_type=None, **kwargs):
@@ -376,7 +376,7 @@ class AkgRegOp(RegOp):
     """Class for Akg op info register."""
 
     def __init__(self, op_name, processor):
-        super(AkgRegOp, self).__init__(op_name)
+        super().__init__(op_name)
         self.imply_type = "AKG"
         self.processor = processor
 
@@ -435,21 +435,21 @@ class AkgGpuRegOp(AkgRegOp):
     """Class for AkgGpu op info register"""
 
     def __init__(self, op_name):
-        super(AkgGpuRegOp, self).__init__(op_name, "CUDA")
+        super().__init__(op_name, "CUDA")
 
 
 class AkgAscendRegOp(AkgRegOp):
     """Class for AkgAscend op info register"""
 
     def __init__(self, op_name):
-        super(AkgAscendRegOp, self).__init__(op_name, "AiCore")
+        super().__init__(op_name, "AiCore")
 
 
 class AkgCpuRegOp(AkgRegOp):
     """Class for AkgCpu op info register"""
 
     def __init__(self, op_name):
-        super(AkgCpuRegOp, self).__init__(op_name, "CPU")
+        super().__init__(op_name, "CPU")
 
 
 class AiCPURegOp(CpuRegOp):
@@ -483,7 +483,7 @@ class AiCPURegOp(CpuRegOp):
     """
 
     def __init__(self, op_name):
-        super(AiCPURegOp, self).__init__(op_name)
+        super().__init__(op_name)
         self.imply_type = "AiCPU"
 
 
@@ -527,7 +527,7 @@ class TBERegOp(RegOp):
     """
 
     def __init__(self, op_name):
-        super(TBERegOp, self).__init__(op_name)
+        super().__init__(op_name)
         self.imply_type = "TBE"
         self.async_flag_ = False
         self.binfile_ = ''
@@ -806,7 +806,7 @@ class CustomRegOp(RegOp):
     """
 
     def __init__(self, op_name="Custom"):
-        super(CustomRegOp, self).__init__(op_name)
+        super().__init__(op_name)
         self.target_ = "UnKnown"
 
     def input(self, index=None, name=None, param_type="required", **kwargs):
@@ -900,7 +900,7 @@ class CustomRegOp(RegOp):
         if len(args) != io_nums:
             raise ValueError("The size of 'args' must be equal to the sum of input tensors and output tensors, but got "
                              "{} vs {}".format(len(args), io_nums))
-        return super(CustomRegOp, self).dtype_format(*args)
+        return super().dtype_format(*args)
 
     def attr(self, name=None, param_type=None, value_type=None, default_value=None, **kwargs):
         """

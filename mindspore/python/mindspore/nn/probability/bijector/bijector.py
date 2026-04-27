@@ -68,7 +68,7 @@ class Bijector(Cell):
         """
         Constructor of Bijector class.
         """
-        super(Bijector, self).__init__()
+        super().__init__()
         validator.check_value_type('name', name, [str], type(self).__name__)
         validator.check_value_type(
             'is_constant_jacobian', is_constant_jacobian, [bool], name)
@@ -204,14 +204,14 @@ class Bijector(Cell):
                 broadcast_shape_tensor = cast_to_tensor(value)
             else:
                 value = cast_to_tensor(value)
-                broadcast_shape_tensor = (value + broadcast_shape_tensor)
+                broadcast_shape_tensor = value + broadcast_shape_tensor
         return broadcast_shape_tensor.shape
 
     def _check_is_scalar_batch(self):
         """
         Check if the parameters used during initialization are scalars.
         """
-        if 'param_dict' not in self.parameters.keys():
+        if 'param_dict' not in self.parameters:
             return False
         param_dict = self.parameters.get('param_dict')
         for value in param_dict.values():
@@ -313,7 +313,7 @@ class Bijector(Cell):
         """
         if isinstance(args[0], Distribution):
             return TransformedDistribution(self, args[0])
-        return super(Bijector, self).__call__(*args, **kwargs)
+        return super().__call__(*args, **kwargs)
 
     def construct(self, name, *args, **kwargs):
         """

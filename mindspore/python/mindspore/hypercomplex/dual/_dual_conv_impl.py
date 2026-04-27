@@ -127,7 +127,7 @@ class _ReDuConvImpl(BaseConvImpl):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number],
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
-        super(_ReDuConvImpl, self).__init__(weight_init, weight_shape, **factory_kwargs)
+        super().__init__(weight_init, weight_shape, **factory_kwargs)
         data_format = factory_kwargs.get('data_format', 'nchw')
         self.c_idx = data_format.lower().find('c')
         if self.c_idx < 0:

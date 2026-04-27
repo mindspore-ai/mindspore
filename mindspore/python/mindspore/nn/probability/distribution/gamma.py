@@ -169,7 +169,7 @@ class Gamma(Distribution):
         if isinstance(rate, (int, float)):
             raise TypeError("Input rate can't be scalar")
 
-        super(Gamma, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._concentration = self._add_parameter(
             concentration, 'concentration')

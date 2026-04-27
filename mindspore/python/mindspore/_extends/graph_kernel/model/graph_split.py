@@ -189,7 +189,7 @@ class ReshapeElimChecker:
                 else:
                     rin.append(in_idx)
             if out_idx > out_ext:
-                rout.extend([i for i in range(out_idx, out_ext, -1)])
+                rout.extend(list(range(out_idx, out_ext, -1)))
             return rin, rout
 
         remap_in, remap_out = _get_remap_axis(reshape.inputs[0].shape, reshape.output.shape)
@@ -273,11 +273,11 @@ class ReshapeElimChecker:
     def check(self, ops, is_fwd):
         """ fuse check """
         if is_fwd:
-            fwd_res = all([op not in self.exc_fwd for op in ops]) if self.exc_fwd is not None else False
+            fwd_res = all(op not in self.exc_fwd for op in ops) if self.exc_fwd is not None else False
             bwd_res = self.exc_bwd is not None
         else:
             fwd_res = self.exc_fwd is not None
-            bwd_res = all([op not in self.exc_bwd for op in ops]) if self.exc_bwd is not None else False
+            bwd_res = all(op not in self.exc_bwd for op in ops) if self.exc_bwd is not None else False
         return [fwd_res, bwd_res] if fwd_res or bwd_res else False
 
     def commit(self, res):
@@ -377,8 +377,8 @@ class GraphSplitByPattern:
         def __init__(self, init_op, is_output, unique_id, reach_tab):
             self.pattern = PrimLib.iter_type(init_op) if init_op is not None else PrimLib.UNKNOWN
             self.ops = [] if init_op is None else [init_op]
-            self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
-            self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
+            self.in_relations = {}  # {area1: relation1, area2: relation2, ...}
+            self.out_relations = {}  # {area1: relation1, area2: relation2, ...}
             self.mode = None
             self.stitch_info = self.StitchInfo()
             self.recompute_ops = []
@@ -469,8 +469,7 @@ class GraphSplitByPattern:
                 relations[a] = max(r, relations[a]) if a in relations else r
 
             def _update_pattern():
-                if area.pattern > self.pattern:
-                    self.pattern = area.pattern
+                self.pattern = max(self.pattern, area.pattern)
                 if area in self.in_relations and self.in_relations.get(area) > self.pattern:
                     self.pattern = self.in_relations.get(area)
 
@@ -883,7 +882,7 @@ class GraphSplitByPattern:
             for op in borders:
                 prod_ops, inputs = prods[op]
                 if prod_ops:
-                    if sum([t.get_size() for t in inputs]) <= op.output.get_size():
+                    if sum(t.get_size() for t in inputs) <= op.output.get_size():
                         pred = self.area_map.get(inputs[0].op) if inputs and inputs[0].op else None
                         result.append([pred, prod_ops[::-1]])
             return result
@@ -1289,7 +1288,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                         _same_input(dom.dom_op(), a.dom_op())):
                     return [a], True
                 if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
-                        any([op.output in fuse_tensor for op in a.ops]):
+                        any(op.output in fuse_tensor for op in a.ops):
                     return [a], True
             return [], False
 

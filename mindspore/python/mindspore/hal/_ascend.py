@@ -24,7 +24,7 @@ class _HalAscend(_HalBase):
     Hal ascend interfaces.
     """
     def __init__(self):
-        super(_HalAscend, self).__init__("Ascend")
+        super().__init__("Ascend")
 
     def device_count(self):
         """

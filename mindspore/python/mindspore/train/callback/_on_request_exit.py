@@ -81,7 +81,7 @@ class OnRequestExit(Callback):
 
     def __init__(self, save_ckpt=True, save_mindir=True, file_name='Net', directory='./', config_file=None,
                  sig=signal.SIGTERM):
-        super(OnRequestExit, self).__init__()
+        super().__init__()
         self.save_ckpt = Validator.check_isinstance('save_ckpt', save_ckpt, bool)
         self.save_mindir = Validator.check_isinstance('save_mindir', save_mindir, bool)
         self.sig = Validator.check_isinstance('sig', sig, int)
@@ -287,7 +287,7 @@ class OnRequestExit(Callback):
     def _check_config_info(self):
         """check json config info"""
         if self.remote_config_file is not None and os.path.exists(self.remote_config_file):
-            with open(self.remote_config_file, "r") as f:
+            with open(self.remote_config_file, "r", encoding='utf-8') as f:
                 try:
                     config_info = json.load(f)
                 except json.JSONDecodeError as e:

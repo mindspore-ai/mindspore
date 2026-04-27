@@ -39,7 +39,7 @@ class Invert(Bijector):
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         self.origin = msb.ScalarAffine(scale=2.0, shift=1.0)
         ...         self.invert = msb.Invert(self.origin)
         ...
@@ -59,7 +59,7 @@ class Invert(Bijector):
         validator.check_value_type('bijector', bijector, [Bijector], "Invert")
         name = name or ('Invert' + bijector.name)
         param["name"] = name
-        super(Invert, self).__init__(is_constant_jacobian=bijector.is_constant_jacobian,
+        super().__init__(is_constant_jacobian=bijector.is_constant_jacobian,
                                      is_injective=bijector.is_injective,
                                      name=name,
                                      dtype=bijector.dtype,

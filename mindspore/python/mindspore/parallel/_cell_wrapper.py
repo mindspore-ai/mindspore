@@ -42,7 +42,7 @@ class AllGatherCell(Cell):
     """
 
     def __init__(self, group, do_reshape, after_reshape_slice_shape):
-        super(AllGatherCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.allgather = AllGather(group)
         self.do_reshape = do_reshape
         self.after_reshape_slice_shape = tuple(after_reshape_slice_shape)
@@ -67,7 +67,7 @@ class SaveOptShardCkptCell(Cell):
     """
 
     def __init__(self, group, do_reshape, after_reshape_slice_shape):
-        super(SaveOptShardCkptCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.allgather1 = AllGather(group)
         self.allgather2 = AllGather()
         self.do_reshape = do_reshape
@@ -89,7 +89,7 @@ class SingleCommunicator(Cell):
     """
 
     def __init__(self, group_name):
-        super(SingleCommunicator, self).__init__()
+        super().__init__()
         self.allreduce = P.AllReduce(group=group_name)
         self.add_flags(skip_auto_parallel_compile=True)
 

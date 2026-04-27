@@ -24,7 +24,7 @@ class _HalGPU(_HalBase):
     Hal gpu interfaces.
     """
     def __init__(self):
-        super(_HalGPU, self).__init__("GPU")
+        super().__init__("GPU")
 
     def device_count(self):
         """

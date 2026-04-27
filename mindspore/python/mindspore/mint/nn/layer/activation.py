@@ -69,7 +69,7 @@ class SiLU(Cell):
 
     def __init__(self, inplace=False):
         """Initialize SiLU."""
-        super(SiLU, self).__init__()
+        super().__init__()
         self.inplace = inplace
 
     def construct(self, x):
@@ -112,7 +112,7 @@ class Sigmoid(Cell):
     """
     def __init__(self):
         """Initialize Sigmoid."""
-        super(Sigmoid, self).__init__()
+        super().__init__()
 
     def construct(self, input):
         return mint.nn.functional.sigmoid(input)
@@ -155,7 +155,7 @@ class LogSigmoid(Cell):
     """
     def __init__(self):
         """Initialize LogSigmoid."""
-        super(LogSigmoid, self).__init__()
+        super().__init__()
 
     def construct(self, input):
         return mint.nn.functional.logsigmoid(input)
@@ -213,7 +213,7 @@ class ELU(Cell):
 
     def __init__(self, alpha=1.0, inplace=False):
         """Initialize ELU."""
-        super(ELU, self).__init__()
+        super().__init__()
         self.alpha = alpha
         self.inplace = inplace
 
@@ -311,7 +311,7 @@ class Tanh(Cell):
 
     def __init__(self):
         """Initialize Tanh."""
-        super(Tanh, self).__init__()
+        super().__init__()
 
     def construct(self, input):
         return mint.nn.functional.tanh(input)
@@ -355,7 +355,7 @@ class Threshold(Cell):
 
     def __init__(self, threshold, value, inplace=False):
         """Initialize Threshold."""
-        super(Threshold, self).__init__()
+        super().__init__()
         self.threshold = threshold
         self.value = value
         self.inplace = inplace

@@ -61,7 +61,7 @@ class CommonHeadLastFN(Cell):
                  weight_init='normal',
                  bias_init='zeros',
                  has_bias=True):
-        super(CommonHeadLastFN, self).__init__()
+        super().__init__()
         weight_shape = [out_channels, in_channels]
         self.weight = Parameter(initializer(weight_init, weight_shape), requires_grad=True, name='weight')
         self.x_norm = P.L2Normalize(axis=1)
@@ -103,7 +103,7 @@ class LessBN(Cell):
         >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self, in_features, out_features):
-        ...        super(Net, self).__init__()
+        ...        super().__init__()
         ...        self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
         ...                                name='weight')
         ...        self.matmul = ops.MatMul()
@@ -123,7 +123,7 @@ class LessBN(Cell):
     """
 
     def __init__(self, network, fn_flag=False):
-        super(LessBN, self).__init__()
+        super().__init__()
         self.network = network
         if "less_bn" not in self.network.get_flags():
             self.network.set_boost("less_bn")

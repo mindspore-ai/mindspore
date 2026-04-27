@@ -124,14 +124,14 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         Parameter (name=network.embedding_table, shape=(12,), dtype=Float64, requires_grad=True)
     """
     if not isinstance(sliced_parameters, list):
-        raise TypeError(f"For 'merge_sliced_parameter', the argument 'sliced_parameters' should be list, "
+        raise TypeError("For 'merge_sliced_parameter', the argument 'sliced_parameters' should be list, "
                         f"but got {type(sliced_parameters)}.")
 
     if not sliced_parameters:
         raise ValueError("For 'merge_sliced_parameter', the argument 'sliced_parameters' should not be empty.")
 
     if strategy and not isinstance(strategy, dict):
-        raise TypeError(f"For 'merge_sliced_parameter', the argument 'strategy' should be dict, "
+        raise TypeError("For 'merge_sliced_parameter', the argument 'strategy' should be dict, "
                         f"but got {type(strategy)}.")
 
     try:
@@ -139,20 +139,20 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         parameter_shape = sliced_parameters[0].data.shape
         parameter_shape_length = len(parameter_shape)
     except BaseException as e:
-        raise TypeError(e.__str__() + f" For 'merge_sliced_parameter', the element in 'sliced_parameters' should be "
+        raise TypeError(e.__str__() + " For 'merge_sliced_parameter', the element in 'sliced_parameters' should be "
                                       f"'Parameter', but got {type(sliced_parameters[0])} at index 0.") from e
 
     is_even = True
     for index, parameter in enumerate(sliced_parameters):
         if not isinstance(parameter, Parameter):
-            raise TypeError(f"For 'merge_sliced_parameter', the element in 'sliced_parameters' should be 'Parameter', "
+            raise TypeError("For 'merge_sliced_parameter', the element in 'sliced_parameters' should be 'Parameter', "
                             f"but got {type(parameter)} at index {index}.")
 
         if parameter.name != parameter_name \
                 or len(parameter.data.shape) != parameter_shape_length \
                 or parameter.data.shape[1:] != parameter_shape[1:]:
-            raise ValueError(f"For 'merge_sliced_parameter', please make sure that the elements in 'slice_parameters'"
-                             f" have the same name, dimension length and shape except 0 axis. The name, dimension "
+            raise ValueError("For 'merge_sliced_parameter', please make sure that the elements in 'slice_parameters'"
+                             " have the same name, dimension length and shape except 0 axis. The name, dimension "
                              f"length, shape except 0 axis should be {parameter_name}, {parameter_shape_length}, "
                              f"{parameter_shape[1:]}, but got name: {parameter.name}, dimension length: "
                              f"{len(parameter.data.shape)}, shape except 0 axis: {parameter.data.shape[1:]} "
@@ -179,7 +179,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
     else:
         if parameter_name not in strategy.keys():
             raise KeyError(f"For 'merge_sliced_parameter', the parameter name {parameter_name} should be a key in "
-                           f"the 'strategy'. Please check 'sliced_parameter' and 'strategy'.")
+                           "the 'strategy'. Please check 'sliced_parameter' and 'strategy'.")
         merged_tensor = _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even)
         merged_parameter = Parameter(merged_tensor, parameter_name, requires_grad, layerwise_parallel)
 
@@ -228,14 +228,14 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
         field_size = int(layout.field)
     except BaseException as e:
         raise ValueError(f"{e.__str__()}. For 'merge_sliced_parameter'"
-                         f", please make sure that 'strategy' is correct.") from e
+                         ", please make sure that 'strategy' is correct.") from e
 
     device_count = 1
     for dim in dev_mat:
         device_count *= dim
 
     if len(sliced_data) != device_count:
-        raise ValueError(f"For 'merge_sliced_parameter', the length of 'sliced_parameters' should be equal to "
+        raise ValueError("For 'merge_sliced_parameter', the length of 'sliced_parameters' should be equal to "
                          f"device_count. The length of 'sliced_parameters' is {len(sliced_data)}, but "
                          f"device_count is {device_count}.")
 
@@ -259,7 +259,7 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
             slice_count *= dim
 
         if len(param_split_shape) != slice_count:
-            raise ValueError(f"For 'merge_sliced_parameter', the param_split_shape length in 'strategy' should be "
+            raise ValueError("For 'merge_sliced_parameter', the param_split_shape length in 'strategy' should be "
                              f"{slice_count}, but got {len(param_split_shape)}.")
 
         tensor_slices_new = list(range(slice_count))
@@ -1121,34 +1121,34 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
     """
     if format not in ['safetensors', 'ckpt'] or output_format not in ['safetensors', 'ckpt']:
         raise ValueError(
-            f"For 'load_distributed_checkpoint', 'format' and 'output_format' "
+            "For 'load_distributed_checkpoint', 'format' and 'output_format' "
             f"must be 'ckpt' or 'safetensors', but got {format}.")
 
     if format == 'safetensors':
         if unified_safetensors_dir is None:
-            raise ValueError(f"For 'load_distributed_checkpoint', 'unified_safetensors_dir' can not be None "
-                             f"when format is 'safetensors'.")
+            raise ValueError("For 'load_distributed_checkpoint', 'unified_safetensors_dir' can not be None "
+                             "when format is 'safetensors'.")
         unsupport_param = [checkpoint_filenames, train_strategy_filename, dec_key]
         for param in unsupport_param:
             if param is not None:
                 raise ValueError(f"For 'load_distributed_checkpoint', {param} must be None "
-                                 f"when format is 'safetensors'.")
+                                 "when format is 'safetensors'.")
         if strict_load or dec_mode != 'AES-GCM':
-            raise ValueError(f"For 'load_distributed_checkpoint', strict_load and dec_mode must be default "
-                             f"when format is 'safetensors'.")
+            raise ValueError("For 'load_distributed_checkpoint', strict_load and dec_mode must be default "
+                             "when format is 'safetensors'.")
         if network is not None:
             try:
                 rank_id = get_rank()
             except RuntimeError:
                 rank_id = 0
-                logger.warning(f"Get rank failed, default loading weight for rank 0.")
+                logger.warning("Get rank failed, default loading weight for rank 0.")
             param_dict = _load_parallel_checkpoint(
                 (unified_safetensors_dir, predict_strategy, network, None, rank_id, output_format, name_map,
                  return_param_dict))
             return param_dict
         if dst_safetensors_dir is None:
-            raise ValueError(f"For 'load_distributed_checkpoint', 'dst_safetensors_dir' can not be None "
-                             f"when network is None.")
+            raise ValueError("For 'load_distributed_checkpoint', 'dst_safetensors_dir' can not be None "
+                             "when network is None.")
         if rank_id is not None:
             _load_parallel_checkpoint(
                 (unified_safetensors_dir, predict_strategy, network, dst_safetensors_dir,
@@ -1188,9 +1188,9 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
     for dim in train_strategy[list(train_strategy.keys())[0]][0]:
         train_dev_count *= dim
     if train_dev_count != ckpt_file_len:
-        raise ValueError(f"For 'Load_distributed_checkpoint', the length of 'checkpoint_filenames' should be "
-                         f"equal to the device count of training process. "
-                         f"But got the length of 'checkpoint_filenames'"
+        raise ValueError("For 'Load_distributed_checkpoint', the length of 'checkpoint_filenames' should be "
+                         "equal to the device count of training process. "
+                         "But got the length of 'checkpoint_filenames'"
                          f" is {ckpt_file_len} and the device count is {train_dev_count}.")
     rank_list = _infer_rank_list(train_strategy, predict_strategy)
 
@@ -1277,7 +1277,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
             except BaseException as e:
                 logger.critical("Failed to load opt shard slice in load distributed checkpoint for {}. Data shape is {}"
                                 " and group is {}".format(param.name, split_param.data.shape, opt_shard_group))
-                raise RuntimeError(e.__str__() + f"\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
+                raise RuntimeError(e.__str__() + "\nFor 'load_distributed_checkpoint', failed to load opt shard slice"
                                                  f" in load distributed checkpoint for {param.name}. Data shape is "
                                                  f"{split_param.data.shape} and group is {opt_shard_group}.") from e
             split_param = Parameter(Tensor(data_slice), param.name,
@@ -1322,7 +1322,7 @@ def restore_group_info_list(group_info_file_name):
         >>> ms.restore_list = restore_group_info_list("./group_info.pb")
     """
     if not isinstance(group_info_file_name, str):
-        raise TypeError(f"For 'restore_group_info_list', the argument 'group_info_file_name' should be str, "
+        raise TypeError("For 'restore_group_info_list', the argument 'group_info_file_name' should be str, "
                         f"but got {type(group_info_file_name)}.")
 
     if not os.path.isfile(group_info_file_name):

@@ -27,7 +27,7 @@ from mindspore.common import mutable
 
 class _FirstGrad(Cell):
     def __init__(self, fn):
-        super(_FirstGrad, self).__init__()
+        super().__init__()
         self.first_grad_op = ops.GradOperation(sens_param=True, get_all=True)
         self.fn = fn
 
@@ -37,7 +37,7 @@ class _FirstGrad(Cell):
 
 class _JvpFirstGrad(Cell):
     def __init__(self):
-        super(_JvpFirstGrad, self).__init__()
+        super().__init__()
         self.first_grad_op = ops.GradOperation(sens_param=True, get_all=True)
 
     def construct(self, u, fn, first_grad_input):
@@ -46,7 +46,7 @@ class _JvpFirstGrad(Cell):
 
 class _FirstGradSingleValue(Cell):
     def __init__(self, fn):
-        super(_FirstGradSingleValue, self).__init__()
+        super().__init__()
         self.first_grad_single_value_op = ops.GradOperation(sens_param=True)
         self.fn = fn
 
@@ -56,7 +56,7 @@ class _FirstGradSingleValue(Cell):
 
 class _JvpFirstGradSingleValue(Cell):
     def __init__(self):
-        super(_JvpFirstGradSingleValue, self).__init__()
+        super().__init__()
         self.first_grad_single_value_op = ops.GradOperation(sens_param=True)
 
     def construct(self, u, fn, first_grad_single_value_input):
@@ -73,7 +73,7 @@ class Jvp(Cell):
 
     @deprecated("1.9", "ops.jvp", True)
     def __init__(self, fn):
-        super(Jvp, self).__init__()
+        super().__init__()
         self.fn = fn
         self.oneslike = ops.OnesLike()
         self.first_grad = _FirstGrad(fn)
@@ -115,7 +115,7 @@ class _JvpInner(Cell):
     """
 
     def __init__(self):
-        super(_JvpInner, self).__init__()
+        super().__init__()
         self.oneslike = ops.OnesLike()
         self.first_grad = _JvpFirstGrad()
         self.first_grad.add_flags(enable_tuple_grad_first=True)
@@ -177,7 +177,7 @@ class Vjp(Cell):
 
     @deprecated("1.9", "ops.vjp", True)
     def __init__(self, fn):
-        super(Vjp, self).__init__()
+        super().__init__()
         self.fn = fn
         self.grad = ops.GradOperation(get_all=True, sens_param=True)
         self.grad_single_value = ops.GradOperation(sens_param=True)

@@ -59,7 +59,7 @@ class ProfilerPathManager:
         elif dir_name is None:
             self._dir_path = dir_name
         else:
-            logger.warning(f"Invalid parameter dir_name, reset it to default.")
+            logger.warning("Invalid parameter dir_name, reset it to default.")
             self._dir_path = None
 
         if self._dir_path:
@@ -139,7 +139,7 @@ class ProfilerPathManager:
                     shutil.copy(db_file, new_file_name)
                 else:
                     new_file_name = f"ascend_mindspore_profiler_{self._prof_ctx.rank_id}.db" if self._prof_ctx.rank_id \
-                        else f"ascend_mindspore_profiler.db"
+                        else "ascend_mindspore_profiler.db"
                     new_file_path = os.path.join(self._prof_ctx.ascend_profiler_output_path, new_file_name)
                     shutil.move(db_file, new_file_path)
 

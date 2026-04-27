@@ -42,7 +42,7 @@ class _UniformOperator(Cell):
                  hc_op,
                  hc_impl,
                  **kwargs) -> None:
-        super(_UniformOperator, self).__init__()
+        super().__init__()
         self.op = hc_op(hc_impl, **kwargs)
 
     def construct(self, x):

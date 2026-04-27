@@ -39,7 +39,7 @@ class _DenseVariational(Cell):
             weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
             bias_posterior_fn=normal_post_fn):
-        super(_DenseVariational, self).__init__()
+        super().__init__()
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
@@ -186,7 +186,7 @@ class DenseReparam(_DenseVariational):
             weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
             bias_posterior_fn=normal_post_fn):
-        super(DenseReparam, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             activation=activation,
@@ -280,7 +280,7 @@ class DenseLocalReparam(_DenseVariational):
             weight_posterior_fn=normal_post_fn,
             bias_prior_fn=NormalPrior,
             bias_posterior_fn=normal_post_fn):
-        super(DenseLocalReparam, self).__init__(
+        super().__init__(
             in_channels,
             out_channels,
             activation=activation,

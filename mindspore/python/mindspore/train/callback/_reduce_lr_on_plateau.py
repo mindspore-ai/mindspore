@@ -102,7 +102,7 @@ class ReduceLROnPlateau(Callback):
     """
     def __init__(self, monitor='eval_loss', factor=0.1, patience=10, verbose=False,
                  mode='auto', min_delta=1e-4, cooldown=0, min_lr=0):
-        super(ReduceLROnPlateau, self).__init__()
+        super().__init__()
         self.monitor = Validator.check_value_type('monitor', monitor, str)
         self.factor = Validator.check_float_range(factor, 0.0, 1.0, Validator.INC_NEITHER)
         self.patience = Validator.check_non_negative_int(patience)
@@ -224,7 +224,7 @@ class ValueReduce(nn.Cell):
     For more details, please refer to :class:`mindspore.ops.AllReduce`.
     """
     def __init__(self):
-        super(ValueReduce, self).__init__()
+        super().__init__()
         self.allreduce = ops.AllReduce(ReduceOp.SUM)
 
     def construct(self, x):

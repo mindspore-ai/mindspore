@@ -89,7 +89,7 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
     Validator.check_isinstance("dynamic_axes", dynamic_axes, dict)
 
     if check_input_dataset(*inputs, dataset_type=Dataset):
-        raise ValueError(f"Can not support dataset as inputs to export ONNX model.")
+        raise ValueError("Can not support dataset as inputs to export ONNX model.")
 
     cell_mode = net.training
     net.set_train(mode=False)

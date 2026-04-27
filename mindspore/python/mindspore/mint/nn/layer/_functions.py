@@ -31,9 +31,10 @@ shape = ops.Shape()
 
 
 class AllGather(PrimitiveWithInfer):
+    """AllGather operation for distributed training."""
     @prim_arg_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
-        super(AllGather, self).__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__)
         self.group = _get_group(group)
         validator.check_value_type('group', self.group, (str,), self.name)
         self.rank = get_rank(self.group)
@@ -61,6 +62,7 @@ class AllGather(PrimitiveWithInfer):
 
 
 class AllReduce(Primitive):
+    """AllReduce operation for distributed training."""
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         """Initialize AllReduce."""
@@ -83,8 +85,9 @@ class AllReduce(Primitive):
 
 
 class SyncBatchNormInner(Cell):
+    """SyncBatchNorm inner implementation for distributed training."""
     def __init__(self, self_num_features, self_world_size):
-        super(SyncBatchNormInner, self).__init__()
+        super().__init__()
         self.num_features = self_num_features
         self.world_size = self_world_size
 
@@ -132,6 +135,7 @@ class SyncBatchNormInner(Cell):
 
     def bprop(self, input_x, weight, bias, running_mean, running_var, eps, momentum,
               process_group, world_size, output, doutput):
+        """Backward propagation for SyncBatchNorm."""
         _, mean_param, invstd_param, count_all_param = output
         dout, _, _, _ = doutput
 
@@ -190,8 +194,9 @@ class SyncBatchNormInner(Cell):
 
 
 class _SyncBatchNorm(Cell):
+    """SyncBatchNorm wrapper for distributed training."""
     def __init__(self, num_features, world_size, dtype=mindspore.float32):
-        super(_SyncBatchNorm, self).__init__()
+        super().__init__()
         self.num_features = num_features
         self.world_size = world_size
         self.inner = SyncBatchNormInner(self.num_features, self.world_size)

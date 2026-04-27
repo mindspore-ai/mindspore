@@ -400,7 +400,7 @@ def slice2indices(input_slice, shape):
     if check_slice_empty(start, stop, step):
         return False
     ndim = len(shape)
-    mesh = list()
+    mesh = []
     range_op = P.Range()
     cast_op = P.Cast()
     grids = [
@@ -412,11 +412,10 @@ def slice2indices(input_slice, shape):
                  Tensor(1, mstype.int64)) for dim_size in shape[1:]
     ]
     for j, grid in enumerate(grids):
-        mesh.append(P.Reshape()(grid, tuple(
-            [grid.size if j == t else 1 for t in range(ndim)])))
+        mesh.append(P.Reshape()(grid, tuple(grid.size if j == t else 1 for t in range(ndim))))
     shapes = map(P.Shape(), mesh)
     out_shape = infer_out_shape(*shapes)
-    mesh_arrays = list()
+    mesh_arrays = []
     for arr in mesh:
         mesh_arrays.append(P.BroadcastTo(out_shape)(arr))
     return P.Stack(-1)(mesh_arrays)
@@ -751,7 +750,7 @@ def filter_expanded_dims(shape, not_expanded_dim):
 
     diff = len(not_expanded_dim) - len(shape)
     _check(diff, shape)
-    res = list()
+    res = []
     for i, flag in zip(shape, not_expanded_dim[diff:]):
         if flag:
             res.append(i)
@@ -822,8 +821,8 @@ def infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
-    shape_out = list()
-    max_len = max([len(it) for it in shapes])
+    shape_out = []
+    max_len = max(len(it) for it in shapes)
 
     for i in range(max_len):
         items = [it[i-max_len+len(it)] if i-max_len +

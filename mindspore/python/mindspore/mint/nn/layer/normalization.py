@@ -36,7 +36,7 @@ class _NormBase(Cell):
                  track_running_stats: bool = True,
                  dtype=None
                  ) -> None:
-        super(_NormBase, self).__init__()
+        super().__init__()
         self.shape = ops.Shape()
         self.num_features = num_features
         self.eps = eps
@@ -107,7 +107,7 @@ class _BatchNorm(_NormBase):
             affine=True,
             track_running_stats=True,
             dtype=None) -> None:
-        super(_BatchNorm, self).__init__(num_features, eps, momentum, affine, track_running_stats,
+        super().__init__(num_features, eps, momentum, affine, track_running_stats,
                                          dtype)
 
 
@@ -405,7 +405,7 @@ class GroupNorm(Cell):
 
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, dtype=None):
         """Initialize GroupNorm."""
-        super(GroupNorm, self).__init__()
+        super().__init__()
         ms_dtype = mstype.float32 if dtype is None else dtype
         weight_init = 'ones'
         bias_init = 'zeros'
@@ -528,7 +528,7 @@ class SyncBatchNorm(_BatchNorm):
                  track_running_stats: bool = True,
                  process_group: Optional[str] = None,
                  dtype=None):
-        super(SyncBatchNorm, self).__init__(
+        super().__init__(
             num_features, eps, momentum, affine, track_running_stats, dtype
         )
 

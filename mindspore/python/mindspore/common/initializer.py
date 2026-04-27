@@ -26,7 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import _random_normal, _random_uniform, _truncated_normal
 
-_INITIALIZER_ALIAS = dict()
+_INITIALIZER_ALIAS = {}
 
 
 class Initializer:
@@ -346,7 +346,7 @@ class XavierUniform(Initializer):
     """
 
     def __init__(self, gain=1):
-        super(XavierUniform, self).__init__(gain=gain)
+        super().__init__(gain=gain)
         self.gain = gain
 
     def _initialize(self, arr):
@@ -393,7 +393,7 @@ class HeUniform(Initializer):
     """
 
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
-        super(HeUniform, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
+        super().__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
         self.negative_slope = negative_slope
         self.mode = mode
         self.nonlinearity = nonlinearity
@@ -442,7 +442,7 @@ class HeNormal(Initializer):
     """
 
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
-        super(HeNormal, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
+        super().__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
         self.negative_slope = negative_slope
         self.mode = mode
         self.nonlinearity = nonlinearity
@@ -473,7 +473,7 @@ class Constant(Initializer):
     """
 
     def __init__(self, value):
-        super(Constant, self).__init__(value=value)
+        super().__init__(value=value)
         self.value = value
 
     def _initialize(self, arr):
@@ -524,7 +524,7 @@ class Sparse(Initializer):
     """
 
     def __init__(self, sparsity, sigma=0.01):
-        super(Sparse, self).__init__()
+        super().__init__()
         self.sparsity = sparsity
         self.sigma = sigma
 
@@ -564,7 +564,7 @@ class Dirac(Initializer):
     """
 
     def __init__(self, groups=1):
-        super(Dirac, self).__init__()
+        super().__init__()
         self.groups = groups
 
     def _initialize(self, arr):
@@ -616,7 +616,7 @@ class Orthogonal(Initializer):
     """
 
     def __init__(self, gain=1.):
-        super(Orthogonal, self).__init__(gain=gain)
+        super().__init__(gain=gain)
         self.gain = gain
 
     def _initialize(self, arr):
@@ -680,7 +680,7 @@ class VarianceScaling(Initializer):
     """
 
     def __init__(self, scale=1.0, mode='fan_in', distribution='truncated_normal'):
-        super(VarianceScaling, self).__init__(scale=scale, mode=mode, distribution=distribution)
+        super().__init__(scale=scale, mode=mode, distribution=distribution)
         if scale <= 0.:
             raise ValueError("For VarianceScaling initializer, "
                              "the argument 'scale' must be greater than 0, but got {}.".format(scale))
@@ -737,7 +737,7 @@ class Uniform(Initializer):
     """
 
     def __init__(self, scale=0.07):
-        super(Uniform, self).__init__(scale=scale)
+        super().__init__(scale=scale)
         self.scale = scale
 
     def _initialize(self, arr):
@@ -770,7 +770,7 @@ class Normal(Initializer):
     """
 
     def __init__(self, sigma=0.01, mean=0.0):
-        super(Normal, self).__init__(sigma=sigma, mean=mean)
+        super().__init__(sigma=sigma, mean=mean)
         self.sigma = sigma
         self.mean = mean
 
@@ -802,7 +802,7 @@ class TruncatedNormal(Initializer):
     """
 
     def __init__(self, sigma=0.01, mean=0.0, a=-2.0, b=2.0):
-        super(TruncatedNormal, self).__init__(sigma=sigma, mean=mean, a=a, b=b)
+        super().__init__(sigma=sigma, mean=mean, a=a, b=b)
         self.sigma = sigma
         self.mean = mean
         self.a = a

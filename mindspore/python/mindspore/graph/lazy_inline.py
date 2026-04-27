@@ -222,7 +222,7 @@ def lazy_inline(fn=None, attrs=None, policy=None):
             if isinstance(policy, str) and policy == "front":
                 self.no_inline = False
             elif policy is not None:
-                raise ValueError(f"policy must be None or 'front'")
+                raise ValueError("policy must be None or 'front'")
 
             if attrs is None:
                 self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
@@ -231,14 +231,14 @@ def lazy_inline(fn=None, attrs=None, policy=None):
             if isinstance(attrs, list):
                 for attr in attrs:
                     if not isinstance(attr, str):
-                        raise ValueError(f"attr must be a string")
+                        raise ValueError("attr must be a string")
                     if hasattr(self, attr):
                         new_args.append(getattr(self, attr))
             elif isinstance(attrs, str):
                 if hasattr(self, attrs):
                     new_args = getattr(self, attrs)
             else:
-                raise ValueError(f"attrs must be list or string")
+                raise ValueError("attrs must be list or string")
             self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(new_args)
 
         return lazy_inline_deco

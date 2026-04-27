@@ -45,7 +45,7 @@ class _BatchNormImpl(nn.Cell):
                  gamma_init: Union[Tensor, str, Initializer, numbers.Number],
                  beta_init: Union[Tensor, str, Initializer, numbers.Number],
                  num_features: int) -> None:
-        super(_BatchNormImpl, self).__init__()
+        super().__init__()
 
     @abstractmethod
     def get_norm(self, u: Tensor) -> Tensor:
@@ -217,7 +217,7 @@ class _BaseBatchNormImpl(_BatchNormImpl):
                  gamma_init: Union[Tensor, str, Initializer, numbers.Number],
                  beta_init: Union[Tensor, str, Initializer, numbers.Number],
                  num_features: int) -> None:
-        super(_BaseBatchNormImpl, self).__init__(gamma_init,
+        super().__init__(gamma_init,
                                                  beta_init,
                                                  num_features)
         self.scale_x = Parameter(initializer(gamma_init, num_features), name="scale_x", requires_grad=affine)

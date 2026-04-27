@@ -57,7 +57,8 @@ def _old_norm(norm_type, x):
 
 def _cal_total_norm(x, norm_type):
     if norm_type == float('inf'):
-        func = lambda data: data.abs().max()
+        def func(data):
+            return data.abs().max()
         total_norm = max(hyper_map(func, x))
     else:
         total_norm = _old_norm(norm_type, F.stack(hyper_map(partial_op(_old_norm, norm_type), x)))
@@ -384,7 +385,7 @@ class _ClipByGlobalNorm(Cell):
 
     def __init__(self, clip_norm=1.0, use_norm=None):
         """Initialize _ClipByGlobalNorm."""
-        super(_ClipByGlobalNorm, self).__init__()
+        super().__init__()
         # Add interface. This parameter is not used at present
         if use_norm is not None:
             raise ValueError(f"For '{self.cls_name}', input 'use_norm' only supports None currently, "

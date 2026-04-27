@@ -99,16 +99,14 @@ class RMSprop(Optimizer):
         check_not_less_than(momentum, "momentum", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
 
-        defaults = dict(
-            lr=lr,
-            momentum=momentum,
-            alpha=alpha,
-            eps=eps,
-            centered=centered,
-            weight_decay=weight_decay,
-            maximize=maximize,
-        )
-        super(RMSprop, self).__init__(params, defaults)
+        defaults = {"lr": lr,
+                "momentum": momentum,
+                "alpha": alpha,
+                "eps": eps,
+                "centered": centered,
+                "weight_decay": weight_decay,
+                "maximize": maximize,}
+        super().__init__(params, defaults)
 
         self.mean_grad = self.parameters.clone(prefix="mean_grad", init='zeros')
         self.mean_square = self.parameters.clone(prefix="mean_square", init='zeros')
@@ -121,7 +119,7 @@ class RMSprop(Optimizer):
         start_id = self.group_start_id[group_id]
         end_id = self.group_start_id[group_id + 1]
         params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = tuple(grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id])
         grads = self._decay_weight(weight_decay, params, grads)
         mean_grad = self.mean_grad[start_id: end_id]
         mean_square = self.mean_square[start_id: end_id]

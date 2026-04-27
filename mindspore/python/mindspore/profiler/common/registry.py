@@ -22,7 +22,7 @@ class Register:
     Common register class
     """
     def __init__(self, name) -> None:
-        self.module_dict = dict()
+        self.module_dict = {}
         self.name = name
 
     def register_module(self, name):

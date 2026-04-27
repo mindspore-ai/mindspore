@@ -3892,7 +3892,7 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
                 if len(shear) == 2:
                     shear = [shear[0], shear[1], 0., 0.]
                 elif len(shear) == 4:
-                    shear = [s for s in shear]
+                    shear = list(shear)
 
         if isinstance(degrees, numbers.Number):
             degrees = (-1 * degrees, degrees)

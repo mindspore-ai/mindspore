@@ -481,7 +481,7 @@ def _reduce_sum(x, attrs=None):
     axis = attrs["axis"]
     keep_dims = attrs["keep_dims"]
     if not axis:
-        axis = [i for i in range(len(x.shape))]
+        axis = list(range(len(x.shape)))
     if not isinstance(axis, list):
         axis = [axis]
     axis = axis_check(len(x.shape), axis)
@@ -496,7 +496,7 @@ def _reduce_max(x, attrs=None):
     axis = attrs["axis"]
     keep_dims = attrs["keep_dims"]
     if not axis:
-        axis = [i for i in range(len(x.shape))]
+        axis = list(range(len(x.shape)))
     if not isinstance(axis, list):
         axis = [axis]
     axis = axis_check(len(x.shape), axis)
@@ -511,7 +511,7 @@ def _reduce_min(x, attrs=None):
     axis = attrs["axis"]
     keep_dims = attrs["keep_dims"]
     if not axis:
-        axis = [i for i in range(len(x.shape))]
+        axis = list(range(len(x.shape)))
     if not isinstance(axis, list):
         axis = [axis]
     axis = axis_check(len(x.shape), axis)

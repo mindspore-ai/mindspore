@@ -174,7 +174,7 @@ def tensordump(file_name, tensor, mode='out'):
     mode_list = ['out', 'in']
     if mode not in mode_list:
         if mode == 'all':
-            raise ValueError(f"Argument [mode] has been not supported value of 'all'.")
+            raise ValueError("Argument [mode] has been not supported value of 'all'.")
         raise ValueError(f"Parameter mode should in {mode_list}, but got {mode}")
     _tensordump = _get_cache_prim(P.TensorDump)(input_output=mode)
     return _tensordump(file_name, tensor)
