@@ -64,8 +64,7 @@ void InnerCommReduceScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, 
       }
     };
 
-    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, /*rank=*/-1,
-                         /*avg_div_tensor=*/is_avg ? output_tensor : nullptr);
+    CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, -1, is_avg ? output_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
 }
