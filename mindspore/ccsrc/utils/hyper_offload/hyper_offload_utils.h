@@ -51,6 +51,14 @@ constexpr auto kHyperOffloadEventId = "hyper_offload_event_id";
 constexpr auto kHyperOffloadEventStreamId = "hyper_offload_event_stream_id";
 // Attribute key for event type for event node.
 constexpr auto kHyperOffloadEventNodeType = "hyper_offload_event_node_type";
+// User data keys for backend runtime metadata consumed by common hyper offload utils.
+constexpr auto kHyperOffloadRefOutputInputMap = "hyper_offload_ref_output_input_map";
+constexpr auto kHyperOffloadInlineBranchName = "hyper_offload_inline_branch_name";
+constexpr auto kHyperOffloadSummaryOutputs = "hyper_offload_summary_outputs";
+constexpr auto kHyperOffloadOutputMemSizes = "hyper_offload_output_mem_sizes";
+constexpr auto kHyperOffloadKernelModOutputSizes = "hyper_offload_kernel_mod_output_sizes";
+constexpr auto kHyperOffloadWorkspaceSize = "hyper_offload_workspace_size";
+constexpr auto kHyperOffloadOutputCount = "hyper_offload_output_count";
 
 const PrimitivePtr kFreeDataPrimitive = std::make_shared<Primitive>("FreeData");
 const PrimitivePtr kAssignDataPrimitive = std::make_shared<Primitive>("AssignData");
