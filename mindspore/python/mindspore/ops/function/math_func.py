@@ -8586,6 +8586,29 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         else:
             raise ValueError(
                 f"Expected a 1-D tensor or a 2-D tensor, but got {signal_dim}")
+    if ms.context.get_context('device_target') == 'Ascend':
+        from mindspore.ops.auto_generate import stft_ext_op
+        if onesided and (_is_complex(x) or _is_complex(window)):
+            raise ValueError(
+                f"For stft, onesided must be False if input or window is complex, "
+                f"but got onesided=True with input dtype {dtype_(x)} and window dtype {dtype_(window)}.")
+        high_prec_set = (mstype.float64, mstype.complex128)
+        high_prec = dtype_(x) in high_prec_set or dtype_(window) in high_prec_set
+        any_complex = _is_complex(x) or _is_complex(window)
+        if high_prec and any_complex:
+            common_dtype = mstype.complex128
+        elif high_prec:
+            common_dtype = mstype.float64
+        elif any_complex:
+            common_dtype = mstype.complex64
+        else:
+            common_dtype = mstype.float32
+        if dtype_(x) != common_dtype:
+            x = cast_(x, common_dtype)
+        if dtype_(window) != common_dtype:
+            window = cast_(window, common_dtype)
+        return stft_ext_op(x, window, n_fft, hop_length, win_length,
+                           normalized, onesided, return_complex)
     stft_ = STFT(n_fft, hop_length, win_length,
                  normalized, onesided, return_complex)
     return stft_(x, window)
