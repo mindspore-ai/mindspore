@@ -178,20 +178,20 @@ def error_inputs_other_op_common_func(op_error_inputs_func = None):
     def _error_inputs_other_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
             yield from itertools.chain.from_iterable(
-                func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
-                ) if isinstance(op_error_inputs_func, (list, tuple)) else \
-                    op_error_inputs_func(op_info, dtype, device, **kwargs)
+                func(op_info, dtype=dtype, device=device, **kwargs) for func in op_error_inputs_func
+            ) if isinstance(op_error_inputs_func, (list, tuple)) else \
+                op_error_inputs_func(op_info, dtype=dtype, device=device, **kwargs)
         if op_info.not_support_dtypes is not None:
             for input_dtype in op_info.not_support_dtypes:
-                sample_input_iter=op_info.op_basic_reference_inputs_func(op_info, input_dtype, device)
-                for sample_input in sample_input_iter:
+                sample_input=next(
+                    op_info.op_basic_reference_inputs_func(op_info, input_dtype, device), None)
+                if sample_input is not None:
                     sample_input.sample_name = f"{op_info.name}_{input_dtype}_dtype_error"
                     yield OpErrorInput(
                         op_sample_input=sample_input,
                         op_error_type=(TypeError, RuntimeError, ValueError),
                         op_error_info=f'error input dtype {input_dtype} is not supported for {op_info.name}',
                     )
-                    break
     return _error_inputs_other_op_func
 
 # basic op_basic_reference_inputs_func for ops

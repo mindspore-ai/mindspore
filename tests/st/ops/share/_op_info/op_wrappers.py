@@ -19,6 +19,7 @@ tensor/nn methods to a uniform call signature used by the OpInfo framework.
 """
 import mindspore as ms
 from mindspore import mint
+from mindspore.common.parameter import Parameter
 import torch
 
 # =====================================wrap tensor/nn method====================================
@@ -727,9 +728,9 @@ def tensor_nn_functional_dropout_ms(op_input, p=0.5, training=False):
                     sizes = sizes + (m1 == 0).sum().item()
                 input_clone[m1 == 0] = 0
                 return (1 / (1-p) * input_clone -m1, ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
+            #torch backward must hava revalance with input tensor, so return value is related to input
             return op_input*0
     return  mint.nn.functional.dropout(op_input, p=p, training=training)
-
 
 def tensor_nn_functional_dropout_torch(op_input, p=0.5, training=False):
     if  0 < p < 1:
@@ -773,3 +774,186 @@ def tensor_addmm_ms(input, mat1, mat2, beta=1, alpha=1 ):
 
 def tensor_addmm_torch(input, mat1, mat2, beta=1, alpha=1 ):
     return input.addmm(mat1, mat2, beta=beta, alpha=alpha)
+
+# NOTE: customize_op_func, used by gradient comparison only when there are kwargs in op!
+def add_ext_func_grad_without_kwargs(x, y, alpha=1):
+    return mint.add(x, y, alpha=alpha)
+
+def sub_ext_func_grad_without_kwargs(x, y, alpha=1):
+    return mint.sub(x, y, alpha=alpha)
+
+def div_func_grad(op_input, other, rounding_mode=None):
+    return mint.div(op_input, other, rounding_mode=rounding_mode)
+
+def var_func_grad(op_input, dim=None, keepdim=False, correction=1):
+    return mint.var(op_input, dim=dim, keepdim=keepdim, correction=correction)
+
+def std_func_grad(op_input, dim=None, keepdim=False, correction=1):
+    return mint.std(op_input, dim=dim, keepdim=keepdim, correction=correction)
+
+def std_mean_func_grad(op_input, dim=None, keepdim=False, correction=1):
+    return mint.std_mean(op_input, dim=dim, keepdim=keepdim, correction=correction)
+
+def repeat_interleave_func_grad(input_x, repeats, dim=None, output_size=None):
+    return mint.repeat_interleave(input_x, repeats, dim, output_size=output_size)
+
+def mint_min_func_grad_without_kwargs(op_input, *args):
+    return mint.min(op_input, *args)
+
+def op_func_grad_without_kwargs(op):
+    '''
+    Generate arg_names for dynamic kwargs when using operators defined with ``*args, **kwargs``
+    signature and decorated with ``enable_dynamic``.
+    Args:
+        op(callable): The operator function to process. The operator should be defined with
+         ``*args, **kwargs`` signature.
+    Returns:
+        function: A wrapped operator function that handles dynamic keyword arguments.
+    '''
+    def op_func(x, y, *args):
+        return op(x, y, *args)
+    return op_func
+
+def tensor_mint_allclose(input, other, rtol=1e-5, atol=1e-8, equal_nan=False):
+    return ms.Tensor(mint.allclose(input, other, rtol, atol, equal_nan))
+
+def tensor_torch_allclose(input, other, rtol=1e-5, atol=1e-8, equal_nan=False):
+    return torch.tensor(torch.allclose(input, other, rtol, atol, equal_nan))
+
+def tensor_mint_addbmm(input, batch1, batch2, beta=1, alpha=1):
+    return mint.addbmm(input, batch1, batch2, beta=beta, alpha=alpha)
+
+def tensor_torch_addbmm(input, batch1, batch2, beta=1, alpha=1):
+    return torch.addbmm(input, batch1, batch2, beta=beta, alpha=alpha)
+
+#tensor.sum has keyword parameter dtype
+def tensor_sum_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.sum(dim, keepdim, dtype=dtype)
+
+#tensor.sum has keyword parameter dtype
+def tensor_sum_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.sum(dim, keepdim, dtype=dtype)
+
+#tensor.mean has keyword parameter dtype
+def tensor_mean_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.mean(dim, keepdim, dtype=dtype)
+
+#tensor.mean has keyword parameter dtype
+def tensor_mean_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.mean(dim, keepdim, dtype=dtype)
+
+def tensor_argmax_ms(op_input, *op_args, **op_kwargs):
+    return op_input.argmax(*op_args, **op_kwargs)
+
+def tensor_argmax_torch(op_input, *op_args, **op_kwargs):
+    return op_input.argmax(*op_args, **op_kwargs)
+
+def tensor_argmin_ms(op_input, *op_args, **op_kwargs):
+    return op_input.argmin(*op_args, **op_kwargs)
+
+def tensor_argmin_torch(op_input, *op_args, **op_kwargs):
+    return op_input.argmin(*op_args, **op_kwargs)
+
+def tensor_max_ms(op_input, *op_args, **op_kwargs):
+    return op_input.max(*op_args, **op_kwargs)
+
+def tensor_max_torch(op_input, *op_args, **op_kwargs):
+    return op_input.max(*op_args, **op_kwargs)
+
+def tensor_view_dtype_ms(op_input, dtype):
+    return op_input.view(dtype)
+
+def tensor_sign_to_sgn(op_input, *op_args, **op_kwargs):
+    if isinstance(op_input, torch.Tensor) and op_input.dtype.is_complex:
+        return torch.sgn(op_input, *op_args, **op_kwargs)
+    return torch.sign(op_input, *op_args, **op_kwargs)
+
+# wrapper function for mindspore.mint.nn.Conv1d
+def mint_nn_conv1d_ms(op_input, in_channels, out_channels, kernel_size, stride=1, padding=0,
+                      dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None,
+                      weight_init=None, bias_init=None):
+    """Wrapper for mindspore.mint.nn.Conv1d."""
+    conv1d_layer = mint.nn.Conv1d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    conv1d_layer.weight = Parameter(weight_init, name='weight')
+    if bias:
+        conv1d_layer.bias = Parameter(bias_init, name='bias')
+    return conv1d_layer(op_input)
+
+
+def nn_conv1d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
+                         padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros',
+                         dtype=None, weight_init=None, bias_init=None):
+    """Wrapper for torch.nn.Conv1d."""
+    conv1d_layer = torch.nn.Conv1d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    conv1d_layer.weight = torch.nn.Parameter(weight_init)
+    if bias:
+        conv1d_layer.bias = torch.nn.Parameter(bias_init)
+    return conv1d_layer(op_input)
+
+
+# wrapper function for mindspore.mint.nn.Conv2d
+def mint_nn_conv2d_ms(op_input, in_channels, out_channels, kernel_size, stride=1, padding=0,
+                      dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None,
+                      weight_init=None, bias_init=None):
+    """Wrapper for mindspore.mint.nn.Conv1d."""
+    conv2d_layer = mint.nn.Conv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    if weight_init is not None:
+        conv2d_layer.weight = Parameter(weight_init, name='weight')
+    if bias:
+        conv2d_layer.bias = Parameter(bias_init, name='bias')
+    return conv2d_layer(op_input)
+
+def nn_conv2d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
+                         padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros',
+                         dtype=None, weight_init=None, bias_init=None):
+    """Wrapper for torch.nn.Conv2d."""
+    conv2d_layer = torch.nn.Conv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    if weight_init is not None:
+        conv2d_layer.weight = torch.nn.Parameter(weight_init)
+    if bias:
+        conv2d_layer.bias = torch.nn.Parameter(bias_init)
+    return conv2d_layer(op_input)
