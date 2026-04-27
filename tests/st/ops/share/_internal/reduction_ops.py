@@ -50,6 +50,8 @@ class ReductionOpsFactory(OpsFactory):
             print(f"\nop_name: {self.op_name} has no op_error_inputs_func, "
                   f"skip test_reduction_op_error.")
             return
+        if self.should_skip_backend_dtype_coverage("test_reduction_op_error"):
+            return
 
         print(f"\nop_name: {self.op_name}, mode:{self._context_mode}, test_reduction_op_error...")
         for error_input in self.op_error_inputs_func(self.op_info, device=self._device):

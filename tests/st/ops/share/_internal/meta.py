@@ -163,6 +163,34 @@ class OpsFactory():
         self._convert_half_to_float = getattr(self.op_info, 'convert_half_to_float', False)
 
     @final
+    def should_skip_backend_dtype_coverage(self, test_name: str):
+        """Check whether the current backend has dtype coverage for this op.
+
+        Args:
+            test_name: Name of the current test for logging.
+
+        Returns:
+            bool: True when the current backend has no configured dtypes and the
+            test should be skipped.
+        """
+        if self._device == 'ascend':
+            ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            if ascend_name == 'ascend910' and not self.op_info.dtypes_ascend:
+                warnings.warn(f"op_name: {self.op_name} has no dtypes_ascend, skip {test_name}.")
+                return True
+            if ascend_name == 'ascend910b' and not self.op_info.dtypes_ascend910b:
+                warnings.warn(f"op_name: {self.op_name} has no dtypes_ascend910b, skip {test_name}.")
+                return True
+            return False
+        if self._device == 'cpu' and not self.op_info.dtypes_cpu:
+            warnings.warn(f"op_name: {self.op_name} has no dtypes_cpu, skip {test_name}.")
+            return True
+        if self._device == 'gpu' and not self.op_info.dtypes_gpu:
+            warnings.warn(f"op_name: {self.op_name} has no dtypes_gpu, skip {test_name}.")
+            return True
+        return False
+
+    @final
     def _generate_random_dout(self, return_torch_douts=False):
         """Generate random dout tensors for the op.
 
@@ -1179,19 +1207,7 @@ class OpsFactory():
             print(f"\nop_name: {self.op_name} has no op_dynamic_inputs_func, skip test_op_dynamic.")
             return
 
-        if self._device == 'ascend':
-            ascend_name = MSContext.get_instance().get_ascend_soc_version()
-            if ascend_name == 'ascend910' and not self.op_info.dtypes_ascend:
-                warnings.warn(f"op_name: {self.op_name} has no dtypes_ascend, skip test_op_dynamic.")
-                return
-            if ascend_name == 'ascend910b' and not self.op_info.dtypes_ascend910b:
-                warnings.warn(f"op_name: {self.op_name} has no dtypes_ascend910b, skip test_op_dynamic.")
-                return
-        if self._device == 'cpu' and not self.op_info.dtypes_cpu:
-            warnings.warn(f"op_name: {self.op_name} has no dtypes_cpu, skip test_op_dynamic.")
-            return
-        if self._device == 'gpu' and not self.op_info.dtypes_gpu:
-            warnings.warn(f"op_name: {self.op_name} has no dtypes_gpu, skip test_op_dynamic.")
+        if self.should_skip_backend_dtype_coverage("test_op_dynamic"):
             return
 
         try:
@@ -1228,6 +1244,8 @@ class OpsFactory():
         if self.op_error_inputs_func is None:
             print(f"\nop_name: {self.op_name} has no op_error_inputs_func, "
                   f"skip test_other_op_error.")
+            return
+        if self.should_skip_backend_dtype_coverage("test_other_op_error"):
             return
 
         _error_type = None
