@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,671 +13,1265 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# init parameter
-status=0
-REPOSITORY_NAME=mindspore
-PIPELINE_TYPE="gate"
-CURR_DIR=$(dirname "${BASH_SOURCE-$0}")
-CURR_DIR=$(
-    cd -P "${CURR_DIR}" || exit
-    pwd -P
-)
-REPO_HOME=$(
-    cd -P "${CURR_DIR}/../../../" || exit
-    pwd -P
-)
-WORKSPACE=$(
-    cd -P "${CURR_DIR}/../../../../" || exit
-    pwd -P
-)
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly MAGENTA='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly WHITE='\033[1;37m'
+readonly BOLD='\033[1m'
+readonly UNDERLINE='\033[4m'
+readonly NC='\033[0m'
+readonly REPOSITORY_NAME=mindspore
+START_TIME=$(date +%s)
 
-# get os name
+function print_color() { local color=$1; local message=$2; echo -e "${color}${message}${NC}"; }
+function print_success() { print_color "${GREEN}" "$1"; }
+function print_error() { print_color "${RED}" "$1"; }
+function print_warning() { print_color "${YELLOW}" "$1"; }
+function print_info() { print_color "${CYAN}" "$1"; }
+function print_header() { print_color "${MAGENTA}${BOLD}" "$1"; }
+function print_step() { print_color "${BLUE}${BOLD}" "$1"; }
+function print_debug() { print_color "${WHITE}" "$1"; }
+
+function check_tool_version() {
+    local tool_name="$1"
+    local expected_version="$2"
+    print_debug "Checking ${tool_name} version..."
+    if ! command -v "$tool_name" &> /dev/null; then
+        print_warning "[WARNING] ${tool_name} is not installed"
+        print_info "  To install, run the following commands in the mindspore/ directory:"
+        print_info "  cd scripts/pre_commit"
+        print_info "  bash install_generic_tools.sh"
+        print_info "  bash install_system_specific_tools.sh"
+        return 1
+    fi
+    local actual_version=""
+    case "$tool_name" in
+        "clang-format")
+            actual_version=$("$tool_name" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ;;
+        "cmakelint")
+            actual_version=$("$tool_name" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ;;
+        "codespell")
+            actual_version=$("$tool_name" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ;;
+        "cpplint")
+            actual_version=$("$tool_name" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ;;
+        "pylint")
+            actual_version=$(pip show pylint 2>/dev/null | grep "Version:" | awk '{print $2}')
+            if [ -z "$actual_version" ]; then
+                actual_version=$("$tool_name" --version 2>&1 | head -1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            fi
+            ;;
+        "lizard")
+            actual_version=$("$tool_name" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ;;
+        *)
+            print_warning "[WARNING] Unknown tool: ${tool_name}"
+            return 1
+            ;;
+    esac
+    if [ -z "$actual_version" ]; then
+        print_warning "[WARNING] Cannot extract version for ${tool_name}"
+        print_info "  Please reinstall the tool using:"
+        print_info "  cd scripts/pre_commit"
+        print_info "  bash install_generic_tools.sh"
+        print_info "  bash install_system_specific_tools.sh"
+        return 1
+    fi
+    print_debug "  Expected version: ${expected_version}"
+    print_debug "  Actual version: ${actual_version}"
+    if [ "$actual_version" != "$expected_version" ]; then
+        print_warning "[WARNING] ${tool_name} version mismatch!"
+        print_warning "  Expected: ${expected_version}"
+        print_warning "  Actual: ${actual_version}"
+        print_warning "  Due to version mismatch with the CI pipeline, the check results may differ."
+        print_info "  Please reinstall the correct version by running the following commands in the mindspore/ directory:"
+        print_info "  cd scripts/pre_commit"
+        print_info "  bash install_generic_tools.sh"
+        print_info "  bash install_system_specific_tools.sh"
+        return 2
+    fi
+    print_success "[OK] ${tool_name} version ${actual_version} matches expected version ${expected_version}"
+    return 0
+}
+
+function check_clang_format_version() {
+    local expected_version="18.1.8"
+    if [ "$(uname -s)" == "Darwin" ] && [ "$(uname -m)" == "arm64" ]; then
+        expected_version="18.1.4"
+        print_debug "Detected Darwin arm64 system, using clang-format version: ${expected_version}"
+    fi
+    check_tool_version "clang-format" "$expected_version"
+    return $?
+}
+
+function check_all_tool_versions() {
+    print_step "Checking tool versions..."
+    local all_ok=0
+    local warnings=0
+    local original_dir=$(pwd)
+    if [ -d "${REPO_HOME}" ]; then
+        cd "${REPO_HOME}" 2>/dev/null || cd / 2>/dev/null || true
+    fi
+    if ! check_clang_format_version; then
+        all_ok=1
+        warnings=$((warnings + 1))
+    fi
+    if ! check_tool_version "cmakelint" "1.4.1"; then
+        all_ok=1
+        warnings=$((warnings + 1))
+    fi
+    if ! check_tool_version "codespell" "2.0.0"; then
+        all_ok=1
+        warnings=$((warnings + 1))
+    fi
+    if ! check_tool_version "cpplint" "2.0.2"; then
+        all_ok=1
+        warnings=$((warnings + 1))
+    fi
+    if ! check_tool_version "pylint" "3.3.7"; then
+        all_ok=1
+        warnings=$((warnings + 1))
+    fi
+    if ! check_tool_version "lizard" "1.17.19"; then
+        all_ok=1
+        warnings=$((warnings + 1))
+    fi
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+    if [ $warnings -eq 0 ]; then
+        print_success "All tool versions are correct!"
+    else
+        print_warning "Found $warnings tool version issue(s)."
+        print_info "  Note: Due to version mismatches, the check results may differ from the CI pipeline."
+        print_info "  For consistent results, please ensure all tools are installed with the correct versions."
+    fi
+    return $all_ok
+}
+
+convert_path_for_local() {
+    local line="$1"
+    if [[ "$line" =~ ^[[:space:]]*# ]]; then
+        echo "$line"
+        return
+    fi
+    if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*$ ]]; then
+        echo ""
+        return
+    fi
+    if [[ "$line" =~ ^\"([^\"]+)\"[[:space:]]+\"([^\"]+)\" ]]; then
+        local original_path="${BASH_REMATCH[1]}"
+        local rule="${BASH_REMATCH[2]}"
+        local converted_path="$original_path"
+        if [[ -n "$original_path" ]] && [[ "$original_path" =~ / ]]; then
+            converted_path="${original_path#*/}"
+        fi
+        if [[ "$original_path" =~ /$ ]] && [[ ! "$converted_path" =~ /$ ]] && [[ -n "$converted_path" ]]; then
+            converted_path="$converted_path/"
+        fi
+        echo "\"$converted_path\" \"$rule\""
+        return
+    fi
+    if [[ "$line" =~ ^([^:]+):(.+)$ ]]; then
+        local file_path="${BASH_REMATCH[1]}"
+        local function_name="${BASH_REMATCH[2]}"
+        local converted_path="$file_path"
+        if [[ -n "$file_path" ]] && [[ "$file_path" =~ / ]]; then
+            converted_path="${file_path#*/}"
+        fi
+        echo "$converted_path:$function_name"
+        return
+    fi
+    echo "$line"
+}
+
+create_converted_filter_file() {
+    local source_file="$1"
+    local dest_file="$2"
+    if [[ ! -f "$source_file" ]]; then
+        return 1
+    fi
+    > "$dest_file"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        local converted_line=$(convert_path_for_local "$line")
+        echo "$converted_line" >> "$dest_file"
+    done < "$source_file"
+    return 0
+}
+
+status=0
+CURR_DIR=$(dirname "${BASH_SOURCE-$0}")
+CURR_DIR=$(cd -P "${CURR_DIR}" || exit; pwd -P)
+REPO_HOME=$(cd -P "${CURR_DIR}/../../../" || exit; pwd -P)
+WORKSPACE=$(cd -P "${CURR_DIR}/../../../../" || exit; pwd -P)
+
+CLANG_FORMAT_ERRORS="0"
+CMAKELINT_ERRORS="0"
+CODESPELL_ERRORS="0"
+CPPLINT_ERRORS="0"
+PYLINT_ERRORS="0"
+SHELLCHECK_ERRORS="0"
+TAB_ERRORS="0"
+LIZARD_CCN_ERRORS="0"
+LIZARD_NLOC_ERRORS="0"
+
+ERROR_DIR="/tmp/pre-push-errors-$$"
+mkdir -p "$ERROR_DIR"
+
 uname_s=$(uname -s)
 os_name=${uname_s:0:5}
-if [ "$os_name" == "Darwi" ]; then # Darwin
-    echo "Mac OS X"
-elif [ "$os_name" == "Linux" ]; then # Linux
-    echo "GNU/Linux"
-elif [ "$os_name" == "MINGW" ]; then # MINGW, windows, git-bash
-    echo "Windows, git-bash"
+if [ "$os_name" == "Darwi" ]; then
+    print_info "Mac OS X"
+elif [ "$os_name" == "Linux" ]; then
+    print_info "GNU/Linux"
+elif [ "$os_name" == "MINGW" ]; then
+    print_info "Windows, git-bash"
 else
-    echo "unknown os"
+    print_warning "unknown os"
 fi
 
+cd "${REPO_HOME}" 2>/dev/null || { print_error "Cannot access repository home: ${REPO_HOME}"; exit 1; }
+
 STAGE_FILES=$(git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD)
-if [[ "$STAGE_FILES" == "" && $PIPELINE_TYPE == "gate" ]]; then
-    echo "No file need to push."
+if [[ "$STAGE_FILES" == "" ]]; then
+    print_success "No file need to push."
     exit "${status}"
 fi
 
-# mkdir check_path
 check_path=${WORKSPACE}/.${REPOSITORY_NAME}_code_check
 rm -rf "${check_path}"
 mkdir -p "${check_path}"
 
-# mkdir CODE_PATH
+if [ -d "${REPO_HOME}/.jenkins" ]; then
+    print_info "Copy .jenkins directory to check path..."
+    cp -r "${REPO_HOME}/.jenkins" "${check_path}/" 2>/dev/null || true
+fi
+
+JENKINS_PATH="${check_path}/.jenkins"
 CODE_PATH="${check_path}/code"
 mkdir -p "${CODE_PATH}"
 
-# get gate pr filelist
-if [ "${PIPELINE_TYPE}" = "gate" ]; then
-    cd "${REPO_HOME}" || return
-    git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD >"${CODE_PATH}/pr_filelist.txt"
-    cat "${CODE_PATH}/pr_filelist.txt"
-    echo "Filelist number: $(cat <"${CODE_PATH}"/pr_filelist.txt | wc -l)"
+cd "${REPO_HOME}" || return
+git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD >"${CODE_PATH}/pr_filelist.txt"
+print_debug "Changed files:"
+cat "${CODE_PATH}/pr_filelist.txt"
+print_info "Filelist number: $(cat <"${CODE_PATH}"/pr_filelist.txt | wc -l)"
 
-    mkdir "${CODE_PATH}/${REPOSITORY_NAME}"
-    while read -r line; do
-        file_dirname=$(dirname "${line}")
-        mkdir -p "${CODE_PATH}/${REPOSITORY_NAME}/${file_dirname}"
-        cp -a "${REPO_HOME}/${line}" "${CODE_PATH}/${REPOSITORY_NAME}/${file_dirname}" >/dev/null 2>&1
-    done <"${CODE_PATH}/pr_filelist.txt"
-
-    # Reserved directory(.jenkins) for code check
-    if [ -d "${REPO_HOME}/.jenkins" ]; then
-        cp -a "${REPO_HOME}/.jenkins" "${CODE_PATH}"/${REPOSITORY_NAME} >/dev/null 2>&1
-    fi
-fi
-
-# Common exclude folder for code check
 if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
     COMMON_EXCLUDE_FOLDER="third_party,graphengine,akg,mindspore/ccsrc/minddata/dataset/kernels/image/dvpp/utils,mindspore/lite/micro/example,tests/models,mindspore/lite/examples/quick_start_micro"
+elif [ "${REPOSITORY_NAME}" = "mindpandas" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,tests/ut/data,tests/st/data"
+elif [ "${REPOSITORY_NAME}" = "docs" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,resource/release/release_list_zh_cn.md,resource/release/release_list_en.md"
+elif [ "${REPOSITORY_NAME}" = "mindscience" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,MindFlow/applications/cfd/acoustic/images,MindChemistry/applications/cdvae/images,MindEarth/applications/nowcasting/PreDiff/images,MindSPONGE/applications/research/Grasp/mindsponge1/data/forcefield/amber.ff14sb.yaml,mindscience/MindFlow/applications/data_driven"
+elif [ "${REPOSITORY_NAME}" = "mindrlhf" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,tests,mindrlhf/tests/ut/qwen_reward_dataset.json"
+elif [ "${REPOSITORY_NAME}" = "golden-stick" ]; then
+    COMMON_EXCLUDE_FOLDER="third_party,tests/mindone"
 elif [ "${REPOSITORY_NAME}" = "akg" ]; then
     COMMON_EXCLUDE_FOLDER="third_party,tests"
-else
+elif [ "${REPOSITORY_NAME}" = "ms_custom_ops" ]; then
     COMMON_EXCLUDE_FOLDER="third_party"
 fi
 
-# Get CODE
+print_debug "Using COMMON_EXCLUDE_FOLDER: ${COMMON_EXCLUDE_FOLDER}"
+
 function GET_CODE() {
     workspace=${1}
-    if [ "${PIPELINE_TYPE}" = "gate" ]; then
-        if [ "$os_name" == "Darwi" ]; then
-            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}/${REPOSITORY_NAME}/" >/dev/null 2>&1
+    local_exclude_folders=${2:-""}
+    mkdir -p "${workspace}"
+    local all_exclude_folders="${COMMON_EXCLUDE_FOLDER}"
+    if [ -n "${local_exclude_folders}" ]; then
+        if [ -n "${all_exclude_folders}" ]; then
+            all_exclude_folders="${all_exclude_folders},${local_exclude_folders}"
         else
-            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}"/ >/dev/null 2>&1
+            all_exclude_folders="${local_exclude_folders}"
         fi
-    else
-        cp -a "${REPO_HOME}/" "${workspace}/${REPOSITORY_NAME}" >/dev/null 2>&1
     fi
+    while read -r line; do
+        if [ -f "${REPO_HOME}/${line}" ]; then
+            local exclude_file=0
+            if [ -n "${all_exclude_folders}" ]; then
+                IFS=',' read -ra exclude_array <<< "${all_exclude_folders}"
+                for exclude_pattern in "${exclude_array[@]}"; do
+                    if [[ "${line}" == ${exclude_pattern}* ]] || [[ "${line}" == */${exclude_pattern}* ]]; then
+                        exclude_file=1
+                        break
+                    fi
+                done
+            fi
+            if [ "${exclude_file}" -eq 0 ]; then
+                mkdir -p "${workspace}/$(dirname "${line}")"
+                cp -a "${REPO_HOME}/${line}" "${workspace}/${line}" >/dev/null 2>&1
+            fi
+        fi
+    done <"${CODE_PATH}/pr_filelist.txt"
 }
 
-# Exclude folder
-function MS_EXCLUDE_FOLDER() {
-    local src_path=${1}
-    local exclude_folder="${2}"
-
-    if [ -n "${src_path}" ] && [ -n "$(echo "${src_path}" | awk -F'/' '{print $3}')" ]; then
-        for folder in ${exclude_folder//,/ }; do
-            rm -rf "${src_path:?}/${folder:?}"
-        done
-    else
-        return
-    fi
-}
-
-# judge succeed or failed
 function DP_ASSERT_EQUAL() {
     local actual_value=${1}
     local expect_value=${2}
     local assert_msg=${3}
+    local check_name=${4}
+    if [[ -z "${actual_value}" ]] || [[ ! "${actual_value}" =~ ^[0-9]+$ ]]; then
+        actual_value=0
+    fi
+    if [[ -z "${expect_value}" ]] || [[ ! "${expect_value}" =~ ^[0-9]+$ ]]; then
+        expect_value=0
+    fi
+    case "${check_name}" in
+        "clang_format") CLANG_FORMAT_ERRORS="${actual_value}" ;;
+        "cmakelint") CMAKELINT_ERRORS="${actual_value}" ;;
+        "codespell") CODESPELL_ERRORS="${actual_value}" ;;
+        "cpplint") CPPLINT_ERRORS="${actual_value}" ;;
+        "pylint") PYLINT_ERRORS="${actual_value}" ;;
+        "shellcheck") SHELLCHECK_ERRORS="${actual_value}" ;;
+        "tab") TAB_ERRORS="${actual_value}" ;;
+        "lizard_ccn") LIZARD_CCN_ERRORS="${actual_value}" ;;
+        "lizard_nloc") LIZARD_NLOC_ERRORS="${actual_value}" ;;
+    esac
     if [ "${actual_value}" != "${expect_value}" ]; then
-        echo "${assert_msg} failed, ${assert_msg} error number is ${actual_value}."
+        print_error "${assert_msg} failed, error number is ${actual_value}."
         status=$((status + actual_value))
     else
-        echo "${assert_msg} succeed."
+        print_success "${assert_msg} succeed."
     fi
 }
 
-# Assert A is not equal to B
-# True: not equal
-# False: equal
-function DP_ASSERT_NOT_EQUAL() {
-    local actual_value=${1}
-    local expect_value=${2}
-    local assert_msg=${3}
-    if [ "${actual_value}" = "${expect_value}" ]; then
-        echo "${assert_msg} is failed, ${assert_msg}  error number is ${actual_value}."
-        status=$((status + 1))
-    else
-        echo "${assert_msg} succeed."
+function STORE_ERRORS() {
+    local check_name=${1}
+    local error_file=${2}
+    if [ -f "${error_file}" ] && [ -s "${error_file}" ]; then
+        cp "${error_file}" "${ERROR_DIR}/${check_name}.log"
     fi
 }
 
-# Print N character
 function PRINT_N_CHAR() {
     local char=${1}
     local number=${2}
+    local color=${3:-"${WHITE}"}
     local str
     str=$(printf "%-${number}s" "")
-    echo "${str// /${char}}"
+    echo -e "${color}${str// /${char}}${NC}"
 }
 
-# 进行clang-format检查
+function SHOW_SUMMARY() {
+    echo ""
+    PRINT_N_CHAR "=" 80 "${MAGENTA}${BOLD}"
+    print_header "PRE-PUSH CHECK SUMMARY"
+    PRINT_N_CHAR "-" 80 "${CYAN}"
+    echo -e "${WHITE}Check Name                     | Status  | Error Count"
+    echo "-------------------------------------------------------"
+    local total_errors=0
+    if [ "${CLANG_FORMAT_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "clang_format" "${CLANG_FORMAT_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "clang_format" "${CLANG_FORMAT_ERRORS}"
+    fi
+    total_errors=$((total_errors + CLANG_FORMAT_ERRORS))
+    if [ "${CMAKELINT_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "cmakelint" "${CMAKELINT_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "cmakelint" "${CMAKELINT_ERRORS}"
+    fi
+    total_errors=$((total_errors + CMAKELINT_ERRORS))
+    if [ "${CODESPELL_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "codespell" "${CODESPELL_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "codespell" "${CODESPELL_ERRORS}"
+    fi
+    total_errors=$((total_errors + CODESPELL_ERRORS))
+    if [ "${CPPLINT_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "cpplint" "${CPPLINT_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "cpplint" "${CPPLINT_ERRORS}"
+    fi
+    total_errors=$((total_errors + CPPLINT_ERRORS))
+    if [ "${PYLINT_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "pylint" "${PYLINT_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "pylint" "${PYLINT_ERRORS}"
+    fi
+    total_errors=$((total_errors + PYLINT_ERRORS))
+    if [ "${SHELLCHECK_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "shellcheck" "${SHELLCHECK_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "shellcheck" "${SHELLCHECK_ERRORS}"
+    fi
+    total_errors=$((total_errors + SHELLCHECK_ERRORS))
+    if [ "${TAB_ERRORS}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d${NC}\n" "tab" "${TAB_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "tab" "${TAB_ERRORS}"
+    fi
+    total_errors=$((total_errors + TAB_ERRORS))
+    local lizard_total=$((LIZARD_CCN_ERRORS + LIZARD_NLOC_ERRORS))
+    if [ "${lizard_total}" -gt 0 ]; then
+        printf "${RED}%-30s | ${BOLD}FAILED${NC}${RED}  | %d (CCN:%d, NLOC:%d)${NC}\n" "lizard" "${lizard_total}" "${LIZARD_CCN_ERRORS}" "${LIZARD_NLOC_ERRORS}"
+    else
+        printf "${GREEN}%-30s | ${BOLD}PASSED${NC}${GREEN}  | %d${NC}\n" "lizard" "${lizard_total}"
+    fi
+    total_errors=$((total_errors + lizard_total))
+    PRINT_N_CHAR "-" 80 "${CYAN}"
+    if [ "${total_errors}" -eq 0 ]; then
+        echo -e "${GREEN}${BOLD}TOTAL ERRORS: ${total_errors}${NC}"
+    else
+        echo -e "${RED}${BOLD}TOTAL ERRORS: ${total_errors}${NC}"
+    fi
+    PRINT_N_CHAR "=" 80 "${MAGENTA}${BOLD}"
+    if [ "${total_errors}" -eq 0 ]; then
+        echo ""
+        PRINT_N_CHAR "*" 60 "${GREEN}${BOLD}"
+        echo -e "${GREEN}${BOLD}All checks passed!${NC}"
+        echo -e "${GREEN}Your code is ready for push/merge.${NC}"
+        PRINT_N_CHAR "*" 60 "${GREEN}${BOLD}"
+        echo -e "\n${GREEN}You can now push your changes with:${NC}"
+        echo -e "  ${BOLD}git push${NC}"
+    else
+        echo ""
+        PRINT_N_CHAR "!" 60 "${RED}${BOLD}"
+        echo -e "${RED}${BOLD}Found ${total_errors} errors during pre-push check!${NC}"
+        echo -e "${RED}Please fix the errors and try again.${NC}"
+        echo ""
+        echo -e "${YELLOW}Detailed errors:${NC}"
+        PRINT_N_CHAR "-" 60 "${YELLOW}"
+        local error_shown=0
+        for error_file in "$ERROR_DIR"/*.log; do
+            if [ -f "$error_file" ] && [ -s "$error_file" ]; then
+                error_shown=1
+                local check_name=$(basename "$error_file" .log)
+                echo ""
+                print_error "${check_name} errors:"
+                echo -e "${RED}$(cat "$error_file")${NC}"
+                PRINT_N_CHAR "-" 40 "${RED}"
+            fi
+        done
+        if [ "${error_shown}" -eq 0 ]; then
+            echo -e "${YELLOW}No detailed error information available.${NC}"
+        fi
+        PRINT_N_CHAR "!" 60 "${RED}${BOLD}"
+        echo -e "\n${CYAN}${BOLD}To fix these issues:${NC}"
+        echo -e "${CYAN}1. Review the errors above${NC}"
+        echo -e "${CYAN}2. Fix the code issues${NC}"
+        echo -e "${CYAN}3. Run '${BOLD}git add${NC}${CYAN}' to stage your changes${NC}"
+        echo -e "${CYAN}4. Run '${BOLD}git commit --amend${NC}${CYAN}' or create a new commit${NC}"
+        echo -e "${CYAN}5. Try pushing again${NC}"
+        echo ""
+        echo -e "${YELLOW}Note: You can also run individual checks:${NC}"
+        echo -e "  clang-format: ${BOLD}clang-format --style=file -i <file>${NC}"
+        echo -e "  codespell:    ${BOLD}codespell -w <file>${NC}"
+        echo -e "  pylint:       ${BOLD}pylint --rcfile=.jenkins/rules/pylint/pylintrc <file>${NC}"
+    fi
+    rm -rf "$ERROR_DIR"
+}
+
 function clang_format_check() {
-    if [ -f "${REPO_HOME}/scripts/check_clang_format.sh" ]; then
-        echo "clang-format scan start"
-        which clang-format || (echo "[INFO] Please install 'clang-format' tool first" && return 1)
-        if [ $? -eq "1" ]; then
-            return
-        fi
-
-        # create clang-format workspace
-        local workspace=${CODE_PATH}/clang_format
-        rm -rf "${workspace}"
+    print_step "clang-format scan start"
+    local original_dir=$(pwd)
+    CLANG_FORMAT=$(which clang-format 2>/dev/null)
+    if [[ -z "$CLANG_FORMAT" ]]; then
+        print_warning "[INFO] Please install 'clang-format' tool first"
+        DP_ASSERT_EQUAL "1" "0" "Clang-format tool check" "clang_format"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    fi
+    print_debug "Using clang-format: ${CLANG_FORMAT}"
+    local version_output=$(${CLANG_FORMAT} --version 2>/dev/null)
+    local version_num=0
+    if [[ "$version_output" =~ clang-format[[:space:]]+version[[:space:]]+([0-9]+)\. ]]; then
+        version_num="${BASH_REMATCH[1]}"
+    elif [[ "$version_output" =~ version[[:space:]]+([0-9]+)\. ]]; then
+        version_num="${BASH_REMATCH[1]}"
+    fi
+    if [[ $version_num -lt 18 ]]; then
+        print_error "clang-format version must be at least 18, current version is ${version_num}"
+        local workspace=${check_path}/clang_format
         mkdir -p "${workspace}"
-
-        # get code
-        cp -a "${REPO_HOME}/" "${workspace}/${REPOSITORY_NAME}" >/dev/null 2>&1
-
-        # Reset exclude file
-        local LOCAL_EXCLUDE_FOLDER=${COMMON_EXCLUDE_FOLDER}
-        if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
-            local DVPP_PATH="mindspore/ccsrc/minddata/dataset/kernels/image/dvpp/utils"
-            LOCAL_EXCLUDE_FOLDER=$(echo ${LOCAL_EXCLUDE_FOLDER} | sed "s#${DVPP_PATH},##g" | sed "s#,${DVPP_PATH}##g")
-        fi
-
-        # Exclude folder
-        MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-        # Check clang-format
-        echo "clang-format scanning"
-        cd "${workspace}/${REPOSITORY_NAME}" || return
-        if [ "${PIPELINE_TYPE}" = "gate" ]; then
-            bash -x scripts/check_clang_format.sh -l
-        else
-            bash -x scripts/check_clang_format.sh -a
-        fi
-        DP_ASSERT_EQUAL "$?" "0" "Clang-format scanning"
-    else
-        echo "${REPO_HOME}/scripts/check_clang_format.sh is not exist."
+        echo "clang-format version must be at least 18, current version is ${version_num}" > "${workspace}"/clang_format.log
+        STORE_ERRORS "clang_format" "${workspace}/clang_format.log"
+        DP_ASSERT_EQUAL "1" "0" "Clang-format version check" "clang_format"
+        rm -rf "${workspace}" 2>/dev/null || true
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
     fi
+    local workspace=${check_path}/clang_format
+    mkdir -p "${workspace}"
+    : > "${workspace}"/clang_format.log
+    : > "${workspace}"/changed_files.log
+    print_info "clang-format scanning"
+    cd "${REPO_HOME}" || {
+        print_error "Cannot cd to project root: ${REPO_HOME}"
+        DP_ASSERT_EQUAL "1" "0" "Clang-format directory change" "clang_format"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    if [ -f "${CODE_PATH}/pr_filelist.txt" ]; then
+        grep -E "\.(h|hh|hpp|cc|cpp|c)$" "${CODE_PATH}/pr_filelist.txt" > "${workspace}"/changed_files.log 2>/dev/null || true
+    else
+        git diff --diff-filter=ACMRTUXB --name-only HEAD~ HEAD 2>/dev/null | \
+            grep -E "\.(h|hh|hpp|cc|cpp|c)$" > "${workspace}"/changed_files.log 2>/dev/null || true
+    fi
+    local checked_count=0
+    local total_errors=0
+    if [ -s "${workspace}"/changed_files.log ]; then
+        print_debug "Found $(wc -l < "${workspace}/changed_files.log") C/C++ files to check"
+        while read -r relative_file; do
+            if [ -f "${relative_file}" ]; then
+                checked_count=$((checked_count + 1))
+                print_debug "Checking ${relative_file} (${checked_count})"
+                ${CLANG_FORMAT} --style=file -Werror --dry-run "${relative_file}" 2>&1 | \
+                    grep "error:" >> "${workspace}"/clang_format.log || true
+            fi
+        done < "${workspace}"/changed_files.log
+    else
+        print_debug "No C/C++ files changed."
+    fi
+    if [ -f "${workspace}"/clang_format.log ] && [ -s "${workspace}"/clang_format.log ]; then
+        total_errors=$(grep -c "error:" "${workspace}"/clang_format.log 2>/dev/null)
+        total_errors=${total_errors:-0}
+        if [ "${total_errors}" -gt 0 ]; then
+            STORE_ERRORS "clang_format" "${workspace}/clang_format.log"
+            print_error "Found ${total_errors} clang-format issues"
+            local error_count=0
+            while IFS= read -r line && [ $error_count -lt 20 ]; do
+                error_count=$((error_count + 1))
+                print_error "  ${error_count}: ${line}"
+            done < <(grep "error:" "${workspace}"/clang_format.log 2>/dev/null | head -20)
+            if [ "${total_errors}" -gt 20 ]; then
+                print_error "  ... and $((total_errors - 20)) more issues"
+            fi
+        fi
+    fi
+    DP_ASSERT_EQUAL "${total_errors}" "0" "Clang-format scanning" "clang_format"
+    rm -rf "${workspace}" 2>/dev/null || true
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
 }
 
-# 进行cmakelint检查
 function cmakelint_check() {
-    echo "cmakelint scan start"
-    which cmakelint || (echo "[INFO] Please install 'cmakelint' tool first" && return 1)
-    if [ $? -eq "1" ]; then
-        return
-    fi
-
-    # create cmakelint workspace
+    print_step "cmakelint scan start"
+    local original_dir=$(pwd)
+    which cmakelint 2>/dev/null >/dev/null || {
+        print_warning "[INFO] Please install 'cmakelint' tool first"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
     local workspace=${CODE_PATH}/cmakelint
-    rm -rf "${workspace}"
+    rm -rf "${workspace}" 2>/dev/null || true
     mkdir -p "${workspace}"
-
-    # get code
-    GET_CODE "${workspace}"
-
-    # Exclude folder
-    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # Set rules
+    local LOCAL_EXCLUDE_FOLDER="${COMMON_EXCLUDE_FOLDER}"
+    if [ "${REPOSITORY_NAME}" = "ms_custom_ops" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},ops/ascendc/aclnn_src"
+    fi
+    GET_CODE "${workspace}" "${LOCAL_EXCLUDE_FOLDER}"
     local CMAKELINT_FILTER="+convention/filename,+linelength,+package/consistency,+readability/logic,-readability/mixedcase,-readability/wonkycase,-syntax,+whitespace/eol,+whitespace/extra,+whitespace/indent,+whitespace/mismatch,+whitespace/newline,+whitespace/tabs"
-
-    # create cmakelint_check path
     local cmakelint_path=${check_path}/cmakelint
-    mkdir "${cmakelint_path}"
+    mkdir -p "${cmakelint_path}"
     : >"${cmakelint_path}"/cmakelint.log
-
-    # Run cmakelint
-    echo "cmakelint scanning"
-    cd "${workspace}" || return
-    find ${REPOSITORY_NAME} -name '*.cmake' -o -name 'CMakeLists.txt' -o -name 'cmakelists.txt' | xargs -r cmakelint --filter=${CMAKELINT_FILTER} --spaces=2 --linelength=120 --quiet >"${cmakelint_path}"/cmakelint.log
-
+    print_info "cmakelint scanning"
+    cd "${workspace}" || {
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return
+    }
+    find . -name '*.cmake' -o -name 'CMakeLists.txt' -o -name 'cmakelists.txt' 2>/dev/null | while read -r file; do
+        print_debug "Checking CMake file: ${file}"
+        PYTHONUTF8=1 cmakelint --filter=${CMAKELINT_FILTER} --spaces=2 --linelength=120 --quiet "${file}" >>"${cmakelint_path}"/cmakelint.log 2>&1 || true
+    done
     if [ "$os_name" == "MINGW" ]; then
-        # change \ to / in "${cmakelint_path}"/cmakelint.log
-        sed -i 's#\\#\/#g' "${cmakelint_path}"/cmakelint.log
+        sed -i 's#\\#/#g' "${cmakelint_path}"/cmakelint.log 2>/dev/null || true
     fi
-
-    error_number=$(cat <"${cmakelint_path}"/cmakelint.log | grep -c "^${REPOSITORY_NAME}/")
+    local error_file="${cmakelint_path}/cmakelint.log"
+    local error_number=0
+    if [ -f "$error_file" ]; then
+        error_number=$(grep -E '^[^:]+:[0-9]+:' "$error_file" 2>/dev/null | wc -l | tr -d ' ')
+    fi
+    error_number=${error_number:-0}
     if [ "$error_number" != 0 ]; then
-        # Print content
-        echo "Problem items: "
-        cat <"${cmakelint_path}"/cmakelint.log | grep "^${REPOSITORY_NAME}/"
+        STORE_ERRORS "cmakelint" "$error_file"
+        print_error "Found ${error_number} cmakelint issues"
+        local count=0
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^[^:]+:[0-9]+: ]]; then
+                count=$((count + 1))
+                print_error "  ${count}:$line"
+            fi
+        done < "$error_file"
+    else
+        print_debug "No cmakelint issues found"
     fi
-    # Return result
-    DP_ASSERT_EQUAL "${error_number}" "0" "Cmakelint scanning"
+    DP_ASSERT_EQUAL "${error_number}" "0" "Cmakelint scanning" "cmakelint"
+    rm -rf "${workspace}" 2>/dev/null || true
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
 }
 
-# 进行codespell检查
 function codespell_check() {
-    echo "codespell scan start"
-    which codespell || (echo "[INFO] Please install 'codespell' tool first" && return 1)
-    if [ $? -eq "1" ]; then
-        return
-    fi
-
-    # create codespell workspace
+    print_step "codespell scan start"
+    local original_dir=$(pwd)
+    which codespell 2>/dev/null >/dev/null || {
+        print_warning "[INFO] Please install 'codespell' tool first"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
     local workspace=${CODE_PATH}/codespell
-    rm -rf "${workspace}"
+    rm -rf "${workspace}" 2>/dev/null || true
     mkdir -p "${workspace}"
-
-    # get code
-    GET_CODE "${workspace}"
-
-    # Reset exclude file
-    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    local LOCAL_EXCLUDE_FOLDER="${COMMON_EXCLUDE_FOLDER}"
     if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
-        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/ut/data,mindspore/python/mindspore/profiler/common/validator/validate.py,mindspore/python/mindspore/ops/_op_impl/_custom_op/fake_quant_perlayer.py"
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/ut/data,mindspore/python/mindspore/profiler/common/validator/validate.py,mindspore/python/mindspore/ops/_op_impl/_custom_op/fake_quant_perlayer.py,tests/st/mindrlhf/qwen2_5/vocab.json,tests/st/mindrlhf/qwen2_5/merges.txt"
+    elif [ "${REPOSITORY_NAME}" = "mindpandas" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/ut/data,tests/st/data"
+    elif [ "${REPOSITORY_NAME}" = "docs" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},resource/release/release_list_zh_cn.md,resource/release/release_list_en.md"
+    elif [ "${REPOSITORY_NAME}" = "mindscience" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},MindFlow/applications/cfd/acoustic/images,MindChemistry/applications/cdvae/images,MindEarth/applications/nowcasting/PreDiff/images,MindSPONGE/applications/research/Grasp/mindsponge1/data/forcefield/amber.ff14sb.yaml,mindscience/MindFlow/applications/data_driven"
+    elif [ "${REPOSITORY_NAME}" = "mindrlhf" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests,mindrlhf/tests/ut/qwen_reward_dataset.json"
+    elif [ "${REPOSITORY_NAME}" = "golden-stick" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/mindone"
     fi
-
-    # Exclude folder
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # Check rule file
-    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/rules/codespell/codespell.allow" ]; then
-        local RULE_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/rules/codespell/codespell.allow
-    else
-        echo "${REPOSITORY_NAME}/.jenkins/rules/codespell/codespell.allow not exist"
+    GET_CODE "${workspace}" "${LOCAL_EXCLUDE_FOLDER}"
+    local RULE_FILE="${JENKINS_PATH}/rules/codespell/codespell.allow"
+    if [ ! -f "${RULE_FILE}" ]; then
+        print_error "${RULE_FILE} not exist"
+        rm -rf "${workspace}" 2>/dev/null || true
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
         return
     fi
-
-    # mkdir codespell_path
     local codespell_path=${check_path}/codespell
-    mkdir "${codespell_path}"
+    mkdir -p "${codespell_path}"
     : >"${codespell_path}"/codespell.log
-
-    # Run codespell
-    echo "codespell scanning"
-    cd "${workspace}" || return
-    codespell -q 7 -S '.git,third_party' -I "${RULE_FILE}" ${REPOSITORY_NAME} | grep -E -v ": [0-9a-zA-Z]{1,4} ==> |: [a-zA-Z][a-z]{1,}[TXYZ] ==> |: [a-z][A-Z][a-z]{1,} ==> " >"${codespell_path}"/codespell.log
-
+    print_info "codespell scanning"
+    cd "${workspace}" || {
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return
+    }
+    codespell -q 7 -S '.git,third_party' -I "${RULE_FILE}" . 2>&1 | grep -v "SKIP" >"${codespell_path}"/codespell_raw.log 2>&1 || true
     if [ "$os_name" == "MINGW" ]; then
-        # change \ to / in "${codespell_path}"/codespell.log
-        sed -i 's#\\#\/#g' "${codespell_path}"/codespell.log
+        sed -i 's#\\#\/#g' "${codespell_path}"/codespell_raw.log 2>/dev/null || true
     fi
-
-    # filter codespell
-    cat <"${RULE_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${codespell_path}"/codespell_filter.txt
+    cat <"${RULE_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${codespell_path}"/codespell_filter.txt 2>/dev/null || true
+    cp "${codespell_path}"/codespell_raw.log "${codespell_path}"/codespell.log
     while read -r line; do
         if [ "$os_name" == "Darwi" ]; then
-            sed -i "" "/: ${line} ==> /d" "${codespell_path}"/codespell.log
+            sed -i "" "/: ${line} ==> /d" "${codespell_path}"/codespell.log 2>/dev/null || true
         else
-            sed -i "/: ${line} ==> /d" "${codespell_path}"/codespell.log
+            sed -i "/: ${line} ==> /d" "${codespell_path}"/codespell.log 2>/dev/null || true
         fi
-    done <"${codespell_path}"/codespell_filter.txt
-
-    error_number=$(cat <"${codespell_path}"/codespell.log | grep -c "^${REPOSITORY_NAME}/")
+    done <"${codespell_path}"/codespell_filter.txt 2>/dev/null || true
+    error_number=$(grep -c '^' "${codespell_path}"/codespell.log 2>/dev/null | tr -d '\n\r' || echo 0)
+    error_number=${error_number:-0}
     if [ "$error_number" != 0 ]; then
-        # Print content
-        echo "Problem items: "
-        cat <"${codespell_path}"/codespell.log | grep "^${REPOSITORY_NAME}/"
+        STORE_ERRORS "codespell" "${codespell_path}/codespell.log"
+        print_error "Found ${error_number} codespell issues"
+        local error_count=0
+        while IFS= read -r line && [ $error_count -lt 20 ]; do
+            error_count=$((error_count + 1))
+            print_error "  ${error_count}:$line"
+        done < "${codespell_path}"/codespell.log
+        if [ "$error_number" -gt 20 ]; then
+            print_error "  ... and $((error_number - 20)) more issues"
+        fi
+    else
+        print_debug "No codespell issues found"
     fi
-    # Return result
-    DP_ASSERT_EQUAL "${error_number}" "0" "Codespell scanning"
+    DP_ASSERT_EQUAL "${error_number}" "0" "Codespell scanning" "codespell"
+    rm -rf "${workspace}" 2>/dev/null || true
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
 }
 
-# 进行cpplint检查
-function cpplint_check() {
-    echo "cpplint scan start"
-    which cpplint || (echo "[INFO] Please install 'cpplint' tool first" && return 1)
-    if [ $? -eq "1" ]; then
+function pylint_check() {
+    print_step "pylint scan start"
+    local original_dir=$(pwd)
+    local total_start_time=$(date +%s)
+    which pylint 2>/dev/null >/dev/null || {
+        print_warning "[INFO] Please install 'pylint' tool first"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    local pylint_version=$(pylint --version 2>&1 | head -1)
+    print_debug "pylint version: ${pylint_version}"
+    local workspace=${CODE_PATH}/pylint
+    rm -rf "${workspace}" 2>/dev/null || true
+    mkdir -p "${workspace}"
+    local LOCAL_EXCLUDE_FOLDER="${COMMON_EXCLUDE_FOLDER}"
+    if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},mindspore/profiler/common/proto_files"
+    elif [ "${REPOSITORY_NAME}" = "mindinsight" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},mindinsight/datavisual/proto_files,mindinsight/debugger/proto,mindinsight/domain/graph/proto"
+    elif [ "${REPOSITORY_NAME}" = "xai" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},mindspore_xai/proto"
+    fi
+    GET_CODE "${workspace}" "${LOCAL_EXCLUDE_FOLDER}"
+    local RULE_FILE="${JENKINS_PATH}/rules/pylint/pylintrc"
+    if [ ! -f "${RULE_FILE}" ]; then
+        print_error "ERROR: ${RULE_FILE} not exist"
+        rm -rf "${workspace}" 2>/dev/null || true
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
         return
     fi
+    local pylint_path=${check_path}/pylint
+    mkdir -p "${pylint_path}"
+    cat <"${CODE_PATH}"/pr_filelist.txt | grep '\.py$' >"${pylint_path}"/scan_filename.txt
+    local file_count=$(wc -l < "${pylint_path}/scan_filename.txt" 2>/dev/null || echo 0)
+    if [ "$file_count" -eq 0 ]; then
+        print_info "No Python files to scan"
+        rm -rf "${workspace}" 2>/dev/null || true
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return
+    fi
+    print_info "Found ${file_count} Python files to scan"
+    if [ "${REPOSITORY_NAME}" = "docs" ]; then
+        cp -a "${pylint_path}"/scan_filename.txt "${pylint_path}"/scan_filename_org.txt
+        cat "${pylint_path}"/scan_filename_org.txt | grep -v '/conf.py$' >"${pylint_path}"/scan_filename.txt
+        file_count=$(wc -l < "${pylint_path}/scan_filename.txt" 2>/dev/null || echo 0)
+        print_info "After excluding conf.py files: ${file_count} files to scan"
+    fi
+    cd "${workspace}" || {
+        print_error "Cannot cd to workspace: ${workspace}"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    : >"${pylint_path}"/pylint_original.log
+    local file_args=()
+    local missing_files=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line=${line%$'\r'}
+        if [ -f "${workspace}/${line}" ]; then
+            file_args+=("${workspace}/${line}")
+        else
+            if [ -f "${REPO_HOME}/${line}" ]; then
+                print_warning "File ${line} not found in workspace, using original path"
+                file_args+=("${REPO_HOME}/${line}")
+                missing_files+=("${line}")
+            else
+                print_warning "File ${line} not found in workspace or repository, skipping"
+            fi
+        fi
+    done < "${pylint_path}/scan_filename.txt"
+    if [ ${#file_args[@]} -eq 0 ]; then
+        print_error "No valid files to check (all files missing)"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    fi
+    print_info "Checking ${#file_args[@]} files (${#missing_files[@]} from original path)"
+    print_info "Files to check:"
+    for f in "${file_args[@]}"; do
+        relative_path="${f#${REPO_HOME}/}"
+        print_info "  - ${relative_path}"
+    done
+    local batch_start_time=$(date +%s)
+    pylint --rcfile="${RULE_FILE}" -j 4 --output-format=parseable \
+        --max-line-length=120 "${file_args[@]}" >"${pylint_path}"/pylint_original.log 2>&1
+    local batch_duration=$(( $(date +%s) - batch_start_time ))
+    print_info "Batch pylint execution time: ${batch_duration}s"
+    if [ "$os_name" == "MINGW" ]; then
+        sed -i 's#\\#\/#g' "${pylint_path}"/pylint_original.log 2>/dev/null || true
+    fi
+    local FILTER_FILE="${JENKINS_PATH}/check/config/filter_pylint.txt"
+    if [ -f "${FILTER_FILE}" ]; then
+        print_debug "Applying compiled filter rules for pylint..."
+        local converted_filter="${pylint_path}/pylint_filter_converted.txt"
+        if create_converted_filter_file "${FILTER_FILE}" "${converted_filter}"; then
+            local compiled_rules="${pylint_path}/pylint_rules_compiled.txt"
+            > "$compiled_rules"
+            while IFS= read -r rule_line || [[ -n "$rule_line" ]]; do
+                if [[ "$rule_line" =~ ^\"([^\"]*)\"[[:space:]]+\"([^\"]+)\"$ ]]; then
+                    local path="${BASH_REMATCH[1]}"
+                    local rule="${BASH_REMATCH[2]}"
+                    if [[ -z "$path" ]]; then
+                        echo ".*${rule}" >> "$compiled_rules"
+                    else
+                        echo "^${path}.*${rule}" >> "$compiled_rules"
+                    fi
+                fi
+            done < "$converted_filter"
+            if [ -s "$compiled_rules" ]; then
+                grep -v -f "$compiled_rules" "${pylint_path}/pylint_original.log" > "${pylint_path}/pylint.log" 2>/dev/null
+            else
+                cp "${pylint_path}/pylint_original.log" "${pylint_path}/pylint.log"
+            fi
+            rm -f "$compiled_rules"
+        else
+            cp "${pylint_path}/pylint_original.log" "${pylint_path}/pylint.log"
+        fi
+        rm -f "$converted_filter"
+    else
+        cp "${pylint_path}/pylint_original.log" "${pylint_path}/pylint.log"
+    fi
+    local error_number=0
+    local error_file="${pylint_path}/pylint.log"
+    if [ -f "$error_file" ]; then
+        error_number=$(grep -E '^[^:]+:[0-9]+:' "$error_file" 2>/dev/null | wc -l | tr -d ' ')
+    fi
+    error_number=${error_number:-0}
+    if [ "$error_number" != 0 ]; then
+        STORE_ERRORS "pylint" "$error_file"
+        print_error "Found ${error_number} pylint issues"
+        local count=0
+        while IFS= read -r line && [ $count -lt 20 ]; do
+            count=$((count + 1))
+            print_error "  ${count}:$line"
+        done < <(grep -E '^[^:]+:[0-9]+:' "$error_file" 2>/dev/null | head -20)
+        if [ "$error_number" -gt 20 ]; then
+            print_error "  ... and $((error_number - 20)) more issues"
+        fi
+    else
+        print_success "No pylint issues found"
+    fi
+    DP_ASSERT_EQUAL "${error_number}" "0" "Pylint scanning" "pylint"
+    local total_duration=$(( $(date +%s) - total_start_time ))
+    print_info "Total pylint check time: ${total_duration}s"
+    rm -rf "${workspace}" 2>/dev/null || true
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+}
 
-    # create cpplint workspace
+function cpplint_check() {
+    print_step "cpplint scan start"
+    local original_dir=$(pwd)
+    local total_start_time=$(date +%s)
+    which cpplint 2>/dev/null >/dev/null || {
+        print_warning "[INFO] Please install 'cpplint' tool first"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
     local workspace=${CODE_PATH}/cpplint
-    rm -rf "${workspace}"
+    rm -rf "${workspace}" 2>/dev/null || true
     mkdir -p "${workspace}"
-
-    # get code
-    GET_CODE "${workspace}"
-
-    # Reset exclude file
-    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
+    local LOCAL_EXCLUDE_FOLDER="${COMMON_EXCLUDE_FOLDER}"
     if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
         LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests"
     elif [ "${REPOSITORY_NAME}" = "models" ]; then
         LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},official/audio/lpcnet/third_party/src"
+    elif [ "${REPOSITORY_NAME}" = "golden-stick" ]; then
+        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/mindone"
     fi
-
-    # Exclude folder
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # Run cpplint
-    echo "cpplint scanning"
+    GET_CODE "${workspace}" "${LOCAL_EXCLUDE_FOLDER}"
+    local file_count=$(find "${workspace}" -type f \( -name "*.h" -o -name "*.hh" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cpp" -o -name "*.c" -o -name "*.cxx" -o -name "*.cu" -o -name "*.hxx" -o -name "*.cuh" -o -name "*.h++" -o -name "*.tpp" -o -name "*.txx" -o -name "*.cl" \) 2>/dev/null | wc -l)
+    print_info "Found ${file_count} C/C++ files in workspace"
+    if [ "$file_count" -eq 0 ]; then
+        print_info "No C/C++ files found, skipping cpplint check"
+        DP_ASSERT_EQUAL "0" "0" "Cpplint scanning" "cpplint"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 0
+    fi
+    print_info "C/C++ files in workspace:"
+    find "${workspace}" -type f \( -name "*.h" -o -name "*.hh" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cpp" -o -name "*.c" -o -name "*.cxx" -o -name "*.cu" -o -name "*.hxx" -o -name "*.cuh" -o -name "*.h++" -o -name "*.tpp" -o -name "*.txx" -o -name "*.cl" \) -printf "%P\n" 2>/dev/null | while read -r f; do
+        print_info "  $f"
+    done
     local cpplint_path=${check_path}/cpplint
-    mkdir "${cpplint_path}"
-    : >"${cpplint_path}"/cpplint.log
-    cd "${workspace}" || return
-    cpplint --root=src --extensions=cxx,cu,hh,cpp,hxx,cuh,h++,cc,c,hpp,c++,h,tpp,txx,cl --filter=-build/header_guard,-build/c++11 --quiet --repository="${workspace}"/${REPOSITORY_NAME} --linelength=120 --recursive ${REPOSITORY_NAME} >"${cpplint_path}"/cpplint.log 2>&1
-
+    mkdir -p "${cpplint_path}"
+    local error_log="${cpplint_path}/cpplint.log"
+    : > "${error_log}"
+    cd "${workspace}" || {
+        print_error "Cannot cd to workspace: ${workspace}"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    print_info "Running cpplint on entire workspace (recursive)..."
+    local detailed_log="${cpplint_path}/cpplint_detailed.log"
+    local cpplint_start=$(date +%s)
+    cpplint --root="${workspace}" --extensions=cxx,cu,hh,cpp,hxx,cuh,h++,cc,c,hpp,c++,h,tpp,txx,cl \
+        --filter=-build/header_guard,-build/c++11,-build/include_what_you_use,-whitespace/indent_namespace,-whitespace/newline,-readability/casting \
+        --quiet --repository="${workspace}" --linelength=120 \
+        --recursive . >"${detailed_log}" 2>&1
+    local cpplint_status=$?
+    local cpplint_end=$(date +%s)
+    local cpplint_duration=$((cpplint_end - cpplint_start))
+    print_info "cpplint execution completed in ${cpplint_duration}s with status ${cpplint_status}"
+    local detailed_log_size=$(wc -l < "${detailed_log}" 2>/dev/null || echo 0)
+    print_debug "cpplint detailed log contains ${detailed_log_size} lines"
+    if [ "$detailed_log_size" -eq 0 ]; then
+        print_info "cpplint produced no output, skipping further processing"
+        DP_ASSERT_EQUAL "0" "0" "Cpplint scanning" "cpplint"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 0
+    fi
     if [ "$os_name" == "MINGW" ]; then
-        # change \ to / in "${cpplint_path}"/cpplint.log
-        sed -i 's#\\#\/#g' "${cpplint_path}"/cpplint.log
+        sed -i 's#\\#\/#g' "${detailed_log}" 2>/dev/null || true
     fi
-
-    # Filter
-    rm -f "${cpplint_path}"/cpplint_org.log
-    cp -a "${cpplint_path}"/cpplint.log "${cpplint_path}"/cpplint_org.log >/dev/null 2>&1
-    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_cpplint.txt" ]; then
-        local FILTER_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_cpplint.txt
-    fi
-    cat <"${FILTER_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${cpplint_path}"/cpplint_filter.txt
-    while read -r line; do
-        local key1
-        key1=$(echo "${line}" | awk -F'"' '{print $2}')
-        local key2
-        key2=$(echo "${line}" | awk -F'"' '{print $4}')
-        cat <"${cpplint_path}"/cpplint.log | grep -n "^${key1}" | grep "${key2}" | awk -F':' '{print $1}' >"${cpplint_path}"/cpplint_line.txt
-        for line_number in $(tac "${cpplint_path}"/cpplint_line.txt); do
-            if [ "$os_name" == "Darwi" ]; then
-                sed -i "" "${line_number}d" "${cpplint_path}"/cpplint.log
-            else
-                sed -i "${line_number}d" "${cpplint_path}"/cpplint.log
+    cp "${detailed_log}" "${error_log}"
+    local FILTER_FILE="${JENKINS_PATH}/check/config/filter_cpplint.txt"
+    if [ -f "${FILTER_FILE}" ] && [ -s "${error_log}" ]; then
+        print_debug "Applying compiled filter rules for cpplint..."
+        local converted_filter="${cpplint_path}/cpplint_filter_converted.txt"
+        if create_converted_filter_file "${FILTER_FILE}" "${converted_filter}"; then
+            local compiled_rules="${cpplint_path}/cpplint_rules_compiled.txt"
+            > "$compiled_rules"
+            while IFS= read -r rule_line || [[ -n "$rule_line" ]]; do
+                if [[ "$rule_line" =~ ^\"([^\"]*)\"[[:space:]]+\"([^\"]+)\"$ ]]; then
+                    local path="${BASH_REMATCH[1]}"
+                    local rule="${BASH_REMATCH[2]}"
+                    if [[ -z "$path" ]]; then
+                        echo ".*\[${rule}\]" >> "$compiled_rules"
+                    else
+                        echo "^${path}.*\[${rule}\]" >> "$compiled_rules"
+                    fi
+                fi
+            done < "$converted_filter"
+            if [ -s "$compiled_rules" ]; then
+                grep -v -f "$compiled_rules" "$error_log" > "${cpplint_path}/cpplint_filtered.log" 2>/dev/null
+                mv "${cpplint_path}/cpplint_filtered.log" "$error_log"
             fi
-        done
-    done <"${cpplint_path}"/cpplint_filter.txt
-
-    # Check result
-    if [ -s "${cpplint_path}"/cpplint_org.log ] && [ ! -s "${cpplint_path}"/cpplint.log ]; then
-        echo "[ERROR] Filter cpplint failed."
+            rm -f "$compiled_rules"
+        fi
+        rm -f "$converted_filter"
     fi
-
-    error_number=$(cat <"${cpplint_path}"/cpplint.log | grep -c "^${REPOSITORY_NAME}/")
+    local error_number=$(grep -E '^[^:]+:[0-9]+:' "${error_log}" 2>/dev/null | wc -l | tr -d ' ')
+    error_number=${error_number:-0}
     if [ "$error_number" != 0 ]; then
-        # Print content
-        echo "Problem items: "
-        cat <"${cpplint_path}"/cpplint.log | grep "^${REPOSITORY_NAME}/"
-    fi
-    # Return result
-    DP_ASSERT_EQUAL "${error_number}" "0" "Cpplint scanning"
-}
-
-# 进行lizard检查
-function lizard_check() {
-    echo "lizard scan start"
-    which lizard || (echo "[INFO] Please install 'lizard' tool first" && return 1)
-    if [ $? -eq "1" ]; then
-        return
-    fi
-
-    # create lizard workspace
-    local workspace=${CODE_PATH}/lizard
-    rm -rf "${workspace}"
-    mkdir -p "${workspace}"
-
-    # get code
-    GET_CODE "${workspace}"
-
-    # Exclude folder
-    local LOCAL_EXCLUDE_FOLDER=${COMMON_EXCLUDE_FOLDER}
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # Set additional option
-    local ADDITIONAL_LIZARD_OPTION=""
-    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/whitelizard.txt" ]; then
-        ADDITIONAL_LIZARD_OPTION="-W ${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/whitelizard.txt"
-    fi
-
-    # mkdir lizard_path
-    local lizard_path=${check_path}/lizard
-    mkdir "${lizard_path}"
-    : >"${lizard_path}"/lizard.log
-
-    # Run lizard
-    echo "lizard scanning"
-    cd "${workspace}" || return
-    local THRESHOLD_LIZARD_CCN=19
-    local THRESHOLD_LIZARD_LENGTH=100
-    lizard -l cpp -l python -l java -C ${THRESHOLD_LIZARD_CCN} -L ${THRESHOLD_LIZARD_LENGTH} -x "*/tests/*" -x "*/test/*" -x "*/third_party/*" "${ADDITIONAL_LIZARD_OPTION}" -w ${REPOSITORY_NAME} >"${lizard_path}"/lizard.log
-
-    if [ "$os_name" == "MINGW" ]; then
-        # change \ to / in "${lizard_path}"/lizard.log
-        sed -i 's#\\#\/#g' "${lizard_path}"/lizard.log
-    fi
-
-    # Get result of cyclomatic complexity
-    (
-        while read -r line; do
-            filename=$(echo "${line}" | awk -F': ' '{print $1}')
-            method_name=$(echo "${line}" | awk -F': ' '{print $3}' | awk '{print $1}')
-            method_ccn=$(echo "${line}" | awk -F'NLOC, ' '{print $2}' | awk -F' CCN' '{print $1}')
-            if [[ ${method_ccn} -gt ${THRESHOLD_LIZARD_CCN} ]]; then
-                printf "%-115s %-75s %-7s\n" "${filename}" "${method_name}" "${method_ccn}"
-            fi
-        done <"${lizard_path}"/lizard.log
-    ) >"${lizard_path}"/lizard_ccn.log
-
-    # Get result of large function
-    (
-        while read -r line; do
-            filename=$(echo "${line}" | awk -F': ' '{print $1}')
-            method_name=$(echo "${line}" | awk -F': ' '{print $3}' | awk '{print $1}')
-            method_nloc=$(echo "${line}" | awk -F'has ' '{print $2}' | awk -F' NLOC' '{print $1}')
-            if [[ ${method_nloc} -gt ${THRESHOLD_LIZARD_LENGTH} ]]; then
-                printf "%-115s %-75s %-7s\n" "${filename}" "${method_name}" "${method_nloc}"
-            fi
-        done <"${lizard_path}"/lizard.log
-    ) >"${lizard_path}"/lizard_nloc.log
-
-    error_number_ccn=$(cat <"${lizard_path}"/lizard_ccn.log | grep -c "^${REPOSITORY_NAME}/")
-    if [ "$error_number_ccn" != 0 ]; then
-        # Print content of cyclomatic complexity
-        echo "[Lizard] Cyclomatic complexity error number: ${error_number_ccn}, threshold(CCN) > ${THRESHOLD_LIZARD_CCN} problem items: "
-        if [ -s "${lizard_path}/lizard_ccn.log" ]; then
-            PRINT_N_CHAR "-" "195"
-            printf "%-115s %-75s %-7s\n" "FilePath" "Function" "CCN"
-            printf "%-115s %-75s %-7s\n" "--------" "--------" "---"
-            cat "${lizard_path}"/lizard_ccn.log
-            PRINT_N_CHAR "-" "195"
+        grep -E '^[^:]+:[0-9]+:' "${error_log}" > "${cpplint_path}/cpplint_errors.log"
+        STORE_ERRORS "cpplint" "${cpplint_path}/cpplint_errors.log"
+        print_error "Found ${error_number} cpplint issues"
+        local count=0
+        while IFS= read -r line && [ $count -lt 20 ]; do
+            count=$((count + 1))
+            print_error "  ${count}:$line"
+        done < "${cpplint_path}/cpplint_errors.log"
+        if [ "$error_number" -gt 20 ]; then
+            print_error "  ... and $((error_number - 20)) more issues"
         fi
-    fi
-
-    error_number_nloc=$(cat <"${lizard_path}"/lizard_nloc.log | grep -c "^${REPOSITORY_NAME}/")
-    if [ "$error_number_nloc" != 0 ]; then
-        # Print content of large function
-        echo "[Lizard] Function length error number: ${error_number_nloc}, threshold(NLOC) > ${THRESHOLD_LIZARD_LENGTH} problem items: "
-        if [ -s "${lizard_path}/lizard_nloc.log" ]; then
-            PRINT_N_CHAR "-" "196"
-            printf "%-115s %-75s %-7s\n" "FilePath" "Function" "NLOC"
-            printf "%-115s %-75s %-7s\n" "--------" "--------" "----"
-            cat "${lizard_path}"/lizard_nloc.log
-            PRINT_N_CHAR "-" "196"
-        fi
-    fi
-    # Return result
-    DP_ASSERT_EQUAL "$((error_number_ccn + error_number_nloc))" "0" "Lizard scanning"
-}
-
-# 进行pylint检查
-function pylint_check() {
-    echo "pylint scan start"
-    which pylint || (echo "[INFO] Please install 'pylint' tool first" && return 1)
-    if [ $? -eq "1" ]; then
-        return
-    fi
-
-    # create pylint workspace
-    local workspace=${CODE_PATH}/pylint
-    rm -rf "${workspace}"
-    mkdir -p "${workspace}"
-
-    # get code
-    GET_CODE "${workspace}"
-
-    # Reset exclude file
-    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
-    if [ "${PIPELINE_TYPE}" = "daily" ] || [ "${PIPELINE_TYPE}" = "version" ]; then
-        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests"
-    fi
-    LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},mindspore/profiler/common/proto_files"
-
-    # Exclude folder
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # Check rule file
-    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/rules/pylint/pylintrc" ]; then
-        local RULE_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/rules/pylint/pylintrc
-    fi
-
-    # create pylint path
-    local pylint_path=${check_path}/pylint
-    mkdir -p "${pylint_path}"
-
-    # Get scan filename
-    if [ "${PIPELINE_TYPE}" = "gate" ]; then
-        # Get pylint pr filelist(*.py)
-        cat <"${CODE_PATH}"/pr_filelist.txt | grep '\.py$' >"${pylint_path}"/scan_filename.txt
     else
-        # Get scan file number
-        cd "${workspace}" || return
-        (find ${REPOSITORY_NAME} -iname "*.py") >"${pylint_path}"/scan_filename.txt
-        if [ "$os_name" == "Darwi" ]; then
-            sed -i "" "s#^${REPOSITORY_NAME}/##g" "${pylint_path}"/scan_filename.txt
-        else
-            sed -i "s#^${REPOSITORY_NAME}/##g" "${pylint_path}"/scan_filename.txt
-        fi
+        print_success "No cpplint issues found"
     fi
-
-    # run pylint
-    echo "pylint scanning"
-    cd "${workspace}" || return
-    : >"${pylint_path}"/pylint.log
-    while read -r line; do
-        if [ -f "${workspace}/${REPOSITORY_NAME}/${line}" ]; then
-            pylint --rcfile="${RULE_FILE}" -j 4 --output-format=parseable "${REPOSITORY_NAME}/${line}" --max-line-length=120 >>"${pylint_path}"/pylint.log
-        fi
-    done <"${pylint_path}"/scan_filename.txt
-
-    if [ "$os_name" == "MINGW" ]; then
-        # change \ to / in "${pylint_path}"/lizard.log
-        sed -i 's#\\#\/#g' "${pylint_path}"/pylint.log
-    fi
-
-    # filter pylint
-    rm -f "${pylint_path}"/pylint_org.log
-    cp -a "${pylint_path}"/pylint.log "${pylint_path}"/pylint_org.log >/dev/null 2>&1
-    if [ -f "${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_pylint.txt" ]; then
-        local FILTER_FILE=${workspace}/${REPOSITORY_NAME}/.jenkins/check/config/filter_pylint.txt
-    fi
-    cat <"${FILTER_FILE}" | grep -v "^[[:space:]]*$" | grep -v "^#" | tr -d '\r' >"${pylint_path}"/pylint_filter.txt
-    while read -r line; do
-        local key1
-        key1=$(echo "${line}" | awk -F'"' '{print $2}')
-        local key2
-        key2=$(echo "${line}" | awk -F'"' '{print $4}')
-        cat <"${pylint_path}"/pylint.log | grep -n "^${key1}" | grep "${key2}" | awk -F':' '{print $1}' >"${pylint_path}"/pylint_line.txt
-        for line_number in $(tac "${pylint_path}"/pylint_line.txt); do
-            if [ "$os_name" == "Darwi" ]; then
-                sed -i "" "${line_number}d" "${pylint_path}"/pylint.log
-            else
-                sed -i "${line_number}d" "${pylint_path}"/pylint.log
-            fi
-        done
-    done <"${pylint_path}"/pylint_filter.txt
-
-    # Check result
-    if [ -s "${pylint_path}"/pylint_org.log ] && [ ! -s "${pylint_path}"/pylint.log ]; then
-        echo "[ERROR] Filter pylint failed."
-        return
-    fi
-
-    error_number=$(cat <"${pylint_path}"/pylint.log | grep -c "^${REPOSITORY_NAME}/")
-    if [ "$error_number" != 0 ]; then
-        # Print content
-        echo "Problem items: "
-        cat <"${pylint_path}"/pylint.log | grep "^${REPOSITORY_NAME}/"
-    fi
-    # Return result
-    DP_ASSERT_EQUAL "${error_number}" "0" "Pylint scanning"
+    DP_ASSERT_EQUAL "${error_number}" "0" "Cpplint scanning" "cpplint"
+    local total_duration=$(( $(date +%s) - total_start_time ))
+    print_info "Total cpplint check time: ${total_duration}s"
+    rm -rf "${workspace}" 2>/dev/null || true
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
 }
 
-# 进行shellcheck检查
 function shellcheck_check() {
-    echo "shellcheck scan start"
-    which shellcheck || (echo "[INFO] Please install 'shellcheck' tool first" && return 1)
-    if [ $? -eq "1" ]; then
+    if [ "$os_name" != "Linux" ] && [ "$os_name" != "Darwi" ]; then
+        print_info "Skipping shellcheck on Windows/MINGW"
         return
     fi
-
-    # create shellcheck workspace
-    local workspace=${CODE_PATH}/shellcheck
-    rm -rf "${workspace}"
-    mkdir -p "${workspace}"
-
-    # get code
-    GET_CODE "${workspace}"
-
-    # Exclude folder
-    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # check shellcheck path
+    print_step "shellcheck scan start"
+    local original_dir=$(pwd)
+    which shellcheck 2>/dev/null >/dev/null || {
+        print_warning "[INFO] Please install 'shellcheck' tool first"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    local shell_files=()
+    while IFS= read -r file; do
+        if [[ "$file" == *.sh ]] && [ -f "${REPO_HOME}/$file" ]; then
+            shell_files+=("$file")
+        fi
+    done < "${CODE_PATH}/pr_filelist.txt"
+    if [ ${#shell_files[@]} -eq 0 ]; then
+        print_info "No shell scripts changed, skipping shellcheck"
+        DP_ASSERT_EQUAL "0" "0" "Shellcheck scanning" "shellcheck"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 0
+    fi
+    print_info "Shell scripts to check:"
+    for f in "${shell_files[@]}"; do
+        print_info "  $f"
+    done
     local shellcheck_path=${check_path}/shellcheck
     mkdir -p "${shellcheck_path}"
-    : >"${shellcheck_path}"/shellcheck_result.log
-
-    # Filter
-    # Reference: https://github.com/pytorch/pytorch/blob/main/.ci/pytorch/.shellcheckrc
-    # SC2086: Double quote to prevent globbing and word splitting.
-    # SC1090: Can't follow non-constant source. Use a directive to specify location.
-    # SC1091: Not following: (error message here)
-    # SC2155: Declare and assign separately to avoid masking return values.
-    # SC2164: Use cd ... || exit in case cd fails.
-    # SC1003: Want to escape a single quote? echo 'This is how it'\''s done'.
+    local result_log="${shellcheck_path}/shellcheck_result.log"
+    : > "$result_log"
     local SHELLCHECK_EXCLUDE_TYPES="SC2086,SC1090,SC1091,SC2155,SC2164,SC1003"
-
-    # Run shellcheck (warning)
-    echo "shellcheck scanning"
-    local error_number
-    error_number=$(find "${workspace}"/${REPOSITORY_NAME} -name '*.sh' -type f -print0 | xargs -0 -r shellcheck --severity=warning --exclude=${SHELLCHECK_EXCLUDE_TYPES} --format=gcc | wc -l)
-    if [ "${error_number}" -ne "0" ]; then
-        find "${workspace}"/${REPOSITORY_NAME} -name '*.sh' -type f -print0 | xargs -0 -r shellcheck --severity=warning --exclude=${SHELLCHECK_EXCLUDE_TYPES} --format=tty >"${shellcheck_path}"/shellcheck_result.log
-        # Print content
-        echo "Problem items: "
-        cat "${shellcheck_path}/shellcheck_result.log"
-    fi
-    DP_ASSERT_EQUAL "${error_number}" "0" "Shellcheck scanning"
-}
-
-# 进行tab检查
-function tab_check() {
-    echo "tab scan start"
-
-    # create tab workspace
-    local workspace=${CODE_PATH}/tab
-    rm -rf "${workspace}"
-    mkdir -p "${workspace}"
-
-    # get code
-    if [ "${PIPELINE_TYPE}" = "gate" ]; then
-        if [ "$os_name" == "Darwi" ]; then
-            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}/${REPOSITORY_NAME}/" >/dev/null 2>&1
-        else
-            cp -a "${CODE_PATH}/${REPOSITORY_NAME}/" "${workspace}"/ >/dev/null 2>&1
+    cd "${REPO_HOME}" || {
+        print_error "Cannot cd to repo home: ${REPO_HOME}"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    for file in "${shell_files[@]}"; do
+        print_debug "Running shellcheck on $file"
+        shellcheck --severity=warning --exclude=${SHELLCHECK_EXCLUDE_TYPES} --format=gcc "$file" >> "$result_log" 2>&1 || true
+    done
+    local error_number=$(grep -c '^[^:]*:[0-9]\+:' "$result_log" 2>/dev/null | tr -d ' ' || echo 0)
+    error_number=${error_number:-0}
+    if [ "$error_number" != 0 ]; then
+        STORE_ERRORS "shellcheck" "$result_log"
+        print_error "Found ${error_number} shellcheck issues"
+        local count=0
+        while IFS= read -r line && [ $count -lt 20 ]; do
+            count=$((count + 1))
+            print_error "  ${count}:$line"
+        done < <(grep '^[^:]*:[0-9]\+:' "$result_log" | head -20)
+        if [ "$error_number" -gt 20 ]; then
+            print_error "  ... and $((error_number - 20)) more issues"
         fi
-        # Reserved directory(.git) for command(git grep)
-        cp -a "${REPO_HOME}/.git" "${workspace}/${REPOSITORY_NAME}/" >/dev/null 2>&1
     else
-        cp -a "${REPO_HOME}/" "${workspace}/${REPOSITORY_NAME}" >/dev/null 2>&1
+        print_success "No shellcheck issues found"
     fi
-
-    # Reset exclude file
-    local LOCAL_EXCLUDE_FOLDER=$COMMON_EXCLUDE_FOLDER
-    if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
-        LOCAL_EXCLUDE_FOLDER="${LOCAL_EXCLUDE_FOLDER},tests/ut/data,tests/ut/cpp/dataset/c_api_text_test.cc,mindspore/lite/examples/quick_start_ios/mindspore-lite.xcodeproj,mindspore/lite/examples/quick_start_ios/mindspore-lite/Base.Iproj,mindspore/lite/examples/quick_start_ios/mindspore-lite/Assets.xcassets,mindspore/lite/examples/quick_start_ios/mindspore-lite/Info.plist"
-    fi
-
-    # Exclude folder
-    MS_EXCLUDE_FOLDER "${workspace}/${REPOSITORY_NAME}" "${LOCAL_EXCLUDE_FOLDER}"
-
-    # Check tab
-    echo "tab scanning"
-    cd "${workspace}/${REPOSITORY_NAME}" || return
-    error_number=$(git grep -I -n $'\t' -- . ':(exclude)*.git*' ':(exclude)third_party' ':(exclude)**Makefile' ':(exclude)*.bin' ':(exclude)*.xml' ':(exclude)*.rst' ':(exclude)*.docx' ':(exclude)*.xlsx' ':(exclude)*.pdf' ':(exclude)*.mindir' ':(exclude)*.css' ':(exclude)*.js' ':(exclude)*.html' ':(exclude)*.patch' | wc -l)
-    if [ "${error_number}" -ne "0" ]; then
-        # Print content
-        echo "Problem items(The following files have tabs, please convert tab to space): "
-        git grep -I -n $'\t' -- . ':(exclude)*.git*' ':(exclude)third_party' ':(exclude)**Makefile' ':(exclude)*.bin' ':(exclude)*.xml' ':(exclude)*.rst' ':(exclude)*.docx' ':(exclude)*.xlsx' ':(exclude)*.pdf' ':(exclude)*.mindir' ':(exclude)*.css' ':(exclude)*.js' ':(exclude)*.html' ':(exclude)*.patch'
-    fi
-    DP_ASSERT_EQUAL "$error_number" "0" "Tab scanning"
+    DP_ASSERT_EQUAL "$error_number" "0" "Shellcheck scanning" "shellcheck"
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
 }
 
-# 按照门禁顺序进行检查
+function tab_check() {
+    print_step "tab scan start"
+    local original_dir=$(pwd)
+    print_info "tab scanning"
+    cd "${REPO_HOME}" || {
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return
+    }
+    local tab_path=${check_path}/tab
+    mkdir -p "${tab_path}"
+    : >"${tab_path}"/tab.log
+    local EXCLUDE_PATTERNS=":(exclude)*.git* :(exclude)third_party"
+    git grep -I -n $'\t' -- ${STAGE_FILES} ${EXCLUDE_PATTERNS} >"${tab_path}"/tab.log 2>/dev/null || true
+    error_number=$(grep -c '^' "${tab_path}"/tab.log 2>/dev/null | tr -d '\n\r' || echo 0)
+    error_number=${error_number:-0}
+    if [ "$error_number" != 0 ]; then
+        STORE_ERRORS "tab" "${tab_path}/tab.log"
+        print_error "Found ${error_number} tab issues (files contain tabs, please convert tabs to spaces)"
+        local error_count=0
+        while IFS= read -r line && [ $error_count -lt 20 ]; do
+            error_count=$((error_count + 1))
+            print_error "  ${error_count}:$line"
+        done < "${tab_path}"/tab.log
+        if [ "$error_number" -gt 20 ]; then
+            print_error "  ... and $((error_number - 20)) more issues"
+        fi
+    else
+        print_debug "No tab issues found"
+    fi
+    DP_ASSERT_EQUAL "$error_number" "0" "Tab scanning" "tab"
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+}
+
+function lizard_check() {
+    print_step "lizard scan start"
+    local original_dir=$(pwd)
+    local total_start_time=$(date +%s)
+    which lizard 2>/dev/null >/dev/null || {
+        print_warning "[INFO] Please install 'lizard' tool first"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    local workspace=${CODE_PATH}/lizard
+    rm -rf "${workspace}" 2>/dev/null || true
+    mkdir -p "${workspace}"
+    GET_CODE "${workspace}" "${COMMON_EXCLUDE_FOLDER}"
+    local THRESHOLD_LIZARD_CCN=19
+    local THRESHOLD_LIZARD_LENGTH=100
+    local lizard_path=${check_path}/lizard
+    mkdir -p "${lizard_path}"
+    : >"${lizard_path}"/lizard.log
+    : >"${lizard_path}"/lizard_ccn.log
+    : >"${lizard_path}"/lizard_nloc.log
+    print_info "lizard scanning"
+    cd "${workspace}" || {
+        print_error "Cannot cd to workspace: ${workspace}"
+        cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+        return 1
+    }
+    local lizard_start=$(date +%s)
+    lizard -l cpp -l python -l java \
+        -C ${THRESHOLD_LIZARD_CCN} -L ${THRESHOLD_LIZARD_LENGTH} \
+        -x "*/tests/*" -x "*/test/*" -x "*/third_party/*" \
+        . >"${lizard_path}"/lizard.log 2>&1
+    local lizard_end=$(date +%s)
+    local lizard_duration=$((lizard_end - lizard_start))
+    print_info "lizard execution completed in ${lizard_duration}s"
+    if [ "$os_name" == "MINGW" ]; then
+        sed -i 's/\r//g' "${lizard_path}"/lizard.log 2>/dev/null || true
+    fi
+    process_lizard_output_original "$lizard_path" "$THRESHOLD_LIZARD_CCN" "$THRESHOLD_LIZARD_LENGTH"
+    local WHITELIST_FILE="${JENKINS_PATH}/check/config/whitelizard.txt"
+    if [ -f "${WHITELIST_FILE}" ]; then
+        print_info "Applying lizard whitelist filtering..."
+        local python_cmd=""
+        if command -v python &> /dev/null; then
+            python_cmd="python"
+        elif command -v python3 &> /dev/null; then
+            python_cmd="python3"
+        fi
+        if [ -n "$python_cmd" ]; then
+            local filter_script="${lizard_path}/lizard_filter.py"
+            cat > "$filter_script" << 'EOF'
+#!/usr/bin/env python3
+import sys
+import os
+import re
+def normalize_path(path, strip_repo=False):
+    path = path.replace('\\', '/')
+    if path.startswith('./'):
+        path = path[2:]
+    if strip_repo and '/' in path:
+        path = path.split('/', 1)[-1]
+    return path
+def load_whitelist(whitelist_file):
+    whitelist = set()
+    with open(whitelist_file, 'r', encoding='utf-8') as f:
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if ':' not in line:
+                print(f"[WARNING] Invalid line {line_num}: {line}", file=sys.stderr)
+                continue
+            file_path, func_name = line.split(':', 1)
+            file_path = file_path.strip()
+            func_name = func_name.strip()
+            file_path_norm = normalize_path(file_path, strip_repo=True)
+            whitelist.add((file_path_norm, func_name))
+    return whitelist
+def filter_log(input_file, output_file, whitelist):
+    filtered = 0
+    with open(input_file, 'r', encoding='utf-8') as inf, open(output_file, 'w', encoding='utf-8') as outf:
+        for line in inf:
+            line = line.rstrip('\n')
+            parts = line.split(None, 2)
+            if len(parts) < 2:
+                outf.write(line + '\n')
+                continue
+            file_path = parts[0].strip()
+            function_name = parts[1].strip()
+            file_path_norm = normalize_path(file_path, strip_repo=False)
+            if (file_path_norm, function_name) in whitelist:
+                print(f"Whitelisted: {file_path_norm} : {function_name}", file=sys.stderr)
+                filtered += 1
+                continue
+            outf.write(line + '\n')
+    return filtered
+if __name__ == "__main__":
+    if len(sys.argv) != 5:
+        print("Usage: filter.py <whitelist> <ccn_file> <nloc_file> <output_dir>", file=sys.stderr)
+        sys.exit(1)
+    whitelist_file = sys.argv[1]
+    input_ccn = sys.argv[2]
+    input_nloc = sys.argv[3]
+    output_dir = sys.argv[4]
+    whitelist = load_whitelist(whitelist_file)
+    output_ccn = os.path.join(output_dir, 'lizard_ccn_filtered.log')
+    output_nloc = os.path.join(output_dir, 'lizard_nloc_filtered.log')
+    filtered_ccn = filter_log(input_ccn, output_ccn, whitelist)
+    filtered_nloc = filter_log(input_nloc, output_nloc, whitelist)
+    os.replace(output_ccn, input_ccn)
+    os.replace(output_nloc, input_nloc)
+    print(f"Filtered {filtered_ccn} CCN and {filtered_nloc} NLOC entries", file=sys.stderr)
+EOF
+            $python_cmd "$filter_script" "${WHITELIST_FILE}" "${lizard_path}/lizard_ccn.log" "${lizard_path}/lizard_nloc.log" "${lizard_path}"
+            print_info "Whitelist filtering completed"
+        else
+            print_warning "Python not available, skipping whitelist filtering"
+        fi
+    fi
+    local error_number_ccn=0
+    local error_number_nloc=0
+    [ -f "${lizard_path}/lizard_ccn.log" ] && error_number_ccn=$(grep -c '^' "${lizard_path}"/lizard_ccn.log 2>/dev/null | tr -d ' ')
+    [ -f "${lizard_path}/lizard_nloc.log" ] && error_number_nloc=$(grep -c '^' "${lizard_path}"/lizard_nloc.log 2>/dev/null | tr -d ' ')
+    error_number_ccn=${error_number_ccn:-0}
+    error_number_nloc=${error_number_nloc:-0}
+    if [ "$error_number_ccn" != 0 ]; then
+        print_error "[Lizard] Found ${error_number_ccn} cyclomatic complexity issues (CCN > ${THRESHOLD_LIZARD_CCN})"
+        if [ "$error_number_ccn" -gt 0 ]; then
+            print_error "CCN issues:"
+            local count=0
+            while IFS= read -r line; do
+                count=$((count + 1))
+                print_error "  ${count}:${line}"
+            done < "${lizard_path}"/lizard_ccn.log
+        fi
+    else
+        print_debug "[Lizard] No cyclomatic complexity issues found"
+    fi
+    if [ "$error_number_nloc" != 0 ]; then
+        print_error "[Lizard] Found ${error_number_nloc} function length issues (NLOC > ${THRESHOLD_LIZARD_LENGTH})"
+        if [ "$error_number_nloc" -gt 0 ]; then
+            print_error "NLOC issues:"
+            local count=0
+            while IFS= read -r line; do
+                count=$((count + 1))
+                print_error "  ${count}:${line}"
+            done < "${lizard_path}"/lizard_nloc.log
+        fi
+    else
+        print_debug "[Lizard] No function length issues found"
+    fi
+    if [ "$error_number_ccn" -gt 0 ] || [ "$error_number_nloc" -gt 0 ]; then
+        local lizard_error_file="${lizard_path}/lizard_combined.log"
+        > "$lizard_error_file"
+        [ "$error_number_ccn" -gt 0 ] && [ -f "${lizard_path}/lizard_ccn.log" ] && cat "${lizard_path}/lizard_ccn.log" >> "$lizard_error_file"
+        [ "$error_number_nloc" -gt 0 ] && [ -f "${lizard_path}/lizard_nloc.log" ] && cat "${lizard_path}/lizard_nloc.log" >> "$lizard_error_file"
+        STORE_ERRORS "lizard" "$lizard_error_file"
+    fi
+    LIZARD_CCN_ERRORS="${error_number_ccn}"
+    LIZARD_NLOC_ERRORS="${error_number_nloc}"
+    local total_errors=$((error_number_ccn + error_number_nloc))
+    local total_end_time=$(date +%s)
+    local total_duration=$((total_end_time - total_start_time))
+    echo ""
+    print_info "===== lizard Performance Summary ====="
+    print_info "Total execution time: ${total_duration}s"
+    print_info "CCN errors: ${error_number_ccn}"
+    print_info "NLOC errors: ${error_number_nloc}"
+    print_info "Total errors: ${total_errors}"
+    print_info "======================================"
+    echo ""
+    if [ "${total_errors}" -ne 0 ]; then
+        print_error "Lizard scanning failed, total error number is ${total_errors}."
+        status=$((status + total_errors))
+    else
+        print_success "Lizard scanning succeed."
+    fi
+    rm -rf "${workspace}" 2>/dev/null || true
+    cd "${original_dir}" 2>/dev/null || cd ~ 2>/dev/null || true
+}
+
+function process_lizard_output_original() {
+    local lizard_path="$1"
+    local threshold_ccn="${2:-19}"
+    local threshold_nloc="${3:-100}"
+    : > "${lizard_path}"/lizard_ccn.log
+    : > "${lizard_path}"/lizard_nloc.log
+    if [ ! -f "${lizard_path}/lizard.log" ]; then
+        return
+    fi
+    local in_data_section=0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line=$(echo "$line" | tr -d '\r')
+        if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*[-=]+$ ]]; then
+            continue
+        fi
+        if [[ "$line" =~ NLOC[[:space:]]+CCN ]]; then
+            in_data_section=1
+            continue
+        fi
+        if [[ $in_data_section -eq 1 ]] && [[ "$line" =~ [0-9]+[[:space:]]+file[[:space:]]+analyzed ]]; then
+            in_data_section=0
+            break
+        fi
+        if [[ $in_data_section -eq 1 ]] && [[ "$line" =~ ^[[:space:]]*[0-9]+ ]]; then
+            local nloc_raw=$(echo "$line" | awk '{print $1}')
+            local ccn_raw=$(echo "$line" | awk '{print $2}')
+            local nloc=${nloc_raw%%.*}
+            local ccn=${ccn_raw%%.*}
+            local location=$(echo "$line" | awk '{for(i=6;i<=NF;i++) printf "%s%s", $i, (i==NF?"":" ");}')
+            local function_name=""
+            local path_part=""
+            if [[ "$location" =~ ^([^@]+)@[0-9-]+@(.*)$ ]]; then
+                function_name="${BASH_REMATCH[1]}"
+                path_part="${BASH_REMATCH[2]}"
+                function_name=$(echo "$function_name" | sed 's/[[:space:]]*$//')
+            else
+                continue
+            fi
+            path_part=$(echo "$path_part" | sed -e 's#^\.\\##' -e 's#^\./##' -e 's#\\#/#g')
+            if [[ $ccn -gt $threshold_ccn ]] 2>/dev/null; then
+                printf "%-115s %-75s %-7s\n" "${path_part}" "${function_name}" "${ccn}" >> "${lizard_path}"/lizard_ccn.log
+            fi
+            if [[ $nloc -gt $threshold_nloc ]] 2>/dev/null; then
+                printf "%-115s %-75s %-7s\n" "${path_part}" "${function_name}" "${nloc}" >> "${lizard_path}"/lizard_nloc.log
+            fi
+        fi
+    done < "${lizard_path}/lizard.log"
+}
+
+echo ""
+print_header "Starting pre-push checks..."
+PRINT_N_CHAR "-" 60 "${CYAN}"
+check_all_tool_versions
 clang_format_check
 cmakelint_check
 codespell_check
@@ -686,12 +1280,27 @@ lizard_check
 pylint_check
 if [ "$os_name" == "Linux" ] || [ "$os_name" == "Darwi" ]; then
     shellcheck_check
+else
+    print_info "Skipping shellcheck on Windows/MINGW"
 fi
 tab_check
-
-if [ "$status" == 0 ]; then
-    echo "No error found during pre-push scanning stage, your code is ready for push!"
+SHOW_SUMMARY
+rm -rf "${check_path}" 2>/dev/null || true
+END_TIME=$(date +%s)
+EXECUTION_TIME=$((END_TIME - START_TIME))
+if [ "${status}" -eq 0 ]; then
+    echo ""
+    print_success "All checks passed! Total time: ${EXECUTION_TIME} seconds"
+    echo ""
+    echo -e "${GREEN}You can now push your changes with:${NC}"
+    echo -e "  ${BOLD}git push${NC}"
 else
-    echo "Total error number is $status, please correct your code before push!"
+    echo ""
+    print_error "Some checks failed! Total time: ${EXECUTION_TIME} seconds"
+    echo -e "${RED}Please fix the errors before pushing.${NC}"
+    echo ""
+    echo -e "${YELLOW}You can skip pre-push checks with:${NC}"
+    echo -e "  ${BOLD}git push --no-verify${NC}"
+    echo -e "${YELLOW}(Not recommended)${NC}"
 fi
 exit $status

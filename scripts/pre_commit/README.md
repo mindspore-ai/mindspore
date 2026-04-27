@@ -17,7 +17,7 @@
 
 1. Check the environment.
 
-  Ensure that the Git tool, Python, and pip have been installed in the local environment. (The `python --version` command output indicates that the version is 3.9, 3.10 or 3.11.)
+  Ensure that the Git tool, Python, and pip have been installed in the local environment. (The `python --version` command output indicates that the version is 3.9, 3.10, 3.11 or 3.12.)
 
 2. Use scripts to install code check tools.
 
@@ -205,18 +205,18 @@ There are too many Linux distributions to be fully compatible. The following use
 
    ```bash
    cd /tmp
-   wget https://github.com/koalaman/shellcheck/releases/download/v0.8.0/shellcheck-v0.8.0.linux.x86_64.tar.xz --no-check-certificate
+   wget https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz --no-check-certificate
    ```
 
    (2) Decompress the shellcheck tool and install it.
 
    ```bash
-   tar -xf shellcheck-v0.8.0.linux.x86_64.tar.xz
+   tar -xf shellcheck-v0.7.1.linux.x86_64.tar.xz
    rm -f /usr/bin/shellcheck
-   mv /tmp/shellcheck-0.8.0/shellcheck /usr/bin/shellcheck
+   mv /tmp/shellcheck-v0.7.1/shellcheck /usr/bin/shellcheck
    chmod 755 /usr/bin/shellcheck
-   rm -rf /tmp/shellcheck-v0.8.0
-   rm -f /tmp/shellcheck-v0.8.0.linux.x86_64.tar.xz
+   rm -rf /tmp/shellcheck-v0.7.1
+   rm -f /tmp/shellcheck-v0.7.1.linux.x86_64.tar.xz
    ```
 
    (3) View the version information.
@@ -283,11 +283,11 @@ There are too many Linux distributions to be fully compatible. The following use
 
 |   Tool  | Version in the CI Gating System| Latest Version| Windows|  Linux |   macOS  |
 | :----------: | :--------: | :------: | :-----: | :-----: | :-----: |
-| clang-format |   18.1.8    |  21.1.4  |  18.1.8  | ≥ 18.1.0 | ≥ 18.1.0 |
-|  cmakelint   |   1.4.1    |  1.4.3   |  1.4.2  |  1.4.2  |  1.4.2  |
-|  codespell   |   2.0.0    |  2.4.1   |  2.1.0  |  2.1.0  |  2.1.0  |
+| clang-format |   18.1.8    |  21.1.7  |  18.1.8  |  18.1.8  |  18.1.8  |
+|  cmakelint   |   1.4.1    |  1.4.3   |  1.4.1  |  1.4.1  |  1.4.1  |
+|  codespell   |   2.0.0    |  2.4.1   |  2.0.0  |  2.0.0  |  2.0.0  |
 |   cpplint    |   2.0.2    |  2.0.2   |  2.0.2  |  2.0.2  |  2.0.2  |
-|    lizard    |   1.17.19   | 1.18.0  | 1.17.10 | 1.17.10 | 1.17.10 |
-|    pylint    |   3.3.7    |  4.0.2  |  3.3.7  |  3.3.7  |  3.3.7  |
-|  shellcheck  |   0.7.1    |  0.11.0   |    —    |  0.8.0  |  0.8.0  |
+|    lizard    |   1.17.19   | 1.19.0  | 1.17.19 | 1.17.19 | 1.17.19 |
+|    pylint    |   3.3.7    |  4.0.4  |  3.3.7  |  3.3.7  |  3.3.7  |
+|  shellcheck  |   0.7.1    |  0.11.0   |    —    |  0.7.1  |  0.7.1  |
 |     tab      |     —      |    —     |    —    |    —    |    —    |

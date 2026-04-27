@@ -17,7 +17,7 @@
 
 1. 确认环境
 
-  确认本地环境已经安装Git工具、Python（**python --version命令打印的版本信息是3.9、3.10或3.11版本**）、pip命令。
+  确认本地环境已经安装Git工具、Python（**python --version命令打印的版本信息是3.9、3.10、3.11或3.12版本**）、pip命令。
 
 2. 使用脚本安装代码检查工具
 
@@ -205,18 +205,18 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
 
    ```bash
    cd /tmp
-   wget https://github.com/koalaman/shellcheck/releases/download/v0.8.0/shellcheck-v0.8.0.linux.x86_64.tar.xz --no-check-certificate
+   wget https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz --no-check-certificate
    ```
 
    （2）解压安装shellcheck工具：
 
    ```bash
-   tar -xf shellcheck-v0.8.0.linux.x86_64.tar.xz
+   tar -xf shellcheck-v0.7.1.linux.x86_64.tar.xz
    rm -f /usr/bin/shellcheck
-   mv /tmp/shellcheck-0.8.0/shellcheck /usr/bin/shellcheck
+   mv /tmp/shellcheck-v0.7.1/shellcheck /usr/bin/shellcheck
    chmod 755 /usr/bin/shellcheck
-   rm -rf /tmp/shellcheck-v0.8.0
-   rm -f /tmp/shellcheck-v0.8.0.linux.x86_64.tar.xz
+   rm -rf /tmp/shellcheck-v0.7.1
+   rm -f /tmp/shellcheck-v0.7.1.linux.x86_64.tar.xz
    ```
 
    （3）查看版本信息：
@@ -271,11 +271,11 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
 
 |   工具名称   | CI门禁版本 | 最新版本 | Windows |  Linux  |   Mac   |
 | :----------: | :--------: | :------: | :-----: | :-----: | :-----: |
-| clang-format |   18.1.8    |  21.1.4  |  18.1.8  | >=18.1.0 | >=18.1.0 |
-|  cmakelint   |   1.4.1    |  1.4.3   |  1.4.2  |  1.4.2  |  1.4.2  |
-|  codespell   |   2.0.0    |  2.4.1   |  2.1.0  |  2.1.0  |  2.1.0  |
+| clang-format |   18.1.8    |  21.1.7  |  18.1.8  |  18.1.8  |  18.1.8  |
+|  cmakelint   |   1.4.1    |  1.4.3   |  1.4.1  |  1.4.1  |  1.4.1  |
+|  codespell   |   2.0.0    |  2.4.1   |  2.0.0  |  2.0.0  |  2.0.0  |
 |   cpplint    |   2.0.2    |  2.0.2   |  2.0.2  |  2.0.2  |  2.0.2  |
-|    lizard    |   1.17.19   | 1.18.0  | 1.17.10 | 1.17.10 | 1.17.10 |
-|    pylint    |   3.3.7    |  4.0.2  |  3.3.7  |  3.3.7  |  3.3.7  |
-|  shellcheck  |   0.7.1    |  0.11.0   |    —    |  0.8.0  |  0.8.0  |
+|    lizard    |   1.17.19   | 1.19.0  | 1.17.19 | 1.17.19 | 1.17.19 |
+|    pylint    |   3.3.7    |  4.0.4  |  3.3.7  |  3.3.7  |  3.3.7  |
+|  shellcheck  |   0.7.1    |  0.11.0   |    —    |  0.7.1  |  0.7.1  |
 |     tab      |     —      |    —     |    —    |    —    |    —    |
