@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CPU matmul operator tests."""
+
 import numpy as np
 import pytest
 
-import mindspore.context as context
-import mindspore.nn as nn
-from mindspore import Tensor
+import mindspore as ms
+from mindspore import Tensor, context, nn, ops
 from mindspore.common import dtype as mstype
 from mindspore.graph.api import _pynative_executor
 from mindspore.ops import operations as P
@@ -29,21 +30,38 @@ np.random.seed(100)
 
 
 class MatMulNet(nn.Cell):
+    """MatMul test network."""
+
     def __init__(self, transpose_a=False, transpose_b=False):
-        super(MatMulNet, self).__init__()
+        super().__init__()
         self.matmul = P.MatMul(transpose_a, transpose_b)
 
-    def construct(self, x, y):
+    def construct(self, x, y):  # pylint: disable=arguments-differ
         return self.matmul(x, y)
 
 
 def judge_result_correct(result, expect):
+    """Assert that tensor results match the expected ndarray."""
+
     assert result.dtype == expect.dtype
     assert result.shape == expect.shape
     assert np.allclose(result, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+ARG_MARK = arg_mark(
+    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
+    level_mark='level1',
+    card_mark='onecard',
+)
+
+ARG_MARK_LEVEL0 = arg_mark(
+    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
+    level_mark='level0',
+    card_mark='onecard',
+)
+
+
+@ARG_MARK
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_matmul_no_transpose_vec(dtype):
     """
@@ -62,6 +80,8 @@ def test_matmul_no_transpose_vec(dtype):
 
 
 def np_matmul(a: np.ndarray, b: np.ndarray, trans_a: bool, trans_b: bool):
+    """Apply matmul after optional transpose handling."""
+
     if trans_a:
         a = a.T
     if trans_b:
@@ -69,7 +89,7 @@ def np_matmul(a: np.ndarray, b: np.ndarray, trans_a: bool, trans_b: bool):
     return np.matmul(a, b)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+@ARG_MARK
 @pytest.mark.parametrize('trans_a', [True, False])
 @pytest.mark.parametrize('trans_b', [True, False])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -95,7 +115,7 @@ def test_matmul_matrix(trans_a, trans_b, dtype):
     judge_result_correct(output, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+@ARG_MARK
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_api_modes(mode):
     """
@@ -116,7 +136,57 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+@ms.jit
+def jit_matmul(x, y):
+    """Run matmul through JIT to cover Graph mode fallback behavior."""
+
+    return ops.matmul(x, y)
+
+
+@ARG_MARK_LEVEL0
+@pytest.mark.parametrize(
+    'x_np, y_np, expected',
+    [
+        (
+            np.zeros((0, 3), dtype=np.float32),
+            np.ones((3, 2), dtype=np.float32),
+            np.empty((0, 2), dtype=np.float32),
+        ),
+        (
+            np.empty((2, 0), dtype=np.float32),
+            np.empty((0, 3), dtype=np.float32),
+            np.zeros((2, 3), dtype=np.float32),
+        ),
+        (
+            np.ones((2, 3), dtype=np.float32),
+            np.empty((3, 0), dtype=np.float32),
+            np.empty((2, 0), dtype=np.float32),
+        ),
+    ],
+)
+def test_ops_matmul_zero_dimension_consistent_between_modes(x_np, y_np, expected):
+    """
+    Feature: ops.matmul on CPU.
+    Description: Zero-dimension inputs should keep the same shape/value semantics
+    in Graph and PyNative modes.
+    Expectation: Graph and PyNative outputs match numpy and each other.
+    """
+    x = Tensor(x_np)
+    y = Tensor(y_np)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    pynative_out = ops.matmul(x, y)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    graph_out = jit_matmul(x, y)
+
+    np.testing.assert_array_equal(pynative_out.asnumpy(), expected)
+    np.testing.assert_array_equal(graph_out.asnumpy(), expected)
+    assert pynative_out.shape == expected.shape
+    assert graph_out.shape == expected.shape
+
+
+@ARG_MARK
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -132,8 +202,11 @@ def test_matmul_dtypes():
     x_np.shape = m, k
     y_np.shape = k, n
     matmul = P.MatMul()
-    valid_dtypes = (mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.float16,
-                    mstype.float32, mstype.float64, mstype.complex64, mstype.complex128)
+    valid_dtypes = (
+        mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+        mstype.float16, mstype.float32, mstype.float64, mstype.complex64,
+        mstype.complex128,
+    )
     invalid_dtypes = (mstype.qint4x2, mstype.float8_e4m3fn, mstype.float8_e5m2, mstype.hifloat8)
     all_dtypes = (dtype for dtype in mstype.all_types if dtype not in invalid_dtypes)
     for dtype in all_dtypes:

@@ -343,15 +343,20 @@ REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
     const ShapeVector shape2_orig = other->shape();
     auto output_dtype = ib->GetDtype(input);
     auto shape_backbone = ops::CheckMatMulShapes(shape1_orig, shape2_orig);
-    bool is_empty_tensor =
-      std::any_of(shape1_orig.begin(), shape1_orig.end(), [](const auto &element) { return element == 0; });
-    if (is_empty_tensor) {
-      return {ib->Tensor(0, input->dtype())};
-    }
     auto input_rank = input->shape().size();
     auto other_rank = other->shape().size();
     bool transpose_b = other_rank == 1;
     auto shape_out = ops::InferShapeRem(shape_backbone, shape1_orig, shape2_orig, transpose_b);
+    bool has_zero_dim =
+      std::any_of(shape1_orig.begin(), shape1_orig.end(), [](const auto &element) { return element == 0; }) ||
+      std::any_of(shape2_orig.begin(), shape2_orig.end(), [](const auto &element) { return element == 0; });
+    if (has_zero_dim) {
+      if (shape_out.empty()) {
+        return {ib->Tensor(0, output_dtype)};
+      }
+      auto dtype = ib->Value(static_cast<int64_t>(output_dtype->type_id()));
+      return {ib->Zeros(ib->Value(shape_out), dtype)};
+    }
     input = input_rank == 1 ? Expand(ib, input, 2) : input;
     other = other_rank == 1 ? Expand(ib, other, 2) : other;
     if (input->shape().size() == 2 && other->shape().size() == 2) {
