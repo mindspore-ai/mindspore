@@ -22,6 +22,7 @@
 #include <fstream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <optional>
 #include <sstream>
@@ -32,7 +33,6 @@
 #include <vector>
 
 #include "abstract/abstract_value.h"
-#include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "include/utils/utils.h"
 #include "mindapi/base/type_id.h"
 #include "ir/dtype/type.h"
@@ -40,9 +40,6 @@
 #include "utils/compile_config.h"
 #include "utils/file_utils.h"
 #include "utils/shape_utils.h"
-#ifndef _WIN32
-#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
-#endif
 #include "include/utils/anfalgo.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 #include "utils/log_adapter.h"
@@ -206,23 +203,19 @@ void FillLastUsageFromGraphOutputs(const FuncGraphPtr &graph, const std::map<Anf
 
 void FillLastUsageFromSummaryNodes(const FuncGraphPtr &graph, const std::map<AnfNodePtr, size_t> &node_to_index,
                                    size_t graph_end_index, OutputLastUsageMap *out_last_usage) {
-  auto kernel_graph = graph != nullptr ? graph->cast_ptr<session::KernelGraph>() : nullptr;
-  if (kernel_graph == nullptr || !kernel_graph->summary_node_exist()) {
+  if (graph == nullptr) {
     return;
   }
-  for (const auto &summary_item : kernel_graph->summary_nodes()) {
-    const auto &origin_node = summary_item.second.first;
-    const size_t origin_index = static_cast<size_t>(summary_item.second.second);
-    if (origin_node == nullptr) {
+  const auto &summary_outputs = graph->user_data<std::vector<KernelWithIndex>>(kHyperOffloadSummaryOutputs);
+  if (summary_outputs == nullptr) {
+    return;
+  }
+  for (const auto &resolved : *summary_outputs) {
+    if (resolved.first == nullptr) {
       continue;
     }
-    try {
-      auto resolved = common::AnfAlgo::VisitKernelWithReturnType(origin_node, origin_index, false);
-      if (resolved.first != nullptr && node_to_index.find(resolved.first) != node_to_index.end()) {
-        (*out_last_usage)[{resolved.first, resolved.second}] = graph_end_index;
-      }
-    } catch (const std::exception &e) {
-      MS_LOG(WARNING) << "[HyperOffload] failed to resolve summary node for fallback memory estimation: " << e.what();
+    if (node_to_index.find(resolved.first) != node_to_index.end()) {
+      (*out_last_usage)[resolved] = graph_end_index;
     }
   }
 }
@@ -411,28 +404,14 @@ static bool LoadMemoryBlockCsv(const std::string &path, const CNodePtrList &inde
 }
 
 size_t GetNodeSizeFromKernelMod(const AnfNodePtr &node, size_t output_index) {
-#ifndef _WIN32
-  if (node == nullptr || !node->isa<CNode>()) {
+  if (node == nullptr) {
     return 0;
   }
-  const auto kernel = node->cast_ptr<CNode>();
-  if (kernel == nullptr) {
+  const auto &output_sizes = node->user_data<std::vector<size_t>>(kHyperOffloadKernelModOutputSizes);
+  if (output_sizes == nullptr || output_index >= output_sizes->size()) {
     return 0;
   }
-  auto kernel_mod = AnfAlgo::GetKernelMod(node);
-  if (kernel_mod == nullptr) {
-    return 0;
-  }
-  const auto &output_sizes = kernel_mod->GetOutputSizeList();
-  if (output_index >= output_sizes.size()) {
-    return 0;
-  }
-  return output_sizes[output_index];
-#else
-  (void)node;
-  (void)output_index;
-  return 0;
-#endif
+  return (*output_sizes)[output_index];
 }
 
 size_t GetNodeSizeFromInfer(const AnfNodePtr &node, size_t output_index) {
@@ -475,22 +454,14 @@ bool IsDynamicShapeNode(const AnfNodePtr &node) {
 }
 
 size_t GetNodeSizeFromDeviceMetadata(const AnfNodePtr &node, size_t output_index) {
-#ifndef _WIN32
   if (node == nullptr || IsDynamicShapeNode(node)) {
     return 0;
   }
-  try {
-    return AnfAlgo::GetOutputTensorMemSize(node, output_index);
-  } catch (const std::exception &e) {
-    MS_LOG(DEBUG) << "[HyperOffload] failed to get device-memory size for node " << node->DebugString()
-                  << ", output_index=" << output_index << ": " << e.what();
+  const auto &output_sizes = node->user_data<std::vector<size_t>>(kHyperOffloadOutputMemSizes);
+  if (output_sizes == nullptr || output_index >= output_sizes->size()) {
     return 0;
   }
-#else
-  (void)node;
-  (void)output_index;
-  return 0;
-#endif
+  return (*output_sizes)[output_index];
 }
 
 size_t EstimateNodeMemorySize(const AnfNodePtr &node, size_t output_index) {
@@ -513,27 +484,11 @@ size_t EstimateNodeMemorySize(const AnfNodePtr &node, size_t output_index) {
 }
 
 size_t GetWorkspaceSizeFromKernelMod(const AnfNodePtr &node) {
-#ifndef _WIN32
-  if (node == nullptr || !node->isa<CNode>()) {
+  if (node == nullptr) {
     return 0;
   }
-  const auto kernel = node->cast_ptr<CNode>();
-  if (kernel == nullptr) {
-    return 0;
-  }
-  auto kernel_mod = AnfAlgo::GetKernelMod(node);
-  if (kernel_mod == nullptr) {
-    return 0;
-  }
-  const auto &workspace_sizes = kernel_mod->GetWorkspaceSizeList();
-  if (workspace_sizes.empty()) {
-    return 0;
-  }
-  return std::accumulate(workspace_sizes.begin(), workspace_sizes.end(), size_t{0});
-#else
-  (void)node;
-  return 0;
-#endif
+  const auto &workspace_size = node->user_data<size_t>(kHyperOffloadWorkspaceSize);
+  return workspace_size == nullptr ? 0 : *workspace_size;
 }
 
 size_t EstimateNodeWorkspaceSize(const AnfNodePtr &node) {
@@ -586,18 +541,15 @@ static size_t TableOutputCount(const AnfNodePtr &node) {
   if (node == nullptr) {
     return 0;
   }
+  const auto &output_count = node->user_data<size_t>(kHyperOffloadOutputCount);
+  if (output_count != nullptr) {
+    return *output_count;
+  }
   auto cnode = node->cast_ptr<CNode>();
   if (cnode == nullptr) {
     return 1;
   }
-  size_t output_count = AnfUtils::GetOutputTensorNum(node);
-#ifndef _WIN32
-  auto kernel_mod = AnfAlgo::GetKernelMod(node);
-  if (kernel_mod != nullptr && !kernel_mod->GetOutputSizeList().empty()) {
-    output_count = kernel_mod->GetOutputSizeList().size();
-  }
-#endif
-  return output_count;
+  return AnfUtils::GetOutputTensorNum(node);
 }
 
 static const std::vector<size_t> *FindCsvRowsByKey(const std::string &key) {
@@ -697,7 +649,10 @@ static bool ResolveCsvRowBinding(const AnfNodePtr &node, size_t output_index, st
   if (TryResolveExplicitCsvRowBinding(explicit_key, output_index, output_count, map_key, row_in_vector)) {
     return true;
   }
-  return TryResolveOutputZeroCsvRowBinding(fullname, output_index, output_count, map_key, row_in_vector);
+  if (TryResolveOutputZeroCsvRowBinding(fullname, output_index, output_count, map_key, row_in_vector)) {
+    return true;
+  }
+  return false;
 }
 
 size_t LookupOperatorMemorySize(const AnfNodePtr &node, size_t exec_order_index, size_t output_index) {
@@ -795,7 +750,10 @@ static bool TableHasKeyForOutput(const AnfNodePtr &node, size_t out_idx) {
   }
   std::string map_key;
   size_t row_in_vector = 0;
-  return ResolveCsvRowBinding(node, out_idx, &map_key, &row_in_vector);
+  if (ResolveCsvRowBinding(node, out_idx, &map_key, &row_in_vector)) {
+    return true;
+  }
+  return false;
 }
 
 static bool NodeNameListedInCsvNColumn(const AnfNodePtr &node) {

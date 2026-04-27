@@ -29,9 +29,6 @@
 #include <vector>
 
 #include "abstract/abstract_value.h"
-#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
-#include "include/backend/common/kernel_graph/kernel_graph.h"
-#include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
@@ -82,15 +79,13 @@ struct ConditionSwitchBranchNames {
   std::string true_branch_name;
 };
 
-std::optional<std::string> GetInlineBranchName(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
+std::optional<std::string> GetInlineBranchName(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
-  const auto &iter = inline_sub_graph_kernels.find(node);
-  if (iter == inline_sub_graph_kernels.end()) {
+  const auto &branch_name = node->user_data<std::string>(kHyperOffloadInlineBranchName);
+  if (branch_name == nullptr || branch_name->empty()) {
     return std::nullopt;
   }
-  return iter->second;
+  return *branch_name;
 }
 
 std::optional<ConditionSwitchBranchNames> GetConditionSwitchBranchNames(const CNodePtr &switch_node) {
@@ -309,11 +304,11 @@ std::vector<size_t> GetRefOutputIndexesForInput(const KernelWithIndex &user_node
   if (tensor_input_index >= common::AnfAlgo::GetInputTensorNum(cnode)) {
     return ref_output_indexes;
   }
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
-  if (kernel_info == nullptr) {
+  const auto &ref_map = cnode->user_data<OutputInputRefMap>(kHyperOffloadRefOutputInputMap);
+  if (ref_map == nullptr) {
     return ref_output_indexes;
   }
-  for (const auto &ref : kernel_info->out_in_ref_map()) {
+  for (const auto &ref : *ref_map) {
     if (ref.second == tensor_input_index) {
       ref_output_indexes.emplace_back(ref.first);
     }
@@ -330,11 +325,11 @@ bool IsRefOutput(const KernelWithIndex &node_output) {
   }
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(cnode->kernel_info());
-  if (kernel_info == nullptr) {
+  const auto &ref_map = cnode->user_data<OutputInputRefMap>(kHyperOffloadRefOutputInputMap);
+  if (ref_map == nullptr) {
     return false;
   }
-  return kernel_info->out_in_ref_map().count(node_output.second) != 0;
+  return ref_map->count(node_output.second) != 0;
 }
 
 std::optional<std::pair<size_t, size_t>> GetInlineBranchIndexRange(const FuncGraphPtr &graph,
@@ -343,11 +338,7 @@ std::optional<std::pair<size_t, size_t>> GetInlineBranchIndexRange(const FuncGra
   if (graph == nullptr || node == nullptr || exec_order.empty()) {
     return std::nullopt;
   }
-  const auto &kernel_graph = graph->cast<KernelGraphPtr>();
-  if (kernel_graph == nullptr || kernel_graph->inline_sub_graph_kernels().empty()) {
-    return std::nullopt;
-  }
-  const auto branch_name = GetInlineBranchName(kernel_graph, node);
+  const auto branch_name = GetInlineBranchName(node);
   if (!branch_name.has_value()) {
     return std::nullopt;
   }
@@ -360,7 +351,7 @@ std::optional<std::pair<size_t, size_t>> GetInlineBranchIndexRange(const FuncGra
   size_t branch_start = 0;
   size_t branch_end = 0;
   for (size_t i = 0; i < exec_order.size(); ++i) {
-    const auto current_branch_name = GetInlineBranchName(kernel_graph, exec_order[i]);
+    const auto current_branch_name = GetInlineBranchName(exec_order[i]);
     if (!current_branch_name.has_value() || *current_branch_name != *branch_name) {
       continue;
     }

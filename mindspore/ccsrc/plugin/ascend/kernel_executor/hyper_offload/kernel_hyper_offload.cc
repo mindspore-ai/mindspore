@@ -16,15 +16,21 @@
 
 #include "plugin/ascend/kernel_executor/hyper_offload/kernel_hyper_offload.h"
 
+#include <algorithm>
+#include <exception>
 #include <memory>
 #include <map>
+#include <numeric>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
 #include "plugin/ascend/graph_optimizer/stream_assign/acl_stream_assign.h"
 #include "primitive/framework_ops.h"
@@ -34,6 +40,7 @@
 #include "plugin/ascend/kernel_executor/kernel_select_ascend.h"
 #include "plugin/ascend/kernel_executor/rts/rt_kernel_build.h"
 #include "utils/compile_config.h"
+#include "utils/anf_utils.h"
 #include "utils/hyper_offload/hyper_offload.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
@@ -59,6 +66,184 @@ void AppendEventNode(std::unordered_map<AnfNodePtr, AnfNodePtrList> *event_map, 
   } else {
     iter->second.emplace_back(event_node);
   }
+}
+
+void SetInlineBranchNameUserData(const AnfNodePtr &node, const std::string &branch_name) {
+  if (node == nullptr || branch_name.empty()) {
+    return;
+  }
+  node->set_user_data<std::string>(utils::hyper_offload::kHyperOffloadInlineBranchName,
+                                   std::make_shared<std::string>(branch_name));
+}
+
+std::optional<std::string> GetInlineBranchNameForNode(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (node == nullptr) {
+    return std::nullopt;
+  }
+  const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
+  auto iter = inline_sub_graph_kernels.find(node);
+  if (iter != inline_sub_graph_kernels.end()) {
+    return iter->second;
+  }
+  const auto &branch_name = node->user_data<std::string>(utils::hyper_offload::kHyperOffloadInlineBranchName);
+  if (branch_name == nullptr || branch_name->empty()) {
+    return std::nullopt;
+  }
+  return *branch_name;
+}
+
+void SetRefMapUserData(const CNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  const auto kernel_info = dynamic_cast<mindspore::device::KernelInfo *>(node->kernel_info());
+  if (kernel_info == nullptr || kernel_info->out_in_ref_map().empty()) {
+    node->set_user_data<OutputInputRefMap>(utils::hyper_offload::kHyperOffloadRefOutputInputMap, nullptr);
+    return;
+  }
+  node->set_user_data<OutputInputRefMap>(utils::hyper_offload::kHyperOffloadRefOutputInputMap,
+                                         std::make_shared<OutputInputRefMap>(kernel_info->out_in_ref_map()));
+}
+
+void ClearRuntimeSizeUserData(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  node->set_user_data<std::vector<size_t>>(utils::hyper_offload::kHyperOffloadKernelModOutputSizes, nullptr);
+  node->set_user_data<size_t>(utils::hyper_offload::kHyperOffloadOutputCount, nullptr);
+  node->set_user_data<std::vector<size_t>>(utils::hyper_offload::kHyperOffloadOutputMemSizes, nullptr);
+  node->set_user_data<size_t>(utils::hyper_offload::kHyperOffloadWorkspaceSize, nullptr);
+}
+
+std::vector<size_t> GetKernelModOutputSizes(const CNodePtr &node) {
+  if (node == nullptr) {
+    return {};
+  }
+  try {
+    const auto kernel_mod = AnfAlgo::GetKernelMod(node);
+    if (kernel_mod == nullptr) {
+      return {};
+    }
+    return kernel_mod->GetOutputSizeList();
+  } catch (const std::exception &e) {
+    MS_LOG(DEBUG) << "[HyperOffload] failed to get kernel mod output sizes for node " << node->DebugString() << ": "
+                  << e.what();
+    return {};
+  }
+}
+
+size_t GetKernelModWorkspaceSize(const CNodePtr &node) {
+  if (node == nullptr) {
+    return 0;
+  }
+  try {
+    const auto kernel_mod = AnfAlgo::GetKernelMod(node);
+    if (kernel_mod == nullptr) {
+      return 0;
+    }
+    const auto &workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+    return std::accumulate(workspace_sizes.begin(), workspace_sizes.end(), size_t{0});
+  } catch (const std::exception &e) {
+    MS_LOG(DEBUG) << "[HyperOffload] failed to get kernel mod workspace sizes for node " << node->DebugString() << ": "
+                  << e.what();
+    return 0;
+  }
+}
+
+size_t GetInferOutputCount(const CNodePtr &node) {
+  if (node == nullptr) {
+    return 0;
+  }
+  try {
+    return AnfUtils::GetOutputTensorNum(node);
+  } catch (const std::exception &e) {
+    MS_LOG(DEBUG) << "[HyperOffload] failed to get output count for node " << node->DebugString() << ": " << e.what();
+    return 0;
+  }
+}
+
+std::vector<size_t> GetOutputTensorMemSizes(const CNodePtr &node, size_t output_count) {
+  if (node == nullptr || output_count == 0) {
+    return {};
+  }
+  std::vector<size_t> output_sizes(output_count, 0);
+  bool has_valid_size = false;
+  for (size_t i = 0; i < output_count; ++i) {
+    try {
+      output_sizes[i] = AnfAlgo::GetOutputTensorMemSize(node, i);
+      has_valid_size = has_valid_size || output_sizes[i] > 0;
+    } catch (const std::exception &e) {
+      MS_LOG(DEBUG) << "[HyperOffload] failed to get output tensor memory size for node " << node->DebugString()
+                    << ", output_index=" << i << ": " << e.what();
+    }
+  }
+  return has_valid_size ? output_sizes : std::vector<size_t>{};
+}
+
+void SetRuntimeSizeUserData(const CNodePtr &node) {
+  if (node == nullptr) {
+    return;
+  }
+  ClearRuntimeSizeUserData(node);
+  const auto kernel_mod_output_sizes = GetKernelModOutputSizes(node);
+  if (!kernel_mod_output_sizes.empty()) {
+    node->set_user_data<std::vector<size_t>>(utils::hyper_offload::kHyperOffloadKernelModOutputSizes,
+                                             std::make_shared<std::vector<size_t>>(kernel_mod_output_sizes));
+  }
+
+  const size_t output_count =
+    !kernel_mod_output_sizes.empty() ? kernel_mod_output_sizes.size() : GetInferOutputCount(node);
+  if (output_count > 0) {
+    node->set_user_data<size_t>(utils::hyper_offload::kHyperOffloadOutputCount, std::make_shared<size_t>(output_count));
+  }
+
+  const auto output_mem_sizes = GetOutputTensorMemSizes(node, output_count);
+  if (!output_mem_sizes.empty()) {
+    node->set_user_data<std::vector<size_t>>(utils::hyper_offload::kHyperOffloadOutputMemSizes,
+                                             std::make_shared<std::vector<size_t>>(output_mem_sizes));
+  }
+
+  const size_t workspace_size = GetKernelModWorkspaceSize(node);
+  if (workspace_size > 0) {
+    node->set_user_data<size_t>(utils::hyper_offload::kHyperOffloadWorkspaceSize,
+                                std::make_shared<size_t>(workspace_size));
+  }
+}
+
+void SetSummaryOutputUserData(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  std::vector<utils::hyper_offload::KernelWithIndex> summary_outputs;
+  if (kernel_graph->summary_node_exist()) {
+    for (const auto &summary_item : kernel_graph->summary_nodes()) {
+      const auto &origin_node = summary_item.second.first;
+      const size_t origin_index = static_cast<size_t>(summary_item.second.second);
+      if (origin_node == nullptr) {
+        continue;
+      }
+      try {
+        auto resolved = common::AnfAlgo::VisitKernelWithReturnType(origin_node, origin_index, false);
+        if (resolved.first != nullptr) {
+          summary_outputs.emplace_back(resolved);
+        }
+      } catch (const std::exception &e) {
+        MS_LOG(WARNING) << "[HyperOffload] failed to resolve summary node for fallback memory estimation: " << e.what();
+      }
+    }
+  }
+  kernel_graph->set_user_data<std::vector<utils::hyper_offload::KernelWithIndex>>(
+    utils::hyper_offload::kHyperOffloadSummaryOutputs,
+    std::make_shared<std::vector<utils::hyper_offload::KernelWithIndex>>(std::move(summary_outputs)));
+}
+
+void PrepareRuntimeMetadataForCommonHyperOffload(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  for (const auto &item : kernel_graph->inline_sub_graph_kernels()) {
+    SetInlineBranchNameUserData(item.first, item.second);
+  }
+  for (const auto &node : kernel_graph->execution_order()) {
+    SetRefMapUserData(node);
+    SetRuntimeSizeUserData(node);
+  }
+  SetSummaryOutputUserData(kernel_graph);
 }
 
 // Set branch information attributes for the Switch node
@@ -151,13 +336,11 @@ ConditionSwitchInfoPtr CreateConditionSwitchInfo(const CNodePtr &cnode) {
   return cur_switch_info;
 }
 
-void UpdateInlineInfo(const KernelGraphPtr &kernel_graph, const CNodePtr &node,
-                      const mindspore::HashMap<AnfNodePtr, std::string>::const_iterator &iter) {
-  const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
-  if (iter == inline_sub_graph_kernels.end()) {
-    return;
-  }
-  kernel_graph->AddInlineSubgraphKernel(node, iter->second);
+void UpdateInlineInfo(const KernelGraphPtr &kernel_graph, const CNodePtr &node, const std::string &branch_name) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  kernel_graph->AddInlineSubgraphKernel(node, branch_name);
+  SetInlineBranchNameUserData(node, branch_name);
 }
 
 void AdjustFrontendHyperOffloadOpsExecutionOrder(const KernelGraphPtr &graph) {
@@ -234,6 +417,9 @@ bool KernelHyperOffloadOptimizer::EnableHyperOffloadForGraph(const KernelGraphPt
 }
 
 HyperOffloadInput KernelHyperOffloadOptimizer::GenerateHyperOffloadInput(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  PrepareRuntimeMetadataForCommonHyperOffload(kernel_graph);
+
   auto callback = [&kernel_graph](const AnfNodePtr &new_node, const AnfNodePtr &context_node) {
     auto cnode = new_node->cast<CNodePtr>();
     if (cnode == nullptr) {
@@ -242,10 +428,9 @@ HyperOffloadInput KernelHyperOffloadOptimizer::GenerateHyperOffloadInput(const K
 
     if (context_node != nullptr) {
       cnode->set_scope(context_node->scope());
-      const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
-      auto iter = inline_sub_graph_kernels.find(context_node);
-      if (iter != inline_sub_graph_kernels.end()) {
-        UpdateInlineInfo(kernel_graph, cnode, iter);
+      const auto branch_name = GetInlineBranchNameForNode(kernel_graph, context_node);
+      if (branch_name.has_value()) {
+        UpdateInlineInfo(kernel_graph, cnode, *branch_name);
       }
     }
 
@@ -387,7 +572,7 @@ void KernelHyperOffloadOptimizer::AddEventToHyperOffloadOps(const KernelGraphPtr
       auto insert_cnode = insert_node->cast<CNodePtr>();
       new_execution_order.emplace_back(insert_cnode);
       if (inline_iter != inline_sub_graph_kernels.end()) {
-        UpdateInlineInfo(kernel_graph, insert_cnode, inline_iter);
+        UpdateInlineInfo(kernel_graph, insert_cnode, inline_iter->second);
       }
     }
   }
