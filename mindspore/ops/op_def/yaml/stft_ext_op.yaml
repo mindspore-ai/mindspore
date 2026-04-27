@@ -1,0 +1,29 @@
+#operator stft_ext
+stft_ext:
+  args:
+    input:
+      dtype: tensor
+    window:
+      dtype: tensor
+    n_fft:
+      dtype: int
+    hop_length:
+      dtype: int
+    win_length:
+      dtype: int
+    normalized:
+      dtype: bool
+    onesided:
+      dtype: bool
+    return_complex:
+      dtype: bool
+  returns:
+    output:
+      dtype: tensor
+  class:
+      name: STFTExt
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: STFTExtAscend
