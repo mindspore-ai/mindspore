@@ -1250,7 +1250,6 @@ class OpsFactory():
 
         _error_type = None
         _sample_input = None
-        error_input = None
         print(f"\nop_name: {self.op_name}, mode:{self._context_mode}, test_other_op_error...")
         for error_input in self.op_error_inputs_func(self.op_info, device=self._device):
             _sample_input = error_input.op_sample_input

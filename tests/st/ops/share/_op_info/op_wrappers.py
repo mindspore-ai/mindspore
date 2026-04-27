@@ -187,6 +187,12 @@ def tensor_repeat_ms(op_input, *sizes):
 def tensor_repeat_torch(op_input, *sizes):
     return op_input.repeat(*sizes)
 
+def tensor_reshape_ms(op_input, *sizes):
+    return op_input.reshape(*sizes)
+
+def tensor_reshape_torch(op_input, *sizes):
+    return op_input.reshape(*sizes)
+
 def tensor_greater_equal_ms(op_input, x):
     return op_input.greater_equal(x)
 
