@@ -825,6 +825,51 @@ mindspore.nn.Cell
         返回：
             Dict，包含整个Cell状态的字典。
 
+    .. py:method:: to(*args, **kwargs)
+
+        将当前 Cell（包含所有子 Cell）的参数和缓冲区移动到目标设备，和/或转换为目标数据类型。
+
+        支持三种调用形式：
+
+        - to(device=None, dtype=None, non_blocking=False)
+        - to(dtype, non_blocking=False)
+        - to(tensor, non_blocking=False)
+
+        参数：
+            - **device** (str，可选) - 目标设备，例如 ``"Ascend"`` 、 ``"CPU"`` 、 ``"meta"`` 。非法或不可用的 ``device`` （例如在仅 CPU 构建上传入
+              ``"Ascend"`` ）会在底层算子层报错。默认值： ``None`` 。
+            - **dtype** (mindspore.dtype，可选) - 目标数据类型。必须为浮点或复数类型，整型或布尔类型会抛出 ``TypeError`` 。整型的参数和缓冲区不会被转换
+              （``device`` 设置仍然生效）。默认值： ``None`` 。
+            - **tensor** (Tensor，可选) - 给定时，从该 Tensor 获取目标设备和数据类型；其数据本身不会被拷贝。默认值： ``None`` 。
+            - **non_blocking** (bool，可选) - 为 ``True`` 时，拷贝在条件允许的情况下相对 Host 异步执行（例如锁页内存到 Device 的拷贝可与计算重叠）；
+              为 ``False`` 时，调用会阻塞直至拷贝完成。默认值： ``False`` 。
+
+        返回：
+            Cell类型，Cell本身。
+
+        异常：
+            - **TypeError** - ``dtype`` 不是浮点或复数类型，或者参数不匹配上述三种调用形式中的任意一种。
+            - **RuntimeError** - 源 tensor 位于 meta 设备，且目标设备为真实设备；错误信息中包含改用 :func:`mindspore.nn.Cell.to_empty` 的提示。
+
+        .. note::
+            - 外部对 ``Parameter`` 对象的引用（例如优化器的 ``param_groups``）会透明地看到新的数据/设备。
+            - 复数类型会触发关于实验性特性的 ``UserWarning`` 。
+            - 必须在 :func:`mindspore.nn.Cell.construct` 之外调用。
+
+    .. py:method:: to_empty(*, device=None, recurse=True)
+
+        为每个 ``Parameter`` 和 ``Buffer`` 在目标设备上重新分配未初始化的存储空间。
+
+        与 :func:`mindspore.nn.Cell.to` 不同，该方法不读取源 tensor 的数据，因此可以处理位于 meta 设备上的 tensor。典型用法：先在 meta 设备上初始化模型，
+        再调用本方法在真实设备上分配存储。
+
+        关键字参数：
+            - **device** (str，可选) - 目标设备。为 ``None`` 时使用当前 :func:`mindspore.set_device` 的设置。默认值： ``None`` 。
+            - **recurse** (bool，可选) - 是否递归地应用到子 ``Cell``。默认值： ``True`` 。
+
+        返回：
+            Cell类型，Cell本身。
+
     .. py:method:: to_float(dst_type)
 
         在Cell和所有子Cell的输入上添加类型转换，以使用特定的浮点类型运行。

@@ -36,6 +36,7 @@ void RegSignatureEnumRW(const py::module *m);
 void RegValues(const py::module *m);
 void RegPreJit(py::module *m);
 void RegFrontendModule(py::module *m);
+void RegCellUtilsApi(py::module *m);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PYBIND_API_FRONTEND_FRONTEND_API_H_

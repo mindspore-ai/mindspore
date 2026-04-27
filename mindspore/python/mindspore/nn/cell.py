@@ -49,10 +49,11 @@ from mindspore._c_expression import init_pipeline, update_func_graph_hyper_param
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.graph.api import _cell_graph_executor, _pynative_executor, cells_compile_cache, \
-    _no_grad, _get_mutable_flags
+    _get_mutable_flags
 from mindspore.graph.api import _convert_python_data
 from mindspore.graph.api import _process_dyn_args, _generate_dyn_compile_args
 from mindspore.graph.api import _register_parameter_forward_hook
+from mindspore.ops.functional_overload import empty_like
 from mindspore.graph.jit_config import _DEFAULT_JIT_CONFIG
 from mindspore.common.parameter import _Buffer, Parameter, ParameterTuple, _is_parameter_generated
 from mindspore.common.tensor import Tensor
@@ -62,6 +63,7 @@ from mindspore.parallel.shard import Shard
 from mindspore.parallel._utils import _init_auto_parallel_context, _clear_auto_parallel_context
 from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._register_for_recompute import recompute_registry
+from mindspore._c_expression import _cell_parse_to_args
 
 _global_buffer_registration_hooks: Dict[int, Callable] = OrderedDict()
 _EXTRA_STATE_KEY_SUFFIX = "_extra_state"
@@ -1466,6 +1468,8 @@ class Cell(Cell_):
         """
         Call custom bprop for cell bprop.
         """
+        from mindspore.graph.api import _no_grad
+
         with _no_grad():
             output = self.construct(*args, **kwargs)
         if self.construct.__defaults__ or self.construct.__kwdefaults__:
@@ -2406,6 +2410,164 @@ class Cell(Cell_):
             cell.apply(fn)
         fn(self)
         return self
+
+    @jit_forbidden_register
+    def _apply(self, fn, recurse=True):
+        r"""
+        Core recursion engine: apply fn to every Parameter / Buffer of self and
+        (optionally) all subcells.
+
+        Strategy routing:
+
+        - **swap_tensors**: fn output is a traceable Tensor wrapper subclass
+          with __tensor_flatten__ / __tensor_unflatten__ protocol.
+          Wraps as Parameter and swaps with the original via ``swap_tensors``.
+        - **.data=**: fn output is a plain Tensor. Assigns to ``param.data``;
+          the Parameter object identity is preserved.
+
+        Args:
+            fn (function): function applied to each Parameter and Buffer; takes
+                a Tensor and returns a Tensor.
+            recurse (bool, optional): whether to recurse into ``self.cells()``.
+                Default: ``True``.
+
+        Returns:
+            Cell: self.
+
+        Note:
+            - fn is invoked inside ``_no_grad()`` context.
+            - Buffers are directly replaced in ``self._buffers`` dict;
+              external references to buffers are not preserved.
+            - Shared parameters (same Parameter object in multiple submodules)
+              are not deduplicated — fn is applied multiple times.
+        """
+        from mindspore.graph.api import _no_grad
+        from mindspore.common.tensor import swap_tensors
+
+        if recurse:
+            for cell in self.cells():
+                if cell is not None and cell is not self:
+                    cell._apply(fn)
+
+        for key, param in self._params.items():
+            if param is None:
+                continue
+
+            with _no_grad():
+                param_applied = fn(param)
+
+            if _is_traceable_tensor_subclass(param_applied):
+                try:
+                    wrapped = Parameter(param_applied, requires_grad=param.requires_grad)
+                    swap_tensors(param, wrapped)
+                except Exception as exc:
+                    raise RuntimeError(
+                        f"Cell._apply(): Couldn't swap {type(self).__name__}.{key}"
+                    ) from exc
+            else:
+                param.data = param_applied
+
+        for key, buf in self._buffers.items():
+            if buf is not None:
+                self._buffers[key] = fn(buf)
+
+        return self
+
+    @jit_forbidden_register
+    def to(self, *args, **kwargs):
+        r"""
+        Move and/or cast the parameters and buffers of this Cell (and all subcells).
+
+        Supported calling forms:
+
+        - to(device=None, dtype=None, non_blocking=False)
+        - to(dtype, non_blocking=False)
+        - to(tensor, non_blocking=False)
+
+        Args:
+            device (str, optional): Target device, e.g. ``"Ascend"``, ``"CPU"``
+                or ``"meta"``. An invalid or unavailable ``device`` (e.g.
+                ``"Ascend"`` on a CPU-only build) raises at the underlying op
+                level. Default: ``None``.
+            dtype (mindspore.dtype, optional): Target dtype. Must be floating
+                point or complex; integral/bool dtypes raise ``TypeError``.
+                Integral parameters and buffers are not cast (``device`` still applies).
+                Default: ``None``.
+            tensor (Tensor, optional): When given, device and dtype are taken
+                from this Tensor; its data is not copied. Default: ``None``.
+            non_blocking (bool, optional): If ``True``, the copy is performed
+                asynchronously with respect to the host where possible (e.g.
+                host-to-device transfers from pinned memory may overlap with
+                computation); if ``False``, the call blocks until the copy
+                completes. Default: ``False``.
+
+        Returns:
+            Cell, the cell itself.
+
+        Raises:
+            TypeError: ``dtype`` is not floating/complex, or arguments don't match
+                any of the 3 overloads.
+            RuntimeError: Source tensor is on meta device and target is real;
+                includes hint to use :func:`mindspore.nn.Cell.to_empty` instead.
+
+        Note:
+            - External references to ``Parameter`` objects (e.g. optimizer
+              ``param_groups``) transparently see the new data/device.
+            - Complex dtypes issue a ``UserWarning`` about experimental status.
+            - Must be called outside of :func:`mindspore.nn.Cell.construct`.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import mindspore.nn as nn
+            >>> net = nn.Dense(4, 4)
+            >>> net.to(device="CPU", dtype=ms.float16)
+        """
+        device, dtype, non_blocking = _cell_parse_to_args(*args, **kwargs)
+
+        if dtype is not None:
+            _validate_to_dtype(dtype)
+
+        def convert(tensor):
+            target_dtype = dtype if _is_float_or_complex(tensor.dtype) else None
+            if tensor.is_meta and device is not None and not str(device).startswith("meta"):
+                raise RuntimeError(
+                    "Cannot copy from tensor which is on meta device. "
+                    "Please use Cell.to_empty() instead of Cell.to() "
+                    "when moving module from meta to a different device."
+                )
+            return tensor.to(device=device, dtype=target_dtype, non_blocking=non_blocking)
+
+        return self._apply(convert)
+
+    @jit_forbidden_register
+    def to_empty(self, *, device=None, recurse=True):
+        r"""
+        Reallocate uninitialized storage for each ``Parameter`` and ``Buffer`` on target device.
+
+        Unlike :func:`mindspore.nn.Cell.to`, this method does not read source
+        tensor data, so it can process tensors on the meta device. Main use case:
+        initialize a model on the meta device, then allocate storage on a real device.
+
+        Keyword Args:
+            device (str, optional): Target device. ``None`` uses the current
+                :func:`mindspore.set_device` setting. Default: ``None``.
+            recurse (bool, optional): Whether to recursively apply to subcells.
+                Default: ``True``.
+
+        Returns:
+            Cell, the cell itself.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import mindspore.nn as nn
+            >>> with ms.DeviceCtx("meta"):
+            ...     model = nn.Dense(1024, 1024)      # parameters on meta, zero memory
+            >>> model.to_empty(device="Ascend")       # allocate uninitialized storage on Ascend
+            >>> # then load_state_dict or init_weights to fill with actual data
+        """
+        def fn(tensor):
+            return empty_like(tensor, device=device)
+        return self._apply(fn, recurse=recurse)
 
     def add_flags(self, **flags):
         """
@@ -3993,3 +4155,39 @@ def _addindent(s_, num_spaces):
     s = "\n".join(s)
     s = first + "\n" + s
     return s
+
+
+def _is_float_or_complex(dtype) -> bool:
+    """Whether dtype is floating-point or complex."""
+    return dtype in mstype.float_type or dtype in mstype.complex_type
+
+
+def _is_complex(dtype) -> bool:
+    """Whether dtype is complex."""
+    return dtype in mstype.complex_type
+
+
+def _validate_to_dtype(dtype) -> None:
+    """Validate Cell.to target dtype: must be floating point or complex."""
+    if not _is_float_or_complex(dtype):
+        raise TypeError(
+            "Cell.to only accepts floating point or complex "
+            f"dtypes, but got desired dtype={dtype}"
+        )
+    if _is_complex(dtype):
+        warnings.warn(
+            "Complex modules are a new feature under active development whose "
+            "design may change, and some modules might not work as expected "
+            "when using complex tensors as parameters or buffers.",
+            stacklevel=2,
+        )
+
+
+def _is_traceable_tensor_subclass(t) -> bool:
+    """Identify Tensor subclasses that expose traceable flatten/unflatten state."""
+    return (
+        isinstance(t, Tensor)
+        and t.__class__ is not Tensor
+        and hasattr(t, "__tensor_flatten__")
+        and hasattr(t, "__tensor_unflatten__")
+    )

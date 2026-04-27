@@ -36,6 +36,7 @@ void RegPyNativeModule(py::module *m) {
   mindspore::tensor::RegRowTensor(m);
   mindspore::tensor::RegMapTensor(m);
   mindspore::tensor::RegPyTensor(m);
+  mindspore::tensor::RegTensorUtilsApi(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::pynative::RegisterPyBoostFunction(m);
   mindspore::pynative::RegisterCustomizeFunction(m);
