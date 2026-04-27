@@ -484,7 +484,7 @@ class ApiCachePool {
     if (MS_UNLIKELY(op_api_func == nullptr)) {                                                                 \
       MS_LOG(EXCEPTION) << aclnn_api << " not in " << device::ascend::GetOpApiLibName() << ", please check!";  \
     }                                                                                                          \
-    static auto run_api_func = reinterpret_cast<device::ascend::RunApiFunc>(op_api_func);                      \
+    auto run_api_func = reinterpret_cast<device::ascend::RunApiFunc>(op_api_func);                             \
     auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                         \
     if (MS_UNLIKELY(api_ret != 0)) {                                                                           \
       CHECK_AND_THROW_RECOVERABLE_ERROR(aclnn_api);                                                            \
@@ -502,7 +502,7 @@ class ApiCachePool {
     if (MS_UNLIKELY(op_api_func == nullptr)) {                                                                \
       MS_LOG(EXCEPTION) << aclnn_api << " not in " << device::ascend::GetOpApiLibName() << ", please check!"; \
     }                                                                                                         \
-    static auto run_api_func = reinterpret_cast<device::ascend::RunApiFunc>(op_api_func);                     \
+    auto run_api_func = reinterpret_cast<device::ascend::RunApiFunc>(op_api_func);                            \
     auto api_ret = run_api_func(workspace_addr, workspace_size, executor, acl_stream);                        \
     if (MS_UNLIKELY(api_ret != 0)) {                                                                          \
       CHECK_AND_THROW_RECOVERABLE_ERROR(aclnn_api);                                                           \

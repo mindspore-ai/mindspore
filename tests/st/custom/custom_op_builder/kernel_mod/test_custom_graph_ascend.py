@@ -34,7 +34,7 @@ def test_custom_single_operator():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("single_op",
                                               ["kernel_impl/add4.cpp",
                                                "kernel_impl/module.cpp"],
@@ -66,7 +66,7 @@ def test_custom_single_operator_tuple():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("single_op_tuple",
                                               ("kernel_impl/add4.cpp",
                                                "kernel_impl/module.cpp"),
@@ -98,7 +98,7 @@ def test_custom_single_operator_no_doc():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("single_op_no_doc",
                                               ["kernel_impl/add4.cpp",
                                                "kernel_impl/module.cpp"],
@@ -157,7 +157,7 @@ def test_custom_multi_operator():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("graphmode_add_2",
                                               ["kernel_impl/add4.cpp", "kernel_impl/add3.cpp",
                                                "kernel_impl/module.cpp"], backend="Ascend",
@@ -210,7 +210,7 @@ def test_CustomOpBuilder_exception_1():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("exception_1",
                                               ["kernel_impl/add4.cpp",
                                                'kernel_impl/pyboost_aclnn_sum.cpp',
@@ -242,7 +242,7 @@ def test_CustomOpBuilder_exception_2():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("exception_2",
                                               ["kernel_impl/add4.cpp",
                                                'kernel_impl/pyboost_aclnn_sum.cpp',
@@ -273,7 +273,7 @@ def test_CustomOpBuilder_exception_3():
     with tempfile.TemporaryDirectory() as tmpdirname:
         class MyNet(ms.nn.Cell):
             def __init__(self):
-                super(MyNet, self).__init__()
+                super().__init__()
                 self.my_ops = CustomOpBuilder("exception_3",
                                               ["kernel_impl/add4.cpp",
                                                'kernel_impl/pyboost_aclnn_sum.cpp',
@@ -354,6 +354,65 @@ def test_aclnn_inplace_add():
         func(input_x, input_y)
         expect = x + y
         assert np.allclose(input_x.asnumpy(), expect, 1e-3, 1e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
+def test_custom_multi_operator_in_one_kernel_mod():
+    """
+    Feature: Multiple operators in one kernel mod.
+    Description: Build multiple different operators (add4, batch_norm) with different aclnn implementations 
+                 in one kernel mod and call them, verifying that RUN_CUSTOM_OP_API_ASYNC without static works correctly.
+    Expectation: Execution succeeds and outputs match expected results.
+    """
+    ms.set_device("Ascend")
+    ms.set_context(mode=ms.GRAPH_MODE, save_graphs=False, save_graphs_path="./graphs")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        class MyNet(ms.nn.Cell):
+            def __init__(self):
+                super().__init__()
+                # Load both add4 (uses aclnnAdd) and batch_norm (uses aclnnBatchNorm) in one kernel mod
+                self.my_ops = CustomOpBuilder("multi_ops_one_mod",
+                                              ["kernel_impl/add4.cpp", "kernel_impl/batch_norm.cpp",
+                                               "kernel_impl/module.cpp"], backend="Ascend",
+                                              op_def=["ops_yaml/add4.yaml",
+                                                      "ops_yaml/batch_norm.yaml"], build_dir=tmpdirname).load()
+
+            def construct(self, x, y, scale, bias, mean, variance):
+                # First use add4 operator
+                added = self.my_ops.add4(x, y, 1)
+                # Then use batch_norm operator
+                bn_out, _, _ = self.my_ops.batch_norm(added, scale, bias, mean, variance, False, 0.1, 1e-5)
+                return added, bn_out
+
+        # Prepare test data
+        # Input data for add4
+        x = (3 * np.ones(16)).reshape(2, 2, 1, 4).astype(np.float32)
+        y = (2 * np.ones(16)).reshape(2, 2, 1, 4).astype(np.float32)
+        # Expected result for add4: x + y = 5 * ones
+        expect_added = 5 * np.ones(16, dtype=np.float32).reshape((2, 2, 1, 4))
+
+        # Parameters for batch_norm
+        scale = np.ones(2).astype(np.float32)
+        bias = np.ones(2).astype(np.float32)
+        mean = np.ones(2).astype(np.float32)
+        variance = np.ones(2).astype(np.float32)
+        # Expected result for batch_norm with these parameters
+        expect_bn = np.array([4.99999]).repeat(16, axis=0).astype(np.float32).reshape((2, 2, 1, 4))
+
+        # Run the network
+        output_added, output_bn = MyNet()(ms.Tensor(x), ms.Tensor(y), ms.Tensor(scale),
+                                         ms.Tensor(bias), ms.Tensor(mean), ms.Tensor(variance))
+
+        # Print results for debugging
+        print("output_added:", output_added.asnumpy())
+        print("expect_added:", expect_added)
+        print("output_bn:", output_bn.asnumpy())
+        print("expect_bn:", expect_bn)
+
+        # Verify results
+        assert np.allclose(output_added.asnumpy(), expect_added)
+        assert np.allclose(output_bn.asnumpy(), expect_bn, 1e-3, 1e-3)
 
 
 if __name__ == "__main__":
