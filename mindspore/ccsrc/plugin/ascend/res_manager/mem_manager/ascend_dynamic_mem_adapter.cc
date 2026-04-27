@@ -115,10 +115,8 @@ std::string AscendDynamicMemAdapter::DevMemStatistics() const {
   std::ostringstream oss;
   oss << "\nDevice MOC memory size: " << device_hbm_total_size_ / kMBToByte << "M";
   oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_ / kMBToByte << "M";
-  auto print_actual_peak_memory =
-    AscendVmmAdapter::IsEnabled() ? AscendVmmAdapter::GetInstance().GetAllocatedSize() : actual_peak_memory_;
   oss << "\nUsed peak memory usage (without fragments): " << used_peak_memory_ / kMBToByte << "M";
-  oss << "\nActual peak memory usage (with fragments): " << print_actual_peak_memory / kMBToByte << "M";
+  oss << "\nActual peak memory usage (with fragments): " << actual_peak_memory_ / kMBToByte << "M";
   oss << std::endl;
   return oss.str();
 }

@@ -1463,7 +1463,7 @@ size_t DynamicMemPoolBestFit::MaxMemReservedStatistics() const {
 }
 size_t DynamicMemPoolBestFit::ActualPeakStatistics() const {
   if (IsEnableVmm()) {
-    return GetVmmUsedMemSize();
+    return MaxMemReservedStatistics();
   }
   return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
 }

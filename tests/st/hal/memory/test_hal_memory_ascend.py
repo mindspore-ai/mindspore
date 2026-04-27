@@ -32,9 +32,7 @@ from mindspore.common.initializer import TruncatedNormal
 
 from tests.mark_utils import arg_mark
 from tests.device_utils import set_device
-
-sys.path.append("..")
-from test_hal_util import run_cmd
+from tests.st.hal.test_hal_util import run_cmd
 
 GB_TO_BYTE = 1024 << 20
 FLOAT32_SIZE = 4
@@ -93,6 +91,80 @@ def test_empty_cache_vmm():
     ms.runtime.empty_cache()
     reserved_size = ms.runtime.memory_reserved()
     assert reserved_size == 0
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
+def test_empty_cache_keeps_peak_memory_statistics_vmm():
+    """
+    Feature: runtime memory api.
+    Description: Test peak memory statistics remain the peak value after empty_cache in VMM mode.
+    Expectation: reserved memory is released, while peak reserved memory and the adapter log keep the peak value.
+    """
+    log_dir_name = "test_empty_cache_vmm_peak_stats"
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    log_dir = os.path.join(cur_dir, log_dir_name)
+    log_file = os.path.join(log_dir, "empty_cache_vmm_peak.log")
+    repo_root = os.path.abspath(os.path.join(cur_dir, "..", "..", "..", ".."))
+    test_script_module = "tests.st.hal.memory.hal_empty_cache_vmm_peak_case"
+    if os.path.isdir(log_dir):
+        shutil.rmtree(log_dir)
+    os.makedirs(log_dir)
+    origin_alloc_conf = os.environ.get('MS_ALLOC_CONF')
+    origin_runtime_conf = os.environ.get('MS_DEV_RUNTIME_CONF')
+    os.environ['MS_ALLOC_CONF'] = "enable_vmm:true"
+    os.environ['MS_DEV_RUNTIME_CONF'] = "memory_statistics:True"
+
+    try:
+        ret, stdout, stderr = run_cmd([sys.executable, "-m", test_script_module], cwd=repo_root)
+        with open(log_file, 'w', encoding='utf-8') as file:
+            file.write(stdout)
+            if stderr:
+                file.write(f"\n{stderr}")
+    finally:
+        if origin_alloc_conf is None:
+            os.environ.pop('MS_ALLOC_CONF', None)
+        else:
+            os.environ['MS_ALLOC_CONF'] = origin_alloc_conf
+        if origin_runtime_conf is None:
+            os.environ.pop('MS_DEV_RUNTIME_CONF', None)
+        else:
+            os.environ['MS_DEV_RUNTIME_CONF'] = origin_runtime_conf
+
+    def extract_stat(name):
+        pattern = rf'{name}=(\d+)'
+        with open(log_file, 'r', encoding='utf-8') as file:
+            for line in file:
+                match = re.search(pattern, line)
+                if match:
+                    return int(match.group(1))
+        return None
+
+    assert ret == 0
+    reserved_before_empty = extract_stat("EMPTY_CACHE_RESERVED_BEFORE")
+    peak_before_empty = extract_stat("EMPTY_CACHE_PEAK_BEFORE")
+    reserved_after_empty = extract_stat("EMPTY_CACHE_RESERVED_AFTER")
+    peak_after_empty = extract_stat("EMPTY_CACHE_PEAK_AFTER")
+    peak_final = extract_stat("EMPTY_CACHE_PEAK_FINAL")
+    peak_memory_pairs = extract_peak_memory_pairs(log_file)
+
+    assert reserved_before_empty is not None and reserved_before_empty > 0
+    assert peak_before_empty is not None and peak_before_empty >= reserved_before_empty
+    assert reserved_after_empty is not None
+    assert peak_after_empty is not None
+    assert peak_final is not None
+    assert peak_memory_pairs
+    assert reserved_after_empty == 0
+    assert peak_after_empty == peak_before_empty
+    assert peak_final == peak_after_empty
+    for used_peak_memory, actual_peak_memory in peak_memory_pairs:
+        assert actual_peak_memory >= used_peak_memory
+    non_zero_peak_pairs = [(used_peak_memory, actual_peak_memory)
+                           for used_peak_memory, actual_peak_memory in peak_memory_pairs
+                           if used_peak_memory > 0 or actual_peak_memory > 0]
+    assert non_zero_peak_pairs
+    for used_peak_memory, actual_peak_memory in non_zero_peak_pairs:
+        assert actual_peak_memory >= used_peak_memory
+    assert peak_memory_pairs[-1][1] == peak_final // (1024 * 1024)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
@@ -182,6 +254,23 @@ def extract_memory_usage(filename):
                 memory_usage = int(match.group(1))
                 return memory_usage
         return None
+
+
+def extract_peak_memory_pairs(filename):
+    used_pattern = r'Used peak memory usage \(without fragments\): (\d+)M'
+    actual_pattern = r'Actual peak memory usage \(with fragments\): (\d+)M'
+    peak_memory_pairs = []
+    used_peak_memory = None
+    with open(filename, 'r', encoding='utf-8') as file:
+        for line in file:
+            used_match = re.search(used_pattern, line)
+            if used_match:
+                used_peak_memory = int(used_match.group(1))
+            actual_match = re.search(actual_pattern, line)
+            if actual_match and used_peak_memory is not None:
+                peak_memory_pairs.append((used_peak_memory, int(actual_match.group(1))))
+                used_peak_memory = None
+    return peak_memory_pairs
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2064.00)
 def test_huge_page_reserve_vmm():
