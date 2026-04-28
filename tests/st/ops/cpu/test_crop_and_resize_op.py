@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-
 """test crop resize op"""
 
+from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
-
 from mindspore import context, Tensor
 from mindspore.ops import operations as P
 from mindspore import nn
@@ -26,7 +23,7 @@ from mindspore import nn
 
 class NetCropAndResize(nn.Cell):
     def __init__(self, method_="bilinear", extrapolation_value_=0.0):
-        super(NetCropAndResize, self).__init__()
+        super().__init__()
         self.op = P.CropAndResize(method=method_, extrapolation_value=extrapolation_value_)
 
     def construct(self, image, boxes, box_index, channel):
@@ -118,6 +115,7 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
     net = NetCropAndResize("bilinear_v2", 0.369)
     output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
+    # The second box extends beyond the right image boundary. Bilinear_v2 clamps absolute sample indices.
     expected_output = np.array([[[[10008.199, 10009.199], [10008.2, 10009.2], [10008.199, 10009.2]],
                                  [[10130.6, 10131.6], [10130.6, 10131.6], [10130.601, 10131.6]],
                                  [[10253, 10253.999], [10253, 10254], [10253, 10254]],
@@ -127,7 +125,7 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
                                  [[9056.667, 9057.667], [9078, 9079], [9099.333, 9100.333]],
                                  [[9236.667, 9237.667], [9258, 9259], [9279.333, 9280.333]],
                                  [[9416.667, 9417.667], [9438, 9439], [9459.333, 9460.333]],
-                                 [[9596.667, 9597.667], [9618, 9619], [9639.333, 9640.334]]]]).astype(np.float32)
+                                 [[9596.667, 9597.667], [9618, 9619], [9621, 9622]]]]).astype(np.float32)
     error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
@@ -274,6 +272,7 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
     net = NetCropAndResize("bilinear_v2", 0.0)
     output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
+    # The second box extends beyond the right image boundary. Bilinear_v2 clamps absolute sample indices.
     expected_output = np.array([[[[12324.999, 12326, 12327], [12325, 12326, 12327],
                                   [12325, 12326, 12327.001]],
                                  [[12730, 12730.999, 12732], [12730, 12731, 12732],
@@ -289,7 +288,7 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
                                  [[8962, 8963, 8964], [9004, 9005, 9006], [9046, 9047, 9048]],
                                  [[9531.999, 9533.001, 9534], [9574, 9575, 9576], [9616, 9617, 9618.001]],
                                  [[10102, 10103, 10104], [10144, 10145, 10146],
-                                  [10186, 10187, 10188]]]]).astype(np.float32)
+                                  [10148.5, 10149.5, 10150.5]]]]).astype(np.float32)
     error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
