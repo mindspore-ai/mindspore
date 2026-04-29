@@ -17,7 +17,7 @@
 
 import re
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore import context
@@ -26,8 +26,12 @@ from mindspore.communication.management import init, get_comm_name, create_group
 from mindspore.communication import GlobalComm
 
 def check_comm_name(text):
-    comm_name_pattern = r"\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}%[a-zA-Z0-9]+(_\d+)+"
-    assert re.match(comm_name_pattern, text), f"{text} is not comm_name!"
+    ip_pattern = r"\d{1,3}(?:\.\d{1,3}){3}"
+    comm_name_patterns = (
+        rf"{ip_pattern}%[a-zA-Z0-9]+(?:_\d+)+",
+        rf"{ip_pattern}(?:_\d+)+",
+    )
+    assert any(re.fullmatch(pattern, text) for pattern in comm_name_patterns), f"{text} is not comm_name!"
 
 
 np.random.seed(1)
@@ -54,7 +58,7 @@ if get_rank() in rank_ids:
 
 class GroupCommNameNet(nn.Cell):
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
-        super(GroupCommNameNet, self).__init__()
+        super().__init__()
         self.group = group
 
     def construct(self, x):

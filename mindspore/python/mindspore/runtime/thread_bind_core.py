@@ -491,26 +491,77 @@ class DeviceInfo:
 
     Attributes:
         npu_id (int): The ID of the NPU.
+        slot_id (int): The slot ID of the NPU.
         chip_id (int): The ID of the chip.
-        chip_logic_id (int, str): The logical ID of the chip, which can be an integer or a string.
+        chip_logic_id (int): The logical ID of the chip.
+        chip_phy_id (int): The physical ID of the chip.
         chip_name (str): The name of the chip.
-
-    Methods:
-        _parse_info_line(info_line): Initializes the attributes by parsing input info_line.
     """
-    def __init__(self, info_line):
-        self.npu_id = 0
-        self.chip_id = 0
-        self.chip_logic_id = 0
+    def __init__(self, info_dict):
+        self.npu_id = None
+        self.slot_id = None
+        self.chip_id = None
+        self.chip_logic_id = None
+        self.chip_phy_id = None
         self.chip_name = ""
-        self._parse_info_line(info_line)
+        self.device_id = None
+        self._parse_info_dict(info_dict)
 
-    def _parse_info_line(self, info_line):
-        self.npu_id, self.chip_id, self.chip_logic_id, self.chip_name = info_line.strip().split(None, 3)
-        self.npu_id = int(self.npu_id)
-        self.chip_id = int(self.chip_id)
-        if self.chip_logic_id.isnumeric():
-            self.chip_logic_id = int(self.chip_logic_id)
+    @staticmethod
+    def _parse_optional_int(value):
+        """Parse npu-smi optional integer fields."""
+        if value is None:
+            return None
+        value = str(value).strip()
+        if not value or value == "-":
+            return None
+        return int(value)
+
+    def _parse_info_dict(self, info_dict):
+        self.npu_id = self._parse_optional_int(info_dict.get("npu_id"))
+        self.slot_id = self._parse_optional_int(info_dict.get("slot_id"))
+        self.chip_id = self._parse_optional_int(info_dict.get("chip_id"))
+        self.chip_logic_id = self._parse_optional_int(info_dict.get("chip_logic_id"))
+        self.chip_phy_id = self._parse_optional_int(info_dict.get("chip_phy_id"))
+        self.chip_name = str(info_dict.get("chip_name", "")).strip()
+
+    def is_compute_chip(self):
+        """Whether the row describes a compute chip instead of an MCU row."""
+        return bool(self.chip_name) and self.chip_name.lower() != "mcu"
+
+    def use_chip_id_for_board_query(self):
+        """950 queries board info by NPU ID only, while other known devices keep the original '-c' flow."""
+        return self.slot_id is None or self.chip_logic_id is not None
+
+
+def _split_device_map_columns(line):
+    """Split one 'npu-smi info -m' table line by aligned columns."""
+    return [item.strip() for item in re.split(r"\s{2,}", line.strip()) if item.strip()]
+
+
+def _normalize_device_map_headers(header_line):
+    """Normalize npu-smi device map headers into internal field names."""
+    header_alias = {
+        "NPU ID": "npu_id",
+        "Slot ID": "slot_id",
+        "Chip ID": "chip_id",
+        "Chip Logic ID": "chip_logic_id",
+        "Chip Phy-ID": "chip_phy_id",
+        "Chip Name": "chip_name",
+    }
+    headers = _split_device_map_columns(header_line)
+    return [header_alias.get(header, header.lower().replace(" ", "_").replace("-", "_")) for header in headers]
+
+
+def _select_device_id_field(device_infos):
+    """Select the canonical device-id field from parsed compute-chip rows."""
+    for field_name in ("chip_logic_id", "npu_id", "chip_phy_id"):
+        field_values = [getattr(device_info, field_name) for device_info in device_infos]
+        if any(field_value is None for field_value in field_values):
+            continue
+        if len(set(field_values)) == len(field_values):
+            return field_name
+    raise RuntimeError("Failed to determine device ids from 'npu-smi info -m'.")
 
 
 def _get_device_map_info():
@@ -524,12 +575,40 @@ def _get_device_map_info():
     device_map_info = {}
     available_devices = set()
 
-    device_map = execute_command(["npu-smi", "info", "-m"]).strip().split("\n")[1:]
-    for line in device_map:
-        device_info = DeviceInfo(line.strip())
-        if isinstance(device_info.chip_logic_id, int):
-            device_map_info[device_info.chip_logic_id] = device_info
-            available_devices.add(device_info.chip_logic_id)
+    device_map_output = execute_command(["npu-smi", "info", "-m"]).strip()
+    device_map_lines = [line for line in device_map_output.split("\n") if line.strip()]
+    if len(device_map_lines) < 2:
+        raise RuntimeError("Failed to parse the result of executing 'npu-smi info -m'.")
+
+    headers = _normalize_device_map_headers(device_map_lines[0])
+    required_headers = {"npu_id", "chip_id", "chip_name"}
+    if not required_headers.issubset(set(headers)):
+        raise RuntimeError("Failed to parse the result of executing 'npu-smi info -m'.")
+
+    parsed_devices = []
+    for line in device_map_lines[1:]:
+        columns = _split_device_map_columns(line)
+        if len(columns) != len(headers):
+            raise RuntimeError("Failed to parse the result of executing 'npu-smi info -m'.")
+        try:
+            device_info = DeviceInfo(dict(zip(headers, columns)))
+        except (TypeError, ValueError) as err:
+            raise RuntimeError("Failed to parse the result of executing 'npu-smi info -m'.") from err
+        if not device_info.is_compute_chip():
+            continue
+        if device_info.npu_id is None or device_info.chip_id is None:
+            raise RuntimeError("Failed to parse the result of executing 'npu-smi info -m'.")
+        parsed_devices.append(device_info)
+
+    if not parsed_devices:
+        raise RuntimeError("Failed to parse the result of executing 'npu-smi info -m'.")
+
+    device_id_field = _select_device_id_field(parsed_devices)
+    for device_info in parsed_devices:
+        device_id = getattr(device_info, device_id_field)
+        device_info.device_id = device_id
+        device_map_info[device_id] = device_info
+        available_devices.add(device_id)
 
     return device_map_info, sorted(available_devices)
 
@@ -551,8 +630,10 @@ def _get_pcie_info(device_map_info, available_devices, keyword="PCIeBusInfo"):
         device_info = device_map_info.get(device)
         if not device_info:
             raise RuntimeError("Failed to get device pcie info.")
-        pcie_info = execute_command(["npu-smi", "info", "-t", "board", "-i", f"{device_info.npu_id}",
-                                     "-c", f"{device_info.chip_id}"]).strip().split("\n")
+        board_cmd = ["npu-smi", "info", "-t", "board", "-i", f"{device_info.npu_id}"]
+        if device_info.use_chip_id_for_board_query():
+            board_cmd.extend(["-c", f"{device_info.chip_id}"])
+        pcie_info = execute_command(board_cmd).strip().split("\n")
         for _ in pcie_info:
             line = ''.join(_.split())
             if line.startswith(keyword):

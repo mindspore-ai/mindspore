@@ -186,7 +186,7 @@ class SimpleNet1(Cell):
 
     def construct(self, x):
         out = x
-        for _ in range(mutable(100)):
+        for _ in range(mutable(200)):
             x += x
             x = self.op2(x)
             out = self.op1(x)
@@ -216,7 +216,7 @@ def test_aclnn_cache_memory_kbk():
     context.set_context(mode=mindspore.GRAPH_MODE, device_target="Ascend", jit_level="O0")
     net = SimpleNet1()
     pid = os.getpid()
-    monitor_proc = multiprocessing.Process(target=memory_monitor, args=(pid, 15))
+    monitor_proc = multiprocessing.Process(target=memory_monitor, args=(pid, 10))
     monitor_proc.daemon = True
     monitor_proc.start()
     random_array = np.random.rand(10, 1500, 64)
