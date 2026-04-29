@@ -228,6 +228,7 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
   struct Load {
     Load() = default;
     dvm::ShapeRef shape;
+    dvm::ShapeRef stride;
     dvm::NDObject *op;
     TensorPtr tensor;
   };
