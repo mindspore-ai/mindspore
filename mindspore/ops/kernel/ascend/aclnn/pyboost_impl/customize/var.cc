@@ -15,40 +15,27 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/var.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_v.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr VarAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                     const std::optional<ValueTuplePtr> &dim, const Int64ImmPtr &correction,
-                                     const BoolImmPtr &keepdim) {
-  OpRunner::InferOpOutput(op, input_tensor, dim, correction, keepdim);
+tensor::TensorPtr VarAscendCustomize(const TensorPtr &input_tensor, const std::optional<ValueTuplePtr> &dim,
+                                     const Int64ImmPtr &correction, const BoolImmPtr &keepdim) {
+  auto output = InferOutput<1>(prim::kPrimVar, input_tensor, dim, correction, keepdim);
 
   std::vector<int64_t> dim_vector = ConvertValueTupleToVector<int64_t>(dim);
   auto correction_imm = GetValue<int64_t>(correction);
   auto keepdim_imm = GetValue<bool>(keepdim);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_vector, correction_imm, keepdim_imm]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      LAUNCH_ACLNN(aclnnVarCorrection, device_context, op->stream_id(), input_tensor, dim_vector, correction_imm,
-                   keepdim_imm, outputs[0]);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
-  return op->output(0);
+  TensorToDevice(input_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnVarCorrection, input_tensor, dim_vector, correction_imm, keepdim_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

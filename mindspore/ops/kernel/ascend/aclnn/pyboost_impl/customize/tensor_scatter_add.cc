@@ -15,34 +15,23 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/tensor_scatter_add.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr TensorScatterAddAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x,
-                                                  const TensorPtr &indices, const TensorPtr &updates) {
-  OpRunner::InferOpOutput(op, input_x, indices, updates);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x, indices, updates);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_x, indices, updates]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_x, indices, updates);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), outputs[0], input_x);
-    LAUNCH_ACLNN(aclnnTfScatterAdd, device_context, op->stream_id(), outputs[0], indices, updates);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call end";
-  }));
-  return op->output(0);
+tensor::TensorPtr TensorScatterAddAscendCustomize(const TensorPtr &input_x, const TensorPtr &indices,
+                                                  const TensorPtr &updates) {
+  auto output = InferOutput<1>(prim::kPrimTensorScatterAdd, input_x, indices, updates);
+  TensorToDevice(input_x, indices, updates);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnInplaceCopy, output, input_x);
+  DISPATCH_ACLNN(aclnnTfScatterAdd, output, indices, updates);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

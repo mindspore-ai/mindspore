@@ -18,15 +18,13 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NANTONUM_
 
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NanToNumAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                          const std::optional<FP32ImmPtr> &nan, const std::optional<FP32ImmPtr> &posinf,
+tensor::TensorPtr NanToNumAscendCustomize(const tensor::TensorPtr &input_tensor, const std::optional<FP32ImmPtr> &nan,
+                                          const std::optional<FP32ImmPtr> &posinf,
                                           const std::optional<FP32ImmPtr> &neginf);
 }  // namespace pyboost
 }  // namespace kernel

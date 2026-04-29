@@ -17,20 +17,17 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_QUANT_BATCH_MATMUL_V3_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_QUANT_BATCH_MATMUL_V3_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr QuantMatmulV4AscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                               const TensorPtr &x2_tensor, const TensorPtr &scale_tensor,
-                                               const std::optional<TensorPtr> &offset_tensor,
-                                               const std::optional<TensorPtr> &bias_tensor,
-                                               const std::optional<TensorPtr> &pertokenScaleOptional_tensor,
+tensor::TensorPtr QuantMatmulV4AscendCustomize(const tensor::TensorPtr &x1_tensor, const tensor::TensorPtr &x2_tensor,
+                                               const tensor::TensorPtr &scale_tensor,
+                                               const std::optional<tensor::TensorPtr> &offset_tensor,
+                                               const std::optional<tensor::TensorPtr> &bias_tensor,
+                                               const std::optional<tensor::TensorPtr> &pertokenScaleOptional_tensor,
                                                const BoolImmPtr &transpose_x1, const BoolImmPtr &transpose_x2,
                                                const Int64ImmPtr &dtype);
 }  // namespace pyboost

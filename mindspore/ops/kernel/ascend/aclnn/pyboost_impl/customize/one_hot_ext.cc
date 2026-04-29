@@ -19,15 +19,18 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "include/pynative/utils/pyboost/auto_generate/max.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr OneHotExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &tensor_tensor,
-                                           const Int64ImmPtr &num_classes, const TensorPtr &on_value,
-                                           const TensorPtr &off_value, const Int64ImmPtr &axis) {
+tensor::TensorPtr OneHotExtAscendCustomize(const TensorPtr &tensor_tensor, const Int64ImmPtr &num_classes,
+                                           const TensorPtr &on_value, const TensorPtr &off_value,
+                                           const Int64ImmPtr &axis) {
   static const int64_t MIN_DEPTH = 1;
   static const int64_t AUTO_DEPTH = -1;
 
@@ -43,27 +46,13 @@ tensor::TensorPtr OneHotExtAscendCustomize(const std::shared_ptr<OpRunner> &op, 
     }
   }
   auto num_class_new = std::make_shared<Int64Imm>(static_cast<int64_t>(num_class_imm));
-  OpRunner::InferOpOutput(op, tensor_tensor, num_class_new, on_value, off_value, axis);
+  auto output = InferOutput<1>(prim::kPrimOneHotExt, tensor_tensor, num_class_new, on_value, off_value, axis);
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), tensor_tensor, on_value, off_value);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, tensor_tensor, num_class_imm, on_value, off_value]() {
-      MS_LOG(DEBUG) << "Run device task OneHotExt start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      int64_t axis_imm = -1;
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, tensor_tensor, on_value, off_value);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnOneHot, device_context, op->stream_id(), tensor_tensor, num_class_imm, on_value, off_value,
-                   axis_imm, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task OneHotExt end";
-    }));
-  return op->output(0);
+  TensorToDevice(tensor_tensor, on_value, off_value);
+  TensorAllocate(output);
+  constexpr int64_t axis_imm = -1;
+  DISPATCH_ACLNN(aclnnOneHot, tensor_tensor, num_class_imm, on_value, off_value, axis_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

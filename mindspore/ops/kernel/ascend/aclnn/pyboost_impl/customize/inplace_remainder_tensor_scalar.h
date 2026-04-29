@@ -18,16 +18,14 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACEREMAINDERTENSORSCALAR_H_
 
 #include <memory>
-#include "include/pynative/utils/pyboost/op_runner.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceRemainderTensorScalarAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                              const TensorPtr &input_tensor, const ScalarPtr &other);
+tensor::TensorPtr InplaceRemainderTensorScalarAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                                              const ScalarPtr &other);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

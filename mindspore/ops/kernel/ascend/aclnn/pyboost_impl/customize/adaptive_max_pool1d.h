@@ -16,21 +16,17 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAPTIVE_MAX_POOL1d_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAPTIVE_MAX_POOL1d_H_
-#include <vector>
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                                  const TensorPtr &input_x_tensor,
-                                                                                  const ValueTuplePtr &output_size);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomize(
+  const tensor::TensorPtr &input_x_tensor, const ValueTuplePtr &output_size);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,10 +18,12 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/runtime/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
@@ -56,7 +58,7 @@ device::DeviceType GetEmptyLikeDeviceName(const std::optional<Int64ImmPtr> &devi
 }
 }  // namespace
 
-tensor::TensorPtr EmptyLikeAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr EmptyLikeAscendCustomize(const tensor::TensorPtr &input_tensor,
                                            const std::optional<Int64ImmPtr> &dtype,
                                            const std::optional<Int64ImmPtr> &device, const BoolImmPtr &pin_memory) {
   MS_LOG(DEBUG) << "Call EmptyLikeAscendCustomize start";
@@ -69,7 +71,7 @@ tensor::TensorPtr EmptyLikeAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   auto output_shape = input_tensor->shape();
   std::vector<tensor::TensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(data_type, output_shape, &outputs);
-  PyBoostUtils::PrepareOpOutputs(device_ctx, op->stream_id(), outputs);
+  TensorAllocate(outputs);
   if (pin_memory->value()) {
     if (device_type != device::DeviceType::kCPU) {
       MS_LOG(EXCEPTION) << "Only CPU tensor can be pinned. device should be CPU.";
@@ -85,16 +87,7 @@ tensor::TensorPtr EmptyLikeAscendCustomize(const std::shared_ptr<OpRunner> &op, 
       device_address->set_allocator(pin_memory_allocator);
     }
   }
-  op->set_outputs(outputs);
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, device_ctx]() {
-    const auto &outputs = op->outputs();
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_ctx, outputs);
-    MS_LOG(DEBUG) << "Run device task EmptyLike end";
-  }));
-  return op->output(0);
+  return outputs[0];
 }
 }  // namespace pyboost
 }  // namespace kernel

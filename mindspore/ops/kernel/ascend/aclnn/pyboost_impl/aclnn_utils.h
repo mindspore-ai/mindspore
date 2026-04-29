@@ -30,6 +30,7 @@
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "kernel/ascend/acl_ir/op_api_exec.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
+#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 using ProcessCache = mindspore::device::ascend::ProcessCache;
 using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor *, ProcessCache, size_t>;

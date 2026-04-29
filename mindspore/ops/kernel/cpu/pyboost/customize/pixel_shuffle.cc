@@ -22,8 +22,9 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr PixelShuffleCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
                                            const Int64ImmPtr &upscale_factor) {
-  PixelShuffleCustomize(op, input, upscale_factor);
-  return op->output(0);
+  auto out = PixelShuffleCustomize(input, upscale_factor);
+  op->set_outputs({out});
+  return out;
 }
 }  // namespace pyboost
 }  // namespace kernel

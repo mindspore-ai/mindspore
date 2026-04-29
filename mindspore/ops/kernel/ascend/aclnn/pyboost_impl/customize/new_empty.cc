@@ -18,10 +18,10 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/runtime/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,7 +36,7 @@ ShapeVector GetShape(const ValueTuplePtr &shape) {
   return output_shape;
 }
 
-TypeId GetDataType(const TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &dtype) {
+TypeId GetDataType(const tensor::TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &dtype) {
   TypeId data_type;
   if (dtype.has_value()) {
     data_type = static_cast<TypeId>(GetValue<int64_t>(dtype.value()));
@@ -65,8 +65,8 @@ device::DeviceType GetNewEmptyDeviceName(const std::optional<Int64ImmPtr> &devic
 }
 }  // namespace
 
-tensor::TensorPtr NewEmptyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                          const ValueTuplePtr &size, const std::optional<Int64ImmPtr> &dtype,
+tensor::TensorPtr NewEmptyAscendCustomize(const tensor::TensorPtr &input_tensor, const ValueTuplePtr &size,
+                                          const std::optional<Int64ImmPtr> &dtype,
                                           const std::optional<Int64ImmPtr> &device) {
   MS_LOG(DEBUG) << "Call NewEmpty start";
   ShapeVector output_shape = GetShape(size);
@@ -78,17 +78,8 @@ tensor::TensorPtr NewEmptyAscendCustomize(const std::shared_ptr<OpRunner> &op, c
 
   std::vector<tensor::TensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(data_type, output_shape, &outputs);
-  PyBoostUtils::PrepareOpOutputs(device_ctx, op->stream_id(), outputs);
-  op->set_outputs(outputs);
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, device_ctx]() {
-    const auto &outputs = op->outputs();
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_ctx, outputs);
-    MS_LOG(DEBUG) << "Run device task NewEmpty end";
-  }));
-  return op->output(0);
+  TensorAllocate(outputs);
+  return outputs[0];
 }
 }  // namespace pyboost
 }  // namespace kernel

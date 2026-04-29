@@ -16,24 +16,24 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/layer_norm_grad_ext.h"
 #include <algorithm>
-#include <memory>
 #include <functional>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LayerNormGradExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dy_tensor,
-                                     const TensorPtr &x_tensor, const ValueTuplePtr &normalized_shape,
-                                     const TensorPtr &mean_tensor, const TensorPtr &variance_tensor,
-                                     const TensorPtr &gamma_tensor, const TensorPtr &beta_tensor,
-                                     const ValueTuplePtr &output_mask) {
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormGradExtAscendCustomize(
+  const TensorPtr &dy_tensor, const TensorPtr &x_tensor, const ValueTuplePtr &normalized_shape,
+  const TensorPtr &mean_tensor, const TensorPtr &variance_tensor, const TensorPtr &gamma_tensor,
+  const TensorPtr &beta_tensor, const ValueTuplePtr &output_mask) {
   MS_LOG(DEBUG) << "Call start";
   // Convert ValuePtr to c++ scalr
-  OpRunner::InferOpOutput(op, dy_tensor, x_tensor, normalized_shape, mean_tensor, variance_tensor, gamma_tensor,
-                          beta_tensor, output_mask);
+  auto outputs = InferOutput<3>(prim::kPrimLayerNormGradExt, dy_tensor, x_tensor, normalized_shape, mean_tensor,
+                                variance_tensor, gamma_tensor, beta_tensor, output_mask);
 
   std::vector<int64_t> normalized_shape_vector = ConvertValueTupleToVector<int64_t>(normalized_shape);
   std::vector<int64_t> output_mask_vector = ConvertValueTupleToVector<int64_t>(output_mask);
@@ -41,28 +41,13 @@ void LayerNormGradExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
   std::transform(output_mask_vector.begin(), output_mask_vector.end(), std::back_inserter(output_mask_u8_vec),
                  [](const int64_t &value) { return static_cast<uint8_t>(value); });
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, x_tensor, mean_tensor,
-                                variance_tensor, gamma_tensor, beta_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(dy_tensor, x_tensor, mean_tensor, variance_tensor, gamma_tensor, beta_tensor);
+  TensorAllocate(outputs);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, dy_tensor, x_tensor, normalized_shape_vector, mean_tensor,
-                                                  variance_tensor, gamma_tensor, beta_tensor, output_mask_u8_vec]() {
-      MS_LOG(DEBUG) << "Run device task LayerNormGradExt start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, dy_tensor, x_tensor, mean_tensor, variance_tensor, gamma_tensor,
-                                   beta_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnLayerNormBackward, device_context, op->stream_id(), dy_tensor, x_tensor,
-                   normalized_shape_vector, mean_tensor, variance_tensor, gamma_tensor, beta_tensor, output_mask_u8_vec,
-                   outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
-      MS_LOG(DEBUG) << "Run device task LayerNormGradExt end";
-    }));
+  DISPATCH_ACLNN(aclnnLayerNormBackward, dy_tensor, x_tensor, normalized_shape_vector, mean_tensor, variance_tensor,
+                 gamma_tensor, beta_tensor, output_mask_u8_vec, std::get<0>(outputs), std::get<1>(outputs),
+                 std::get<2>(outputs));
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

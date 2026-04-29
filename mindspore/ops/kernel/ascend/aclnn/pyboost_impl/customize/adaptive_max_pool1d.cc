@@ -17,7 +17,8 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/pynative/utils/pyboost/auto_generate/adaptive_max_pool2d.h"
@@ -25,13 +26,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                                  const TensorPtr &input_x_tensor,
-                                                                                  const ValueTuplePtr &output_size) {
-  OpRunner::InferOpOutput(op, input_x_tensor, output_size);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomize(
+  const tensor::TensorPtr &input_x_tensor, const ValueTuplePtr &output_size) {
   auto input_shape = input_x_tensor->shape();
   auto origin_shape_dim = SizeToLong(input_shape.size());
 
@@ -69,7 +65,6 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool1DAscendCustomiz
   squeeze_input_shape.emplace_back(shape_pool2d[shape_pool2d_dim - 1]);
   auto output_tensor = reshape(output_adaptive_max_pool2d_tensor, squeeze_input_shape);
   auto output_indices = reshape(output_adaptive_max_pool2d_indices, squeeze_input_shape);
-  op->set_outputs({output_tensor, output_indices});
   return std::make_tuple(output_tensor, output_indices);
 }
 }  // namespace pyboost

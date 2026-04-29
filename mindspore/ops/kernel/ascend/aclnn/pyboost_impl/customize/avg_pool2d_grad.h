@@ -17,20 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_AVG_POOL2D_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_AVG_POOL2D_GRAD_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AvgPool2DGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &grad,
-                                               const TensorPtr &image, const ValueTuplePtr &kernel_size,
-                                               const ValueTuplePtr &stride, const ValueTuplePtr &padding,
-                                               const BoolImmPtr &ceil_mode, const BoolImmPtr &count_include_pad,
+tensor::TensorPtr AvgPool2DGradAscendCustomize(const tensor::TensorPtr &grad, const tensor::TensorPtr &image,
+                                               const ValueTuplePtr &kernel_size, const ValueTuplePtr &stride,
+                                               const ValueTuplePtr &padding, const BoolImmPtr &ceil_mode,
+                                               const BoolImmPtr &count_include_pad,
                                                const std::optional<Int64ImmPtr> &divisor_override);
 }  // namespace pyboost
 }  // namespace kernel

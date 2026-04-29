@@ -15,36 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/bernoulli_ext.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr BernoulliExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                              const TensorPtr &seed, const TensorPtr &offset) {
-  OpRunner::InferOpOutput(op, input_tensor, seed, offset);
+tensor::TensorPtr BernoulliExtAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &seed,
+                                              const TensorPtr &offset) {
+  auto output = InferOutput<1>(prim::kPrimBernoulliExt, input_tensor, seed, offset);
 
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
-  auto device_context = op->device_context();
-  auto outputs = op->outputs();
-  PyBoostUtils::PrepareOpInputs(device_context, op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(device_context, op->stream_id(), outputs);
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, seed_imm, offset_imm]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnInplaceBernoulliTensor, device_context, op->stream_id(), outputs[kIndex0], input_tensor, seed_imm,
-                 offset_imm);
-  }));
-  return outputs[kIndex0];
+  TensorToDevice(input_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnInplaceBernoulliTensor, output, input_tensor, seed_imm, offset_imm);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -15,41 +15,31 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/masked_fill.h"
-#include <memory>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
 
-tensor::TensorPtr MaskedFillAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                                       const TensorPtr &input_tensor, const TensorPtr &mask_tensor,
+tensor::TensorPtr MaskedFillAscendCall(const TensorPtr &input_tensor, const TensorPtr &mask_tensor,
                                        const TensorPtr &value_tensor, const TensorPtr &output_tensor) {
-  LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), output_tensor, input_tensor);
-  LAUNCH_ACLNN(aclnnInplaceMaskedFillTensor, device_context, op->stream_id(), output_tensor, mask_tensor, value_tensor);
+  DISPATCH_ACLNN(aclnnInplaceCopy, output_tensor, input_tensor);
+  DISPATCH_ACLNN(aclnnInplaceMaskedFillTensor, output_tensor, mask_tensor, value_tensor);
   return output_tensor;
 }
 }  // namespace
 
-tensor::TensorPtr MaskedFillAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                            const TensorPtr &mask_tensor, const TensorPtr &value_tensor) {
-  OpRunner::InferOpOutput(op, input_tensor, mask_tensor, value_tensor);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mask_tensor, value_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, mask_tensor, value_tensor]() {
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor, mask_tensor, value_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
-      MaskedFillAscendCall(op, device_context, input_tensor, mask_tensor, value_tensor, op->output(0));
-    }));
-  return op->output(0);
+tensor::TensorPtr MaskedFillAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &mask_tensor,
+                                            const TensorPtr &value_tensor) {
+  auto output = InferOutput<1>(prim::kPrimMaskedFill, input_tensor, mask_tensor, value_tensor);
+  TensorToDevice(input_tensor, mask_tensor, value_tensor);
+  TensorAllocate(output);
+  MaskedFillAscendCall(input_tensor, mask_tensor, value_tensor, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

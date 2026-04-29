@@ -15,19 +15,20 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/std_mean.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void StdMeanAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                            const std::optional<ValueTuplePtr> &dim, const Int64ImmPtr &correction,
-                            const BoolImmPtr &keepdim) {
-  OpRunner::InferOpOutput(op, input_tensor, dim, correction, keepdim);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> StdMeanAscendCustomize(const TensorPtr &input_tensor,
+                                                                        const std::optional<ValueTuplePtr> &dim,
+                                                                        const Int64ImmPtr &correction,
+                                                                        const BoolImmPtr &keepdim) {
+  auto outputs = InferOutput<2>(prim::kPrimStdMean, input_tensor, dim, correction, keepdim);
 
   std::vector<int64_t> dim_vector{};
   if (dim.has_value()) {
@@ -36,24 +37,12 @@ void StdMeanAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr
   const auto correction_imm = GetValue<int64_t>(correction);
   const auto keepdim_imm = GetValue<bool>(keepdim);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_vector, correction_imm, keepdim_imm]() {
-      MS_LOG(DEBUG) << "Run device task StdMean start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-      LAUNCH_ACLNN(aclnnStdMeanCorrection, device_context, op->stream_id(), input_tensor, dim_vector, correction_imm,
-                   keepdim_imm, outputs[kIndex0], outputs[kIndex1]);
-      MS_LOG(DEBUG) << "Run device task StdMean end";
-    }));
+  TensorToDevice(input_tensor);
+  TensorAllocate(outputs);
+  const auto &std_out = std::get<0>(outputs);
+  const auto &mean = std::get<1>(outputs);
+  DISPATCH_ACLNN(aclnnStdMeanCorrection, input_tensor, dim_vector, correction_imm, keepdim_imm, std_out, mean);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

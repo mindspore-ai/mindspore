@@ -18,12 +18,12 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_STOP_GRADIENT_H_
 
 #include <memory>
-#include "include/pynative/utils/pyboost/op_runner.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void InplaceStopGradientAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor);
+tensor::TensorPtr InplaceStopGradientAscendCustomize(const tensor::TensorPtr &input_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

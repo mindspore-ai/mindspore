@@ -18,18 +18,16 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceMatmulAddAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                                  const TensorPtr &weight, const TensorPtr &c) {
+tensor::TensorPtr InplaceMatmulAddAscendCustomize(const TensorPtr &x, const TensorPtr &weight, const TensorPtr &c) {
   MS_EXCEPTION(RuntimeError) << "For now, the api of 'InplaceMatmulAdd' has not been supported on pynative mode.";
-  return op->output(0);
+  return nullptr;
 }
 }  // namespace pyboost
 }  // namespace kernel

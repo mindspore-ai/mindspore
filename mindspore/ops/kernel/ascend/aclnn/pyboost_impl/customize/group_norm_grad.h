@@ -17,20 +17,17 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GROUP_NORM_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GROUP_NORM_GRAD_H_
 
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GroupNormGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dout_tensor,
-                                  const TensorPtr &input_tensor, const TensorPtr &mean_tensor,
-                                  const TensorPtr &rstd_tensor, const TensorPtr &weight_opt_tensor,
-                                  const Int64ImmPtr &num_groups, const BoolImmPtr &dx_is_require,
-                                  const BoolImmPtr &dgamma_is_require, const BoolImmPtr &dbeta_is_require);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormGradAscendCustomize(
+  const tensor::TensorPtr &dout_tensor, const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &mean_tensor,
+  const tensor::TensorPtr &rstd_tensor, const tensor::TensorPtr &weight_opt_tensor, const Int64ImmPtr &num_groups,
+  const BoolImmPtr &dx_is_require, const BoolImmPtr &dgamma_is_require, const BoolImmPtr &dbeta_is_require);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

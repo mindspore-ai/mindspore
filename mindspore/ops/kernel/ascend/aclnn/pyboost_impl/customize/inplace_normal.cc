@@ -19,8 +19,8 @@
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,29 +40,17 @@ float GetScalarValueToFloat(const std::shared_ptr<Scalar> &scalar, const string 
   }
 }
 
-tensor::TensorPtr InplaceNormalAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                               const ScalarPtr &mean, const ScalarPtr &std, const TensorPtr &seed,
-                                               const TensorPtr &offset) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  op->set_outputs({input});
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, mean, std, seed, offset]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input);
-    // For the aclnnInplacenormal operator, mean and std must be of the float type.
-    float mean_value = GetScalarValueToFloat(mean, "mean");
-    float std_value = GetScalarValueToFloat(std, "std");
-    auto [seed_value, offset_value] = GetGeneratorState(seed, offset);
-
-    MS_LOG(DEBUG) << "InplaceNormal launch start";
-    LAUNCH_ACLNN(aclnnInplaceNormal, device_context, op->stream_id(), input, mean_value, std_value, seed_value,
-                 offset_value);
-    MS_LOG(DEBUG) << "Run device task aclnnInplaceNormal end";
-  }));
-
-  return op->output(0);
+tensor::TensorPtr InplaceNormalAscendCustomize(const tensor::TensorPtr &input, const ScalarPtr &mean,
+                                               const ScalarPtr &std, const tensor::TensorPtr &seed,
+                                               const tensor::TensorPtr &offset) {
+  float mean_value = GetScalarValueToFloat(mean, "mean");
+  float std_value = GetScalarValueToFloat(std, "std");
+  auto gen_state = GetGeneratorState(seed, offset);
+  auto seed_value = std::get<0>(gen_state);
+  auto offset_value = std::get<1>(gen_state);
+  TensorToDevice(input);
+  DISPATCH_ACLNN(aclnnInplaceNormal, input, mean_value, std_value, seed_value, offset_value);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

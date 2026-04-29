@@ -15,41 +15,29 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/divmod.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr DivModAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                        const TensorPtr &y_tensor, const std::optional<Int64ImmPtr> &rounding_mode) {
-  OpRunner::InferOpOutput(op, x_tensor, y_tensor, rounding_mode);
+tensor::TensorPtr DivModAscendCustomize(const TensorPtr &x_tensor, const TensorPtr &y_tensor,
+                                        const std::optional<Int64ImmPtr> &rounding_mode) {
+  auto output = InferOutput<1>(prim::kPrimDivMod, x_tensor, y_tensor, rounding_mode);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, y_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  auto mode = 0;
+  if (rounding_mode.has_value()) {
+    mode = GetValue<int64_t>(rounding_mode.value());
+  }
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, y_tensor, rounding_mode]() {
-    MS_LOG(DEBUG) << "Run device task DivMod start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, x_tensor, y_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  TensorToDevice(x_tensor, y_tensor);
+  TensorAllocate(output);
 
-    auto mode = 0;
-    if (rounding_mode.has_value()) {
-      mode = GetValue<int64_t>(rounding_mode.value());
-    }
-
-    LAUNCH_ACLNN(aclnnDivMod, device_context, op->stream_id(), x_tensor, y_tensor, mode, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task DivMod end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnDivMod, x_tensor, y_tensor, mode, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

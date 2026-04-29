@@ -18,14 +18,12 @@
 #define MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_SMOOTH_L1_LOSS_ASCEND_H_
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SmoothL1LossAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &prediction_tensor,
-                                              const TensorPtr &target_tensor, const FP32ImmPtr &beta,
+tensor::TensorPtr SmoothL1LossAscendCustomize(const tensor::TensorPtr &prediction_tensor,
+                                              const tensor::TensorPtr &target_tensor, const FP32ImmPtr &beta,
                                               const Int64ImmPtr &reduction);
 }  // namespace pyboost
 }  // namespace kernel

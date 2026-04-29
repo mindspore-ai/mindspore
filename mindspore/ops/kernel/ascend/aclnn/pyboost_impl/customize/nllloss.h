@@ -16,19 +16,18 @@
 
 #ifndef MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_NLLLOSS_H_
 #define MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_NLLLOSS_H_
-#include <vector>
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> NLLLossAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor, const TensorPtr &label_tensor,
-  const TensorPtr &weight_tensor, const Int64ImmPtr &reduction, const Int64ImmPtr &ignore_index);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> NLLLossAscendCustomize(const tensor::TensorPtr &logits_tensor,
+                                                                        const tensor::TensorPtr &label_tensor,
+                                                                        const tensor::TensorPtr &weight_tensor,
+                                                                        const Int64ImmPtr &reduction,
+                                                                        const Int64ImmPtr &ignore_index);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

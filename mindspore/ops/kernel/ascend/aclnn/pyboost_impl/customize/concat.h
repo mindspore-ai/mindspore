@@ -20,13 +20,11 @@
 #include <memory>
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ConcatAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors,
-                                        const Int64ImmPtr &axis);
+tensor::TensorPtr ConcatAscendCustomize(const ValueTuplePtr &tensors, const Int64ImmPtr &axis);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

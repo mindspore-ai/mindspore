@@ -21,15 +21,13 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ConvolutionStrAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const TensorPtr &weight_tensor,
-                                                const std::optional<TensorPtr> &bias_tensor,
+tensor::TensorPtr ConvolutionStrAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                                const tensor::TensorPtr &weight_tensor,
+                                                const std::optional<tensor::TensorPtr> &bias_tensor,
                                                 const ValueTuplePtr &stride, const Int64ImmPtr &padding_enum,
                                                 const ValueTuplePtr &dilation, const BoolImmPtr &transposed,
                                                 const ValueTuplePtr &output_padding, const Int64ImmPtr &group);

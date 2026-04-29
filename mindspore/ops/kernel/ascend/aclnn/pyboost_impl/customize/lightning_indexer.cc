@@ -15,25 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/lightning_indexer.h"
-#include <string>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "include/op_enum.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LightningIndexerAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key,
-                                     const TensorPtr &weights, const std::optional<TensorPtr> &actual_seq_lengths_query,
-                                     const std::optional<TensorPtr> &actual_seq_lengths_key,
-                                     const std::optional<TensorPtr> &block_table, const Int64ImmPtr &layout_query,
-                                     const Int64ImmPtr &layout_key, const Int64ImmPtr &sparse_count,
-                                     const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens,
-                                     const Int64ImmPtr &next_tokens, const BoolImmPtr &return_value) {
-  OpRunner::InferOpOutput(op, query, key, weights, actual_seq_lengths_query, actual_seq_lengths_key, block_table,
-                          layout_query, layout_key, sparse_count, sparse_mode, pre_tokens, next_tokens, return_value);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> LightningIndexerAscendCustomize(
+  const TensorPtr &query, const TensorPtr &key, const TensorPtr &weights,
+  const std::optional<TensorPtr> &actual_seq_lengths_query, const std::optional<TensorPtr> &actual_seq_lengths_key,
+  const std::optional<TensorPtr> &block_table, const Int64ImmPtr &layout_query, const Int64ImmPtr &layout_key,
+  const Int64ImmPtr &sparse_count, const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens,
+  const Int64ImmPtr &next_tokens, const BoolImmPtr &return_value) {
+  auto outputs = InferOutput<2>(prim::kPrimLightningIndexer, query, key, weights, actual_seq_lengths_query,
+                                actual_seq_lengths_key, block_table, layout_query, layout_key, sparse_count,
+                                sparse_mode, pre_tokens, next_tokens, return_value);
 
   auto layout_query_str = device::ascend::FASInputLayoutMode::ConvertEnumToString(layout_query->value());
   auto layout_key_str = device::ascend::FASInputLayoutMode::ConvertEnumToString(layout_key->value());
@@ -43,27 +42,15 @@ void LightningIndexerAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
   auto next_tokens_v = next_tokens->value();
   auto return_value_v = return_value->value();
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), query, key, weights, actual_seq_lengths_query,
-                                actual_seq_lengths_key, block_table);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, query, key, weights, actual_seq_lengths_query, actual_seq_lengths_key, block_table, layout_query_str,
-     layout_key_str, sparse_count_v, sparse_mode_v, pre_tokens_v, next_tokens_v, return_value_v]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, query, key, weights, actual_seq_lengths_query,
-                                   actual_seq_lengths_key, block_table);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      auto values_out = return_value_v ? std::optional<TensorPtr>(outputs[kIndex1]) : std::nullopt;
-      LAUNCH_ACLNN(aclnnLightningIndexer, device_context, op->stream_id(), query, key, weights,
-                   actual_seq_lengths_query, actual_seq_lengths_key, block_table, layout_query_str, layout_key_str,
-                   sparse_count_v, sparse_mode_v, pre_tokens_v, next_tokens_v, return_value_v, outputs[kIndex0],
-                   values_out);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
+  TensorToDevice(query, key, weights, actual_seq_lengths_query, actual_seq_lengths_key, block_table);
+  TensorAllocate(outputs);
+
+  MS_LOG(DEBUG) << "LightningIndexer Call start";
+  DISPATCH_ACLNN(aclnnLightningIndexer, query, key, weights, actual_seq_lengths_query, actual_seq_lengths_key,
+                 block_table, layout_query_str, layout_key_str, sparse_count_v, sparse_mode_v, pre_tokens_v,
+                 next_tokens_v, return_value_v, std::get<0>(outputs), std::get<1>(outputs));
+  MS_LOG(DEBUG) << "LightningIndexer Launch end";
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

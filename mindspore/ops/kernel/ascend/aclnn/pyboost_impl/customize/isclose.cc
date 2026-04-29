@@ -16,43 +16,28 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/isclose.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr IsCloseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                         const TensorPtr &other_tensor, const FP32ImmPtr &rtol, const FP32ImmPtr &atol,
-                                         const BoolImmPtr &equal_nan) {
-  MS_LOG(DEBUG) << "IsCloseCustomize start";
-  OpRunner::InferOpOutput(op, input_tensor, other_tensor, rtol, atol, equal_nan);
+tensor::TensorPtr IsCloseAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &other_tensor,
+                                         const FP32ImmPtr &rtol, const FP32ImmPtr &atol, const BoolImmPtr &equal_nan) {
+  auto output = InferOutput<1>(prim::kPrimIsClose, input_tensor, other_tensor, rtol, atol, equal_nan);
 
   auto rtol_imm = static_cast<double>(GetValue<float>(rtol));
   auto atol_imm = static_cast<double>(GetValue<float>(atol));
   auto equal_nan_imm = GetValue<bool>(equal_nan);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, other_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor, other_tensor);
+  TensorAllocate(output);
 
   // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other_tensor, rtol_imm, atol_imm, equal_nan_imm]() {
-      MS_LOG(DEBUG) << "Run device task IsClose start";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         "IsClose", false);
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, other_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnIsClose, device_context, op->stream_id(), input_tensor, other_tensor, rtol_imm, atol_imm,
-                   equal_nan_imm, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task IsClose end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnIsClose, input_tensor, other_tensor, rtol_imm, atol_imm, equal_nan_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -17,15 +17,13 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_LOG_SOFTMAX_EXT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_LOG_SOFTMAX_EXT_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr LogSoftmaxExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr LogSoftmaxExtAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                const std::optional<Int64ImmPtr> &dim,
                                                const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost

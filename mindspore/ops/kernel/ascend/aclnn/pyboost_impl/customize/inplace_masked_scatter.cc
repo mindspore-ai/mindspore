@@ -16,32 +16,23 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_masked_scatter.h"
 #include <memory>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceMaskedScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                      const TensorPtr &mask, const TensorPtr &source) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, mask, source);
-  op->set_outputs({input});
-  // source
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, mask, source]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input, mask, source);
-    // Check Memory Partial Overlap
-    CheckMemory({input, mask, source}, {input});
-    // Inplace output need be front
-    MS_LOG(DEBUG) << "Call InplaceMaskedScatter start";
-    LAUNCH_ACLNN(aclnnInplaceMaskedScatter, device_context, op->stream_id(), input, mask, source);
-    MS_LOG(DEBUG) << "Launch InplaceMaskedScatter end";
-  }));
-  return op->output(0);
+tensor::TensorPtr InplaceMaskedScatterAscendCustomize(const tensor::TensorPtr &input, const tensor::TensorPtr &mask,
+                                                      const tensor::TensorPtr &source) {
+  TensorToDevice(input, mask, source);
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({input, mask, source}, {input});
+  // Inplace output need be front
+  MS_LOG(DEBUG) << "Call InplaceMaskedScatter start";
+  DISPATCH_ACLNN(aclnnInplaceMaskedScatter, input, mask, source);
+  MS_LOG(DEBUG) << "Launch InplaceMaskedScatter end";
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

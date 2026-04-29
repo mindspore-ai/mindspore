@@ -23,7 +23,7 @@
 #include "include/utils/pynative/variable.h"
 
 namespace mindspore::kernel::pyboost {
-void CellBackwardHookCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors_list) {
+std::vector<tensor::TensorPtr> CellBackwardHookCustomize(const ValueTuplePtr &tensors_list) {
   MS_LOG(DEBUG) << "Cell BackwardHook call start";
   const auto tensor_vector = ConvertValueTupleToVector<tensor::TensorPtr>(tensors_list);
   tensor::TensorPtrList outputs;
@@ -47,7 +47,7 @@ void CellBackwardHookCustomize(const std::shared_ptr<OpRunner> &op, const ValueT
     (void)outputs.emplace_back(view_tensor);
   }
 
-  op->set_outputs(outputs);
   MS_LOG(DEBUG) << "Cell BackwardHook call end";
+  return outputs;
 }
 }  // namespace mindspore::kernel::pyboost

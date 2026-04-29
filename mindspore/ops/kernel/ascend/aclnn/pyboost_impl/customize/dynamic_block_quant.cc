@@ -15,26 +15,21 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dynamic_block_quant.h"
-
-#include <cstdint>
-#include <memory>
-#include <vector>
-#include <tuple>
 #include <string>
-
-#include "include/utils/utils.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "kernel/ascend/acl_ir/acl_convert.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void DynamicBlockQuantAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                      const FP32ImmPtr &min_scale, const StringImmPtr &round_mode,
-                                      const Int64ImmPtr &dst_type, const Int64ImmPtr &row_block_size,
-                                      const Int64ImmPtr &col_block_size) {
-  OpRunner::InferOpOutput(op, x, min_scale, round_mode, dst_type, row_block_size, col_block_size);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> DynamicBlockQuantAscendCustomize(
+  const tensor::TensorPtr &x, const FP32ImmPtr &min_scale, const StringImmPtr &round_mode, const Int64ImmPtr &dst_type,
+  const Int64ImmPtr &row_block_size, const Int64ImmPtr &col_block_size) {
+  static auto prim = std::make_shared<Primitive>("DynamicBlockQuant");
+  auto outputs = InferOutput<2>(prim, x, min_scale, round_mode, dst_type, row_block_size, col_block_size);
+
   float min_scale_imm = GetValue<float>(min_scale);
   std::string round_mode_imm = GetValue<std::string>(round_mode);
   int64_t ms_dst_type_imm = GetValue<int64_t>(dst_type);
@@ -42,22 +37,14 @@ void DynamicBlockQuantAscendCustomize(const std::shared_ptr<OpRunner> &op, const
   int64_t row_block_size_imm = GetValue<int64_t>(row_block_size);
   int64_t col_block_size_imm = GetValue<int64_t>(col_block_size);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(x);
+  TensorAllocate(outputs);
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x, min_scale_imm, round_mode_imm, acl_dst_type_imm, row_block_size_imm, col_block_size_imm]() {
-      MS_LOG(DEBUG) << "Run device task DynamicBlockQuant start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, x);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnDynamicBlockQuant, device_context, op->stream_id(), x, min_scale_imm, round_mode_imm,
-                   acl_dst_type_imm, row_block_size_imm, col_block_size_imm, outputs[kIndex0], outputs[kIndex1]);
-      MS_LOG(DEBUG) << "Run device task DynamicBlockQuant end";
-    }));
+  const auto &y = std::get<0>(outputs);
+  const auto &scale = std::get<1>(outputs);
+  DISPATCH_ACLNN(aclnnDynamicBlockQuant, x, min_scale_imm, round_mode_imm, acl_dst_type_imm, row_block_size_imm,
+                 col_block_size_imm, y, scale);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

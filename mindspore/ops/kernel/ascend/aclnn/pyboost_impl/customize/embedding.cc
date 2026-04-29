@@ -15,20 +15,22 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/embedding.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/pyboost/auto_generate/copy.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void InplaceEmbeddingRenormCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input, const TensorPtr &weight,
+void InplaceEmbeddingRenormCall(const TensorPtr &input, const TensorPtr &weight,
                                 const std::optional<FP32ImmPtr> &max_norm, const FP32ImmPtr &norm_type) {
   if (!max_norm.has_value()) {
     return;
@@ -40,48 +42,29 @@ void InplaceEmbeddingRenormCall(const std::shared_ptr<OpRunner> &op, const Tenso
   copy_input = copy_op->Call(input);
   copy_input = view(copy_input, {-1});
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), copy_input, weight);
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, copy_input, weight, max_norm, norm_type]() {
-      MS_LOG(DEBUG) << "Run device task EmbeddingRenorm start";
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, copy_input, weight);
-      MS_EXCEPTION_IF_NULL(max_norm.value());
-      LAUNCH_ACLNN(aclnnEmbeddingRenorm, device_context, op->stream_id(), weight, copy_input,
-                   static_cast<double>(max_norm.value()->value()), static_cast<double>(norm_type->value()));
-      MS_LOG(DEBUG) << "Run device task EmbeddingRenorm end";
-    }));
+  TensorToDevice(copy_input, weight);
+  MS_EXCEPTION_IF_NULL(max_norm.value());
+  auto max_norm_value = static_cast<double>(max_norm.value()->value());
+  auto norm_type_value = static_cast<double>(norm_type->value());
+  DISPATCH_ACLNN(aclnnEmbeddingRenorm, weight, copy_input, max_norm_value, norm_type_value);
 }
 }  // namespace
 
-tensor::TensorPtr EmbeddingAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                           const TensorPtr &weight, const std::optional<Int64ImmPtr> &padding_idx,
+tensor::TensorPtr EmbeddingAscendCustomize(const TensorPtr &input, const TensorPtr &weight,
+                                           const std::optional<Int64ImmPtr> &padding_idx,
                                            const std::optional<FP32ImmPtr> &max_norm, const FP32ImmPtr &norm_type,
                                            const BoolImmPtr &scale_grad_by_freq) {
-  MS_EXCEPTION_IF_NULL(op);
+  auto output =
+    InferOutput<1>(prim::kPrimEmbedding, input, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq);
 
-  OpRunner::InferOpOutput(op, input, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq);
+  InplaceEmbeddingRenormCall(input, weight, max_norm, norm_type);
 
-  InplaceEmbeddingRenormCall(op, input, weight, max_norm, norm_type);
-
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, weight);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input, weight);
+  TensorAllocate(output);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, weight]() {
-    MS_LOG(DEBUG) << "Run device task Embedding start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input, weight);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnEmbedding, device_context, op->stream_id(), weight, input, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task Embedding end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnEmbedding, weight, input, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

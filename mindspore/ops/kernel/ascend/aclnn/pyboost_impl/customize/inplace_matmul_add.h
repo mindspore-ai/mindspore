@@ -16,17 +16,14 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_MATMUL_ADD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_MATMUL_ADD_H_
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceMatmulAddAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                                  const TensorPtr &weight, const TensorPtr &c);
+tensor::TensorPtr InplaceMatmulAddAscendCustomize(const tensor::TensorPtr &x, const tensor::TensorPtr &weight,
+                                                  const tensor::TensorPtr &c);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -15,11 +15,12 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/convolution_grad.h"
-#include <memory>
 #include <algorithm>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,12 +29,12 @@ namespace {
 void ExpandParamIfNeeded(std::vector<int64_t> *const param, size_t expect_dim);
 }  // namespace
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> ConvolutionGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &dout_tensor, const TensorPtr &input_tensor,
-  const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor, const ValueTuplePtr &stride,
-  const ValueTuplePtr &pad, const ValueTuplePtr &dilation, const BoolImmPtr &transposed,
-  const ValueTuplePtr &output_padding, const Int64ImmPtr &group, const ValueTuplePtr &output_mask) {
-  OpRunner::InferOpOutput(op, dout_tensor, input_tensor, weight_tensor, bias_tensor, stride, pad, dilation, transposed,
-                          output_padding, group, output_mask);
+  const TensorPtr &dout_tensor, const TensorPtr &input_tensor, const TensorPtr &weight_tensor,
+  const std::optional<TensorPtr> &bias_tensor, const ValueTuplePtr &stride, const ValueTuplePtr &pad,
+  const ValueTuplePtr &dilation, const BoolImmPtr &transposed, const ValueTuplePtr &output_padding,
+  const Int64ImmPtr &group, const ValueTuplePtr &output_mask) {
+  auto outputs = InferOutput<3>(prim::kPrimConvolutionGrad, dout_tensor, input_tensor, weight_tensor, bias_tensor,
+                                stride, pad, dilation, transposed, output_padding, group, output_mask);
   // Convert ValueTuple to std::vector
   const auto &weihgt_shape = weight_tensor->shape();
   auto spatial_len = weihgt_shape.size() - kIndex2;
@@ -53,33 +54,21 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> ConvolutionG
   auto transposed_imm = GetValue<bool>(transposed);
   auto group_imm = GetValue<int64_t>(group);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dout_tensor, input_tensor, weight_tensor,
-                                bias_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(dout_tensor, input_tensor, weight_tensor, bias_tensor);
+  TensorAllocate(outputs);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, dout_tensor, input_tensor, weight_tensor, bias_tensor, pad_vector, stride_vector, dilation_vector,
-     transposed_imm, output_padding_vector, group_imm, output_mask_u8_vec]() {
-      MS_LOG(DEBUG) << "Run device task ConvolutionGrad end";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), dout_tensor, input_tensor, weight_tensor, bias_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
-
-      const auto &dout_shape = dout_tensor->shape();
-      const size_t c_axis = 1;
-      // Only `NCHW` support in Ascend, so the index of `C` is 1.
-      std::vector<int64_t> bias_size = {dout_shape[c_axis]};
-      LAUNCH_ACLNN(aclnnConvolutionBackward, device_context, op->stream_id(), dout_tensor, input_tensor, weight_tensor,
-                   bias_size, stride_vector, pad_vector, dilation_vector, transposed_imm, output_padding_vector,
-                   group_imm, output_mask_u8_vec, GetCubeMathType(IsAllowConvHF32()), outputs[0], outputs[1],
-                   outputs[kIndex2]);
-      MS_LOG(DEBUG) << "Run device task ConvolutionGrad end";
-    }));
-  return std::make_tuple(op->output(0), op->output(1), op->output(kIndex2));
+  const auto &dout_shape = dout_tensor->shape();
+  const size_t c_axis = 1;
+  // Only `NCHW` support in Ascend, so the index of `C` is 1.
+  std::vector<int64_t> bias_size = {dout_shape[c_axis]};
+  const auto &dx = std::get<0>(outputs);
+  const auto &dw = std::get<1>(outputs);
+  const auto &dbias = std::get<2>(outputs);
+  DISPATCH_ACLNN(aclnnConvolutionBackward, dout_tensor, input_tensor, weight_tensor, bias_size, stride_vector,
+                 pad_vector, dilation_vector, transposed_imm, output_padding_vector, group_imm, output_mask_u8_vec,
+                 GetCubeMathType(IsAllowConvHF32()), dx, dw, dbias);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

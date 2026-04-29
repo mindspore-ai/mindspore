@@ -23,7 +23,8 @@
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
@@ -39,24 +40,25 @@ void CheckGroupTypeValue(const Int64ImmPtr &group_type_ptr, const std::string &o
 }
 }  // namespace
 
-void GmmAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &x_tensor_list,
-                        const ValueTuplePtr &weight_tensor_list, const std::optional<ValueTuplePtr> &bias_tensor_list,
-                        const std::optional<ValueTuplePtr> &group_list, const Int64ImmPtr &group_type,
-                        const Int64ImmPtr &group_list_type) {
+std::vector<tensor::TensorPtr> GmmAscendCustomize(const ValueTuplePtr &x_tensor_list,
+                                                  const ValueTuplePtr &weight_tensor_list,
+                                                  const std::optional<ValueTuplePtr> &bias_tensor_list,
+                                                  const std::optional<ValueTuplePtr> &group_list,
+                                                  const Int64ImmPtr &group_type, const Int64ImmPtr &group_list_type) {
   MS_LOG(DEBUG) << "GMM Func Op launch start.";
   CheckGroupTypeValue(group_type, "Gmm");
   static const auto split_item = std::make_shared<Int64Imm>(3);
   auto out = grouped_matmul_v2(x_tensor_list, weight_tensor_list, bias_tensor_list, std::nullopt, std::nullopt,
                                std::nullopt, std::nullopt, group_list, split_item, group_type);
-
-  op->set_outputs(out);
   MS_LOG(DEBUG) << "GMM Func Op launch end.";
+  return out;
 }
 
-void GmmV2AscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &x_tensor_list,
-                          const ValueTuplePtr &weight_tensor_list, const std::optional<ValueTuplePtr> &bias_tensor_list,
-                          const std::optional<TensorPtr> &group_list, const Int64ImmPtr &group_type,
-                          const Int64ImmPtr &group_list_type) {
+std::vector<tensor::TensorPtr> GmmV2AscendCustomize(const ValueTuplePtr &x_tensor_list,
+                                                    const ValueTuplePtr &weight_tensor_list,
+                                                    const std::optional<ValueTuplePtr> &bias_tensor_list,
+                                                    const std::optional<tensor::TensorPtr> &group_list,
+                                                    const Int64ImmPtr &group_type, const Int64ImmPtr &group_list_type) {
   MS_LOG(DEBUG) << "GMMV2 Func Op launch start.";
   CheckGroupTypeValue(group_type, "GmmV2");
   static const auto split_item = std::make_shared<Int64Imm>(3);
@@ -64,8 +66,8 @@ void GmmV2AscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTupleP
   auto out = grouped_matmul_v4(x_tensor_list, weight_tensor_list, bias_tensor_list, std::nullopt, std::nullopt,
                                std::nullopt, std::nullopt, std::nullopt, group_list, std::nullopt, std::nullopt,
                                std::nullopt, split_item, group_type, group_list_type, act_type, std::nullopt);
-  op->set_outputs(out);
   MS_LOG(DEBUG) << "GMMV2 Func Op launch end.";
+  return out;
 }
 }  // namespace pyboost
 }  // namespace kernel

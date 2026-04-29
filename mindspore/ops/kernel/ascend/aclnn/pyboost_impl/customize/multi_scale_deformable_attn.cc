@@ -15,19 +15,18 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/multi_scale_deformable_attn.h"
-#include <memory>
 #include <tuple>
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/cast.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MultiScaleDeformableAttnAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                          const TensorPtr &value_tensor, const TensorPtr &shape_tensor,
+tensor::TensorPtr MultiScaleDeformableAttnAscendCustomize(const TensorPtr &value_tensor, const TensorPtr &shape_tensor,
                                                           const TensorPtr &offset_tensor,
                                                           const TensorPtr &locations_tensor,
                                                           const TensorPtr &weight_tensor) {
@@ -65,32 +64,20 @@ tensor::TensorPtr MultiScaleDeformableAttnAscendCustomize(const std::shared_ptr<
     PyBoostUtils::CastTensor(locations_tensor, kNumberTypeFloat32, device::DeviceType::kAscend);
   auto weight_tensor_cp = PyBoostUtils::CastTensor(weight_tensor, kNumberTypeFloat32, device::DeviceType::kAscend);
 
-  OpRunner::InferOpOutput(op, value_tensor_cp, shape_tensor_cp, offset_tensor_cp, locations_tensor_cp,
-                          weight_tensor_cp);
+  auto output = InferOutput<1>(prim::kPrimMultiScaleDeformableAttn, value_tensor_cp, shape_tensor_cp, offset_tensor_cp,
+                               locations_tensor_cp, weight_tensor_cp);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), value_tensor_cp, shape_tensor_cp,
-                                offset_tensor_cp, locations_tensor_cp, weight_tensor_cp);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(value_tensor_cp, shape_tensor_cp, offset_tensor_cp, locations_tensor_cp, weight_tensor_cp);
+  TensorAllocate(output);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, value_tensor_cp, shape_tensor_cp, offset_tensor_cp, locations_tensor_cp, weight_tensor_cp]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, value_tensor_cp, shape_tensor_cp, offset_tensor_cp,
-                                   locations_tensor_cp, weight_tensor_cp);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnMultiScaleDeformableAttnFunction, device_context, op->stream_id(), value_tensor_cp,
-                   shape_tensor_cp, offset_tensor_cp, locations_tensor_cp, weight_tensor_cp, outputs[0]);
-    }));
+  DISPATCH_ACLNN(aclnnMultiScaleDeformableAttnFunction, value_tensor_cp, shape_tensor_cp, offset_tensor_cp,
+                 locations_tensor_cp, weight_tensor_cp, output);
 
   if (ori_type == kFloat32) {
-    return PyBoostUtils::CastTensor(op->output(0), kNumberTypeFloat32, device::DeviceType::kAscend);
+    return PyBoostUtils::CastTensor(output, kNumberTypeFloat32, device::DeviceType::kAscend);
   }
-  return PyBoostUtils::CastTensor(op->output(0), kNumberTypeFloat16, device::DeviceType::kAscend);
+  return PyBoostUtils::CastTensor(output, kNumberTypeFloat16, device::DeviceType::kAscend);
 }
 }  // namespace pyboost
 }  // namespace kernel

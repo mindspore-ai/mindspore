@@ -18,30 +18,17 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceFloorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
-  MS_LOG(DEBUG) << "Call InplaceFloor start";
-  OpRunner::InferOpOutput(op, input_tensor);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-
-    // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceFloor, device_context, op->stream_id(), input_tensor);
-    MS_LOG(DEBUG) << "Launch InplaceFloor end";
-  }));
-  return op->output(0);
+tensor::TensorPtr InplaceFloorAscendCustomize(const tensor::TensorPtr &input_tensor) {
+  TensorToDevice(input_tensor);
+  DISPATCH_ACLNN(aclnnInplaceFloor, input_tensor);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

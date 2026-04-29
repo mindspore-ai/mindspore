@@ -19,15 +19,20 @@
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/stream_guard.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> InnerUniqueAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                            const TensorPtr &input_tensor,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> InnerUniqueAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                                             const BoolImmPtr &sorted,
                                                                             const BoolImmPtr &return_inverse) {
+  auto op = std::make_shared<OpRunner>(prim::kPrimInnerUnique,
+                                       runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   MS_LOG(DEBUG) << "Call InnerUnique start";
   OpRunner::InferOpOutput(op, input_tensor, sorted, return_inverse);
 

@@ -17,19 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAPTIVE_MAX_POOL2D_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAPTIVE_MAX_POOL2D_GRAD_H_
 
-#include <vector>
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AdaptiveMaxPool2DGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &y_grad,
-                                                       const TensorPtr &x, const TensorPtr &argmax);
+tensor::TensorPtr AdaptiveMaxPool2DGradAscendCustomize(const tensor::TensorPtr &y_grad, const tensor::TensorPtr &x,
+                                                       const tensor::TensorPtr &argmax);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

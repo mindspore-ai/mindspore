@@ -16,50 +16,35 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/searchsorted.h"
 
-#include <memory>
 #include <tuple>
 #include <string>
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SearchSortedAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &sorted_sequence,
-                                              const TensorPtr &values, const std::optional<TensorPtr> &sorter,
-                                              const Int64ImmPtr &dtype, const BoolImmPtr &right) {
-  OpRunner::InferOpOutput(op, sorted_sequence, values, sorter, dtype, right);
+tensor::TensorPtr SearchSortedAscendCustomize(const TensorPtr &sorted_sequence, const TensorPtr &values,
+                                              const std::optional<TensorPtr> &sorter, const Int64ImmPtr &dtype,
+                                              const BoolImmPtr &right) {
+  auto output = InferOutput<1>(prim::kPrimSearchSorted, sorted_sequence, values, sorter, dtype, right);
   // Convert ValuePtr to c++ scalar
   auto in_dtype = GetValue<int64_t>(dtype);
   auto in_right = GetValue<bool>(right);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), sorted_sequence, values, sorter);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, sorted_sequence, values, sorter, in_dtype, in_right]() {
-      MS_LOG(DEBUG) << "Run device task SearchSorted start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, sorted_sequence, values, sorter);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      auto in_dtype_id = static_cast<TypeId>(in_dtype);
-      bool out_int32 = false;
-      if (in_dtype_id == kNumberTypeInt32) {
-        out_int32 = true;
-      }
-
-      LAUNCH_ACLNN(aclnnSearchSorted, device_context, op->stream_id(), sorted_sequence, values, out_int32, in_right,
-                   sorter, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task SearchSorted end";
-    }));
-  return op->output(0);
+  TensorToDevice(sorted_sequence, values, sorter);
+  TensorAllocate(output);
+  auto in_dtype_id = static_cast<TypeId>(in_dtype);
+  bool out_int32 = false;
+  if (in_dtype_id == kNumberTypeInt32) {
+    out_int32 = true;
+  }
+  DISPATCH_ACLNN(aclnnSearchSorted, sorted_sequence, values, out_int32, in_right, sorter, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

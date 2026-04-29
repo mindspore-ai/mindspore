@@ -17,20 +17,18 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_RING_ATTENTION_UPDATE_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_RING_ATTENTION_UPDATE_H_
 
-#include <vector>
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> RingAttentionUpdateAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &prev_attn_out, const TensorPtr &prev_softmax_max,
-  const TensorPtr &prev_softmax_sum, const TensorPtr &cur_attn_out, const TensorPtr &cur_softmax_max,
-  const TensorPtr &cur_softmax_sum, const std::optional<TensorPtr> &actual_seq_qlen, const Int64ImmPtr layout);
+  const tensor::TensorPtr &prev_attn_out, const tensor::TensorPtr &prev_softmax_max,
+  const tensor::TensorPtr &prev_softmax_sum, const tensor::TensorPtr &cur_attn_out,
+  const tensor::TensorPtr &cur_softmax_max, const tensor::TensorPtr &cur_softmax_sum,
+  const std::optional<tensor::TensorPtr> &actual_seq_qlen, const Int64ImmPtr layout);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -17,6 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/internal/functions/functions.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 ${ops_prim_inc}
 ${merge_op_header}
 

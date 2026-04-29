@@ -22,7 +22,8 @@ namespace kernel {
 namespace pyboost {
 void CellBackwardHookGPUCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors_list) {
   MS_LOG(DEBUG) << "Cell BackwardHook GPU start";
-  CellBackwardHookCustomize(op, tensors_list);
+  auto outputs = CellBackwardHookCustomize(tensors_list);
+  op->set_outputs(outputs);
   MS_LOG(DEBUG) << "Cell BackwardHook GPU end";
 }
 }  // namespace pyboost

@@ -29,8 +29,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AnyCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                               const std::optional<Int64ImmPtr> &dim, const std::optional<BoolImmPtr> &keepdim) {
+tensor::TensorPtr AnyCustomize(const TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &dim,
+                               const std::optional<BoolImmPtr> &keepdim) {
   ValueTuplePtr axis{nullptr};
   if (dim.has_value()) {
     axis = std::make_shared<ValueTuple>(std::vector<ValuePtr>{dim.value()});
@@ -42,9 +42,7 @@ tensor::TensorPtr AnyCustomize(const std::shared_ptr<OpRunner> &op, const Tensor
   static const auto static_false = std::make_shared<BoolImm>(false);
   auto keep_dims = keepdim.value_or(static_false);
 
-  auto out = reduce_any(input_tensor, axis, keep_dims);
-  op->set_outputs({out});
-  return out;
+  return reduce_any(input_tensor, axis, keep_dims);
 }
 }  // namespace pyboost
 }  // namespace kernel

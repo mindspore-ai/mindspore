@@ -15,16 +15,16 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/matmul_reduce_scatter.h"
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,16 +38,17 @@ std::vector<int64_t> GetTransposePerm(const TensorPtr &tensor) {
 }
 }  // namespace matmul_reduce_scatter_in
 
-tensor::TensorPtr MatmulReduceScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                     const TensorPtr &x2, const StringImmPtr &group,
-                                                     const Int64ImmPtr &world_size, const Int64ImmPtr &reduction,
-                                                     const std::optional<TensorPtr> &bias, const Int64ImmPtr &comm_turn,
-                                                     const BoolImmPtr &trans_input, const BoolImmPtr &trans_x2) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
+tensor::TensorPtr MatmulReduceScatterAscendCustomize(const TensorPtr &input, const TensorPtr &x2,
+                                                     const StringImmPtr &group, const Int64ImmPtr &world_size,
+                                                     const Int64ImmPtr &reduction, const std::optional<TensorPtr> &bias,
+                                                     const Int64ImmPtr &comm_turn, const BoolImmPtr &trans_input,
+                                                     const BoolImmPtr &trans_x2) {
+  MS_LOG(DEBUG) << "MatmulReduceScatter call start";
 
-  OpRunner::InferOpOutput(op, input, x2, group, world_size, reduction, bias, comm_turn, trans_input, trans_x2);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, x2, bias);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  auto output = InferOutput<1>(prim::kPrimMatmulReduceScatter, input, x2, group, world_size, reduction, bias, comm_turn,
+                               trans_input, trans_x2);
+  TensorToDevice(input, x2, bias);
+  TensorAllocate(output);
 
   auto group_imm = GetValue<std::string>(group);
   auto world_size_imm = GetValue<int64_t>(world_size);
@@ -57,11 +58,11 @@ tensor::TensorPtr MatmulReduceScatterAscendCustomize(const std::shared_ptr<OpRun
   auto trans_x2_imm = GetValue<bool>(trans_x2);
 
   auto hccl_inner_comm_name_imm = mindspore::device::ascend::OpApiUtil::GetCommName(group_imm);
-  mindspore::device::ascend::OpApiUtil::CheckWorldSize(group_imm, world_size_imm, op->primitive()->name());
+  mindspore::device::ascend::OpApiUtil::CheckWorldSize(group_imm, world_size_imm, "MatmulReduceScatter");
   std::unordered_map<Reduction, std::string> reduction_map = {{Reduction::REDUCTION_SUM, "sum"}};
   auto iter = reduction_map.find(reduction_imm);
   if (iter == reduction_map.end()) {
-    MS_LOG(EXCEPTION) << op->primitive()->name() << ": the value of reduce_op is invalid.";
+    MS_LOG(EXCEPTION) << "MatmulReduceScatter: the value of reduce_op is invalid.";
   }
   auto reduce_op_imm = iter->second;
   TensorPtr input_ = input;
@@ -75,24 +76,15 @@ tensor::TensorPtr MatmulReduceScatterAscendCustomize(const std::shared_ptr<OpRun
     x2_ = transpose(x2, matmul_reduce_scatter_in::GetTransposePerm(x2));
   }
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_, x2_, hccl_inner_comm_name_imm, reduce_op_imm, bias, comm_turn_imm]() {
-      MS_LOG(DEBUG) << op->primitive()->name() << " run device task start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      PyBoostUtils::MallocOpInputs(device_context, input_, x2_, bias);
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      constexpr int64_t stream_mode = 1;
-      if (bias.has_value()) {
-        LAUNCH_ACLNN(aclnnMatmulReduceScatter, device_context, op->stream_id(), input_, x2_, bias,
-                     hccl_inner_comm_name_imm, reduce_op_imm, comm_turn_imm, stream_mode, outputs[0]);
-      } else {
-        LAUNCH_ACLNN(aclnnMatmulReduceScatter, device_context, op->stream_id(), input_, x2_, nullptr,
-                     hccl_inner_comm_name_imm, reduce_op_imm, comm_turn_imm, stream_mode, outputs[0]);
-      }
-      MS_LOG(DEBUG) << op->primitive()->name() << " run device task end";
-    }));
-  return op->output(0);
+  constexpr int64_t stream_mode = 1;
+  if (bias.has_value()) {
+    DISPATCH_ACLNN(aclnnMatmulReduceScatter, input_, x2_, bias, hccl_inner_comm_name_imm, reduce_op_imm, comm_turn_imm,
+                   stream_mode, output);
+  } else {
+    DISPATCH_ACLNN(aclnnMatmulReduceScatter, input_, x2_, nullptr, hccl_inner_comm_name_imm, reduce_op_imm,
+                   comm_turn_imm, stream_mode, output);
+  }
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

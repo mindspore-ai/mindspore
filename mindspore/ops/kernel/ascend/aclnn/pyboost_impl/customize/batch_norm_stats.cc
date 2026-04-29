@@ -16,47 +16,34 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/batch_norm_stats.h"
 #include <tuple>
-#include <string>
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> BatchNormStatsAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                               const TensorPtr &input_tensor,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> BatchNormStatsAscendCustomize(const TensorPtr &input_tensor,
                                                                                const FP32ImmPtr &eps) {
-  std::string op_name = op->primitive()->name();
-  MS_LOG(DEBUG) << op_name << " call start";
-  OpRunner::InferOpOutput(op, input_tensor, eps);
+  MS_LOG(DEBUG) << "BatchNormStats call start";
+  auto outputs = InferOutput<2>(prim::kPrimBatchNormStats, input_tensor, eps);
+  auto [output0, output1] = outputs;
   // ValueTuple to std::vector
 
   // Convert ValuePtr to c++ scalar
   // Convert ValuePtr to c++ scalar
   auto eps_imm = GetValue<float>(eps);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
+  TensorToDevice(input_tensor);
 
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorAllocate(outputs);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, eps_imm]() {
-    std::string op_name = op->primitive()->name();
-    MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    double eps_imm_d = static_cast<double>(eps_imm);
-    LAUNCH_ACLNN(aclnnBatchNormStats, device_context, op->stream_id(), input_tensor, eps_imm_d, outputs[0], outputs[1]);
-    MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-  }));
-  return std::make_tuple(op->output(0), op->output(1));
+  double eps_imm_d = static_cast<double>(eps_imm);
+  DISPATCH_ACLNN(aclnnBatchNormStats, input_tensor, eps_imm_d, output0, output1);
+  return std::make_tuple(output0, output1);
 }
 }  // namespace pyboost
 }  // namespace kernel

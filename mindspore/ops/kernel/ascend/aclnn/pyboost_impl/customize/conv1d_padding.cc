@@ -19,7 +19,8 @@
 #include <algorithm>
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
@@ -71,12 +72,11 @@ bool Conv1DGetSymmetricPadding(std::vector<int64_t> &padding_l, std::vector<int6
 }
 }  // namespace
 
-tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                               const TensorPtr &weight_tensor,
-                                               const std::optional<TensorPtr> &bias_tensor, const ValueTuplePtr &stride,
-                                               const Int64ImmPtr &padding_enum, const ValueTuplePtr &dilation,
-                                               const Int64ImmPtr &group) {
-  OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding_enum, dilation, group);
+tensor::TensorPtr Conv1DPaddingAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                               const tensor::TensorPtr &weight_tensor,
+                                               const std::optional<tensor::TensorPtr> &bias_tensor,
+                                               const ValueTuplePtr &stride, const Int64ImmPtr &padding_enum,
+                                               const ValueTuplePtr &dilation, const Int64ImmPtr &group) {
   std::vector<int64_t> stride_vector = ConvertValueTupleToVector<int64_t>(stride);
   std::vector<int64_t> dilation_vector = ConvertValueTupleToVector<int64_t>(dilation);
   // Convert ValuePtr to c++ scalar
@@ -148,7 +148,6 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
   if (is_batchify) {
     auto output_imm = convolution(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
                                   transposed_imm_ptr, output_padding_vector_1d_imm_ptr, group);
-    op->set_outputs({output_imm});
     return output_imm;
   } else {
     auto output_imm = convolution(input_tensor_new, weight_tensor, bias_tensor, stride, pad_ptr, dilation,
@@ -159,7 +158,6 @@ tensor::TensorPtr Conv1DPaddingAscendCustomize(const std::shared_ptr<OpRunner> &
       squeeze_output_shape.emplace_back(output_imm_shape[i]);
     }
     auto squeeze_output_tensor = reshape(output_imm, squeeze_output_shape);
-    op->set_outputs({squeeze_output_tensor});
     return squeeze_output_tensor;
   }
 }

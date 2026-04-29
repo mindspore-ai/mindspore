@@ -17,24 +17,20 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_QUANT_MATMUL_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_QUANT_MATMUL_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void QuantMatmulAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1, const TensorPtr &x2,
-                                const TensorPtr &scale, const std::optional<TensorPtr> &offset,
-                                const std::optional<TensorPtr> &pertoken_scale, const std::optional<TensorPtr> &bias,
-                                const std::optional<Int64ImmPtr> &output_dtype,
-                                const std::optional<Int64ImmPtr> &x1_dtype, const std::optional<Int64ImmPtr> &x2_dtype,
-                                const std::optional<Int64ImmPtr> &pertoken_scale_dtype,
-                                const std::optional<Int64ImmPtr> &scale_dtype,
-                                const std::optional<ValueTuplePtr> &group_sizes);
+tensor::TensorPtr QuantMatmulAscendCustomize(
+  const tensor::TensorPtr &x1, const tensor::TensorPtr &x2, const tensor::TensorPtr &scale,
+  const std::optional<tensor::TensorPtr> &offset, const std::optional<tensor::TensorPtr> &pertoken_scale,
+  const std::optional<tensor::TensorPtr> &bias, const std::optional<Int64ImmPtr> &output_dtype,
+  const std::optional<Int64ImmPtr> &x1_dtype, const std::optional<Int64ImmPtr> &x2_dtype,
+  const std::optional<Int64ImmPtr> &pertoken_scale_dtype, const std::optional<Int64ImmPtr> &scale_dtype,
+  const std::optional<ValueTuplePtr> &group_sizes);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

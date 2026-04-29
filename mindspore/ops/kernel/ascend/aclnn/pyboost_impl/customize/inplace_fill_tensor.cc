@@ -18,7 +18,8 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
@@ -26,37 +27,21 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceFillTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                   const TensorPtr &value) {
+tensor::TensorPtr InplaceFillTensorAscendCustomize(const TensorPtr &input, const TensorPtr &value) {
   // No need to convert input
   bool is_host_tensor = value->device_address() == nullptr && value->isa<Tensor>();
   if (!is_host_tensor) {
-    PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), value);
+    TensorToDevice(value);
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  op->set_outputs({input});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, value, is_host_tensor]() {
-    auto device_context = op->device_context();
-    if (is_host_tensor) {
-      MS_LOG(INFO) << "For " << op->primitive()->name() << ", Input [value] is a host tensor, FillScalar will be used.";
-      auto value_scalar = CreateValueFromTensor(value->cast<TensorPtr>())->cast<ScalarPtr>();
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpInputs(device_context, input);
-      MS_LOG(DEBUG) << "Call FillScalar start";
-      LAUNCH_ACLNN(aclnnInplaceFillScalar, device_context, op->stream_id(), input, value_scalar);
-      MS_LOG(DEBUG) << "Launch FillScalar end";
-      return;
-    }
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input, value);
-
-    // Inplace output need be front
-    MS_LOG(DEBUG) << "Call FillTensor start";
-    LAUNCH_ACLNN(aclnnInplaceFillTensor, device_context, op->stream_id(), input, value);
-    MS_LOG(DEBUG) << "Launch FillTensor end";
-  }));
-  return op->output(0);
+  TensorToDevice(input);
+  if (is_host_tensor) {
+    MS_LOG(INFO) << "For InplaceFillTensor, Input [value] is a host tensor, FillScalar will be used.";
+    auto value_scalar = CreateValueFromTensor(value->cast<TensorPtr>())->cast<ScalarPtr>();
+    DISPATCH_ACLNN(aclnnInplaceFillScalar, input, value_scalar);
+  } else {
+    DISPATCH_ACLNN(aclnnInplaceFillTensor, input, value);
+  }
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

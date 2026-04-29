@@ -15,22 +15,21 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/index_fill_tensor.h"
-#include <memory>
 #include <string>
 
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr IndexFillTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                 const Int64ImmPtr &dim, const TensorPtr &index,
+tensor::TensorPtr IndexFillTensorAscendCustomize(const TensorPtr &input, const Int64ImmPtr &dim, const TensorPtr &index,
                                                  const TensorPtr &value) {
-  OpRunner::InferOpOutput(op, input, dim, index, value);
+  auto output = InferOutput<1>(prim::kPrimIndexFillTensor, input, dim, index, value);
   auto value_scalar = CreateValueFromTensor(value->cast<TensorPtr>())->cast<ScalarPtr>();
   auto dim_imm = GetValue<int64_t>(dim);
   std::vector<int64_t> index_vector;
@@ -65,31 +64,15 @@ tensor::TensorPtr IndexFillTensorAscendCustomize(const std::shared_ptr<OpRunner>
   } else {
     MS_LOG(EXCEPTION) << "Unsupported data type for index conversion";
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input, dim_imm, index_vector, value_scalar]() {
-      MS_LOG(DEBUG) << "Run device task "
-                    << " end";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      if (index_vector.empty() && input->DataSize() == 0) {
-        MS_LOG(DEBUG) << "aclnnIndexFillTensor throws 'CopyNpuToNpuOp' error when 'self' and 'index' are empty tensors,"
-                      << "because we allocated NPU memory for empty 'self' tensor. So we skip launching in this case.";
-      } else {
-        MS_LOG(DEBUG) << "Run IndexFillScalar device task start";
-        LAUNCH_ACLNN(aclnnIndexFillTensor, device_context, op->stream_id(), input, dim_imm, index_vector, value_scalar,
-                     outputs[0]);
-        MS_LOG(DEBUG) << "Run IndexFillScalardevice task end";
-      }
-    }));
-  return op->output(0);
+  TensorToDevice(input);
+  TensorAllocate(output);
+  if (index_vector.empty() && input->DataSize() == 0) {
+    MS_LOG(DEBUG) << "aclnnIndexFillTensor throws 'CopyNpuToNpuOp' error when 'self' and 'index' are empty tensors,"
+                  << "because we allocated NPU memory for empty 'self' tensor. So we skip launching in this case.";
+  } else {
+    DISPATCH_ACLNN(aclnnIndexFillTensor, input, dim_imm, index_vector, value_scalar, output);
+  }
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

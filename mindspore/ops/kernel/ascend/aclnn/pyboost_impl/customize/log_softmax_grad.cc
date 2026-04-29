@@ -16,34 +16,25 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/log_softmax_grad.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr LogSoftmaxGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor,
-                                                const TensorPtr &grad_tensor, const Int64ImmPtr &axis) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
-  OpRunner::InferOpOutput(op, logits_tensor, grad_tensor, axis);
+tensor::TensorPtr LogSoftmaxGradAscendCustomize(const TensorPtr &logits_tensor, const TensorPtr &grad_tensor,
+                                                const Int64ImmPtr &axis) {
+  MS_LOG(DEBUG) << "LogSoftmaxGrad call start";
+  auto output = InferOutput<1>(prim::kPrimLogSoftmaxGrad, logits_tensor, grad_tensor, axis);
   auto axis_imm = GetValue<int64_t>(axis);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), grad_tensor, logits_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, grad_tensor, logits_tensor, axis_imm]() {
-    auto device_context = op->device_context();
-
-    PyBoostUtils::MallocOpInputs(device_context, grad_tensor, logits_tensor);
-    PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnLogSoftmaxBackward, device_context, op->stream_id(), grad_tensor, logits_tensor, axis_imm,
-                 op->output(0));
-    MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-  }));
-  return op->output(0);
+  TensorToDevice(grad_tensor, logits_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnLogSoftmaxBackward, grad_tensor, logits_tensor, axis_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -16,34 +16,25 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/masked_select_grad.h"
 
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr MaskedSelectGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                  const TensorPtr &mask_tensor, const TensorPtr &grad_tensor) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
-  OpRunner::InferOpOutput(op, input_tensor, mask_tensor, grad_tensor);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mask_tensor, grad_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, mask_tensor, grad_tensor]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, mask_tensor, grad_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnInplaceZero, device_context, op->stream_id(), outputs[0]);
-      LAUNCH_ACLNN(aclnnInplaceMaskedScatter, device_context, op->stream_id(), outputs[0], mask_tensor, grad_tensor);
-      MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " end";
-    }));
-  return op->output(0);
+tensor::TensorPtr MaskedSelectGradAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &mask_tensor,
+                                                  const TensorPtr &grad_tensor) {
+  MS_LOG(DEBUG) << "MaskedSelectGrad call start";
+  auto output = InferOutput<1>(prim::kPrimMaskedSelectGrad, input_tensor, mask_tensor, grad_tensor);
+  TensorToDevice(input_tensor, mask_tensor, grad_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnInplaceZero, output);
+  DISPATCH_ACLNN(aclnnInplaceMaskedScatter, output, mask_tensor, grad_tensor);
+  MS_LOG(DEBUG) << "Run device task MaskedSelectGrad end";
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

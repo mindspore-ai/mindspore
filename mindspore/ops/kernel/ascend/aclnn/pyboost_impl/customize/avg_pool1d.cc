@@ -19,7 +19,8 @@
 #include <memory>
 
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/avg_pool2d.h"
@@ -31,10 +32,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AvgPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                           const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &stride,
-                                           const ValueTuplePtr &padding, const BoolImmPtr &ceil_mode,
-                                           const BoolImmPtr &count_include_pad) {
+tensor::TensorPtr AvgPool1DAscendCustomize(const tensor::TensorPtr &input, const ValueTuplePtr &kernel_size,
+                                           const std::optional<ValueTuplePtr> &stride, const ValueTuplePtr &padding,
+                                           const BoolImmPtr &ceil_mode, const BoolImmPtr &count_include_pad) {
   MS_LOG(DEBUG) << "AvgPool1DAscendCustomize start";
 
   auto input_shape = input->shape_c();
@@ -84,8 +84,6 @@ tensor::TensorPtr AvgPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   squeeze_shape.emplace_back(avg_pool2d_output_shape[input_dim]);
 
   auto output = reshape(avg_pool2d_output, squeeze_shape);
-  op->set_outputs({output});
-
   MS_LOG(DEBUG) << "AvgPool1DAscendCustomize end";
   return output;
 }

@@ -17,20 +17,19 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_FLASH_ATTENTION_SCORE_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_FLASH_ATTENTION_SCORE_H_
 
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr FlashAttentionScoreAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const std::optional<TensorPtr> &real_shift, const std::optional<TensorPtr> &drop_mask,
-  const std::optional<TensorPtr> &padding_mask, const std::optional<TensorPtr> &attn_mask,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
+FlashAttentionScoreAscendCustomize(
+  const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
+  const std::optional<tensor::TensorPtr> &real_shift, const std::optional<tensor::TensorPtr> &drop_mask,
+  const std::optional<tensor::TensorPtr> &padding_mask, const std::optional<tensor::TensorPtr> &attn_mask,
   const std::optional<ValueTuplePtr> &prefix, const std::optional<ValueTuplePtr> &actual_seq_qlen,
   const std::optional<ValueTuplePtr> &actual_seq_kvlen, const Int64ImmPtr head_num, const FP32ImmPtr keep_prob,
   const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens, const Int64ImmPtr next_tokens,

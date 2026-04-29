@@ -15,49 +15,25 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/softmax.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/device_put.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-void SoftmaxAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                       const tensor::TensorPtr &logits_tensor, const int64_t dim,
-                       const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  LAUNCH_ACLNN(aclnnSoftmax, device_context, op->stream_id(), logits_tensor, dim, outputs[0]);
-  MS_LOG(DEBUG) << "Launch end";
-}
-}  // namespace
-
-tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor,
-                                         const ValueTuplePtr &axis) {
-  OpRunner::InferOpOutput(op, logits_tensor, axis);
+tensor::TensorPtr SoftmaxAscendCustomize(const TensorPtr &logits_tensor, const ValueTuplePtr &axis) {
+  auto output = InferOutput<1>(prim::kPrimSoftmax, logits_tensor, axis);
   // ValueTuple to std::vector
   auto axis_vector = ConvertValueTupleToVector<int64_t>(axis);
   auto dim = axis_vector[0];
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), logits_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, logits_tensor, dim]() {
-    MS_LOG(DEBUG) << "Run device task Softmax start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, logits_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    // Call aclnnSoftmax
-    SoftmaxAscendCall(op, device_context, logits_tensor, dim, outputs);
-    MS_LOG(DEBUG) << "Run device task Softmax end";
-  }));
-  return op->output(0);
+  TensorToDevice(logits_tensor);
+  TensorAllocate(output);
+  DISPATCH_ACLNN(aclnnSoftmax, logits_tensor, dim, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel
