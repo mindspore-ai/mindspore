@@ -86,7 +86,7 @@ def test_pyboost_atb_rope():
     """
     ms.set_device("Ascend")
     ntokens = 4
-    head_size = 8
+    head_size = 16
     hiddenSizeQ = 16
     hiddenSizeK = 16
 
