@@ -179,7 +179,8 @@ def test_preserve_version_counter_data_unchanged():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          mem_peak=1024)
+          mem_peak=1024,
+          essential_mark='essential')
 def test_all():
     """
     Feature: _unsafe_preserve_version_counter

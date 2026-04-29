@@ -60,7 +60,7 @@ void RegPyNativeModule(py::module *m) {
       if (tensors_len != versions_len) {
         MS_LOG(EXCEPTION) << "tensors size(" << tensors_len << ") != versions size(" << versions_len << ")";
       }
-      runtime::Pipeline::Get().WaitFrontend();
+      runtime::Pipeline::Get().WaitFrontendAndBprop();
       for (size_t i = 0; i < tensors_len; ++i) {
         MS_EXCEPTION_IF_NULL(tensors[i]);
         tensors[i]->SetVersionValue(static_cast<uint32_t>(versions[i]));

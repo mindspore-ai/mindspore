@@ -275,7 +275,7 @@ def test_storage_copy_after_rng():
     assert b.item() == 6.0
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_storage_update_after_set_data():
     """
     Feature: untyped_storage invalidation
@@ -293,7 +293,7 @@ def test_storage_update_after_set_data():
     assert np.allclose(param.asnumpy(), [4., 5., 6.])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_storage_update_after_data_assign():
     """
     Feature: untyped_storage invalidation
@@ -311,7 +311,7 @@ def test_storage_update_after_data_assign():
     assert np.allclose(param.asnumpy(), [4., 5., 6.])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_storage_update_after_update_data():
     """
     Feature: untyped_storage invalidation
@@ -329,7 +329,7 @@ def test_storage_update_after_update_data():
     assert np.allclose(param.asnumpy(), [4., 5., 6.])
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_storage_update_multiple_reassigns():
     """
     Feature: untyped_storage invalidation
