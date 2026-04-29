@@ -140,14 +140,14 @@ def tensor_add__ms(op_input, other, alpha=1):
     """Wrapper for Tensor.add_ (in-place operation)."""
     #TODO:The is_inplace_op item of OpInfo still has problem. Should be fixed in the future.
     cloned_input = op_input.clone()
-    result = cloned_input.add_(other, alpha=alpha)
-    return result
+    cloned_input.add_(other, alpha=alpha)
+    return cloned_input
 
 def tensor_add__torch(op_input, other, alpha=1):
     """Wrapper for torch.Tensor.add_ (in-place operation)."""
     cloned_input_pt = op_input.clone()
-    result = cloned_input_pt.add_(other, alpha=alpha)
-    return result
+    cloned_input_pt.add_(other, alpha=alpha)
+    return cloned_input_pt
 
 def tensor_masked_scatter_ms(op_input, mask, source):
     return op_input.masked_scatter(mask, source)
@@ -447,11 +447,11 @@ def tensor_reciprocal_ms(op_input):
 def tensor_reciprocal_torch(op_input):
     return op_input.reciprocal()
 
-def tensor_unsqueeze_ms(op_input, *args, **kwargs):
-    return op_input.unsqueeze(*args, **kwargs)
+def tensor_unsqueeze_ms(op_input, dim):
+    return op_input.unsqueeze(dim)
 
-def tensor_unsqueeze_torch(op_input, *args, **kwargs):
-    return op_input.unsqueeze(*args, **kwargs)
+def tensor_unsqueeze_torch(op_input, dim):
+    return op_input.unsqueeze(dim)
 
 def tensor_topk_ms(op_input, *args, **kwargs):
     return op_input.topk(*args, **kwargs)
@@ -571,11 +571,11 @@ def tensor_logical_or_torch(op_input, args):
     return op_input.logical_or(args)
 
 # wrap tensor method for split
-def tensor_split_ms(op_input, args):
-    return op_input.split(args)
+def tensor_split_ms(op_input, args, dim):
+    return op_input.split(args, dim)
 
-def tensor_split_torch(op_input, args):
-    return op_input.split(args)
+def tensor_split_torch(op_input, args, dim):
+    return op_input.split(args, dim)
 
 # wrap tensor method for index_select
 def tensor_index_select_ms(op_input, axis, index):

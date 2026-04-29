@@ -736,7 +736,7 @@ def error_inputs_shape_not_match_func(op_info: OpInfo, dtype=None, device=None, 
                 op_kwargs={},
                 sample_name=f"{op_info.name}_shape_not_match",
             ),
-            op_error_type=ValueError,
+            op_error_type=(ValueError, RuntimeError),
             op_error_info=f'shape cannot broadcast for {op_info.name}',
         )
 

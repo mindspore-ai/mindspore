@@ -4519,17 +4519,18 @@ def basic_sample_inputs_tensor_split(op_info: OpInfo, dtype=None, device=None):
     Generate basic sample inputs for mint.split op.
     """
     S = SMALL_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
     make_input = functools.partial(make_tensor, device=device, dtype=dtype)
-
     cases = (
-        ((S, S, S), ([int(S / 3), S - int(S / 3) * 2, int(S / 3)])),
-        ((S, S, S), ([int(S / 2), S - int(S / 2) * 2, int(S / 2)])),
-        ((S, S, S), ([int(S / 2), S - int(S / 2) * 2, int(S / 2)]))
+        ((S, S, S), ([int(S / 3), S - int(S / 3) * 2, int(S / 3)]), -2),
+        ((S, M, S), ([int(S / 2), S - int(S / 2) * 2, int(S / 2)]), 0),
+        ((S, M, M), ([int(M / 2), M - int(M / 2) * 2, int(M / 2)]), 1)
     )
-    for shape, args in cases:
+    for shape, args, dim in cases:
         yield OpSampleInput(
             op_input=make_input(shape),
-            op_args=(args, ),
+            op_args=(args,),
+            op_kwargs={'dim': dim},
             sample_name=op_info.name,
         )
 
@@ -5394,3 +5395,375 @@ def extra_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
             for value in [None, 'floor', 'trunc']:
                 input.op_kwargs.update({'rounding_mode': value})
                 yield input
+
+
+def extra_sample_inputs_mint_matmul(op_info, dtype, device, is_rmatmul=False, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    extremal_cases = [
+     float('inf'),
+     float('-inf'),
+      ]
+    for extremal_val in extremal_cases:
+        lhs = make_arg((3,))
+        lhs[2] = extremal_val
+        rhs = make_arg((3,))
+        if not is_rmatmul:
+            yield OpSampleInput(lhs, op_args=(rhs,), sample_name=op_info.name)
+        else:
+            yield OpSampleInput(rhs, op_args=(lhs,), sample_name=op_info.name)
+
+    #discontiguous_tensor
+    yield OpSampleInput(
+        op_input=make_arg((5, 3), discontiguous=True),
+        op_args=(make_arg((3,), discontiguous=True),),
+        sample_name=f"{op_info.name}_discontiguous_tensor_inputs",
+        )
+
+def error_inputs_other_op_select(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = ((1.0, -3), (-3, 1.0))
+    for dim, index in cases:
+        yield OpErrorInput(
+            OpSampleInput(
+                op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+                op_args=(dim, index),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=TypeError,
+            op_error_info="dim or index error",
+        )
+
+
+def error_inputs_other_op_split(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = ((1.0, -1), (19, 1), (1 - 1, -1), ([1, 0, 0, 0], -1),)
+    for split_size, dim in cases:
+        yield OpErrorInput(
+            OpSampleInput(
+                op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+                op_kwargs={'split_size': split_size, 'dim': dim},
+                sample_name=op_info.name,
+            ),
+            op_error_type=TypeError,
+            op_error_info="split_size or dim error",
+        )
+
+
+def error_inputs_other_op_tile(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield OpErrorInput(
+        OpSampleInput(
+            op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+            op_args=(),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info="dims error",
+    )
+
+    yield OpErrorInput(
+        OpSampleInput(
+            op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+            op_args=(1.0,),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info="dims error",
+    )
+
+
+def error_inputs_other_op_topk(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield OpErrorInput(
+        OpSampleInput(
+            op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+            op_args=('1', 0, True, True),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info="k error",
+    )
+
+    yield OpErrorInput(
+        OpSampleInput(
+            op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+            op_args=(1, 0, True, 2),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info="sorted error",
+    )
+
+
+def error_inputs_other_op_tensor_transpose(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (('1', 1), (0, '0'), ([1], 1), (1, -3), (-3, 0))
+    for args1, args2 in cases:
+        yield OpErrorInput(
+            OpSampleInput(
+                op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+                op_args=(args1, args2),
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info="dim error",
+        )
+
+
+def error_inputs_other_op_tensor_unique(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = ((1.0, True, False, 0),
+             (True, 1.0, False, 0),
+             (True, False, 1.0, 0),
+             (True, True, False, 1.0),
+             )
+    for args1, args2, args3, args4 in cases:
+        yield OpErrorInput(
+            OpSampleInput(
+                op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+                op_args=(args1, args2, args3, args4),
+                sample_name=op_info.name,
+            ),
+            op_error_type=TypeError,
+            op_error_info="dim error",
+        )
+
+
+def error_inputs_other_op_tensor_unsqueeze(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (1.0, -4)
+    for args in cases:
+        yield OpErrorInput(
+            OpSampleInput(
+                op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+                op_args=(args,),
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info="dim error",
+        )
+
+
+def error_inputs_mint_matmul(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2,), dtype=ms.float32),
+            op_args=((1,),),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='other is not tensor',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=True,
+            op_args=make_tensor(shape=(2,), dtype=ms.float32),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='input is not tensor',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2,), dtype=ms.float64),
+            op_args=make_tensor(shape=(3,), dtype=ms.float32),
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info='input and other dtype must the same',
+    )
+
+
+def extra_sample_inputs_tensor_unique(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_x = functools.partial(make_tensor, device=device, dtype=dtype)
+    extremal_cases = [
+        (float('nan'), 'nan'),
+        (float('inf'), 'inf'),
+        (float('-inf'), 'neg_inf'),
+    ]
+
+    for extremal_val, name_suffix in extremal_cases:
+        t = make_x((5,))
+        t[2] = extremal_val
+        yield OpSampleInput(
+            op_input=t,
+            op_args=(True, True, True, 0),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}')
+
+
+def extra_sample_inputs_tensor_split(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(
+        make_tensor,
+        device=device,
+        dtype=dtype,
+    )
+
+    # Single element tensors
+    yield OpSampleInput(
+        op_input=make_func((1,)),
+        op_args=(1,),
+        op_kwargs={'dim': 0},
+        sample_name=f'{op_info.name}_{dtype}_single_element_1d_default'
+    )
+
+    # Duplicate values test - numerical stability
+    t = make_func((4, 4))
+    yield OpSampleInput(
+        op_input=t,
+        op_args=(1,),
+        op_kwargs={'dim': 0},
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_default'
+    )
+
+    # Extremal values test - only for floating point types
+    if dtype.is_floating_point:
+        # inf and nan is unsupported on Ascend910 devices.
+        skip_inf_nan = False
+        if device == 'ascend':
+            ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            if ascend_name == 'ascend910':
+                warnings.warn("Inf and NaN are unsupported on current Ascend devices.")
+                skip_inf_nan = True
+
+        # Test with different extremal values
+        extremal_cases = [
+            (0.0, 'zero'),
+            (1.0, 'one'),
+        ]
+
+        # Only add inf and nan cases if not on Ascend910
+        if not skip_inf_nan:
+            extremal_cases.extend([
+                (float('nan'), 'nan'),
+                (float('inf'), 'inf'),
+                (float('-inf'), 'neg_inf'),
+            ])
+
+        for extremal_val, name_suffix in extremal_cases:
+            t = make_func((5,))
+            t[2] = extremal_val
+            yield OpSampleInput(
+                op_input=t,
+                op_args=(1,),
+                op_kwargs={'dim': 0},
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+            )
+
+    # Large input tests - numerical stability
+    LARGE_1D_SIZE = 2 ** 8
+    yield OpSampleInput(
+        op_input=make_func((LARGE_1D_SIZE,)),
+        op_args=(1,),
+        op_kwargs={'dim': 0},
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
+    )
+
+
+def extra_sample_inputs_tile(op_info, dtype, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    if dtype.is_floating_point:
+        # inf and nan is unsupported on Ascend910 devices.
+        skip_inf_nan = False
+        if device == 'ascend':
+            ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            if ascend_name == 'ascend910':
+                warnings.warn("Inf and NaN are unsupported on current Ascend devices.")
+                skip_inf_nan = True
+
+        # Test with different extremal values
+        extremal_cases = [
+            (0.0, 'zero'),
+            (1.0, 'one'),
+        ]
+
+        # Only add inf and nan cases if not on Ascend910
+        if not skip_inf_nan:
+            extremal_cases.extend([
+                (float('nan'), 'nan'),
+                (float('inf'), 'inf'),
+                (float('-inf'), 'neg_inf'),
+            ])
+
+        for extremal_val, name_suffix in extremal_cases:
+            t = make_func((5,))
+            t[2] = extremal_val
+            yield OpSampleInput(
+                op_input=t,
+                op_args=((1, 1),),
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+            )
+
+
+def extra_sample_inputs_tensor_unsqueeze(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    extremal_cases = [
+        (0.0, 'zero'),
+        (1.0, 'one'),
+    ]
+    extremal_cases.extend([
+        (float('nan'), 'nan'),
+        (float('inf'), 'inf'),
+        (float('-inf'), 'neg_inf'),
+    ])
+
+    for extremal_val, name_suffix in extremal_cases:
+        t = make_func((5,))
+        t[2] = extremal_val
+        yield OpSampleInput(
+            op_input=t,
+            op_args=(0,),
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+        )
+
+    # Large input tests - numerical stability
+    LARGE_1D_SIZE = 2 ** 10
+    yield OpSampleInput(
+        op_input=make_func((LARGE_1D_SIZE,)),
+        op_args=(0,),
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
+    )
+
+
+def extra_sample_inputs_tensor_transpose(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    extremal_cases = [
+        (0.0, 'zero'),
+        (1.0, 'one'),
+    ]
+    extremal_cases.extend([
+        (float('nan'), 'nan'),
+        (float('inf'), 'inf'),
+        (float('-inf'), 'neg_inf'),
+    ])
+
+    for extremal_val, name_suffix in extremal_cases:
+        t = make_func((5,))
+        t[2] = extremal_val
+        yield OpSampleInput(
+            op_input=t,
+            op_args=(-1, 0),
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+        )
+
+    # Large input tests - numerical stability
+    LARGE_1D_SIZE = 2 ** 8
+    yield OpSampleInput(
+        op_input=make_func((LARGE_1D_SIZE,)),
+        op_args=(-1, 0),
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
+    )
+
+
+def extra_sample_inputs_mint_topk(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    extremal_cases = [
+     (float('nan'), 'nan'),
+     (float('inf'), 'inf'),
+     (float('-inf'), 'neg_inf'),
+    ]
+    if dtype is ms.float32:
+        for extremal_val, name_suffix in extremal_cases:
+            t = make_func((5,))
+            t[2] = extremal_val
+            yield OpSampleInput(
+                op_input=t,
+                op_args=(1, 0, True, True),
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+            )
