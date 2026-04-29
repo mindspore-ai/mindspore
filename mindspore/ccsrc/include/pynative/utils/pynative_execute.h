@@ -106,6 +106,11 @@ class PYNATIVE_EXPORT PyNativeExecutor : public std::enable_shared_from_this<PyN
   void EndEmptyGraph();
 
  private:
+  // Handle dispatch callback path (guard chain / tensor-level).
+  // Tracks whether the handler called the callback; if not, registers grad via PostDispatchGrad.
+  py::object RunOpDispatch(const py::args &args, const FrontendOpRunInfoPtr &op_run_info) const;
+  // Register gradient for dispatch paths that bypass normal execution.
+  void PostDispatchGrad(const FrontendOpRunInfoPtr &op_run_info, const py::object &result) const;
   PyNativeExecutor() = default;
   static std::shared_ptr<PyNativeExecutor> executor_;
   static std::mutex instance_lock_;

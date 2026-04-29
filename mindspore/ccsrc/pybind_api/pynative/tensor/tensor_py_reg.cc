@@ -662,6 +662,8 @@ extern int TensorPython_set_data(PyObject *self, PyObject *other, void *) {
   PyType<TensorPy> *other_obj = reinterpret_cast<PyType<TensorPy> *>(other);
   auto other_tensor = other_obj->value.GetTensor();
   self_tensor->shallow_copy_from(*other_tensor);
+  // Invalidate cached storage so untyped_storage() reflects the new data.
+  self_obj->value.SetStorage(py::none());
   return 0;
   HANDLE_MS_EXCEPTION_RET_FAIL_END
 }
@@ -683,6 +685,8 @@ extern PyObject *TensorPy_update_data(PyObject *self, PyObject *args) {
   PyType<TensorPy> *self_tensor = (PyType<TensorPy> *)self;
   PyType<TensorPy> *other_tensor = (PyType<TensorPy> *)(other);
   self_tensor->value.GetTensor()->shallow_copy_from(*other_tensor->value.GetTensor());
+  // Invalidate cached storage so untyped_storage() reflects the new data.
+  self_tensor->value.SetStorage(py::none());
 
   Py_INCREF(self);
   return self;
@@ -1186,6 +1190,8 @@ extern PyObject *TensorPython_assign_value(PyObject *self, PyObject *args) {
     PyType<TensorPy> *tensorpy = (PyType<TensorPy> *)(py_tensor);
     tensor->value.AssignValue(tensorpy->value);
   }
+  // Invalidate cached storage so untyped_storage() reflects the new data.
+  tensor->value.SetStorage(py::none());
   Py_INCREF(self);
   return self;
   HANDLE_MS_EXCEPTION_END

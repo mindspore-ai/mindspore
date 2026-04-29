@@ -23,6 +23,7 @@
 #include "include/pynative/forward/pyboost/fallback.h"
 #include "include/utils/pynative/dispatch/ms_dispatch.h"
 #include "include/utils/pytree.h"
+#include "include/utils/tensor_py.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -51,6 +52,21 @@ void RegPyNativeModule(py::module *m) {
   mindspore::pynative::autograd::RegFunctionBase(m);
   mindspore::pytree::RegPyTree(m);
   RegTensorDoc(m);
+  (void)m->def(
+    "_unsafe_set_version_counter",
+    [](const std::vector<tensor::TensorPtr> &tensors, const std::vector<int64_t> &versions) {
+      auto tensors_len = tensors.size();
+      auto versions_len = versions.size();
+      if (tensors_len != versions_len) {
+        MS_LOG(EXCEPTION) << "tensors size(" << tensors_len << ") != versions size(" << versions_len << ")";
+      }
+      runtime::Pipeline::Get().WaitFrontendAndBprop();
+      for (size_t i = 0; i < tensors_len; ++i) {
+        MS_EXCEPTION_IF_NULL(tensors[i]);
+        tensors[i]->SetVersionValue(static_cast<uint32_t>(versions[i]));
+      }
+    },
+    "Unsafe set version counter for tensors.");
   (void)m->def("disable_multi_thread", &mindspore::runtime::Pipeline::DisableMultiThreadAfterFork,
                "Disable multi thread");
   (void)m->def("frombuffer", &mindspore::tensor::TensorFrombuffer, py::arg("buffer"), py::arg("dtype"),

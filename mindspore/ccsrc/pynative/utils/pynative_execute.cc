@@ -16,7 +16,10 @@
 
 #include "include/pynative/utils/pynative_execute.h"
 #include "include/pynative/utils/pynative_utils.h"
+#include "pynative/backward/grad_utils.h"
 #include "pynative/backward/hook/function_py.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "include/utils/pynative/common_utils.h"
 #include "pynative/forward/pyboost/auto_grad_register.h"
 #include "include/utils/tensor_py.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -97,9 +100,10 @@ bool CheckHasFallback(const py::args &args) {
   }
   constexpr size_t kPyInputsIdx = 2;
   PyObject *inputs = args[kPyInputsIdx].ptr();
-  Py_ssize_t size = PyTuple_Check(inputs) ? PyTuple_Size(inputs) : 0;
+  bool is_list = PyList_Check(inputs);
+  Py_ssize_t size = is_list ? PyList_Size(inputs) : (PyTuple_Check(inputs) ? PyTuple_Size(inputs) : 0);
   for (Py_ssize_t i = 0; i < size; ++i) {
-    PyObject *item = PyTuple_GetItem(inputs, i);
+    PyObject *item = is_list ? PyList_GetItem(inputs, i) : PyTuple_GetItem(inputs, i);
     if (pynative::PyObjectHasFallbackAttr(item)) {
       return true;
     }
@@ -151,33 +155,96 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   forward_executor()->WaitForwardTask();
 
   if (ShouldDispatchCallback(op_run_info)) {
-    MS_LOG(DEBUG) << "Should dispatch to callback.";
-    auto op_call =
-      std::make_shared<OpCall>(op_run_info->base_op_run_info.op_name,
-                               [this](const py::args &args, const py::kwargs &kwargs) { return RunOpStub(args); });
-    auto [dispatch_callback, is_guard_callback] = GetDispatchCallbackFromInput(args);
-    if (is_guard_callback) {
-      // Use guard chain dispatch with GuardChainScope
-      GuardChainScope guard_chain_scope;
-      // Create a callback wrapper that calls RunOpStub
-      auto cpp_callback = [this](const py::args &inner_args) -> py::object { return RunOpStub(inner_args); };
-      return detail::InvokeGuardChain(cpp_callback, args, op_run_info->base_op_run_info.op_name);
-    } else if (!dispatch_callback.is_none()) {
-      // Tensor-level callback
-      return dispatch_callback(py::cast(op_call), args);
-    } else {
-      // No callback found, fall through to normal execution
-      MS_LOG(WARNING) << "ShouldDispatchCallback returned true but no callback found, falling through to normal path";
+    return RunOpDispatch(args, op_run_info);
+  }
+
+  SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
+  StoreAsyncStatus(op_run_info);
+  PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
+  return py::reinterpret_steal<py::object>(tensor::Wrap(op_run_info->real_out));
+}
+
+py::object PyNativeExecutor::RunOpDispatch(const py::args &args, const FrontendOpRunInfoPtr &op_run_info) const {
+  MS_LOG(DEBUG) << "Should dispatch to callback.";
+  auto [dispatch_callback, is_guard_callback] = GetDispatchCallbackFromInput(args);
+  bool callback_called = false;
+
+  py::object result;
+  if (is_guard_callback) {
+    GuardChainScope guard_chain_scope;
+    auto cpp_callback = [this, &callback_called](const py::args &inner_args) -> py::object {
+      callback_called = true;
+      return RunOpStub(inner_args);
+    };
+    result = detail::InvokeGuardChain(cpp_callback, args, op_run_info->base_op_run_info.op_name);
+  } else if (!dispatch_callback.is_none()) {
+    auto op_call = std::make_shared<OpCall>(op_run_info->base_op_run_info.op_name,
+                                            [this, &callback_called](const py::args &a, const py::kwargs &kw) {
+                                              callback_called = true;
+                                              return RunOpStub(a);
+                                            });
+    result = dispatch_callback(py::cast(op_call), args);
+  } else {
+    MS_LOG(WARNING) << "ShouldDispatchCallback returned true but no callback found, falling through to normal path";
+    SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
+    StoreAsyncStatus(op_run_info);
+    PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
+    return py::reinterpret_steal<py::object>(tensor::Wrap(op_run_info->real_out));
+  }
+
+  if (!callback_called) {
+    PostDispatchGrad(op_run_info, result);
+  }
+  return result;
+}
+
+void PyNativeExecutor::PostDispatchGrad(const FrontendOpRunInfoPtr &op_run_info, const py::object &result) const {
+  if (!op_run_info->requires_grad) {
+    return;
+  }
+
+  auto out_value = parse::data_converter::PyObjToValue(result);
+  op_run_info->op_grad_info->out_value = out_value;
+  op_run_info->real_out = out_value;
+
+  // Mark output tensor(s) with kOpOutput metadata so downstream ops see requires_grad()=true.
+  // This mirrors what the pyboost path does in ProcessSingleOutput for kernel-produced outputs.
+  // Without this, the async ForwardOpGradImpl sets grad_node on a fresh AutoGradMetaData, but
+  // downstream ops (e.g. SumExt via pyboost) may reference a different tensor instance that
+  // still lacks metadata, causing NeedGrad() to return false.
+  for (const auto &v : CommonUtils::FlattenTensorSeqInValue(out_value)) {
+    if (v->isa<tensor::Tensor>()) {
+      auto tensor = v->cast<tensor::TensorPtr>();
+      if (tensor->auto_grad_meta_data() == nullptr) {
+        tensor->set_auto_grad_meta_data(std::make_shared<autograd::AutoGradMetaData>(InputType::kOpOutput));
+      } else {
+        tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+      }
+    }
+  }
+
+  auto out_abs = CommonUtils::SetAbstractValueToAnyValue(out_value->ToAbstract());
+  op_run_info->op_grad_info->out_abs = out_abs;
+  op_run_info->base_op_run_info.abstract = out_abs;
+
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    if (op_run_info->op_grad_info->input_abs[i] == nullptr) {
+      op_run_info->op_grad_info->input_abs[i] =
+        CommonUtils::SetAbstractValueToAnyValue(op_run_info->op_grad_info->input_value[i]->ToAbstract());
+    }
+  }
+
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    const auto &input = op_run_info->op_grad_info->input_value[i];
+    if (input->isa<tensor::Tensor>()) {
+      op_run_info->op_grad_info->input_value_grad_type[i] =
+        AutoGradUtil::SetTensorGradInfo(input->cast<tensor::TensorPtr>());
     }
   }
 
   SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
-
   StoreAsyncStatus(op_run_info);
-
-  // RunOp sync
-  PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
-  return py::reinterpret_steal<py::object>(tensor::Wrap(op_run_info->real_out));
+  forward_executor()->ForwardOpGradImpl(op_run_info->op_grad_info, op_run_info->async_status);
 }
 
 py::object PyNativeExecutor::RunSliceOpStub(const std::vector<ValuePtr> &input_values,
