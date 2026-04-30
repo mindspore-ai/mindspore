@@ -79,9 +79,9 @@ def less_equal(x1, x2, dtype=None):
             output Tensor.
 
     Returns:
-       Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
-       scalars.
+        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
+        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
+        scalars.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -105,16 +105,16 @@ def less(x1, x2, dtype=None):
         and `extobj` are not supported.
 
     Args:
-        x1 (Tensor): input array.
+        x1 (Tensor): Input array.
         x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
             broadcastable to a common shape (which becomes the shape of the output).
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
     Returns:
-       Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
-       scalars.
+        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
+        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
+        scalars.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -634,9 +634,9 @@ def logical_or(x1, x2, dtype=None):
             output Tensor.
 
     Returns:
-       Tensor or scalar, logical OR operation of `x1` and `x2`. Typically of type
-       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
-       scalars.
+        Tensor or scalar, logical OR operation of `x1` and `x2`. Typically of type
+        bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+        scalars.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

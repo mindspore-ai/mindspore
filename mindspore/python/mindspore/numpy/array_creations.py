@@ -766,7 +766,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype.
             If `dtype` is None, infer the data type from other input arguments. Default: ``None`` .
         axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or stop is array-like.  By default, the samples will
+            only if start or stop is array-like. By default, the samples will
             be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
             Default: ``0`` .
 

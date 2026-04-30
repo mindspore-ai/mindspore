@@ -1248,10 +1248,10 @@ def log(x, dtype=None):
     ``log(exp(x)) = x``. The natural logarithm is logarithm in base e.
 
     Note:
-        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        - Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
+        - On GPU, the supported dtypes are np.float16, and np.float32.
+        - On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
 
     Args:
         x (Tensor): Input array.
@@ -2857,8 +2857,8 @@ def kron(a, b):
         Booleans are not supported.
 
     Args:
-        a (Union[int, float, list, tuple, Tensor]): input values.
-        b (Union[int, float, list, tuple, Tensor]): input values.
+        a (Union[int, float, list, tuple, Tensor]): Input values.
+        b (Union[int, float, list, tuple, Tensor]): Input values.
 
     Returns:
         Tensor.
