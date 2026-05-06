@@ -67,6 +67,7 @@ class CustomV2AclnnKernelMod : public AclnnKernelMod {
   bool CallGetWorkSpaceSize(const std::vector<std::vector<KernelTensor *>> &inputs,
                             const std::vector<std::vector<KernelTensor *>> &outputs, uint64_t *workspace_size_addr,
                             aclOpExecutor **executor_addr, void *get_workspace_size_func);
+  void ResetAndReserveConvertScalarBuffers(size_t reserve_count);
   std::vector<std::vector<void *>> GetTensorAddress(const std::vector<std::vector<KernelTensor *>> &inputs,
                                                     const std::vector<std::vector<KernelTensor *>> &outputs);
   void UpdateTensorForLaunch(const std::vector<std::vector<KernelTensor *>> &inputs,

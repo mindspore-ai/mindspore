@@ -202,15 +202,27 @@ std::vector<void *> CustomV2AclnnKernelMod::ConvertTypes(const std::vector<std::
   return convert_inputs;
 }
 
+void CustomV2AclnnKernelMod::ResetAndReserveConvertScalarBuffers(size_t reserve_count) {
+  inputs_bool_value_.clear();
+  inputs_float_value_.clear();
+  inputs_int_value_.clear();
+  inputs_double_value_.clear();
+  inputs_string_value_.clear();
+  inputs_type_value_.clear();
+
+  inputs_bool_value_.reserve(reserve_count);
+  inputs_float_value_.reserve(reserve_count);
+  inputs_int_value_.reserve(reserve_count);
+  inputs_double_value_.reserve(reserve_count);
+  inputs_string_value_.reserve(reserve_count);
+  inputs_type_value_.reserve(reserve_count);
+}
+
 bool CustomV2AclnnKernelMod::CallGetWorkSpaceSize(const std::vector<std::vector<KernelTensor *>> &inputs,
                                                   const std::vector<std::vector<KernelTensor *>> &outputs,
                                                   uint64_t *workspace_size_addr, aclOpExecutor **executor_addr,
                                                   void *get_workspace_size_func) {
-  inputs_bool_value_.reserve(inputs.size());
-  inputs_float_value_.reserve(inputs.size());
-  inputs_int_value_.reserve(inputs.size());
-  inputs_double_value_.reserve(inputs.size());
-  inputs_string_value_.reserve(inputs.size());
+  ResetAndReserveConvertScalarBuffers(inputs.size() + outputs.size());
 
   auto convert_inputs = ConvertTypes(inputs, 0);
   auto convert_outputs = ConvertTypes(outputs, inputs.size());
