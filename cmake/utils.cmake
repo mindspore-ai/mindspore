@@ -418,10 +418,15 @@ function(mindspore_add_pkg pkg_name)
                     set(${pkg_name}_CMAKE_LDFLAGS "-DCMAKE_SHARED_LINKER_FLAGS=${${pkg_name}_LDFLAGS}")
                 endif()
             endif()
+            set(${pkg_name}_CMAKE_POLICY_OPTION)
+            if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
+                set(${pkg_name}_CMAKE_POLICY_OPTION -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
+            endif()
             if(APPLE)
                 __exec_cmd(COMMAND ${CMAKE_COMMAND} -DCMAKE_CXX_COMPILER_ARG1=${CMAKE_CXX_COMPILER_ARG1}
                         -DCMAKE_C_COMPILER_ARG1=${CMAKE_C_COMPILER_ARG1} ${PKG_CMAKE_OPTION}
                         ${${pkg_name}_CMAKE_CFLAGS} ${${pkg_name}_CMAKE_CXXFLAGS} ${${pkg_name}_CMAKE_LDFLAGS}
+                        ${${pkg_name}_CMAKE_POLICY_OPTION}
                         -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                         WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
                 __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install --
@@ -430,6 +435,7 @@ function(mindspore_add_pkg pkg_name)
                 __exec_cmd(COMMAND ${CMAKE_COMMAND} -DCMAKE_CXX_COMPILER_ARG1=${CMAKE_CXX_COMPILER_ARG1}
                         -DCMAKE_C_COMPILER_ARG1=${CMAKE_C_COMPILER_ARG1} ${PKG_CMAKE_OPTION} -G ${CMAKE_GENERATOR}
                     ${${pkg_name}_CMAKE_CFLAGS} ${${pkg_name}_CMAKE_CXXFLAGS} ${${pkg_name}_CMAKE_LDFLAGS}
+                    ${${pkg_name}_CMAKE_POLICY_OPTION}
                     -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
                 if(MSVC)

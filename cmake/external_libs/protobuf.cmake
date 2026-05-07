@@ -44,6 +44,10 @@ else()
 endif()
 
 set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
+set(PROTOBUF_CMAKE_POLICY_OPTION)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
+    set(PROTOBUF_CMAKE_POLICY_OPTION -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
+endif()
 
 if(MSVC)
 mindspore_add_pkg(protobuf
@@ -54,6 +58,7 @@ mindspore_add_pkg(protobuf
         SHA256 ${SHA256}
         CMAKE_PATH cmake/
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+            ${PROTOBUF_CMAKE_POLICY_OPTION}
             -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
@@ -66,6 +71,7 @@ mindspore_add_pkg(protobuf
         SHA256 ${SHA256}
         CMAKE_PATH cmake/
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+            ${PROTOBUF_CMAKE_POLICY_OPTION}
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch
         PATCHES ${PROTOBUF_PATCH_ROOT}/protobuf.patch001)
