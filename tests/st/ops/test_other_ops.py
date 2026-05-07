@@ -145,7 +145,7 @@ def test_other_op_dynamic_backward(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard', mem_peak=2048.0)
+          card_mark='onecard', mem_peak=1024.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_error'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_error'][1])
 def test_other_op_error(mode, op_info):
@@ -162,7 +162,7 @@ def test_other_op_error(mode, op_info):
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
-          card_mark='onecard', mem_peak=2048.0)
+          card_mark='onecard', mem_peak=1024.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_error_kbk'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_error_kbk'][1])
 def test_other_op_error_kbk(mode, op_info):
