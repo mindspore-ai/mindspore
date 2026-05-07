@@ -19,14 +19,13 @@
 
 #include <tuple>
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LinalgQrAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &A_tensor, const Int64ImmPtr &mode);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> LinalgQrAscendCustomize(const tensor::TensorPtr &A_tensor,
+                                                                         const Int64ImmPtr &mode);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

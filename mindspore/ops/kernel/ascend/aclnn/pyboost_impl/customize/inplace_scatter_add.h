@@ -18,17 +18,14 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_SCATTER_ADD_H_
 
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceScatterAddAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                   const Int64ImmPtr &dim, const TensorPtr &index_tensor,
-                                                   const TensorPtr &src_tensor);
+tensor::TensorPtr InplaceScatterAddAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &dim,
+                                                   const tensor::TensorPtr &index_tensor,
+                                                   const tensor::TensorPtr &src_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

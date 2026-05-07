@@ -21,7 +21,8 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/auto_generate/convolution.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
@@ -43,22 +44,21 @@ bool ConvNDBatchify(const ShapeVector &input_shape, const int64_t num_spatial_di
 }
 }  // namespace
 
-tensor::TensorPtr ConvTranspose2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                 const TensorPtr &weight_tensor,
-                                                 const std::optional<TensorPtr> &bias_tensor,
+tensor::TensorPtr ConvTranspose2DAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                                 const tensor::TensorPtr &weight_tensor,
+                                                 const std::optional<tensor::TensorPtr> &bias_tensor,
                                                  const ValueTuplePtr &stride, const ValueTuplePtr &padding,
                                                  const ValueTuplePtr &output_padding, const Int64ImmPtr &groups,
                                                  const ValueTuplePtr &dilation) {
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   const auto &input_shape = input_tensor->shape();
-  auto is_batchify = ConvNDBatchify(input_shape, 2, op->primitive()->name());
+  auto is_batchify = ConvNDBatchify(input_shape, 2, "ConvTranspose2D");
 
   static BoolImmPtr transposed = std::make_shared<BoolImm>(true);
   auto convolution_op = CREATE_PYBOOST_OP(Convolution, device::DeviceType::kAscend);
   if (is_batchify) {
     auto output_convolution = convolution_op->Call(input_tensor, weight_tensor, bias_tensor, stride, padding, dilation,
                                                    transposed, output_padding, groups);
-    op->set_outputs(convolution_op->outputs());
     return output_convolution;
   } else {
     // unsqueeze dim 0
@@ -70,7 +70,6 @@ tensor::TensorPtr ConvTranspose2DAscendCustomize(const std::shared_ptr<OpRunner>
     // squeeze dim 0
     static std::vector<int64_t> squeeze_dims{dim};
     auto squeeze_output_tensor = squeeze(output_convolution, squeeze_dims);
-    op->set_outputs({squeeze_output_tensor});
     return squeeze_output_tensor;
   }
 }

@@ -18,15 +18,13 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_CUMSUM_EXT_H_
 
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr CumsumExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                           const Int64ImmPtr &dim, const std::optional<Int64ImmPtr> &dtype);
+tensor::TensorPtr CumsumExtAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &dim,
+                                           const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

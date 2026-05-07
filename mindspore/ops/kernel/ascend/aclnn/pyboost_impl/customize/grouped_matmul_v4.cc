@@ -20,8 +20,11 @@
 #include <functional>
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace kernel {
@@ -50,8 +53,8 @@ void UnifyWeightShape(const std::vector<TensorPtr> &ori_weights, std::vector<Ten
 }
 }  // namespace
 
-void GroupedMatmulV4AscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
+std::vector<tensor::TensorPtr> GroupedMatmulV4AscendCustomize(
+  const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
   const std::optional<ValueTuplePtr> &bias_tensor_list, const std::optional<ValueTuplePtr> &scale_tensor_list,
   const std::optional<ValueTuplePtr> &offset_tensor_list,
   const std::optional<ValueTuplePtr> &antiquant_scale_tensor_list,
@@ -62,12 +65,11 @@ void GroupedMatmulV4AscendCustomize(
   const std::optional<ValueTuplePtr> &activation_quant_offset_tensor_list, const Int64ImmPtr &split_item_imm,
   const Int64ImmPtr &group_type_imm, const Int64ImmPtr &group_list_type_imm, const Int64ImmPtr &act_type_imm,
   const std::optional<Int64ImmPtr> &output_dtype_imm) {
-  MS_LOG(DEBUG) << "Call GroupedMatmulV4 start";
-  OpRunner::InferOpOutput(op, x_tensor_list, weight_tensor_list, bias_tensor_list, scale_tensor_list,
-                          offset_tensor_list, antiquant_scale_tensor_list, antiquant_offset_tensor_list,
-                          pre_token_scale_tensor_list, group_list, activation_input_tensor_list,
-                          activation_quant_scale_tensor_list, activation_quant_offset_tensor_list, split_item_imm,
-                          group_type_imm, group_list_type_imm, act_type_imm, output_dtype_imm);
+  auto output = InferDynamicOutput(
+    prim::kPrimGroupedMatmulV4, x_tensor_list, weight_tensor_list, bias_tensor_list, scale_tensor_list,
+    offset_tensor_list, antiquant_scale_tensor_list, antiquant_offset_tensor_list, pre_token_scale_tensor_list,
+    group_list, activation_input_tensor_list, activation_quant_scale_tensor_list, activation_quant_offset_tensor_list,
+    split_item_imm, group_type_imm, group_list_type_imm, act_type_imm, output_dtype_imm);
 
   // Convert ValuePtr to c++ scalar
   std::vector<TensorPtr> x = ConvertValueTupleToVector<TensorPtr>(x_tensor_list);
@@ -88,37 +90,21 @@ void GroupedMatmulV4AscendCustomize(
   auto group_list_type = GetValue<int64_t>(group_list_type_imm);
   auto act_type = GetValue<int64_t>(act_type_imm);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x, weight, bias, scale, offset, antiquant_scale,
-                                antiquant_offset, pre_token_scale, group_list, activation_input, activation_quant_scale,
-                                activation_quant_offset);
+  TensorToDevice(x, weight, bias, scale, offset, antiquant_scale, antiquant_offset, pre_token_scale, group_list,
+                 activation_input, activation_quant_scale, activation_quant_offset);
 
   std::vector<TensorPtr> activation_feature_out;
   std::vector<TensorPtr> dyn_quant_scale_out;
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorMalloc(output);
 
   std::vector<TensorPtr> new_weights;
   UnifyWeightShape(weight, &new_weights);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x, new_weights, weight, bias, scale, offset, antiquant_scale, antiquant_offset, pre_token_scale, group_list,
-     activation_input, activation_quant_scale, activation_quant_offset, split_item, group_type, group_list_type,
-     act_type, activation_feature_out, dyn_quant_scale_out]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, x, weight, bias, scale, offset, antiquant_scale, antiquant_offset,
-                                   pre_token_scale, group_list, activation_input, activation_quant_scale,
-                                   activation_quant_offset);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnGroupedMatmulV4, device_context, op->stream_id(), x, new_weights, bias, scale, offset,
-                   antiquant_scale, antiquant_offset, pre_token_scale, group_list, activation_input,
-                   activation_quant_scale, activation_quant_offset, split_item, group_type, group_list_type, act_type,
-                   outputs, activation_feature_out, dyn_quant_scale_out);
-      MS_LOG(DEBUG) << "Launch GroupedMatmulV4 end";
-    }));
+  DISPATCH_ACLNN(aclnnGroupedMatmulV4, x, new_weights, bias, scale, offset, antiquant_scale, antiquant_offset,
+                 pre_token_scale, group_list, activation_input, activation_quant_scale, activation_quant_offset,
+                 split_item, group_type, group_list_type, act_type, output, activation_feature_out,
+                 dyn_quant_scale_out);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

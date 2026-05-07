@@ -31,7 +31,7 @@
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 
 namespace mindspore::compile {
 namespace {

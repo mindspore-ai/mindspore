@@ -20,16 +20,12 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AvgPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                           const ValueTuplePtr &kernel_size, const ValueTuplePtr &stride,
-                                           const ValueTuplePtr &padding, const BoolImmPtr &ceil_mode,
-                                           const BoolImmPtr &count_include_pad,
+tensor::TensorPtr AvgPool2DAscendCustomize(const tensor::TensorPtr &input, const ValueTuplePtr &kernel_size,
+                                           const ValueTuplePtr &stride, const ValueTuplePtr &padding,
+                                           const BoolImmPtr &ceil_mode, const BoolImmPtr &count_include_pad,
                                            const std::optional<Int64ImmPtr> &divisor_override);
 }  // namespace pyboost
 }  // namespace kernel

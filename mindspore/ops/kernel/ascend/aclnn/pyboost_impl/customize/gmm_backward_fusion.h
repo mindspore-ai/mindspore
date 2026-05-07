@@ -21,16 +21,14 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GmmBackwardFusionAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &grad_tenor_list,
-                                      const ValueTuplePtr &weight_tensor_list,
-                                      const std::optional<ValueTuplePtr> &group_list,
-                                      const Int64ImmPtr &group_list_type);
+std::vector<tensor::TensorPtr> GmmBackwardFusionAscendCustomize(const ValueTuplePtr &grad_tenor_list,
+                                                                const ValueTuplePtr &weight_tensor_list,
+                                                                const std::optional<ValueTuplePtr> &group_list,
+                                                                const Int64ImmPtr &group_list_type);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

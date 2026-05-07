@@ -16,31 +16,17 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_sigmoid.h"
 #include <memory>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceSigmoidAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
-  MS_LOG(DEBUG) << "Call InplaceSigmoid start";
+tensor::TensorPtr InplaceSigmoidAscendCustomize(const tensor::TensorPtr &input_tensor) {
+  TensorToDevice(input_tensor);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor]() {
-    MS_LOG(DEBUG) << "Run device task InplaceSigmoid start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-
-    LAUNCH_ACLNN(aclnnInplaceSigmoid, device_context, op->stream_id(), input_tensor);
-    MS_LOG(DEBUG) << "Run device task InplaceSigmoid end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceSigmoid, input_tensor);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

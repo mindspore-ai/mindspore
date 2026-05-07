@@ -23,7 +23,9 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr AnyExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                      const Int64ImmPtr &dim, const BoolImmPtr &keepdim) {
-  return AnyCustomize(op, input_tensor, dim, keepdim);
+  auto out = AnyCustomize(input_tensor, dim, keepdim);
+  op->set_outputs({out});
+  return out;
 }
 }  // namespace pyboost
 }  // namespace kernel

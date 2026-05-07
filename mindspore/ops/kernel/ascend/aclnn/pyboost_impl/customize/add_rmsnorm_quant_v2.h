@@ -16,19 +16,16 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADD_RMSNORM_QUANT_V2_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADD_RMSNORM_QUANT_V2_H_
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void AddRmsNormQuantAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                    const TensorPtr &x2_tensor, const TensorPtr &gamma_tensor,
-                                    const TensorPtr &scale_tensor, const TensorPtr &offset_tensor,
-                                    const FP32ImmPtr &epsilon);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AddRmsNormQuantAscendCustomize(
+  const tensor::TensorPtr &x1_tensor, const tensor::TensorPtr &x2_tensor, const tensor::TensorPtr &gamma_tensor,
+  const tensor::TensorPtr &scale_tensor, const tensor::TensorPtr &offset_tensor, const FP32ImmPtr &epsilon);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

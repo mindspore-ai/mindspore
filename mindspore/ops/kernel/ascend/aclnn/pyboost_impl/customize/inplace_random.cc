@@ -18,9 +18,8 @@
 
 #include <limits>
 
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "ops_utils/type_dispatch.h"
 
 namespace mindspore {
@@ -38,10 +37,9 @@ void GetTypeLimit(int64_t *limit) {
 }
 }  // namespace
 
-tensor::TensorPtr InplaceRandomAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &tensor_tensor,
-                                               const Int64ImmPtr from, const std::optional<Int64ImmPtr> &to,
-                                               const TensorPtr &seed, const TensorPtr &offset) {
-  OpRunner::InferOpOutput(op, tensor_tensor, from, to, seed, offset);
+tensor::TensorPtr InplaceRandomAscendCustomize(const tensor::TensorPtr &tensor_tensor, const Int64ImmPtr from,
+                                               const std::optional<Int64ImmPtr> &to, const tensor::TensorPtr &seed,
+                                               const tensor::TensorPtr &offset) {
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
   auto from_imm = GetValueWithCheck<int64_t>(from);
   int64_t to_imm;
@@ -51,18 +49,10 @@ tensor::TensorPtr InplaceRandomAscendCustomize(const std::shared_ptr<OpRunner> &
     TYPE_DISPATCH_ALL(tensor_tensor->Dtype()->type_id(), "GetTypeLimit",
                       [&]() -> void { GetTypeLimit<scalar_t>(&to_imm); });
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), tensor_tensor);
-  op->set_outputs({tensor_tensor});
+  TensorToDevice(tensor_tensor);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, tensor_tensor, seed_imm, offset_imm, from_imm, to_imm]() {
-      auto device_context = op->device_context();
-      PyBoostUtils::MallocOpInputs(device_context, tensor_tensor);
-      LAUNCH_ACLNN(aclnnInplaceRandom, device_context, op->stream_id(), tensor_tensor, from_imm, to_imm, seed_imm,
-                   offset_imm);
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceRandom, tensor_tensor, from_imm, to_imm, seed_imm, offset_imm);
+  return tensor_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

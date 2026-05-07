@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "primitive/array_ops.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
 #include "include/pynative/utils/runtime/op_runner.h"

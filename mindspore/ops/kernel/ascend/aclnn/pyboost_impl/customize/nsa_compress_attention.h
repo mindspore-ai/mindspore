@@ -19,18 +19,18 @@
 
 #include <memory>
 #include <optional>
-#include <vector>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::vector<tensor::TensorPtr> NsaCompressAttentionAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
+NsaCompressAttentionAscendCustomize(
+  const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const FP32ImmPtr &scale_value, const Int64ImmPtr &head_num, const Int64ImmPtr &compress_block_size,
   const Int64ImmPtr &compress_stride, const Int64ImmPtr &select_block_size, const Int64ImmPtr &select_block_count,
-  const std::optional<TensorPtr> &topk_mask, const std::optional<TensorPtr> &atten_mask,
+  const std::optional<tensor::TensorPtr> &topk_mask, const std::optional<tensor::TensorPtr> &atten_mask,
   const std::optional<ValueTuplePtr> &actual_seq_qlen, const std::optional<ValueTuplePtr> &actual_cmp_seq_kvlen,
   const std::optional<ValueTuplePtr> &actual_sel_seq_kvlen);
 }  // namespace pyboost

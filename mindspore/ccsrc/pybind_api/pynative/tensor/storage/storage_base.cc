@@ -28,7 +28,7 @@
 #include "include/pynative/utils/pynative_utils.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
-#include "mindspore/core/include/utils/stream_guard.h"
+#include "mindspore/core/include/utils/current_state.h"
 
 namespace mindspore {
 namespace {

@@ -16,18 +16,16 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ROTARY_POSITION_EMBEDDING_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ROTARY_POSITION_EMBEDDING_GRAD_H_
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void RotaryPositionEmbeddingGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dy_tensor,
-                                                const TensorPtr &cos_tensor, const TensorPtr &sin_tensor,
-                                                const std::optional<TensorPtr> &dx_tensor, const Int64ImmPtr &mode);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> RotaryPositionEmbeddingGradAscendCustomize(
+  const tensor::TensorPtr &dy_tensor, const tensor::TensorPtr &cos_tensor, const tensor::TensorPtr &sin_tensor,
+  const std::optional<tensor::TensorPtr> &dx_tensor, const Int64ImmPtr &mode);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

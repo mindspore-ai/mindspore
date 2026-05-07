@@ -16,19 +16,15 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_UNIQUE_CONSECUTIVE_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_UNIQUE_CONSECUTIVE_H_
-#include <vector>
-#include <memory>
 #include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> UniqueConsecutiveAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const BoolImmPtr &return_inverse,
-  const BoolImmPtr &return_counts, const std::optional<Int64ImmPtr> &dim);
+  const tensor::TensorPtr &input_tensor, const BoolImmPtr &return_inverse, const BoolImmPtr &return_counts,
+  const std::optional<Int64ImmPtr> &dim);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

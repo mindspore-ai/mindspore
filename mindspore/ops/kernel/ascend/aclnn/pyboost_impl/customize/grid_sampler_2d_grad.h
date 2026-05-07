@@ -21,16 +21,14 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr> GridSampler2DGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &grad_tensor, const TensorPtr &input_x_tensor,
-  const TensorPtr &grid_tensor, const Int64ImmPtr &interpolation_mode, const Int64ImmPtr &padding_mode,
-  const BoolImmPtr &align_corners, const ValueTuplePtr &output_mask);
+  const tensor::TensorPtr &grad_tensor, const tensor::TensorPtr &input_x_tensor, const tensor::TensorPtr &grid_tensor,
+  const Int64ImmPtr &interpolation_mode, const Int64ImmPtr &padding_mode, const BoolImmPtr &align_corners,
+  const ValueTuplePtr &output_mask);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

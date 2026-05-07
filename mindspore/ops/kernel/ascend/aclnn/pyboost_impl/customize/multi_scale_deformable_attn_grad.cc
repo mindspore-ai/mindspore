@@ -15,20 +15,20 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/multi_scale_deformable_attn_grad.h"
-#include <memory>
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/cast.h"
-#include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> MultiScaleDeformableAttnGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &value_tensor, const TensorPtr &shape_tensor,
-  const TensorPtr &offset_tensor, const TensorPtr &locations_trans_tensor, const TensorPtr &weight_tensor,
-  const TensorPtr &grad_output_tensor) {
+  const TensorPtr &value_tensor, const TensorPtr &shape_tensor, const TensorPtr &offset_tensor,
+  const TensorPtr &locations_trans_tensor, const TensorPtr &weight_tensor, const TensorPtr &grad_output_tensor) {
   auto ori_type1 = value_tensor->Dtype();
   auto ori_type2 = locations_trans_tensor->Dtype();
   auto ori_type3 = weight_tensor->Dtype();
@@ -77,48 +77,35 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> MultiScaleDe
   auto grad_output_tensor_cp =
     PyBoostUtils::CastTensor(grad_output_tensor, kNumberTypeFloat32, device::DeviceType::kAscend);
 
-  OpRunner::InferOpOutput(op, value_tensor_cp, shape_tensor_cp, offset_tensor_cp, locations_trans_tensor_cp,
-                          weight_tensor_cp, grad_output_tensor_cp);
-
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), value_tensor_cp, shape_tensor_cp,
+  auto outputs = InferOutput<3>(prim::kPrimMultiScaleDeformableAttnGrad, value_tensor_cp, shape_tensor_cp,
                                 offset_tensor_cp, locations_trans_tensor_cp, weight_tensor_cp, grad_output_tensor_cp);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+
+  TensorToDevice(value_tensor_cp, shape_tensor_cp, offset_tensor_cp, locations_trans_tensor_cp, weight_tensor_cp,
+                 grad_output_tensor_cp);
+  TensorMalloc(outputs);
+  auto [o0, o1, o2] = outputs;
 
   auto shape_shape = shape_tensor_cp->shape();
   auto weight_shape = weight_tensor_cp->shape();
   bool is_equal = (weight_shape[4] == shape_shape[0]);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, value_tensor_cp, shape_tensor_cp, offset_tensor_cp, locations_trans_tensor_cp, weight_tensor_cp,
-     grad_output_tensor_cp, is_equal]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, value_tensor_cp, shape_tensor_cp, offset_tensor_cp,
-                                   locations_trans_tensor_cp, weight_tensor_cp, grad_output_tensor_cp);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  DISPATCH_ACLNN(aclnnInplaceZero, o0);
 
-      LAUNCH_ACLNN(aclnnInplaceZero, device_context, op->stream_id(), outputs[0]);
+  if (!is_equal) {
+    DISPATCH_ACLNN(aclnnInplaceZero, o1);
+    DISPATCH_ACLNN(aclnnInplaceZero, o2);
+  }
 
-      if (!is_equal) {
-        LAUNCH_ACLNN(aclnnInplaceZero, device_context, op->stream_id(), outputs[1]);
-        LAUNCH_ACLNN(aclnnInplaceZero, device_context, op->stream_id(), outputs[2]);
-      }
-
-      LAUNCH_ACLNN(aclnnMultiScaleDeformableAttentionGrad, device_context, op->stream_id(), value_tensor_cp,
-                   shape_tensor_cp, offset_tensor_cp, locations_trans_tensor_cp, weight_tensor_cp,
-                   grad_output_tensor_cp, outputs[0], outputs[1], outputs[2]);
-    }));
+  DISPATCH_ACLNN(aclnnMultiScaleDeformableAttentionGrad, value_tensor_cp, shape_tensor_cp, offset_tensor_cp,
+                 locations_trans_tensor_cp, weight_tensor_cp, grad_output_tensor_cp, o0, o1, o2);
 
   auto res_type1 = (ori_type1 == kFloat32) ? kNumberTypeFloat32 : kNumberTypeFloat16;
   auto res_type2 = (ori_type2 == kFloat32) ? kNumberTypeFloat32 : kNumberTypeFloat16;
   auto res_type3 = (ori_type3 == kFloat32) ? kNumberTypeFloat32 : kNumberTypeFloat16;
 
-  auto output_tensor1 = PyBoostUtils::CastTensor(op->output(0), res_type1, device::DeviceType::kAscend);
-  auto output_tensor2 = PyBoostUtils::CastTensor(op->output(1), res_type2, device::DeviceType::kAscend);
-  auto output_tensor3 = PyBoostUtils::CastTensor(op->output(2), res_type3, device::DeviceType::kAscend);
+  auto output_tensor1 = PyBoostUtils::CastTensor(o0, res_type1, device::DeviceType::kAscend);
+  auto output_tensor2 = PyBoostUtils::CastTensor(o1, res_type2, device::DeviceType::kAscend);
+  auto output_tensor3 = PyBoostUtils::CastTensor(o2, res_type3, device::DeviceType::kAscend);
 
   return std::make_tuple(output_tensor1, output_tensor2, output_tensor3);
 }

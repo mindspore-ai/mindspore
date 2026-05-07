@@ -17,20 +17,18 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MAX_POOL_WITH_MASK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MAX_POOL_WITH_MASK_H_
 
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void MaxPoolWithMaskAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                    const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &strides,
-                                    const ValueTuplePtr &pads, const ValueTuplePtr &dilation,
-                                    const BoolImmPtr &ceil_mode, const Int64ImmPtr &argmax_type);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> MaxPoolWithMaskAscendCustomize(
+  const tensor::TensorPtr &x_tensor, const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &strides,
+  const ValueTuplePtr &pads, const ValueTuplePtr &dilation, const BoolImmPtr &ceil_mode,
+  const Int64ImmPtr &argmax_type);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -22,15 +22,15 @@
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-std::vector<TensorPtr> InplaceIndexGetNewTensor(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const std::vector<TensorPtr> &tensors) {
+std::vector<TensorPtr> InplaceIndexGetNewTensor(const TensorPtr &input_tensor, const std::vector<TensorPtr> &tensors) {
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   std::vector<TensorPtr> result{};
   auto input_shape = input_tensor->shape();
@@ -93,11 +93,10 @@ std::vector<TensorPtr> InplaceIndexGetNewTensor(const std::shared_ptr<OpRunner> 
 }
 }  // namespace
 
-tensor::TensorPtr InplaceIndexPutAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr InplaceIndexPutAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                  const ValueTuplePtr &indices_tensor_list,
-                                                 const TensorPtr &values_tensor, const BoolImmPtr &accumulate) {
+                                                 const tensor::TensorPtr &values_tensor, const BoolImmPtr &accumulate) {
   MS_LOG(DEBUG) << "InplaceIndexPut Ascend start";
-  op->set_outputs({input_tensor});
   const auto &input_shape = input_tensor->shape();
   const auto &values_shape = values_tensor->shape();
   std::vector<TensorPtr> indices_tensor_vector = ConvertValueTupleToVector<TensorPtr>(indices_tensor_list);
@@ -106,15 +105,14 @@ tensor::TensorPtr InplaceIndexPutAscendCustomize(const std::shared_ptr<OpRunner>
   auto values_numel =
     std::accumulate(values_shape.begin(), values_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (input_numel == 0 || values_numel == 0 || indices_tensor_vector.size() == 0) {
-    return op->output(0);
+    return input_tensor;
   }
-  auto new_indices_tensor_vector = InplaceIndexGetNewTensor(op, input_tensor, indices_tensor_vector);
+  auto new_indices_tensor_vector = InplaceIndexGetNewTensor(input_tensor, indices_tensor_vector);
 
   ValueTuplePtr new_indices_tensor_list = PyBoostUtils::ConvertTensorVectorToTuple(new_indices_tensor_vector);
 
   auto inner_inp_index_put_op = CREATE_PYBOOST_OP(InnerInplaceIndexPut, device::DeviceType::kAscend);
   auto index_out = inner_inp_index_put_op->Call(input_tensor, new_indices_tensor_list, values_tensor, accumulate);
-  op->set_outputs(inner_inp_index_put_op->outputs());
   MS_LOG(DEBUG) << "InplaceIndexPut Ascend end";
   return index_out;
 }

@@ -17,17 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_RAND_PERM_EXT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_RAND_PERM_EXT_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr RandpermExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const Int64ImmPtr &n,
-                                             const TensorPtr &seed, const TensorPtr &offset,
-                                             const std::optional<Int64ImmPtr> &dtype);
+tensor::TensorPtr RandpermExtAscendCustomize(const Int64ImmPtr &n, const tensor::TensorPtr &seed,
+                                             const tensor::TensorPtr &offset, const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

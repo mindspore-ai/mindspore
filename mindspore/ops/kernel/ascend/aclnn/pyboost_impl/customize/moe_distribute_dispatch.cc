@@ -16,15 +16,16 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/moe_distribute_dispatch.h"
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <tuple>
 #include <string>
 #include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
@@ -79,47 +80,32 @@ MoeDispatchParams ParseMoeDispatchParams(const Int64ImmPtr &ep_world_size, const
   return params;
 }
 
-std::shared_ptr<runtime::PyBoostDeviceTask> CreateMoeDispatchTask(const std::shared_ptr<OpRunner> &op,
-                                                                  const TensorPtr &x, const TensorPtr &expert_ids,
-                                                                  const std::optional<TensorPtr> &expert_scales,
-                                                                  const std::optional<TensorPtr> &scales,
-                                                                  const std::optional<TensorPtr> &x_activate_mask,
-                                                                  const MoeDispatchParams &params) {
-  return std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x, expert_ids, scales, x_activate_mask, expert_scales, params]() {
-      MS_LOG(DEBUG) << "Run device task MoeDistributeDispatch start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      PyBoostUtils::MallocOpInputs(device_context, x, expert_ids, scales, x_activate_mask, expert_scales);
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnMoeDistributeDispatch, device_context, op->stream_id(), x, expert_ids, scales, x_activate_mask,
-                   expert_scales, params.group_ep, params.ep_world_size, params.ep_rank_id, params.moe_expert_num,
-                   params.group_tp, params.tp_world_size, params.tp_rank_id, params.expert_shard_type,
-                   params.shared_expert_num, params.shared_expert_rank_num, params.quant_mode, params.global_bs,
-                   params.expert_token_nums_type, outputs[kExpandX], outputs[kDynamicScales], outputs[kExpandIdx],
-                   outputs[kExpertTokenNums], outputs[kEpRecvCounts], outputs[kTpRecvCounts], outputs[kExpandScales]);
-      MS_LOG(DEBUG) << "Run device task MoeDistributeDispatch end";
-    });
-}
-
-void MoeDistributeDispatchAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &x, const TensorPtr &expert_ids,
-  const Int64ImmPtr &ep_world_size, const Int64ImmPtr &ep_rank_id, const Int64ImmPtr &moe_expert_num,
-  const std::optional<TensorPtr> &expert_scales, const std::optional<TensorPtr> &scales,
-  const std::optional<TensorPtr> &x_activate_mask, const std::optional<StringImmPtr> &group_ep,
-  const std::optional<StringImmPtr> &group_tp, const Int64ImmPtr &tp_world_size, const Int64ImmPtr &tp_rank_id,
-  const Int64ImmPtr &expert_shard_type, const Int64ImmPtr &shared_expert_num, const Int64ImmPtr &shared_expert_rank_num,
-  const Int64ImmPtr &quant_mode, const Int64ImmPtr &global_bs, const Int64ImmPtr &expert_token_nums_type) {
-  OpRunner::InferOpOutput(op, x, expert_ids, ep_world_size, ep_rank_id, moe_expert_num, expert_scales, scales,
-                          x_activate_mask, group_ep, group_tp, tp_world_size, tp_rank_id, expert_shard_type,
-                          shared_expert_num, shared_expert_rank_num, quant_mode, global_bs, expert_token_nums_type);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
+           tensor::TensorPtr, tensor::TensorPtr>
+MoeDistributeDispatchAscendCustomize(
+  const TensorPtr &x, const TensorPtr &expert_ids, const Int64ImmPtr &ep_world_size, const Int64ImmPtr &ep_rank_id,
+  const Int64ImmPtr &moe_expert_num, const std::optional<TensorPtr> &expert_scales,
+  const std::optional<TensorPtr> &scales, const std::optional<TensorPtr> &x_activate_mask,
+  const std::optional<StringImmPtr> &group_ep, const std::optional<StringImmPtr> &group_tp,
+  const Int64ImmPtr &tp_world_size, const Int64ImmPtr &tp_rank_id, const Int64ImmPtr &expert_shard_type,
+  const Int64ImmPtr &shared_expert_num, const Int64ImmPtr &shared_expert_rank_num, const Int64ImmPtr &quant_mode,
+  const Int64ImmPtr &global_bs, const Int64ImmPtr &expert_token_nums_type) {
+  auto output = InferOutput<7>(prim::kPrimMoeDistributeDispatch, x, expert_ids, ep_world_size, ep_rank_id,
+                               moe_expert_num, expert_scales, scales, x_activate_mask, group_ep, group_tp,
+                               tp_world_size, tp_rank_id, expert_shard_type, shared_expert_num, shared_expert_rank_num,
+                               quant_mode, global_bs, expert_token_nums_type);
   auto params = ParseMoeDispatchParams(ep_world_size, ep_rank_id, moe_expert_num, group_ep, group_tp, tp_world_size,
                                        tp_rank_id, expert_shard_type, shared_expert_num, shared_expert_rank_num,
                                        quant_mode, global_bs, expert_token_nums_type);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x, expert_ids, scales, x_activate_mask,
-                                expert_scales);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  PyBoostUtils::DispatchRun(CreateMoeDispatchTask(op, x, expert_ids, expert_scales, scales, x_activate_mask, params));
+  TensorToDevice(x, expert_ids, scales, x_activate_mask, expert_scales);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnMoeDistributeDispatch, x, expert_ids, scales, x_activate_mask, expert_scales, params.group_ep,
+                 params.ep_world_size, params.ep_rank_id, params.moe_expert_num, params.group_tp, params.tp_world_size,
+                 params.tp_rank_id, params.expert_shard_type, params.shared_expert_num, params.shared_expert_rank_num,
+                 params.quant_mode, params.global_bs, params.expert_token_nums_type, std::get<kExpandX>(output),
+                 std::get<kDynamicScales>(output), std::get<kExpandIdx>(output), std::get<kExpertTokenNums>(output),
+                 std::get<kEpRecvCounts>(output), std::get<kTpRecvCounts>(output), std::get<kExpandScales>(output));
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

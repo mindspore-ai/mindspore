@@ -17,35 +17,20 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/left_shift.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr LeftShiftAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor,
-                                           const TensorPtr &input_y_tensor) {
-  MS_EXCEPTION_IF_NULL(input_x_tensor);
-  MS_EXCEPTION_IF_NULL(input_y_tensor);
-  OpRunner::InferOpOutput(op, input_x_tensor, input_y_tensor);
-
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_tensor, input_y_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_x_tensor, input_y_tensor]() {
-    MS_LOG(DEBUG) << "Run device task LeftShift start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_x_tensor, input_y_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    LAUNCH_ACLNN(aclnnLeftShift, device_context, op->stream_id(), input_x_tensor, input_y_tensor, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task LeftShift end";
-  }));
-  return op->output(0);
+tensor::TensorPtr LeftShiftAscendCustomize(const TensorPtr &x_tensor, const TensorPtr &y_tensor) {
+  auto output = InferOutput<1>(prim::kPrimLeftShift, x_tensor, y_tensor);
+  TensorToDevice(x_tensor, y_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnLeftShift, x_tensor, y_tensor, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

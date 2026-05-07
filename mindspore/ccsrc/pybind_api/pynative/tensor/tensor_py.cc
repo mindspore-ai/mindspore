@@ -40,7 +40,7 @@
 #include "include/pynative/utils/runtime/op_runner.h"
 #include "utils/ms_utils_secure.h"
 #include "utils/misc.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 
 namespace mindspore {
 namespace tensor {

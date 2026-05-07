@@ -17,29 +17,17 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_divs.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceDivsAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                             const ScalarPtr &other) {
+tensor::TensorPtr InplaceDivsAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &other) {
   MS_LOG(DEBUG) << "Call InplaceDivsAscendCustomize start";
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other]() {
-    MS_LOG(DEBUG) << "Run device task InplaceDivs start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-
-    LAUNCH_ACLNN(aclnnInplaceDivs, device_context, op->stream_id(), input_tensor, other);
-    MS_LOG(DEBUG) << "Run device task InplaceDivs end";
-  }));
-  return op->output(0);
+  TensorToDevice(input_tensor);
+  DISPATCH_ACLNN(aclnnInplaceDivs, input_tensor, other);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

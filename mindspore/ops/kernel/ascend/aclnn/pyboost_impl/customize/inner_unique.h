@@ -17,19 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_INNER_UNIQUE_H_
 #define MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_INNER_UNIQUE_H_
 
-#include <memory>
 #include <tuple>
-#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> InnerUniqueAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                            const TensorPtr &input_tensor,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> InnerUniqueAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                                             const BoolImmPtr &sorted,
                                                                             const BoolImmPtr &return_inverse);
 }  // namespace pyboost

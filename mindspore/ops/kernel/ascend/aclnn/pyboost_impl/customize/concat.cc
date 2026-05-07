@@ -20,7 +20,8 @@
 #include "ir/scalar.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
@@ -65,9 +66,8 @@ static ShapeVector InferConcatOutputShape(const std::vector<tensor::TensorPtr> &
   return out_shape;
 }
 
-tensor::TensorPtr ConcatAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors,
-                                        const Int64ImmPtr &axis) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
+tensor::TensorPtr ConcatAscendCustomize(const ValueTuplePtr &tensors, const Int64ImmPtr &axis) {
+  MS_LOG(DEBUG) << "Concat call start";
   // Manual InferType & InferShape (fast path): assume inputs are a value tuple of dense tensors; no dynamic rank.
   std::vector<tensor::TensorPtr> tensors_vector = ConvertValueTupleToVector<tensor::TensorPtr>(tensors);
   if (tensors_vector.empty()) {
@@ -95,29 +95,13 @@ tensor::TensorPtr ConcatAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   // Create output tensor
   std::vector<tensor::TensorPtr> outputs_vec;
   PyBoostUtils::CreateOutputTensor(out_type, out_shape, &outputs_vec);
-  op->set_outputs(outputs_vec);
+  auto output = outputs_vec[0];
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), tensors_vector);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(tensors_vector);
+  TensorMalloc(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, tensors_vector, axis_norm]() {
-    MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " start.";
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                       op->primitive()->name(), false);
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, tensors_vector);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    // Launch aclnn kernel
-    LAUNCH_ACLNN(aclnnCat, device_context, op->stream_id(), tensors_vector, axis_norm, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " end.";
-  }));
-  return op->outputs()[0];
+  DISPATCH_ACLNN(aclnnCat, tensors_vector, axis_norm, output);
+  return output;
 }
 
 }  // namespace pyboost

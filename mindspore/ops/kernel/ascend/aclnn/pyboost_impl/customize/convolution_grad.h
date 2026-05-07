@@ -17,22 +17,18 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_CONVOLUTION_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_CONVOLUTION_GRAD_H_
 
-#include <vector>
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> ConvolutionGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &dout_tensor, const TensorPtr &input_tensor,
-  const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor, const ValueTuplePtr &stride,
-  const ValueTuplePtr &pad, const ValueTuplePtr &dilation, const BoolImmPtr &transposed,
-  const ValueTuplePtr &output_padding, const Int64ImmPtr &group, const ValueTuplePtr &output_mask);
+  const tensor::TensorPtr &dout_tensor, const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
+  const std::optional<tensor::TensorPtr> &bias_tensor, const ValueTuplePtr &stride, const ValueTuplePtr &pad,
+  const ValueTuplePtr &dilation, const BoolImmPtr &transposed, const ValueTuplePtr &output_padding,
+  const Int64ImmPtr &group, const ValueTuplePtr &output_mask);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -252,6 +252,10 @@ class PyboostOpCppGenerator:
     and registering custom kernels as necessary.
     """
 
+    # Ops that need the OpRunner (get_op()) passed to their Customize function.
+    # These ops access caller-provided primitive attributes at runtime.
+    OPS_NEED_OP_RUNNER = {'custom_ext'}
+
     def __init__(self, device):
         """
         Initializes the PyboostOpCppGenerator with the appropriate templates for the specified device.
@@ -331,65 +335,95 @@ class PyboostOpCppGenerator:
             _, call_func_outputs = op_parser.generate_pyboost_outputs()
             operator_name = op_proto.op_name
             op_name_str = op_proto.op_class.name
-            check_inplace_func = ''
-            for arg in op_proto.op_returns:
-                if arg.inplace != '':
-                    check_inplace_func = f'ThrowExpectionWhenInternalOverlap({arg.inplace}_tensor);'
-                    break
+            check_inplace_func = self._generate_inplace_check_func(op_proto)
             inplace_indices = get_inplace_indices(op_proto)
             inplace_indices_str = ', '.join(str(i) for i in inplace_indices)
+            customize_func = getattr(op_proto.op_dispatch, self.device) + "Customize"
+            standalone_call = self._generate_customize_standalone_call(
+                is_ascend_comm_op, customize_func, call_args, op_proto)
+            if self.device == 'ascend' and not is_ascend_comm_op:
+                call_func_outputs = '__result'
             call_impl = self.PYBOOST_CUSTOMIZE_CALL_TEMPLATE.replace(
                 call_args=call_args,
                 return_values=call_func_outputs,
-                inplace_indices=inplace_indices_str,
-                customize_func=getattr(
-                    op_proto.op_dispatch, self.device) + "Customize",
+                standalone_call=standalone_call,
                 check_expression=check_inplace_func,
+                inplace_indices=inplace_indices_str,
+                customize_func=customize_func,
             )
             if is_ascend_comm_op and ((merge_op_hccl_header is None) or (merge_op_hccl_function is None)):
                 raise ValueError(f"merge_op_hccl_header and merge_op_hccl_function \
 must be provided for comm op {operator_name}")
 
-            if is_ascend_comm_op:
-                customize_include = \
-                    f'#include "mindspore/ops/kernel/ascend/hccl/pyboost/{operator_name.lower()}.h"\n'
-            else:
-                if self.device == 'ascend':
-                    customize_include = (
-                        f'#include "{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/customize/'
-                        f'{operator_name.lower()}.h"\n'
-                    )
-                else:
-                    customize_include = \
-                        f'#include "{K.MS_OPS_KERNEL_PATH}/{self.device}/pyboost/customize/{operator_name.lower()}.h"\n'
+            customize_include = self._generate_customize_include(is_ascend_comm_op, operator_name)
 
             register_custom = self._get_register_custom_kernel(op_proto)
             cpp_func_return = _generate_cpp_func_return(op_proto)
             op_register = self.PYBOOST_REG_OP_TEMPLATE.replace(op_name=op_name_str,
                                                                device=self.device_reg_str,
                                                                register_custom_kernel=register_custom)
+            self._append_customize_op_code(
+                is_ascend_comm_op, operator_name, op_name_str,
+                call_args_with_type, cpp_func_return, call_impl, op_register,
+                customize_include, merge_op_header, merge_op_function, merge_op_inc,
+                merge_op_hccl_header, merge_op_hccl_function, merge_op_hccl_inc)
+
+    @staticmethod
+    def _generate_inplace_check_func(op_proto):
+        """Generate inplace check function call for the first inplace argument."""
+        for arg in op_proto.op_returns:
+            if arg.inplace != '':
+                return f'ThrowExpectionWhenInternalOverlap({arg.inplace}_tensor);'
+        return ''
+
+    def _generate_customize_standalone_call(self, is_ascend_comm_op, customize_func, call_args, op_proto):
+        """Generate standalone call, handling OpRunner vs non-OpRunner cases."""
+        needs_op = is_ascend_comm_op or op_proto.op_name in self.OPS_NEED_OP_RUNNER
+        if needs_op:
+            args_str = ', '.join(str(x) for x in call_args)
             if is_ascend_comm_op:
-                merge_op_hccl_header.append(
-                    self.PYBOOST_SINGLE_HCLL_OP_HEADER_TEMPLATE.replace(operator_name=operator_name,
-                                                                        customize_include=customize_include))
-                merge_op_hccl_function.append(
-                    self.PYBOOST_SINGLE_OP_SOURCE_TEMPLATE.replace(op_name=op_name_str,
-                                                                   call_args_with_type=call_args_with_type,
-                                                                   return_type=cpp_func_return, call_impl=call_impl,
-                                                                   op_register=op_register,
-                                                                   device=self.device_reg_str))
-                merge_op_hccl_inc.append(op_name_str)
-            else:
-                merge_op_header.append(
-                    self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=operator_name,
-                                                                   customize_include=customize_include))
-                merge_op_function.append(
-                    self.PYBOOST_SINGLE_OP_SOURCE_TEMPLATE.replace(op_name=op_name_str,
-                                                                   call_args_with_type=call_args_with_type,
-                                                                   return_type=cpp_func_return, call_impl=call_impl,
-                                                                   op_register=op_register,
-                                                                   device=self.device_reg_str))
-                merge_op_inc.append(op_name_str)
+                return f'{customize_func}(get_op(), {args_str});'
+            return f'auto __result = {customize_func}(get_op(), {args_str});'
+        return self._generate_standalone_call(op_proto, customize_func, call_args)
+
+    def _generate_customize_include(self, is_ascend_comm_op, operator_name):
+        """Generate the appropriate include path based on device and comm op status."""
+        if is_ascend_comm_op:
+            return f'#include "mindspore/ops/kernel/ascend/hccl/pyboost/{operator_name.lower()}.h"\n'
+        if self.device == 'ascend':
+            return (
+                f'#include "{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/customize/'
+                f'{operator_name.lower()}.h"\n'
+            )
+        return f'#include "{K.MS_OPS_KERNEL_PATH}/{self.device}/pyboost/customize/{operator_name.lower()}.h"\n'
+
+    def _append_customize_op_code(self, is_ascend_comm_op, operator_name, op_name_str,
+                                  call_args_with_type, cpp_func_return, call_impl, op_register,
+                                  customize_include, merge_op_header, merge_op_function, merge_op_inc,
+                                  merge_op_hccl_header, merge_op_hccl_function, merge_op_hccl_inc):
+        """Append generated code to appropriate merge lists based on operation type."""
+        source_code = self.PYBOOST_SINGLE_OP_SOURCE_TEMPLATE.replace(
+            op_name=op_name_str, call_args_with_type=call_args_with_type,
+            return_type=cpp_func_return, call_impl=call_impl,
+            op_register=op_register, device=self.device_reg_str)
+        if is_ascend_comm_op:
+            merge_op_hccl_header.append(
+                self.PYBOOST_SINGLE_HCLL_OP_HEADER_TEMPLATE.replace(operator_name=operator_name,
+                                                                    customize_include=customize_include))
+            merge_op_hccl_function.append(source_code)
+            merge_op_hccl_inc.append(op_name_str)
+        else:
+            merge_op_header.append(
+                self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=operator_name,
+                                                               customize_include=customize_include))
+            merge_op_function.append(source_code)
+            merge_op_inc.append(op_name_str)
+
+    @staticmethod
+    def _generate_standalone_call(op_proto, customize_func, call_args):
+        """Generate the call code for standalone customize functions (no OpRunner)."""
+        args_str = ', '.join(str(x) for x in call_args)
+        return f'auto __result = {customize_func}({args_str});'
 
     def _get_register_custom_kernel(self, op_proto: OpProto):
         """
@@ -656,7 +690,7 @@ class AclnnOpCppCodeGenerator:
         create_input_address = ''
         args_list = ', '.join(str(item) for item in need_malloc_tensors)
         if args_list:
-            create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), {args_list});\n'
+            create_input_address = f'TensorToDevice(op, {args_list});\n'
         return create_input_address
 
     @staticmethod
@@ -853,11 +887,11 @@ class InternalOpCppCodeGenerator:
         args_list = ''.join(f'{arg}, ' for arg in need_malloc_tensors)
         args_list = args_list[:-2]
         if args_list:
-            create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), {args_list});\n'
+            create_input_address = f'TensorToDevice(op, {args_list});\n'
         if op_proto.op_args_signature and op_proto.op_args_signature.rw_write:
             create_output_address = ''
         else:
-            create_output_address = 'PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);\n'
+            create_output_address = 'TensorMalloc(op, outputs_);\n'
 
         return create_input_address, create_output_address
 

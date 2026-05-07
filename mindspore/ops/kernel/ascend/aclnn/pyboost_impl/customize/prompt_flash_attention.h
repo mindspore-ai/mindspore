@@ -17,23 +17,20 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_PROMPT_FLASH_ATTENTION_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_PROMPT_FLASH_ATTENTION_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr PromptFlashAttentionAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const std::optional<TensorPtr> &atten_mask, const std::optional<ValueTuplePtr> &actual_seq_qlen,
-  const std::optional<ValueTuplePtr> &actual_seq_qlen_kv, const std::optional<TensorPtr> &pse_shift,
-  const std::optional<TensorPtr> &deq_scale1, const std::optional<TensorPtr> &quant_scale1,
-  const std::optional<TensorPtr> &deq_scale2, const std::optional<TensorPtr> &quant_scale2,
-  const std::optional<TensorPtr> &quant_offset2, const Int64ImmPtr num_heads, const FP32ImmPtr scale_value,
+  const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
+  const std::optional<tensor::TensorPtr> &atten_mask, const std::optional<ValueTuplePtr> &actual_seq_qlen,
+  const std::optional<ValueTuplePtr> &actual_seq_qlen_kv, const std::optional<tensor::TensorPtr> &pse_shift,
+  const std::optional<tensor::TensorPtr> &deq_scale1, const std::optional<tensor::TensorPtr> &quant_scale1,
+  const std::optional<tensor::TensorPtr> &deq_scale2, const std::optional<tensor::TensorPtr> &quant_scale2,
+  const std::optional<tensor::TensorPtr> &quant_offset2, const Int64ImmPtr num_heads, const FP32ImmPtr scale_value,
   const Int64ImmPtr pre_tokens, const Int64ImmPtr next_tokens, const Int64ImmPtr input_layout,
   const Int64ImmPtr num_key_value_heads, const Int64ImmPtr sparse_mode, const Int64ImmPtr inner_precise);
 }  // namespace pyboost

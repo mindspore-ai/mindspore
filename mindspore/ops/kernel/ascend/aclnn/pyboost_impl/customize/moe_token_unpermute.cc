@@ -19,15 +19,15 @@
 #include <memory>
 #include <vector>
 #include "mindspore/ops/ops_utils/op_constants.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MoeTokenUnpermuteAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                   const TensorPtr &permuted_tokens, const TensorPtr &sorted_indices,
-                                                   const std::optional<TensorPtr> &probs, const BoolImmPtr &padded_mode,
+tensor::TensorPtr MoeTokenUnpermuteAscendCustomize(const tensor::TensorPtr &permuted_tokens,
+                                                   const tensor::TensorPtr &sorted_indices,
+                                                   const std::optional<tensor::TensorPtr> &probs,
+                                                   const BoolImmPtr &padded_mode,
                                                    const std::optional<ValueTuplePtr> &restore_shape) {
   if (probs.has_value()) {
     auto target_dtype = probs.value()->data_type();
@@ -35,12 +35,10 @@ tensor::TensorPtr MoeTokenUnpermuteAscendCustomize(const std::shared_ptr<OpRunne
     auto unpermute_token_casted = cast(permuted_tokens, std::make_shared<Int64Imm>(target_dtype));
     auto out = inner_moe_token_unpermute(unpermute_token_casted, sorted_indices, probs, padded_mode, restore_shape);
     out = cast(out, std::make_shared<Int64Imm>(origin_dtype));
-    op->set_outputs({out});
-    return op->output(0);
+    return out;
   }
   auto out = inner_moe_token_unpermute(permuted_tokens, sorted_indices, probs, padded_mode, restore_shape);
-  op->set_outputs({out});
-  return op->output(0);
+  return out;
 }
 }  // namespace pyboost
 }  // namespace kernel

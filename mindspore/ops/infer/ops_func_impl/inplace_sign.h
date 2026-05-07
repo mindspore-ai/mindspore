@@ -17,11 +17,15 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INPLACE_SIGN_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INPLACE_SIGN_H_
 
+#include <string>
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
+// Shared by InplaceSignFuncImpl::InferType and the pyboost customize path.
+OPS_API void CheckInplaceSignDtype(const std::string &prim_name, TypeId input_type);
+
 class OPS_API InplaceSignFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

@@ -15,41 +15,35 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/add_layernorm_v2.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void AddLayerNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                 const TensorPtr &x2_tensor, const TensorPtr &gamma_tensor,
-                                 const TensorPtr &beta_tensor, const FP32ImmPtr &epsilon,
-                                 const BoolImmPtr &additional_out) {
-  MS_LOG(DEBUG) << "Call start";
-  OpRunner::InferOpOutput(op, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon, additional_out);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AddLayerNormAscendCustomize(
+  const TensorPtr &x1_tensor, const TensorPtr &x2_tensor, const TensorPtr &gamma_tensor, const TensorPtr &beta_tensor,
+  const FP32ImmPtr &epsilon, const BoolImmPtr &additional_out) {
+  auto outputs =
+    InferOutput<4>(prim::kPrimAddLayerNormV2, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon, additional_out);
   // Convert ValuePtr to c++ scalar
   auto epsilon_imm = static_cast<double>(GetValue<float>(epsilon));
   auto additional_out_imm = GetValue<bool>(additional_out);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x1_tensor, x2_tensor, gamma_tensor, beta_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, epsilon_imm, additional_out_imm]() {
-      MS_LOG(DEBUG) << "Run device task AddLayerNorm start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, x1_tensor, x2_tensor, gamma_tensor, beta_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnAddLayerNorm, device_context, op->stream_id(), x1_tensor, x2_tensor, gamma_tensor, beta_tensor,
-                   nullptr, epsilon_imm, additional_out_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2],
-                   outputs[kIndex3]);
-      MS_LOG(DEBUG) << "Run device task AddLayerNorm end";
-    }));
+  TensorToDevice(x1_tensor, x2_tensor, gamma_tensor, beta_tensor);
+  TensorMalloc(outputs);
+
+  const auto &y = std::get<0>(outputs);
+  const auto &mean = std::get<1>(outputs);
+  const auto &rstd = std::get<2>(outputs);
+  const auto &x = std::get<3>(outputs);
+  DISPATCH_ACLNN(aclnnAddLayerNorm, x1_tensor, x2_tensor, gamma_tensor, beta_tensor, nullptr, epsilon_imm,
+                 additional_out_imm, y, mean, rstd, x);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

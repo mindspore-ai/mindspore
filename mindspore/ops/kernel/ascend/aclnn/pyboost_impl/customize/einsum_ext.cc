@@ -20,10 +20,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr EinsumExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &equation,
-                                           const ValueTuplePtr &operands) {
-  EinsumExtCustomize(op, equation, operands);
-  return op->output(0);
+tensor::TensorPtr EinsumExtAscendCustomize(const StringImmPtr &equation, const ValueTuplePtr &operands) {
+  return EinsumExtCustomize(equation, operands);
 }
 }  // namespace pyboost
 }  // namespace kernel

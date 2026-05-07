@@ -17,21 +17,18 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_LAYER_NORM_GRAD_EXT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_LAYER_NORM_GRAD_EXT_H_
 
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LayerNormGradExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dy_tensor,
-                                     const TensorPtr &x_tensor, const ValueTuplePtr &normalized_shape,
-                                     const TensorPtr &mean_tensor, const TensorPtr &variance_tensor,
-                                     const TensorPtr &gamma_tensor, const TensorPtr &beta_tensor,
-                                     const ValueTuplePtr &output_mask);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormGradExtAscendCustomize(
+  const tensor::TensorPtr &dy_tensor, const tensor::TensorPtr &x_tensor, const ValueTuplePtr &normalized_shape,
+  const tensor::TensorPtr &mean_tensor, const tensor::TensorPtr &variance_tensor, const tensor::TensorPtr &gamma_tensor,
+  const tensor::TensorPtr &beta_tensor, const ValueTuplePtr &output_mask);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

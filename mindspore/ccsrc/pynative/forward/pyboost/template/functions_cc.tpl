@@ -29,7 +29,7 @@
 #include "mindspore/ccsrc/pynative/utils/base.h"
 #include "mindspore/ccsrc/pynative/backward/grad_utils.h"
 #include "include/pynative/utils/pynative_utils.h"
-#include "mindspore/core/include/utils/stream_guard.h"
+#include "mindspore/core/include/utils/current_state.h"
 #include "mindspore/ccsrc/pynative/utils/pyboost/functions/customize/view_impl.h"
 
 ${ops_inc}

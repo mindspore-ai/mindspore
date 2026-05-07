@@ -20,14 +20,13 @@
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AdamWAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &var, const TensorPtr &m, const TensorPtr &v,
-  const TensorPtr &max_v, const TensorPtr &grad, const TensorPtr &step, const FP32ImmPtr &lr, const FP32ImmPtr &beta1,
+  const tensor::TensorPtr &var, const tensor::TensorPtr &m, const tensor::TensorPtr &v, const tensor::TensorPtr &max_v,
+  const tensor::TensorPtr &grad, const tensor::TensorPtr &step, const FP32ImmPtr &lr, const FP32ImmPtr &beta1,
   const FP32ImmPtr &beta2, const FP32ImmPtr &decay, const FP32ImmPtr &epsilon, const BoolImmPtr &amsgrad,
   const BoolImmPtr &maximize);
 }  // namespace pyboost

@@ -21,13 +21,19 @@
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/current_state.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> UniqueDimAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const BoolImmPtr &sorted,
-  const BoolImmPtr &return_inverse, const Int64ImmPtr &dim) {
+  const tensor::TensorPtr &input_tensor, const BoolImmPtr &sorted, const BoolImmPtr &return_inverse,
+  const Int64ImmPtr &dim) {
+  auto op =
+    std::make_shared<OpRunner>(prim::kPrimUniqueDim, runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   MS_LOG(DEBUG) << "Run device task unique_dim start";
   OpRunner::InferOpOutput(op, input_tensor, sorted, return_inverse, dim);
 

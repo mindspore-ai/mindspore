@@ -17,16 +17,23 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/masked_select.h"
 
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_runner.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/current_state.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr MaskedSelectAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                              const TensorPtr &mask_tensor) {
+tensor::TensorPtr MaskedSelectAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                              const tensor::TensorPtr &mask_tensor) {
+  auto op = std::make_shared<OpRunner>(prim::kPrimMaskedSelect,
+                                       runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   MS_LOG(DEBUG) << op->primitive()->name() << " call start";
   auto stream_id = op->stream_id();
   OpRunner::InferOpOutput(op, input_tensor, mask_tensor);

@@ -20,16 +20,14 @@
 #include <memory>
 
 #include "ir/tensor.h"
-#include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MoeTokenUnpermuteAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                   const TensorPtr &permuted_tokens, const TensorPtr &sorted_indices,
-                                                   const std::optional<TensorPtr> &probs, const BoolImmPtr &padded_mode,
+tensor::TensorPtr MoeTokenUnpermuteAscendCustomize(const tensor::TensorPtr &permuted_tokens,
+                                                   const tensor::TensorPtr &sorted_indices,
+                                                   const std::optional<tensor::TensorPtr> &probs,
+                                                   const BoolImmPtr &padded_mode,
                                                    const std::optional<ValueTuplePtr> &restore_shape);
 }  // namespace pyboost
 }  // namespace kernel

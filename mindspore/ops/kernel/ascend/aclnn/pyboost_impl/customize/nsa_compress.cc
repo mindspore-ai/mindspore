@@ -19,15 +19,21 @@
 #include <vector>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/current_state.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NsaCompressAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                             const TensorPtr &weight, const Int64ImmPtr &compress_block_size,
-                                             const Int64ImmPtr &compress_stride,
+tensor::TensorPtr NsaCompressAscendCustomize(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
+                                             const Int64ImmPtr &compress_block_size, const Int64ImmPtr &compress_stride,
                                              const std::optional<ValueTuplePtr> &actual_seq_len) {
+  auto op = std::make_shared<OpRunner>(prim::kPrimNsaCompress,
+                                       runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   OpRunner::InferOpOutput(op, input, weight, compress_block_size, compress_stride, actual_seq_len);
 
   auto compress_block_size_value = GetValue<int64_t>(compress_block_size);
@@ -66,20 +72,11 @@ tensor::TensorPtr NsaCompressAscendCustomize(const std::shared_ptr<OpRunner> &op
     }
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, weight);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, weight, compress_block_size_value,
-                                                                          compress_stride_value, actual_seq_len_array,
-                                                                          layout_string, actual_seq_len_type_value]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    PyBoostUtils::MallocOpInputs(device_context, input, weight);
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << "Run aclnnNsaCompress in pyboost";
-    LAUNCH_ACLNN(aclnnNsaCompress, device_context, op->stream_id(), input, weight, actual_seq_len_array, layout_string,
-                 compress_block_size_value, compress_stride_value, actual_seq_len_type_value, outputs[0]);
-  }));
+  TensorToDevice(op, input, weight);
+  TensorMalloc(op, op->outputs());
+  const auto &outputs = op->outputs();
+  DISPATCH_LAUNCH_ACLNN(aclnnNsaCompress, input, weight, actual_seq_len_array, layout_string, compress_block_size_value,
+                        compress_stride_value, actual_seq_len_type_value, outputs[0]);
   return op->output(0);
 }
 }  // namespace pyboost

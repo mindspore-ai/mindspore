@@ -15,12 +15,12 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/adaptive_avg_pool3d_ext.h"
-#include <memory>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "include/pynative/utils/pyboost/auto_generate/mean_ext.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,9 +29,8 @@ namespace {
 constexpr int kShapeDim1d = 1;
 constexpr int kShapeDim3d = 3;
 }  // namespace
-tensor::TensorPtr AdaptiveAvgPool3DExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                      const TensorPtr &input_tensor, const ValueTuplePtr &output_size) {
-  OpRunner::InferOpOutput(op, input_tensor, output_size);
+tensor::TensorPtr AdaptiveAvgPool3DExtAscendCustomize(const TensorPtr &input_tensor, const ValueTuplePtr &output_size) {
+  auto output = InferOutput<1>(prim::kPrimAdaptiveAvgPool3DExt, input_tensor, output_size);
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
   std::vector<int64_t> axis_vector{-1, -2, -3};  // {-1, -2, -3}, fixed axis dims for aclnnMean
   const auto keep_dims = true;                   // true, fixed keep_dims for aclnnMean
@@ -48,34 +47,17 @@ tensor::TensorPtr AdaptiveAvgPool3DExtAscendCustomize(const std::shared_ptr<OpRu
       output_size_update.emplace_back(input_shape[input_shape_size - kShapeDim3d + i]);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
 
   if (output_size_update[kIndex0] == kShapeDim1d && output_size_update[kIndex1] == kShapeDim1d &&
       output_size_update[kIndex2] == kShapeDim1d) {
-    PyBoostUtils::DispatchRun(
-      std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_vector, keep_dims, out_dtype]() {
-        auto device_context = op->device_context();
-        PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-        PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-        MS_LOG(DEBUG) << "Run device task AdaptiveAvgPool3DExt-Mean start";
-        LAUNCH_ACLNN(aclnnMean, device_context, op->stream_id(), input_tensor, axis_vector, keep_dims, out_dtype,
-                     op->output(0));
-        MS_LOG(DEBUG) << "Run device task AdaptiveAvgPool3DExt-Mean end";
-      }));
+    DISPATCH_ACLNN(aclnnMean, input_tensor, axis_vector, keep_dims, out_dtype, output);
   } else {
-    PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, output_size_update]() {
-      auto device_context = op->device_context();
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-      MS_LOG(DEBUG) << "Run device task AdaptiveAvgPool3DExt-AdaptiveAvgPool3D start";
-      LAUNCH_ACLNN(aclnnAdaptiveAvgPool3d, device_context, op->stream_id(), input_tensor, output_size_update,
-                   op->output(0));
-      MS_LOG(DEBUG) << "Run device task AdaptiveAvgPool3DExt-AdaptiveAvgPool3D end";
-    }));
+    DISPATCH_ACLNN(aclnnAdaptiveAvgPool3d, input_tensor, output_size_update, output);
   }
 
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

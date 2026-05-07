@@ -51,7 +51,7 @@ using mindspore::profiler::ProfilerManager;
 #include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "include/utils/tensor_py.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/runtime/utils/dispatch/dispatch_env.h"
 #include "include/pynative/utils/pyboost/functions/dispatch.h"

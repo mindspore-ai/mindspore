@@ -1,0 +1,37 @@
+/**
+ * Copyright 2026 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "infer/ops_func_impl/adaptive_pool_1d_check.h"
+#include <string>
+#include "utils/check_convert_utils.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
+
+namespace mindspore {
+namespace ops {
+void CheckAdaptivePool1DInputs(const std::string &prim_name, const ShapeVector &x_shape, size_t output_size_len) {
+  const int64_t input_num_dims = SizeToLong(x_shape.size());
+  (void)CheckAndConvertUtils::CheckInRange("dim of x", input_num_dims, kIncludeBoth, {2, 3}, prim_name);
+  for (size_t i = 0; i < x_shape.size(); i++) {
+    (void)CheckAndConvertUtils::CheckInteger(std::to_string(i) + "th dimension of x", x_shape[i], kGreaterEqual, 1,
+                                             prim_name);
+  }
+  if (output_size_len != 1) {
+    MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], the length of 'output_size' must be 1, but got"
+                             << output_size_len << "!";
+  }
+}
+}  // namespace ops
+}  // namespace mindspore

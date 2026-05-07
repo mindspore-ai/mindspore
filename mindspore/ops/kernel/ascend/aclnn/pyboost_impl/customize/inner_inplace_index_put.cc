@@ -16,10 +16,10 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inner_inplace_index_put.h"
 #include <functional>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,13 +42,12 @@ std::vector<TensorPtr> RemoveTrailingEmptyTensor(const std::vector<TensorPtr> &i
 }
 }  // namespace
 
-tensor::TensorPtr InnerInplaceIndexPutAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                      const TensorPtr &input_tensor,
+tensor::TensorPtr InnerInplaceIndexPutAscendCustomize(const tensor::TensorPtr &input_tensor,
                                                       const ValueTuplePtr &indices_tensor_list,
-                                                      const TensorPtr &values_tensor, const BoolImmPtr &accumulate) {
+                                                      const tensor::TensorPtr &values_tensor,
+                                                      const BoolImmPtr &accumulate) {
   // Inplace op does not require infer, but for check broadcasts of indexes, inputs and value.
-  OpRunner::InferOpOutput(op, input_tensor, indices_tensor_list, values_tensor, accumulate);
-  op->set_outputs({input_tensor});
+  InferOutput<1>(prim::kPrimInnerInplaceIndexPut, input_tensor, indices_tensor_list, values_tensor, accumulate);
 
   const auto &input_shape = input_tensor->shape();
   const auto &values_shape = values_tensor->shape();
@@ -59,24 +58,14 @@ tensor::TensorPtr InnerInplaceIndexPutAscendCustomize(const std::shared_ptr<OpRu
   auto values_numel =
     std::accumulate(values_shape.begin(), values_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   if (input_numel == 0 || values_numel == 0 || indices_tensor_vector.size() == 0) {
-    return op->output(0);
+    return input_tensor;
   }
 
   auto accumulate_imm = GetValue<bool>(accumulate);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, indices_tensor_vector,
-                                values_tensor);
+  TensorToDevice(input_tensor, indices_tensor_vector, values_tensor);
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_tensor, indices_tensor_vector, values_tensor, accumulate_imm]() {
-      auto device_context = op->device_context();
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, indices_tensor_vector, values_tensor);
-
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      LAUNCH_ACLNN(aclnnIndexPutImpl, device_context, op->stream_id(), input_tensor, indices_tensor_vector,
-                   values_tensor, accumulate_imm, false);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnIndexPutImpl, input_tensor, indices_tensor_vector, values_tensor, accumulate_imm, false);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

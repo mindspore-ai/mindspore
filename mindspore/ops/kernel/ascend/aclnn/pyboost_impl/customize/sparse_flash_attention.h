@@ -17,21 +17,18 @@
 #ifndef MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_SPARSE_FLASH_ATTENTION_H_
 #define MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_SPARSE_FLASH_ATTENTION_H_
 
-#include <memory>
-#include <vector>
+#include <tuple>
 #include <optional>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr SparseFlashAttentionAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const TensorPtr &sparse_indices, const FP32ImmPtr &scale_value, const std::optional<TensorPtr> &block_table,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SparseFlashAttentionAscendCustomize(
+  const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const TensorPtr &sparse_indices,
+  const FP32ImmPtr &scale_value, const std::optional<TensorPtr> &block_table,
   const std::optional<TensorPtr> &actual_seq_lengths_query, const std::optional<TensorPtr> &actual_seq_lengths_kv,
   const std::optional<TensorPtr> &query_rope, const std::optional<TensorPtr> &key_rope,
   const Int64ImmPtr &sparse_block_size, const Int64ImmPtr &layout_query, const Int64ImmPtr &layout_kv,

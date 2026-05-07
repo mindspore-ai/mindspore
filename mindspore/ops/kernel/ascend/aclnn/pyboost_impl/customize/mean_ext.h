@@ -18,15 +18,13 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MEAN_EXT_H_
 
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MeanExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr MeanExtAscendCustomize(const tensor::TensorPtr &input_tensor,
                                          const std::optional<ValueTuplePtr> &axis, const BoolImmPtr &keep_dims,
                                          const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost

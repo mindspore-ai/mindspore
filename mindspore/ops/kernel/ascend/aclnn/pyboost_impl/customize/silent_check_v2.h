@@ -17,19 +17,17 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SILENT_CHECK_V2_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SILENT_CHECK_V2_H_
 
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/scalar.h"
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::vector<tensor::TensorPtr> SilentCheckV2AscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &val, const TensorPtr &input_grad, const TensorPtr &sfda,
-  const TensorPtr &step, const Int64ImmPtr &c_min_steps_ptr, const FloatImmPtr &c_thresh_l1_ptr,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SilentCheckV2AscendCustomize(
+  const tensor::TensorPtr &val, const tensor::TensorPtr &input_grad, const tensor::TensorPtr &sfda,
+  const tensor::TensorPtr &step, const Int64ImmPtr &c_min_steps_ptr, const FloatImmPtr &c_thresh_l1_ptr,
   const FloatImmPtr &c_coeff_l1_ptr, const FloatImmPtr &c_thresh_l2_ptr, const FloatImmPtr &c_coeff_l2_ptr,
   const Int64ImmPtr &npu_asd_detect_ptr);
 }  // namespace pyboost

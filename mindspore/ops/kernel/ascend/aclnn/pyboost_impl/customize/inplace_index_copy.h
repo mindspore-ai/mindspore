@@ -18,17 +18,14 @@
 #define MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_INPLACE_INDEX_COPY_H_
 
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceIndexCopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                  const Int64ImmPtr &dim, const TensorPtr &index,
-                                                  const TensorPtr &tensor);
+tensor::TensorPtr InplaceIndexCopyAscendCustomize(const tensor::TensorPtr &input, const Int64ImmPtr &dim,
+                                                  const tensor::TensorPtr &index, const tensor::TensorPtr &tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

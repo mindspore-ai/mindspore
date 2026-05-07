@@ -21,7 +21,7 @@
 #include "utils/ms_context.h"
 
 #include "pybind_api/runtime/utils_py.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "utils/ms_exception.h"
 #include "pybind_api/runtime/runtime_api.h"
 

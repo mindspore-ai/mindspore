@@ -16,19 +16,16 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADD_LAYERNORM_V2_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADD_LAYERNORM_V2_H_
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void AddLayerNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                 const TensorPtr &x2_tensor, const TensorPtr &gamma_tensor,
-                                 const TensorPtr &beta_tensor, const FP32ImmPtr &epsilon,
-                                 const BoolImmPtr &additional_out);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AddLayerNormAscendCustomize(
+  const tensor::TensorPtr &x1_tensor, const tensor::TensorPtr &x2_tensor, const tensor::TensorPtr &gamma_tensor,
+  const tensor::TensorPtr &beta_tensor, const FP32ImmPtr &epsilon, const BoolImmPtr &additional_out);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

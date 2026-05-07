@@ -15,12 +15,13 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/adaptive_max_pool2d.h"
-#include <memory>
 #include <tuple>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,10 +29,9 @@ namespace pyboost {
 namespace {
 constexpr int kShapeDim2d = 2;
 }  // namespace
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                                  const TensorPtr &input_tensor,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool2DAscendCustomize(const TensorPtr &input_tensor,
                                                                                   const ValueTuplePtr &output_size) {
-  OpRunner::InferOpOutput(op, input_tensor, output_size);
+  auto outputs = InferOutput<2>(prim::kPrimAdaptiveMaxPool2D, input_tensor, output_size);
 
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
   if (output_size_vector.size() != 2) {
@@ -50,21 +50,14 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> AdaptiveMaxPool2DAscendCustomiz
     }
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor);
+  TensorMalloc(outputs);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, output_size_update]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-    LAUNCH_ACLNN(aclnnAdaptiveMaxPool2d, device_context, op->stream_id(), input_tensor, output_size_update,
-                 op->output(0), op->output(1));
-  }));
-  return std::make_tuple(op->output(0), op->output(1));
+  const auto &output = std::get<0>(outputs);
+  const auto &indices = std::get<1>(outputs);
+  DISPATCH_ACLNN(aclnnAdaptiveMaxPool2d, input_tensor, output_size_update, output, indices);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

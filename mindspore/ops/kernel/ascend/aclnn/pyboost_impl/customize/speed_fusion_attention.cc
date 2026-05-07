@@ -19,19 +19,24 @@
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/zeros.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
 #include "include/op_enum.h"
 #include "ir/tensor_new.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-std::optional<TensorPtr> SpeedFusionAttentionDropoutGenMaskCall(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, int64_t head_num_value,
-  int64_t input_layout_value, double keep_prob_value, const TensorPtr &seed, const TensorPtr &offset,
-  const BoolImmPtr &gen_mask_parallel, const BoolImmPtr &sync, int64_t *numels) {
+std::optional<TensorPtr> SpeedFusionAttentionDropoutGenMaskCall(const TensorPtr &query, const TensorPtr &key,
+                                                                int64_t head_num_value, int64_t input_layout_value,
+                                                                double keep_prob_value, const TensorPtr &seed,
+                                                                const TensorPtr &offset,
+                                                                const BoolImmPtr &gen_mask_parallel,
+                                                                const BoolImmPtr &sync, int64_t *numels) {
   auto query_shape = query->shape();
   auto key_shape = key->shape();
 
@@ -84,19 +89,27 @@ tensor::TensorPtr RecordRandomStateBeforeGenMask(const TensorPtr &tensor, double
 }
 }  // namespace
 
-void SpeedFusionAttentionAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const Int64ImmPtr &head_num, const Int64ImmPtr &input_layout, const TensorPtr &seed, const TensorPtr &offset,
-  const std::optional<TensorPtr> &pse, const std::optional<TensorPtr> &padding_mask,
-  const std::optional<TensorPtr> &atten_mask, const FP32ImmPtr &scale, const FP32ImmPtr &keep_prob,
-  const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens, const Int64ImmPtr &inner_precise,
-  const std::optional<ValueTuplePtr> &prefix, const std::optional<ValueTuplePtr> &actual_seq_qlen,
-  const std::optional<ValueTuplePtr> &actual_seq_kvlen, const Int64ImmPtr &sparse_mode,
-  const BoolImmPtr &gen_mask_parallel, const BoolImmPtr &sync, const Int64ImmPtr &pse_type,
-  const std::optional<ValueTuplePtr> &q_start_idx, const std::optional<ValueTuplePtr> &kv_start_idx) {
-  OpRunner::InferOpOutput(op, query, key, value, head_num, input_layout, seed, offset, pse, padding_mask, atten_mask,
-                          scale, keep_prob, pre_tokens, next_tokens, inner_precise, prefix, actual_seq_qlen,
-                          actual_seq_kvlen, sparse_mode, gen_mask_parallel, sync, pse_type, q_start_idx, kv_start_idx);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
+           tensor::TensorPtr, tensor::TensorPtr>
+SpeedFusionAttentionAscendCustomize(
+  const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
+  const Int64ImmPtr &head_num, const Int64ImmPtr &input_layout, const tensor::TensorPtr &seed,
+  const tensor::TensorPtr &offset, const std::optional<tensor::TensorPtr> &pse,
+  const std::optional<tensor::TensorPtr> &padding_mask, const std::optional<tensor::TensorPtr> &atten_mask,
+  const FP32ImmPtr &scale, const FP32ImmPtr &keep_prob, const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens,
+  const Int64ImmPtr &inner_precise, const std::optional<ValueTuplePtr> &prefix,
+  const std::optional<ValueTuplePtr> &actual_seq_qlen, const std::optional<ValueTuplePtr> &actual_seq_kvlen,
+  const Int64ImmPtr &sparse_mode, const BoolImmPtr &gen_mask_parallel, const BoolImmPtr &sync,
+  const Int64ImmPtr &pse_type, const std::optional<ValueTuplePtr> &q_start_idx,
+  const std::optional<ValueTuplePtr> &kv_start_idx) {
+  auto infer_outputs = InferOutput<7>(prim::kPrimSpeedFusionAttention, query, key, value, head_num, input_layout, seed,
+                                      offset, pse, padding_mask, atten_mask, scale, keep_prob, pre_tokens, next_tokens,
+                                      inner_precise, prefix, actual_seq_qlen, actual_seq_kvlen, sparse_mode,
+                                      gen_mask_parallel, sync, pse_type, q_start_idx, kv_start_idx);
+  auto output0 = std::get<0>(infer_outputs);
+  auto output1 = std::get<1>(infer_outputs);
+  auto output2 = std::get<2>(infer_outputs);
+  auto output3 = std::get<3>(infer_outputs);
 
   auto input_layout_value = static_cast<mindspore::ops::FASInputLayoutMode>(GetValue<int64_t>(input_layout));
   auto actual_seq_qlen_array = ConvertValueTupleToVector<int64_t>(actual_seq_qlen);
@@ -118,9 +131,8 @@ void SpeedFusionAttentionAscendCustomize(
   auto keep_prob_value = static_cast<double>(GetValue<float>(keep_prob));
   auto ori_seed = RecordRandomStateBeforeGenMask(seed, keep_prob_value);
   auto ori_offset = RecordRandomStateBeforeGenMask(offset, keep_prob_value);
-  auto dropout_mask =
-    SpeedFusionAttentionDropoutGenMaskCall(op, query, key, head_num_value, input_layout_value, keep_prob_value, seed,
-                                           offset, gen_mask_parallel, sync, &numels);
+  auto dropout_mask = SpeedFusionAttentionDropoutGenMaskCall(
+    query, key, head_num_value, input_layout_value, keep_prob_value, seed, offset, gen_mask_parallel, sync, &numels);
 
   auto input_layout_str =
     mindspore::device::ascend::FASInputLayoutMode::ConvertEnumToString(GetValue<int64_t>(input_layout));
@@ -134,46 +146,27 @@ void SpeedFusionAttentionAscendCustomize(
   auto q_start_idx_array = ConvertValueTupleToVector<int64_t>(q_start_idx);
   auto kv_start_idx_array = ConvertValueTupleToVector<int64_t>(kv_start_idx);
 
-  constexpr int64_t kHostOutputNum = 3;
-  auto device_outputs = std::vector<tensor::TensorPtr>(op->outputs().begin(), op->outputs().end() - kHostOutputNum);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), query, key, value, pse, dropout_mask,
-                                padding_mask, atten_mask);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), device_outputs);
+  std::vector<tensor::TensorPtr> device_outputs = {output0, output1, output2, output3};
+  TensorToDevice(query, key, value, pse, dropout_mask, padding_mask, atten_mask);
+  TensorMalloc(device_outputs);
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, query, key, value, head_num_value, input_layout_str, pse, dropout_mask, padding_mask, atten_mask, scale_value,
-     keep_prob_value, pre_tokens_value, next_tokens_value, inner_precise_value, prefix_array, actual_seq_qlen_array,
-     actual_seq_kvlen_array, sparse_mode_value, pse_type_value, q_start_idx_array, kv_start_idx_array,
-     device_outputs]() {
-      auto device_context = op->device_context();
-      const auto &outputs = device_outputs;
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, query, key, value, pse, dropout_mask, padding_mask, atten_mask);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      if (!actual_seq_qlen_array.empty() && !actual_seq_kvlen_array.empty()) {
-        LAUNCH_ACLNN(aclnnFlashAttentionVarLenScoreV2, device_context, op->stream_id(), query, key, value, pse,
-                     dropout_mask, padding_mask, atten_mask, prefix_array, actual_seq_qlen_array,
-                     actual_seq_kvlen_array, q_start_idx_array, kv_start_idx_array, scale_value, keep_prob_value,
-                     pre_tokens_value, next_tokens_value, head_num_value, input_layout_str, inner_precise_value,
-                     sparse_mode_value, pse_type_value, outputs[kIndex1], outputs[kIndex2], outputs[kIndex3],
-                     outputs[kIndex0]);
-      } else {
-        LAUNCH_ACLNN(aclnnFlashAttentionScoreV2, device_context, op->stream_id(), query, key, value, pse, dropout_mask,
-                     padding_mask, atten_mask, prefix_array, q_start_idx_array, kv_start_idx_array, scale_value,
-                     keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value, input_layout_str,
-                     inner_precise_value, sparse_mode_value, pse_type_value, outputs[kIndex1], outputs[kIndex2],
-                     outputs[kIndex3], outputs[kIndex0]);
-      }
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
+  MS_LOG(DEBUG) << "SpeedFusionAttention Call start";
+  if (!actual_seq_qlen_array.empty() && !actual_seq_kvlen_array.empty()) {
+    DISPATCH_ACLNN(aclnnFlashAttentionVarLenScoreV2, query, key, value, pse, dropout_mask, padding_mask, atten_mask,
+                   prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array, q_start_idx_array, kv_start_idx_array,
+                   scale_value, keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value, input_layout_str,
+                   inner_precise_value, sparse_mode_value, pse_type_value, device_outputs[kIndex1],
+                   device_outputs[kIndex2], device_outputs[kIndex3], device_outputs[kIndex0]);
+  } else {
+    DISPATCH_ACLNN(aclnnFlashAttentionScoreV2, query, key, value, pse, dropout_mask, padding_mask, atten_mask,
+                   prefix_array, q_start_idx_array, kv_start_idx_array, scale_value, keep_prob_value, pre_tokens_value,
+                   next_tokens_value, head_num_value, input_layout_str, inner_precise_value, sparse_mode_value,
+                   pse_type_value, device_outputs[kIndex1], device_outputs[kIndex2], device_outputs[kIndex3],
+                   device_outputs[kIndex0]);
+  }
+  MS_LOG(DEBUG) << "SpeedFusionAttention Launch end";
 
-  // Set host outputs
-  device_outputs.emplace_back(ori_seed);
-  device_outputs.emplace_back(ori_offset);
-  device_outputs.emplace_back(tensor::from_scalar(numels));
-  op->set_outputs(device_outputs);
+  return std::make_tuple(output0, output1, output2, output3, ori_seed, ori_offset, tensor::from_scalar(numels));
 }
 }  // namespace pyboost
 }  // namespace kernel

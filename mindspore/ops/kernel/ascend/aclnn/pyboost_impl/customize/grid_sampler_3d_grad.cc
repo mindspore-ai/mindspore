@@ -17,28 +17,27 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/grid_sampler_3d_grad.h"
 #include <tuple>
 #include <string>
-#include <memory>
 #include <vector>
 #include <algorithm>
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr> GridSampler3DGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &grad_tensor, const TensorPtr &input_x_tensor,
-  const TensorPtr &grid_tensor, const Int64ImmPtr &interpolation_mode, const Int64ImmPtr &padding_mode,
-  const BoolImmPtr &align_corners, const ValueTuplePtr &output_mask) {
+  const TensorPtr &grad_tensor, const TensorPtr &input_x_tensor, const TensorPtr &grid_tensor,
+  const Int64ImmPtr &interpolation_mode, const Int64ImmPtr &padding_mode, const BoolImmPtr &align_corners,
+  const ValueTuplePtr &output_mask) {
   constexpr char op_name[] = "GridSampler3DGrad";
   MS_LOG(DEBUG) << op_name << " call start";
-  auto device_context = op->device_context();
-  OpRunner::InferOpOutput(op, grad_tensor, input_x_tensor, grid_tensor, interpolation_mode, padding_mode,
-                          align_corners);
-  // ValueTuple to std::vector
+  auto outputs = InferOutput<2>(prim::kPrimGridSampler3DGrad, grad_tensor, input_x_tensor, grid_tensor,
+                                interpolation_mode, padding_mode, align_corners);
 
-  // Convert ValuePtr to c++ scalar
   // Convert ValuePtr to c++ scalar
   auto interpolation_mode_imm = GetValue<int64_t>(interpolation_mode);
   auto padding_mode_imm = GetValue<int64_t>(padding_mode);
@@ -48,27 +47,14 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> GridSampler3DGradAscendCustomiz
   std::transform(output_mask_tmp.begin(), output_mask_tmp.end(), std::back_inserter(output_mask_vec),
                  [](int64_t value) { return static_cast<uint8_t>(value); });
 
-  PyBoostUtils::PrepareOpInputs(device_context, op->stream_id(), grad_tensor, input_x_tensor, grid_tensor);
+  TensorToDevice(grad_tensor, input_x_tensor, grid_tensor);
+  TensorMalloc(outputs);
 
-  PyBoostUtils::PrepareOpOutputs(device_context, op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, grad_tensor, input_x_tensor, grid_tensor, interpolation_mode_imm,
-                                                  padding_mode_imm, align_corners_imm, output_mask_vec, op_name]() {
-      MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, grad_tensor, input_x_tensor, grid_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-      LAUNCH_ACLNN(aclnnGridSampler3DBackward, device_context, op->stream_id(), grad_tensor, input_x_tensor,
-                   grid_tensor, interpolation_mode_imm, padding_mode_imm, align_corners_imm, output_mask_vec,
-                   op->output(0), op->output(1));
-      MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-    }));
-  return std::make_tuple(op->output(0), op->output(1));
+  MS_LOG(DEBUG) << "Run device task " << op_name << " start";
+  DISPATCH_ACLNN(aclnnGridSampler3DBackward, grad_tensor, input_x_tensor, grid_tensor, interpolation_mode_imm,
+                 padding_mode_imm, align_corners_imm, output_mask_vec, std::get<0>(outputs), std::get<1>(outputs));
+  MS_LOG(DEBUG) << "Run device task " << op_name << " end";
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

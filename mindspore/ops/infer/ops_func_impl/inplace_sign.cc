@@ -22,6 +22,11 @@
 
 namespace mindspore {
 namespace ops {
+void CheckInplaceSignDtype(const std::string &prim_name, TypeId input_type) {
+  if (input_type == kNumberTypeComplex64 || input_type == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For Primitive " << prim_name << ", complex input types are not supported.";
+  }
+}
 
 ShapeArray InplaceSignFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   return {input_infos[kIndex0]->GetShape()};
@@ -30,10 +35,7 @@ ShapeArray InplaceSignFuncImpl::InferShape(const PrimitivePtr &primitive, const 
 std::vector<TypeId> InplaceSignFuncImpl::InferType(const PrimitivePtr &primitive,
                                                    const InferInfoPtrList &input_infos) const {
   auto input_type = input_infos[kIndex0]->GetType();
-  auto prim_name = primitive->name();
-  if (input_type == kNumberTypeComplex64 || input_type == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For Primitive " << prim_name << ", complex input types are not supported.";
-  }
+  CheckInplaceSignDtype(primitive->name(), input_type);
   return {input_type};
 }
 }  // namespace ops

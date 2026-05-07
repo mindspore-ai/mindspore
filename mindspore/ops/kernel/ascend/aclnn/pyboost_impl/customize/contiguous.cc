@@ -16,14 +16,20 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/contiguous.h"
 #include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/current_state.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/pyboost/auto_generate/copy.h"
 #include "include/pynative/utils/pyboost/customize/op_common.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ContiguousAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::TensorPtr ContiguousAscendCustomize(const tensor::TensorPtr &input_tensor) {
+  auto op =
+    std::make_shared<OpRunner>(prim::kPrimContiguous, runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   MS_LOG(DEBUG) << "Call start";
   MS_EXCEPTION_IF_NULL(input_tensor);
 

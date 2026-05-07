@@ -15,46 +15,35 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/layer_norm_ext.h"
-#include <memory>
 #include <functional>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void LayerNormExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                 const ValueTuplePtr &normalized_shape,
-                                 const std::optional<TensorPtr> &weight_opt_tensor,
-                                 const std::optional<TensorPtr> &bias_opt_tensor, const FP32ImmPtr &eps) {
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormExtAscendCustomize(
+  const TensorPtr &input_tensor, const ValueTuplePtr &normalized_shape,
+  const std::optional<TensorPtr> &weight_opt_tensor, const std::optional<TensorPtr> &bias_opt_tensor,
+  const FP32ImmPtr &eps) {
   MS_LOG(DEBUG) << "Call start";
 
   // Convert ValuePtr to c++ scalr
-  OpRunner::InferOpOutput(op, input_tensor, normalized_shape, weight_opt_tensor, bias_opt_tensor, eps);
+  auto outputs =
+    InferOutput<3>(prim::kPrimLayerNormExt, input_tensor, normalized_shape, weight_opt_tensor, bias_opt_tensor, eps);
 
   std::vector<int64_t> normalized_shape_vector = ConvertValueTupleToVector<int64_t>(normalized_shape);
   auto eps_imm = static_cast<double>(GetValue<float>(eps));
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, weight_opt_tensor,
-                                bias_opt_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor, weight_opt_tensor, bias_opt_tensor);
+  TensorMalloc(outputs);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_tensor, normalized_shape_vector, weight_opt_tensor, bias_opt_tensor, eps_imm]() {
-      MS_LOG(DEBUG) << "Run device task LayerNormExt start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, weight_opt_tensor, bias_opt_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnLayerNorm, device_context, op->stream_id(), input_tensor, normalized_shape_vector,
-                   weight_opt_tensor, bias_opt_tensor, eps_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
-      MS_LOG(DEBUG) << "Run device task LayerNormExt end";
-    }));
+  DISPATCH_ACLNN(aclnnLayerNorm, input_tensor, normalized_shape_vector, weight_opt_tensor, bias_opt_tensor, eps_imm,
+                 std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -21,8 +21,12 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/current_state.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,9 +56,12 @@ int64_t ConvertTensorToInt64(const TensorPtr &tensor) {
 }
 }  // namespace
 
-tensor::TensorPtr BincountExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                             const std::optional<TensorPtr> &weight_tensor,
+tensor::TensorPtr BincountExtAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                             const std::optional<tensor::TensorPtr> &weight_tensor,
                                              const Int64ImmPtr &min_length) {
+  auto op = std::make_shared<OpRunner>(prim::kPrimBincountExt,
+                                       runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   auto output_shape = GetValue<int64_t>(min_length);
 
   // Check if null tensor
@@ -79,27 +86,16 @@ tensor::TensorPtr BincountExtAscendCustomize(const std::shared_ptr<OpRunner> &op
   const auto output_shape_ptr = std::make_shared<Int64Imm>(output_shape);
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, output_shape_ptr);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, weight_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(op, input_tensor, weight_tensor);
+  TensorMalloc(op, op->outputs());
 
   // update output shape
   auto output_real = ShapeVector({output_shape});
   op->UpdateOutputShape(op->output(kIndex0), output_real);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, weight_tensor,
-                                                                          output_shape]() {
-    MS_LOG(DEBUG) << "Run device task bincount start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor, weight_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnBincount, device_context, op->stream_id(), input_tensor, weight_tensor, output_shape, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task bincount end";
-  }));
+  const auto &output = op->output(kIndex0);
+  DISPATCH_LAUNCH_ACLNN(aclnnBincount, input_tensor, weight_tensor, output_shape, output);
 
   // update simple infer shape
   auto simple_infer_ptr = op->output_value_simple_info();

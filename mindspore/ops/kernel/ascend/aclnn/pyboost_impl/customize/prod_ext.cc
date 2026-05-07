@@ -16,16 +16,17 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/prod_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ProdExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                         const std::optional<Int64ImmPtr> &axis, const BoolImmPtr &keep_dims,
-                                         const std::optional<Int64ImmPtr> &dtype) {
-  OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims, dtype);
+tensor::TensorPtr ProdExtAscendCustomize(const TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &axis,
+                                         const BoolImmPtr &keep_dims, const std::optional<Int64ImmPtr> &dtype) {
+  auto output = InferOutput<1>(prim::kPrimProdExt, input_tensor, axis, keep_dims, dtype);
 
   int64_t axis_imm = 0;
   bool keep_dims_imm = false;
@@ -38,37 +39,16 @@ tensor::TensorPtr ProdExtAscendCustomize(const std::shared_ptr<OpRunner> &op, co
   }
 
   // Infer function has confirmed the actual dtype of output
-  TypeId out_dtype = op->output_value_simple_info()->dtype_vector_[kIndex0]->type_id();
+  TypeId out_dtype = output->data_type();
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
   if (is_all_reduce) {
-    PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, out_dtype]() {
-      auto device_context = op->device_context();
-
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      LAUNCH_ACLNN(aclnnProd, device_context, op->stream_id(), input_tensor, out_dtype, op->output(0));
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
+    DISPATCH_ACLNN(aclnnProd, input_tensor, out_dtype, output);
   } else {
-    PyBoostUtils::DispatchRun(
-      std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_imm, keep_dims_imm, out_dtype]() {
-        auto device_context = op->device_context();
-
-        PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-        PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-        MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-        LAUNCH_ACLNN(aclnnProdDim, device_context, op->stream_id(), input_tensor, axis_imm, keep_dims_imm, out_dtype,
-                     op->output(0));
-        MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-      }));
+    DISPATCH_ACLNN(aclnnProdDim, input_tensor, axis_imm, keep_dims_imm, out_dtype, output);
   }
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

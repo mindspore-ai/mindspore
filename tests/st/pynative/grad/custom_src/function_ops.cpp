@@ -15,7 +15,7 @@
  */
 
 #include <string>
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "custom_op_api.h"
 
 namespace mindspore::pynative {

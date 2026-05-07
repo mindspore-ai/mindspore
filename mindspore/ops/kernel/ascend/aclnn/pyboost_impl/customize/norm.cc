@@ -15,21 +15,22 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/norm.h"
-#include <memory>
 #include <functional>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void NormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor, const FP32ImmPtr &p,
-                         const std::optional<ValueTuplePtr> &dim, const BoolImmPtr &keepdim,
-                         const std::optional<Int64ImmPtr> &dtype) {
+tensor::TensorPtr NormAscendCustomize(const TensorPtr &input_x_tensor, const FP32ImmPtr &p,
+                                      const std::optional<ValueTuplePtr> &dim, const BoolImmPtr &keepdim,
+                                      const std::optional<Int64ImmPtr> &dtype) {
   MS_LOG(DEBUG) << "Call Norm start";
   // Convert ValuePtr to c++ scalar
-  OpRunner::InferOpOutput(op, input_x_tensor, p, dim, keepdim, dtype);
+  auto output = InferOutput<1>(prim::kPrimNorm, input_x_tensor, p, dim, keepdim, dtype);
   std::vector<int64_t> dim_vector{};
   if (dim.has_value()) {
     dim_vector = ConvertValueTupleToVector<int64_t>(dim.value());
@@ -38,22 +39,10 @@ void NormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &i
   MAKE_SCALAR(GetValue<float>(p), kNumberTypeFloat32, p_scalar);
 
   const auto keepdim_imm = GetValue<bool>(keepdim);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_x_tensor, p_scalar, dim_vector, keepdim_imm]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_x_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnNorm, device_context, op->stream_id(), input_x_tensor, p_scalar, dim_vector, keepdim_imm,
-                   outputs[kIndex0]);
-      MS_LOG(DEBUG) << "Launch Norm end";
-    }));
+  TensorToDevice(input_x_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnNorm, input_x_tensor, p_scalar, dim_vector, keepdim_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

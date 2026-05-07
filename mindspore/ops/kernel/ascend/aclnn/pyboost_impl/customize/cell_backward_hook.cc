@@ -19,9 +19,10 @@
 #include "include/pynative/utils/pyboost/customize/cell_backward_hook.h"
 
 namespace mindspore::kernel::pyboost {
-void CellBackwardHookAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors_list) {
+std::vector<tensor::TensorPtr> CellBackwardHookAscendCustomize(const ValueTuplePtr &tensors_list) {
   MS_LOG(DEBUG) << "Cell BackwardHook Ascend start";
-  CellBackwardHookCustomize(op, tensors_list);
+  auto outputs = CellBackwardHookCustomize(tensors_list);
   MS_LOG(DEBUG) << "Cell BackwardHook Ascend end";
+  return outputs;
 }
 }  // namespace mindspore::kernel::pyboost

@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #include "ir/dtype/tensor_type.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 
 namespace mindspore {
 namespace kernel {

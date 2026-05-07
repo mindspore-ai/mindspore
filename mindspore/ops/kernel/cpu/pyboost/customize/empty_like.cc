@@ -20,6 +20,7 @@
 #include <vector>
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/runtime/op_runner.h"
 
 namespace mindspore {
 namespace kernel {

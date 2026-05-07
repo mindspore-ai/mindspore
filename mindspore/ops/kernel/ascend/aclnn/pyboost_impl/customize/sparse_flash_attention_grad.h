@@ -17,26 +17,23 @@
 #ifndef MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_SPARSE_FLASH_ATTENTION_GRAD_H_
 #define MINDSPORE_OPS_KERNEL_ASCEND_PYBOOST_CUSTOMIZE_SPARSE_FLASH_ATTENTION_GRAD_H_
 
-#include <memory>
-#include <vector>
+#include <tuple>
 #include <optional>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-std::vector<tensor::TensorPtr> SparseFlashAttentionGradAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const TensorPtr &sparse_indices, const TensorPtr &d_out, const TensorPtr &out, const TensorPtr &softmax_max,
-  const TensorPtr &softmax_sum, const FP32ImmPtr &scale_value, const Int64ImmPtr &sparse_block_size,
-  const std::optional<TensorPtr> &query_rope, const std::optional<TensorPtr> &key_rope,
-  const std::optional<TensorPtr> &actual_seq_qlen, const std::optional<TensorPtr> &actual_seq_kvlen,
-  const Int64ImmPtr &layout, const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens,
-  const Int64ImmPtr &next_tokens, const Int64ImmPtr &attention_mode);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
+SparseFlashAttentionGradAscendCustomize(
+  const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const TensorPtr &sparse_indices,
+  const TensorPtr &d_out, const TensorPtr &out, const TensorPtr &softmax_max, const TensorPtr &softmax_sum,
+  const FP32ImmPtr &scale_value, const Int64ImmPtr &sparse_block_size, const std::optional<TensorPtr> &query_rope,
+  const std::optional<TensorPtr> &key_rope, const std::optional<TensorPtr> &actual_seq_qlen,
+  const std::optional<TensorPtr> &actual_seq_kvlen, const Int64ImmPtr &layout, const Int64ImmPtr &sparse_mode,
+  const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens, const Int64ImmPtr &attention_mode);
 
 }  // namespace pyboost
 }  // namespace kernel

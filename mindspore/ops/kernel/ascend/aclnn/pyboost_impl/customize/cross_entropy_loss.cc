@@ -16,24 +16,25 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/cross_entropy_loss.h"
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <tuple>
 #include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> CrossEntropyLossAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input, const TensorPtr &target,
-  const std::optional<TensorPtr> &weight, const Int64ImmPtr &reduction, const Int64ImmPtr &ignore_index,
-  const FP32ImmPtr &label_smoothing, const FP32ImmPtr &lse_square_scale_for_zloss, const BoolImmPtr &return_zloss) {
-  OpRunner::InferOpOutput(op, input, target, weight, reduction, ignore_index, label_smoothing,
-                          lse_square_scale_for_zloss, return_zloss);
+  const TensorPtr &input, const TensorPtr &target, const std::optional<TensorPtr> &weight, const Int64ImmPtr &reduction,
+  const Int64ImmPtr &ignore_index, const FP32ImmPtr &label_smoothing, const FP32ImmPtr &lse_square_scale_for_zloss,
+  const BoolImmPtr &return_zloss) {
+  auto outputs = InferOutput<4>(prim::kPrimCrossEntropyLoss, input, target, weight, reduction, ignore_index,
+                                label_smoothing, lse_square_scale_for_zloss, return_zloss);
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
   // transform reduction enum value to corresponding value
   const char *reduction_value = ops::ConvertReductionStrForAclnn(reduction_imm);
@@ -41,8 +42,8 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::Tens
   const auto label_smoothing_imm = static_cast<double>(label_smoothing->value());
   const auto lse_square_scale_for_zloss_imm = static_cast<double>(lse_square_scale_for_zloss->value());
   const auto return_zloss_imm = GetValue<bool>(return_zloss);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, target, weight);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input, target, weight);
+  TensorMalloc(outputs);
 
   TensorPtr input_contiguous = input;
   if (!input->is_contiguous()) {
@@ -65,28 +66,18 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::Tens
     }
   }
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, input_contiguous, target_contiguous, weight_contiguous, reduction_value, ignore_index_imm, label_smoothing_imm,
-     lse_square_scale_for_zloss_imm, return_zloss_imm]() {
-      MS_LOG(DEBUG) << "Run device task CrossEntropyLoss start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-
-      std::optional<TensorPtr> weight_opt;
-      if (weight_contiguous) {
-        weight_opt = weight_contiguous;
-      }
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), input_contiguous, target_contiguous, weight_opt);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
-      LAUNCH_ACLNN(aclnnCrossEntropyLoss, device_context, op->stream_id(), input_contiguous, target_contiguous,
-                   weight_opt, reduction_value, ignore_index_imm, label_smoothing_imm, lse_square_scale_for_zloss_imm,
-                   return_zloss_imm, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
-      MS_LOG(DEBUG) << "Run device task CrossEntropyLoss end";
-    }));
-  return std::make_tuple(op->output(kIndex0), op->output(kIndex1), op->output(kIndex2), op->output(kIndex3));
+  std::optional<TensorPtr> weight_opt;
+  if (weight_contiguous) {
+    weight_opt = weight_contiguous;
+  }
+  const auto &loss = std::get<0>(outputs);
+  const auto &log_prob = std::get<1>(outputs);
+  const auto &zloss = std::get<2>(outputs);
+  const auto &lse_for_zloss = std::get<3>(outputs);
+  DISPATCH_ACLNN(aclnnCrossEntropyLoss, input_contiguous, target_contiguous, weight_opt, reduction_value,
+                 ignore_index_imm, label_smoothing_imm, lse_square_scale_for_zloss_imm, return_zloss_imm, loss,
+                 log_prob, zloss, lse_for_zloss);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -15,43 +15,30 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/multinomial_ext.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MultinomialExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const Int64ImmPtr &num_samples, const BoolImmPtr &replacement,
-                                                const TensorPtr &seed, const TensorPtr &offset) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
-  OpRunner::InferOpOutput(op, input_tensor, num_samples, replacement, seed, offset);
+tensor::TensorPtr MultinomialExtAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &num_samples,
+                                                const BoolImmPtr &replacement, const tensor::TensorPtr &seed,
+                                                const tensor::TensorPtr &offset) {
+  MS_LOG(DEBUG) << prim::kPrimMultinomialExt->name() << " call start";
+  auto output = InferOutput<1>(prim::kPrimMultinomialExt, input_tensor, num_samples, replacement, seed, offset);
 
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, num_samples, replacement, seed_imm, offset_imm]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-
-      auto num_samples_value = static_cast<int64_t>(num_samples->value());
-      auto replacement_value = static_cast<bool>(replacement->value());
-
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnMultinomial, device_context, op->stream_id(), input_tensor, num_samples_value,
-                   replacement_value, seed_imm, offset_imm, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " end";
-    }));
-  return op->output(0);
+  auto num_samples_value = static_cast<int64_t>(num_samples->value());
+  auto replacement_value = static_cast<bool>(replacement->value());
+  DISPATCH_ACLNN(aclnnMultinomial, input_tensor, num_samples_value, replacement_value, seed_imm, offset_imm, output);
+  MS_LOG(DEBUG) << "Run device task " << prim::kPrimMultinomialExt->name() << " end";
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

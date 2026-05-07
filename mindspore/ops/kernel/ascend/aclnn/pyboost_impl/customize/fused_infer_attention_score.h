@@ -19,29 +19,35 @@
 
 #include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr FusedInferAttentionScoreAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query_tensor, const ValueTuplePtr &key_tensor_list,
-  const ValueTuplePtr &value_tensor_list, const std::optional<TensorPtr> &pse_shift_tensor,
-  const std::optional<TensorPtr> &attn_mask_tensor, const std::optional<TensorPtr> &actual_seq_lengths_tensor,
-  const std::optional<TensorPtr> &actual_seq_lengths_kv_tensor, const std::optional<TensorPtr> &dequant_scale1_tensor,
-  const std::optional<TensorPtr> &quant_scale1_tensor, const std::optional<TensorPtr> &dequant_scale2_tensor,
-  const std::optional<TensorPtr> &quant_scale2_tensor, const std::optional<TensorPtr> &quant_offset2_tensor,
-  const std::optional<TensorPtr> &antiquant_scale_tensor, const std::optional<TensorPtr> &antiquant_offset_tensor,
-  const std::optional<TensorPtr> &block_table_tensor, const std::optional<TensorPtr> &query_padding_size_tensor,
-  const std::optional<TensorPtr> &kv_padding_size_tensor, const std::optional<TensorPtr> &key_antiquant_scale_tensor,
-  const std::optional<TensorPtr> &key_antiquant_offset_tensor,
-  const std::optional<TensorPtr> &value_antiquant_scale_tensor,
-  const std::optional<TensorPtr> &value_antiquant_offset_tensor,
-  const std::optional<TensorPtr> &key_shared_prefix_tensor, const std::optional<TensorPtr> &value_shared_prefix_tensor,
-  const std::optional<TensorPtr> &actual_shared_prefix_len_tensor, const Int64ImmPtr &num_heads,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> FusedInferAttentionScoreAscendCustomize(
+  const tensor::TensorPtr &query_tensor, const ValueTuplePtr &key_tensor_list, const ValueTuplePtr &value_tensor_list,
+  const std::optional<tensor::TensorPtr> &pse_shift_tensor, const std::optional<tensor::TensorPtr> &attn_mask_tensor,
+  const std::optional<tensor::TensorPtr> &actual_seq_lengths_tensor,
+  const std::optional<tensor::TensorPtr> &actual_seq_lengths_kv_tensor,
+  const std::optional<tensor::TensorPtr> &dequant_scale1_tensor,
+  const std::optional<tensor::TensorPtr> &quant_scale1_tensor,
+  const std::optional<tensor::TensorPtr> &dequant_scale2_tensor,
+  const std::optional<tensor::TensorPtr> &quant_scale2_tensor,
+  const std::optional<tensor::TensorPtr> &quant_offset2_tensor,
+  const std::optional<tensor::TensorPtr> &antiquant_scale_tensor,
+  const std::optional<tensor::TensorPtr> &antiquant_offset_tensor,
+  const std::optional<tensor::TensorPtr> &block_table_tensor,
+  const std::optional<tensor::TensorPtr> &query_padding_size_tensor,
+  const std::optional<tensor::TensorPtr> &kv_padding_size_tensor,
+  const std::optional<tensor::TensorPtr> &key_antiquant_scale_tensor,
+  const std::optional<tensor::TensorPtr> &key_antiquant_offset_tensor,
+  const std::optional<tensor::TensorPtr> &value_antiquant_scale_tensor,
+  const std::optional<tensor::TensorPtr> &value_antiquant_offset_tensor,
+  const std::optional<tensor::TensorPtr> &key_shared_prefix_tensor,
+  const std::optional<tensor::TensorPtr> &value_shared_prefix_tensor,
+  const std::optional<tensor::TensorPtr> &actual_shared_prefix_len_tensor, const Int64ImmPtr &num_heads,
   const FP32ImmPtr &scale_value, const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens,
   const Int64ImmPtr &input_layout, const Int64ImmPtr &num_key_value_heads, const Int64ImmPtr &sparse_mode,
   const Int64ImmPtr &inner_precise, const Int64ImmPtr &block_size, const Int64ImmPtr &antiquant_mode,

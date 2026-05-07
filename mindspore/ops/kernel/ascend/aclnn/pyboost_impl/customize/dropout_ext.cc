@@ -15,42 +15,34 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dropout_ext.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr DropoutExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                            const FP32ImmPtr &p, const TensorPtr &seed, const TensorPtr &offset) {
-  OpRunner::InferOpOutput(op, input, p, seed, offset);
-  // Create device address for input/output tensors.
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  auto [seed_value, offset_value] = GetGeneratorState(seed, offset);
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, p, seed_value, offset_value]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(op->device_context(), input);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
-    auto p_value = static_cast<double>(p->value());
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> DropoutExtAscendCustomize(const tensor::TensorPtr &input,
+                                                                           const FP32ImmPtr &p,
+                                                                           const tensor::TensorPtr &seed,
+                                                                           const tensor::TensorPtr &offset) {
+  auto outputs = InferOutput<2>(prim::kPrimDropoutExt, input, p, seed, offset);
+  auto [output0, output1] = outputs;
+  TensorToDevice(input);
+  TensorMalloc(outputs);
+  auto gen_state = GetGeneratorState(seed, offset);
+  auto seed_value = std::get<0>(gen_state);
+  auto offset_value = std::get<1>(gen_state);
+  auto p_value = static_cast<double>(p->value());
 
-    std::vector<int64_t> input_shape = input->shape();
-    auto tensor_type = op->input_abs()[kIndex0]->GetType()->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(tensor_type);
-    auto dtype = tensor_type->element()->type_id();
-    MS_LOG(DEBUG) << "DropoutExt input dtype = " << TypeIdToString(dtype);
+  std::vector<int64_t> input_shape = input->shape();
+  auto dtype = input->data_type();
+  MS_LOG(DEBUG) << "DropoutExt input dtype = " << TypeIdToString(dtype);
 
-    LAUNCH_ACLNN(aclnnDropoutGenMaskV2, device_context, op->stream_id(), input_shape, p_value, seed_value, offset_value,
-                 dtype, outputs[kIndex1]);
-    LAUNCH_ACLNN(aclnnDropoutDoMask, device_context, op->stream_id(), input, outputs[kIndex1], p_value,
-                 outputs[kIndex0]);
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnDropoutGenMaskV2, input_shape, p_value, seed_value, offset_value, dtype, output1);
+  DISPATCH_ACLNN(aclnnDropoutDoMask, input, output1, p_value, output0);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

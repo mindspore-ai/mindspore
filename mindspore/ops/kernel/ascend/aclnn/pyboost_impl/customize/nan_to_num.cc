@@ -16,8 +16,10 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/nan_to_num.h"
 #include <tuple>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,13 +61,13 @@ std::tuple<float, float> GetInfValues(TypeId input_type, const std::optional<FP3
   }
   return std::make_tuple(new_posinf, new_neginf);
 }
-tensor::TensorPtr NanToNumAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                          const std::optional<FP32ImmPtr> &nan, const std::optional<FP32ImmPtr> &posinf,
+tensor::TensorPtr NanToNumAscendCustomize(const TensorPtr &input_tensor, const std::optional<FP32ImmPtr> &nan,
+                                          const std::optional<FP32ImmPtr> &posinf,
                                           const std::optional<FP32ImmPtr> &neginf) {
   const float DEFAULT_NAN = 0.0;
 
   auto new_nan = nan.has_value() ? nan.value()->value() : DEFAULT_NAN;
-  OpRunner::InferOpOutput(op, input_tensor, nan, posinf, neginf);
+  auto output = InferOutput<1>(prim::kPrimNanToNum, input_tensor, nan, posinf, neginf);
 
   bool posinf_has_value = posinf.has_value();
   bool neginf_has_value = neginf.has_value();
@@ -79,23 +81,11 @@ tensor::TensorPtr NanToNumAscendCustomize(const std::shared_ptr<OpRunner> &op, c
     auto input_type = input_tensor->Dtype()->type_id();
     std::tie(new_posinf, new_neginf) = GetInfValues(input_type, posinf, neginf, posinf_has_value, neginf_has_value);
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnNanToNum, input_tensor, new_nan, new_posinf, new_neginf, output);
 
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, new_nan, new_posinf, new_neginf]() {
-      MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " end";
-      auto device_context = op->device_context();
-
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-      LAUNCH_ACLNN(aclnnNanToNum, device_context, op->stream_id(), input_tensor, new_nan, new_posinf, new_neginf,
-                   op->output(0));
-
-      MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " end";
-    }));
-
-  return op->output(0);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -18,19 +18,18 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_M_T_UNPERMUTE_GRAD_H_
 
 #include <memory>
+#include <tuple>
 
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void MoeTokenUnpermuteGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &permuted_tokens,
-                                          const TensorPtr &unpermuted_tokens_grad, const TensorPtr &sorted_indices,
-                                          const std::optional<TensorPtr> &probs, const BoolImmPtr &padded_mode,
-                                          const std::optional<ValueTuplePtr> &restore_shape);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> MoeTokenUnpermuteGradAscendCustomize(
+  const tensor::TensorPtr &permuted_tokens, const tensor::TensorPtr &unpermuted_tokens_grad,
+  const tensor::TensorPtr &sorted_indices, const std::optional<tensor::TensorPtr> &probs, const BoolImmPtr &padded_mode,
+  const std::optional<ValueTuplePtr> &restore_shape);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

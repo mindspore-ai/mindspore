@@ -16,18 +16,17 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/tile.h"
 
-#include <memory>
 #include <vector>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "utils/log_adapter.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore::kernel::pyboost {
-void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor,
-                         const ValueTuplePtr &dims) {
-  MS_EXCEPTION_IF_NULL(op);
-  OpRunner::InferOpOutput(op, input_x_tensor, dims);
+tensor::TensorPtr TileAscendCustomize(const TensorPtr &input_x_tensor, const ValueTuplePtr &dims) {
+  auto output = InferOutput<1>(prim::kPrimTile, input_x_tensor, dims);
   std::vector<int64_t> multiples_vector = ConvertValueTupleToVector<int64_t>(dims);
 
   // Expand dims with 1 in head when its length is less than x rank.
@@ -39,19 +38,9 @@ void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &i
     (void)multiples_vector.insert(multiples_vector.begin(), expand_len, 1);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_x_tensor, multiples_vector]() {
-    MS_LOG(DEBUG) << "Run device task Tile start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    PyBoostUtils::MallocOpInputs(device_context, input_x_tensor);
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnRepeat, device_context, op->stream_id(), input_x_tensor, multiples_vector, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task Tile end";
-  }));
+  TensorToDevice(input_x_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnRepeat, input_x_tensor, multiples_vector, output);
+  return output;
 }
 }  // namespace mindspore::kernel::pyboost

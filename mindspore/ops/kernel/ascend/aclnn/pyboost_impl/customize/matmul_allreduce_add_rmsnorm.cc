@@ -15,25 +15,24 @@
  */
 #include "kernel/ascend/aclnn/pyboost_impl/customize/matmul_allreduce_add_rmsnorm.h"
 #include <string>
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void MatmulAllReduceAddRmsNormAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                              const TensorPtr &x2_tensor, const TensorPtr &bias_tensor,
-                                              const TensorPtr &residual_tensor, const TensorPtr &gamma_tensor,
-                                              const FP32ImmPtr &epsilon, const StringImmPtr &group,
-                                              const Int64ImmPtr &reduction, const Int64ImmPtr &comm_turn,
-                                              const Int64ImmPtr &stream_mode) {
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> MatmulAllReduceAddRmsNormAscendCustomize(
+  const TensorPtr &x1_tensor, const TensorPtr &x2_tensor, const TensorPtr &bias_tensor,
+  const TensorPtr &residual_tensor, const TensorPtr &gamma_tensor, const FP32ImmPtr &epsilon, const StringImmPtr &group,
+  const Int64ImmPtr &reduction, const Int64ImmPtr &comm_turn, const Int64ImmPtr &stream_mode) {
   MS_LOG(DEBUG) << "MatmulAllReduceAddRmsNormAscendCustomize call start.";
-  OpRunner::InferOpOutput(op, x1_tensor, x2_tensor, bias_tensor, residual_tensor, gamma_tensor, epsilon, group,
-                          reduction, comm_turn, stream_mode);
+  auto outputs = InferOutput<2>(prim::kPrimMatmulAllReduceAddRmsNorm, x1_tensor, x2_tensor, bias_tensor,
+                                residual_tensor, gamma_tensor, epsilon, group, reduction, comm_turn, stream_mode);
 
   // Convert ValuePtr to c++ scalar
   auto epsilon_imm = static_cast<double>(GetValue<float>(epsilon));
@@ -45,35 +44,21 @@ void MatmulAllReduceAddRmsNormAscendCustomize(const std::shared_ptr<OpRunner> &o
   // transform reduction enum value to corresponding value
   auto reduction_value = device::ascend::GEReduction::ConvertEnumToString(GetValue<int64_t>(reduction));
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x1_tensor, x2_tensor, bias_tensor,
-                                residual_tensor, gamma_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(x1_tensor, x2_tensor, bias_tensor, residual_tensor, gamma_tensor);
+  TensorMalloc(outputs);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x1_tensor, x2_tensor, bias_tensor, residual_tensor, gamma_tensor, epsilon_imm, group_imm, reduction_value,
-     comm_turn_imm, stream_mode_imm]() {
-      MS_LOG(DEBUG) << "Run device task MatmulAllReduceAddRmsNorm start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), x1_tensor, x2_tensor, bias_tensor, residual_tensor,
-                                   gamma_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
-      // for empty bias input
-      if (bias_tensor->ElementsNum() == 0) {
-        LAUNCH_ACLNN(aclnnMatmulAllReduceAddRmsNorm, device_context, op->stream_id(), x1_tensor, x2_tensor, nullptr,
-                     residual_tensor, gamma_tensor, epsilon_imm, group_imm, reduction_value, comm_turn_imm,
-                     stream_mode_imm, outputs[kIndex0], outputs[kIndex1]);
-      } else {
-        LAUNCH_ACLNN(aclnnMatmulAllReduceAddRmsNorm, device_context, op->stream_id(), x1_tensor, x2_tensor, bias_tensor,
-                     residual_tensor, gamma_tensor, epsilon_imm, group_imm, reduction_value, comm_turn_imm,
-                     stream_mode_imm, outputs[kIndex0], outputs[kIndex1]);
-      }
-      MS_LOG(DEBUG) << "Run device task MatmulAllReduceAddRmsNorm end";
-    }));
+  auto [o0, o1] = outputs;
+
+  // for empty bias input
+  if (bias_tensor->ElementsNum() == 0) {
+    DISPATCH_ACLNN(aclnnMatmulAllReduceAddRmsNorm, x1_tensor, x2_tensor, nullptr, residual_tensor, gamma_tensor,
+                   epsilon_imm, group_imm, reduction_value, comm_turn_imm, stream_mode_imm, o0, o1);
+  } else {
+    DISPATCH_ACLNN(aclnnMatmulAllReduceAddRmsNorm, x1_tensor, x2_tensor, bias_tensor, residual_tensor, gamma_tensor,
+                   epsilon_imm, group_imm, reduction_value, comm_turn_imm, stream_mode_imm, o0, o1);
+  }
   MS_LOG(DEBUG) << "MatmulAllReduceAddRmsNormAscendCustomize call end.";
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

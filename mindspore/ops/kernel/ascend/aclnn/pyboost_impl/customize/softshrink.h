@@ -16,17 +16,13 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SOFTSHRINK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_SOFTSHRINK_H_
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SoftShrinkAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                            const ScalarPtr &lambd);
+tensor::TensorPtr SoftShrinkAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &lambd);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

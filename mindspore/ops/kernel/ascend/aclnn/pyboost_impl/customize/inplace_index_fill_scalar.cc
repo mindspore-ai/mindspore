@@ -19,19 +19,19 @@
 #include <string>
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr InplaceIndexFillScalarAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                        const Int64ImmPtr &dim, const TensorPtr &index,
-                                                        const ScalarPtr &value) {
+tensor::TensorPtr InplaceIndexFillScalarAscendCustomize(const TensorPtr &input, const Int64ImmPtr &dim,
+                                                        const TensorPtr &index, const ScalarPtr &value) {
   auto index_shape = index->shape();
   if (MS_UNLIKELY(index_shape.size() > 1)) {
-    MS_LOG(EXCEPTION) << "For [" << op->primitive()->name() << "], the rank of input 'index'"
+    MS_LOG(EXCEPTION) << "For InplaceIndexFillScalar, the rank of input 'index'"
                       << " must be in [0, 1], but got " << index_shape.size() << ".";
   }
   auto dim_imm = GetValue<int64_t>(dim);
@@ -50,24 +50,14 @@ tensor::TensorPtr InplaceIndexFillScalarAscendCustomize(const std::shared_ptr<Op
       index_vector.push_back(elem_ptr[i]);
     }
   } else {
-    MS_EXCEPTION(TypeError) << "For [" << op->primitive()->name() << "], the input 'index'"
+    MS_EXCEPTION(TypeError) << "For InplaceIndexFillScalar, the input 'index'"
                             << " for conversion to int array must be of type Int32 or Int64,"
                             << " but got " << TypeIdToString(index_type_id);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  op->set_outputs({input});
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, dim_imm, index_vector, value]() {
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input);
-    LAUNCH_ACLNN(aclnnInplaceIndexFillTensor, device_context, op->stream_id(), input, dim_imm, index_vector, value);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-  }));
-  return op->output(0);
+  TensorToDevice(input);
+  DISPATCH_ACLNN(aclnnInplaceIndexFillTensor, input, dim_imm, index_vector, value);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

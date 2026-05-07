@@ -19,22 +19,19 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/sort_ext.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ArgSortAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x,
-                                         const Int64ImmPtr &dim, const BoolImmPtr &descending,
-                                         const BoolImmPtr &stable) {
+tensor::TensorPtr ArgSortAscendCustomize(const tensor::TensorPtr &input_x, const Int64ImmPtr &dim,
+                                         const BoolImmPtr &descending, const BoolImmPtr &stable) {
   MS_LOG(DEBUG) << "ArgSort call start";
   const auto sort_op = CREATE_PYBOOST_OP(SortExt, device::DeviceType::kAscend);
-  sort_op->Call(input_x, dim, descending, stable);
-  auto indices = sort_op->output(kIndex1);
-  op->set_outputs({indices});
-
-  return indices;
+  auto result = sort_op->Call(input_x, dim, descending, stable);
+  return std::get<1>(result);
 }
 }  // namespace pyboost
 }  // namespace kernel

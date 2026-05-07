@@ -18,30 +18,17 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceFillScalarAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                   const ScalarPtr &value) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  op->set_outputs({input});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, value]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input);
-
-    // Inplace output need be front
-    MS_LOG(DEBUG) << "Call FillScalar start";
-    LAUNCH_ACLNN(aclnnInplaceFillScalar, device_context, op->stream_id(), input, value);
-    MS_LOG(DEBUG) << "Launch FillScalar end";
-  }));
-  return op->output(0);
+tensor::TensorPtr InplaceFillScalarAscendCustomize(const tensor::TensorPtr &input, const ScalarPtr &value) {
+  TensorToDevice(input);
+  DISPATCH_ACLNN(aclnnInplaceFillScalar, input, value);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

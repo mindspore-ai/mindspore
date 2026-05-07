@@ -18,15 +18,12 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADDBMM_H_
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AddbmmAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                        const TensorPtr &batch1_tensor, const TensorPtr &batch2_tensor,
-                                        const ScalarPtr &beta, const ScalarPtr &alpha);
+tensor::TensorPtr AddbmmAscendCustomize(const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &batch1_tensor,
+                                        const tensor::TensorPtr &batch2_tensor, const ScalarPtr &beta,
+                                        const ScalarPtr &alpha);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

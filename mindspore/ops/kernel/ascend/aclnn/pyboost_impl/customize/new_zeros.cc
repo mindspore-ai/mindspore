@@ -16,12 +16,13 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/new_zeros.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/zeros.h"
+#include "include/pynative/utils/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void NewZerosAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                             const ValueTuplePtr &size, const std::optional<Int64ImmPtr> &dtype) {
+tensor::TensorPtr NewZerosAscendCustomize(const TensorPtr &input_tensor, const ValueTuplePtr &size,
+                                          const std::optional<Int64ImmPtr> &dtype) {
   MS_LOG(DEBUG) << "NewZeros Call start";
   std::optional<Int64ImmPtr> use_dtype;
   if (dtype.has_value()) {
@@ -33,9 +34,9 @@ void NewZerosAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPt
 
   auto zeros_op = CREATE_PYBOOST_OP(Zeros, device::DeviceType::kAscend);
   auto zeros_out = zeros_op->Call(size, use_dtype);
-  op->set_outputs({zeros_out});
 
   MS_LOG(DEBUG) << "NewZeros Call end";
+  return zeros_out;
 }
 }  // namespace pyboost
 }  // namespace kernel

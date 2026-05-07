@@ -15,42 +15,31 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/gather_d_grad_v2.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                             const Int64ImmPtr &dim, const TensorPtr &index, const TensorPtr &d_out) {
+tensor::TensorPtr GatherDGradAscendCustomize(const TensorPtr &x, const Int64ImmPtr &dim, const TensorPtr &index,
+                                             const TensorPtr &d_out) {
   MS_EXCEPTION_IF_NULL(dim);
-  MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(index);
   MS_EXCEPTION_IF_NULL(d_out);
 
-  OpRunner::InferOpOutput(op, x, dim, index, d_out);
+  auto output = InferOutput<1>(prim::kPrimGatherDGradV2, x, dim, index, d_out);
   auto dim_value = dim->value();
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), d_out);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(index, d_out);
+  TensorMalloc(output);
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, dim_value, index, d_out]() {
-    MS_LOG(DEBUG) << "Run device task GatherDGrad start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, index, d_out);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    LAUNCH_ACLNN(aclnnInplaceZero, device_context, op->stream_id(), outputs[0]);
-    LAUNCH_ACLNN(aclnnScatterAdd, device_context, op->stream_id(), outputs[0], dim_value, index, d_out, outputs[0]);
-    MS_LOG(DEBUG) << "Run device task GatherDGrad end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceZero, output);
+  DISPATCH_ACLNN(aclnnScatterAdd, output, dim_value, index, d_out, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -15,31 +15,20 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/ones_like_ext.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_o.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr OnesLikeExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                             const std::optional<Int64ImmPtr> &dtype) {
-  OpRunner::InferOpOutput(op, input_tensor, dtype);
-  // No need to convert input
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << "Call OnesLikeExt start";
-    LAUNCH_ACLNN(aclnnInplaceOne, device_context, op->stream_id(), outputs[0]);
-    MS_LOG(DEBUG) << "Launch OnesLikeExt end";
-  }));
-  return op->output(0);
+tensor::TensorPtr OnesLikeExtAscendCustomize(const TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &dtype) {
+  auto output = InferOutput<1>(prim::kPrimOnesLikeExt, input_tensor, dtype);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnInplaceOne, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel
