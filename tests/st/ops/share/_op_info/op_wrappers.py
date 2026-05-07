@@ -674,3 +674,43 @@ def tensor_mint_nansum(input, dim=None, keepdim=False, dtype=None):
 #  nansum has keyword parameters dtype,so for matching cases make this fouctions
 def tensor_torch_nansum(input, dim=None, keepdim=False, dtype=None):
     return torch.nansum(input, dim, keepdim, dtype=dtype)
+
+def tensor_batch_norm_ms(op_input, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
+    output = mint.nn.functional.batch_norm(op_input, running_mean, running_var, weight, bias, training, momentum, eps)
+    return (output, running_mean, running_var)
+
+def tensor_batch_norm_torch(op_input, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
+    output = torch.nn.functional.batch_norm(op_input, running_mean, running_var, weight, bias, training, momentum, eps)
+    return (output, running_mean, running_var)
+
+def tensor_nn_functional_dropout_ms(op_input, p=0.5, training=False):
+    input_clone = op_input.clone()
+    if  0 < p < 1:
+        if training:
+            if op_input.dtype.is_floating_point:
+                sizes = 0
+                m1 = None
+                for _ in  range(100):
+                    m1 = mint.nn.functional.dropout(op_input, p=p, training=training)
+                    sizes = sizes + (m1 == 0).sum().item()
+                input_clone[m1 == 0] = 0
+                return (1 / (1-p) * input_clone -m1, ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
+            return ms.Tensor(1, dtype=op_input.dtype)
+    return  mint.nn.functional.dropout(op_input, p=p, training=training)
+
+
+def tensor_nn_functional_dropout_torch(op_input, p=0.5, training=False):
+    if  0 < p < 1:
+        if training:
+            if op_input.dtype.is_floating_point:
+                sizes = 0
+                t1 = None
+                input_clone = op_input.clone()
+                for _ in range(100):
+                    t1 = torch.nn.functional.dropout(op_input, p=p, training=training)
+                    sizes = sizes + (t1 == 0).sum().item()
+                input_clone[t1 == 0] = 0
+                return (1 / (1 - p) * input_clone - t1, torch.tensor(sizes / (100 * op_input.numel()),
+                                                                     dtype=op_input.dtype))
+            return torch.tensor(1, dtype=op_input.dtype)
+    return torch.nn.functional.dropout(op_input, p=p, training=training)
