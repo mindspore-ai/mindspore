@@ -13,6 +13,7 @@
 /mindspore/ccsrc/backend/ @limingqi107
 /mindspore/ccsrc/backend/ge_backend/dump/ @DavidFFFan
 /mindspore/ccsrc/backend/ms_backend/graph_fusion/ @gaoxiong1
+/mindspore/ccsrc/backend/ms_backend/runtime/ @zyli2020
 /mindspore/ccsrc/cluster/ @zhangyinxia
 /mindspore/ccsrc/cmake/ @nicholas_yhr
 /mindspore/ccsrc/frontend/ @ginfung
@@ -31,6 +32,7 @@
 /mindspore/ccsrc/plugin/ascend/res_manager/error_manager/ @fary86
 /mindspore/ccsrc/plugin/ascend/res_manager/mbuf_manager/tensorprint_utils.* @fary86
 /mindspore/ccsrc/plugin/ascend/res_manager/mbuf_manager/tensorreport_utils.* @fary86
+/mindspore/ccsrc/plugin/ascend/res_manager/op_adapter/ @hbhu_bin
 /mindspore/ccsrc/plugin/ascend/res_manager/collective/ @zhangyinxia
 /mindspore/ccsrc/plugin/ascend/stress_detect/ @fary86
 /mindspore/ccsrc/plugin/ascend/kernel_executor/hyper_offload/ @zh_qh
@@ -293,8 +295,8 @@
 /tests/ut/python/ops/composite/ @ginfung
 
 # The maintainers of other code directories.
-.claude/ @chujinjin
-CLAUDE.md @chujinjin
+/.claude/ @chujinjin
+/CLAUDE.md @chujinjin
 /.gitee/ @limingqi107
 /.jenkins/ @nicholas_yhr
 /cmake/ @nicholas_yhr
@@ -309,6 +311,8 @@ CLAUDE.md @chujinjin
 /.gitignore @limingqi107
 /.gitattributes @limingqi107
 /.clangformat @limingqi107
+/README*.MD @fangwenyi1
+/RELEASE*.MD @fangwenyi1
 /requirements.txt  @tronzhang @r1chardf1d0
 /setup.py  @tronzhang @r1chardf1d0
 /Third_Party_Open_Source_Software_Notice  @tronzhang @r1chardf1d0
