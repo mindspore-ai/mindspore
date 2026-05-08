@@ -46,7 +46,9 @@
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/ceil.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/floor.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/trunc.h"
+#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/divs.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/pow.h"
+#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/pow_tensor_scalar.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/maximum.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/minimum.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/logical_not.h"
@@ -262,12 +264,28 @@ class DivAscendDvm : public DivAscend {
   tensor::TensorPtr Call(const TensorPtr &input_tensor, const TensorPtr &other_tensor) override;
 };
 
+class DivsAscendDvm : public DivsAscend {
+ public:
+  DivsAscendDvm(PrimitivePtr primitive, const DeviceContext *device_context)
+      : DivsAscend(std::move(primitive), device_context) {}
+  ~DivsAscendDvm() = default;
+  tensor::TensorPtr Call(const TensorPtr &input_tensor, const ScalarPtr &other) override;
+};
+
 class PowAscendDvm : public PowAscend {
  public:
   PowAscendDvm(PrimitivePtr primitive, const DeviceContext *device_context)
       : PowAscend(std::move(primitive), device_context) {}
   ~PowAscendDvm() = default;
   tensor::TensorPtr Call(const TensorPtr &input_tensor, const TensorPtr &other_tensor) override;
+};
+
+class PowTensorScalarAscendDvm : public PowTensorScalarAscend {
+ public:
+  PowTensorScalarAscendDvm(PrimitivePtr primitive, const DeviceContext *device_context)
+      : PowTensorScalarAscend(std::move(primitive), device_context) {}
+  ~PowTensorScalarAscendDvm() = default;
+  tensor::TensorPtr Call(const TensorPtr &input_tensor, const ScalarPtr &exponent) override;
 };
 
 class MaximumAscendDvm : public MaximumAscend {

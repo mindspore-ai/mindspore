@@ -97,6 +97,33 @@ bool IsFloatIntType(const TypeId &type) { return IsFloatType(type) || type == kN
 
 bool IsSupportType(const TypeId &type) { return IsFloatIntType(type) || type == kNumberTypeBool; }
 
+bool IsViewLoadSupported(const TensorPtr &x) {
+  if (x == nullptr || x->is_contiguous()) {
+    return false;
+  }
+  auto storage = x->storage_info();
+  if (storage == nullptr) {
+    return false;
+  }
+  const auto &shape = x->shape();
+  const auto &strides = x->stride();
+  if (shape.empty() || shape.size() != strides.size()) {
+    return false;
+  }
+  if (std::any_of(strides.begin(), strides.end(), [](int64_t stride) { return stride < 0; })) {
+    return false;
+  }
+  if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim <= 0; })) {
+    return false;
+  }
+  return strides.back() == 1 && shape.back() != 1;
+}
+
+bool InputCheckAllowViewLoad(const TensorPtr &x,
+                             const std::function<bool(const TypeId &type)> &type_check = IsFloatType) {
+  return !NeedSync() && type_check(x->data_type()) && (x->is_contiguous() || IsViewLoadSupported(x));
+}
+
 bool InputCheck(const TensorPtr &x, const std::function<bool(const TypeId &type)> &type_check = IsFloatType) {
   return !NeedSync() && x->is_contiguous() && type_check(x->data_type());
 }
@@ -120,6 +147,13 @@ bool BinaryInputCheck(const TensorPtr &input_tensor, const TensorPtr &other_tens
                       const std::function<bool(const TypeId &type)> &type_check = IsFloatType) {
   return !NeedSync() && input_tensor->is_contiguous() && other_tensor->is_contiguous() &&
          type_check(input_tensor->data_type()) && other_tensor->data_type() == input_tensor->data_type() &&
+         CheckShapeBroadcast(input_tensor->shape(), other_tensor->shape());
+}
+
+bool BinaryInputCheckAllowViewLoad(const TensorPtr &input_tensor, const TensorPtr &other_tensor,
+                                   const std::function<bool(const TypeId &type)> &type_check = IsFloatType) {
+  return InputCheckAllowViewLoad(input_tensor, type_check) && InputCheckAllowViewLoad(other_tensor, type_check) &&
+         other_tensor->data_type() == input_tensor->data_type() &&
          CheckShapeBroadcast(input_tensor->shape(), other_tensor->shape());
 }
 
@@ -562,7 +596,7 @@ tensor::TensorPtr ConcatAscendDvm::Call(const ValueTuplePtr &tensors_tensor_list
 
 tensor::TensorPtr CastAscendDvm::Call(const TensorPtr &input_tensor, const Int64ImmPtr &dtype) {
   auto dst_type = static_cast<TypeId>(GetValue<int64_t>(dtype));
-  if (!InputCheck(input_tensor, IsSupportType) || !IsSupportType(dst_type)) {
+  if (!InputCheckAllowViewLoad(input_tensor, IsSupportType) || !IsSupportType(dst_type)) {
     return CastAscend::Call(input_tensor, dtype);
   }
   DvmCall(
@@ -594,7 +628,7 @@ tensor::TensorPtr AbsAscendDvm::Call(const TensorPtr &input_tensor) {
 }
 
 tensor::TensorPtr NegAscendDvm::Call(const TensorPtr &input_tensor) {
-  if (!InputCheck(input_tensor, IsFloatIntType)) {
+  if (!InputCheckAllowViewLoad(input_tensor, IsFloatIntType)) {
     return NegAscend::Call(input_tensor);
   }
   DvmCall(
@@ -794,7 +828,7 @@ tensor::TensorPtr AddAscendDvm::Call(const TensorPtr &input_tensor, const Tensor
 }
 
 tensor::TensorPtr MulAscendDvm::Call(const TensorPtr &input_tensor, const TensorPtr &other_tensor) {
-  if (!BinaryInputCheck(input_tensor, other_tensor, IsFloatIntType)) {
+  if (!BinaryInputCheckAllowViewLoad(input_tensor, other_tensor, IsFloatIntType)) {
     return MulAscend::Call(input_tensor, other_tensor);
   }
   BinaryDvmCall(op_name_, this, dvm::BinaryOpType::kMul, input_tensor, other_tensor, input_tensor->data_type());
@@ -820,12 +854,44 @@ tensor::TensorPtr DivAscendDvm::Call(const TensorPtr &input_tensor, const Tensor
   return outputs_.front();
 }
 
+tensor::TensorPtr DivsAscendDvm::Call(const TensorPtr &input_tensor, const ScalarPtr &other) {
+  auto [succ, scalar] = GetScalarValue<float>(other);
+  if (!InputCheck(input_tensor) || !succ) {
+    return DivsAscend::Call(input_tensor, other);
+  }
+  DvmCall(
+    op_name_, this,
+    [&](LazyFusionKernelAscend *k) -> TensorPtr {
+      auto obj = k->Binary(dvm::BinaryOpType::kDiv, k->Input(input_tensor), scalar);
+      return k->Output(obj, input_tensor->data_type(), input_tensor->shape());
+    },
+    input_tensor);
+  DumpOp(op_name_, this, input_tensor, other);
+  return outputs_.front();
+}
+
 tensor::TensorPtr PowAscendDvm::Call(const TensorPtr &input_tensor, const TensorPtr &other_tensor) {
   if (!BinaryInputCheck(input_tensor, other_tensor)) {
     return PowAscend::Call(input_tensor, other_tensor);
   }
   BinaryDvmCall(op_name_, this, dvm::BinaryOpType::kPow, input_tensor, other_tensor, input_tensor->data_type());
   DumpOp(op_name_, this, input_tensor, other_tensor);
+  return outputs_.front();
+}
+
+tensor::TensorPtr PowTensorScalarAscendDvm::Call(const TensorPtr &input_tensor, const ScalarPtr &exponent) {
+  auto [succ, scalar] = GetScalarValue<float>(exponent);
+  if (!InputCheck(input_tensor) || !succ) {
+    return PowTensorScalarAscend::Call(input_tensor, exponent);
+  }
+  DvmCall(
+    op_name_, this,
+    [&](LazyFusionKernelAscend *k) -> TensorPtr {
+      auto obj = k->Binary(dvm::BinaryOpType::kPow, k->Input(input_tensor), scalar);
+      return k->Output(obj, input_tensor->data_type(), input_tensor->shape());
+    },
+    input_tensor);
+  DumpOp(op_name_, this, input_tensor, exponent);
   return outputs_.front();
 }
 
@@ -956,7 +1022,7 @@ tensor::TensorPtr SigmoidGradAscendDvm::Call(const TensorPtr &y_tensor, const Te
 }
 
 tensor::TensorPtr SiLUAscendDvm::Call(const TensorPtr &input_tensor) {
-  if (!InputCheck(input_tensor)) {
+  if (!InputCheckAllowViewLoad(input_tensor)) {
     return SiLUAscend::Call(input_tensor);
   }
   DvmCall(
@@ -976,7 +1042,7 @@ tensor::TensorPtr SiLUAscendDvm::Call(const TensorPtr &input_tensor) {
 }
 
 tensor::TensorPtr SiLUGradAscendDvm::Call(const TensorPtr &dout_tensor, const TensorPtr &x_tensor) {
-  if (!BinaryInputCheck(dout_tensor, x_tensor)) {
+  if (!BinaryInputCheckAllowViewLoad(dout_tensor, x_tensor)) {
     return SiLUGradAscend::Call(dout_tensor, x_tensor);
   }
   DvmCall(
@@ -1931,7 +1997,9 @@ void RegisterLazyFusionOp() {
   MS_REPLACE_DVM_OP(OpLevel_0, Muls);
   MS_REPLACE_DVM_OP(OpLevel_0, Sub);
   MS_REPLACE_DVM_OP(OpLevel_0, Div);
+  MS_REPLACE_DVM_OP(OpLevel_0, Divs);
   MS_REPLACE_DVM_OP(OpLevel_0, Pow);
+  MS_REPLACE_DVM_OP(OpLevel_0, PowTensorScalar);
   MS_REPLACE_DVM_OP(OpLevel_0, Maximum);
   MS_REPLACE_DVM_OP(OpLevel_0, Minimum);
   MS_REPLACE_DVM_OP(OpLevel_0, LogicalNot);
