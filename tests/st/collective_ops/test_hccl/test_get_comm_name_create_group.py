@@ -50,11 +50,16 @@ group2 = "group_buffersize_100"
 options2 = GroupOptions()
 options2.hccl_config = {"hccl_buffer_size": 100}
 
+group3 = "group_op_expansion_aiv"
+options3 = GroupOptions()
+options3.hccl_config = {"hccl_op_expansion_mode": "AIV"}
+
 rank_ids = [0, 7]
 if get_rank() in rank_ids:
     create_group(group0, rank_ids, options0)
     create_group(group1, rank_ids, options1)
     create_group(group2, rank_ids, options2)
+    create_group(group3, rank_ids, options3)
 
 class GroupCommNameNet(nn.Cell):
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):

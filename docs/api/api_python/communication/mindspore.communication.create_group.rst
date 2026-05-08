@@ -25,10 +25,11 @@ mindspore.communication.create_group
                 hccl_config(dict)
             }
 
-          `hccl_config` 当前仅支持 "hccl_buffer_size" 和 "hccl_comm" 两个参数。
+          `hccl_config` 当前支持 "hccl_buffer_size"、"hccl_comm" 或 "hccl_op_expansion_mode"。
 
           - **hccl_buffer_size** (uint32)：指定HCCL通信缓冲区的大小。
-          - **hccl_comm** (int64)：指定已存在的HcclComm指针。如果设置了 "hccl_comm"，则 "hccl_buffer_size" 无效。
+          - **hccl_comm** (int64)：指定已存在的HcclComm指针。如果设置了 "hccl_comm"，则其他HCCL配置参数无效。
+          - **hccl_op_expansion_mode** (str | uint32)：指定通信组的HCCL算子展开模式。支持的字符串值为 "DEFAULT"、"HOST"、"AICPU" 和 "AIV"，支持的整数值为 0、1、2 和 3。
 
     异常：
         - **TypeError** - 参数 `group` 不是字符串，或参数 `rank_ids` 不是列表。
