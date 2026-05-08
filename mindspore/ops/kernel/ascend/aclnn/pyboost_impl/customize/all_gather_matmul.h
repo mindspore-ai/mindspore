@@ -17,20 +17,17 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ALLGATHERMATMUL_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ALLGATHERMATMUL_H_
 
-#include <vector>
 #include <memory>
+#include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::vector<tensor::TensorPtr> AllGatherMatmulAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input, const TensorPtr &x2, const StringImmPtr &group,
-  const Int64ImmPtr &world_size, const std::optional<TensorPtr> &bias, const Int64ImmPtr &gather_index,
-  const BoolImmPtr &gather_output, const Int64ImmPtr &comm_turn, const BoolImmPtr &trans_input,
-  const BoolImmPtr &trans_x2);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> AllGatherMatmulAscendCustomize(
+  const tensor::TensorPtr &input, const tensor::TensorPtr &x2, const StringImmPtr &group, const Int64ImmPtr &world_size,
+  const std::optional<tensor::TensorPtr> &bias, const Int64ImmPtr &gather_index, const BoolImmPtr &gather_output,
+  const Int64ImmPtr &comm_turn, const BoolImmPtr &trans_input, const BoolImmPtr &trans_x2);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

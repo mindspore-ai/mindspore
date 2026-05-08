@@ -16,54 +16,31 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/upsample_nearest2d.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "utils/log_adapter.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-tensor::TensorPtr UpsampleNearest2dAscendCall(const std::shared_ptr<OpRunner> &op,
-                                              const device::DeviceContext *device_context,
-                                              const TensorPtr &input_tensor, const std::vector<int64_t> &output_size,
-                                              const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  LAUNCH_ACLNN(aclnnUpsampleNearest2d, device_context, op->stream_id(), input_tensor, output_size, outputs[0]);
-  return outputs[0];
-}
-}  // namespace
-
-tensor::TensorPtr UpsampleNearest2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr UpsampleNearest2DAscendCustomize(const TensorPtr &input_tensor,
                                                    const std::optional<ValueTuplePtr> &output_size,
                                                    const std::optional<ValueTuplePtr> &scale_factors) {
   auto input_dtype_id = input_tensor->data_type();
   if (input_dtype_id == TypeId::kNumberTypeFloat64 || input_dtype_id == TypeId::kNumberTypeDouble) {
-    MS_EXCEPTION(ValueError) << "For " << op->primitive()->name()
-                             << ", input's type should not be float64, which is not supported.";
+    MS_EXCEPTION(ValueError) << "For UpsampleNearest2D, input's type should not be float64, which is not supported.";
   }
-  OpRunner::InferOpOutput(op, input_tensor, output_size, scale_factors);
+  auto output = InferOutput<1>(prim::kPrimUpsampleNearest2D, input_tensor, output_size, scale_factors);
 
-  const ShapeVector &osize = op->output(kIndex0)->shape();
+  const ShapeVector &osize = output->shape();
   std::vector<int64_t> output_size_vector = {osize.begin() + kDim2, osize.end()};
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {
-    MS_LOG(DEBUG) << "Run device task UpsampleNearest2d start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    // Call aclnnUpsampleNearest2d
-    UpsampleNearest2dAscendCall(op, device_context, input_tensor, output_size_vector, outputs);
-    MS_LOG(DEBUG) << "Run device task UpsampleNearest2d end";
-  }));
-  return op->output(0);
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnUpsampleNearest2d, input_tensor, output_size_vector, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

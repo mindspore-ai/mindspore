@@ -24,7 +24,7 @@
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/runtime/utils/dispatch/dispatch_env.h"
 #include "include/pynative/utils/pyboost/functions/dispatch.h"
-#include "mindspore/core/include/utils/stream_guard.h"
+#include "mindspore/core/include/utils/current_state.h"
 #include "mindspore/ops/include/primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {

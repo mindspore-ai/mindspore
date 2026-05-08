@@ -17,7 +17,10 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/log_softmax_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,11 +39,10 @@ int64_t GetDimValue(const TensorPtr &input_tensor) {
 }
 }  // namespace
 
-tensor::TensorPtr LogSoftmaxExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                               const std::optional<Int64ImmPtr> &dim,
+tensor::TensorPtr LogSoftmaxExtAscendCustomize(const TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &dim,
                                                const std::optional<Int64ImmPtr> &dtype) {
-  MS_LOG(DEBUG) << op->primitive()->name() << " call start";
-  OpRunner::InferOpOutput(op, input_tensor, dim, dtype);
+  MS_LOG(DEBUG) << "LogSoftmaxExt call start";
+  auto output = InferOutput<1>(prim::kPrimLogSoftmaxExt, input_tensor, dim, dtype);
 
   int64_t dim_value;
   if (dim.has_value()) {
@@ -54,20 +56,11 @@ tensor::TensorPtr LogSoftmaxExtAscendCustomize(const std::shared_ptr<OpRunner> &
     new_tensor = PyBoostUtils::CastTensor(input_tensor, dtype_value, device::DeviceType::kAscend);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), new_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(new_tensor);
+  TensorMalloc(output);
 
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, new_tensor, dim_value]() {
-    auto device_context = op->device_context();
-
-    PyBoostUtils::MallocOpInputs(device_context, new_tensor);
-    PyBoostUtils::MallocOpOutputs(device_context, op->outputs());
-
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnLogSoftmax, device_context, op->stream_id(), new_tensor, dim_value, op->output(0));
-    MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnLogSoftmax, new_tensor, dim_value, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

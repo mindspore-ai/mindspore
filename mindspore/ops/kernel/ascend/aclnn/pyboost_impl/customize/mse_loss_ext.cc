@@ -15,25 +15,26 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/mse_loss_ext.h"
-#include <memory>
 #include <unordered_map>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "mindapi/base/types.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 // namespace
 
 namespace pyboost {
-tensor::TensorPtr MSELossExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                            const TensorPtr &target_tensor, const Int64ImmPtr &reduction) {
+tensor::TensorPtr MSELossExtAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &target_tensor,
+                                            const Int64ImmPtr &reduction) {
   MS_LOG(DEBUG) << "MSELossExt call start";
-  OpRunner::InferOpOutput(op, input_tensor, target_tensor, reduction);
+  auto output = InferOutput<1>(prim::kPrimMSELossExt, input_tensor, target_tensor, reduction);
 
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
   // transform reduction enum value to corresponding value
@@ -43,7 +44,7 @@ tensor::TensorPtr MSELossExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
   const std::vector<int64_t> &input_shape = input_tensor->shape();
   const std::vector<int64_t> &target_shape = target_tensor->shape();
   if (reduction_imm == Reduction::NONE) {
-    expand_shape = op->output_value_simple_info()->shape_vector_[kIndex0];
+    expand_shape = output->shape();
   } else {
     expand_shape = ops::CalBroadCastShapeV3(input_shape, target_shape);
   }
@@ -62,24 +63,12 @@ tensor::TensorPtr MSELossExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
   }
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor_bd, target_tensor_bd);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor_bd, target_tensor_bd);
+  TensorMalloc(output);
 
   // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor_bd, target_tensor_bd, reduction_value]() {
-      MS_LOG(DEBUG) << "Run device task MSELossExt start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor_bd, target_tensor_bd);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnMseLoss, device_context, op->stream_id(), input_tensor_bd, target_tensor_bd, reduction_value,
-                   outputs[0]);
-      MS_LOG(DEBUG) << "Run device task MSELossExt end";
-    }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnMseLoss, input_tensor_bd, target_tensor_bd, reduction_value, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_STREAM_GUARD_H_
-#define MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_STREAM_GUARD_H_
+#ifndef MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_CURRENT_STATE_H_
+#define MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_CURRENT_STATE_H_
 
 #include <cstdint>
 #include "mindapi/base/macros.h"
 
 namespace mindspore {
+namespace device {
+class DeviceContext;
+}  // namespace device
+
 class MS_CORE_API CurrentStream {
  public:
   static uint32_t id();
   static void set_id(uint32_t stream_id);
 };
+
+class MS_CORE_API CurrentDeviceContext {
+ public:
+  static const device::DeviceContext *get();
+  static void set(const device::DeviceContext *device_context);
+};
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_STREAM_GUARD_H_
+#endif  // MINDSPORE_MINDSPORE_CORE_INCLUDE_UTILS_CURRENT_STATE_H_

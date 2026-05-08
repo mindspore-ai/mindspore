@@ -8,27 +8,14 @@ ${const_number_convert}
 auto op = get_op();
 ${create_input_address}
 ${inplace_process}
+TensorMalloc(op, outputs_);
 
-PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);
 ProfileTrackerTask();
+const auto &outputs = op->outputs();
 
-// Async
-PyBoostUtils::DispatchRun(
-std::make_shared<runtime::PyBoostDeviceTask>(
-  [op, ${real_call_args}]() {
-    MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    ${malloc_inputs}
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    ${get_cube_math_type}
-    LAUNCH_ACLNN(${aclnn_name}, device_context, op->stream_id(), ${real_call_args}${outputs}${cube_math_type});
-    MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
-  }
-)
-);
+DISPATCH_LAUNCH_ACLNN(${aclnn_name}, ${real_call_args}${outputs}${cube_math_type});
+
 ProfileTrackerInput(${call_args});
 ProfileTrackerOutput(${return_values});
+MS_LOG(DEBUG) << op_name() << " call end. output size: " << outputs.size();
 return ${return_values};

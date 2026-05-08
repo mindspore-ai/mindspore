@@ -17,20 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_DYNAMIC_BLOCK_QUANT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_DYNAMIC_BLOCK_QUANT_H_
 
-#include <memory>
 #include <tuple>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void DynamicBlockQuantAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                      const FP32ImmPtr &min_scale, const StringImmPtr &round_mode,
-                                      const Int64ImmPtr &dst_type, const Int64ImmPtr &row_block_size,
-                                      const Int64ImmPtr &col_block_size);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> DynamicBlockQuantAscendCustomize(
+  const tensor::TensorPtr &x, const FP32ImmPtr &min_scale, const StringImmPtr &round_mode, const Int64ImmPtr &dst_type,
+  const Int64ImmPtr &row_block_size, const Int64ImmPtr &col_block_size);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

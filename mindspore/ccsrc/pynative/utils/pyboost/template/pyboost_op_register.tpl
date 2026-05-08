@@ -15,6 +15,7 @@
  */
 
 #include "include/pynative/utils/pyboost/op_register.h"
+#include "utils/current_state.h"
 ${op_includes}
 
 namespace mindspore {
@@ -34,6 +35,7 @@ std::shared_ptr<T> OpFactory<T>::Create(device::DeviceType device, uint32_t stre
   }
   auto op = iter->second();
   op->set_stream_id(stream_id);
+  CurrentDeviceContext::set(op->device_context());
   return op;
 }
 
@@ -52,6 +54,7 @@ std::shared_ptr<T> InternalOpFactory<T>::Create(device::DeviceType device, uint3
   }
   auto op = iter->second();
   op->set_stream_id(stream_id);
+  CurrentDeviceContext::set(op->device_context());
   return op;
 }
 

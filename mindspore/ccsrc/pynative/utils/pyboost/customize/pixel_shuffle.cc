@@ -54,8 +54,7 @@ void CheckPixelShuffleShapes(const std::vector<int64_t> &input_shape, int64_t up
   }
 }
 }  // namespace
-tensor::TensorPtr PixelShuffleCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                        const Int64ImmPtr &upscale_factor_imm) {
+tensor::TensorPtr PixelShuffleCustomize(const TensorPtr &input, const Int64ImmPtr &upscale_factor_imm) {
   const auto &input_shape = input->shape();
   const auto input_rank = input_shape.size();
   auto upscale_factor = GetValue<int64_t>(upscale_factor_imm);
@@ -95,9 +94,7 @@ tensor::TensorPtr PixelShuffleCustomize(const std::shared_ptr<OpRunner> &op, con
   // and (w, upscale_factor) -> a single dim (ow).
   std::vector<int64_t> final_shape(input_shape.begin(), input_shape_batch_end);
   final_shape.insert(final_shape.end(), {oc, oh, ow});
-  const auto final_out = view(contiguous(input_permuted), final_shape);
-  op->set_outputs({final_out});
-  return op->output(0);
+  return view(contiguous(input_permuted), final_shape);
 }
 }  // namespace pyboost
 }  // namespace kernel

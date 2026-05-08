@@ -20,15 +20,13 @@
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AddRmsNormAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor, const TensorPtr &x2_tensor,
-  const TensorPtr &gamma_tensor, const FP32ImmPtr &epsilon);
+  const tensor::TensorPtr &x1_tensor, const tensor::TensorPtr &x2_tensor, const tensor::TensorPtr &gamma_tensor,
+  const FP32ImmPtr &epsilon);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

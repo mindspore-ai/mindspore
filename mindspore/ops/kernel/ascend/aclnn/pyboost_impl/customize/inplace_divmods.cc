@@ -17,31 +17,19 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_divmods.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceDivModsAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const ScalarPtr &other,
+tensor::TensorPtr InplaceDivModsAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &other,
                                                 const std::optional<Int64ImmPtr> &rounding_mode) {
   MS_LOG(DEBUG) << "Call InplaceDivModsAscendCustomize start";
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  op->set_outputs({input_tensor});
+  TensorToDevice(input_tensor);
   auto mode = GetValue<int64_t>(rounding_mode.value());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other, mode]() {
-    MS_LOG(DEBUG) << "Run device task InplaceDivMods start";
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-
-    LAUNCH_ACLNN(aclnnInplaceDivMods, device_context, op->stream_id(), input_tensor, other, mode);
-    MS_LOG(DEBUG) << "Run device task InplaceDivMods end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceDivMods, input_tensor, other, mode);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

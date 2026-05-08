@@ -26,7 +26,7 @@
 #include "include/pynative/utils/pyboost/functions/dispatch.h"
 #include "mindspore/core/include/ops/op_def_utils.h"
 #include "mindspore/core/include/utils/check_convert_utils.h"
-#include "mindspore/core/include/utils/stream_guard.h"
+#include "mindspore/core/include/utils/current_state.h"
 #include "mindspore/ops/include/primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {

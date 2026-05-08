@@ -17,7 +17,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/custom_ext.h"
 #include <algorithm>
 #include <string>
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/custom_aclnn_utils.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"

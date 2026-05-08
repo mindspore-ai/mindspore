@@ -15,41 +15,33 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/add_rmsnorm_quant_v2.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void AddRmsNormQuantAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x1_tensor,
-                                    const TensorPtr &x2_tensor, const TensorPtr &gamma_tensor,
-                                    const TensorPtr &scale_tensor, const TensorPtr &offset_tensor,
-                                    const FP32ImmPtr &epsilon) {
-  MS_LOG(DEBUG) << "Call start";
-  OpRunner::InferOpOutput(op, x1_tensor, x2_tensor, gamma_tensor, scale_tensor, offset_tensor, epsilon);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AddRmsNormQuantAscendCustomize(
+  const TensorPtr &x1_tensor, const TensorPtr &x2_tensor, const TensorPtr &gamma_tensor, const TensorPtr &scale_tensor,
+  const TensorPtr &offset_tensor, const FP32ImmPtr &epsilon) {
+  auto outputs = InferOutput<3>(prim::kPrimAddRmsNormQuantV2, x1_tensor, x2_tensor, gamma_tensor, scale_tensor,
+                                offset_tensor, epsilon);
   // Convert ValuePtr to c++ scalar
   auto epsilon_imm = static_cast<double>(GetValue<float>(epsilon));
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x1_tensor, x2_tensor, gamma_tensor, scale_tensor,
-                                offset_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x1_tensor, x2_tensor, gamma_tensor, scale_tensor, offset_tensor, epsilon_imm]() {
-      MS_LOG(DEBUG) << "Run device task AddRmsNormQuant start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, x1_tensor, x2_tensor, gamma_tensor, scale_tensor, offset_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnAddRmsNormQuant, device_context, op->stream_id(), x1_tensor, x2_tensor, gamma_tensor,
-                   scale_tensor, nullptr, offset_tensor, nullptr, nullptr, epsilon_imm, outputs[0], outputs[1],
-                   outputs[2]);
-      MS_LOG(DEBUG) << "Run device task AddRmsNormQuant end";
-    }));
+  TensorToDevice(x1_tensor, x2_tensor, gamma_tensor, scale_tensor, offset_tensor);
+  TensorMalloc(outputs);
+
+  const auto &y1 = std::get<0>(outputs);
+  const auto &y2 = std::get<1>(outputs);
+  const auto &x = std::get<2>(outputs);
+  DISPATCH_ACLNN(aclnnAddRmsNormQuant, x1_tensor, x2_tensor, gamma_tensor, scale_tensor, nullptr, offset_tensor,
+                 nullptr, nullptr, epsilon_imm, y1, y2, x);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

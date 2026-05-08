@@ -18,30 +18,18 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceFillDiagonalAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                     const ScalarPtr &fill_value, const BoolImmPtr &wrap) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
+tensor::TensorPtr InplaceFillDiagonalAscendCustomize(const tensor::TensorPtr &input, const ScalarPtr &fill_value,
+                                                     const BoolImmPtr &wrap) {
+  TensorToDevice(input);
   auto wrap_imm = GetValue<bool>(wrap);
-  op->set_outputs({input});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, fill_value, wrap_imm]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input);
-
-    // Inplace output need be front
-    MS_LOG(DEBUG) << "Call FillDiagonal start";
-    LAUNCH_ACLNN(aclnnInplaceFillDiagonal, device_context, op->stream_id(), input, fill_value, wrap_imm);
-    MS_LOG(DEBUG) << "Launch FillDiagonal end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceFillDiagonal, input, fill_value, wrap_imm);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

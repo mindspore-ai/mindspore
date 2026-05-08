@@ -16,18 +16,22 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/max_pool_grad_with_mask.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-void MaxPoolGradWithMaskAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                                   const TensorPtr &x_tensor, const TensorPtr &grad, const TensorPtr mask,
-                                   const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &strides,
-                                   const ValueTuplePtr &pads, const ValueTuplePtr &dilation,
-                                   const BoolImmPtr &ceil_mode, const std::vector<tensor::TensorPtr> &outputs) {
+
+tensor::TensorPtr MaxPoolGradWithMaskAscendCustomize(const TensorPtr &x_tensor, const TensorPtr &grad,
+                                                     const TensorPtr mask, const ValueTuplePtr &kernel_size,
+                                                     const std::optional<ValueTuplePtr> &strides,
+                                                     const ValueTuplePtr &pads, const ValueTuplePtr &dilation,
+                                                     const BoolImmPtr &ceil_mode, const Int64ImmPtr &argmax_type) {
+  auto output = InferOutput<1>(prim::kPrimMaxPoolGradWithMask, x_tensor, grad, mask, kernel_size, strides, pads,
+                               dilation, ceil_mode, argmax_type);
   std::vector<int64_t> strides_array;
   if (strides.has_value()) {
     strides_array = ConvertValueTupleToVector<int64_t>(strides.value());
@@ -36,37 +40,11 @@ void MaxPoolGradWithMaskAscendCall(const std::shared_ptr<OpRunner> &op, const de
   auto pads_array = ConvertValueTupleToVector<int64_t>(pads);
   auto dilation_array = ConvertValueTupleToVector<int64_t>(dilation);
   auto ceil_mode_scalar = GetValue<bool>(ceil_mode);
-  LAUNCH_ACLNN(aclnnMaxPool2dWithMaskBackward, device_context, op->stream_id(), grad, x_tensor, mask, kernel_size_array,
-               strides_array, pads_array, dilation_array, ceil_mode_scalar, outputs[0]);
-}
-}  // namespace
-
-tensor::TensorPtr MaxPoolGradWithMaskAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                                     const TensorPtr &grad, const TensorPtr mask,
-                                                     const ValueTuplePtr &kernel_size,
-                                                     const std::optional<ValueTuplePtr> &strides,
-                                                     const ValueTuplePtr &pads, const ValueTuplePtr &dilation,
-                                                     const BoolImmPtr &ceil_mode, const Int64ImmPtr &argmax_type) {
-  OpRunner::InferOpOutput(op, x_tensor, grad, mask, kernel_size, strides, pads, dilation, ceil_mode, argmax_type);
-  // Create device address for input/output tensors
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, grad, mask);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, x_tensor, grad, mask, kernel_size, strides, pads, dilation, ceil_mode]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, x_tensor, grad, mask);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-      MaxPoolGradWithMaskAscendCall(op, device_context, x_tensor, grad, mask, kernel_size, strides, pads, dilation,
-                                    ceil_mode, outputs);
-      MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-    }));
-  return op->output(0);
+  TensorToDevice(x_tensor, grad, mask);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnMaxPool2dWithMaskBackward, grad, x_tensor, mask, kernel_size_array, strides_array, pads_array,
+                 dilation_array, ceil_mode_scalar, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

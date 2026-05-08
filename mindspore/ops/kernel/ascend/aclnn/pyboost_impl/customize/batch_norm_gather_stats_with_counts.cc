@@ -15,26 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/batch_norm_gather_stats_with_counts.h"
-#include <memory>
 #include <tuple>
-#include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr> BatchNormGatherStatsWithCountsAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const TensorPtr &mean_tensor,
-  const TensorPtr &invstd_tensor, const std::optional<TensorPtr> &running_mean_tensor,
-  const std::optional<TensorPtr> &running_var_tensor, const FP32ImmPtr &momentum, const FP32ImmPtr &eps,
-  const std::optional<TensorPtr> &counts_tensor) {
-  std::string op_name = op->primitive()->name();
-  MS_LOG(DEBUG) << op_name << " call start";
-  OpRunner::InferOpOutput(op, input_tensor, mean_tensor, invstd_tensor, running_mean_tensor, running_var_tensor,
-                          momentum, eps, counts_tensor);
+  const TensorPtr &input_tensor, const TensorPtr &mean_tensor, const TensorPtr &invstd_tensor,
+  const std::optional<TensorPtr> &running_mean_tensor, const std::optional<TensorPtr> &running_var_tensor,
+  const FP32ImmPtr &momentum, const FP32ImmPtr &eps, const std::optional<TensorPtr> &counts_tensor) {
+  MS_LOG(DEBUG) << "BatchNormGatherStatsWithCounts call start";
+  auto outputs = InferOutput<2>(prim::kPrimBatchNormGatherStatsWithCounts, input_tensor, mean_tensor, invstd_tensor,
+                                running_mean_tensor, running_var_tensor, momentum, eps, counts_tensor);
+  auto [output0, output1] = outputs;
   // ValueTuple to std::vector
 
   // Convert ValuePtr to c++ scalar
@@ -42,32 +40,16 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> BatchNormGatherStatsWithCountsA
   auto momentum_imm = GetValue<float>(momentum);
   auto eps_imm = GetValue<float>(eps);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mean_tensor, invstd_tensor,
-                                running_mean_tensor, running_var_tensor, counts_tensor);
+  TensorToDevice(input_tensor, mean_tensor, invstd_tensor, running_mean_tensor, running_var_tensor, counts_tensor);
 
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorMalloc(outputs);
 
   // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, mean_tensor, invstd_tensor, running_mean_tensor,
-                                                  running_var_tensor, momentum_imm, eps_imm, counts_tensor]() {
-      std::string op_name = op->primitive()->name();
-      MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, mean_tensor, invstd_tensor, running_mean_tensor,
-                                   running_var_tensor, counts_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      double momentum_imm_d = static_cast<double>(momentum_imm);
-      double eps_imm_d = static_cast<double>(eps_imm);
-      LAUNCH_ACLNN(aclnnBatchNormGatherStatsWithCounts, device_context, op->stream_id(), input_tensor, mean_tensor,
-                   invstd_tensor, running_mean_tensor, running_var_tensor, momentum_imm_d, eps_imm_d, counts_tensor,
-                   outputs[0], outputs[1]);
-      MS_LOG(DEBUG) << "Run device task " << op_name << " end";
-    }));
-  return std::make_tuple(op->output(0), op->output(1));
+  double momentum_imm_d = static_cast<double>(momentum_imm);
+  double eps_imm_d = static_cast<double>(eps_imm);
+  DISPATCH_ACLNN(aclnnBatchNormGatherStatsWithCounts, input_tensor, mean_tensor, invstd_tensor, running_mean_tensor,
+                 running_var_tensor, momentum_imm_d, eps_imm_d, counts_tensor, output0, output1);
+  return std::make_tuple(output0, output1);
 }
 }  // namespace pyboost
 }  // namespace kernel

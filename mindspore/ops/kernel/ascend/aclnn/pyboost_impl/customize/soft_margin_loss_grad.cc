@@ -15,46 +15,30 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/soft_margin_loss_grad.h"
-#include <memory>
 #include <unordered_map>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "mindapi/base/types.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr SoftMarginLossGradAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                    const TensorPtr &predict_tensor, const TensorPtr &label_tensor,
+tensor::TensorPtr SoftMarginLossGradAscendCustomize(const TensorPtr &predict_tensor, const TensorPtr &label_tensor,
                                                     const TensorPtr &dout_tensor, const Int64ImmPtr &reduction) {
   MS_LOG(DEBUG) << "SoftMarginLossGrad call start";
-  OpRunner::InferOpOutput(op, predict_tensor, label_tensor, dout_tensor, reduction);
+  auto output = InferOutput<1>(prim::kPrimSoftMarginLossGrad, predict_tensor, label_tensor, dout_tensor, reduction);
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
   auto reduction_value = ops::ConvertReductionForAclnn(reduction_imm);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), predict_tensor, label_tensor, dout_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, dout_tensor, predict_tensor, label_tensor, reduction_value]() {
-      MS_LOG(DEBUG) << "Run device task SoftMarginLossGrad end";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, dout_tensor, predict_tensor, label_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-      LAUNCH_ACLNN(aclnnSoftMarginLossBackward, device_context, op->stream_id(), dout_tensor, predict_tensor,
-                   label_tensor, reduction_value, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task SoftMarginLossGrad end";
-    }));
-  return op->output(0);
+  TensorToDevice(predict_tensor, label_tensor, dout_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnSoftMarginLossBackward, dout_tensor, predict_tensor, label_tensor, reduction_value, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

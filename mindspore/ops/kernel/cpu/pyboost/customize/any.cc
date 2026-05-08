@@ -22,7 +22,9 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr AnyCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
-  return AnyCustomize(op, input_tensor, std::nullopt, std::nullopt);
+  auto out = AnyCustomize(input_tensor, std::nullopt, std::nullopt);
+  op->set_outputs({out});
+  return out;
 }
 }  // namespace pyboost
 }  // namespace kernel

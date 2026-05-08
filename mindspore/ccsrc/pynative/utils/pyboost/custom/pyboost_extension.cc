@@ -25,7 +25,7 @@
 #include <vector>
 #include <memory>
 
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "include/pynative/utils/pyboost/custom/tensor.h"
 #include "include/utils/tensor_utils.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"

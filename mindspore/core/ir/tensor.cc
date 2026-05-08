@@ -38,7 +38,7 @@
 #include "device_address/device_address_maker.h"
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "base/float16.h"
 #include "ir/dtype/type_id.h"
 #include "ir/format_utils.h"

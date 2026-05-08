@@ -21,17 +21,17 @@
 #include <tuple>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void MoeDistributeDispatchAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &x, const TensorPtr &expert_ids,
-  const Int64ImmPtr &ep_world_size, const Int64ImmPtr &ep_rank_id, const Int64ImmPtr &moe_expert_num,
-  const std::optional<TensorPtr> &expert_scales, const std::optional<TensorPtr> &scales,
-  const std::optional<TensorPtr> &x_activate_mask, const std::optional<StringImmPtr> &group_ep,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
+           tensor::TensorPtr, tensor::TensorPtr>
+MoeDistributeDispatchAscendCustomize(
+  const tensor::TensorPtr &x, const tensor::TensorPtr &expert_ids, const Int64ImmPtr &ep_world_size,
+  const Int64ImmPtr &ep_rank_id, const Int64ImmPtr &moe_expert_num,
+  const std::optional<tensor::TensorPtr> &expert_scales, const std::optional<tensor::TensorPtr> &scales,
+  const std::optional<tensor::TensorPtr> &x_activate_mask, const std::optional<StringImmPtr> &group_ep,
   const std::optional<StringImmPtr> &group_tp, const Int64ImmPtr &tp_world_size, const Int64ImmPtr &tp_rank_id,
   const Int64ImmPtr &expert_shard_type, const Int64ImmPtr &shared_expert_num, const Int64ImmPtr &shared_expert_rank_num,
   const Int64ImmPtr &quant_mode, const Int64ImmPtr &global_bs, const Int64ImmPtr &expert_token_nums_type);

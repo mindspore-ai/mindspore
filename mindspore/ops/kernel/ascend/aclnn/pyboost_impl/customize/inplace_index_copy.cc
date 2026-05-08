@@ -16,28 +16,18 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_index_copy.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceIndexCopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                  const Int64ImmPtr &dim, const TensorPtr &index,
-                                                  const TensorPtr &tensor) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, index, tensor);
-  op->set_outputs({input});
+tensor::TensorPtr InplaceIndexCopyAscendCustomize(const tensor::TensorPtr &input, const Int64ImmPtr &dim,
+                                                  const tensor::TensorPtr &index, const tensor::TensorPtr &tensor) {
+  TensorToDevice(input, index, tensor);
   auto dim_imm = dim->value();
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, dim_imm, index, tensor]() {
-    auto device_context = op->device_context();
-
-    PyBoostUtils::MallocOpInputs(device_context, input, index, tensor);
-
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnInplaceIndexCopy, device_context, op->stream_id(), input, dim_imm, index, tensor);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnInplaceIndexCopy, input, dim_imm, index, tensor);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

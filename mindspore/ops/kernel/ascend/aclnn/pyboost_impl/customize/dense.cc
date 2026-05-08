@@ -19,7 +19,8 @@
 #include <vector>
 #include <algorithm>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
@@ -49,8 +50,8 @@ std::vector<int64_t> GetTransposePerm(const TensorPtr &weight_tensor) {
 }
 }  // namespace pyboost_dense
 
-void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                          const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor) {
+tensor::TensorPtr DenseAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &weight_tensor,
+                                       const std::optional<TensorPtr> &bias_tensor) {
   MS_LOG(DEBUG) << "Dense Launch start";
   auto x_type = input_tensor->Dtype();
   auto w_type = weight_tensor->Dtype();
@@ -97,9 +98,8 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     const auto beta = std::make_shared<Int64Imm>(1);
     const auto alpha = std::make_shared<Int64Imm>(1);
     auto addmm_out = addmm_op->Call(bias_tensor_, input_tensor, weight_transposed, beta, alpha);
-    op->set_outputs({addmm_out});
     MS_LOG(DEBUG) << "Dense Launch end";
-    return;
+    return addmm_out;
   } else if (bias_tensor.has_value() && (bias_tensor.value()->shape().size() == kDim1 || input_tensor_rank == kDim3)) {
     // reshape 2D
     int64_t flattened_dim = 1;
@@ -125,9 +125,8 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
     out_shape[input_tensor_rank - 1] = static_cast<int64_t>(addmm_out_shape[kIndex1]);
 
     auto output = view(addmm_out, out_shape);
-    op->set_outputs({output});
     MS_LOG(DEBUG) << "Dense Launch end";
-    return;
+    return output;
   } else {
     auto matmul_op = CREATE_PYBOOST_OP(MatMulExt, device::DeviceType::kAscend);
     auto matmul_out = matmul_op->Call(input_tensor, weight_transposed);
@@ -135,13 +134,11 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
       auto bias_tensor_ = bias_tensor.value();
       auto add_op = CREATE_PYBOOST_OP(Add, device::DeviceType::kAscend);
       auto add_out = add_op->Call(matmul_out, bias_tensor_);
-      op->set_outputs({add_out});
       MS_LOG(DEBUG) << "Dense Launch end";
-      return;
+      return add_out;
     }
-    op->set_outputs({matmul_out});
     MS_LOG(DEBUG) << "Dense Launch end";
-    return;
+    return matmul_out;
   }
 }  // namespace pyboost
 }  // namespace pyboost

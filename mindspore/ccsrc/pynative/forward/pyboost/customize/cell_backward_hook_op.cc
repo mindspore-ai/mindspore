@@ -67,7 +67,8 @@ py::object PyboostCellBackwardHookBase(const PrimitivePtr &prim, const py::list 
   // Run op
   {
     kernel::pyboost::RequireGradGuard require_grad_guard(op_run_info->requires_grad);
-    (void)op->Call(tensors_tensor_list);
+    auto outputs = op->Call(tensors_tensor_list);
+    op->set_outputs(outputs);
   }
   // Create output value
   auto real_out = AutoGradUtil::MakeMultiOutput(op_run_info->requires_grad, op);

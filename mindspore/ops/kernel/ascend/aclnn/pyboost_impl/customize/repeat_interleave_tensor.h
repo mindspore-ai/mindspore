@@ -17,17 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_TENSOR_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_REPEAT_INTERLEAVE_TENSOR_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr RepeatInterleaveTensorAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                        const TensorPtr &input_tensor, const TensorPtr &repeats,
+tensor::TensorPtr RepeatInterleaveTensorAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                                        const tensor::TensorPtr &repeats,
                                                         const std::optional<Int64ImmPtr> &dim,
                                                         const std::optional<Int64ImmPtr> &output_size);
 }  // namespace pyboost

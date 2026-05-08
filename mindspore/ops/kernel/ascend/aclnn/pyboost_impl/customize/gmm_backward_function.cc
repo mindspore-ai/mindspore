@@ -25,7 +25,8 @@
 
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
@@ -96,9 +97,11 @@ std::vector<TensorPtr> GmmV2(const ValueTuplePtr &x, const ValueTuplePtr &weight
                            group_list_type, act_type, std::nullopt);
 }
 }  // namespace
-void GmmBackwardAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &grad_tenor_list,
-                                const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
-                                const std::optional<ValueTuplePtr> &group_list, const Int64ImmPtr &group_list_type) {
+std::vector<tensor::TensorPtr> GmmBackwardAscendCustomize(const ValueTuplePtr &grad_tenor_list,
+                                                          const ValueTuplePtr &x_tensor_list,
+                                                          const ValueTuplePtr &weight_tensor_list,
+                                                          const std::optional<ValueTuplePtr> &group_list,
+                                                          const Int64ImmPtr &group_list_type) {
   MS_LOG(DEBUG) << "GMMBackward launch start.";
 
   auto xt = ForEachTranspose(x_tensor_list);
@@ -110,26 +113,28 @@ void GmmBackwardAscendCustomize(const std::shared_ptr<OpRunner> &op, const Value
   auto &all_gradients = dx;
   all_gradients.insert(all_gradients.end(), dw.begin(), dw.end());
 
-  op->set_outputs(all_gradients);
   MS_LOG(DEBUG) << "GMMBackward launch end.";
+  return all_gradients;
 }
 
-void GmmBackwardFusionAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &grad_tenor_list,
-                                      const ValueTuplePtr &weight_tensor_list,
-                                      const std::optional<ValueTuplePtr> &group_list,
-                                      const Int64ImmPtr &group_list_type) {
+std::vector<tensor::TensorPtr> GmmBackwardFusionAscendCustomize(const ValueTuplePtr &grad_tenor_list,
+                                                                const ValueTuplePtr &weight_tensor_list,
+                                                                const std::optional<ValueTuplePtr> &group_list,
+                                                                const Int64ImmPtr &group_list_type) {
   MS_LOG(DEBUG) << "GMMBackwardFusion launch start.";
 
   auto wt = ForEachTranspose(weight_tensor_list);
   auto dx = Gmm(grad_tenor_list, wt, group_list, 0);
 
-  op->set_outputs(dx);
   MS_LOG(DEBUG) << "GMMBackwardFusion launch end.";
+  return dx;
 }
 
-void GmmV2BackwardAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &grad_tenor_list,
-                                  const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
-                                  const std::optional<TensorPtr> &group_list, const Int64ImmPtr &group_list_type) {
+std::vector<tensor::TensorPtr> GmmV2BackwardAscendCustomize(const ValueTuplePtr &grad_tenor_list,
+                                                            const ValueTuplePtr &x_tensor_list,
+                                                            const ValueTuplePtr &weight_tensor_list,
+                                                            const std::optional<tensor::TensorPtr> &group_list,
+                                                            const Int64ImmPtr &group_list_type) {
   MS_LOG(DEBUG) << "GMMV2Backward launch start.";
 
   auto wt = ForEachTranspose(weight_tensor_list);
@@ -148,21 +153,21 @@ void GmmV2BackwardAscendCustomize(const std::shared_ptr<OpRunner> &op, const Val
   auto &all_gradients = dx;
   all_gradients.insert(all_gradients.end(), dw.begin(), dw.end());
 
-  op->set_outputs(all_gradients);
   MS_LOG(DEBUG) << "GMMV2Backward launch end.";
+  return all_gradients;
 }
 
-void GmmV2BackwardFusionAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &grad_tenor_list,
-                                        const ValueTuplePtr &weight_tensor_list,
-                                        const std::optional<TensorPtr> &group_list,
-                                        const Int64ImmPtr &group_list_type) {
+std::vector<tensor::TensorPtr> GmmV2BackwardFusionAscendCustomize(const ValueTuplePtr &grad_tenor_list,
+                                                                  const ValueTuplePtr &weight_tensor_list,
+                                                                  const std::optional<tensor::TensorPtr> &group_list,
+                                                                  const Int64ImmPtr &group_list_type) {
   MS_LOG(DEBUG) << "GMMV2BackwardFusion launch start.";
 
   auto wt = ForEachTranspose(weight_tensor_list);
   auto dx = GmmV2(grad_tenor_list, wt, group_list, group_list_type, 0);
 
-  op->set_outputs(dx);
   MS_LOG(DEBUG) << "GMMV2BackwardFusion launch end.";
+  return dx;
 }
 }  // namespace pyboost
 }  // namespace kernel

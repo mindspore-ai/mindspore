@@ -17,17 +17,13 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ALL_FINITE_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ALL_FINITE_H_
 
-#include <memory>
-#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AllFiniteAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                           const ValueTuplePtr &tensors_tensor_list);
+tensor::TensorPtr AllFiniteAscendCustomize(const ValueTuplePtr &tensors_tensor_list);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

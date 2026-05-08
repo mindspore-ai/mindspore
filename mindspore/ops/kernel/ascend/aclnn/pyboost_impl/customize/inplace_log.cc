@@ -18,29 +18,17 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceLogAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  op->set_outputs({input});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input);
-
-    // Inplace output need be front
-    MS_LOG(DEBUG) << "Call InplaceLog start";
-    LAUNCH_ACLNN(aclnnInplaceLog, device_context, op->stream_id(), input);
-    MS_LOG(DEBUG) << "Launch InplaceLog end";
-  }));
-  return op->output(0);
+tensor::TensorPtr InplaceLogAscendCustomize(const tensor::TensorPtr &input) {
+  TensorToDevice(input);
+  DISPATCH_ACLNN(aclnnInplaceLog, input);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

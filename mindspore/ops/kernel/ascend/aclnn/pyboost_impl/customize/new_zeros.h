@@ -17,17 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NEW_ZEROS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NEW_ZEROS_H_
 
-#include <vector>
 #include <memory>
 #include "ir/scalar.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
+#include "ir/tensor.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void NewZerosAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                             const ValueTuplePtr &size, const std::optional<Int64ImmPtr> &dtype);
+tensor::TensorPtr NewZerosAscendCustomize(const tensor::TensorPtr &input_tensor, const ValueTuplePtr &size,
+                                          const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

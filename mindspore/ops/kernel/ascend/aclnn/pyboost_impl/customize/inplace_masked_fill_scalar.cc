@@ -18,30 +18,18 @@
 
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceMaskedFillScalarAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                         const TensorPtr &mask, const ScalarPtr &value) {
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, mask);
-  op->set_outputs({input});
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, mask, value]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input, mask);
-
-    // Inplace output need be front
-    MS_LOG(DEBUG) << "Call MaskFillScalar start";
-    LAUNCH_ACLNN(aclnnInplaceMaskedFillScalar, device_context, op->stream_id(), input, mask, value);
-    MS_LOG(DEBUG) << "Launch MaskFillScalar end";
-  }));
-  return op->output(0);
+tensor::TensorPtr InplaceMaskedFillScalarAscendCustomize(const tensor::TensorPtr &input, const tensor::TensorPtr &mask,
+                                                         const ScalarPtr &value) {
+  TensorToDevice(input, mask);
+  DISPATCH_ACLNN(aclnnInplaceMaskedFillScalar, input, mask, value);
+  return input;
 }
 }  // namespace pyboost
 }  // namespace kernel

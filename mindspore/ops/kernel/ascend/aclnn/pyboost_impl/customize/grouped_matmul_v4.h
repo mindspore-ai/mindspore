@@ -17,23 +17,21 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GROUPED_MATMUL_V4_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GROUPED_MATMUL_V4_H_
 
-#include <vector>
 #include <memory>
+#include <vector>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void GroupedMatmulV4AscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
+std::vector<tensor::TensorPtr> GroupedMatmulV4AscendCustomize(
+  const ValueTuplePtr &x_tensor_list, const ValueTuplePtr &weight_tensor_list,
   const std::optional<ValueTuplePtr> &bias_tensor_list, const std::optional<ValueTuplePtr> &scale_tensor_list,
   const std::optional<ValueTuplePtr> &offset_tensor_list,
   const std::optional<ValueTuplePtr> &antiquant_scale_tensor_list,
   const std::optional<ValueTuplePtr> &antiquant_offset_tensor_list,
-  const std::optional<ValueTuplePtr> &pre_token_scale_tensor_list, const std::optional<TensorPtr> &group_list,
+  const std::optional<ValueTuplePtr> &pre_token_scale_tensor_list, const std::optional<tensor::TensorPtr> &group_list,
   const std::optional<ValueTuplePtr> &activation_input_tensor_list,
   const std::optional<ValueTuplePtr> &activation_quant_scale_tensor_list,
   const std::optional<ValueTuplePtr> &activation_quant_offset_tensor_list, const Int64ImmPtr &split_item_imm,

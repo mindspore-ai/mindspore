@@ -16,16 +16,15 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_scatter_src.h"
 #include <memory>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ops/ops_utils/memory_overlap.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceScatterSrcAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                   const Int64ImmPtr &dim, const TensorPtr &index_tensor,
-                                                   const TensorPtr &src_tensor) {
+tensor::TensorPtr InplaceScatterSrcAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &dim,
+                                                   const tensor::TensorPtr &index_tensor,
+                                                   const tensor::TensorPtr &src_tensor) {
   MS_LOG(DEBUG) << "Call InplaceScatterSrc start";
   // No need to call infer
   // forbid complex support: grad backward use aclnnGather which not supports complex
@@ -37,26 +36,15 @@ tensor::TensorPtr InplaceScatterSrcAscendCustomize(const std::shared_ptr<OpRunne
         << "Complex Type is forbidden because the grad operation 'Gather' does not supports complex type";
     }
   }
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, index_tensor, src_tensor);
-  op->set_outputs({input_tensor});
+  TensorToDevice(input_tensor, index_tensor, src_tensor);
 
   auto dim_imm = GetValue<int64_t>(dim);
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_imm, index_tensor, src_tensor]() {
-      MS_LOG(DEBUG) << "Run device task InplaceScatterSrc start";
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor, src_tensor);
-      // Check Memory Partial Overlap
-      CheckMemory({input_tensor, index_tensor, src_tensor}, {input_tensor});
-      const int64_t reduce = 0;  // reduce none
-      LAUNCH_ACLNN(aclnnInplaceScatter, device_context, op->stream_id(), input_tensor, dim_imm, index_tensor,
-                   src_tensor, reduce);
-      MS_LOG(DEBUG) << "Run device task InplaceScatterSrc end";
-    }));
-  return op->output(0);
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({input_tensor, index_tensor, src_tensor}, {input_tensor});
+  const int64_t reduce = 0;  // reduce none
+  DISPATCH_ACLNN(aclnnInplaceScatter, input_tensor, dim_imm, index_tensor, src_tensor, reduce);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

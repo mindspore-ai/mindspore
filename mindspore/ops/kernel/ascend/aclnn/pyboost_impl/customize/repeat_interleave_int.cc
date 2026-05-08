@@ -18,60 +18,50 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "include/pynative/utils/pyboost/auto_generate/copy.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr RepeatInterleaveIntAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                     const Int64ImmPtr &repeats, const std::optional<Int64ImmPtr> &dim,
+tensor::TensorPtr RepeatInterleaveIntAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &repeats,
+                                                     const std::optional<Int64ImmPtr> &dim,
                                                      const std::optional<Int64ImmPtr> &output_size) {
-  OpRunner::InferOpOutput(op, input_tensor, repeats, dim, output_size);
-  const ShapeVector &output_shape = op->output_value_simple_info()->shape_vector_[0];
+  auto output = InferOutput<1>(prim::kPrimRepeatInterleaveInt, input_tensor, repeats, dim, output_size);
+  const ShapeVector &output_shape = output->shape();
   int64_t repeats_imm = GetValue<int64_t>(repeats);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
+  MS_LOG(DEBUG) << "RepeatInterleaveInt Call start";
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, repeats_imm, dim, output_size, output_shape]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      if (dim.has_value()) {
-        int64_t dim_imm = GetValue<int64_t>(*dim);
-        auto rank = SizeToLong(output_shape.size());
-        dim_imm = (dim_imm < 0) ? (dim_imm + rank) : dim_imm;
-        if (output_size.has_value()) {
-          int64_t output_size_imm = GetValue<int64_t>(*output_size);
-          if (output_size_imm != output_shape[dim_imm]) {
-            MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
-          }
-        }
-
-        LAUNCH_ACLNN(aclnnRepeatInterleaveIntWithDim, device_context, op->stream_id(), input_tensor, repeats_imm,
-                     dim_imm, output_shape[dim_imm], outputs[0]);
-      } else {
-        if (output_size.has_value()) {
-          int64_t output_size_imm = GetValue<int64_t>(*output_size);
-          if (output_size_imm != output_shape[0]) {
-            MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
-          }
-        }
-
-        LAUNCH_ACLNN(aclnnRepeatInterleaveInt, device_context, op->stream_id(), input_tensor, repeats_imm,
-                     output_shape[0], outputs[0]);
+  if (dim.has_value()) {
+    int64_t dim_imm = GetValue<int64_t>(*dim);
+    auto rank = SizeToLong(output_shape.size());
+    dim_imm = (dim_imm < 0) ? (dim_imm + rank) : dim_imm;
+    if (output_size.has_value()) {
+      int64_t output_size_imm = GetValue<int64_t>(*output_size);
+      if (output_size_imm != output_shape[dim_imm]) {
+        MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
       }
-    }));
+    }
 
-  MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-  return op->output(0);
+    DISPATCH_ACLNN(aclnnRepeatInterleaveIntWithDim, input_tensor, repeats_imm, dim_imm, output_shape[dim_imm], output);
+  } else {
+    if (output_size.has_value()) {
+      int64_t output_size_imm = GetValue<int64_t>(*output_size);
+      if (output_size_imm != output_shape[0]) {
+        MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
+      }
+    }
+
+    DISPATCH_ACLNN(aclnnRepeatInterleaveInt, input_tensor, repeats_imm, output_shape[0], output);
+  }
+
+  MS_LOG(DEBUG) << "RepeatInterleaveInt Launch end";
+  return output;
 }
 
 }  // namespace pyboost

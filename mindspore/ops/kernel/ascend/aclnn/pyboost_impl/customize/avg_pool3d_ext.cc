@@ -17,20 +17,22 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/avg_pool3d_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AvgPool3DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                              const ValueTuplePtr &kernel_size,
+tensor::TensorPtr AvgPool3DExtAscendCustomize(const TensorPtr &input, const ValueTuplePtr &kernel_size,
                                               const std::optional<mindspore::ValueTuplePtr> &stride,
                                               const ValueTuplePtr &padding, const BoolImmPtr &ceil_mode,
                                               const BoolImmPtr &count_include_pad,
                                               const std::optional<Int64ImmPtr> &divisor_override) {
   MS_LOG(INFO) << "AvgPool3DExtAscendCustomize start";
-  OpRunner::InferOpOutput(op, input, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override);
+  auto output = InferOutput<1>(prim::kPrimAvgPool3DExt, input, kernel_size, stride, padding, ceil_mode,
+                               count_include_pad, divisor_override);
 
   auto kernel_size_val = ConvertValueTupleToVector<int64_t>(kernel_size);
   auto stride_val = stride.has_value() ? ConvertValueTupleToVector<int64_t>(stride.value()) : kernel_size_val;
@@ -39,29 +41,14 @@ tensor::TensorPtr AvgPool3DExtAscendCustomize(const std::shared_ptr<OpRunner> &o
   auto count_include_pad_val = GetValue<bool>(count_include_pad);
   auto divisor_override_val = divisor_override.has_value() ? GetValue<int64_t>(divisor_override.value()) : 0;
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input, kernel_size_val, stride_val, padding_val, ceil_mode_val,
-                                                  count_include_pad_val, divisor_override_val]() {
-      MS_LOG(DEBUG) << "Run device task AvgPool3DExtAscend start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      // Call aclnnAvgPool3d
-      LAUNCH_ACLNN(aclnnAvgPool3d, device_context, op->stream_id(), input, kernel_size_val, stride_val, padding_val,
-                   ceil_mode_val, count_include_pad_val, divisor_override_val, outputs[0]);
-      MS_LOG(DEBUG) << "Run device task AvgPool3DExtAscend end";
-    }));
+  TensorToDevice(input);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnAvgPool3d, input, kernel_size_val, stride_val, padding_val, ceil_mode_val, count_include_pad_val,
+                 divisor_override_val, output);
 
   MS_LOG(INFO) << "AvgPool3DExtAscendCustomize end";
 
-  return op->output(0);
+  return output;
 }
 
 }  // namespace pyboost

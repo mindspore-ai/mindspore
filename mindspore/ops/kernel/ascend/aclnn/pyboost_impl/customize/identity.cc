@@ -18,6 +18,8 @@
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "utils/current_state.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/pyboost/customize/identity.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
@@ -171,7 +173,10 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
   }));
 }
 
-tensor::TensorPtr IdentityAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
+tensor::TensorPtr IdentityAscendCustomize(const tensor::TensorPtr &x_tensor) {
+  auto op =
+    std::make_shared<OpRunner>(prim::kPrimIdentity, runtime::OpRunner::GetDeviceContext(device::DeviceType::kAscend));
+  op->set_stream_id(CurrentStream::id());
   OpRunner::InferOpOutput(op, x_tensor);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

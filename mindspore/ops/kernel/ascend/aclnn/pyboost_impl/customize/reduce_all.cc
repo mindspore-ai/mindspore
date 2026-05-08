@@ -15,29 +15,20 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/reduce_all.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
 
-tensor::TensorPtr ReduceAllAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                                      const TensorPtr &input_tensor, const std::vector<int64_t> &axis,
-                                      const bool &keep_dims, const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  LAUNCH_ACLNN(aclnnAll, device_context, op->stream_id(), input_tensor, axis, keep_dims, outputs[0]);
-  MS_LOG(DEBUG) << "Launch end";
-  return outputs[0];
-}
-}  // namespace
-
-tensor::TensorPtr ReduceAllAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+tensor::TensorPtr ReduceAllAscendCustomize(const tensor::TensorPtr &input_tensor,
                                            const std::optional<ValueTuplePtr> &axis, const BoolImmPtr &keep_dims) {
-  OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims);
+  auto output = InferOutput<1>(prim::kPrimReduceAll, input_tensor, axis, keep_dims);
 
   std::vector<int64_t> axis_vector{};
   // If axis is not None, Convert ValueTuple to std::vector
@@ -48,23 +39,10 @@ tensor::TensorPtr ReduceAllAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   // Convert ValuePtr to c++ scalar
   bool keep_dims_imm = GetValue<bool>(keep_dims);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_vector, keep_dims_imm]() {
-      MS_LOG(DEBUG) << "Run device task ReduceAll start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(op->device_context(), op->outputs());
-      ReduceAllAscendCall(op, device_context, input_tensor, axis_vector, keep_dims_imm, outputs);
-      MS_LOG(DEBUG) << "Run device task ReduceAll end";
-    }));
-  return op->output(0);
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnAll, input_tensor, axis_vector, keep_dims_imm, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

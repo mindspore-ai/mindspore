@@ -15,35 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/adaptive_max_pool2d_grad.h"
-#include <memory>
 #include <tuple>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AdaptiveMaxPool2DGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &y_grad,
-                                                       const TensorPtr &x, const TensorPtr &argmax) {
-  OpRunner::InferOpOutput(op, y_grad, x, argmax);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), y_grad, x, argmax);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+tensor::TensorPtr AdaptiveMaxPool2DGradAscendCustomize(const TensorPtr &y_grad, const TensorPtr &x,
+                                                       const TensorPtr &argmax) {
+  auto output = InferOutput<1>(prim::kPrimAdaptiveMaxPool2DGrad, y_grad, x, argmax);
+  TensorToDevice(y_grad, x, argmax);
+  TensorMalloc(output);
 
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, y_grad, x, argmax]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, y_grad, x, argmax);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnAdaptiveMaxPool2dBackward, device_context, op->stream_id(), y_grad, x, argmax, outputs[0]);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnAdaptiveMaxPool2dBackward, y_grad, x, argmax, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

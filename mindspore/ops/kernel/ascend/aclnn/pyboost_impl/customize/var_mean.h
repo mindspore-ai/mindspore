@@ -16,19 +16,18 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_VAR_MEAN_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_VAR_MEAN_H_
-#include <vector>
+#include <tuple>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void VarMeanAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                            const std::optional<ValueTuplePtr> &dim, const Int64ImmPtr &correction,
-                            const BoolImmPtr &keepdim);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> VarMeanAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                                                        const std::optional<ValueTuplePtr> &dim,
+                                                                        const Int64ImmPtr &correction,
+                                                                        const BoolImmPtr &keepdim);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

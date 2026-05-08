@@ -15,51 +15,35 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/max_unpool2d_ext.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/sum_ext.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/ne_scalar.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr MaxUnpool2DExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                const TensorPtr &indices,
+tensor::TensorPtr MaxUnpool2DExtAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &indices,
                                                 const std::optional<ValueTuplePtr> &kernel_size,
                                                 const std::optional<ValueTuplePtr> &stride,
                                                 const std::optional<ValueTuplePtr> &padding,
                                                 const std::optional<ValueTuplePtr> &ouput_size) {
-  OpRunner::InferOpOutput(op, input_tensor, indices, kernel_size, stride, padding, ouput_size);
+  auto output =
+    InferOutput<1>(prim::kPrimMaxUnpool2DExt, input_tensor, indices, kernel_size, stride, padding, ouput_size);
   std::vector<int64_t> output_size_vector{};
-  std::vector<int64_t> shape{op->output(0)->shape()};
+  std::vector<int64_t> shape{output->shape()};
   size_t size = shape.size();
 
   output_size_vector.push_back(shape[size - kDim2]);
   output_size_vector.push_back(shape[size - kDim1]);
-
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, indices);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, indices, output_size_vector]() {
-      MS_LOG(DEBUG) << "Launch MaxUnpool2d start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, indices);
-
-      // Inplace output need be front
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      LAUNCH_ACLNN(aclnnMaxUnpool2d, device_context, op->stream_id(), input_tensor, indices, output_size_vector,
-                   outputs[0]);
-      MS_LOG(DEBUG) << "Launch MaxUnpool2d end";
-    }));
-  return op->output(0);
+  TensorToDevice(input_tensor, indices);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnMaxUnpool2d, input_tensor, indices, output_size_vector, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -18,34 +18,21 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindapi/base/types.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-tensor::TensorPtr UpsampleNearest2DGradAscendCall(const std::shared_ptr<OpRunner> &op,
-                                                  const device::DeviceContext *device_context,
-                                                  const TensorPtr &grad_out, const std::vector<int64_t> &input_size,
-                                                  const std::vector<int64_t> &output_size,
-                                                  const std::vector<pyfloat> &scales,
-                                                  const std::vector<tensor::TensorPtr> &outputs) {
-  MS_LOG(DEBUG) << "Call start";
-  double scales_h = scales[0];
-  double scales_w = scales[1];
-  LAUNCH_ACLNN(aclnnUpsampleNearest2dBackward, device_context, op->stream_id(), grad_out, output_size, input_size,
-               scales_h, scales_w, outputs[0]);
-  MS_LOG(DEBUG) << "Call end";
-  return outputs[0];
-}
-}  // namespace
-
-tensor::TensorPtr UpsampleNearest2DGradAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                       const TensorPtr &gradout_tensor, const ValueTuplePtr &input_size,
+tensor::TensorPtr UpsampleNearest2DGradAscendCustomize(const tensor::TensorPtr &gradout_tensor,
+                                                       const ValueTuplePtr &input_size,
                                                        const std::optional<ValueTuplePtr> &output_size,
                                                        const std::optional<ValueTuplePtr> &scale_factors) {
   MS_LOG(DEBUG) << "UpsampleNearest2DGradAscendCustomize start";
-  OpRunner::InferOpOutput(op, gradout_tensor, input_size, output_size, scale_factors);
+  auto output =
+    InferOutput<1>(prim::kPrimUpsampleNearest2DGrad, gradout_tensor, input_size, output_size, scale_factors);
 
   auto input_size_vector = ConvertValueTupleToVector<int64_t>(input_size);
 
@@ -61,23 +48,13 @@ tensor::TensorPtr UpsampleNearest2DGradAscendCustomize(const std::shared_ptr<OpR
     }
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), gradout_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, gradout_tensor, input_size_vector, output_size_vector, scales]() {
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, gradout_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      // Call aclnnUpsampleNearest2DGrad
-      UpsampleNearest2DGradAscendCall(op, device_context, gradout_tensor, input_size_vector, output_size_vector, scales,
-                                      outputs);
-    }));
-  return op->output(0);
+  TensorToDevice(gradout_tensor);
+  TensorMalloc(output);
+  double scales_h = scales[0];
+  double scales_w = scales[1];
+  DISPATCH_ACLNN(aclnnUpsampleNearest2dBackward, gradout_tensor, output_size_vector, input_size_vector, scales_h,
+                 scales_w, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

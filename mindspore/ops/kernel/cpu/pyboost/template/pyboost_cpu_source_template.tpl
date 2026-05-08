@@ -17,6 +17,7 @@
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_custom_kernel_register.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 ${ops_inc}
 ${merge_op_header}
 

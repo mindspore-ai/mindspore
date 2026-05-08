@@ -17,18 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_EXPONENTIAL_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_EXPONENTIAL_H_
 #include <memory>
-#include <vector>
 
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceExponentialAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                    const ScalarPtr lambda, const TensorPtr &seed,
-                                                    const TensorPtr &offset);
+tensor::TensorPtr InplaceExponentialAscendCustomize(const tensor::TensorPtr &input, const ScalarPtr lambda,
+                                                    const tensor::TensorPtr &seed, const tensor::TensorPtr &offset);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

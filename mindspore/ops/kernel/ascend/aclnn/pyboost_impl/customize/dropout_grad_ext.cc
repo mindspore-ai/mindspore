@@ -16,31 +16,21 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dropout_grad_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr DropoutGradExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                const TensorPtr &mask, const FP32ImmPtr &p) {
-  OpRunner::InferOpOutput(op, input, mask, p);
-  // Create device address for input/output tensors.
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input, mask);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input, mask, p]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(op->device_context(), input, mask);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
-    auto p_value = static_cast<double>(p->value());
-
-    LAUNCH_ACLNN(aclnnDropoutDoMask, device_context, op->stream_id(), input, mask, p_value, outputs[kIndex0]);
-  }));
-  return op->output(0);
+tensor::TensorPtr DropoutGradExtAscendCustomize(const TensorPtr &input, const TensorPtr &mask, const FP32ImmPtr &p) {
+  auto output = InferOutput<1>(prim::kPrimDropoutGradExt, input, mask, p);
+  auto p_value = static_cast<double>(p->value());
+  TensorToDevice(input, mask);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnDropoutDoMask, input, mask, p_value, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

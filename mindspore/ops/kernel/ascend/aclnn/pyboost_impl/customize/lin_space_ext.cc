@@ -16,28 +16,22 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/lin_space_ext.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr LinSpaceExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const ScalarPtr &start,
-                                             const ScalarPtr &end, const Int64ImmPtr &steps,
+tensor::TensorPtr LinSpaceExtAscendCustomize(const ScalarPtr &start, const ScalarPtr &end, const Int64ImmPtr &steps,
                                              const std::optional<Int64ImmPtr> &dtype) {
-  OpRunner::InferOpOutput(op, start, end, steps, dtype);
+  auto output = InferOutput<1>(prim::kPrimLinSpaceExt, start, end, steps, dtype);
   auto steps_value = GetValue<int64_t>(steps);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, start, end, steps_value]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
+  TensorMalloc(output);
 
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnLinspace, device_context, op->stream_id(), start, end, steps_value, outputs[0]);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
-  }));
-  return op->output(0);
+  DISPATCH_ACLNN(aclnnLinspace, start, end, steps_value, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

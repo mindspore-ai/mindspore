@@ -21,16 +21,17 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void FuncMaxPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                  const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &stride,
-                                  const ValueTuplePtr &padding, const ValueTuplePtr &dilation,
-                                  const BoolImmPtr &ceil_mode, const BoolImmPtr &return_indices) {
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> FuncMaxPool2DAscendCustomize(
+  const tensor::TensorPtr &input_tensor, const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &stride,
+  const ValueTuplePtr &padding, const ValueTuplePtr &dilation, const BoolImmPtr &ceil_mode,
+  const BoolImmPtr &return_indices) {
   TensorPtr out;
   TensorPtr indices;
   const auto &real_stride = stride.value_or(kernel_size);
@@ -43,7 +44,7 @@ void FuncMaxPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const Ten
     std::tie(out, indices) =
       max_pool_with_mask(input_tensor, kernel_size, real_stride, padding, dilation, ceil_mode, argmax_type);
   }
-  op->set_outputs({out, indices});
+  return std::make_tuple(out, indices);
 }
 }  // namespace pyboost
 }  // namespace kernel

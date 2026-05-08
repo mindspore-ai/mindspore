@@ -20,7 +20,8 @@
 #include <set>
 #include <memory>
 
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
@@ -64,9 +65,8 @@ double GetScalarValue(const std::shared_ptr<Scalar> &scalar) {
 }
 }  // namespace
 
-tensor::TensorPtr InplaceExponentialAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                    const ScalarPtr lambda, const TensorPtr &seed,
-                                                    const TensorPtr &offset) {
+tensor::TensorPtr InplaceExponentialAscendCustomize(const tensor::TensorPtr &input, const ScalarPtr lambda,
+                                                    const tensor::TensorPtr &seed, const tensor::TensorPtr &offset) {
   MS_LOG(DEBUG) << "InplaceExponentialAscendCustomize Call start";
   kernel::pyboost::RequireGradGuard no_grad(false);
   double lambda_val = GetScalarValue(lambda);
@@ -75,7 +75,6 @@ tensor::TensorPtr InplaceExponentialAscendCustomize(const std::shared_ptr<OpRunn
   }
   if (std::isinf(lambda_val)) {
     auto out = inplace_zero(input);
-    op->set_outputs({out});
     return out;
   }
 
@@ -92,7 +91,7 @@ tensor::TensorPtr InplaceExponentialAscendCustomize(const std::shared_ptr<OpRunn
   auto neg_out = inplace_muls(uniform_out, neg_one);
   auto add_out = inplace_adds_ext(neg_out, float_one, float_one);
 
-  TensorPtr real_out = add_out;
+  tensor::TensorPtr real_out = add_out;
   std::set<TypeId> float_types{kNumberTypeFloat16, kNumberTypeBFloat16, kNumberTypeFloat32};
   if (float_types.find(input_type) != float_types.end()) {
     auto eps = GetEps(input_type);
@@ -105,7 +104,6 @@ tensor::TensorPtr InplaceExponentialAscendCustomize(const std::shared_ptr<OpRunn
   real_out = inplace_muls(real_out, std::make_shared<FP64Imm>(-1.0 / lambda_val));
 
   MS_LOG(DEBUG) << "InplaceExponentialAscendCustomize Call end";
-  op->set_outputs({real_out});
   return real_out;
 }
 }  // namespace pyboost

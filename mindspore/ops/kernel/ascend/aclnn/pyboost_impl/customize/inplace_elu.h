@@ -20,14 +20,11 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceEluAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                            const ScalarPtr &alpha);
+tensor::TensorPtr InplaceEluAscendCustomize(const tensor::TensorPtr &input_tensor, const ScalarPtr &alpha);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

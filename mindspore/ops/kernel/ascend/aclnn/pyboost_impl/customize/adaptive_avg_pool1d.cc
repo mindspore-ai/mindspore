@@ -19,10 +19,12 @@
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/op_register.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/pynative/utils/pyboost/auto_generate/adaptive_avg_pool2d_ext.h"
+#include "infer/ops_func_impl/adaptive_pool_1d_check.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,14 +32,13 @@ namespace pyboost {
 namespace {
 constexpr int kShape2dDims = 2;
 }
-tensor::TensorPtr AdaptiveAvgPool1DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_x_tensor,
-                                                   const ValueTuplePtr &output_size) {
+tensor::TensorPtr AdaptiveAvgPool1DAscendCustomize(const TensorPtr &input_x_tensor, const ValueTuplePtr &output_size) {
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
-  OpRunner::InferOpOutput(op, input_x_tensor, output_size);
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_x_tensor);
 
   auto input_shape = input_x_tensor->shape();
+  auto output_size_val = ConvertValueTupleToVector<int64_t>(output_size);
+  ops::CheckAdaptivePool1DInputs("AdaptiveAvgPool1D", input_shape, output_size_val.size());
   auto origin_shape_dim = SizeToLong(input_shape.size());
 
   // unsqueeze shape
@@ -48,8 +49,6 @@ tensor::TensorPtr AdaptiveAvgPool1DAscendCustomize(const std::shared_ptr<OpRunne
   expand_input_shape.emplace_back(1);
   expand_input_shape.emplace_back(input_shape[origin_shape_dim - 1]);
   auto input_x_imm = reshape(input_x_tensor, expand_input_shape);
-
-  auto output_size_val = ConvertValueTupleToVector<int64_t>(output_size);
   auto output_size_2d = std::make_shared<ValueTuple>(
     std::vector<ValuePtr>{std::make_shared<Int64Imm>(1), std::make_shared<Int64Imm>(output_size_val[0])});
   // call AdaptiveAvgPool2dExt
@@ -69,7 +68,6 @@ tensor::TensorPtr AdaptiveAvgPool1DAscendCustomize(const std::shared_ptr<OpRunne
   }
   squeeze_input_shape.emplace_back(shape_pool2d[shape_pool2d_dim - 1]);
   auto output_tensor = reshape(output_adaptive_avg_pool2d_tensor, squeeze_input_shape);
-  op->set_outputs({output_tensor});
   return output_tensor;
 }
 }  // namespace pyboost

@@ -15,13 +15,13 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/matmul.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
@@ -43,16 +43,15 @@ std::vector<int64_t> MatmulGetTransposePerm(const TensorPtr &weight_tensor) {
   return perm;
 }
 }  // namespace
-tensor::TensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                        const TensorPtr &mat2_tensor, const BoolImmPtr &transpose_a,
-                                        const BoolImmPtr &transpose_b) {
-  OpRunner::InferOpOutput(op, input_tensor, mat2_tensor, transpose_a, transpose_b);
+tensor::TensorPtr MatMulAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &mat2_tensor,
+                                        const BoolImmPtr &transpose_a, const BoolImmPtr &transpose_b) {
+  auto output = InferOutput<1>(prim::kPrimMatMul, input_tensor, mat2_tensor, transpose_a, transpose_b);
   auto transpose_a_imm = GetValue<bool>(transpose_a);
   auto transpose_b_imm = GetValue<bool>(transpose_b);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mat2_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(input_tensor, mat2_tensor);
+  TensorMalloc(output);
 
   TensorPtr input_tensor_ = input_tensor;
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
@@ -64,22 +63,9 @@ tensor::TensorPtr MatMulAscendCustomize(const std::shared_ptr<OpRunner> &op, con
   if (transpose_b_imm) {
     mat2_tensor_ = transpose(mat2_tensor, MatmulGetTransposePerm(mat2_tensor));
   }
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor_, mat2_tensor_]() {
-    MS_LOG(DEBUG) << "Run device task MatMul start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor_, mat2_tensor_);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
-    auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
-    LAUNCH_ACLNN(aclnnMm, device_context, op->stream_id(), input_tensor_, mat2_tensor_, outputs[0], cube_math_type);
-    MS_LOG(DEBUG) << "Run device task MatMul end";
-  }));
-  return op->output(0);
+  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
+  DISPATCH_ACLNN(aclnnMm, input_tensor_, mat2_tensor_, output, cube_math_type);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

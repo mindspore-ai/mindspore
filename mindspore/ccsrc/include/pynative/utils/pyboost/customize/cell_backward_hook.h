@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_PYBOOST_CUSTOMIZE_CELL_BACKWARD_HOOK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_PYBOOST_CUSTOMIZE_CELL_BACKWARD_HOOK_H_
 
-#include <memory>
+#include <vector>
+#include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore::kernel::pyboost {
-void PYBOOST_API CellBackwardHookCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &tensors_list);
+std::vector<tensor::TensorPtr> PYBOOST_API CellBackwardHookCustomize(const ValueTuplePtr &tensors_list);
 }  // namespace mindspore::kernel::pyboost
 #endif  // MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_PYBOOST_CUSTOMIZE_CELL_BACKWARD_HOOK_H_

@@ -15,31 +15,22 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/full_like.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr FullLikeAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                          const ScalarPtr &fill_value, const std::optional<Int64ImmPtr> &dtype) {
-  OpRunner::InferOpOutput(op, input, fill_value, dtype);
+tensor::TensorPtr FullLikeAscendCustomize(const tensor::TensorPtr &input, const ScalarPtr &fill_value,
+                                          const std::optional<Int64ImmPtr> &dtype) {
+  auto output = InferOutput<1>(prim::kPrimFullLike, input, fill_value, dtype);
   // No need to convert input
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, fill_value]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << "Call FullLike start";
-    LAUNCH_ACLNN(aclnnInplaceFillScalar, device_context, op->stream_id(), outputs[0], fill_value);
-    MS_LOG(DEBUG) << "Launch FullLike end";
-  }));
-  return op->output(0);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnInplaceFillScalar, output, fill_value);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

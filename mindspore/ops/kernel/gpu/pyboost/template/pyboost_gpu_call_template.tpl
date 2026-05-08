@@ -8,19 +8,13 @@ auto op = get_op();
 ${create_input_address}
 ${inplace_process}
 // Create device address for output tensors
-PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);
+TensorMalloc(op, outputs_);
 ProfileTrackerTask();
 // Async
 PyBoostUtils::DispatchRun(
 std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
   auto device_context = op->device_context();
   const auto &outputs = op->outputs();
-
-  // Malloc for input tensors
-  ${malloc_inputs}
-
-  // Malloc for output tensors
-  PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
   // Get inputs kernel tensors, the not-tensor value will malloc here
   ${get_inputs_kernel_tensors}

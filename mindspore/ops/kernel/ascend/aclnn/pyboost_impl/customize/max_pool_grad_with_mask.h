@@ -17,19 +17,15 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MAX_POOL_GRAD_WITH_MASK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MAX_POOL_GRAD_WITH_MASK_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MaxPoolGradWithMaskAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                                     const TensorPtr &grad, const TensorPtr mask,
-                                                     const ValueTuplePtr &kernel_size,
+tensor::TensorPtr MaxPoolGradWithMaskAscendCustomize(const tensor::TensorPtr &x_tensor, const tensor::TensorPtr &grad,
+                                                     const tensor::TensorPtr mask, const ValueTuplePtr &kernel_size,
                                                      const std::optional<ValueTuplePtr> &strides,
                                                      const ValueTuplePtr &pads, const ValueTuplePtr &dilation,
                                                      const BoolImmPtr &ceil_mode, const Int64ImmPtr &argmax_type);

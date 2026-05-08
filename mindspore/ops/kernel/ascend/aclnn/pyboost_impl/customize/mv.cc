@@ -15,39 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/mv.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MvAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                    const TensorPtr &vec_tensor) {
-  OpRunner::InferOpOutput(op, input_tensor, vec_tensor);
+tensor::TensorPtr MvAscendCustomize(const TensorPtr &input_tensor, const TensorPtr &vec_tensor) {
+  auto output = InferOutput<1>(prim::kPrimMv, input_tensor, vec_tensor);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, vec_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, vec_tensor]() {
-    MS_LOG(DEBUG) << "Run device task Mv start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, input_tensor, vec_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
-    auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
-    LAUNCH_ACLNN(aclnnMv, device_context, op->stream_id(), input_tensor, vec_tensor, outputs[0], cube_math_type);
-    MS_LOG(DEBUG) << "Run device task Mv end";
-  }));
-  return op->output(0);
+  TensorToDevice(input_tensor, vec_tensor);
+  TensorMalloc(output);
+  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
+  DISPATCH_ACLNN(aclnnMv, input_tensor, vec_tensor, output, cube_math_type);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

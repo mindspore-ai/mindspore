@@ -22,16 +22,14 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void FuncMaxPool2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                  const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &stride,
-                                  const ValueTuplePtr &padding, const ValueTuplePtr &dilation,
-                                  const BoolImmPtr &ceil_mode, const BoolImmPtr &return_indices);
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> FuncMaxPool2DAscendCustomize(
+  const tensor::TensorPtr &input_tensor, const ValueTuplePtr &kernel_size, const std::optional<ValueTuplePtr> &stride,
+  const ValueTuplePtr &padding, const ValueTuplePtr &dilation, const BoolImmPtr &ceil_mode,
+  const BoolImmPtr &return_indices);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

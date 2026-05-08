@@ -15,40 +15,29 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_addmm.h"
-#include <memory>
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "mindspore/ops/ops_utils/memory_overlap.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceAddmmAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                              const TensorPtr &mat1_tensor, const TensorPtr &mat2_tensor,
-                                              const ScalarPtr &beta, const ScalarPtr &alpha) {
-  OpRunner::InferOpOutput(op, input_tensor, mat1_tensor, mat2_tensor, beta, alpha);
+tensor::TensorPtr InplaceAddmmAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                              const tensor::TensorPtr &mat1_tensor,
+                                              const tensor::TensorPtr &mat2_tensor, const ScalarPtr &beta,
+                                              const ScalarPtr &alpha) {
+  InferOutput<1>(prim::kPrimInplaceAddmm, input_tensor, mat1_tensor, mat2_tensor, beta, alpha);
 
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, mat1_tensor, mat2_tensor);
-  op->set_outputs({input_tensor});
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, mat1_tensor, mat2_tensor, beta, alpha]() {
-      MS_LOG(DEBUG) << "Run device task InplaceAddmm start";
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, mat1_tensor, mat2_tensor);
-      // Check Memory Partial Overlap
-      CheckMemory({input_tensor, mat1_tensor, mat2_tensor}, {input_tensor});
-      // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
-      auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
-      LAUNCH_ACLNN(aclnnInplaceAddmm, device_context, op->stream_id(), input_tensor, mat1_tensor, mat2_tensor, beta,
-                   alpha, cube_math_type);
-      MS_LOG(DEBUG) << "Run device task InplaceAddmm end";
-    }));
-  return op->output(0);
+  TensorToDevice(input_tensor, mat1_tensor, mat2_tensor);
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({input_tensor, mat1_tensor, mat2_tensor}, {input_tensor});
+  // cubeMathType: 0 - KEEP_DTYPE, 1 - ALLOW_FP32_DOWN_PRECISION
+  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
+  DISPATCH_ACLNN(aclnnInplaceAddmm, input_tensor, mat1_tensor, mat2_tensor, beta, alpha, cube_math_type);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

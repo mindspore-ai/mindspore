@@ -16,23 +16,21 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/inplace_scatter_src_reduce.h"
 #include <memory>
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "mindapi/base/types.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
-#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceScatterSrcReduceAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                         const TensorPtr &input_tensor, const Int64ImmPtr &dim,
-                                                         const TensorPtr &index_tensor, const TensorPtr &src_tensor,
+tensor::TensorPtr InplaceScatterSrcReduceAscendCustomize(const tensor::TensorPtr &input_tensor, const Int64ImmPtr &dim,
+                                                         const tensor::TensorPtr &index_tensor,
+                                                         const tensor::TensorPtr &src_tensor,
                                                          const Int64ImmPtr &reduce) {
   MS_LOG(DEBUG) << "Call InplaceScatterSrcReduce start";
   // No need to call infer
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, index_tensor, src_tensor);
-  op->set_outputs({input_tensor});
+  TensorToDevice(input_tensor, index_tensor, src_tensor);
 
   auto dim_imm = GetValue<int64_t>(dim);
   auto reduce_imm = GetValue<int64_t>(reduce);
@@ -42,20 +40,10 @@ tensor::TensorPtr InplaceScatterSrcReduceAscendCustomize(const std::shared_ptr<O
                              << mindspore::device::ascend::ScatterReduceMode::ConvertEnumToString(reduce_imm) << "'.";
   }
 
-  // Async
-  PyBoostUtils::DispatchRun(
-    std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_imm, index_tensor, src_tensor, reduce_imm]() {
-      MS_LOG(DEBUG) << "Run device task InplaceScatterSrcReduce start";
-      auto device_context = op->device_context();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, input_tensor, index_tensor, src_tensor);
-      // Check Memory Partial Overlap
-      CheckMemory({input_tensor, index_tensor, src_tensor}, {input_tensor});
-      LAUNCH_ACLNN(aclnnInplaceScatter, device_context, op->stream_id(), input_tensor, dim_imm, index_tensor,
-                   src_tensor, reduce_imm);
-      MS_LOG(DEBUG) << "Run device task InplaceScatterSrcReduce end";
-    }));
-  return op->output(0);
+  // Check Memory Partial Overlap
+  mindspore::pyboost::CheckMemoryOverlap({input_tensor, index_tensor, src_tensor}, {input_tensor});
+  DISPATCH_ACLNN(aclnnInplaceScatter, input_tensor, dim_imm, index_tensor, src_tensor, reduce_imm);
+  return input_tensor;
 }
 }  // namespace pyboost
 }  // namespace kernel

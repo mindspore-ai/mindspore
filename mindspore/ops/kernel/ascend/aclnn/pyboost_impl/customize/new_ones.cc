@@ -16,29 +16,22 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/new_ones.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/ones.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NewOnesAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                         const ValueTuplePtr &size, const std::optional<Int64ImmPtr> &dtype) {
-  OpRunner::InferOpOutput(op, input_tensor, size, dtype);
-  // No need to convert input
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op]() {
-    MS_LOG(DEBUG) << "Run device task NewOnes start";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    ScalarPtr fill_value = std::make_shared<Int64Imm>(1);
-    LAUNCH_ACLNN(aclnnInplaceFillScalar, device_context, op->stream_id(), outputs[0], fill_value);
-    MS_LOG(DEBUG) << "Run device task NewOnes end";
-  }));
-  return op->output(0);
+tensor::TensorPtr NewOnesAscendCustomize(const TensorPtr &input_tensor, const ValueTuplePtr &size,
+                                         const std::optional<Int64ImmPtr> &dtype) {
+  auto output = InferOutput<1>(prim::kPrimNewOnes, input_tensor, size, dtype);
+  TensorMalloc(output);
+  ScalarPtr fill_value = std::make_shared<Int64Imm>(1);
+  DISPATCH_ACLNN(aclnnInplaceFillScalar, output, fill_value);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -18,18 +18,15 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_INPLACE_CLAMPTENSOR_ASCEND_H_
 
 #include <memory>
-#include <vector>
 
 #include "ir/tensor.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceClampTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                    const std::optional<TensorPtr> &min_tensor,
-                                                    const std::optional<TensorPtr> &max_tensor);
+tensor::TensorPtr InplaceClampTensorAscendCustomize(const tensor::TensorPtr &input_tensor,
+                                                    const std::optional<tensor::TensorPtr> &min_tensor,
+                                                    const std::optional<tensor::TensorPtr> &max_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

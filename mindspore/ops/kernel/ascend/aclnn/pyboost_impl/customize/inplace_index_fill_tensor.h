@@ -17,17 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_INDEX_FILL_TENSOR_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_INPLACE_INDEX_FILL_TENSOR_H_
 #include <memory>
-#include <vector>
 #include "ir/tensor.h"
 #include "ir/scalar.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr InplaceIndexFillTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                                        const Int64ImmPtr &dim, const TensorPtr &index,
-                                                        const TensorPtr &value);
+tensor::TensorPtr InplaceIndexFillTensorAscendCustomize(const tensor::TensorPtr &input, const Int64ImmPtr &dim,
+                                                        const tensor::TensorPtr &index, const tensor::TensorPtr &value);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -50,7 +50,7 @@
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "mindspore/core/include/ir/tensor_new.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "utils/log_adapter.h"
 #include "include/runtime/utils/dispatch/dispatch_env.h"
 #include "runtime/pipeline/task/task.h"

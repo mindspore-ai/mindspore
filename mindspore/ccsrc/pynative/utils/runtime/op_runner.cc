@@ -39,7 +39,7 @@
 #include "include/backend/common/pass_manager/dynamic_shape_helper.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/utils/runtime/ir_converter.h"
-#include "utils/stream_guard.h"
+#include "utils/current_state.h"
 #include "primitive/structure_op_name.h"
 #include "primitive/framework_op_name.h"
 using mindspore::profiler::ProfilerManager;

@@ -15,37 +15,26 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/rms_norm.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr> RmsNormAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                        const TensorPtr &x_tensor,
+std::tuple<tensor::TensorPtr, tensor::TensorPtr> RmsNormAscendCustomize(const TensorPtr &x_tensor,
                                                                         const TensorPtr &gamma_tensor,
                                                                         const FP32ImmPtr &epsilon) {
-  OpRunner::InferOpOutput(op, x_tensor, gamma_tensor, epsilon);
+  auto outputs = InferOutput<2>(prim::kPrimRmsNorm, x_tensor, gamma_tensor, epsilon);
   auto epsilon_imm = static_cast<double>(GetValue<float>(epsilon));
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, gamma_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-
-  // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, gamma_tensor, epsilon_imm]() {
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, x_tensor, gamma_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    LAUNCH_ACLNN(aclnnRmsNorm, device_context, op->stream_id(), x_tensor, gamma_tensor, epsilon_imm, outputs[0],
-                 outputs[1]);
-    MS_LOG(DEBUG) << op->primitive()->name() << " Call end";
-  }));
-  return std::make_tuple(op->output(0), op->output(1));
+  TensorToDevice(x_tensor, gamma_tensor);
+  TensorMalloc(outputs);
+  auto [o0, o1] = outputs;
+  DISPATCH_ACLNN(aclnnRmsNorm, x_tensor, gamma_tensor, epsilon_imm, o0, o1);
+  return outputs;
 }
 }  // namespace pyboost
 }  // namespace kernel

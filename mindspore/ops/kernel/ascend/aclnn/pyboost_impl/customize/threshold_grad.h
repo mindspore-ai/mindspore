@@ -17,17 +17,14 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_THRESHOLD_GRAD_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_THRESHOLD_GRAD_H_
 
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ThresholdGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &y_tensor,
-                                               const TensorPtr &dy_tensor, const ScalarPtr &threshold);
+tensor::TensorPtr ThresholdGradAscendCustomize(const tensor::TensorPtr &y_tensor, const tensor::TensorPtr &dy_tensor,
+                                               const ScalarPtr &threshold);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

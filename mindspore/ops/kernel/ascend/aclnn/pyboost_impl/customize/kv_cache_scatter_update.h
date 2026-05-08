@@ -16,18 +16,16 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_KV_CACHE_SCATTER_UPDATE_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_KV_CACHE_SCATTER_UPDATE_H_
-#include <vector>
 #include <memory>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr KVCacheScatterUpdateAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &var_tensor,
-                                                      const TensorPtr &indices_tensor, const TensorPtr &updates_tensor,
-                                                      const Int64ImmPtr &axis, const Int64ImmPtr &reduce);
+tensor::TensorPtr KVCacheScatterUpdateAscendCustomize(const tensor::TensorPtr &var_tensor,
+                                                      const tensor::TensorPtr &indices_tensor,
+                                                      const tensor::TensorPtr &updates_tensor, const Int64ImmPtr &axis,
+                                                      const Int64ImmPtr &reduce);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

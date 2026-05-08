@@ -19,14 +19,11 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr EmptyAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &size,
-                                       const std::optional<Int64ImmPtr> &dtype,
+tensor::TensorPtr EmptyAscendCustomize(const ValueTuplePtr &size, const std::optional<Int64ImmPtr> &dtype,
                                        const std::optional<Int64ImmPtr> &device,
                                        const BoolImmPtr &pin_memory = std::make_shared<BoolImm>(false));
 }  // namespace pyboost

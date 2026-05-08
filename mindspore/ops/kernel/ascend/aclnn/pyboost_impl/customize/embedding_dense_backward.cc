@@ -15,26 +15,24 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/embedding_dense_backward.h"
-#include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/op_register.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                        const TensorPtr &grad_tensor, const TensorPtr &indices_tensor,
+tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const TensorPtr &grad_tensor, const TensorPtr &indices_tensor,
                                                         const Int64ImmPtr &num_weights,
                                                         const std::optional<Int64ImmPtr> &padding_idx,
                                                         const BoolImmPtr &scale_grad_by_freq) {
-  MS_EXCEPTION_IF_NULL(op);
+  auto output = InferOutput<1>(prim::kPrimEmbeddingDenseBackward, grad_tensor, indices_tensor, num_weights, padding_idx,
+                               scale_grad_by_freq);
 
-  OpRunner::InferOpOutput(op, grad_tensor, indices_tensor, num_weights, padding_idx, scale_grad_by_freq);
-
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), grad_tensor, indices_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
+  TensorToDevice(grad_tensor, indices_tensor);
+  TensorMalloc(output);
 
   MS_EXCEPTION_IF_NULL(num_weights);
   auto num_weights_imm = num_weights->value();
@@ -53,23 +51,11 @@ tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const std::shared_ptr<Op
   auto scale_grad_by_freq_imm = scale_grad_by_freq->value();
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-    [op, grad_tensor, indices_tensor, num_weights_imm, padding_idx_imm, scale_grad_by_freq_imm]() {
-      MS_LOG(DEBUG) << "Run device task EmbeddingDenseBackward start";
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      PyBoostUtils::MallocOpInputs(device_context, grad_tensor, indices_tensor);
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  DISPATCH_ACLNN(aclnnEmbeddingDenseBackward, grad_tensor, indices_tensor, static_cast<uint64_t>(num_weights_imm),
+                 static_cast<uint64_t>(padding_idx_imm), scale_grad_by_freq_imm, output);
 
-      LAUNCH_ACLNN(aclnnEmbeddingDenseBackward, device_context, op->stream_id(), grad_tensor, indices_tensor,
-                   static_cast<uint64_t>(num_weights_imm), static_cast<uint64_t>(padding_idx_imm),
-                   scale_grad_by_freq_imm, outputs[0]);
-
-      MS_LOG(DEBUG) << "Run device task EmbeddingDenseBackward end";
-    }));
-  return op->output(0);
+  MS_LOG(DEBUG) << "Run device task EmbeddingDenseBackward end";
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -17,20 +17,16 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_DROPOUT2D_EXT_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_DROPOUT2D_EXT_H_
 
-#include <vector>
 #include <memory>
 
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr Dropout2dExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input,
-                                              const FP32ImmPtr &p, const BoolImmPtr &training,
-                                              const BoolImmPtr &inplace, const TensorPtr &seed,
-                                              const TensorPtr &offset);
+tensor::TensorPtr Dropout2dExtAscendCustomize(const tensor::TensorPtr &input, const FP32ImmPtr &p,
+                                              const BoolImmPtr &training, const BoolImmPtr &inplace,
+                                              const tensor::TensorPtr &seed, const tensor::TensorPtr &offset);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

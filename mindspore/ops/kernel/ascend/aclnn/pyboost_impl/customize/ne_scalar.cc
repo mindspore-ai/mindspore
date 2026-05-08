@@ -15,30 +15,21 @@
  */
 #include "kernel/ascend/aclnn/pyboost_impl/customize/ne_scalar.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/tensor_memory.h"
+#include "include/pynative/utils/pyboost/infer_output.h"
+#include "primitive/auto_generate/gen_ops_primitive_n.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr NeScalarAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                          const ScalarPtr &other) {
-  OpRunner::InferOpOutput(op, input_tensor, other);
+tensor::TensorPtr NeScalarAscendCustomize(const TensorPtr &input_tensor, const ScalarPtr &other) {
+  auto output = InferOutput<1>(prim::kPrimNeScalar, input_tensor, other);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  // Async
-
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, other]() {
-    auto device_context = op->device_context();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(op->device_context(), input_tensor);
-    // Malloc for output tensors
-    const auto &outputs = op->outputs();
-    PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
-    LAUNCH_ACLNN(aclnnNeScalar, device_context, op->stream_id(), input_tensor, other, outputs[0]);
-  }));
-  return op->output(0);
+  TensorToDevice(input_tensor);
+  TensorMalloc(output);
+  DISPATCH_ACLNN(aclnnNeScalar, input_tensor, other, output);
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel
