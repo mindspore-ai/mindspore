@@ -131,14 +131,14 @@ class AutoParallel(Cell):
         >>> from mindspore.nn.utils import no_init_parameters
         >>>
         >>> with no_init_parameters():
-        >>>     net = Network()
-        >>>     optimizer = nn.SGD(net.trainable_params(), 1e-2)
-        >>>     pp_grad_reducer = PipelineGradReducer(optimizer.parameters, opt_shard=False)
+        ...     net = Network()
+        ...     optimizer = nn.SGD(net.trainable_params(), 1e-2)
+        ...     pp_grad_reducer = PipelineGradReducer(optimizer.parameters, opt_shard=False)
         >>>
         >>> loss_fn = nn.CrossEntropyLoss()
         >>> net_with_loss = Pipeline(nn.WithLossCell(net, loss_fn), 4, stage_config={"_backbone.flatten":0,
-        >>>     "_backbone.layer1": 0, "_backbone.relu1": 0, "_backbone.layer2": 1,
-        >>>     "_backbone.relu2": 1, "_backbone.layer3": 1})
+        ...     "_backbone.layer1": 0, "_backbone.relu1": 0, "_backbone.layer2": 1,
+        ...     "_backbone.relu2": 1, "_backbone.layer3": 1})
         >>> parallel_net = AutoParallel(net_with_loss, parallel_mode="semi_auto")
         >>> parallel_net.hsdp()
         >>> parallel_net.pipeline(stages=2)
@@ -566,7 +566,7 @@ class AutoParallel(Cell):
             >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> comm_config = {"openstate": True, "allreduce": {"mode": "auto", "config": None}}
-            >>> net.comm_fusion(config=comm_config)
+            >>> parallel_net.comm_fusion(config=comm_config)
         """
         if config is not None and not isinstance(config, dict):
             raise TypeError(f"The parameter '{config}' must be {dict}, but got {type(config)}.")

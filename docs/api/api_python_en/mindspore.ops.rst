@@ -833,7 +833,7 @@ MC2 Functions
     mindspore.ops.all_gather_matmul
     mindspore.ops.matmul_reduce_scatter
 
-mindspore.ops.communication
+Communication Functions
 --------------------------------
 
 .. msplatformautosummary::
