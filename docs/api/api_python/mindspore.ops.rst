@@ -819,7 +819,7 @@ CSR函数
     mindspore.ops.csr_tan
     mindspore.ops.csr_tanh
 
-MC2 函数
+MC2函数
 ----------------
 
 .. warning::
@@ -833,7 +833,7 @@ MC2 函数
     mindspore.ops.all_gather_matmul
     mindspore.ops.matmul_reduce_scatter
 
-mindspore.ops.communication
+通信函数
 --------------------------------
 
 .. mscnplatformautosummary::

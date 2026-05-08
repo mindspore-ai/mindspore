@@ -1249,7 +1249,7 @@ def log(x, dtype=None):
 
     Note:
         - Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
-        not supported.
+          not supported.
         - On GPU, the supported dtypes are np.float16, and np.float32.
         - On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
 
