@@ -35,6 +35,7 @@ MessageQueue::MessageQueue(key_t key)
                       << " failed. Errno: " << std::to_string(errno);
   }
   msg_queue_id_ = msg_queue_id;
+  MS_LOG(INFO) << "Create new msg queue id: " << msg_queue_id_ << " success.";
 
   auto ret = memset_s(err_msg_, kWorkerErrorMsgSize, 0, kWorkerErrorMsgSize);
   if (ret != EOK) {
@@ -111,7 +112,7 @@ Status MessageQueue::MsgSnd(int64_t mtype, int shm_id, uint64_t shm_size) {
     }
     RETURN_STATUS_UNEXPECTED("Exec msgsnd failed. Msg queue id: " + std::to_string(msg_queue_id_) +
                              ", mtype: " + std::to_string(mtype) + ", shm_id: " + std::to_string(shm_id) +
-                             ", shm_size: " + std::to_string(shm_size));
+                             ", shm_size: " + std::to_string(shm_size) + ", errno: " + std::to_string(errno));
   }
   MS_LOG(DEBUG) << "Exec msgsnd success, msg queue id: " << msg_queue_id_ << ", mtype: " << mtype
                 << ", shm_id: " << shm_id << ", shm_size: " << shm_size << ", err status: " << GetErrorStatus();
