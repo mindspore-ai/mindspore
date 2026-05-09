@@ -9,7 +9,7 @@ mindspore.numpy.blackman
         - **M** (int) - 输出窗口的长度。如果为零或小于零，则返回一个空数组。
 
     返回：
-        Tensor，生成一个长度为 ``M`` 且最大值归一化为 :math:`1` 的Blackman窗口（仅当样本数为奇数时才会出现值 :math:`1` ）。
+        Tensor，生成一个长度为 `M` 且最大值归一化为 :math:`1` 的Blackman窗口（仅当样本数为奇数时才会出现值 :math:`1` ）。
 
     异常：
-        - **TypeError** - 如果输入 ``M`` 不是一个int型数据。
+        - **TypeError** - 如果输入 `M` 不是一个int型数据。

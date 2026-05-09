@@ -12,5 +12,5 @@ mindspore.numpy.argwhere
         Tensor，非零元素的索引。索引按元素分组。Tensor的shape为 :math:`(N, a.ndim)` 其中 :math:`N` 为非零元素个数。
 
     异常：
-        - **TypeError** - 如果输入的 ``a`` 不是类似数组的对象。
+        - **TypeError** - 如果 ``a`` 不是类似数组的对象。
         - **ValueError** - 如果 ``a`` 的维数为0。

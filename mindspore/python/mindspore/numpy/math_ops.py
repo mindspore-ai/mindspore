@@ -118,14 +118,14 @@ def count_nonzero(x, axis=None, keepdims=False):
     Args:
         x (Tensor): The tensor for which to count non-zeros.
         axis (Union[int,tuple], optional): Axis or tuple of axes along which to
-            count non-zeros. Default is None, meaning that non-zeros will be counted
-            along a flattened version of `x`. Default: ``None`` .
-        keepdims (bool, optional): If this is set to True, the axes that are counted
+            count non-zeros. Default is ``None``, meaning that non-zeros will be counted
+            along a flattened version of `x`.
+        keepdims (bool, optional): If set to True, the axes that are counted
             are left in the result as dimensions with size one. With this option,
             the result will broadcast correctly against `x`. Default: ``False`` .
 
     Returns:
-        Tensor, indicating number of non-zero values in the `x` along a given axis.
+        Tensor, indicating number of non-zero values in `x` along a given axis.
         Otherwise, the total number of non-zero values in `x` is returned.
 
     Raises:
@@ -159,11 +159,11 @@ def clip(x, xmin, xmax, dtype=None):
 
     Args:
         x (Tensor): Tensor containing elements to clip.
-        xmin (Tensor, scalar, None): Minimum value. If None, clipping is not performed
+        xmin (Tensor, scalar, None): Minimum value. If ``None``, clipping is not performed
             on lower interval edge. Not more than one of `xmin` and `xmax` may be None.
-        xmax (Tensor, scalar, None): Maximum value. If None, clipping is not performed
+        xmax (Tensor, scalar, None): Maximum value. If ``None``, clipping is not performed
             on upper interval edge. Not more than one of `xmin` and `xmax` may be None.
-            If `xmin` or `xmax` are tensors, then the three tensors will be broadcasted
+            If `xmin` or `xmax` is a tensor, then the tensors will be broadcasted
             to match their shapes.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
@@ -174,7 +174,7 @@ def clip(x, xmin, xmax, dtype=None):
 
     Raises:
         TypeError: If inputs have types not specified above.
-        ValueError: If the shapes of `x1` and `x2` cannot broadcast, or both `xmin` and `xmax` are `None`.
+        ValueError: If the shapes of `x`, `xmin` and `xmax` cannot broadcast, or both `xmin` and `xmax` are `None`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -383,8 +383,8 @@ def divide(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor): the divident.
-        x2 (Tensor): the divisor.
+        x1 (Tensor): The dividend.
+        x2 (Tensor): The divisor.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -501,8 +501,8 @@ def float_power(x1, x2, dtype=None):
         Integers and floats are promoted to float32 instead of float64.
 
     Args:
-        x1 (Tensor): the bases.
-        x2 (Tensor): the exponents.
+        x1 (Tensor): The bases.
+        x2 (Tensor): The exponents.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -641,15 +641,15 @@ def inner(a, b):
     axes.
 
     Note:
-        Numpy argument `out` is not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, and
-        np.float64.
+        - Numpy argument `out` is not supported.
+        - On GPU, the supported dtypes are np.float16, and np.float32.
+        - On CPU, the supported dtypes are np.float16, np.float32, and
+          np.float64.
 
     Args:
-        a (Tensor): input tensor. If `a` and `b` are nonscalar, their last
+        a (Tensor): Input tensor. If `a` and `b` are nonscalar, their last
                     dimensions must match.
-        b (Tensor): input tensor. If `a` and `b` are nonscalar, their last
+        b (Tensor): Input tensor. If `a` and `b` are nonscalar, their last
                     dimensions must match.
 
     Returns:
@@ -700,7 +700,7 @@ def dot(a, b):
     If both `a` and `b` are 1-D arrays, it is inner product of vectors
     (without complex conjugation).
     If both `a` and `b` are 2-D arrays, it is matrix multiplication.
-    If either `a` or `b` is 0-D (scalar), it is equivalent to multiply.
+    If either `a` or `b` is 0-D (scalar), it is equivalent to multiplication.
     If `a` is an `N-D` array and `b` is a 1-D array, it is a sum product
     over the last axis of `a` and `b`.
     If `a` is an `N-D` array and `b` is an `M-D` array (where ``M>=2``), it is a
@@ -708,10 +708,10 @@ def dot(a, b):
     ``dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])``
 
     Note:
-        Numpy argument `out` is not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, and
-        np.float64.
+        - Numpy argument `out` is not supported.
+        - On GPU, the supported dtypes are np.float16 and np.float32.
+        - On CPU, the supported dtypes are np.float16, np.float32 and
+          np.float64.
 
     Args:
         a (Tensor): input tensor
@@ -719,7 +719,7 @@ def dot(a, b):
 
     Returns:
         Tensor or scalar, the dot product of `a` and `b`. If `a` and `b` are
-        both scalars or both 1-D arrays then a scalar is returned;
+        both scalars or both 1-D arrays, then a scalar is returned;
         otherwise an array is returned
 
     Raises:
@@ -1012,7 +1012,7 @@ def average(x, axis=None, weights=None, returned=False):
             If the axis is `None`, it will average over all of the elements of the tensor `x`.
             If the axis is negative, it counts from the last to the first axis.
         weights (Union[None, Tensor], optional): Weights associated with the values in `x`. Default: ``None`` .
-            If `weights` is `None`, all the data in `x` are assumed to have a weight equal to one.
+            If `weights` is `None`, all data in `x` are assumed to have a weight equal to one.
             If `weights` is 1-D tensor, the length must be the same as the given axis.
             Otherwise, `weights` should have the same shape as `x`.
         returned (bool, optional): Default: ``False`` .
@@ -1475,7 +1475,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
             is passed, initial must also be provided.
 
     Returns:
-        Tensor or scalar, minimum of `a`. If axis is None, the result is a scalar
+        Tensor or scalar, minimum of `a`. If `axis` is None, the result is a scalar
         value. If `axis` is given, the result is an array of dimension ``a.ndim - 1``.
 
     Raises:
@@ -1571,7 +1571,7 @@ def floor(x, dtype=None):
         On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
 
     Args:
-        x (Tensor): input data.
+        x (Tensor): Input data.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -1734,8 +1734,8 @@ def fmod(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor): the first input arrays.
-        x2 (Tensor): the second input arrays.
+        x1 (Tensor): The first input array.
+        x2 (Tensor): The second input array.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -1797,11 +1797,11 @@ def exp(x, dtype=None):
         When `where` is provided, `out` must have a tensor value. `out` is not supported
         for storing the result, however it can be used in combination with `where` to set
         the value at indices for which `where` is set to False.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, np.float64.
+        On GPU, the supported dtypes are np.float16 and np.float32.
+        On CPU, the supported dtypes are np.float16, np.float32 and np.float64.
 
     Args:
-        x (Tensor): input data.
+        x (Tensor): Input data.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -1828,11 +1828,11 @@ def expm1(x, dtype=None):
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, and np.float32.
+        On GPU, the supported dtypes are np.float16 and np.float32.
+        On CPU, the supported dtypes are np.float16 and np.float32.
 
     Args:
-        x (Tensor): input data.
+        x (Tensor): Input data.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -1917,12 +1917,11 @@ def diff(a, n=1, axis=-1, prepend=None, append=None):
         a (Tensor): Input tensor.
         n (int, optional): The number of times values are differenced. If zero,
             the input is returned as-is. Default: ``1`` .
-        axis (int, optional): The axis along which the difference is taken, default
-            is the last axis. Default: ``-1`` .
+        axis (int, optional): The axis along which the difference is taken. Default: ``-1`` .
         prepend/append (Tensor, optional): Values to prepend or append to a along
             `axis` prior to performing the difference. Scalar values are expanded to
             arrays with length 1 in the direction of `axis` and the shape of the input
-            array in along all other axes. Otherwise the dimension and shape must
+            array along all other axes. Otherwise the dimension and shape must
             match `a` except along axis. Default: ``None`` .
 
     Returns:
@@ -2130,8 +2129,8 @@ def gcd(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor): input data.
-        x2 (Tensor): input data.
+        x1 (Tensor): Input data.
+        x2 (Tensor): Input data.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
@@ -2220,7 +2219,7 @@ def convolve(a, v, mode='full'):
 
     Raises:
         TypeError: If the inputs have types not specified above.
-        ValueError: If a and v are empty or have wrong dimensions
+        ValueError: If a and v are empty or have wrong dimensions.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2304,13 +2303,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
     Estimates a covariance matrix, given data and weights.
 
     Covariance indicates the level to which two variables vary together. If we examine
-    N-dimensional samples, :math:`X = [x_1, x_2, .. x_N]^T`, then the covariance matrix
+    N-dimensional samples, :math:`X = [x_1, x_2, .., x_N]^T`, then the covariance matrix
     element :math:`C_{ij}` is the covariance of :math:`x_i` and :math:`x_j`. The element
     :math:`C_{ii}` is the variance of :math:`x_i`.
 
     Note:
         `fweights` and `aweights` must be all positive, in Numpy if negative values
-        are detected, a value error will be raised, in MindSpore we converts all values
+        are detected, a ValueError will be raised, in MindSpore we convert all values
         to positive instead.
 
     Args:
@@ -2322,7 +2321,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
         rowvar(bool, optional): If `rowvar` is ``True`` (default), then each row represents
             a variable, with observations in the columns. Otherwise, the relationship
             is transposed: each column represents a variable, while the rows contain
-            observations.
+            observations. Default is ``True``.
         bias (bool, optional): Default Normalization (``False``) is by :math:`(N - 1)`, where
             :math:`N` is the number of observations given (unbiased estimate). If bias is
             ``True``, then Normalization is by `N`. These values can be overridden by
@@ -2826,7 +2825,7 @@ def exp2(x, dtype=None):
         On GPU, the supported dtypes are np.float16, and np.float32.
 
     Args:
-        x (Tensor): input values.
+        x (Tensor): Input values.
         dtype (:class:`mindspore.dtype`, optional): Defaults to ``None``. Overrides the dtype of the
             output Tensor.
 
@@ -2917,12 +2916,12 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         a (Union[list, tuple, Tensor]): Components of the first vector(s).
         b (Union[list, tuple, Tensor]): Components of the second vector(s).
         axisa (int, optional): Axis of `a` that defines the vector(s). By default, the last
-            axis.
+            axis. Default: ``-1``.
         axisb (int, optional): Axis of `b` that defines the vector(s). By default, the last
-            axis.
+            axis. Default: ``-1``.
         axisc (int, optional): Axis of `c` containing the cross product vector(s). Ignored
             if both input vectors have dimension 2, as the return is scalar. By default,
-            the last axis.
+            the last axis. Default: ``-1``.
         axis (int, optional): If defined, the axis of `a`, `b` and `c` that defines the
             vector(s) and cross product(s). Overrides `axisa`, `axisb` and `axisc`.
             Default: ``None`` .
@@ -2931,7 +2930,7 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         Tensor, vector cross product(s).
 
     Raises:
-        ValueError: when the dimensions of the vector(s) in `a` and/or `b` does not equal 2
+        ValueError: If the dimensions of the vector(s) in `a` and/or `b` do not equal 2
             or 3.
 
     Supported Platforms:
@@ -3013,15 +3012,15 @@ def ceil(x, dtype=None):
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        On GPU, the supported dtypes are np.float16 and np.float32.
 
     Args:
-        x (Tensor): input values.
+        x (Tensor): Input values.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
     Returns:
-        Tensor or scalar, the floor of each element in `x`. This is a scalar if `x` is a scalar.
+        Tensor or scalar, the ceiling of each element in `x`. This is a scalar if `x` is a scalar.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3123,7 +3122,7 @@ def cumsum(a, axis=None, dtype=None):
         a (Tensor): Input tensor.
         axis (int, optional): Axis along which the cumulative sum is computed. The
             default ( ``None`` ) is to compute the cumsum over the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): If not specified, stay the same as `a`,
+        dtype (:class:`mindspore.dtype`, optional): If not specified, stays the same as `a`,
             unless `a` has an integer dtype with a precision less than that of the
             default platform integer. In that case, the default platform integer
             is used. Default: ``None`` .
@@ -3791,13 +3790,13 @@ def arctan2(x1, x2, dtype=None):
         not supported.
 
     Args:
-        x1 (Tensor): input tensor.
-        x2 (Tensor): input tensor.
+        x1 (Tensor): Input tensor.
+        x2 (Tensor): Input tensor.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 
     Returns:
-        Tensor or scalar, the sum of `x1` and `x2`, element-wise. This is a scalar
+        Tensor or scalar, the arc tangent of `x1` and `x2`, element-wise. This is a scalar
         if both `x1` and `x2` are scalars.
 
     Supported Platforms:
@@ -3874,7 +3873,7 @@ def corrcoef(x, y=None, rowvar=True, dtype=None):
             the return data-type will have at least float32 precision. Default: ``None`` .
 
     Returns:
-        Tensor, The correlation coefficient matrix of the variables.
+        Tensor. The correlation coefficient matrix of the variables.
 
     Raises:
         TypeError: If the inputs have types not specified above.
@@ -3958,7 +3957,7 @@ def check_gradient_arguments(f, axis, edge_order):
 
 def gradient(f, *varargs, axis=None, edge_order=1):
     """
-    Returns the gradient of a N-dimensional array.
+    Returns the gradient of an N-dimensional array.
     The gradient is computed using second order accurate central differences
     in the interior points and either first or second order accurate one-sides
     (forward or backwards) differences at the boundaries.
@@ -4233,7 +4232,7 @@ def argmax(a, axis=None):
         shape as a.shape with the dimension along axis removed.
 
     Raises:
-        ValueError: If axis is out of range.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4272,7 +4271,7 @@ def argmin(a, axis=None):
         shape as a.shape with the dimension along axis removed.
 
     Raises:
-        ValueError: If axis is out of range.
+        ValueError: If `axis` is out of range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4508,7 +4507,7 @@ def copysign(x1, x2, dtype=None):
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        Complex inputs are not supported now.
+        Complex inputs are not supported.
 
     Args:
         x1 (Union[int, float, list, tuple, Tensor]): Values to change the sign of.
@@ -4522,7 +4521,7 @@ def copysign(x1, x2, dtype=None):
 
     Raises:
         TypeError: If dtype of the input is not in the given types or
-            the input can not be converted to tensor.
+            the input can not be converted to a tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4567,16 +4566,16 @@ def digitize(x, bins, right=False):
 
     Args:
         x (Union[int, float, bool, list, tuple, Tensor]): Input array to be binned.
-        bins (Union[list, tuple, Tensor]): Array of bins. It has to
+        bins (Union[list, tuple, Tensor]): Array of bins. It must
             be 1-dimensional and monotonic.
-        right (boolean, optional): Indicating whether the intervals include the right
+        right (boolean, optional): Indicates whether the intervals include the right
             or the left bin edge. Default behavior is ``(right==False)`` indicating
             that the interval does not include the right edge. The left bin end is
             open in this case, i.e., ``bins[i-1] <= x < bins[i]`` is the default
             behavior for monotonically increasing bins.
 
     Returns:
-        Tensor of ints, output array of indices, of same shape as `x`.
+        Tensor of ints, output array of indices, of the same shape as `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4607,12 +4606,12 @@ def digitize(x, bins, right=False):
 
 def bincount(x, weights=None, minlength=0, length=None):
     """
-    Count number of occurrences of each value in array of non-negative ints.
+    Count number of occurrences of each value in an array of non-negative ints.
     The number of bins (of size 1) is one larger than the largest value in `x`.
     If `minlength` is specified, there will be at least this number of bins in the
     output array (though it will be longer if necessary, depending on the contents
     of `x`). Each bin gives the number of occurrences of its index value in `x`. If
-    `weights` is specified the input array is weighted by it, i.e. if a value `n`
+    `weights` is specified, the input array is weighted by it, i.e. if a value `n`
     is found at position `i`, ``out[n] += weight[i]`` instead of ``out[n] += 1``.
 
     Note:
@@ -4622,15 +4621,15 @@ def bincount(x, weights=None, minlength=0, length=None):
         are treated as zeros instead.
 
     Args:
-        x (Union[list, tuple, Tensor]): 1-d input array.
+        x (Union[list, tuple, Tensor]): A 1-d input array.
         weights (Union[int, float, bool, list, tuple, Tensor], optional): Weights,
-            array of the same shape as `x`. Default: ``None`` .
+            an array of the same shape as `x`. Default: ``None`` .
         minlength (int, optional): A minimum number of bins for the output array.
             Default: ``0`` .
         length (int, optional): Number of bins. Default: ``None`` .
 
     Returns:
-        Tensor, the result of binning the input array. The length of out is equal to
+        Tensor, the result of binning the input array. The length of the output is equal to
         ``np.amax(x)+1``.
 
     Raises:
@@ -5395,7 +5394,7 @@ def cumprod(a, axis=None, dtype=None):
         Tensor.
 
     Raises:
-        TypeError: If the input can not be converted to tensor or `axis` is not integer.
+        TypeError: If the input can not be converted to tensor or `axis` is not an integer.
         ValueError: If axis is out of range.
 
     Supported Platforms:
@@ -5665,7 +5664,7 @@ def bitwise_or(x1, x2, dtype=None):
     r"""
     Computes the bit-wise OR of two arrays element-wise.
     Computes the bit-wise OR of the underlying binary representation of the integers in
-    the input arrays. This ufunc implements the C/Python operator \|.
+    the input arrays. This ufunc implements the C/Python operator |.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
@@ -5680,7 +5679,7 @@ def bitwise_or(x1, x2, dtype=None):
             output Tensor.
 
     Returns:
-        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+        Tensor or scalar, this is a scalar if both `x1` and `x2` are scalars.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5712,7 +5711,7 @@ def bitwise_xor(x1, x2, dtype=None):
             output Tensor.
 
     Returns:
-        Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
+        Tensor or scalar, this is a scalar if both `x1` and `x2` are scalars.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5824,16 +5823,16 @@ def correlate(a, v, mode='valid'):
               completely. Values outside the signal boundary have no effect.
 
             - ``"full"``: it returns the convolution at each point of overlap, with
-              an output shape of :math:`(N + M - 1,)`.At the end-points of the convolution,
+              an output shape of :math:`(N + M - 1,)`. At the end-points of the convolution,
               the signals do not overlap completely, and boundary effects may be seen.
 
     Returns:
-        Tensor, Discrete cross-correlation of `a` and `v`.
+        Tensor, discrete cross-correlation of `a` and `v`.
 
     Raises:
         TypeError: If `a` or `v` is not a tensor.
-        TypeError: If `a` and `v` is of different dtype.
-        ValueError: If `a` and `v` are empty or have wrong dimensions
+        TypeError: If `a` and `v` are of different dtypes.
+        ValueError: If `a` and `v` are empty or have wrong dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -8,7 +8,7 @@ mindspore.numpy.diag_indices
 
     参数：
         - **n** (int) - 可使用返回索引的数组沿每个维度的大小。
-        - **ndim** (int, 可选) - 维数。
+        - **ndim** (int, 可选) - 维数。默认值： ``2`` 。
 
     返回：
         元素为Tensor的Tuple。

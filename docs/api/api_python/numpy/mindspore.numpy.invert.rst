@@ -15,7 +15,7 @@ mindspore.numpy.invert
 
     参数：
         - **x** (Tensor) - 仅处理int和bool类型。
-        - **dtype** (:class:`mindspore.dtype`，可选) - 默认值: `None` 。覆盖输出Tensor的dtype。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 默认值: ``None`` 。覆盖输出Tensor的dtype。
 
     返回：
         Tensor或标量。

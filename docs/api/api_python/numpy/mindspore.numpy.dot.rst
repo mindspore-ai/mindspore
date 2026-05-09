@@ -10,8 +10,9 @@ mindspore.numpy.dot
     如果 `a` 是N-D数组且 `b` 是M-D数组(其中M>=2)，它在 `a` 的最后一个轴上与 `b` 的倒数第二个轴上计算求和乘积： ``dot(a, b)[i,j,k,m] = sum(a[i,j, :] * b[k, :, m])`` 。
 
     .. note::
-        不支持NumPy的 `out` 参数。在 GPU 上，支持的数据类型为 np.float16, np.float32 和 np.float64。
-        在 CPU 上，支持的数据类型为 np.float16, np.float32 和 np.float64。
+        - 不支持NumPy的 `out` 参数。
+        - 在 GPU 上，支持的数据类型为 np.float16、np.float32 和 np.float64。
+        - 在 CPU 上，支持的数据类型为 np.float16、np.float32 和 np.float64。
 
     参数：
         - **a** (Tensor) - 输入Tensor。

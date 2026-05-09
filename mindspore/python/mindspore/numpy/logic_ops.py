@@ -208,9 +208,9 @@ def equal(x1, x2, dtype=None):
             output Tensor.
 
     Returns:
-       Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
-       scalars.
+        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
+        bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
+        scalars.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -233,7 +233,7 @@ def isfinite(x, dtype=None):
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
         and `extobj` are not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        On GPU, the supported dtypes are np.float16 and np.float32.
 
     Args:
         x (Tensor): Input values.
@@ -241,8 +241,8 @@ def isfinite(x, dtype=None):
             output Tensor.
 
     Returns:
-       Tensor or scalar, true where `x` is not positive infinity, negative infinity,
-       or NaN; false otherwise. This is a scalar if `x` is a scalar.
+        Tensor or scalar. True where `x` is not positive infinity, negative infinity,
+        or NaN. False otherwise. This is a scalar if `x` is a scalar.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -258,7 +258,7 @@ def isfinite(x, dtype=None):
 
 def isnan(x, dtype=None):
     """
-    Tests element-wise for NaN and return result as a boolean array.
+    Tests element-wise for NaN and returns result as a boolean array.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
@@ -271,7 +271,7 @@ def isnan(x, dtype=None):
             output Tensor.
 
     Returns:
-       Tensor or scalar, true where `x` is NaN, false otherwise. This is a scalar if
+        Tensor or scalar. True where `x` is NaN. False otherwise. This is a scalar if
        `x` is a scalar.
 
     Supported Platforms:
@@ -318,8 +318,8 @@ def isinf(x, dtype=None):
             output Tensor.
 
     Returns:
-       Tensor or scalar, true where `x` is positive or negative infinity, false
-       otherwise. This is a scalar if `x` is a scalar.
+        Tensor or scalar. True where `x` is positive or negative infinity. False
+        otherwise. This is a scalar if `x` is a scalar.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -360,8 +360,8 @@ def isposinf(x):
         x (Tensor): Input values.
 
     Returns:
-       Tensor or scalar, true where `x` is positive infinity, false otherwise.
-       This is a scalar if `x` is a scalar.
+        Tensor or scalar, true where `x` is positive infinity, false otherwise.
+        This is a scalar if `x` is a scalar.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -391,8 +391,8 @@ def isneginf(x):
         x (Tensor): Input values.
 
     Returns:
-       Tensor or scalar, true where `x` is negative infinity, false otherwise.
-       This is a scalar if `x` is a scalar.
+        Tensor or scalar, true where `x` is negative infinity, false otherwise.
+        This is a scalar if `x` is a scalar.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -414,9 +414,9 @@ def isscalar(element):
     Returns True if the type of element is a scalar type.
 
     Note:
-        Only object types recognized by the mindspore parser are supported,
+        Only object types recognized by the MindSpore parser are supported,
         which includes objects, types, methods and functions defined within
-        the scope of mindspore. Other built-in types are not supported.
+        the scope of MindSpore. Other built-in types are not supported.
 
     Args:
         element (any): Input argument, can be of any type and shape.
@@ -425,7 +425,7 @@ def isscalar(element):
         Boolean, True if `element` is a scalar type, False if it is not.
 
     Raises:
-        TypeError: If the type of `element` is not supported by mindspore parser.
+        TypeError: If the type of `element` is not supported by MindSpore parser.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -510,12 +510,12 @@ def in1d(ar1, ar2, invert=False):
         ar1 (Union[int, float, bool, list, tuple, Tensor]): Input array with shape `(M,)`.
         ar2 (Union[int, float, bool, list, tuple, Tensor]): The values against which
             to test each value of `ar1`.
-        invert (boolean, optional): If True, the values in the returned array are
+        invert (bool, optional): If True, the values in the returned array are
             inverted (that is, False where an element of `ar1` is in `ar2` and True
             otherwise). Default: ``False`` .
 
     Returns:
-       Tensor, with shape `(M,)`. The values ``ar1[in1d]`` are in `ar2`.
+        Tensor, with shape `(M,)`. The values ``ar1[in1d]`` are in `ar2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -556,12 +556,12 @@ def isin(element, test_elements, invert=False):
         element (Union[int, float, bool, list, tuple, Tensor]): Input array.
         test_elements (Union[int, float, bool, list, tuple, Tensor]): The values against
             which to test each value of `element`.
-        invert (boolean, optional): If True, the values in the returned array are
+        invert (bool, optional): If True, the values in the returned array are
             inverted, as if calculating `element` not in `test_elements`. Default: ``False`` .
 
     Returns:
-       Tensor, has the same shape as `element`. The values ``element[isin]`` are in
-       `test_elements`.
+        Tensor, has the same shape as `element`. The values ``element[isin]`` are in
+        `test_elements`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -736,7 +736,8 @@ def array_equal(a1, a2, equal_nan=False):
         ``equal_nan`` is not supported on Ascend.
 
     Args:
-        a1/a2 (Union[int, float, bool, list, tuple, Tensor]): Input arrays.
+        a1 (Union[int, float, bool, list, tuple, Tensor]): Input array.
+        a2 (Union[int, float, bool, list, tuple, Tensor]): Input array.
         equal_nan (bool, optional): Whether to compare NaN's as equal. Default: ``False`` .
 
     Returns:

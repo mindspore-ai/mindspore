@@ -211,7 +211,6 @@ def asfarray(a, dtype=mstype.float32):
             be in format of np.int32, or \'int32\'. If dtype is ``None``, the data type
             of the new tensor will be inferred from `a`. Default is ``mstype.float32``.
 
-
     Returns:
         Tensor, generated tensor with the specified float dtype.
 
@@ -602,7 +601,7 @@ def arange(start, stop=None, step=None, dtype=None):
     Raises:
         TypeError(PyNative Mode): If input arguments have types not specified above,
             or arguments are not given in the correct orders specified above.
-        RuntimeError(Graph Mode): The inputs that lead to TypeError in Pynative Mode
+        RuntimeError(Graph Mode): The inputs that lead to TypeError in PyNative Mode
             will lead to RuntimeError in Graph Mode.
 
     Supported Platforms:
@@ -810,7 +809,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
             not included. Default: ``True`` .
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`.If `dtype` is None, infer the data
+            be in format of np.float32, or `float32`. If `dtype` is None, infer the data
             type from other input arguments. Default: ``None`` .
         axis (int, optional): The axis in the result to store the samples. Relevant
             only if start or stop is array-like. By default (0), the samples will
@@ -860,8 +859,8 @@ def eye(N, M=None, k=0, dtype=mstype.float32):
 
     Args:
         N (int): Number of rows in the output, must be larger than 0.
-        M (int, optional): Number of columns in the output. If is ``None``, default: ``N`` ,
-            if defined, must be larger than 0. Default: ``None``.
+        M (int, optional): Number of columns in the output. If it is ``None``, default: ``N`` .
+            If it is defined, must be larger than 0. Default: ``None``.
         k (int, optional): Index of the diagonal: ``0`` (the default) refers to the main
             diagonal, a positive value refers to an upper diagonal, and a negative value
             to a lower diagonal. Default: ``0`` .
@@ -961,7 +960,7 @@ def empty(shape, dtype=mstype.float32):
         shape (Union[int, tuple(int)]): Shape of the empty array, e.g.,
             (2, 3) or 2.
         dtype (:class:`mindspore.dtype`, optional): Desired output data-type for the
-            array, e.g, mstype.int8. Default: ``mstype.float32`` .
+            array, e.g., mstype.int8. Default: ``mstype.float32`` .
 
     Returns:
         Tensor, array of uninitialized (arbitrary) data of the given
@@ -1027,9 +1026,9 @@ def empty_like(prototype, dtype=None, shape=None):
         prototype (Union[Tensor, list, tuple]): The shape and data-type of `prototype`
             define these same attributes of the returned array.
         dtype (:class:`mindspore.dtype`, optional): Overrides the data type of the
-            result.
+            result. Default: ``None`` .
         shape (int or sequence of ints, optional): Overrides the shape
-            of the result.
+            of the result. Default: ``None`` .
 
     Returns:
         Tensor, array of uninitialized (arbitrary) data with the same
@@ -1338,8 +1337,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
             sub-arrays from which the diagonals should be taken. Defaults to
             first axis (0).
         axis2 (int, optional): Axis to be used as the second axis of the 2-D
-            sub-arrays from which the diagonals should be taken. Defaults to
-            second axis.
+            sub-arrays from which the diagonals should be taken. Default: ``1``.
 
     Returns:
         Tensor, if `a` is 2-D, then `a` 1-D array containing the diagonal. If
@@ -1681,11 +1679,11 @@ ogrid = OGridClass()
 
 def diag(v, k=0):
     """
-    Extracts a diagonal or construct a diagonal array.
+    Extracts a diagonal or constructs a diagonal array.
 
     Args:
-        v (Tensor): If `v` is a 2-D array, return a copy of its `k-th` diagonal.
-            If `v` is a 1-D array, return a 2-D array with v on the `k-th` diagonal.
+        v (Tensor): If `v` is a 2-D array, returns a copy of its `k-th` diagonal.
+            If `v` is a 1-D array, returns a 2-D array with v on the `k-th` diagonal.
         k (int, optional): Diagonal in question. The default is 0. Use ``k>0`` for
             diagonals above the main diagonal, and ``k<0`` for diagonals below the
             main diagonal.
@@ -1748,7 +1746,7 @@ def diagflat(v, k=0):
     Creates a two-dimensional array with the flattened input as a diagonal.
 
     Note:
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        On GPU, the supported dtypes are np.float16 and np.float32.
 
     Args:
         v (Tensor): Input data, which is flattened and set as the `k-th` diagonal
@@ -1758,7 +1756,7 @@ def diagflat(v, k=0):
             diagonal above (below) the main.
 
     Returns:
-        Tensor, The 2-D output array.
+        Tensor, the 2-D output array.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -1815,13 +1813,13 @@ def diag_indices(n, ndim=2):
     Args:
         n (int): The size, along each dimension, of the arrays for which
             the returned indices can be used.
-        ndim (int, optional): The number of dimensions.
+        ndim (int, optional): The number of dimensions. Default: ``2`` .
 
     Returns:
         Tuple of Tensor.
 
     Raises:
-        TypeError: If input are not integers.
+        TypeError: If inputs are not integers.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1954,7 +1952,7 @@ def indices(dimensions, dtype=mstype.int32, sparse=False):
     Args:
         dimensions (Union[list(int), tuple]): The shape of the grid.
         dtype (:class:`mindspore.dtype`, optional): Data type of the result. Default: ``mstype.int32``.
-        sparse (boolean, optional): Default: ``False`` . Return a sparse
+        sparse (bool, optional): Default: ``False`` . Return a sparse
             representation of the grid instead of a dense representation.
 
     Returns:
@@ -2294,7 +2292,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):  # pylint: disabl
             not provided, `range` is simply ``(a.min(), a.max())``. Values outside
             the range are ignored. The first element of the range must be less than
             or equal to the second. Default: ``None`` .
-        weights (Union[int, float, bool, list, tuple, Tensor], optional):  An array of weights,
+        weights (Union[int, float, bool, list, tuple, Tensor], optional): An array of weights,
             of the same shape as `a`. Each value in `a` only contributes its associated weight
             towards the bin count (instead of 1). This is currently not used by any of the bin
             estimators, but may be in the future. Default: ``None`` .

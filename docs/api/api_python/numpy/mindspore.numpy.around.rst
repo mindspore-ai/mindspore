@@ -6,7 +6,7 @@ mindspore.numpy.around
     向给定的小数位数四舍五入。
 
     .. note::
-         不支持NumPy参数 `out` 。 不支持复数。
+        不支持NumPy参数 `out` 。 不支持复数。
 
     参数：
         - **a** (Union[int, float, list, tuple, Tensor]) - 输入数据。

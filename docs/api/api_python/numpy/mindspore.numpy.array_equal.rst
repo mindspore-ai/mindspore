@@ -9,7 +9,8 @@ mindspore.numpy.array_equal
         在MindSpore中，会返回一个bool tensor，因为在图模式下，该值无法在编译时追踪和计算。由于Ascend平台对 ``nan`` 的处理不同，目前在Ascend上不支持 ``equal_nan`` 参数。
 
     参数：
-        - **a1/a2** (Union[int, float, bool, list, tuple, Tensor]) - 输入数组。
+        - **a1** (Union[int, float, bool, list, tuple, Tensor]) - 输入数组。
+        - **a2** (Union[int, float, bool, list, tuple, Tensor]) - 输入数组。
         - **equal_nan** (bool，可选) - 是否将 ``NaN`` 视为相等。默认值： ``False`` 。
 
     返回：

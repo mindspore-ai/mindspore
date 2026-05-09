@@ -8,7 +8,7 @@ mindspore.numpy.array_split
     .. note::
         目前， ``array_split`` 仅支持CPU上的 ``mindspore.float32`` 。
 
-    ``np.split`` 和 ``np.array_split`` 之间的唯一区别是， ``np.array_split`` 允许 ``indices _or_sections`` 是一个不用等分 ``axis`` 的整数。对于长度为l的Tensor，其应当被分割成n个部分，返回的子数组中一部分子数组shape为 :math:`l//n+1` ，剩余子数组shape为 :math:`l//n` 。
+    ``np.split`` 和 ``np.array_split`` 之间的唯一区别是， ``np.array_split`` 允许 ``indices_or_sections`` 是一个不用等分 ``axis`` 的整数。对于长度为l的Tensor，其应当被分割成n个部分，返回的子数组中一部分子数组shape为 :math:`l//n+1` ，剩余子数组shape为 :math:`l//n` 。
 
     参数：
         - **x** (Tensor) - 待切分的Tensor。

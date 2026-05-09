@@ -12,7 +12,7 @@ mindspore.numpy.isscalar
         - **element** (any) - 输入参数，可以是任意类型和shape。
 
     返回：
-        Boolean，如果 ``element`` 是标量类型，则返回True，否则返回False。
+        Boolean，如果 `element` 是标量类型，则返回True，否则返回False。
 
     异常：
-        - **TypeError** - 如果 ``element`` 的类型不受MindSpore解析器支持。
+        - **TypeError** - 如果 `element` 的类型不受MindSpore解析器支持。

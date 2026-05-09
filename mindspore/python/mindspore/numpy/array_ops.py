@@ -48,10 +48,10 @@ def expand_dims(a, axis):
     Args:
         a (Tensor): Input tensor array.
         axis (Union[int, list(int), tuple(int)]): Position in the expanded axes where
-            the new axis is placed,
+            the new axis is placed.
 
     Returns:
-        Tensor, with the number of dimensions increased at specified axis.
+        Tensor, with the number of dimensions increased at the specified axis.
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -379,11 +379,11 @@ def concatenate(arrays, axis=0):
     Joins a sequence of tensors along an existing axis.
 
     Note:
-        To match Numpy behaviour, :math:`axis >= 32` will not cause value error, the
+        To match Numpy behaviour, :math:`axis >= 32` will not cause ValueError,
         `axis` will be treated as ``None`` instead.
 
     Args:
-        arrays (Union[Tensor, tuple(Tensor), list(Tensor)]): a tensor or a list
+        arrays (Union[Tensor, tuple(Tensor), list(Tensor)]): A tensor or a list
             of tensors to be concatenated.
         axis (Union[None, int], optional): The axis along which the tensors will be joined,
             if `axis` is ``None``, tensors are flattened before use. Default: ``0`` .
@@ -462,7 +462,7 @@ def append(arr, values, axis=None):
 
     Raises:
         TypeError: If input arguments have types not specified above.
-        ValueError: If specified axis exceeds `arr.ndim`.
+        ValueError: If specified `axis` exceeds `arr.ndim`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -488,8 +488,8 @@ def append(arr, values, axis=None):
 
 def column_stack(tup):
     """
-    Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is,
-    like np.hstack.
+    Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is.
+    This is similar to np.hstack.
 
     Args:
         tup (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All
@@ -585,7 +585,7 @@ def hstack(tup):
     Args:
         tup (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The
             tensors must have the same shape along all but the second axis, except
-            1-D tensors which can be any length.
+            1-D tensors, which can be of any length.
 
     Returns:
         Stacked Tensor, formed by stacking the given tensors.
@@ -624,10 +624,10 @@ def hstack(tup):
 
 def dstack(tup):
     """
-    Stacks tensors in sequence depth wise (along the third axis).
+    Stacks tensors in sequence depth-wise (along the third axis).
     This is equivalent to concatenation along the third axis. 1-D tensors :math:`(N,)` should be
-    reshaped to :math:`(1,N,1)`.
-    2-D tensors :math:`(M,N)` should be reshaped to :math:`(M,N,1)` before concatenation.
+    reshaped to :math:`(1, N, 1)`.
+    2-D tensors :math:`(M, N)` should be reshaped to :math:`(M, N, 1)` before concatenation.
 
     Args:
         tup (Union[Tensor, tuple, list]): A sequence of tensors. The tensors must have the same shape along all but
@@ -765,7 +765,7 @@ def atleast_1d(*arys):
     """
     Converts inputs to arrays with at least one dimension.
 
-    Scalar inputs are converted to 1-dimensional arrays, whilst
+    Scalar inputs are converted to 1-dimensional arrays, while
     higher-dimensional inputs are preserved.
 
     Note:
@@ -773,10 +773,10 @@ def atleast_1d(*arys):
         tensors.
 
     Args:
-        *arys (Tensor): one or more input tensors.
+        *arys (Tensor): One or more input tensors.
 
     Returns:
-        Tensor, or list of tensors, each with ``a.ndim >= 1``.
+        Tensor or list of tensors, each with ``a.ndim >= 1``.
 
     Raises:
         TypeError: If the input is not a tensor.
@@ -809,8 +809,9 @@ def atleast_2d(*arys):
     Note:
         In graph mode, returns a tuple of tensor instead of a list of
         tensors.
+
     Args:
-        *arys (Tensor): one or more input tensors.
+        *arys (Tensor): One or more input tensors.
 
     Returns:
         Tensor, or list of tensors, each with ``a.ndim >= 2``.
@@ -848,7 +849,7 @@ def atleast_3d(*arys):
         tensors.
 
     Args:
-        *arys (Tensor): one or more input tensors.
+        *arys (Tensor): One or more input tensors.
 
     Returns:
         Tensor, or list of tensors, each with ``a.ndim >= 3``. For example,
@@ -1561,7 +1562,7 @@ def hsplit(x, indices_or_sections):
         A list of sub-tensors.
 
     Raises:
-        TypeError: If argument `indices_or_sections` is not integer.
+        TypeError: If argument `indices_or_sections` is not an integer.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1593,10 +1594,10 @@ def dsplit(x, indices_or_sections):
     Args:
         x (Tensor): A Tensor to be divided.
         indices_or_sections (Union[int, tuple(int), list(int)]):
-            If integer, :math:`N`, the tensor will be divided into
+            If an integer, :math:`N`, the tensor will be divided into
             :math:`N` equal tensors along axis.
             If tuple(int), list(int) or of sorted integers,
-            the entries indicate where along axis the array is split.
+            the entries indicate where along the axis the array is split.
             For example, :math:`[2, 3]` would, for :math:`axis=0`, result in
             three sub-tensors :math:`x[:2]`, :math:`x[2:3]` and :math:`x[3:]`.
             If an index exceeds the dimension of the array along axis,
@@ -1606,7 +1607,7 @@ def dsplit(x, indices_or_sections):
         A list of sub-tensors.
 
     Raises:
-        TypeError: If argument `indices_or_sections` is not integer.
+        TypeError: If argument `indices_or_sections` is not an integer.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2566,7 +2567,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
                               If `True` but `ar1` or `ar2` are not unique,
                               incorrect results and out-of-bounds indices could result.
                               Default: ``False``.
-        return_indices (bool): If `True`, the indices which correspond to the intersection of two Tensors are returned.
+        return_indices (bool): If `True`, the indices that correspond to the intersection of two Tensors are returned.
                                The first instance of a value is used if there are multiple.
                                Default: ``False``.
 

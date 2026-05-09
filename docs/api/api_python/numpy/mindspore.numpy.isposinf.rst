@@ -12,7 +12,7 @@ mindspore.numpy.isposinf
         - **x** (Tensor) - 输入值。
 
     返回：
-        Tensor或标量，当 ``x`` 为正无穷大时为True，否则为False。如果 ``x`` 是标量，则返回标量。
+        Tensor或标量，当 `x` 为正无穷大时为True，否则为False。如果 `x` 是标量，则返回标量。
 
     异常：
         - **TypeError** - 如果输入不是Tensor。
