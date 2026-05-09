@@ -8,7 +8,7 @@
 
 - Where to get help
 
-    - [MindSpore Documentation](https://www.mindspore.cn)
+    - [MindSpore Documentation](https://www.mindspore.cn/en)
     - [MindSpore Community](https://discuss.mindspore.cn)
     - [Issue Feedback](https://atomgit.com/mindspore/mindspore/issues)
 
@@ -29,7 +29,7 @@ Tags follow this format:
 | Field | Example Values | Description |
 |-------|---------------|-------------|
 | MindSpore Version | 2.9.0 | Corresponds to the version identifier in MindSpore official release tags |
-| Hardware Info (Chip) | 910b / a3 | Ascend chip model identifier |
+| Hardware Info (Chip) | see below | Ascend chip model identifier |
 | Operating System | ubuntu22.04 / openeuler24.03 | Operating system distribution and version used in the base image |
 | Python Version | py3.11 | Major Python version built into the image |
 
@@ -54,7 +54,7 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 | Parameter | Description | Required | Source | Example Values |
 |-----------|-------------|----------|--------|----------------|
 | CANN_VERSION | Ascend CANN toolkit version | Yes | CANN image tag | 9.0.0 |
-| CHIP_ARCH | Ascend chip architecture identifier | Yes | Tag specification | 910b / a3 |
+| CHIP_ARCH | Ascend chip architecture identifier | Yes | Tag specification | see below |
 | OS_SYSTEM | Base image operating system and version | Yes | Tag specification | ubuntu22.04 / openeuler24.03 |
 | PY_VERSION | Python version built into the base image | Yes | Tag specification | py3.11 |
 | MINDSPORE_VERSION | MindSpore version number | Yes | MindSpore repository releases | 2.9.0 |
@@ -117,8 +117,8 @@ CMD ["python", "train.py"]
 
 | Chip Series | Product Examples | Architecture |
 |-------------|-----------------|--------------|
-| Ascend 910B | Atlas 800T A2, Atlas 900 A2 PoD | Auto-detected (ARM64/x86_64) |
-| Ascend A3 | Atlas 800T A3 | Auto-detected (ARM64/x86_64) |
+| Atlas A2 | Atlas 800T A2, Atlas 900 A2 PoD | Auto-detected (ARM64/x86_64) |
+| Atlas A3 | Atlas 800T A3 | Auto-detected (ARM64/x86_64) |
 
 > Tips: Use the `docker manifest inspect` command to view the system architectures supported by an image.
 
