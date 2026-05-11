@@ -29,7 +29,7 @@ Tag 遵循以下格式：
 | 字段          | 示例值          | 说明                             |
 |-------------|---------------|--------------------------------|
 | MindSpore 版本号 | 2.9.0         | 对应 MindSpore 官方发布 Tag 中的版本标识        |
-| 硬件信息（芯片）  | 910b / a3 | 昇腾芯片型号标识                      |
+| 硬件信息（芯片）  | 参考下文 | 昇腾芯片型号标识                      |
 | 操作系统      | ubuntu22.04 / openeuler24.03 | 基础镜像所使用的操作系统发行版及版本号      |
 | Python 版本   | py3.11        | 镜像内置 Python 大版本号                |
 
@@ -54,7 +54,7 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 | 参数               | 说明                               | 必填 | 参考来源              | 示例值                                                |
 |------------------|----------------------------------|----|-------------------|----------------------------------------------------|
 | CANN_VERSION     | 昇腾 CANN 工具包版本                    | 是  | CANN 镜像标签         | 9.0.0                                              |
-| CHIP_ARCH        | 昇腾芯片架构标识                         | 是  | Tag 规范             | 910b / a3                                   |
+| CHIP_ARCH        | 昇腾芯片架构标识                         | 是  | Tag 规范             | 参考下文                                   |
 | OS_SYSTEM        | 基础镜像操作系统及版本                      | 是  | Tag 规范             | ubuntu22.04 / openeuler24.03                      |
 | PY_VERSION       | 基础镜像内置 Python 版本                 | 是  | Tag 规范             | py3.11                           |
 | MINDSPORE_VERSION | MindSpore 版本号                       | 是  | MindSpore 仓库发行版         | 2.9.0                                              |
@@ -117,7 +117,7 @@ CMD ["python", "train.py"]
 
 | 芯片系列 | 产品示例 | 架构 |
 |---|---|---|
-| 昇腾 910B | Atlas 800T A2、Atlas 900 A2 PoD | 自动识别 (ARM64/x86_64) |
+| 昇腾 A2 | Atlas 800T A2、Atlas 900 A2 PoD | 自动识别 (ARM64/x86_64) |
 | 昇腾 A3 | Atlas 800T A3 | 自动识别 (ARM64/x86_64) |
 
 > Tips: 使用 `docker manifest inspect` 命令可以查看镜像支持的系统架构。
