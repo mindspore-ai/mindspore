@@ -104,6 +104,10 @@ function(ms_grpc_generate c_var h_var)
 
     set(${c_var})
     set(${h_var})
+    set(_GRPC_PROTOC_ENV)
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set(_GRPC_PROTOC_ENV ${CMAKE_COMMAND} -E env "DYLD_LIBRARY_PATH=${zlib_ROOT}/lib:$ENV{DYLD_LIBRARY_PATH}")
+    endif()
 
     foreach(file ${ARGN})
         get_filename_component(abs_file ${file} ABSOLUTE)
@@ -124,7 +128,8 @@ function(ms_grpc_generate c_var h_var)
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/proto"
                 COMMAND protobuf::protoc --version
-                COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto
+                COMMAND ${_GRPC_PROTOC_ENV} $<TARGET_FILE:protobuf::protoc>
+                        -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto
                         --grpc_out=${CMAKE_BINARY_DIR}/proto
                         --plugin=protoc-gen-grpc=$<TARGET_FILE:grpc::grpc_cpp_plugin> ${abs_file}
                 DEPENDS protobuf::protoc grpc::grpc_cpp_plugin ${abs_file}
