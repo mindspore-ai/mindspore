@@ -5,10 +5,10 @@ mindspore.mint.nn.functional.normalize
 
     将输入的张量按照指定维度进行归一化。
 
-    对于一个输入的张量，它的维度为 :math:`(n_{0},..., n_{dim},..., n_{k})`，对于第 :math:`n_{dim}` 个向量 `v`，它沿着维度 `dim` 按照如下公式进行转换
+    对于一个输入的张量，其维度为 :math:`(n_{0},..., n_{dim},..., n_{k})`，对于第 :math:`n_{dim}` 个向量 `v`，它沿着维度 `dim` 按照如下公式进行转换：
 
     .. math::
-        v=\frac{v}{\max(\left \| v \right \| _{p},\in )}
+        v=\frac{v}{\max(\left \| v \right \| _{p},\epsilon )}
 
     默认归一化计算方法为沿着第一个维度利用欧几里得范数进行归一化。
 
@@ -22,4 +22,4 @@ mindspore.mint.nn.functional.normalize
         - **eps** (float) - 设置的最小值，以避免除法分母为 `0` 。默认值为 ``1e-12``。
 
     返回：
-        - Tensor。shape和数据类型与输入input相同。
+        Tensor。shape和数据类型与输入input相同。

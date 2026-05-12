@@ -12,7 +12,6 @@ mindspore.mint.normal
     关键字参数：
         - **generator** (generator，可选) - MindSpore随机种子。默认值： ``None``。
 
-
     返回：
         Tensor，输出tensor的shape和 `mean` 的shape相同。
 

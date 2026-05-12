@@ -15,7 +15,7 @@ sigmoid:
 
         Args:
             input (Tensor): `input` is :math:`x` in the preceding formula. Tensor of any dimension.
-                The data type is float16, float32, float64, complex64 or complex128.
+                The data type can be float16, float32, float64, complex64 or complex128.
 
         Returns:
             Tensor, with the same type and shape as the input.

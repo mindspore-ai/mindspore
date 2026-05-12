@@ -116,7 +116,7 @@ class Adam(Optimizer):
        \end{aligned}
 
     .. warning::
-            This is an experimental API that is subject to change or deletion.
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
@@ -124,10 +124,10 @@ class Adam(Optimizer):
         lr (Union[int, float, Tensor], optional): learning rate. Default: ``1e-3``.
         betas (Tuple[float, float], optional): The exponential decay rate for the moment estimations.
             Should be in range (0.0, 1.0). Default: ``(0.9, 0.999)``.
-        eps (float, optional): term added to the denominator to improve
+        eps (float, optional): Term added to the denominator to improve
             numerical stability. Should be greater than 0. Default: ``1e-8``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
-        amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: ``False``.
+        weight_decay (float, optional): Weight decay (L2 penalty). Default: ``0.``.
+        amsgrad (bool, optional): Whether to use the AMSGrad algorithm. Default: ``False``.
 
     Keyword Args:
         maximize (bool, optional): maximize the params based on the objective, instead of minimizing.

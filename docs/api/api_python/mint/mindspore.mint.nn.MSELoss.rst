@@ -8,9 +8,9 @@ mindspore.mint.nn.MSELoss
     假设 :math:`x` 和 :math:`y` 为一维Tensor，长度 :math:`N` ，则计算 :math:`x` 和 :math:`y` 的loss（即reduction参数设置为 ``'none'``）的公式如下：
 
     .. math::
-        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with} \quad l_n = (x_n - y_n)^2.
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with} \quad l_n = (x_n - y_n)^2
 
-    其中， :math:`N` 为batch size。如果 `reduction` 不是'none'，则：
+    其中， :math:`N` 为batch size。如果 `reduction` 不是 ``'none'``，则：
 
     .. math::
         \ell(x, y) =

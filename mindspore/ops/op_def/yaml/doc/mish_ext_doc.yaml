@@ -17,7 +17,7 @@ mish_ext:
           :align: center
       
       Args:
-          input (Tensor): The input of MISH. Supported dtypes: 
+          input (Tensor): The input of MISH. Supported dtypes:
 
               - Ascend: float16, float32.
 
@@ -26,7 +26,7 @@ mish_ext:
 
       Raises:
           TypeError: If `input` is not a Tensor.
-          TypeError: If dtype of `input` is not float16 or float32.
+          TypeError: If the dtype of `input` is not float16 or float32.
 
       Supported Platforms:
           ``Ascend``

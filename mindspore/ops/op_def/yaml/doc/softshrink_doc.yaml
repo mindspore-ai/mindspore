@@ -23,10 +23,10 @@ softshrink:
                 - Ascend: float16, float32, bfloat16.
                 - CPU/GPU: float16, float32.
             lambd (number, optional): The threshold :math:`\lambda` defined by the Soft Shrink formula.
-                It should be greater than or equal to 0, default: ``0.5`` .
+                It should be greater than or equal to 0. Default: ``0.5`` .
 
         Returns:
-            Tensor, has the same data type and shape as the input `input`.
+            Tensor, with the same data type and shape as the input `input`.
 
         Raises:
             TypeError: If `lambd` is not a float, int or bool.

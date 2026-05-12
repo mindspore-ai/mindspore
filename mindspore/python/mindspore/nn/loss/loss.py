@@ -195,7 +195,7 @@ class L1Loss(LossBase):
         \end{cases}
 
     Args:
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+        reduction (str, optional): Apply a specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
@@ -205,7 +205,7 @@ class L1Loss(LossBase):
     Inputs:
         - **logits** (Tensor) - Predicted value, Tensor of any dimension.
         - **labels** (Tensor) - Target value, same shape as the `logits` in common cases.
-          However, it supports the shape of `logits` is different from the shape of `labels`
+          However, the shape of `logits` can be different from that of `labels`,
           and they should be broadcasted to each other.
 
     Outputs:
@@ -269,7 +269,7 @@ class L1LossExt(LossBase):
         \end{cases}
 
     Args:
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+        reduction (str, optional): Apply a specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
@@ -279,7 +279,7 @@ class L1LossExt(LossBase):
     Inputs:
         - **logits** (Tensor) - Predicted value, Tensor of any dimension.
         - **labels** (Tensor) - Target value, same shape as the `logits` in common cases.
-          However, it supports the shape of `logits` is different from the shape of `labels`
+          However, the shape of `logits` can be different from the shape of `labels`,
           and they should be broadcasted to each other.
 
     Outputs:
