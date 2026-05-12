@@ -57,7 +57,7 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 | CHIP_ARCH | Ascend chip architecture identifier | Yes | Tag specification | see below |
 | OS_SYSTEM | Base image operating system and version | Yes | Tag specification | ubuntu22.04 / openeuler24.03 |
 | PY_VERSION | Python version built into the base image | Yes | Tag specification | py3.11 |
-| MINDSPORE_VERSION | MindSpore version number | Yes | MindSpore repository releases | 2.9.0 |
+| MINDSPORE_VERSION | MindSpore version number | Yes | [MindSpore repository releases](https://atomgit.com/mindspore/mindspore/releases) | 2.9.0 |
 | PIP_INDEX_URL | pip installation source URL (default: Huawei Cloud mirror) | No | PyPI mirror source | https://mirrors.huaweicloud.com/repository/pypi/simple |
 
 ## Quick Start
@@ -66,14 +66,14 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 
 ```bash
 docker build \
---build-arg CANN_VERSION=9.0.0 \
---build-arg CHIP_ARCH=910b \
---build-arg OS_SYSTEM=ubuntu22.04 \
---build-arg PY_VERSION=py3.11 \
---build-arg MINDSPORE_VERSION=2.9.0 \
---build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
--t mindspore:2.9.0-910b-ubuntu22.04-py3.11 \
--f Dockerfile .
+    --build-arg CANN_VERSION=9.0.0 \
+    --build-arg CHIP_ARCH=910b \
+    --build-arg OS_SYSTEM=ubuntu22.04 \
+    --build-arg PY_VERSION=py3.11 \
+    --build-arg MINDSPORE_VERSION=2.9.0 \
+    --build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
+    -t mindspore:2.9.0-910b-ubuntu22.04-py3.11 \
+    -f Dockerfile .
 ```
 
 ### Running MindSpore Container
@@ -91,8 +91,12 @@ docker run \
     -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ \
     -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
     -v /etc/ascend_install.info:/etc/ascend_install.info \
-    -it mindspore:tag bash
+    -it mindspore:{tag} bash
 ```
+
+Where:
+
+- `{tag}` is the tag specified during the MindSpore image build, for example, `mindspore:2.9.0-910b-ubuntu22.04-py3.11`.
 
 ### How to Extend for Custom Development
 
