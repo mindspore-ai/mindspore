@@ -62,11 +62,13 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
                                                       const TensorPtr &other_tensor, const TensorPtr &input_tensor,
                                                       const ValueTuplePtr &input_split_sizes,
                                                       const Int64ImmPtr &rank_size, const StringImmPtr &op_type,
-                                                      const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, other_tensor, input_tensor, input_split_sizes, rank_size, op_type, group);
+                                                      const StringImmPtr &group, const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, other_tensor, input_tensor, input_split_sizes, rank_size, op_type, group, async_op);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, other_tensor, input_tensor);
   op->set_outputs({other_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, other_tensor, input_tensor, input_split_sizes, rank_size, op_type, group]() {
     PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
@@ -118,6 +120,10 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
     CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, -1, is_avg ? other_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 }  // namespace pyboost
 }  // namespace kernel

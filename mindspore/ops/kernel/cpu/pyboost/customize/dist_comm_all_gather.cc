@@ -32,9 +32,9 @@ namespace kernel {
 namespace pyboost {
 void DistCommAllGatherCPUCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &gather_list,
                                    const TensorPtr &input_tensor, const Int64ImmPtr &rank_size,
-                                   const StringImmPtr &group) {
+                                   const StringImmPtr &group, const BoolImmPtr &async_op) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  OpRunner::InferOpOutput(op, gather_list, input_tensor, rank_size, group);
+  OpRunner::InferOpOutput(op, gather_list, input_tensor, rank_size, group, async_op);
 
   std::vector<TensorPtr> gather_tensors = ConvertValueTupleToVector<TensorPtr>(gather_list);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), gather_tensors, input_tensor);

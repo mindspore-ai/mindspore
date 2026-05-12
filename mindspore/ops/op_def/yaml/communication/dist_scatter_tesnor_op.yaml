@@ -13,6 +13,9 @@ dist_comm_scatter_tensor:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor

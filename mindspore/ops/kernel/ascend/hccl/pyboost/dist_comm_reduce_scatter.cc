@@ -101,8 +101,9 @@ void RunDifferentShapeReduceScatter(void *input_data_ptr, void *output_data_ptr,
 
 void DistCommReduceScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &other_tensor,
                                           const ValueTuplePtr &input_list, const Int64ImmPtr &rank_size,
-                                          const StringImmPtr &op_type, const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, other_tensor, input_list, rank_size, op_type, group);
+                                          const StringImmPtr &op_type, const StringImmPtr &group,
+                                          const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, other_tensor, input_list, rank_size, op_type, group, async_op);
 
   std::vector<TensorPtr> scatter_tensors = ConvertValueTupleToVector<TensorPtr>(input_list);
   op->set_outputs({other_tensor});
@@ -112,6 +113,8 @@ void DistCommReduceScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, c
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, other_tensor, scatter_tensors);
   // Avoid h2d copy.
   PyBoostUtils::PrepareOpOutputs(op->device_context(), kDefaultStreamIndex, {input_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, other_tensor, input_tensor, rank_size_imm, op_type, group, scatter_tensors]() {
     auto device_context = op->device_context();
@@ -165,6 +168,10 @@ void DistCommReduceScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, c
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, -1, is_avg ? other_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

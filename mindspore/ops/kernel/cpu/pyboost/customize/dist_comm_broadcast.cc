@@ -28,7 +28,9 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 void DistCommBroadcastCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &tensor, const Int64ImmPtr &src,
-                                   const Int64ImmPtr &rank_id, const StringImmPtr &group) {
+                                   const Int64ImmPtr &rank_id, const StringImmPtr &group, const BoolImmPtr &async_op) {
+  // CPU collective is blocking; async_op has no effect on this path.
+  (void)async_op;
 #if defined(__linux__) && defined(WITH_BACKEND)
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, tensor);
   op->set_outputs({tensor});

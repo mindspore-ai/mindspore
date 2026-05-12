@@ -168,7 +168,7 @@ void Reducer::all_reduce_bucket(Bucket *bucketPtr) {
   // inplace allreduce
   bucketPtr->comm_handle = mindspore::kernel::pyboost::dist_comm_all_reduce(
     bucketPtr->gradients, std::make_shared<mindspore::StringImm>(op_type),
-    std::make_shared<mindspore::StringImm>(process_group_));
+    std::make_shared<mindspore::StringImm>(process_group_), std::make_shared<mindspore::BoolImm>(true));
 }
 
 // update bucket views mapping

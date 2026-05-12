@@ -32,7 +32,8 @@ bool InnerCommReduceScatterTensorKernel::Init(const std::vector<KernelTensor *> 
 
 int InnerCommReduceScatterTensorKernel::Resize(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != inplace_num_ + kInputNum4) {
+  const auto expected_input_num = inplace_num_ == 0 ? kInputNum4 : kIndex6;
+  if (inputs.size() != expected_input_num) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl InnerCommReduceScatterTensorKernel input size " << inputs.size();
   }
   rank_size_ = inputs[inplace_num_ + kIndex1]->GetValueWithCheck<int64_t>();

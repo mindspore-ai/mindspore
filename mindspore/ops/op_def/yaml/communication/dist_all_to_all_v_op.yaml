@@ -16,6 +16,9 @@ dist_comm_all_to_all_v:
             type_cast: list[int]
         rank_size:
             dtype: int
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor

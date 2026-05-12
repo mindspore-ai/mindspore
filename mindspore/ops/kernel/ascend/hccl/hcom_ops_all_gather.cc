@@ -30,9 +30,9 @@ bool DistCommAllGatherKernel::Init(const std::vector<KernelTensor *> &inputs,
 uint64_t DistCommAllGatherKernel::GetAllGatherVParam(const std::vector<KernelTensor *> &inputs,
                                                      uint64_t input_list_num) {
   const std::optional<int64_t> rank_size_opt;
-  data_type_ = HcomUtil::ConvertHcclType(inputs[input_size_ - kIndex3]->dtype_id());
+  data_type_ = HcomUtil::ConvertHcclType(inputs[input_size_ - kInputNum4]->dtype_id());
   std::vector<int64_t> output_split_sizes;
-  auto in_shape = inputs[input_size_ - kIndex3]->GetDeviceShapeVector();
+  auto in_shape = inputs[input_size_ - kInputNum4]->GetDeviceShapeVector();
   if (!HcomUtil::GetHcomCount(primitive_, {data_type_}, {in_shape}, 1, rank_size_opt, &hccl_count_)) {
     MS_LOG(EXCEPTION) << "GetHcomCount fail!";
   }
@@ -40,7 +40,7 @@ uint64_t DistCommAllGatherKernel::GetAllGatherVParam(const std::vector<KernelTen
     MS_LOG(EXCEPTION) << "GetHcomCount fail!";
   }
 
-  for (size_t i = 0; i < input_list_num - kIndex3; ++i) {
+  for (size_t i = 0; i < input_list_num - kInputNum4; ++i) {
     uint64_t count;
     auto shape = inputs[i]->GetDeviceShapeVector();
     if (!HcomUtil::GetHcomCount(primitive_, {data_type_}, {shape}, 1, rank_size_opt, &count)) {
@@ -71,20 +71,20 @@ uint64_t DistCommAllGatherKernel::GetAllGatherVParam(const std::vector<KernelTen
 
 int DistCommAllGatherKernel::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() < kInputNum4) {
+  if (inputs.size() < kInputNum5) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl DistCommAllGatherKernel input size " << inputs.size();
   }
   input_size_ = inputs.size();
-  rank_size_ = inputs[input_size_ - kIndex2]->GetValueWithCheck<int64_t>();
-  if (rank_size_ != static_cast<int64_t>(input_size_ - kIndex3)) {
+  rank_size_ = inputs[input_size_ - kIndex3]->GetValueWithCheck<int64_t>();
+  if (rank_size_ != static_cast<int64_t>(input_size_ - kInputNum4)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl DistCommAllGatherKernel rank size " << rank_size_;
   }
-  group_ = inputs[input_size_ - kIndex1]->GetValueWithCheck<std::string>();
+  group_ = inputs[input_size_ - kIndex2]->GetValueWithCheck<std::string>();
   uint64_t output_numel = GetAllGatherVParam(inputs, input_size_);
 
   ShapeVector shape;
   if (same_shape_) {
-    shape = inputs[input_size_ - kIndex3]->GetDeviceShapeVector();
+    shape = inputs[input_size_ - kInputNum4]->GetDeviceShapeVector();
   } else {
     if (output_numel != 0) {
       shape.push_back(output_numel);
@@ -106,10 +106,10 @@ int DistCommAllGatherKernel::Resize(const std::vector<KernelTensor *> &inputs,
 bool DistCommAllGatherKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
-  MS_EXCEPTION_IF_NULL(inputs[input_size_ - kIndex3]);
+  MS_EXCEPTION_IF_NULL(inputs[input_size_ - kInputNum4]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   if (same_shape_) {
-    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(inputs[input_size_ - kIndex3]->device_ptr(),
+    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(inputs[input_size_ - kInputNum4]->device_ptr(),
                                                                       outputs[kIndex0]->device_ptr(), hccl_count_,
                                                                       data_type_, stream_ptr, comm_);
     if (hccl_result != HCCL_SUCCESS) {
@@ -129,7 +129,7 @@ bool DistCommAllGatherKernel::Launch(const std::vector<KernelTensor *> &inputs, 
       }
     }
   } else {
-    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGatherV(inputs[input_size_ - kIndex3]->device_ptr(),
+    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGatherV(inputs[input_size_ - kInputNum4]->device_ptr(),
                                                                        outputs[kIndex0]->device_ptr(), params_,
                                                                        data_type_, stream_ptr, comm_);
     if (hccl_result != HCCL_SUCCESS) {

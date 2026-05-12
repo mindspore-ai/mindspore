@@ -9,6 +9,9 @@ dist_comm_all_gather:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     args_signature:
         rw_write: tensor_list
     returns:
@@ -24,4 +27,3 @@ dist_comm_all_gather:
         Ascend: DistCommAllGatherAscend
         CPU: DistCommAllGatherCPU
     non-differentiable: True
-

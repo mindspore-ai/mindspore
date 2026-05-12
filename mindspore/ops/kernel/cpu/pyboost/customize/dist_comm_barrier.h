@@ -21,13 +21,15 @@
 #include <memory>
 #include <tuple>
 #include "ir/tensor.h"
+#include "ir/value.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void DistCommBarrierCPUCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &group);
+void DistCommBarrierCPUCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &group,
+                                 const BoolImmPtr &async_op);
 
 }  // namespace pyboost
 }  // namespace kernel

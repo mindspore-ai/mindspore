@@ -99,13 +99,16 @@ std::function<void(const HcclComm &, void *)> CallAllToAll(const std::shared_ptr
 void DistCommAllToAllVSingleAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &other_tensor,
                                             const TensorPtr &input_tensor, const StringImmPtr &group,
                                             const ValueTuplePtr &send_numel_list, const ValueTuplePtr &recv_numel_list,
-                                            const Int64ImmPtr &rank_size, const BoolImmPtr &split_sizes_empty) {
+                                            const Int64ImmPtr &rank_size, const BoolImmPtr &split_sizes_empty,
+                                            const BoolImmPtr &async_op) {
   OpRunner::InferOpOutput(op, other_tensor, input_tensor, group, send_numel_list, recv_numel_list, rank_size,
-                          split_sizes_empty);
+                          split_sizes_empty, async_op);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, other_tensor, input_tensor);
   // PyBoostUtils::PrepareOpOutputs(op->device_context(), kDefaultStreamIndex, op->outputs());
   op->set_outputs({other_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, other_tensor, input_tensor, group, send_numel_list, recv_numel_list, rank_size,
                    split_sizes_empty]() {
@@ -122,6 +125,10 @@ void DistCommAllToAllVSingleAscendCustomize(const std::shared_ptr<OpRunner> &op,
     CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

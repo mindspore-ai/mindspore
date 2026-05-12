@@ -29,9 +29,9 @@ namespace kernel {
 namespace pyboost {
 void DistCommGatherCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                 const ValueTuplePtr &gather_list, const Int64ImmPtr &rank_size, const Int64ImmPtr &dst,
-                                const Int64ImmPtr &rank_id, const StringImmPtr &group) {
+                                const Int64ImmPtr &rank_id, const StringImmPtr &group, const BoolImmPtr &async_op) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  OpRunner::InferOpOutput(op, input_tensor, gather_list, rank_size, dst, rank_id, group);
+  OpRunner::InferOpOutput(op, input_tensor, gather_list, rank_size, dst, rank_id, group, async_op);
   auto dst_rank = GetValue<int64_t>(dst);
   auto local_rank = GetValue<int64_t>(rank_id);
   auto rank_size_imm = static_cast<size_t>(GetValue<int64_t>(rank_size));

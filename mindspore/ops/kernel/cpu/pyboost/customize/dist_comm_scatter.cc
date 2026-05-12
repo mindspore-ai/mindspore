@@ -30,9 +30,10 @@ namespace kernel {
 namespace pyboost {
 void DistCommScatterCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &other_tensor,
                                  const ValueTuplePtr &scatter_list, const Int64ImmPtr &rank_size,
-                                 const Int64ImmPtr &src, const Int64ImmPtr &rank_id, const StringImmPtr &group) {
+                                 const Int64ImmPtr &src, const Int64ImmPtr &rank_id, const StringImmPtr &group,
+                                 const BoolImmPtr &async_op) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  OpRunner::InferOpOutput(op, other_tensor, scatter_list, rank_size, src, rank_id, group);
+  OpRunner::InferOpOutput(op, other_tensor, scatter_list, rank_size, src, rank_id, group, async_op);
   op->set_outputs({other_tensor});
 
   auto src_rank = GetValue<int64_t>(src);

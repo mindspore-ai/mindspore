@@ -31,7 +31,10 @@ namespace kernel {
 using device::CollectiveOpReduceType;
 #endif
 namespace pyboost {
-void DistCommBarrierCPUCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &group) {
+void DistCommBarrierCPUCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &group,
+                                 const BoolImmPtr &async_op) {
+  // CPU collective is blocking; async_op has no effect on this path.
+  (void)async_op;
 #if defined(__linux__) && defined(WITH_BACKEND)
   MS_LOG(DEBUG) << "Call start";
   const auto &group_str = GetValue<std::string>(group);

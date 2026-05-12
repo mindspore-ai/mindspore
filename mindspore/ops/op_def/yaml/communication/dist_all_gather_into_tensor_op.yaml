@@ -9,6 +9,9 @@ dist_comm_all_gather_into_tensor:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     args_signature:
         rw_write: other
     returns:

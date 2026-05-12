@@ -32,8 +32,9 @@ namespace kernel {
 namespace pyboost {
 void DistCommScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &other_tensor,
                                     const ValueTuplePtr &scatter_list, const Int64ImmPtr &rank_size,
-                                    const Int64ImmPtr &src, const Int64ImmPtr &rank_id, const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, other_tensor, scatter_list, rank_size, src, rank_id, group);
+                                    const Int64ImmPtr &src, const Int64ImmPtr &rank_id, const StringImmPtr &group,
+                                    const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, other_tensor, scatter_list, rank_size, src, rank_id, group, async_op);
   op->set_outputs({other_tensor});
 
   auto src_rank = GetValue<int64_t>(src);
@@ -45,6 +46,8 @@ void DistCommScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const T
   TensorPtr input_tensor =
     tensor::from_spec(static_cast<TypeId>(other_tensor->data_type_c()), input_shape, device::DeviceType::kAscend);
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, other_tensor, scatter_tensors);
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, other_tensor, input_tensor, local_rank, src_rank, group, rank_size_imm, scatter_tensors]() {
     auto device_context = op->device_context();
@@ -90,6 +93,10 @@ void DistCommScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const T
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, src_rank);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

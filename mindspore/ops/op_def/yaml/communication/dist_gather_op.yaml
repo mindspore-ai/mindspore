@@ -14,6 +14,9 @@ dist_comm_gather:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor

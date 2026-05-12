@@ -368,6 +368,22 @@ def _deal_comm_outputs(output, async_op, exec_sync=False):
     return (output, default_handle)
 
 
+def _deal_dist_comm_outputs(output, async_op, exec_sync=False):
+    """
+    Deal with dist_comm outputs whose sync wait is handled inside the backend op.
+    """
+    if isinstance(output, tuple):
+        if not async_op:
+            if exec_sync:
+                synchronize()
+            return (output[0], None)
+        return (output[0], CommHandle(output[1], exec_sync))
+
+    if not async_op:
+        return (output, None)
+    return (output, default_handle)
+
+
 @_primexpr
 def _check_all_tensors(tensor_list):
     """check all elements in tensor_list are type of Tensor"""
@@ -1475,8 +1491,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         )
 
     if is_inplace_func("all_reduce") is True:
-        output = dist_comm_all_reduce_op(tensor, op, group)
-        _, handle = _deal_comm_outputs(output, async_op)
+        result = dist_comm_all_reduce_op(tensor, op, group, async_op)
+        _, handle = _deal_dist_comm_outputs(result, async_op)
         return handle
     out = inner_comm_all_reduce_op(tensor, op, group)
     return _deal_comm_outputs(out, async_op)
@@ -1565,10 +1581,10 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
         )
     group_size = get_cache_group_size(group)
     if is_inplace_func("all_gather_into_tensor") is True:
-        output = dist_comm_all_gather_into_tensor_op(
-            output_tensor, input_tensor, group_size, group
+        result = dist_comm_all_gather_into_tensor_op(
+            output_tensor, input_tensor, group_size, group, async_op
         )
-        _, handle = _deal_comm_outputs(output, async_op)
+        _, handle = _deal_dist_comm_outputs(result, async_op)
         return handle
     output = inner_comm_all_gather_op(input_tensor, group_size, group)
     return _deal_comm_outputs(output, async_op)
@@ -1655,9 +1671,9 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
     group_size = get_cache_group_size(group)
     output_split_sizes = [] if output_split_sizes is None else output_split_sizes
     result = dist_comm_all_gather_into_tensor_uneven_op(
-        output, input, output_split_sizes, group_size, group
+        output, input, output_split_sizes, group_size, group, async_op
     )
-    _, handle = _deal_comm_outputs(result, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -1753,8 +1769,8 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         )
     rank_size = get_cache_group_size(group)
     if is_inplace_func("reduce_scatter_tensor") is True:
-        out = dist_comm_reduce_scatter_tensor_op(output, input, rank_size, op, group)
-        _, handle = _deal_comm_outputs(out, async_op)
+        result = dist_comm_reduce_scatter_tensor_op(output, input, rank_size, op, group, async_op)
+        _, handle = _deal_dist_comm_outputs(result, async_op)
         return handle
     out = inner_comm_reduce_scatter_op(input, rank_size, op, group)
     return _deal_comm_outputs(out, async_op)
@@ -1852,9 +1868,9 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
     input_split_sizes = [] if input_split_sizes is None else input_split_sizes
     rank_size = get_cache_group_size(group)
     result = dist_comm_reduce_scatter_tensor_uneven_op(
-        output, input, input_split_sizes, rank_size, op, group
+        output, input, input_split_sizes, rank_size, op, group, async_op
     )
-    _, handle = _deal_comm_outputs(result, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -1942,8 +1958,8 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
         raise TypeError(
             f"The argument 'async_op' must be a bool, but got {type(async_op)}."
         )
-    result = dist_comm_reduce_op(tensor, op, dst, group)
-    _, handle = _deal_comm_outputs(result, async_op)
+    result = dist_comm_reduce_op(tensor, op, dst, group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -2228,10 +2244,10 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
     src = get_group_rank_from_world_rank(src, group)
     rank_size = get_cache_group_size(group)
     rank_id = get_cache_group_rank(group)
-    output = dist_comm_scatter_tensor_op(
-        output_tensor, input_tensor, rank_size, src, rank_id, group
+    result = dist_comm_scatter_tensor_op(
+        output_tensor, input_tensor, rank_size, src, rank_id, group, async_op
     )
-    _, handle = _deal_comm_outputs(output, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -2323,10 +2339,10 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
     group_size = get_cache_group_size(group)
     dst = get_group_rank_from_world_rank(dst, group)
     rank_id = get_cache_group_rank(group)
-    output = dist_comm_gather_into_tensor_op(
-        output_tensor, input_tensor, group_size, dst, rank_id, group
+    result = dist_comm_gather_into_tensor_op(
+        output_tensor, input_tensor, group_size, dst, rank_id, group, async_op
     )
-    _, handle = _deal_comm_outputs(output, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -2402,8 +2418,8 @@ def broadcast(tensor, src, group=None, async_op=False):
         )
     src_rank = get_group_rank_from_world_rank(src, group)
     rank_id = get_cache_group_rank(group)
-    output = dist_comm_broadcast_op(tensor, src_rank, rank_id, group)
-    _, handle = _deal_comm_outputs(output, async_op)
+    result = dist_comm_broadcast_op(tensor, src_rank, rank_id, group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -2461,8 +2477,8 @@ def barrier(group=None, async_op=False, device_ids=None):
         raise TypeError(
             f"The argument 'async_op' must be a bool, but got {type(async_op)}."
         )
-    output = dist_comm_barrier_op(group)
-    _, handle = _deal_comm_outputs(output, async_op, True)
+    result = dist_comm_barrier_op(group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op, True)
     return handle
 
 
@@ -2920,15 +2936,16 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
         recv_numel_list.append(tensor.numel())
         recv_shape_list.append(tensor.shape)
 
-    output = dist_comm_all_to_all_v_op(
+    result = dist_comm_all_to_all_v_op(
         output_tensor_list,
         send_flatten_tensor,
         group,
         send_numel_list,
         recv_numel_list,
         rank_size,
+        async_op,
     )
-    _, handle = _deal_comm_outputs(output, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -3088,8 +3105,9 @@ def all_to_all_single(output,
         recv_numel_list,
         rank_size,
         split_sizes_empty,
+        async_op,
     )
-    _, handle = _deal_comm_outputs(result, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -3192,8 +3210,8 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
     rank_id = _get_group_rank_from_world_rank_from_cache_helper(_get_rank_helper(), group)
     _check_output_shape(tensor, tensor_list[rank_id].shape, "all_gather")
     _check_output_dtype(tensor, tensor_list[0].dtype, "all_gather")
-    result = dist_comm_all_gather_op(tensor_list, tensor, group_size, group)
-    _, handle = _deal_comm_outputs(result, async_op)
+    result = dist_comm_all_gather_op(tensor_list, tensor, group_size, group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -3283,8 +3301,8 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
     rank_id = _get_group_rank_from_world_rank_from_cache_helper(_get_rank_helper(), group)
     _check_output_shape(output, input_list[rank_id].shape, "reduce_scatter")
     _check_output_dtype(output, input_list[0].dtype, "reduce_scatter")
-    result = dist_comm_reduce_scatter_op(output, input_list, rank_size, op, group)
-    _, handle = _deal_comm_outputs(result, async_op)
+    result = dist_comm_reduce_scatter_op(output, input_list, rank_size, op, group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -3374,8 +3392,8 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
     rank_id = get_cache_group_rank(group)
     if src == rank_id:
         _check_tensor_list(scatter_list, tensor, rank_size)
-    output = dist_comm_scatter_op(tensor, scatter_list, rank_size, src, rank_id, group)
-    _, handle = _deal_comm_outputs(output, async_op)
+    result = dist_comm_scatter_op(tensor, scatter_list, rank_size, src, rank_id, group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -3475,8 +3493,8 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
     rank_id = get_cache_group_rank(group)
     if dst == rank_id:
         _check_tensor_list(gather_list, tensor, group_size)
-    output = dist_comm_gather_op(tensor, gather_list, group_size, dst, rank_id, group)
-    _, handle = _deal_comm_outputs(output, async_op)
+    result = dist_comm_gather_op(tensor, gather_list, group_size, dst, rank_id, group, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 
@@ -3942,8 +3960,9 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
         _send_count_matrix,
         rank_size,
         rank_id,
+        async_op,
     )
-    _, handle = _deal_comm_outputs(result, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 
 

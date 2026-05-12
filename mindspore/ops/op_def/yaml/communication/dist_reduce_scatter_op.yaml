@@ -11,6 +11,9 @@ dist_comm_reduce_scatter:
             dtype: str
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     args_signature:
         rw_write: other
     returns:

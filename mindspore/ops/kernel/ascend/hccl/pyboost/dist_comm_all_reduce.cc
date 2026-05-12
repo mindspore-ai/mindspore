@@ -28,11 +28,14 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 void DistCommAllReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                      const StringImmPtr &op_type, const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, input_tensor, op_type, group);
+                                      const StringImmPtr &op_type, const StringImmPtr &group,
+                                      const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, input_tensor, op_type, group, async_op);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, input_tensor);
   op->set_outputs({input_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, input_tensor, op_type, group]() {
     PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
@@ -61,6 +64,13 @@ void DistCommAllReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, const
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, -1, is_avg ? input_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    // Sync mode: queue a stream-wait task that runs after run_func completes,
+    // so subsequent ops on the op stream serialize after this collective.
+    // Called from the dispatch thread (not the executor worker), so the push is safe.
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost
