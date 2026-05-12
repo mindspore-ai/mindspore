@@ -963,6 +963,45 @@ def test_pynative_fallback_fill_tensor():
     assert DTensor.RUN_OPS == ["InplaceFillTensor"]
 
 
+# ====== Scenario 50: exception propagation through fallback ======
+
+class _RaisingDTensor(Tensor):
+    """DTensor variant whose __fallback__ unconditionally raises ValueError.
+
+    Used to verify that an exception raised inside the Python fallback
+    handler is re-raised with its original type and message, rather than
+    clobbered into RuntimeError("Python fallback failed.").
+    """
+
+    SENTINEL_MSG = "raise from fallback sentinel"
+
+    def __new__(cls, local_tensor):
+        t = Tensor._make_subclass(cls, local_tensor)
+        t._local_tensor = local_tensor
+        return t
+
+    def __init__(self, local_tensor):
+        pass
+
+    @classmethod
+    def __fallback__(cls, func, args=(), kwargs=None):
+        raise ValueError(cls.SENTINEL_MSG)
+
+
+def test_pynative_fallback_exception_propagation():
+    """
+    Feature: Pynative fallback
+    Description: A non-RuntimeError raised inside the Python fallback
+                 handler must propagate to the caller with its original
+                 type and message preserved.
+    Expectation: caller catches ValueError(SENTINEL_MSG); not
+                 RuntimeError("Python fallback failed.").
+    """
+    x = _RaisingDTensor(Tensor([1, 1, 1]))
+    with pytest.raises(ValueError, match=_RaisingDTensor.SENTINEL_MSG):
+        x.add(x)
+
+
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard', mem_peak=2048.01)
@@ -1034,3 +1073,5 @@ def test_pynative_fallback():
     # In-place ops (overloaded)
     test_pynative_fallback_fill_scalar()
     test_pynative_fallback_fill_tensor()
+    # Exception propagation through fallback
+    test_pynative_fallback_exception_propagation()

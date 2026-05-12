@@ -116,7 +116,9 @@ py::object GetFallbackFromInput(PyObject *py_args) {
 
 void CheckCallResult(PyObject *ret) {
   if (ret == nullptr) {
-    PyErr_Print();
+    if (PyErr_Occurred() != nullptr) {
+      throw py::error_already_set();
+    }
     MS_LOG(EXCEPTION) << "Python fallback failed.";
   }
 }
