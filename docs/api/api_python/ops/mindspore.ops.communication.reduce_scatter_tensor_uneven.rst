@@ -13,7 +13,7 @@ mindspore.ops.communication.reduce_scatter_tensor_uneven
         - **output** (Tensor) - 输出张量，与 `input` 具有相同的数据类型，shape为 :math:`(input\_split\_sizes[rank], *)`，其中rank是设备的本地rank id。
         - **input** (Tensor) - 待归约和分散的输入张量，期望shape为 :math:`(N, *)`，其中 `*` 表示任意数量的额外维度。N必须等于所有rank的 `input_split_sizes` 的总和。
         - **input_split_sizes** (list[int], 可选) - 指定如何分割输入张量第一维的列表。默认值： ``None``，表示根据通信组大小平均分割。
-        - **op** (str，可选) - 用于逐元素归约的操作，如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 、 ``"min"`` 和 ``"avg"`` 。使用 ``"avg"`` 时，结果为求和后除以组内设备数。默认值： ``ReduceOp.SUM`` 。
+        - **op** (str，可选) - 用于逐元素归约的操作，如 ``"sum"`` 、 ``"max"`` 、 ``"min"`` 和 ``"avg"`` 。使用 ``"avg"`` 时，结果为求和后除以组内设备数。默认值： ``ReduceOp.SUM`` 。
         - **group** (str，可选) - 通信组名称。默认值： ``None`` ，即Ascend平台表示为 ``"hccl_world_group"`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False``。
 

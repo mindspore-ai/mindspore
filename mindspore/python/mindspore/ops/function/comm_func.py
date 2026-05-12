@@ -1777,8 +1777,8 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
         input_split_sizes (list[int], optional): List specifying how to split the first dimension of input tensor.
             Default: ``None``, which means splits evenly according to communication group size.
         op (str, optional): Specifies an operation used for element-wise reductions,
-            One of ReduceOp: 'SUM', 'MIN', 'MAX', 'AVG'. On ``"avg"``, the result is the sum divided
-            by the group size. Default: ``ReduceOp.SUM``.
+            One of ReduceOp: ``"sum"``, ``"max"``, ``"min"``, and ``"avg"``. On ``"avg"``, the result is the sum
+            divided by the group size. Default: ``ReduceOp.SUM``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False``.
