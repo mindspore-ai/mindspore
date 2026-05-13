@@ -1,6 +1,6 @@
 log1p:
     description: |
-        Compute the natural logarithm of (tensor + 1) element-wise.
+        Compute the natural logarithm of the input tensor plus 1 element-wise.
 
         .. math::
             out_i = \log_e(input_i + 1)

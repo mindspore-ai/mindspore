@@ -260,6 +260,7 @@ class Custom(ops.PrimitiveWithInfer):
               for "aot":
 
               a) GPU/CPU platform.
+
               "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
               operator. Users need to compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
               and offer the path of the file along with a function name.
@@ -316,6 +317,7 @@ class Custom(ops.PrimitiveWithInfer):
                     "aot"))
 
               b) Ascend platform.
+
               Before using Custom operators on the Ascend platform, users must first develop custom operators
               based on Ascend C and compile them. The complete development and usage process can refer to the
               tutorial `AOT-Type Custom Operators(Ascend)

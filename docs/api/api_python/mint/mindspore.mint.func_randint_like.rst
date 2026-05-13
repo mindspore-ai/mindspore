@@ -18,7 +18,7 @@ mindspore.mint.randint_like
         - **device** (str, 可选) - 指定Tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果为 ``None`` ，将会使用 `input` 的device。默认值： ``None`` 。
 
     返回：
-        Tensor，shape和dtype被输入指定，其元素为 [ `low` , `high` ) 区间的随机整数。
+        Tensor，shape和dtype由输入指定，其元素为 [ `low` , `high` ) 区间的随机整数。
 
     异常：
         - **TypeError** - 如果 `low` 或 `high` 不是整数。

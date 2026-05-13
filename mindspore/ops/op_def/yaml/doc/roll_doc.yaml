@@ -4,7 +4,7 @@ roll:
 
         Args:
             input (Tensor): The input tensor.
-            shifts (Union[list(int), tuple(int), int]): The amount of element shifting.
+            shifts (Union[list(int), tuple(int), int]): The amount of element shifts.
             dims (Union[list(int), tuple(int), int], optional): Specify the dimension to move. Default ``None`` ,
                 which means the input tensor will be flattened before computation, and the result will be reshaped back
                 to the original input shape.

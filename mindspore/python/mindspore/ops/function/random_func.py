@@ -1230,14 +1230,14 @@ def rand_like(input, seed=None, *, dtype=None):
 @_function_forbid_reuse
 def rand_ext(*size, generator=None, dtype=None, device=None):
     r"""
-    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    Returns a new tensor filled with numbers from the uniform distribution over an interval :math:`[0, 1)`
     based on the given shape and dtype.
 
     Args:
         size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
 
     Keyword Args:
-        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator.
+        generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.float32` will be applied. Default: ``None`` .
@@ -1274,14 +1274,14 @@ def rand_ext(*size, generator=None, dtype=None, device=None):
 @_function_forbid_reuse
 def rand_like_ext(input, *, dtype=None, device=None):
     r"""
-    Returns a new tensor that fills numbers from the uniform distribution over an interval :math:`[0, 1)`
+    Returns a new tensor filled with numbers from the uniform distribution over an interval :math:`[0, 1)`
     based on the given dtype and shape of the input tensor.
 
     Args:
         input (Tensor): Input Tensor to specify the output shape and its default dtype.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. It must be float type. If ``None``,
             the same dtype of `input` will be applied. Default: ``None`` .
         device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"``
             are supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
@@ -1291,7 +1291,7 @@ def rand_like_ext(input, *, dtype=None, device=None):
         the interval :math:`[0, 1)`.
 
     Raises:
-        RuntimeError: If `Input` device is ``"CPU"``, and `device` is ``None`` .
+        RuntimeError: If `input` device is ``"CPU"``, and `device` is ``None`` .
         RuntimeError: If `device` is ``"CPU"`` .
         ValueError: If `device` is ``"GPU"`` .
 
@@ -1320,9 +1320,9 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
         size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
 
     Keyword Args:
-        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator.
+        generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
             Default: ``None``, uses the default pseudorandom number generator.
-        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.float32` will be applied. Default: ``None`` .
         device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
             supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
@@ -1376,7 +1376,7 @@ def randn_like_ext(input, *, dtype=None, device=None):
         the interval :math:`[0, 1)`.
 
     Raises:
-        RuntimeError: If `Input` device is ``"CPU"``, and `device` is ``None`` .
+        RuntimeError: If `input` device is ``"CPU"``, and `device` is ``None`` .
         RuntimeError: If `device` is ``"CPU"``.
         ValueError: If `device` is ``"GPU"``.
 
@@ -1404,16 +1404,16 @@ def randint_ext(*args, generator=None, dtype=None, device=None):
     based on the given shape and dtype.
 
     Args:
-        low (int, optional): the lower bound of the generated random number. Default: ``0``.
-        high (int): the upper bound of the generated random number
-        size (Union[tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)`.
+        low (int, optional): The lower bound of the generated random number. Default: ``0``.
+        high (int): The upper bound of the generated random number.
+        size (Union[tuple(int), list(int)]): Shape of the new tensor, e.g., :math:`(2, 3)`.
 
     Keyword Args:
-        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator.
+        generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
             Default: ``None``, uses the default pseudorandom number generator.
-        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.int64` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"``
             are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
@@ -1423,7 +1423,7 @@ def randint_ext(*args, generator=None, dtype=None, device=None):
 
     Raises:
         TypeError: If `size` is not a tuple.
-        TypeError: If `low` or `high` is not integer.
+        TypeError: If `low` or `high` is not an integer.
         RuntimeError: If `device` is ``"CPU"`` .
         ValueError: If `device` is ``"GPU"`` .
 
@@ -1459,11 +1459,11 @@ def randint_like_ext(*args, dtype=None, device=None):
 
     Args:
         input (Tensor): Input Tensor to specify the output shape and its default dtype.
-        low (int, optional): the lower bound of the generated random number. Default: ``0``.
-        high (int): the upper bound of the generated random number
+        low (int, optional): The lower bound of the generated random number. Default: ``0``.
+        high (int): The upper bound of the generated random number
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If None,
+        dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             the same dtype of `input` will be applied. Default: ``None`` .
         device (str, optional): The specified device of the output tensor. ``"Ascend"``, ``"npu"`` and ``"meta"`` are
             supported. If `device = None`, the device of `input` will be used. Default: ``None`` .
@@ -1473,8 +1473,8 @@ def randint_like_ext(*args, dtype=None, device=None):
         the interval :math:`[low, high)`.
 
     Raises:
-        TypeError: If `low` or `high` is not integer.
-        RuntimeError: If `Input` device is ``"CPU"``, and `device` is ``None`` .
+        TypeError: If `low` or `high` is not an integer.
+        RuntimeError: If `input` device is ``"CPU"``, and `device` is ``None`` .
         RuntimeError: If `device` is ``"CPU"`` .
         ValueError: If `device` is ``"GPU"`` .
 
@@ -1759,11 +1759,11 @@ def randperm_ext(n, *, generator=None, dtype=mstype.int64):
     Generates random permutation of integers from 0 to n-1.
 
     Args:
-        n (Union[Tensor, int]): size of the permutation. int or Tensor with shape: () or (1,) and
+        n (Union[Tensor, int]): Size of the permutation. int or Tensor with shape: () or (1,) and
             data type int64. The value of `n` must be greater than zero.
 
     Keyword Args:
-        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator.
+        generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (mindspore.dtype, optional): The type of output. Default: mstype.int64.
 

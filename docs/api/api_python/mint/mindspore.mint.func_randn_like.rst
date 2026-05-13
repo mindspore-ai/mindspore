@@ -16,7 +16,7 @@ mindspore.mint.randn_like
         - **device** (str, 可选) - 指定tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果是 ``None`` ，则使用参数 `input` 的device。默认值 ``None`` 。
 
     返回：
-        Tensor，shape和dtype由输入决定其元素为服从标准正态分布的数字。
+        Tensor，shape和dtype由输入决定，其元素为服从标准正态分布的数字。
 
     异常：
         - **RuntimeError** - 如果 `input` 的device是 ``"CPU"`` ，同时 `device` 是 ``None`` 。

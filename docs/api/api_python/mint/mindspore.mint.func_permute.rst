@@ -14,4 +14,4 @@ mindspore.mint.permute
 
     异常：
         - **ValueError** - `dims` 为None。
-        - **ValueError** - `dims` 的元素总量不等于 `input` 的维数。
+        - **ValueError** - `dims` 的元素个数不等于 `input` 的维数。

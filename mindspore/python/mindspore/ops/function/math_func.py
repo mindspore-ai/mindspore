@@ -1841,7 +1841,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
     Converts polar coordinates to Cartesian coordinates.
 
     Returns a complex tensor. Its elements are Cartesian coordinates constructed with the polar
-    coordinates which are specified by radial distance `abs` and polar angle `angle`.
+    coordinates specified by radial distance `abs` and polar angle `angle`.
 
     .. math::
 
@@ -1883,10 +1883,10 @@ def pow_ext(input, exponent):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is
+        input (Union[Tensor, Number]): The first input, which can be a Number or a tensor with data type of
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
-        exponent (Union[Tensor, Number]): The second input is a Number or a tensor whose data type is
+        exponent (Union[Tensor, Number]): The second input, which can be a Number or a tensor with data type of
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
 
@@ -1895,8 +1895,8 @@ def pow_ext(input, exponent):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If types of `input` and `exponent` are bool.
-        TypeError: The `input` is tensor and of type int or bool, while the `exponent` is negative int.
+        TypeError: If the types of `input` and `exponent` are bool.
+        TypeError: If the `input` is a tensor and of type int or bool, while the `exponent` is a negative int.
 
     Supported Platforms:
         ``Ascend``

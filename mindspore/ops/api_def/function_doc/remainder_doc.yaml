@@ -5,7 +5,7 @@ remainder:
     Computes the remainder of `input` divided by `other` element-wise. The result has the same sign as the divisor and
     its absolute value is less than that of `other`.
 
-    Supports broadcasting to a common shape and implicit type promotion.
+    This function supports broadcasting to a common shape and implicit type promotion.
 
     .. code:: python
 
@@ -21,7 +21,7 @@ remainder:
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
         other (Union[Tensor, numbers.Number, bool]): The divisor is a numbers.Number or
             a bool or a tensor whose data type is number or bool when the dividend is a tensor.
-            When the dividend is Scalar, the divisor must be a Tensor whose data type is number or bool.
+            When the dividend is a Scalar, the divisor must be a Tensor whose data type is number or bool.
 
     Returns:
         Tensor, with dtype promoted and shape broadcasted.

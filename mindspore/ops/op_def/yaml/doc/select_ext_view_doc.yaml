@@ -6,15 +6,15 @@ select_ext_view:
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            input (Tensor): the input tensor.
-            dim (int): the dimension to slice.
-            index (int): the index to select with.
+            input (Tensor): The input tensor.
+            dim (int): The dimension to slice.
+            index (int): The index to select with.
 
         Returns:
             Tensor.
 
         Raises:
-            TypeError: If input is not a Tensor.
+            TypeError: If `input` is not a Tensor.
 
         Supported Platforms:
             ``Ascend``
@@ -25,4 +25,3 @@ select_ext_view:
             >>> y = ops.auto_generate.select_ext_view(input, 0, 0)
             >>> print(y)
             [2 3 4 5]
-            

@@ -18,9 +18,9 @@ mindspore.mint.scatter_add
         input[i][j][index[i][j][k]] += src[i][j][k]  # if dim == 2
 
     参数：
-        - **input** (Tensor) - 输入Tensor。rank必须大于等于1。
-        - **dim** (int) - `input` 执行scatter_add操作的轴。取值范围是[-r, r)，其中r是 `input` 的rank。
-        - **index** (Tensor) - `input` 要进行scatter_add操作的目标索引。数据类型为int32或int64，rank必须和 `input` 一致。除了 `dim` 指定的维度， `index` 的每一维的size都需要小于等于 `input` 对应维度的size。
+        - **input** (Tensor) - 输入Tensor。秩必须大于等于1。
+        - **dim** (int) - `input` 执行scatter_add操作的轴。取值范围是[-r, r)，其中r是 `input` 的秩。
+        - **index** (Tensor) - `input` 要进行scatter_add操作的目标索引。数据类型为int32或int64，秩必须和 `input` 一致。除了 `dim` 指定的维度， `index` 的每一维的size都需要小于等于 `input` 对应维度的size。
         - **src** (Tensor) - 指定与 `input` 进行scatter_add操作的Tensor，其数据类型与 `input` 类型相同，shape中每一维的size必须大于等于 `index` 。
 
     返回：
@@ -28,7 +28,7 @@ mindspore.mint.scatter_add
 
     异常：
         - **TypeError** - `index` 的数据类型不满足int32或int64。
-        - **ValueError** - `input` 、 `index` 和 `src` 中，任意一者的rank小于1。
-        - **ValueError** - `input`, `index` 和 `src` 的rank不一致。
+        - **ValueError** - `input` 、 `index` 和 `src` 中，任意一者的秩小于1。
+        - **ValueError** - `input` 、 `index` 和 `src` 的秩不一致。
         - **ValueError** - 除了 `dim` 指定的维度， `index` 的任意维的size大于 `input` 对应维度的size。
         - **ValueError** - `src` 任意维度size小于 `index` 对应维度的size。

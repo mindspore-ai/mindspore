@@ -17,12 +17,12 @@ erfc:
 
     Examples:
         >>> import mindspore
-        >>> # The datatype of output will be float32 when datatype of input is in [int64, bool](Datatype only supported on Ascend).
+        >>> # The dtype of output will be float32 when dtype of input is in [int64, bool] (data types only supported on Ascend).
         >>> input = mindspore.tensor([-1, 0, 1, 2, 3], mindspore.int64)
         >>> mindspore.ops.erfc(input)
         Tensor(shape=[5], dtype=Float32, value= [ 1.84270079e+00,  1.00000000e+00,  1.57299207e-01,  4.67773498e-03,  2.20904970e-05])
         >>>
-        >>> # Otherwise output has the same dtype as the input.
+        >>> # Otherwise, the output has the same dtype as the input.
         >>> input = mindspore.tensor([-1, 0, 1, 2, 3], mindspore.float64)
         >>> mindspore.ops.erfc(input)
         Tensor(shape=[5], dtype=Float64, value= [ 1.84270079e+00,  1.00000000e+00,  1.57299207e-01,  4.67773498e-03,  2.20904970e-05])

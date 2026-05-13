@@ -1086,7 +1086,7 @@ def permute(input, dims):
             to the order of the `dims`.
 
     Returns:
-        Tensor, has the same dimension as input tensor, with `axis` suitably permuted.
+        Tensor, has the same dimension as input tensor, with `dims` suitably permuted.
 
     Raises:
         ValueError: If `dims` is None.
@@ -1335,13 +1335,13 @@ def scatter(input, dim, index, src):
         output[i][j][index[i][j][k]] = src[i][j][k]  # if dim == 2
 
     .. note::
-        The backward is supported only for the case `src.shape == index.shape` when `src` is a tensor.
+        The backward propagation is supported only for the case `src.shape == index.shape` when `src` is a tensor.
 
     Args:
         input (Tensor): The target tensor. The rank of `input` must be at least 1.
-        dim (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(input).
+        dim (int): The axis along which to scatter. Accepted range is [-r, r) where r = rank(input).
         index (Tensor): The index to do update operation whose data must be positive number with type of mindspore.int32
-            or mindspore.int64. Same rank as `input` . And accepted range is [-s, s) where s is the size along axis.
+            or mindspore.int64. Same rank as `input` . The accepted range is [-s, s) where s is the size along axis.
         src (Tensor, float): The data doing the update operation with `input`. Can be a tensor with the same data type
             as `input` or a float number to scatter.
 

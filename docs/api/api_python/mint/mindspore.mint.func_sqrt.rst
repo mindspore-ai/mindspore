@@ -3,7 +3,7 @@ mindspore.mint.sqrt
 
 .. py:function:: mindspore.mint.sqrt(input)
 
-    逐元素返回当前Tensor的平方根。
+    逐元素计算并返回输入Tensor的平方根。
 
     .. math::
         out_{i} = \sqrt{input_{i}}
@@ -16,4 +16,3 @@ mindspore.mint.sqrt
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
-

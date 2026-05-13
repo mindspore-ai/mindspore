@@ -6,7 +6,7 @@ mindspore.mint.rand
     返回一个Tensor，shape和dtype由输入决定，其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。
 
     参数：
-        - **size** (Union[int, tuple(int), list(int)]) - 输出的Tensor的shape，例如，:math:`(2, 3)` or :math:`2`。
+        - **size** (Union[int, tuple(int), list(int)]) - 输出的Tensor的shape，例如，:math:`(2, 3)` 或 :math:`2`。
 
     关键字参数：
         - **generator** (:class:`mindspore.Generator`, 可选) - 伪随机数生成器。默认值： ``None`` ，使用默认伪随机数生成器。
@@ -14,7 +14,7 @@ mindspore.mint.rand
         - **device** (str, 可选) - 指定Tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果为 ``None`` ，那么将会使用 :func:`mindspore.set_device` 设置的值。默认值： ``None`` 。
 
     返回：
-        Tensor，shape和dtype由输入决定其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。
+        Tensor，shape和dtype由输入决定，其元素为服从均匀分布的 :math:`[0, 1)` 区间的数字。
 
     异常：
         - **ValueError** - 如果 `size` 包含负数。
