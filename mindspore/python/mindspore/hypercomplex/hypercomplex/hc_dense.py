@@ -96,7 +96,7 @@ class Dense(nn.Cell):
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  has_bias: bool = True) -> None:
         """Initialize Dense."""
-        super(Dense, self).__init__()
+        super().__init__()
         self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
         self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.has_bias = Validator.check_bool(has_bias, "has_bias", self.cls_name)
@@ -104,6 +104,14 @@ class Dense(nn.Cell):
 
         self.weight_x = None
         self.weight_y = None
+        self._set_dtype(weight_init, in_channels, out_channels)
+        self.dense_impl = dense_impl(weight_init, [out_channels, in_channels])
+        self.bias_x = None
+        self.bias_y = None
+        self._set_bias_x_y(bias_init, out_channels)
+
+    def _set_dtype(self, weight_init, in_channels, out_channels):
+        """Set dtype"""
         if isinstance(weight_init, Tensor):
             self.dtype = weight_init.dtype
             if self.dtype in [mindspore.float16, mindspore.float32] and ( \
@@ -126,10 +134,8 @@ class Dense(nn.Cell):
                                  f"'weight_init': {weight_init}, 'out_channels': {out_channels}, 'in_channels': "
                                  f"{in_channels}.")
 
-        self.dense_impl = dense_impl(weight_init, [out_channels, in_channels])
-
-        self.bias_x = None
-        self.bias_y = None
+    def _set_bias_x_y(self, bias_init, out_channels):
+        """set self.biax_x self.biax_y"""
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if self.dtype is None:

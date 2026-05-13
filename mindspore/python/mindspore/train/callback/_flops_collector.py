@@ -39,7 +39,7 @@ class AllReduceNet(nn.Cell):
     Used to accumulate flops in pipeline parallel.
     """
     def __init__(self, group_name):
-        super(AllReduceNet, self).__init__()
+        super().__init__()
         self.allreduce_sum = P.AllReduce(op=P.ReduceOp.SUM, group=group_name)
         self.add_flags(skip_auto_parallel_compile=True)
 
@@ -89,7 +89,7 @@ class FlopsUtilizationCollector(Callback):
         Train per step time: 1.317 ms, mfu:48.59% hfu:48.59%
     """
     def __init__(self, data_size, computility=1, full_flops=True, enable_ma_collector=False):
-        super(FlopsUtilizationCollector, self).__init__()
+        super().__init__()
         self.step_time = time.time()
         self.computility = computility
         self.full_mfu = 0.0
@@ -176,7 +176,7 @@ class FlopsUtilizationCollector(Callback):
             self.shard_hardware_flops, is_dynamic_shape = flops_collection(network.current_phase)
         except Exception as e:
             if self.verbose:
-                raise ValueError("FlopsUtilizationCollector is not supported because {}.".format(e))
+                raise ValueError("FlopsUtilizationCollector is not supported because {}.".format(e)) from e
             logger.info("FlopsUtilizationCollector is not supported because {}.".format(e))
             return False
         if is_dynamic_shape:

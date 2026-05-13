@@ -66,7 +66,7 @@ class _ConvImpl(nn.Cell):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number],
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
-        super(_ConvImpl, self).__init__()
+        super().__init__()
 
     def construct(self,
                   conv_fn: Callable,
@@ -116,7 +116,7 @@ class _BaseConvImpl(_ConvImpl):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number],
                  weight_shape: tuple,
                  **factory_kwargs) -> None:
-        super(_BaseConvImpl, self).__init__(weight_init,
+        super().__init__(weight_init,
                                             weight_shape,
                                             **factory_kwargs)
 

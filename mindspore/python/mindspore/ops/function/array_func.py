@@ -4622,12 +4622,12 @@ def split(tensor, split_size_or_sections, axis=0):
     """
     if not isinstance(tensor, Tensor):
         raise TypeError(f'expect `tensor` is a Tensor, but got {type(tensor)}')
-    if type(axis) is not int:
+    if not isinstance(axis, int):
         raise TypeError(
             f"Type of Argument `axis` should be integer but got {type(axis)}")
     arr_axis = _canonicalize_axis(axis, tensor.ndim)
 
-    if type(split_size_or_sections) is int:
+    if isinstance(split_size_or_sections, int):
         if split_size_or_sections > 0:
             res = _split_int(tensor, split_size_or_sections, arr_axis)
         else:
@@ -4635,7 +4635,7 @@ def split(tensor, split_size_or_sections, axis=0):
                              f"but got {split_size_or_sections}.")
     elif isinstance(split_size_or_sections, (list, tuple)):
         for item in split_size_or_sections:
-            if type(item) is not int:
+            if not isinstance(item, int):
                 raise TypeError(
                     f"Each element in 'split_size_or_sections' should be integer, but got {type(item)}.")
             if item < 0:
@@ -5069,11 +5069,11 @@ def tensor_split(input, indices_or_sections, axis=0):
     if not isinstance(input, Tensor):
         raise TypeError(f'expect `x` is a Tensor, but got {type(input)}')
 
-    if type(axis) is not int:
+    if not isinstance(axis, int):
         raise TypeError(
             f"Type of Argument `axis` should be integer but got {type(axis)}")
     handle_axis = _canonicalize_axis(axis, input.ndim)
-    if type(indices_or_sections) is int:
+    if isinstance(indices_or_sections, int):
         if indices_or_sections > 0:
             res = _tensor_split_sub_int(
                 input, indices_or_sections, handle_axis)
@@ -5082,7 +5082,7 @@ def tensor_split(input, indices_or_sections, axis=0):
                              f"but got {indices_or_sections}")
     elif isinstance(indices_or_sections, (list, tuple)):
         for item in indices_or_sections:
-            if type(item) is not int:
+            if not isinstance(item, int):
                 raise TypeError(
                     f"Each element in 'indices_or_sections' should be integer, but got {type(item)}.")
         res = _tensor_split_sub_tensors(

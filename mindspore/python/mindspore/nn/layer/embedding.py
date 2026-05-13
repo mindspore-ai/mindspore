@@ -105,7 +105,7 @@ class Embedding(Cell):
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
                  dtype=mstype.float32, padding_idx=None):
         """Initialize Embedding."""
-        super(Embedding, self).__init__()
+        super().__init__()
         self.vocab_size = Validator.check_value_type(
             'vocab_size', vocab_size, [int], self.cls_name)
         self.embedding_size = Validator.check_value_type(
@@ -376,7 +376,7 @@ class EmbeddingLookup(Cell):
                  target='CPU', slice_mode='batch_slice', manual_shapes=None,
                  max_norm=None, sparse=True, dtype=mstype.float32):
         """Initialize EmbeddingLookup."""
-        super(EmbeddingLookup, self).__init__()
+        super().__init__()
         Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
         self.vocab_size = Validator.check_positive_int(
             vocab_size, 'vocab_size')
@@ -580,7 +580,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
                  slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM',
                  dtype=mstype.float32):
         """Initialize MultiFieldEmbeddingLookup."""
-        super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,
+        super().__init__(vocab_size, embedding_size, param_init, target,
                                                         slice_mode, feature_num_list, max_norm, sparse, dtype=dtype)
         self.field_size = Validator.check_positive_int(
             field_size, 'field_size', self.cls_name)

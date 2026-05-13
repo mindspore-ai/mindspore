@@ -56,7 +56,7 @@ class Perplexity(Metric):
     """
 
     def __init__(self, ignore_label=None):
-        super(Perplexity, self).__init__()
+        super().__init__()
 
         if ignore_label is None:
             self.ignore_label = ignore_label

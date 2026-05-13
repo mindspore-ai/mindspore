@@ -51,14 +51,14 @@ def cell_attr_register(fn=None, attrs=None):
             if isinstance(attrs, list):
                 for item in attrs:
                     if not isinstance(item, str):
-                        raise ValueError(f"attr must be a string")
+                        raise ValueError("attr must be a string")
                     if hasattr(self, item):
                         arguments.append(getattr(self, item))
             elif isinstance(attrs, str):
                 if hasattr(self, attrs):
                     arguments = getattr(self, attrs)
             else:
-                raise ValueError(f"attrs must be list or string")
+                raise ValueError("attrs must be list or string")
             self.cell_init_args = type(self).__name__ + str(arguments)
 
         return deco

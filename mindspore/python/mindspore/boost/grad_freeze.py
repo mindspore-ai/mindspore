@@ -51,7 +51,7 @@ class FreezeOpt(Cell):
         ``Ascend``
     """
     def __init__(self, opt, train_parameter_groups=None, train_strategy=None):
-        super(FreezeOpt, self).__init__()
+        super().__init__()
         if not isinstance(opt, Optimizer):
             raise TypeError(
                 f"The first arg 'opt' must be an Optimizer instance, but got {type(opt)}")
@@ -166,7 +166,7 @@ class _TrainFreezeCell(Cell):
         ``Ascend``
     """
     def __init__(self, net, sens, grad, grad_reducer, use_grad_accumulation, optimizer, max_accumulation_step=1):
-        super(_TrainFreezeCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.net = net
         self.grad = grad
         self.grad_reducer = grad_reducer
@@ -213,7 +213,7 @@ class GradientFreeze:
         >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self, in_features, out_features):
-        ...        super(Net, self).__init__()
+        ...        super().__init__()
         ...        self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
         ...                                name='weight')
         ...        self.matmul = ops.MatMul()
@@ -352,7 +352,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
         ...                                 name='weight')
         ...         self.matmul = ops.MatMul()

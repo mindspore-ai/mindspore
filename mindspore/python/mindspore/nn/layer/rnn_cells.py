@@ -65,12 +65,12 @@ def _check_lstmcell_init(func):
     """Internal function, used to check init args."""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        logger.warning(f"LSTMCell has been changed from 'single LSTM layer' to 'single LSTM cell', "
-                       f"if you still need use single LSTM layer, please use `nn.LSTM` instead.")
+        logger.warning("LSTMCell has been changed from 'single LSTM layer' to 'single LSTM cell', "
+                       "if you still need use single LSTM layer, please use `nn.LSTM` instead.")
         if len(args) > 4 or 'batch_size' in kwargs or \
             'dropout' in kwargs or 'bidirectional' in kwargs:
-            raise ValueError(f"The arguments of `nn.LSTMCell` from old MindSpore version(<1.6) are detected, "
-                             f"if you still need use single LSTM layer, please use `nn.LSTM` instead.")
+            raise ValueError("The arguments of `nn.LSTMCell` from old MindSpore version(<1.6) are detected, "
+                             "if you still need use single LSTM layer, please use `nn.LSTM` instead.")
         return func(*args, **kwargs)
     return wrapper
 
@@ -322,10 +322,10 @@ class LSTMCell(RNNCellBase):
     def _check_construct_args(self, *inputs, **kwargs):
         if len(inputs) == 4:
             raise ValueError(f"For '{self.cls_name}', the number of input args of construct is {len(inputs)}, if you "
-                             f"are using the implementation of `nn.LSTMCell` from old MindSpore version(<1.6), "
-                             f"please notice that: LSTMCell has been changed from 'single LSTM layer' to "
-                             f"'single LSTM cell', if you still need use single LSTM layer, "
-                             f"please use `nn.LSTM` instead.")
+                             "are using the implementation of `nn.LSTMCell` from old MindSpore version(<1.6), "
+                             "please notice that: LSTMCell has been changed from 'single LSTM layer' to "
+                             "'single LSTM cell', if you still need use single LSTM layer, "
+                             "please use `nn.LSTM` instead.")
         return super()._check_construct_args(*inputs, **kwargs)
 
 

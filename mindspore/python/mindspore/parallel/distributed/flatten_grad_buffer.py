@@ -155,7 +155,7 @@ class FlattenGradBuffer:
 
     def __init__(self, average_in_collective, param_dtype, grad_dtype, params, data_parallel_group,
                  bucket_size, gradient_scaling_factor, ddp_handle):
-        super(FlattenGradBuffer, self).__init__()
+        super().__init__()
         self.param_dtype = param_dtype
         self.grad_dtype = grad_dtype
         self.data_parallel_group = data_parallel_group

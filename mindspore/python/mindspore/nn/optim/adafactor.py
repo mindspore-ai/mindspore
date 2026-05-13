@@ -309,7 +309,7 @@ class AdaFactor(Optimizer):
             if relative_step or scale_parameter:
                 logging.warning("When learning_rate is learning scheduler, it not support update learning rate!")
 
-        super(AdaFactor, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         validator.check_value_type("eps", eps, [list, tuple], self.cls_name)
         if len(eps) != 2:
             raise ValueError("eps must have 2 value: (eps1, eps2).")

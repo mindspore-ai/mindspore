@@ -120,7 +120,7 @@ class LARS(Optimizer):
     @opt_init_args_register
     def __init__(self, optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False,
                  lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name):
-        super(LARS, self).__init__(0.0, [Parameter(Tensor(0.0), name="fake_param")])
+        super().__init__(0.0, [Parameter(Tensor(0.0), name="fake_param")])
         _check_param_value(optimizer, epsilon, coefficient, use_clip, self.cls_name)
         self.opt = optimizer
         self.dynamic_decay_flags = optimizer.dynamic_decay_flags

@@ -97,15 +97,13 @@ class ASGD(Optimizer):
             raise TypeError(f"For 'ASGD', the type of lambd must be float, but got {type(lambd)}.")
         if not isinstance(t0, float):
             raise TypeError(f"For 'ASGD', the type of t0 must be float, but got {type(t0)}.")
-        defaults = dict(
-            lr=lr,
-            lambd=lambd,
-            alpha=alpha,
-            t0=t0,
-            weight_decay=weight_decay,
-            maximize=maximize,
-        )
-        super(ASGD, self).__init__(params, defaults)
+        defaults = {"lr": lr,
+                "lambd": lambd,
+                "alpha": alpha,
+                "t0": t0,
+                "weight_decay": weight_decay,
+                "maximize": maximize,}
+        super().__init__(params, defaults)
         self.mu = [Parameter(Tensor(1.), "mu_" + param.name) for param in self.parameters]
         self.eta = [Parameter(Tensor(0.), "eta_" + param.name) for param in self.parameters]
         self.ax = self.parameters.clone(prefix="ax", init='zeros')
@@ -120,7 +118,7 @@ class ASGD(Optimizer):
         start_id = self.group_start_id[group_id]
         end_id = self.group_start_id[group_id + 1]
         params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = tuple(grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id])
         grads = self._decay_weight(weight_decay, params, grads)
 
         ax = self.ax[start_id: end_id]

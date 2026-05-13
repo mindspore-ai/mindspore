@@ -125,7 +125,7 @@ class ApplyPreTransform(nn.Cell):
     """
 
     def __init__(self, transform, model):
-        super(ApplyPreTransform, self).__init__(auto_prefix=False, flags=model.get_flags())
+        super().__init__(auto_prefix=False, flags=model.get_flags())
         self.transform = transform
         self.model = model
 
@@ -146,7 +146,7 @@ class IdentityCell(nn.Cell):
     """
 
     def __init__(self):
-        super(IdentityCell, self).__init__()
+        super().__init__()
         self.identity = P.Identity()
 
     def construct(self, x):
@@ -159,7 +159,7 @@ class RandomHorizontalFlip(nn.Cell):
     """
 
     def __init__(self, prob):
-        super(RandomHorizontalFlip, self).__init__()
+        super().__init__()
 
         self.prob = Tensor(prob, dtype=mstype.float32)
 
@@ -178,7 +178,7 @@ class RandomHorizontalFlip(nn.Cell):
 
         flip_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
         flip_rand_factor = self.cast((self.prob > flip_rand_factor), mstype.float32)
-        flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h * w * c)), (bs, h, w, c))
+        flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=h * w * c), (bs, h, w, c))
 
         x_flip = self.h_flip(x)
         operation = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
@@ -193,7 +193,7 @@ class RandomVerticalFlip(nn.Cell):
     """
 
     def __init__(self, prob):
-        super(RandomVerticalFlip, self).__init__()
+        super().__init__()
 
         self.prob = Tensor(prob, dtype=mstype.float32)
 
@@ -212,7 +212,7 @@ class RandomVerticalFlip(nn.Cell):
 
         flip_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
         flip_rand_factor = self.cast((self.prob > flip_rand_factor), mstype.float32)
-        flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=(h * w * c)), (bs, h, w, c))
+        flip_rand_factor = self.reshape(C.repeat_elements(flip_rand_factor, rep=h * w * c), (bs, h, w, c))
 
         x_flip = self.h_flip(x)
         operation = self.mul(x_flip, flip_rand_factor) + self.mul((1 - flip_rand_factor), x)
@@ -227,7 +227,7 @@ class GenerateRandBatch(nn.Cell):
     """
 
     def __init__(self):
-        super(GenerateRandBatch, self).__init__()
+        super().__init__()
 
         self.ones = P.Ones()
         self.reshape = P.Reshape()
@@ -239,7 +239,7 @@ class GenerateRandBatch(nn.Cell):
         rand_factor = degree_min + (degree_max - degree_min)*rand_factor
         degree_factor = degree_min * self.ones((bs, 1), mstype.float32)
         rand_factor = (check_rand * degree_factor) + (~check_rand * rand_factor)
-        rand_factor = self.reshape(C.repeat_elements(rand_factor, rep=(h * w * c)), (bs, h, w, c))
+        rand_factor = self.reshape(C.repeat_elements(rand_factor, rep=h * w * c), (bs, h, w, c))
 
         return rand_factor
 
@@ -250,7 +250,7 @@ class RandomColorAdjust(nn.Cell):
     """
 
     def __init__(self, brightness, contrast, saturation, hue):
-        super(RandomColorAdjust, self).__init__()
+        super().__init__()
 
         self.br_min, self.br_max = assign_min_max_params(brightness)
         self.cont_min, self.cont_max = assign_min_max_params(contrast)
@@ -304,7 +304,7 @@ class RandomColorAdjust(nn.Cell):
 
         x_gray = 0.2989 * r_ + 0.587 * g_ + 0.114 * b_
         x_gray_mean = self.expand_dims(self.mean(x_gray, (1, 2)) + 0.5, -1)
-        x_gray_mean = self.reshape(C.repeat_elements(x_gray_mean, rep=(h * w * c)), (bs, h, w, c))
+        x_gray_mean = self.reshape(C.repeat_elements(x_gray_mean, rep=h * w * c), (bs, h, w, c))
         x_gray = C.repeat_elements(self.expand_dims(x_gray, -1), rep=c, axis=-1)
 
         # Apply brightness
@@ -339,7 +339,7 @@ class RandomColorAdjust(nn.Cell):
         hue_rand_factor = self.hue_min + (self.hue_max - self.hue_min)*hue_rand_factor
         degree_factor = self.hue_min * self.ones((bs, 1), mstype.float32)
         hue_rand_factor = (self.check_rand_hue * degree_factor) + (~self.check_rand_hue * hue_rand_factor)
-        hue_rand_factor = self.reshape(C.repeat_elements(hue_rand_factor, rep=(h * w)), (bs, h, w))
+        hue_rand_factor = self.reshape(C.repeat_elements(hue_rand_factor, rep=h * w), (bs, h, w))
         hue = hue + (hue_rand_factor * 360.0)
 
         # Convert tensor from hsv to rgb
@@ -374,7 +374,7 @@ class RandomSharpness(nn.Cell):
     """
 
     def __init__(self, degrees):
-        super(RandomSharpness, self).__init__()
+        super().__init__()
 
         if isinstance(degrees, (list, tuple)):
             self.degree_min = degrees[0]
@@ -410,7 +410,7 @@ class RandomSharpness(nn.Cell):
         degree_rand_factor = self.degree_min + (self.degree_max - self.degree_min)*degree_rand_factor
         degree_factor = self.degree_min * self.ones((bs, 1), mstype.float32)
         degree_rand_factor = (self.check_rand * degree_factor) + (~self.check_rand * degree_rand_factor)
-        degree_rand_factor = self.reshape(C.repeat_elements(degree_rand_factor, rep=(h * w * c)), (bs, h, w, c))
+        degree_rand_factor = self.reshape(C.repeat_elements(degree_rand_factor, rep=h * w * c), (bs, h, w, c))
 
         x_sharp = self.filter(self.transpose(x, (0, 3, 1, 2)), self.weight)
         x_sharp = self.transpose(x_sharp, (0, 2, 3, 1))
@@ -428,7 +428,7 @@ class Rescale(nn.Cell):
     """
 
     def __init__(self, rescale, shift):
-        super(Rescale, self).__init__()
+        super().__init__()
 
         self.rescale = Tensor(rescale, dtype=mstype.float32)
         self.shift = Tensor(shift, dtype=mstype.float32)
@@ -451,7 +451,7 @@ class HwcToChw(nn.Cell):
     """
 
     def __init__(self):
-        super(HwcToChw, self).__init__()
+        super().__init__()
         self.trans = P.Transpose()
         self.shape = P.Shape()
 
@@ -470,7 +470,7 @@ class Normalize(nn.Cell):
     """
 
     def __init__(self, mean, std, is_hwc=True):
-        super(Normalize, self).__init__()
+        super().__init__()
         if is_hwc is False:
             mean = np.expand_dims(np.array(mean), (1, 2))
             std = np.expand_dims(np.array(std), (1, 2))
@@ -495,7 +495,7 @@ class TypeCast(nn.Cell):
     """
 
     def __init__(self, data_type_str):
-        super(TypeCast, self).__init__()
+        super().__init__()
 
         self.cast = P.Cast()
         self.data_type = mstype.typing.str_to_type(data_type_str)
@@ -533,7 +533,7 @@ class GetModelFromJson2Col(nn.Cell):
     """
 
     def __init__(self, json_offload, col_idxs):
-        super(GetModelFromJson2Col, self).__init__()
+        super().__init__()
         self.col_idxs = col_idxs
         self.me_ops = []
         self.input_cols = []
@@ -576,7 +576,7 @@ class GetOffloadModel(nn.Cell):
     """
 
     def __init__(self, dataset_consumer, ds_cols):
-        super(GetOffloadModel, self).__init__()
+        super().__init__()
         self.transform_list = []
         json_offload = json.loads(dataset_consumer.GetOffload())
         if json_offload is not None:

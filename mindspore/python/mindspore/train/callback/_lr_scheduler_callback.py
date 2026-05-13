@@ -57,7 +57,7 @@ class LearningRateScheduler(Callback):
     """
 
     def __init__(self, learning_rate_function):
-        super(LearningRateScheduler, self).__init__()
+        super().__init__()
         self.learning_rate_function = learning_rate_function
 
     def step_end(self, run_context):

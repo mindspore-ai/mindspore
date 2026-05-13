@@ -195,7 +195,7 @@ class ProximalAdagrad(Optimizer):
     @opt_init_args_register
     def __init__(self, params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0,
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
-        super(ProximalAdagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(accum, l1, l2, use_locking, self.cls_name)
         self.accum = self._parameters.clone(prefix="accum", init=accum)
         self.l1 = Tensor(l1, mstype.float32)

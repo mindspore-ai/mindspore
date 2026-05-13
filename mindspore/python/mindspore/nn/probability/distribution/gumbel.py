@@ -63,7 +63,7 @@ class Gumbel(TransformedDistribution):
         >>> from mindspore import Tensor
         >>> class Prob(nn.Cell):
         ...     def __init__(self):
-        ...         super(Prob, self).__init__()
+        ...         super().__init__()
         ...         self.gum = msd.Gumbel(np.array([0.0]), np.array([[1.0], [2.0]]), dtype=mindspore.float32)
         ...
         ...     def construct(self, x_):
@@ -86,7 +86,7 @@ class Gumbel(TransformedDistribution):
         Validator.check_type_name(
             "dtype", dtype, valid_dtype, type(self).__name__)
         gumbel_cdf = msb.GumbelCDF(loc, scale)
-        super(Gumbel, self).__init__(
+        super().__init__(
             distribution=msd.Uniform(0.0, 1.0, dtype=dtype),
             bijector=msb.Invert(gumbel_cdf),
             seed=seed, name=name)

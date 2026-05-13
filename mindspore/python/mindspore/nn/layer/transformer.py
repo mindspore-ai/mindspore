@@ -636,7 +636,7 @@ class TransformerEncoder(Cell):
     """
 
     def __init__(self, encoder_layer, num_layers, norm=None):
-        super(TransformerEncoder, self).__init__()
+        super().__init__()
         layers = TransformerEncoderLayer(encoder_layer.d_model, encoder_layer.nhead, encoder_layer.dim_feedforward,
                                          encoder_layer.dropout_num, encoder_layer.activation1,
                                          encoder_layer.layernorm_eps, encoder_layer.batch_first,
@@ -711,7 +711,7 @@ class TransformerDecoder(Cell):
     """
 
     def __init__(self, decoder_layer, num_layers, norm=None):
-        super(TransformerDecoder, self).__init__()
+        super().__init__()
         layers = TransformerDecoderLayer(decoder_layer.d_model, decoder_layer.nhead, decoder_layer.dim_feedforward,
                                          decoder_layer.dropout_num, decoder_layer.activation1,
                                          decoder_layer.layernorm_eps, decoder_layer.batch_first,
@@ -823,7 +823,7 @@ class Transformer(Cell):
                  activation: Union[str, Cell, callable] = 'relu', custom_encoder: Optional[Cell] = None,
                  custom_decoder: Optional[Cell] = None, layer_norm_eps: float = 1e-5,
                  batch_first: bool = False, norm_first: bool = False, dtype=mstype.float32):
-        super(Transformer, self).__init__()
+        super().__init__()
 
         if custom_encoder is not None:
             self.encoder = custom_encoder

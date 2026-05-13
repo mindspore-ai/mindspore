@@ -51,7 +51,7 @@ class TopKCategoricalAccuracy(Metric):
         0.6666666666666666
     """
     def __init__(self, k):
-        super(TopKCategoricalAccuracy, self).__init__()
+        super().__init__()
         if not isinstance(k, int):
             raise TypeError("For 'TopKCategoricalAccuracy', the type of "
                             "the argument 'k' should be int, but got 'k' type: {}.".format(type(k)))
@@ -136,7 +136,7 @@ class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
         0.0
     """
     def __init__(self):
-        super(Top1CategoricalAccuracy, self).__init__(1)
+        super().__init__(1)
 
 
 class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
@@ -164,4 +164,4 @@ class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
         1.0
     """
     def __init__(self):
-        super(Top5CategoricalAccuracy, self).__init__(5)
+        super().__init__(5)

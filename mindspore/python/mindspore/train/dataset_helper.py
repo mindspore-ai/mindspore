@@ -91,7 +91,7 @@ class _DataWrapper(nn.Cell):
     """
 
     def __init__(self, network, dataset_types, dataset_shapes, queue_name):
-        super(_DataWrapper, self).__init__(
+        super().__init__(
             auto_prefix=False, flags=network.get_flags())
         # Also copy the flag in `network` construct
         flags = getattr(network.__class__.construct, "_func_graph_flags", {})
@@ -295,7 +295,7 @@ def connect_network_with_dataset(network, dataset_helper):
                 if hasattr(aux, '__network_manage__'):
                     aux.__network_manage__ = aux.__network_manage__
                 else:
-                    aux.__network_manage__ = dict()
+                    aux.__network_manage__ = {}
                 aux.__network_manage__[key] = network
             network.add_flags(sink_mode=True)
             return network

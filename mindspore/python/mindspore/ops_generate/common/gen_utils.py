@@ -61,7 +61,7 @@ def get_type_str(type_str):
     }
     if type_str in type_kind_set:
         return "OpDtype." + convert_dtype_str(type_str)
-    raise TypeError(f"""Unsupported type {type_str} for args.""")
+    raise TypeError("""Unsupported type {type_str} for args.""")
 
 
 def get_file_md5(file_path):
@@ -102,10 +102,10 @@ def merge_files_to_one_file(file_paths, merged_file_path):
     merged_content = ''
     file_paths.sort()
     for file_path in file_paths:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             merged_content += file.read()
             merged_content += '\n'
-    with open(merged_file_path, 'w') as file:
+    with open(merged_file_path, 'w', encoding='utf-8') as file:
         file.write(merged_content)
 
 
@@ -128,7 +128,7 @@ def safe_load_yaml(yaml_file_path):
     if not yaml_file_path.endswith('.yaml'):
         raise ValueError(f"Invalid yaml file path: {yaml_file_path}")
 
-    with open(yaml_file_path, 'r') as yaml_file:
+    with open(yaml_file_path, 'r', encoding='utf-8') as yaml_file:
         return yaml.safe_load(yaml_file)
 
 
@@ -136,12 +136,12 @@ def safe_load_yaml_from_dir(yaml_dir_path):
     """
     Load yaml dictionary from directory.
     """
-    yaml_dict = dict()
+    yaml_dict = {}
     if not os.path.isdir(yaml_dir_path):
         raise ValueError(f"Invalid yaml directory path: {yaml_dir_path}")
 
     for yaml_file_path in glob.glob(os.path.join(yaml_dir_path, '*.yaml')):
-        with open(yaml_file_path, 'r') as f:
+        with open(yaml_file_path, 'r', encoding='utf-8') as f:
             yaml_data = yaml.safe_load(f)
         for name, data in yaml_data.items():
             if name in yaml_dict:
@@ -177,7 +177,6 @@ def save_file(save_path, file_name, content):
     """
     Save file to path. For existing file, only update the file if the content is different.
     """
-    global gen_file_lists
     pathlib.Path(save_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(save_path, file_name)
     gen_file_lists.add(os.path.abspath(dst_file_path))
@@ -186,7 +185,7 @@ def save_file(save_path, file_name, content):
         if get_file_md5(dst_file_path) == hashlib.md5(content.encode('utf-8')).hexdigest():
             return
 
-    with open(dst_file_path, "w") as f:
+    with open(dst_file_path, "w", encoding='utf-8') as f:
         f.write(content)
 
 
@@ -198,7 +197,7 @@ def clear_obsolete_auto_gen_files():
     if not os.path.exists(gen_file_list_filename):
         last_gen_file_lists = set()
     else:
-        with open(gen_file_list_filename, "r") as f:
+        with open(gen_file_list_filename, "r", encoding='utf-8') as f:
             last_gen_file_lists = set(json.load(f))
 
     obsolete_files = last_gen_file_lists - gen_file_lists
@@ -206,7 +205,7 @@ def clear_obsolete_auto_gen_files():
         if os.path.isfile(file):
             os.remove(file)
 
-    with open(gen_file_list_filename, "w") as f:
+    with open(gen_file_list_filename, "w", encoding='utf-8') as f:
         json.dump(list(gen_file_lists), f)
 
 
@@ -235,9 +234,9 @@ def get_op_description(operator_name, doc_dict):
     """
     Generate ops api description.
     """
-    op_description = f"    r\"\"\"\n" \
-                     f"    \n" \
-                     f"    \"\"\"\n"
+    op_description = "    r\"\"\"\n" \
+                     "    \n" \
+                     "    \"\"\"\n"
     if doc_dict is None:
         logging.info("Description is None, op_name: %s", operator_name)
         return op_description
@@ -252,9 +251,9 @@ def get_op_description(operator_name, doc_dict):
         logging.info("Description is None, op_name: %s", operator_name)
         return op_description
 
-    op_description = f"    r\"\"\"\n" \
+    op_description = "    r\"\"\"\n" \
                      f"    {normalize_func_description_format(description)}\n" \
-                     f"    \"\"\"\n"
+                     "    \"\"\"\n"
     return op_description
 
 

@@ -71,7 +71,7 @@ class PowerTransform(Bijector):
     def __init__(self, power=0., name='PowerTransform'):
         param = dict(locals())
         param['param_dict'] = {'power': power}
-        super(PowerTransform, self).__init__(name=name, param=param)
+        super().__init__(name=name, param=param)
         self._power = self._add_parameter(power, 'power')
         check_greater_equal_zero(self._power, 'Power')
 

@@ -57,7 +57,7 @@ class TimeMonitor(Callback):
     """
 
     def __init__(self, data_size=None, data_time=False):
-        super(TimeMonitor, self).__init__()
+        super().__init__()
         self.data_size = data_size
         self.epoch_time = time.time()
         self.data_time = data_time

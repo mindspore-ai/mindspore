@@ -49,7 +49,7 @@ class WithBNNLossCell(Cell):
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         self.dense = bnn_layers.DenseReparam(16, 1)
         ...     def construct(self, x):
         ...         return self.dense(x)
@@ -66,7 +66,7 @@ class WithBNNLossCell(Cell):
     """
 
     def __init__(self, backbone, loss_fn, dnn_factor=1, bnn_factor=1):
-        super(WithBNNLossCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         if isinstance(dnn_factor, bool) or not isinstance(dnn_factor, (int, float)):
             raise TypeError('The type of `dnn_factor` must be `int` or `float`')
         if dnn_factor < 0:
@@ -88,8 +88,8 @@ class WithBNNLossCell(Cell):
         y_pred = self._backbone(x)
         backbone_loss = self._loss_fn(y_pred, label)
         kl_loss = 0
-        for i in range(len(self.kl_loss)):
-            kl_loss += self.kl_loss[i]()
+        for kl_loss_func in self.kl_loss:
+            kl_loss += kl_loss_func()
         loss = backbone_loss * self.dnn_factor + kl_loss * self.bnn_factor
         return loss
 

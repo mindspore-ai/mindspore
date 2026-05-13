@@ -194,7 +194,7 @@ class AdaMax(Optimizer):
     @opt_init_args_register
     def __init__(self, params, learning_rate=0.001, beta1=0.9, beta2=0.999, eps=1e-08,
                  weight_decay=0.0, loss_scale=1.0):
-        super(AdaMax, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(beta1, beta2, eps, self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)

@@ -59,7 +59,7 @@ class ConfusionMatrix(Metric):
          [1. 1.]]
     """
     def __init__(self, num_classes, normalize="no_norm", threshold=0.5):
-        super(ConfusionMatrix, self).__init__()
+        super().__init__()
 
         self.num_classes = validator.check_value_type("num_classes", num_classes, [int])
         if normalize not in ["target", "prediction", "all", "no_norm"]:
@@ -196,7 +196,7 @@ class ConfusionMatrixMetric(Metric):
                  metric_name="sensitivity",
                  calculation_method=False,
                  decrease="mean"):
-        super(ConfusionMatrixMetric, self).__init__()
+        super().__init__()
 
         self.confusion_matrix = _ConfusionMatrix(skip_channel=skip_channel, metric_name=metric_name,
                                                  calculation_method=calculation_method, decrease=decrease)

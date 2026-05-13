@@ -47,7 +47,7 @@ class AstFinder(ast.NodeVisitor):
 
         if isinstance(node, self._targets):
             self._results.append(node)
-        super(AstFinder, self).generic_visit(node)
+        super().generic_visit(node)
 
     def find_all(self, ast_types) -> [ast.AST]:
         """
@@ -92,13 +92,13 @@ class StrChecker(ast.NodeVisitor):
         """Visit a node of type ast.Attribute."""
         if isinstance(node.value, ast.Name) and node.value.id == self._pattern:
             self._hit = True
-        return super(StrChecker, self).generic_visit(node)
+        return super().generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> Any:
         """Visit a node of type ast.Name."""
         if node.id == self._pattern:
             self._hit = True
-        return super(StrChecker, self).generic_visit(node)
+        return super().generic_visit(node)
 
     def generic_visit(self, node: ast.AST) -> Any:
         for _, value in ast.iter_fields(node):
@@ -185,7 +185,7 @@ class CheckPropertyIsUsed(ast.NodeVisitor):
         """Visit a node of type ast.Attribute."""
         if isinstance(node.value, ast.Name) and node.value.id == self._value and node.attr == self._attr:
             self._hit = True
-        return super(CheckPropertyIsUsed, self).generic_visit(node)
+        return super().generic_visit(node)
 
     def generic_visit(self, node: ast.AST) -> Any:
         """
@@ -193,7 +193,7 @@ class CheckPropertyIsUsed(ast.NodeVisitor):
         """
         if self._hit:
             return
-        super(CheckPropertyIsUsed, self).generic_visit(node)
+        super().generic_visit(node)
 
     def check(self, value, attr) -> bool:
         """
@@ -222,7 +222,7 @@ class GetPropertyOfObj(ast.NodeVisitor):
         target = node.targets[0]
         if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) and target.value.id == "self":
             self._property.add(target.attr)
-        return super(GetPropertyOfObj, self).generic_visit(node)
+        return super().generic_visit(node)
 
     def get(self):
         """

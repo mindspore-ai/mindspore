@@ -68,7 +68,7 @@ class OptTFTWrapper(Optimizer):
     def __init__(self, opt, **kwargs):
         if not isinstance(opt, Optimizer):
             raise TypeError(f"For 'OptTFTWrapper', the argument 'opt' must be Optimizer type, " f"but got {type(opt)}.")
-        super(OptTFTWrapper, self).__init__(opt.learning_rate, opt._parameters) # pylint: disable=W0212
+        super().__init__(opt.learning_rate, opt._parameters) # pylint: disable=W0212
         tft_env = os.getenv("MS_ENABLE_TFT", "")
         if ("TTP:1" not in tft_env) and ("UCE:1" not in tft_env) and ("ARF:1" not in tft_env):
             raise ValueError("MindIO TFT regitster need custom switch on[MS_ENABLE_TFT='{TTP:1,UCE:1,ARF:1}']!")

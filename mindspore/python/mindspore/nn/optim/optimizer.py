@@ -151,7 +151,7 @@ class Optimizer(Cell):
         >>>
         >>> class MyMomentum(nn.Optimizer):
         ...     def __init__(self, params, learning_rate, momentum=0.9):
-        ...         super(MyMomentum, self).__init__(learning_rate, params)
+        ...         super().__init__(learning_rate, params)
         ...         self.moments = self.parameters.clone(prefix="moments", init="zeros")
         ...         self.momentum = momentum
         ...         self.opt = ops.ApplyMomentum()
@@ -195,7 +195,7 @@ class Optimizer(Cell):
     _support_parallel_optimizer = False
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):
-        super(Optimizer, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         parameters = self._parameters_base_check(parameters, "parameters")
         self.param_rank = None
         self.optim_filter = None
@@ -247,8 +247,13 @@ class Optimizer(Cell):
         if self.is_group:
             self.parameters = ParameterTuple(self.group_params)
             self._parameters = self.parameters
-            decay_filter = lambda x: isinstance(x, Cell) or x > 0
-            dynamic_decay_filter = lambda x: isinstance(x, Cell)
+
+            def decay_filter(x):
+                return isinstance(x, Cell) or x > 0
+
+            def dynamic_decay_filter(x):
+                return isinstance(x, Cell)
+
             self.decay_flags = tuple(decay_filter(x) for x in self.group_weight_decay)
             self.dynamic_decay_flags = tuple(dynamic_decay_filter(x) for x in self.group_weight_decay)
             self.weight_decay = tuple(x if flag else Tensor(x, mstype.float32)
@@ -258,7 +263,10 @@ class Optimizer(Cell):
         else:
             self.parameters = ParameterTuple(parameters)
             self._parameters = self.parameters
-            decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
+
+            def decay_filter(x):
+                return 'beta' not in x.name and 'gamma' not in x.name
+
             self.decay_flags = tuple(decay_filter(x) for x in self._parameters)
             self.dynamic_decay_flags = isinstance(weight_decay, Cell)
             self.exec_weight_decay = isinstance(weight_decay, Cell) or weight_decay > 0
@@ -944,7 +952,7 @@ class _ConvertToCell(LearningRateSchedule):
     """Inner api, convert learning rate of scalar to LearningRateSchedule."""
 
     def __init__(self, learning_rate):
-        super(_ConvertToCell, self).__init__()
+        super().__init__()
         if not isinstance(learning_rate, Parameter):
             raise TypeError("For 'Optimizer', the argument 'learning_rate' must be Parameter, "
                             "but got {}.".format(type(learning_rate)))
@@ -958,7 +966,7 @@ class _IteratorLearningRate(LearningRateSchedule):
     """Inner api, convert learning rate of Tensor(list) to LearningRateSchedule."""
 
     def __init__(self, learning_rate, name):
-        super(_IteratorLearningRate, self).__init__()
+        super().__init__()
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim != 1:
                 raise ValueError(f"For 'Optimizer', the dimension of the argument 'learning_rate' should "
@@ -978,7 +986,7 @@ class _WrappedWeightDecay(Cell):
     """Inner api, a combination of dynamic or non-dynamic weight decay"""
 
     def __init__(self, weight_decay, loss_scale=1.0):
-        super(_WrappedWeightDecay, self).__init__()
+        super().__init__()
         self.weight_decay = weight_decay
         self.loss_scale = Tensor(loss_scale, mstype.float32)
 

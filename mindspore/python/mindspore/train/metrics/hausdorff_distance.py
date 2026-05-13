@@ -117,7 +117,7 @@ class HausdorffDistance(Metric):
     """
 
     def __init__(self, distance_metric="euclidean", percentile=None, directed=False, crop=True):
-        super(HausdorffDistance, self).__init__()
+        super().__init__()
         string_list = ["euclidean", "chessboard", "taxicab"]
         distance_metric = validator.check_value_type("distance_metric", distance_metric, [str])
         self.distance_metric = validator.check_string(distance_metric, string_list, "distance_metric")
@@ -176,8 +176,8 @@ class HausdorffDistance(Metric):
         nonzero_idx = np.nonzero(data)
         margin = self._is_tuple_rep(margin, data.ndim)
 
-        box_start = list()
-        box_end = list()
+        box_start = []
+        box_end = []
         for i in range(data.ndim):
             if nonzero_idx[i].size <= 0:
                 raise ValueError("Did not find nonzero index at the spatial dim {}".format(i))
@@ -225,6 +225,9 @@ class HausdorffDistance(Metric):
                 dis = morphology.distance_transform_edt(~y_edges)
             elif self.distance_metric == "chessboard" or self.distance_metric == "taxicab":
                 dis = morphology.distance_transform_cdt(~y_edges, metric=self.distance_metric)
+            else:
+                raise ValueError(f"For 'HausdorffDistance', the distance_metric '{self.distance_metric}' "
+                                 "is not supported.")
 
         surface_distance = dis[y_pred_edges]
 

@@ -178,7 +178,7 @@ class _AdaSum(Cell):
         - **adasum_parameters** (Tuple(Tensor)) - Tuple of parameters after adasum process.
     """
     def __init__(self, rank, device_number, group_number, parameter_tuple):
-        super(_AdaSum, self).__init__()
+        super().__init__()
         self.rank = rank
         self.device_number = device_number
         self.group_number = group_number
@@ -455,7 +455,7 @@ class AdaSumByGradWrapCell(Cell):
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, optimizer):
-        super(AdaSumByGradWrapCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         _device_number = 8
         _parallel_check()
         self.optimizer = optimizer
@@ -528,7 +528,7 @@ class AdaSumByDeltaWeightWrapCell(Cell):
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, optimizer):
-        super(AdaSumByDeltaWeightWrapCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         _parallel_check()
         self.optimizer = optimizer
         validator.check_value_type('optimizer', optimizer, (nn.Optimizer,))

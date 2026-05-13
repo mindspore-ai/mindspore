@@ -109,13 +109,8 @@ class Rprop(Optimizer):
         check_not_less_than_without_equal(etas[1], "etas[1]", self.cls_name, 1.)
         validator.check_float_range(etas[0], 0., 1., validator.INC_NEITHER, "etas[0]", self.cls_name)
 
-        defaults = dict(
-            lr=lr,
-            etas=etas,
-            step_sizes=step_sizes,
-            maximize=maximize,
-        )
-        super(Rprop, self).__init__(params, defaults)
+        defaults = {"lr": lr, "etas": etas, "step_sizes": step_sizes, "maximize": maximize,}
+        super().__init__(params, defaults)
         self.prev = self.parameters.clone(prefix="prev", init='zeros')
         self.step_size = self.parameters.clone(prefix="step_size", init='zeros')
         self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
@@ -130,7 +125,7 @@ class Rprop(Optimizer):
         end_id = self.group_start_id[group_id + 1]
 
         params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = tuple(grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id])
         prev = self.prev[start_id: end_id]
         step_size = self.step_size[start_id: end_id]
         self.hyper_map(ops.partial(_rprop_opt, etaminus, etaplus, step_size_min, step_size_max, self.step_t, lr),

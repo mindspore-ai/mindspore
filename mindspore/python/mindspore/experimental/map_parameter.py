@@ -142,14 +142,14 @@ class MapParameter(Parameter):
     @staticmethod
     def _check_map_parameter_args(key_tensor, key_dtype, value_tensor, value_dtype, value_shape):
         if key_dtype is not None and key_tensor is not None and key_dtype != key_tensor.dtype:
-            raise ValueError(f"When initializing a MapParameter, 'key_dtype' and 'key_tensor.dtype' should be set the"
-                             f" same.")
+            raise ValueError("When initializing a MapParameter, 'key_dtype' and 'key_tensor.dtype' should be set the"
+                             " same.")
         if value_dtype is not None and value_tensor is not None and value_dtype != value_tensor.dtype:
-            raise ValueError(f"When initializing a MapParameter, 'value_dtype' and 'value_tensor.dtype' should be set "
-                             f"the same.")
+            raise ValueError("When initializing a MapParameter, 'value_dtype' and 'value_tensor.dtype' should be set "
+                             "the same.")
         if value_shape is not None and value_tensor is not None and value_shape != value_tensor.shape:
-            raise ValueError(f"When initializing a map_parameter, 'value_shape' and 'value_tensor.shape' should be set "
-                             f"the same.")
+            raise ValueError("When initializing a map_parameter, 'value_shape' and 'value_tensor.shape' should be set "
+                             "the same.")
 
     def clone(self, init='same'):
         """

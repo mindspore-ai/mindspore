@@ -188,7 +188,7 @@ class VarNode(PatternNode):
     """
 
     def __init__(self):
-        super(VarNode, self).__init__("placeholder", Cell, [])
+        super().__init__("placeholder", Cell, [])
 
     def match(self, node: Node) -> bool:
         return node is not None and node.get_handler() is not None

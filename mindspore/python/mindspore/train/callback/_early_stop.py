@@ -99,7 +99,7 @@ class EarlyStopping(Callback):
 
     def __init__(self, monitor='eval_loss', min_delta=0, patience=0,
                  verbose=False, mode='auto', baseline=None, restore_best_weights=False):
-        super(EarlyStopping, self).__init__()
+        super().__init__()
         self.monitor = Validator.check_value_type('monitor', monitor, str)
         min_delta = Validator.check_value_type("min_delta", min_delta, [float, int])
         self.min_delta = abs(min_delta)
@@ -232,7 +232,7 @@ class ValueReduce(nn.Cell):
     For more details, please refer to :class:`mindspore.ops.AllReduce`.
     """
     def __init__(self):
-        super(ValueReduce, self).__init__()
+        super().__init__()
         self.allreduce = ops.AllReduce(ReduceOp.SUM)
 
     def construct(self, x):

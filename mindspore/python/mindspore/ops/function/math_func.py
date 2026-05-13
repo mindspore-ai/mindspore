@@ -10946,8 +10946,7 @@ def _canonicalize_fft_shape_and_dim(input, shape, dim):
             ret_shape[i] = input_sizes[i]
     else:
         ret_shape = [0] * len(ret_dim)
-        for i in range(len(ret_dim)):
-            value = ret_dim[i]
+        for i, value in enumerate(ret_dim):
             ret_shape[i] = input_sizes[value]
 
     for value in ret_shape:
@@ -10970,7 +10969,7 @@ def _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes):
     """Resize the input"""
     paddings = [0] * input_dim * 2
     must_copy = False
-    for i in range(len(ret_dim)):
+    for i, _ in enumerate(ret_dim):
         value = ret_dim[i]
         # resize input based on n & dim
         if ret_shape[i] == -1:
@@ -11005,8 +11004,7 @@ def _permute_input(input, input_dim, ret_dim):
 
     # partition dim_permute
     dim_permute_a, dim_permute_b = [], []
-    for i in range(len(dim_permute)):
-        value = dim_permute[i]
+    for i, value in enumerate(dim_permute):
         (dim_permute_a if not is_transformed_dim[i] else dim_permute_b).append(value)
 
     # strides
@@ -11027,8 +11025,7 @@ def _permute_input(input, input_dim, ret_dim):
     # copy
     if dim_permute_b:
         ret_dim = sorted(ret_dim, key=cmp_to_key(cmp))
-        for i in range(len(ret_dim)):
-            value = ret_dim[i]
+        for i, value in enumerate(ret_dim):
             dim_permute_b[i] = value
 
     # merge
@@ -11696,7 +11693,7 @@ def _calc_new_shape(shape, axes, position=0):
     prod_contraction = 1
     for i in contraction_axes:
         prod_contraction *= shape[i]
-    free_axes = tuple(i for i in range(len(shape)) if i not in contraction_axes)
+    free_axes = tuple(i for i, _ in enumerate(shape) if i not in contraction_axes)
     free_dims = tuple(shape[i] if shape[i] is not None else -1 for i in free_axes)
     prod_free = 1
     for free_dim in free_dims:

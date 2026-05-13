@@ -97,7 +97,7 @@ class Namer:
             self._names[name] = number
             # When _names is {x:2, x_3:1}, origin_name is x and number is update to 3,
             # new_name x_3 is conflict with key x_3, so this new_name need to be skipped.
-            if new_name in self._names.keys():
+            if new_name in self._names:
                 continue
             return new_name
 
@@ -126,7 +126,7 @@ class TargetNamer(Namer):
         Returns:
             A string represents unique-name.
         """
-        return super(TargetNamer, self).get_name(origin_name)
+        return super().get_name(origin_name)
 
 
 class NodeNamer(Namer):
@@ -171,7 +171,7 @@ class NodeNamer(Namer):
             origin_name = node_or_name
         else:
             raise ValueError("unexpected type of node_or_name:", type(node_or_name))
-        return super(NodeNamer, self).get_name(origin_name)
+        return super().get_name(origin_name)
 
 
 class ClassNamer(Namer):
@@ -210,7 +210,7 @@ class ClassNamer(Namer):
             A string represents a unique class name generated from `origin_name`.
         """
 
-        return super(ClassNamer, self).get_name(origin_name + self._prefix)
+        return super().get_name(origin_name + self._prefix)
 
     def add_name(self, name: str):
         """
@@ -220,7 +220,7 @@ class ClassNamer(Namer):
             name (str): A string represents a class name.
         """
 
-        super(ClassNamer, self).add_name(name + self._prefix)
+        super().add_name(name + self._prefix)
 
 
 class FunctionNamer(Namer):
@@ -259,7 +259,7 @@ class FunctionNamer(Namer):
             A string represents a unique function name generated from `origin_name`.
         """
 
-        return super(FunctionNamer, self).get_name(origin_name + self._prefix)
+        return super().get_name(origin_name + self._prefix)
 
     def add_name(self, name: str):
         """
@@ -269,4 +269,4 @@ class FunctionNamer(Namer):
             name (str): A string represents a function name.
         """
 
-        super(FunctionNamer, self).add_name(name + self._prefix)
+        super().add_name(name + self._prefix)

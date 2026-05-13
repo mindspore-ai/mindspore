@@ -87,7 +87,7 @@ class _PoolNd(nn.Cell):
                  pad_mode: str,
                  data_format: str = "NCHW") -> None:
         """Initialize _PoolNd."""
-        super(_PoolNd, self).__init__()
+        super().__init__()
         validator.check_value_type('pad_mode', pad_mode, [str], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(),
                                                ['VALID', 'SAME'],
@@ -212,7 +212,7 @@ class MaxPool2d(_PoolNd):
                  stride: _size_2_t = 1,
                  pad_mode: str = "valid",
                  data_format: str = "NCHW") -> None:
-        super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
+        super().__init__(kernel_size, stride, pad_mode, data_format)
         self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
                                   pad_mode=self.pad_mode,
@@ -294,7 +294,7 @@ class MaxPool1d(_PoolNd):
                  stride: _size_1_t = 1,
                  pad_mode: str = "valid") -> None:
         """Initialize MaxPool1d."""
-        super(MaxPool1d, self).__init__(kernel_size, stride, pad_mode)
+        super().__init__(kernel_size, stride, pad_mode)
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
         validator.check_value_type('pad_mode', pad_mode, [str], self.cls_name)
@@ -406,7 +406,7 @@ class AvgPool2d(_PoolNd):
                  stride: _size_2_t = 1,
                  pad_mode: str = "valid",
                  data_format: str = "NCHW") -> None:
-        super(AvgPool2d, self).__init__(kernel_size,
+        super().__init__(kernel_size,
                                         stride,
                                         pad_mode,
                                         data_format)
@@ -501,7 +501,7 @@ class AvgPool1d(_PoolNd):
                                                self.cls_name)
         validator.check_int(kernel_size, 1, validator.GE, "kernel_size", self.cls_name)
         validator.check_int(stride, 1, validator.GE, "stride", self.cls_name)
-        super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
+        super().__init__(kernel_size, stride, pad_mode)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
         self.avg_pool = P.AvgPool(kernel_size=self.kernel_size,
@@ -572,7 +572,7 @@ class _AdaptivePoolNd(nn.Cell):
     """
 
     def __init__(self, output_size: Tuple[int, ...]) -> None:
-        super(_AdaptivePoolNd, self).__init__()
+        super().__init__()
         self.output_size = output_size
 
     def construct(self, u: Tensor) -> Tensor:
@@ -658,7 +658,7 @@ class AdaptiveAvgPool1d(_AdaptivePoolNd):
 
     def __init__(self, output_size: int) -> None:
         """Initialize AdaptiveAvgPool1d."""
-        super(AdaptiveAvgPool1d, self).__init__(output_size)
+        super().__init__(output_size)
         validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
 
     def _construct(self,
@@ -746,7 +746,7 @@ class AdaptiveAvgPool2d(_AdaptivePoolNd):
 
     def __init__(self, output_size: _size_2_t) -> None:
         """Initialize AdaptiveAvgPool2d."""
-        super(AdaptiveAvgPool2d, self).__init__(output_size)
+        super().__init__(output_size)
         self.adaptive_avgpool2d = P.AdaptiveAvgPool2D(output_size)
 
     def _construct(self,
@@ -821,7 +821,7 @@ class AdaptiveAvgPool3d(_AdaptivePoolNd):
 
     def __init__(self, output_size: _size_3_t):
         """Initialize AdaptiveAvgPool3d."""
-        super(AdaptiveAvgPool3d, self).__init__(output_size)
+        super().__init__(output_size)
         self.adaptive_avg_pool3d = AdaptiveAvgPool3D(output_size)
 
     def _construct(self,
@@ -883,7 +883,7 @@ class AdaptiveMaxPool1d(_AdaptivePoolNd):
 
     def __init__(self, output_size: int) -> None:
         """Initialize AdaptiveMaxPool1d."""
-        super(AdaptiveMaxPool1d, self).__init__(output_size)
+        super().__init__(output_size)
         validator.check_value_type('output_size', output_size, [int], self.cls_name)
         validator.check_int(output_size, 1, validator.GE, "output_size", self.cls_name)
 
@@ -986,7 +986,7 @@ class AdaptiveMaxPool2d(_AdaptivePoolNd):
 
     def __init__(self, output_size: _size_2_t) -> None:
         """Initialize AdaptiveAvgPool2d."""
-        super(AdaptiveMaxPool2d, self).__init__(output_size)
+        super().__init__(output_size)
         self.adaptive_maxpool2d = AdaptiveMaxPool2D(output_size)
 
     def _construct(self,

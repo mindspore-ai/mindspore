@@ -90,7 +90,7 @@ class Metric(metaclass=ABCMeta):
         >>>
         >>> class MyMAE(ms.train.Metric):
         ...     def __init__(self):
-        ...         super(MyMAE, self).__init__()
+        ...         super().__init__()
         ...         self.clear()
         ...
         ...     def clear(self):
@@ -238,7 +238,7 @@ class EvaluationBase(Metric):
         TypeError: If the input type is not classification or multilabel.
     """
     def __init__(self, eval_type):
-        super(EvaluationBase, self).__init__()
+        super().__init__()
         if eval_type not in _eval_types:
             raise TypeError("The argument 'eval_type' must be in {}, but got {}".format(_eval_types, eval_type))
         self._type = eval_type

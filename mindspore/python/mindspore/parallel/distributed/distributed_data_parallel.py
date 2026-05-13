@@ -134,7 +134,7 @@ class DistributedDataParallel(nn.Cell):
     def __init__(self, module, init_sync=True, process_group=None, bucket_cap_mb: Optional[int] = None,
                  find_unused_parameters=False, average_in_collective: bool = False, static_graph=False,
                  reducer_mode="CppReducer"):
-        super(DistributedDataParallel, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.init_sync = init_sync
         self.bucket_cap_mb = bucket_cap_mb
         self.average_in_collective = average_in_collective

@@ -39,7 +39,7 @@ class FileManager:
         PathManager.check_input_file_path(path)
         PathManager.check_directory_path_readable(path)
         try:
-            with open(path, mode) as file:
+            with open(path, mode) as file:  # pylint: disable=W1514
                 return file.read()
         except Exception as err:
             raise RuntimeError(f"Failed read file: {path}, error: {err}") from err
@@ -109,7 +109,7 @@ class FileManager:
                     headers = extern_headers + headers
 
                 csv_data = [
-                    tuple([row.get(field) for field in headers]) for row in reader
+                    tuple(row.get(field) for field in headers) for row in reader
                 ]
                 csv_data_np = np.array(
                     csv_data, dtype=np.dtype([(field, object) for field in headers])

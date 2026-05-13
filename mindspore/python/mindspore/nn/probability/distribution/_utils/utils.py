@@ -41,11 +41,11 @@ def cast_to_tensor(t, hint_type=mstype.float32):
         Tensor.
     """
     if t is None:
-        raise ValueError(f'Input cannot be None in cast_to_tensor')
+        raise ValueError('Input cannot be None in cast_to_tensor')
     if isinstance(t, Parameter):
         return t
     if isinstance(t, bool):
-        raise TypeError(f'Input cannot be Type Bool')
+        raise TypeError('Input cannot be Type Bool')
     if isinstance(t, (Tensor, np.ndarray, list, int, float)):
         return Tensor(t, dtype=hint_type)
     invalid_type = type(t)
@@ -105,7 +105,7 @@ def check_greater_zero(value, name):
 
     """
     if value is None:
-        raise ValueError(f'input value cannot be None in check_greater_zero')
+        raise ValueError('input value cannot be None in check_greater_zero')
     if isinstance(value, Parameter):
         if not isinstance(value.data, Tensor):
             return
@@ -129,7 +129,7 @@ def check_greater(a, b, name_a, name_b):
         ValueError: if b is less than or equal to a
     """
     if a is None or b is None:
-        raise ValueError(f'input value cannot be None in check_greater')
+        raise ValueError('input value cannot be None in check_greater')
     if isinstance(a, Parameter) or isinstance(b, Parameter):
         return
     comp = np.less(a.asnumpy(), b.asnumpy())
@@ -148,7 +148,7 @@ def check_prob(p):
         ValueError: if p is not a proper probability.
     """
     if p is None:
-        raise ValueError(f'input value cannot be None in check_greater_zero')
+        raise ValueError('input value cannot be None in check_greater_zero')
     if isinstance(p, Parameter):
         if not isinstance(p.data, Tensor):
             return
@@ -166,7 +166,7 @@ def check_sum_equal_one(probs):
     Used in categorical distribution. check if probabilities of each category sum to 1.
     """
     if probs is None:
-        raise ValueError(f'input value cannot be None in check_sum_equal_one')
+        raise ValueError('input value cannot be None in check_sum_equal_one')
     if isinstance(probs, Parameter):
         if not isinstance(probs.data, Tensor):
             return
@@ -187,7 +187,7 @@ def check_rank(probs):
     Used in categorical distribution. check Rank >=1.
     """
     if probs is None:
-        raise ValueError(f'input value cannot be None in check_rank')
+        raise ValueError('input value cannot be None in check_rank')
     if isinstance(probs, Parameter):
         if not isinstance(probs.data, Tensor):
             return
@@ -233,7 +233,7 @@ def probs_to_logits(probs, is_binary=False):
 @constexpr(check=False)
 def raise_none_error(name):
     raise TypeError(f"the type {name} must be subclass of Tensor."
-                    f" It can not be None since it is not specified during initialization.")
+                    " It can not be None since it is not specified during initialization.")
 
 
 @_primexpr
@@ -269,7 +269,7 @@ def raise_not_defined(func_name, obj, *args, **kwargs):
 def check_distribution_name(name, expected_name):
     if name is None:
         raise ValueError(
-            f"Input dist must be a constant which is not None.")
+            "Input dist must be a constant which is not None.")
     if name != expected_name:
         raise ValueError(
             f"Expected dist input is {expected_name}, but got {name}.")
@@ -281,7 +281,7 @@ class CheckTuple(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self):
-        super(CheckTuple, self).__init__("CheckTuple")
+        super().__init__("CheckTuple")
         self.init_prim_io_names(inputs=['x', 'name'], outputs=['dummy_output'])
 
     def __infer__(self, x, name):
@@ -309,7 +309,7 @@ class CheckTensor(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self):
-        super(CheckTensor, self).__init__("CheckTensor")
+        super().__init__("CheckTensor")
         self.init_prim_io_names(inputs=['x', 'name'], outputs=['dummy_output'])
 
     def __infer__(self, x, name):

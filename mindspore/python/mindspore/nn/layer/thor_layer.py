@@ -98,7 +98,7 @@ class DenseThor(Cell):
                  has_bias=True,
                  activation=None):
         """Initialize DenseThor."""
-        super(DenseThor, self).__init__()
+        super().__init__()
         self.thor = True
         self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
         self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
@@ -211,7 +211,7 @@ class _ConvThor(Cell):
     def __init__(self, in_channels, out_channels, kernel_size, stride, pad_mode,
                  padding, dilation, group, has_bias, weight_init, bias_init, transposed=False):
         """Initialize _ConvThor."""
-        super(_ConvThor, self).__init__()
+        super().__init__()
         self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
         self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.kernel_size = kernel_size
@@ -385,7 +385,7 @@ class Conv2dThor(_ConvThor):
         stride = twice(stride)
         self._dilation = dilation
         dilation = twice(dilation)
-        super(Conv2dThor, self).__init__(in_channels, out_channels, kernel_size,
+        super().__init__(in_channels, out_channels, kernel_size,
                                          stride, pad_mode, padding, dilation, group, has_bias, weight_init, bias_init)
         self.conv2d = ops.Conv2D(out_channel=self.out_channels, kernel_size=self.kernel_size,
                                  mode=1, pad_mode=self.pad_mode, pad=self.padding,
@@ -583,7 +583,7 @@ class EmbeddingThor(Cell):
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
                  dtype=mstype.float32, padding_idx=None):
         """Initialize EmbeddingThor."""
-        super(EmbeddingThor, self).__init__()
+        super().__init__()
         self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
         self.embedding_size = Validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
         Validator.check_value_type('use_one_hot', use_one_hot, [bool], self.cls_name)
@@ -730,7 +730,7 @@ class EmbeddingLookupThor(Cell):
     def __init__(self, vocab_size, embedding_size, param_init='normal',
                  target='CPU', slice_mode='batch_slice', manual_shapes=None,
                  max_norm=None, sparse=True):
-        super(EmbeddingLookupThor, self).__init__()
+        super().__init__()
         Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
         self.vocab_size = Validator.check_positive_int(vocab_size, 'vocab_size', self.cls_name)
         self.target = target

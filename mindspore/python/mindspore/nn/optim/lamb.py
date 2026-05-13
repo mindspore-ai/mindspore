@@ -252,7 +252,7 @@ class Lamb(Optimizer):
 
     @opt_init_args_register
     def __init__(self, params, learning_rate, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
-        super(Lamb, self).__init__(learning_rate, params, weight_decay)
+        super().__init__(learning_rate, params, weight_decay)
         _check_param_value(beta1, beta2, eps, self.cls_name)
 
         # turn them to scalar when me support scalar/tensor mix operations

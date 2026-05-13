@@ -103,9 +103,12 @@ class NAdam(Optimizer):
         validator.check_float_range(betas[0], 0., 1., validator.INC_LEFT, "betas[0]", self.cls_name)
         validator.check_float_range(betas[1], 0., 1., validator.INC_LEFT, "betas[1]", self.cls_name)
 
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, momentum_decay=momentum_decay)
-        super(NAdam, self).__init__(params, defaults)
+        defaults = {"lr": lr,
+                "betas": betas,
+                "eps": eps,
+                "weight_decay": weight_decay,
+                "momentum_decay": momentum_decay}
+        super().__init__(params, defaults)
         self.step_t = Parameter(Tensor(0, mstype.int32), "step_t")
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')

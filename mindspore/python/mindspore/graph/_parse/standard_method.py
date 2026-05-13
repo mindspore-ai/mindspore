@@ -1760,7 +1760,7 @@ def _infer_out_shape(*shapes):
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
     shape_out = []
-    max_len = ms_max([len(it) for it in shapes])
+    max_len = ms_max(len(it) for it in shapes)
     for i in range(max_len):
         items = [it[i - (max_len - len(it))] if i - (max_len - len(it))
                                                 >= 0 else 1 for it in shapes]
@@ -2155,7 +2155,7 @@ def _check_sum_to_size(size, input_dim, shape_input):
 def _count_axes(size, input_shape, shape_input, pre_len, pre_axis):
     """Count the sum axes for sum_to_size."""
     axes = pre_axis
-    for i in range(len(size)):
+    for i, _ in enumerate(size):
         element = size[i]
         if element != input_shape[i + pre_len] and element == 1:
             axes.append(i + pre_len)

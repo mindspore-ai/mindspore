@@ -25,7 +25,7 @@ class ConstantPadNd_(Cell):
     Base class for N-dimensional constant padding.
     """
     def __init__(self, padding, value=None, padding_length=None):
-        super(ConstantPadNd_, self).__init__()
+        super().__init__()
         self.padding = padding
         self.value = value
 
@@ -109,7 +109,7 @@ class ConstantPad1d(ConstantPadNd_):
     """
 
     def __init__(self, padding, value):
-        super(ConstantPad1d, self).__init__(padding, value, padding_length=2)
+        super().__init__(padding, value, padding_length=2)
 
 
 class ConstantPad2d(ConstantPadNd_):
@@ -161,7 +161,7 @@ class ConstantPad2d(ConstantPadNd_):
     """
 
     def __init__(self, padding, value):
-        super(ConstantPad2d, self).__init__(padding, value, padding_length=4)
+        super().__init__(padding, value, padding_length=4)
 
 
 class ConstantPad3d(ConstantPadNd_):
@@ -217,7 +217,7 @@ class ConstantPad3d(ConstantPadNd_):
     """
 
     def __init__(self, padding, value):
-        super(ConstantPad3d, self).__init__(padding, value, padding_length=6)
+        super().__init__(padding, value, padding_length=6)
 
 
 class ZeroPadNd_(ConstantPadNd_):
@@ -225,7 +225,7 @@ class ZeroPadNd_(ConstantPadNd_):
     Base class for N-dimensional zero padding.
     """
     def __init__(self, padding, padding_length):
-        super(ZeroPadNd_, self).__init__(padding, value=0, padding_length=padding_length)
+        super().__init__(padding, value=0, padding_length=padding_length)
 
 
 class ZeroPad1d(ZeroPadNd_):
@@ -283,7 +283,7 @@ class ZeroPad1d(ZeroPadNd_):
     """
 
     def __init__(self, padding):
-        super(ZeroPad1d, self).__init__(padding, padding_length=2)
+        super().__init__(padding, padding_length=2)
 
 
 class ZeroPad2d(ZeroPadNd_):
@@ -328,7 +328,7 @@ class ZeroPad2d(ZeroPadNd_):
     """
 
     def __init__(self, padding):
-        super(ZeroPad2d, self).__init__(padding, padding_length=4)
+        super().__init__(padding, padding_length=4)
 
 
 class ZeroPad3d(ZeroPadNd_):
@@ -373,7 +373,7 @@ class ZeroPad3d(ZeroPadNd_):
     """
 
     def __init__(self, padding):
-        super(ZeroPad3d, self).__init__(padding, padding_length=6)
+        super().__init__(padding, padding_length=6)
 
 
 class ReflectionPadNd_(Cell):
@@ -381,7 +381,7 @@ class ReflectionPadNd_(Cell):
     Base class for N-dimensional reflection padding.
     """
     def __init__(self, padding, padding_length=None):
-        super(ReflectionPadNd_, self).__init__()
+        super().__init__()
         self.padding = padding
 
         if isinstance(self.padding, int):
@@ -439,7 +439,7 @@ class ReflectionPad1d(ReflectionPadNd_):
     """
 
     def __init__(self, padding):
-        super(ReflectionPad1d, self).__init__(padding, padding_length=2)
+        super().__init__(padding, padding_length=2)
 
 
 class ReflectionPad2d(ReflectionPadNd_):
@@ -487,7 +487,7 @@ class ReflectionPad2d(ReflectionPadNd_):
     """
 
     def __init__(self, padding):
-        super(ReflectionPad2d, self).__init__(padding, padding_length=4)
+        super().__init__(padding, padding_length=4)
 
 
 class ReflectionPad3d(ReflectionPadNd_):
@@ -542,7 +542,7 @@ class ReflectionPad3d(ReflectionPadNd_):
     """
 
     def __init__(self, padding):
-        super(ReflectionPad3d, self).__init__(padding, padding_length=6)
+        super().__init__(padding, padding_length=6)
 
 
 class ReplicationPadNd_(Cell):
@@ -550,7 +550,7 @@ class ReplicationPadNd_(Cell):
     Base class for N-dimensional replication padding.
     """
     def __init__(self, padding, padding_length=None):
-        super(ReplicationPadNd_, self).__init__()
+        super().__init__()
         self.padding = padding
 
         if isinstance(self.padding, int):
@@ -615,7 +615,7 @@ class ReplicationPad1d(ReplicationPadNd_):
     """
 
     def __init__(self, padding):
-        super(ReplicationPad1d, self).__init__(padding, padding_length=2)
+        super().__init__(padding, padding_length=2)
 
 
 class ReplicationPad2d(ReplicationPadNd_):
@@ -674,7 +674,7 @@ class ReplicationPad2d(ReplicationPadNd_):
     """
 
     def __init__(self, padding):
-        super(ReplicationPad2d, self).__init__(padding, padding_length=4)
+        super().__init__(padding, padding_length=4)
 
 
 class ReplicationPad3d(ReplicationPadNd_):
@@ -732,7 +732,7 @@ class ReplicationPad3d(ReplicationPadNd_):
     """
 
     def __init__(self, padding):
-        super(ReplicationPad3d, self).__init__(padding, padding_length=6)
+        super().__init__(padding, padding_length=6)
 
 
 __all__ = [

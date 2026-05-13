@@ -37,7 +37,7 @@ def device_count():
         8
     """
     if not MSContext.get_instance().is_pkg_support_device("Ascend") or not is_available():
-        raise RuntimeError(f"Device Ascend not exist.")
+        raise RuntimeError("Device Ascend not exist.")
     return ascend_get_device_count()
 
 
@@ -55,10 +55,10 @@ def is_available():
     """
     # MindSpore will try to load plugins in "import mindspore", and availability status will be stored.
     if not MSContext.get_instance().is_pkg_support_device("Ascend"):
-        logger.warning(f"Device Ascend is not available.")
+        logger.warning("Device Ascend is not available.")
         load_plugin_error = MSContext.get_instance().load_plugin_error()
         if load_plugin_error != "":
-            logger.warning(f"Here's error when loading plugin for MindSpore package."
+            logger.warning("Here's error when loading plugin for MindSpore package."
                            f"Error message: {load_plugin_error}")
         return False
     return True

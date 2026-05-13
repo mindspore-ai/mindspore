@@ -66,7 +66,7 @@ class MinimizeBfgs(nn.Cell):
 
     def __init__(self, func, jac):
         """Initialize MinimizeBfgs."""
-        super(MinimizeBfgs, self).__init__()
+        super().__init__()
         self.func = func
         self.jac = jac
         self.line_search = LineSearch(func, jac)

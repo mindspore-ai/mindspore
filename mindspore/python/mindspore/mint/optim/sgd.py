@@ -142,12 +142,17 @@ class SGD(Optimizer):
             raise ValueError("Invalid momentum value: {}".format(momentum))
         if weight_decay < 0.:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
-        defaults = dict(lr=lr, momentum=momentum, weight_decay=weight_decay, dampening=dampening, nesterov=nesterov,
-                        maximize=maximize, lr_float=lr)
+        defaults = {"lr": lr,
+                "momentum": momentum,
+                "weight_decay": weight_decay,
+                "dampening": dampening,
+                "nesterov": nesterov,
+                "maximize": maximize,
+                "lr_float": lr}
         for param in params:
             if isinstance(param, dict) and param.get('lr', None):
                 param['lr_float'] = param['lr']
-        super(SGD, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
         if nesterov and (momentum <= 0. or dampening != 0.):
             raise ValueError("For 'SGD', if 'nesterov' is true, 'momentum' must be > 0.0 and 'dampening' must "
@@ -160,7 +165,7 @@ class SGD(Optimizer):
         for group_id, group in enumerate(self.param_groups):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
-            grads = tuple([grad if not group.get('maximize') else -grad for grad in gradients[start_id: end_id]])
+            grads = tuple(grad if not group.get('maximize') else -grad for grad in gradients[start_id: end_id])
             if group.get('weight_decay') != 0.:
                 grads = self.map_(ops.partial(_tensor_weight_decay, group.get('weight_decay')),
                                   self.parameters[start_id: end_id], grads)

@@ -166,7 +166,7 @@ class _ConvNd(Cell):
                  data_format: str = 'NCHW',
                  transposed: bool = False) -> None:
         """Initialize _ConvNd."""
-        super(_ConvNd, self).__init__()
+        super().__init__()
 
         # Check and set parameters
         self._check_set_param(in_channels,
@@ -463,7 +463,7 @@ class Conv2d(_ConvNd):
         stride = twice(stride)
         self._dilation = dilation
         dilation = twice(dilation)
-        super(Conv2d, self).__init__(conv_impl,
+        super().__init__(conv_impl,
                                      in_channels,
                                      out_channels,
                                      kernel_size,
@@ -623,7 +623,7 @@ class Conv1d(_ConvNd):
             weight_init_value = np.expand_dims(weight_init_value, 2)
             weight_init = Tensor(weight_init_value, weight_init_dtype)
 
-        super(Conv1d, self).__init__(conv_impl,
+        super().__init__(conv_impl,
                                      in_channels,
                                      out_channels,
                                      kernel_size,
@@ -826,7 +826,7 @@ class Conv3d(_ConvNd):
         Validator.check_value_type('padding', padding, (int, tuple), self.cls_name)
         if isinstance(padding, tuple):
             Validator.check_equal_int(len(padding), 6, 'padding size', self.cls_name)
-        super(Conv3d, self).__init__(conv_impl,
+        super().__init__(conv_impl,
                                      in_channels,
                                      out_channels,
                                      kernel_size,

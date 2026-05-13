@@ -188,10 +188,13 @@ class AdamW(Optimizer):
         if weight_decay < 0.0:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, amsgrad=amsgrad,
-                        maximize=maximize)
-        super(AdamW, self).__init__(params, defaults)
+        defaults = {"lr": lr,
+                "betas": betas,
+                "eps": eps,
+                "weight_decay": weight_decay,
+                "amsgrad": amsgrad,
+                "maximize": maximize}
+        super().__init__(params, defaults)
 
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
@@ -221,8 +224,8 @@ class AdamW(Optimizer):
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
-            grads = tuple([grad if not group.get("maximize") else ops.neg(grad) \
-                           for grad in gradients[start_id:end_id]])
+            grads = tuple(grad if not group.get("maximize") else ops.neg(grad) \
+                          for grad in gradients[start_id:end_id])
 
             self.implementation(lr, group.get("weight_decay"), beta1, beta2, group.get("amsgrad"), group.get("eps"),
                                 grads, start_id, end_id)
@@ -249,11 +252,14 @@ class SpeedAdamW(Optimizer):
         if weight_decay < 0.0:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, amsgrad=amsgrad,
-                        maximize=maximize)
+        defaults = {"lr": lr,
+                "betas": betas,
+                "eps": eps,
+                "weight_decay": weight_decay,
+                "amsgrad": amsgrad,
+                "maximize": maximize}
         self.max_v_group = True
-        super(SpeedAdamW, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')

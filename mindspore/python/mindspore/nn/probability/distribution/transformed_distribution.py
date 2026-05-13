@@ -68,7 +68,7 @@ class TransformedDistribution(Distribution):
         >>> from mindspore import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self, shape, dtype=mindspore.float32, seed=0, name='transformed_distribution'):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         # create TransformedDistribution distribution
         ...         self.exp = msb.Exp()
         ...         self.normal = msd.Normal(0.0, 1.0, dtype=dtype)
@@ -103,7 +103,7 @@ class TransformedDistribution(Distribution):
                                    [Distribution], type(self).__name__)
         validator.check_type_name(
             "dtype", distribution.dtype, mstype.float_type, type(self).__name__)
-        super(TransformedDistribution, self).__init__(
+        super().__init__(
             seed, distribution.dtype, name, param)
 
         self._bijector = bijector

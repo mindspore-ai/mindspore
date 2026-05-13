@@ -220,7 +220,7 @@ class ShardWriter:
             bytes, merged blob data
         """
         if len(blob_data) == 1:
-            values = [v for v in blob_data.values()]
+            values = list(blob_data.values())
             return bytes(values[0])
 
         # convert int to bytes

@@ -159,7 +159,7 @@ class Uniform(Distribution):
         valid_dtype = mstype.float_type
         Validator.check_type_name(
             "dtype", dtype, valid_dtype, type(self).__name__)
-        super(Uniform, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._low = self._add_parameter(low, 'low')
         self._high = self._add_parameter(high, 'high')

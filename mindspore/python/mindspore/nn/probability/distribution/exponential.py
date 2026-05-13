@@ -146,7 +146,7 @@ class Exponential(Distribution):
         valid_dtype = mstype.float_type
         Validator.check_type_name(
             "dtype", dtype, valid_dtype, type(self).__name__)
-        super(Exponential, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._rate = self._add_parameter(rate, 'rate')
         if self.rate is not None:

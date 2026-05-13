@@ -75,7 +75,7 @@ class MeanSurfaceDistance(Metric):
     """
 
     def __init__(self, symmetric=False, distance_metric="euclidean"):
-        super(MeanSurfaceDistance, self).__init__()
+        super().__init__()
         self.distance_metric_list = ["euclidean", "chessboard", "taxicab"]
         distance_metric = validator.check_value_type("distance_metric", distance_metric, [str])
         self.distance_metric = validator.check_string(distance_metric, self.distance_metric_list, "distance_metric")
@@ -107,6 +107,9 @@ class MeanSurfaceDistance(Metric):
                 dis = morphology.distance_transform_edt(~y_edges)
             elif self.distance_metric in self.distance_metric_list[-2:]:
                 dis = morphology.distance_transform_cdt(~y_edges, metric=self.distance_metric)
+            else:
+                raise ValueError(f"For 'MeanSurfaceDistance', the distance_metric '{self.distance_metric}' "
+                                 "is not supported.")
         else:
             dis = np.full(y_edges.shape, np.inf)
 

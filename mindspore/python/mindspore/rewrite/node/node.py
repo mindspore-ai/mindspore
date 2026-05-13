@@ -932,7 +932,7 @@ class Node:
         Validator.check_int_range(len(kwargs), 0, self._kwargs_num, Validator.INC_LEFT, "Length of kwargs")
         Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
         for key, arg in kwargs.items():
-            if key not in self._normalized_args.keys() or key not in self._normalized_args_keys:
+            if key not in self._normalized_args or key not in self._normalized_args_keys:
                 raise RuntimeError("Input key is not exist, ", key)
             if not isinstance(arg, ScopedValue):
                 raise TypeError("arg should be ScopedValue, got: ", type(arg))
@@ -951,7 +951,7 @@ class Node:
         Raises:
             RuntimeError: If 'key' is not in original kwargs' keys.
         """
-        if key not in self._normalized_args_keys[self._args_num:] or key not in self._normalized_args.keys():
+        if key not in self._normalized_args_keys[self._args_num:] or key not in self._normalized_args:
             raise RuntimeError("Input key is not exist, ", key)
         self._normalized_args[key] = arg
         self._sync_arg()
@@ -1098,7 +1098,7 @@ class Node:
         """
         if index == -1:
             return self._target_users
-        if index not in self._target_users.keys():
+        if index not in self._target_users:
             self._target_users[index] = []
         return self._target_users.get(index, None)
 
@@ -1111,7 +1111,7 @@ class Node:
             provider (tuple): A tuple includes the node and the index of node's argument who uses the target.
 
         """
-        if index not in self._target_users.keys():
+        if index not in self._target_users:
             self._target_users[index] = []
         self._target_users.get(index).append(provider)
 
@@ -1169,7 +1169,7 @@ class Node:
             args = []
         if not kwargs:
             kwargs = {}
-        normalized_args: dict = dict()
+        normalized_args: dict = {}
         if (args or kwargs) and self._instance and hasattr(type(self._instance), "construct"):
             parameters = inspect.signature(type(self._instance).construct).parameters
             names = Node._get_construct_arg_names(parameters)
@@ -1179,7 +1179,7 @@ class Node:
             arg_temp_name, suffix = "arg", 0
             for arg in args:
                 arg_key = "{}_{}".format(arg_temp_name, suffix)
-                while arg_key in kwargs.keys() or arg_key in normalized_args.keys():
+                while arg_key in kwargs or arg_key in normalized_args:
                     suffix += 1
                     arg_key = "{}_{}".format(arg_temp_name, suffix)
                 normalized_args[arg_key] = arg

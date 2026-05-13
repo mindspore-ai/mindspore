@@ -234,7 +234,7 @@ class Conv2d(_UniformOperator):
                  data_format: str = 'NCHW',
                  use_karatsuba: bool = False) -> None:
         if use_karatsuba:
-            super(Conv2d, self).__init__(HConv2d,
+            super().__init__(HConv2d,
                                          KaratsubaConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -249,7 +249,7 @@ class Conv2d(_UniformOperator):
                                          bias_init=bias_init,
                                          data_format=data_format)
         else:
-            super(Conv2d, self).__init__(HConv2d,
+            super().__init__(HConv2d,
                                          ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -425,7 +425,7 @@ class Conv1d(_UniformOperator):
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  use_karatsuba: bool = False) -> None:
         if use_karatsuba:
-            super(Conv1d, self).__init__(HConv1d,
+            super().__init__(HConv1d,
                                          KaratsubaConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -439,7 +439,7 @@ class Conv1d(_UniformOperator):
                                          weight_init=weight_init,
                                          bias_init=bias_init)
         else:
-            super(Conv1d, self).__init__(HConv1d,
+            super().__init__(HConv1d,
                                          ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -653,7 +653,7 @@ class Conv3d(_UniformOperator):
                  data_format: str = 'NCDHW',
                  use_karatsuba: bool = False) -> None:
         if use_karatsuba:
-            super(Conv3d, self).__init__(HConv3d,
+            super().__init__(HConv3d,
                                          KaratsubaConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -668,7 +668,7 @@ class Conv3d(_UniformOperator):
                                          bias_init=bias_init,
                                          data_format=data_format)
         else:
-            super(Conv3d, self).__init__(HConv3d,
+            super().__init__(HConv3d,
                                          ConvImpl,
                                          in_channels=in_channels,
                                          out_channels=out_channels,
@@ -777,7 +777,7 @@ class BatchNorm1d(_UniformOperator):
                  moving_mean_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  moving_var_init: Union[Tensor, str, Initializer, numbers.Number] = 'ones',
                  use_batch_statistics: bool = True) -> None:
-        super(BatchNorm1d, self).__init__(HBatchNorm1d,
+        super().__init__(HBatchNorm1d,
                                           BatchNormImpl,
                                           num_features=num_features,
                                           eps=eps,
@@ -888,7 +888,7 @@ class BatchNorm2d(_UniformOperator):
                  moving_var_init: Union[Tensor, str, Initializer, numbers.Number] = 'ones',
                  use_batch_statistics: bool = True,
                  data_format='NCHW') -> None:
-        super(BatchNorm2d, self).__init__(HBatchNorm2d,
+        super().__init__(HBatchNorm2d,
                                           BatchNormImpl,
                                           num_features=num_features,
                                           eps=eps,
@@ -995,7 +995,7 @@ class BatchNorm3d(_UniformOperator):
                  moving_var_init: Union[Tensor, str, Initializer, numbers.Number] = 'ones',
                  use_batch_statistics: bool = True,
                  data_format='NCDHW') -> None:
-        super(BatchNorm3d, self).__init__(HBatchNorm3d,
+        super().__init__(HBatchNorm3d,
                                           BatchNormImpl,
                                           num_features=num_features,
                                           eps=eps,
@@ -1101,7 +1101,7 @@ class Dense(_UniformOperator):
                  has_bias: bool = True,
                  use_karatsuba: bool = False) -> None:
         if use_karatsuba:
-            super(Dense, self).__init__(HDense,
+            super().__init__(HDense,
                                         KaratsubaDenseImpl,
                                         in_channels=in_channels,
                                         out_channels=out_channels,
@@ -1109,7 +1109,7 @@ class Dense(_UniformOperator):
                                         bias_init=bias_init,
                                         has_bias=has_bias)
         else:
-            super(Dense, self).__init__(HDense,
+            super().__init__(HDense,
                                         DenseImpl,
                                         in_channels=in_channels,
                                         out_channels=out_channels,

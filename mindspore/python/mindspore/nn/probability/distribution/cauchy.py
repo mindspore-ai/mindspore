@@ -159,7 +159,7 @@ class Cauchy(Distribution):
         valid_dtype = mstype.float_type
         Validator.check_type_name(
             "dtype", dtype, valid_dtype, type(self).__name__)
-        super(Cauchy, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._loc = self._add_parameter(loc, 'loc')
         self._scale = self._add_parameter(scale, 'scale')

@@ -130,8 +130,8 @@ def _save_file_atomically(transform_param_dict, save_file_name, metadata=None):
     except Exception as e:
         if not os.path.exists(save_file_name):
             logger.warning(f"Save failed, {save_file_name} not found. "
-                           f"This may indicate multiple processes modifying the same file "
-                           f"or insufficient disk space.")
+                           "This may indicate multiple processes modifying the same file "
+                           "or insufficient disk space.")
         raise e
 
 
@@ -420,7 +420,7 @@ def _check_transform_safetensors(ckpt_prefix, src_strategy_file, dst_strategy_fi
 
 def _check_output_format(output_format):
     if output_format not in ["safetensors", "ckpt"]:
-        raise ValueError(f"For 'transform_safetensors', the output_format must be "
+        raise ValueError("For 'transform_safetensors', the output_format must be "
                          f"'safetensors' or 'ckpt', but got {output_format}.")
 
 
@@ -523,7 +523,7 @@ def _distribute_files_by_size(all_safetensor_files_map, needed_rank_list_map, pr
             part_list_dict[index][src_rank] = split_list[index]
         return part_list_dict
 
-    rank_size = dict()
+    rank_size = {}
     for rank_id, file_name in all_safetensor_files_map.items():
         tmp_size = os.path.getsize(file_name) / 1024 / 1024
         rank_size[rank_id] = tmp_size
@@ -692,7 +692,7 @@ def _transform_safetensors_single(needed_rank_list_map, all_safetensor_files_map
         needed_rank_list = needed_rank_list_key.split("-")
         for needed_rank in needed_rank_list:
             if pipe_param_list:
-                safetensor_dict = dict()
+                safetensor_dict = {}
                 if src_strategy_file is not None:
                     io_time = _find_remove_redundancy_rank_id(pipe_param_list, single_param_dict, file_dict,
                                                               safetensor_dict, redundancy_dict, needed_rank,
@@ -940,7 +940,7 @@ def _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix):
         return _find_shortest_file(matched, rank_ckpts, new_file_suffix, file_suffix)
     raise ValueError(f"Multiple files with suffix '{file_suffix}' found in {rank_ckpts}. Following MindSpore naming "
                      f"rules, searched for files ending with '{new_file_suffix}' but found zero files. "
-                     f"Please set file_suffix to the longest common suffix of all files.")
+                     "Please set file_suffix to the longest common suffix of all files.")
 
 
 def _find_most_matching_file(rank_ckpts, file_suffix, format):
@@ -950,9 +950,9 @@ def _find_most_matching_file(rank_ckpts, file_suffix, format):
         return rank_ckpts[-1]
 
     new_file_suffix = file_suffix
-    pattern1 = rf'^_(\d+)-(\d+)_(\d+)$'
+    pattern1 = r'^_(\d+)-(\d+)_(\d+)$'
     matches1 = re.search(pattern1, file_suffix)
-    pattern2 = rf'^(\d+)-(\d+)_(\d+)$'
+    pattern2 = r'^(\d+)-(\d+)_(\d+)$'
     matches2 = re.search(pattern2, file_suffix)
     # Pattern matching for _{task_id}-{epoch}_{step} format (e.g., _1-10_100 or 1-10_100)
     if matches1 is not None or matches2 is not None:
@@ -962,9 +962,9 @@ def _find_most_matching_file(rank_ckpts, file_suffix, format):
                    not ckpt.endswith(f"rank{new_file_suffix}.{format}")]
         return _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix)
 
-    pattern3 = rf'^-(\d+)_(\d+)$'
+    pattern3 = r'^-(\d+)_(\d+)$'
     matches3 = re.search(pattern3, file_suffix)
-    pattern4 = rf'^(\d+)_(\d+)$'
+    pattern4 = r'^(\d+)_(\d+)$'
     matches4 = re.search(pattern4, file_suffix)
     # Pattern matching for -{epoch}_{step} format (e.g., -10_100 or 10_100)
     if matches3 is not None or matches4 is not None:
@@ -973,9 +973,9 @@ def _find_most_matching_file(rank_ckpts, file_suffix, format):
         matched = [ckpt for ckpt in rank_ckpts if ckpt.endswith(f"{new_file_suffix}.{format}")]
         return _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix)
 
-    pattern5 = rf'^_(\d+)$'
+    pattern5 = r'^_(\d+)$'
     matches5 = re.search(pattern5, file_suffix)
-    pattern6 = rf'^(\d+)$'
+    pattern6 = r'^(\d+)$'
     matches6 = re.search(pattern6, file_suffix)
     # Pattern matching for _{step} format (e.g., _100 or 100)
     if matches5 is not None or matches6 is not None:
@@ -985,8 +985,8 @@ def _find_most_matching_file(rank_ckpts, file_suffix, format):
         return _get_matched_file(matched, rank_ckpts, new_file_suffix, file_suffix)
 
     raise ValueError(f"Multiple {format} files ending with '{file_suffix}' found in {rank_ckpts}. "
-                     f"Cannot determine which file is the intended one. "
-                     f"Please set file_suffix to the longest common suffix.")
+                     "Cannot determine which file is the intended one. "
+                     "Please set file_suffix to the longest common suffix.")
 
 
 def _collect_safetensor_files(src_safetensors_dir, format='safetensors', file_suffix=None):
@@ -1026,12 +1026,12 @@ def _collect_safetensor_files(src_safetensors_dir, format='safetensors', file_su
         elif file_suffix is not None:
             raise ValueError(f"No safetensors files found in directory '{safetensor_dir}' "
                              f"with suffix '{file_suffix}' and format '{format}'. "
-                             f"Please verify the directory contains the expected files. "
-                             f"Recommend setting file_suffix to the longest common suffix.")
+                             "Please verify the directory contains the expected files. "
+                             "Recommend setting file_suffix to the longest common suffix.")
     if file_suffix is not None and multiple_files_found_flag:
         logger.warning(f"When unified_safetensors files with file_suffix `{file_suffix}`, multiple files were found. "
                        f"Showing one list: {multiple_files_list}; selected `{chosen_file}` from it. "
-                       f"Please check whether the file_suffix is set correctly.")
+                       "Please check whether the file_suffix is set correctly.")
     return all_safetensor_files_map
 
 
@@ -1186,7 +1186,7 @@ def _save_hyper_param(split_dst_file, all_safetensor_files_map, name_list, dst_d
 
 def _save_parameter_map_json(split_list, choice_func, split_dst_file, dst_dir, param_total_size):
     """save parameter map json file"""
-    param_name_dict = dict()
+    param_name_dict = {}
     for index, part_list in enumerate(split_list):
         for name in part_list:
             save_param_name = name
@@ -1265,7 +1265,7 @@ def _validate_safetensors_files(target_directory, expected_file_ids):
     if missing_file_ids:
         logger.warning(
             f"For unified_safetensors, target file part {missing_file_ids} does not exist. "
-            f"Possible causes: file rename failed, insufficient permissions, or disk space shortage."
+            "Possible causes: file rename failed, insufficient permissions, or disk space shortage."
         )
 
 
@@ -1390,7 +1390,7 @@ def unified_safetensors(src_dir, src_strategy_file, dst_dir, merge_with_redundan
         res = list(range(start_index, end_index))
     else:
         sub_list = split_list
-        res = [i for i in range(split_num)]
+        res = list(range(split_num))
 
     _save_hyper_param(split_dst_file, all_safetensor_files_map, name_list, dst_dir)
     _save_parameter_map_json(split_list, choice_func, split_dst_file, dst_dir, param_total_size)
@@ -1519,14 +1519,14 @@ def _cal_param_name_map_and_param_list(file_list, total_safetensors_dir, json_fi
         file_name = os.path.join(total_safetensors_dir, file_list[0])
         is_file = os.path.isfile(file_name)
         if not is_file:
-            raise ValueError(f"For 'load_parallel_checkpoint', weight files must be included "
-                             f"in the `unified_safetensors_dir`.")
+            raise ValueError("For 'load_parallel_checkpoint', weight files must be included "
+                             "in the `unified_safetensors_dir`.")
         param_name_map = _get_param_name_map_by_file(file_name, file_list, name_map)
     else:
         if not json_files:
             raise ValueError(
-                f"For 'load_parallel_checkpoint', there must be a JSON file named 'param_name_map.json' in "
-                f"the 'total_safetensors_dir'.")
+                "For 'load_parallel_checkpoint', there must be a JSON file named 'param_name_map.json' in "
+                "the 'total_safetensors_dir'.")
         param_name_json = os.path.join(total_safetensors_dir, json_files[0])
         with open(param_name_json, 'r') as f:
             param_name_map = json.load(f)
@@ -1609,7 +1609,7 @@ def _load_parallel_checkpoint(file_info):
     param_name_map, param_list, dst_strategy_list = _cal_param_name_map_and_param_list(sf_files, total_safetensors_dir,
                                                                                        json_files, dst_strategy_file,
                                                                                        rank_id, name_map)
-    total_param = dict()
+    total_param = {}
     dst_stage_device_num = np.prod(dst_strategy_list.get(list(dst_strategy_list.keys())[0])[0]) if dst_strategy_list \
                                                                                                    is not None else 1
     local_rank_id = rank_id % dst_stage_device_num

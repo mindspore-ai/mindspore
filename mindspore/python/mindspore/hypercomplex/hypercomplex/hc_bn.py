@@ -125,7 +125,7 @@ class _BatchNorm(nn.Cell):
                  use_batch_statistics: bool = None,
                  data_format: str = 'NCHW') -> None:
         """Initialize _BatchNorm."""
-        super(_BatchNorm, self).__init__()
+        super().__init__()
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         if num_features < 1:
             raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
@@ -362,7 +362,7 @@ class BatchNorm1d(_BatchNorm):
                  use_batch_statistics: bool = None) -> None:
         """Initialize _BatchNorm."""
 
-        super(BatchNorm1d, self).__init__(bn_impl,
+        super().__init__(bn_impl,
                                           num_features,
                                           eps,
                                           momentum,
@@ -572,7 +572,7 @@ class BatchNorm3d(nn.Cell):
                  use_batch_statistics: bool = None,
                  data_format: str = 'NCDHW') -> None:
         """Initialize _BatchNorm."""
-        super(BatchNorm3d, self).__init__()
+        super().__init__()
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.cls_name)
         self.bn2d = BatchNorm2d(bn_impl=bn_impl,
                                 num_features=num_features,

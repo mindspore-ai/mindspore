@@ -206,7 +206,7 @@ class Conv2d(_UniformOperator):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number] = 'normal',
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  data_format: str = 'NCHW') -> None:
-        super(Conv2d, self).__init__(HConv2d,
+        super().__init__(HConv2d,
                                      ConvImpl,
                                      in_channels=in_channels,
                                      out_channels=out_channels,
@@ -357,7 +357,7 @@ class Conv1d(_UniformOperator):
                  has_bias: bool = False,
                  weight_init: Union[Tensor, str, Initializer, numbers.Number] = 'normal',
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros') -> None:
-        super(Conv1d, self).__init__(HConv1d,
+        super().__init__(HConv1d,
                                      ConvImpl,
                                      in_channels=in_channels,
                                      out_channels=out_channels,
@@ -549,7 +549,7 @@ class Conv3d(_UniformOperator):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number] = 'normal',
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  data_format: str = 'NCDHW') -> None:
-        super(Conv3d, self).__init__(HConv3d,
+        super().__init__(HConv3d,
                                      ConvImpl,
                                      in_channels=in_channels,
                                      out_channels=out_channels,
@@ -654,7 +654,7 @@ class BatchNorm1d(_UniformOperator):
                  moving_mean_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  moving_var_init: Union[Tensor, str, Initializer, numbers.Number] = 'ones',
                  use_batch_statistics: bool = True) -> None:
-        super(BatchNorm1d, self).__init__(HBatchNorm1d,
+        super().__init__(HBatchNorm1d,
                                           BatchNormImpl,
                                           num_features=num_features,
                                           eps=eps,
@@ -760,7 +760,7 @@ class BatchNorm2d(_UniformOperator):
                  moving_var_init: Union[Tensor, str, Initializer, numbers.Number] = 'ones',
                  use_batch_statistics: bool = True,
                  data_format='NCHW') -> None:
-        super(BatchNorm2d, self).__init__(HBatchNorm2d,
+        super().__init__(HBatchNorm2d,
                                           BatchNormImpl,
                                           num_features=num_features,
                                           eps=eps,
@@ -866,7 +866,7 @@ class BatchNorm3d(_UniformOperator):
                  moving_var_init: Union[Tensor, str, Initializer, numbers.Number] = 'ones',
                  use_batch_statistics: bool = True,
                  data_format='NCDHW') -> None:
-        super(BatchNorm3d, self).__init__(HBatchNorm3d,
+        super().__init__(HBatchNorm3d,
                                           BatchNormImpl,
                                           num_features=num_features,
                                           eps=eps,
@@ -949,7 +949,7 @@ class Dense(_UniformOperator):
                  weight_init: Union[Tensor, str, Initializer, numbers.Number] = 'normal',
                  bias_init: Union[Tensor, str, Initializer, numbers.Number] = 'zeros',
                  has_bias: bool = True) -> None:
-        super(Dense, self).__init__(HDense,
+        super().__init__(HDense,
                                     DenseImpl,
                                     in_channels=in_channels,
                                     out_channels=out_channels,

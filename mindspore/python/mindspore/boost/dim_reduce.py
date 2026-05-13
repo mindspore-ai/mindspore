@@ -145,7 +145,7 @@ class DimReduce(Cell):
     """
     def __init__(self, network, optimizer, weight, pca_mat_local, n_components, rho, gamma, alpha, sigma, rank,
                  rank_size):
-        super(DimReduce, self).__init__()
+        super().__init__()
         self.network = network
         self.optimizer = optimizer
         self.rank = rank

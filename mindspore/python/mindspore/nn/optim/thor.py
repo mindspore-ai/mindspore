@@ -200,7 +200,7 @@ def find_net_layertype_recur(net, layertype_map):
         prefix = subcell.param_prefix
         if subcell == net:
             continue
-        elif isinstance(subcell, Conv2dThor):
+        if isinstance(subcell, Conv2dThor):
             layertype_map.append(Conv)
         elif isinstance(subcell, DenseThor):
             layertype_map.append(FC)
@@ -254,9 +254,7 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
          frequency=100):
     r"""
     Updates gradients by second-order algorithm--THOR.
-
     The updating formulas are as follows,
-
     .. math::
         \begin{array}{ll}
           & \textbf{Parameter:} \: \text{the learning rate } \gamma\text{, the damping parameter }\lambda \\
@@ -266,13 +264,11 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
           & w_{i}^{(k+1)} \leftarrow w_{i}^{(k)}-\gamma\left(\left(A_{i-1}^{(k)}+\lambda I\right)^{-1}
             \otimes\left(G_{i}^{(k)}+\lambda I\right)^{-1}\right) \nabla_{w_{i}} J^{(k)}
         \end{array}
-
     :math:`a_{i-1}` represents the input of :math:`i`-th layer,and which is the activations of previous layer.
     :math:`D_{s_i}` represents the derivative of the loss function of the output of the :math:`i`-th layer.
     :math:`I` represents the identity matrix.
     :math:`\lambda` represents :math:`damping`, :math:`g_i` represents gradients of the :math:`i`-th layer.
     :math:`\otimes` represents Kronecker product, :math:`\gamma` represents 'learning rate'.
-
     Note:
         When a parameter group is separated, 'weight_decay' of each group is applied to the corresponding parameter.
         'weight_decay' in the optimizer is applied to arguments that do not have 'beta' or 'gamma' in their name
@@ -281,46 +277,31 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         but concentration gradients can only be applied to parameters of the convolution layer.
         If the parameter for the unconvolutional layer is set to True, an error will be reported.
         To improve the performance of parameter groups, you can customize the order of parameters.
-
     Args:
         net (Cell): The training network.
-
         learning_rate (Tensor): A value for the learning rate.
-
         damping (Tensor): A value for the damping.
-
         momentum (float): Hyper-parameter of type float, means momentum for the moving average. It must be at least 0.0.
-
         weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0.0.
             Default: ``0.0`` .
-
         loss_scale (float): A value for the loss scale. It must be greater than 0.0. In general, use the
             default value. Default: ``1.0`` .
-
         batch_size (int): The size of a batch. Default: ``32`` .
-
         use_nesterov (bool): Enable Nesterov momentum. Default: ``False`` .
-
         decay_filter (function): A function to determine which layers the weight decay applied to. And it
             only works when the weight_decay > 0. Default: lambda x: x.name not in []
-
         split_indices (list): Set allreduce fusion strategy by A/G layer indices . Only works when distributed
             computing. ResNet50 as an example, there are 54 layers of A/G respectively, when split_indices is set
             to [26, 53], it means A/G is divided into two groups to allreduce,  one is 0~26 layer, and the other
             is 27~53. Default: ``None`` .
-
         enable_clip_grad (bool): Whether to clip the gradients. Default: ``False`` .
-
         frequency(int): The update interval of A/G and :math:`A^{-1}/G^{-1}`. When frequency equals N
             (N is greater than 1), A/G and :math:`A^{-1}/G^{-1}` will be updated every N steps,
             and other steps will use the stale A/G and :math:`A^{-1}/G^{-1}` to update weights. Default: ``100`` .
-
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
-
     Outputs:
         tuple[bool], all elements are True.
-
     Raises:
         TypeError: If `learning_rate` is not Tensor.
         TypeError: If `loss_scale`, `momentum` or `frequency` is not a float.
@@ -330,10 +311,8 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         ValueError: If `loss_scale` is less than or equal to 0.
         ValueError: If `weight_decay` or `momentum` is less than 0.
         ValueError: If `frequency` is less than 2.
-
     Supported Platforms:
         ``Ascend`` ``GPU``
-
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import nn
@@ -375,7 +354,7 @@ class ThorGpu(Optimizer):
                  use_nesterov=False, decay_filter=lambda x: x.name not in [], split_indices=None,
                  enable_clip_grad=False, frequency=100):
         params = filter(lambda x: x.requires_grad, net.get_parameters())
-        super(ThorGpu, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param(momentum, frequency, learning_rate, self.__class__.__name__)
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self._parameters
@@ -462,11 +441,10 @@ class ThorGpu(Optimizer):
         """for GPU, process matrix init shape, and get weight idx map"""
         layer_type_map = get_net_layertype_mask(net)
         layer_counter = 0
-        for idx in range(len(self.params)):
+        for idx, weight in enumerate(self.params):
             layer_type = layer_type_map[layer_counter]
-            weight = self.params[idx]
             weight_shape = self.shape(weight)
-            if layer_type in [Conv, FC] and "bias" not in self.params[idx].name.lower():
+            if layer_type in [Conv, FC] and "bias" not in weight.name.lower():
                 in_channels = weight_shape[1]
                 out_channels = weight_shape[0]
                 matrix_a_dim = in_channels
@@ -664,7 +642,7 @@ class ThorAscend(Optimizer):
     def __init__(self, net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32,
                  decay_filter=lambda x: x.name not in [], split_indices=None, enable_clip_grad=False, frequency=100):
         params = filter(lambda x: x.requires_grad, net.get_parameters())
-        super(ThorAscend, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param(momentum, frequency, learning_rate, self.__class__.__name__)
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self._parameters
@@ -842,11 +820,10 @@ class ThorAscend(Optimizer):
         """for Ascend, process matrix init shape, and get weight idx map"""
         layer_counter = 0
         layer_type_map = get_net_layertype_mask(net)
-        for idx in range(len(self.params)):
+        for idx, weight in enumerate(self.params):
             layer_type = layer_type_map[layer_counter]
-            weight = self.params[idx]
             weight_shape = self.shape(weight)
-            if layer_type == Conv and "bias" not in self.params[idx].name.lower():
+            if layer_type == Conv and "bias" not in weight.name.lower():
                 in_channels = weight_shape[1]
                 out_channels = weight_shape[0]
                 matrix_a_dim = in_channels * weight_shape[2] * weight_shape[3]
@@ -993,11 +970,11 @@ class ThorAscend(Optimizer):
     def _get_ainv_ginv_amax_gmax_list(self, gradients, damping_step, matrix_a_allreduce, matrix_g_allreduce,
                                       matrix_a_max_allreduce, matrix_g_max_allreduce):
         """get matrixA inverse list, matrixG inverse list, matrixA_max list, matrixG_max list"""
-        for i in range(len(self.params)):
+        for i, param in enumerate(self.params):
             thor_layer_count = self.weight_fim_idx_map[i]
             conv_layer_count = self.weight_conv_idx_map[i]
             layer_type = self.weight_layertype_idx_map[i]
-            weight_shape = self.shape(self.params[i])
+            weight_shape = self.shape(param)
             out_channels = weight_shape[0]
             if layer_type == Conv:
                 g = gradients[i]

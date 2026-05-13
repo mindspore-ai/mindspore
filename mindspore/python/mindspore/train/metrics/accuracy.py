@@ -56,7 +56,7 @@ class Accuracy(EvaluationBase):
         0.6666666666666666
     """
     def __init__(self, eval_type='classification'):
-        super(Accuracy, self).__init__(eval_type)
+        super().__init__(eval_type)
         self.clear()
 
     def clear(self):
@@ -113,6 +113,9 @@ class Accuracy(EvaluationBase):
             y_pred = y_pred.swapaxes(1, dimension_index).reshape(-1, self._class_num)
             y = y.swapaxes(1, dimension_index).reshape(-1, self._class_num)
             result = np.equal(y_pred, y).all(axis=1) * 1
+        else:
+            raise ValueError(f"For 'Accuracy.update', the type '{self._type}' is not supported, "
+                             "please check whether your inputs(predicted value, true value) are correct.")
 
         self._correct_num += result.sum()
         self._total_num += result.shape[0]

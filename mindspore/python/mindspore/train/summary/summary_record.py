@@ -76,7 +76,7 @@ def _get_summary_tensor_data():
 
 def _record_summary_tensor_data():
     """Record summary tensor data."""
-    summary_list = list()
+    summary_list = []
     for data in debug_ops.SUMMARY_TENSOR_CACHE:
         check_summary_param(data[0], data[1], data[2])
         if data[0] == "TensorSummary":
@@ -87,6 +87,8 @@ def _record_summary_tensor_data():
             summary_op_name = data[1] + "[:Image]"
         elif data[0] == "HistogramSummary":
             summary_op_name = data[1] + "[:Histogram]"
+        else:
+            summary_op_name = data[1]
         summary_value = {
             "name": summary_op_name,
             "data": data[2]
@@ -223,7 +225,7 @@ class SummaryRecord:
         """Enter the context manager."""
         if self._status.get('closed'):
             raise ValueError(f'For "{self.__class__.__name__}", SummaryRecord has been closed, '
-                             f'please check if close() method is called')
+                             'please check if close() method is called')
         return self
 
     def __exit__(self, *err):
@@ -255,7 +257,7 @@ class SummaryRecord:
         mode_spec = 'train', 'eval'
         if mode not in mode_spec:
             raise ValueError(f'For "{self.__class__.__name__}.set_mode", {repr(mode)} is not a '
-                             f'recognized mode, expect the parameter "mode" is "train" or "eval"')
+                             'recognized mode, expect the parameter "mode" is "train" or "eval"')
         self._mode = mode
 
     def add_value(self, plugin, name, value):
@@ -325,8 +327,8 @@ class SummaryRecord:
             if name in {item['tag'] for item in self._data_pool[plugin]}:
                 entry = repr(f'{name}/{plugin}')
                 logger.warning(f'For "{self.__class__.__name__}.add_value", {entry} has duplicate values. '
-                               f'Only the newest one will be recorded.')
-            data = dict(tag=name, value=np_value)
+                               'Only the newest one will be recorded.')
+            data = {"tag": name, "value": np_value}
             export_plugin = '{}_format'.format(plugin)
             if self._export_options is not None and export_plugin in self._export_options:
                 data['export_option'] = self._export_options.get(export_plugin)
@@ -334,16 +336,16 @@ class SummaryRecord:
 
         elif plugin in ('train_lineage', 'eval_lineage', 'dataset_graph', 'custom_lineage_data'):
             _check_lineage_value(plugin, value)
-            self._data_pool[plugin].append(dict(value=value.SerializeToString()))
+            self._data_pool[plugin].append({"value": value.SerializeToString()})
         elif plugin == 'graph':
             package_graph_event(value)
-            self._data_pool[plugin].append(dict(value=value))
+            self._data_pool[plugin].append({"value": value})
         elif plugin == PluginEnum.LANDSCAPE.value:
-            self._data_pool[plugin].append(dict(tag=name, value=value.SerializeToString()))
+            self._data_pool[plugin].append({"tag": name, "value": value.SerializeToString()})
         else:
             raise ValueError(f'For "{self.__class__.__name__}.add_value", no such "plugin" of {repr(plugin)} '
-                             f', expect value is one of [tensor, scalar, image, histogram, train_lineage, '
-                             f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
+                             ', expect value is one of [tensor, scalar, image, histogram, train_lineage, '
+                             'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
     def _sync_summary_data(self, step):
         """
@@ -366,7 +368,6 @@ class SummaryRecord:
         _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
         _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
         _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
-        global SUMMARY_TENSOR_CACHE
         for tag in tags:
             item_name = name + tag
             time_out = 30
@@ -420,7 +421,7 @@ class SummaryRecord:
 
         if self._status.get('closed'):
             logger.error(f"For '{self.__class__.__name__}', The record writer is closed, "
-                         f"please check if close() method is called")
+                         "please check if close() method is called")
             return False
         # Set the current summary of train step
         if self.network is not None and not self._status.get('has_graph'):
@@ -480,9 +481,11 @@ class SummaryRecord:
         if self._export_options is not None:
             export_dir = "export_{}".format(time_second)
 
-        filename_dict = dict(summary=self.file_info.get('file_name'),
-                             lineage=get_event_file_name(self.file_prefix, '_lineage', time_second),
-                             exporter=export_dir)
+        filename_dict = {
+            "summary": self.file_info.get('file_name'),
+            "lineage": get_event_file_name(self.file_prefix, '_lineage', time_second),
+            "exporter": export_dir
+        }
         self._event_writer = WriterPool(self.base_log_dir,
                                         self.max_file_size,
                                         self._num_process,
@@ -497,7 +500,7 @@ class SummaryRecord:
         _record_summary_tensor_data()
         summary_data = _get_summary_tensor_data()
         if not summary_data:
-            logger.debug(f'No summary data bubbled from the network.')
+            logger.debug('No summary data bubbled from the network.')
         for name, tensor in summary_data.items():
             tag, plugin = SummaryRecord._parse_from(name)
             if (tag, plugin) == (None, None):
@@ -546,7 +549,7 @@ class SummaryRecord:
         """
         if self._status.get('closed'):
             logger.error(f"For '{self.__class__.__name__}', the record writer is closed and can not flush, "
-                         f"please check if close() method is called")
+                         "please check if close() method is called")
         elif self._event_writer:
             self._event_writer.flush()
 
@@ -578,7 +581,7 @@ class SummaryRecord:
             raise RuntimeError(
                 f"For '{cls.__name__}', only one instance is supported in a training process, "
                 f"you are trying to create a new one when the existing instance number is {cls.count}. "
-                f"Please check your scripts.")
+                "Please check your scripts.")
 
     @staticmethod
     def _parse_from(name: str = None):

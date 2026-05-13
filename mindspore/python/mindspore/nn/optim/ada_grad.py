@@ -203,7 +203,7 @@ class Adagrad(Optimizer):
     @opt_init_args_register
     def __init__(self, params, accum=0.1, learning_rate=0.001,
                  update_slots=True, loss_scale=1.0, weight_decay=0.0):
-        super(Adagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(accum, update_slots, self.cls_name)
         self.accum = self._parameters.clone(prefix="accum", init=accum)
         self.opt = P.ApplyAdagrad(update_slots=update_slots)

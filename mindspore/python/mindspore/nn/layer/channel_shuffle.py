@@ -74,7 +74,7 @@ class ChannelShuffle(Cell):
     """
     def __init__(self, groups):
         """Initialize ChannelShuffle."""
-        super(ChannelShuffle, self).__init__()
+        super().__init__()
         if not isinstance(groups, int):
             raise TypeError(f"For ChannelShuffle, the param `groups` must be int, but got {type(groups)}.")
         if groups < 1:

@@ -52,7 +52,7 @@ class PipelineCell(Cell):
         >>> net = nn.PipelineCell(net, 4, stage_config={"cell_name_0": 0, "cell_name_1": 1})
     """
     def __init__(self, network, micro_size, stage_config=None, segment_config=None):
-        super(PipelineCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
@@ -215,7 +215,7 @@ class MicroBatchInterleaved(Cell):
         >>> net = nn.MicroBatchInterleaved(net, 2)
     """
     def __init__(self, network, interleave_num=2):
-        super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         if not isinstance(interleave_num, int):
             raise TypeError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be integer, "
                             "but got the type : {}.".format(type(interleave_num)))
@@ -265,7 +265,7 @@ class GradAccumulation(Cell):
         >>> net = GradAccumulation(net, 4)
     """
     def __init__(self, network, micro_size):
-        super(GradAccumulation, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size

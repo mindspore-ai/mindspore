@@ -224,7 +224,7 @@ class CheckpointConfig:
             keep_checkpoint_per_n_minutes = Validator.check_non_negative_int(keep_checkpoint_per_n_minutes)
 
         if saved_network is not None and not isinstance(saved_network, nn.Cell):
-            raise TypeError(f"For 'CheckpointConfig', the type of 'saved_network' must be None or Cell, "
+            raise TypeError("For 'CheckpointConfig', the type of 'saved_network' must be None or Cell, "
                             f"but got {str(type(saved_network))}.")
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
@@ -406,7 +406,7 @@ class CheckpointConfig:
         if append_info is None or append_info == []:
             return None
         if not isinstance(append_info, list):
-            raise TypeError(f"For 'CheckpointConfig', the type of 'append_info' must be list,"
+            raise TypeError("For 'CheckpointConfig', the type of 'append_info' must be list,"
                             f"but got {str(type(append_info))}.")
         handle_append_info = {}
         if "epoch_num" in append_info:
@@ -416,24 +416,24 @@ class CheckpointConfig:
         dict_num = 0
         for element in append_info:
             if not isinstance(element, str) and not isinstance(element, dict):
-                raise TypeError(f"For 'CheckpointConfig', the type of 'append_info' element must be str or dict,"
+                raise TypeError("For 'CheckpointConfig', the type of 'append_info' element must be str or dict,"
                                 f"but got {str(type(element))}.")
             if isinstance(element, str) and element not in _info_list:
-                raise ValueError(f"For 'CheckpointConfig', the value of element in the argument 'append_info' "
+                raise ValueError("For 'CheckpointConfig', the value of element in the argument 'append_info' "
                                  f"must be in {_info_list}, "
                                  f"but got {element}.")
             if isinstance(element, dict):
                 dict_num += 1
                 if dict_num > 1:
-                    raise TypeError(f"For 'CheckpointConfig', the element of 'append_info' must has only one dict, "
+                    raise TypeError("For 'CheckpointConfig', the element of 'append_info' must has only one dict, "
                                     "but got {dict_num}")
                 for key, value in element.items():
                     if isinstance(key, str) and isinstance(value,
                                                            (int, float, bool, str, Parameter, Tensor, Generator)):
                         handle_append_info[key] = value
                     else:
-                        raise TypeError(f"For 'CheckpointConfig', the key type of the dict 'append_info' "
-                                        f"must be string, the value type must be int or float or bool, "
+                        raise TypeError("For 'CheckpointConfig', the key type of the dict 'append_info' "
+                                        "must be string, the value type must be int or float or bool, "
                                         f"but got key type {type(key)}, value type {type(value)}")
 
         return handle_append_info
@@ -484,7 +484,7 @@ class ModelCheckpoint(Callback):
     """
 
     def __init__(self, prefix='CKP', directory=None, config=None):
-        super(ModelCheckpoint, self).__init__()
+        super().__init__()
         self._latest_ckpt_file_name = ""
         self._init_time = time.time()
         self._last_time = time.time()
@@ -673,8 +673,8 @@ class ModelCheckpoint(Callback):
                                 global_step_num=cb_params.cur_step_num)
             elif self._config.remove_redundancy:
                 if get_group_size() == 1:
-                    raise TypeError(f"The deduplication feature for saving checkpoint can only be used "
-                                    f"in parallel scenarios, but got 'stand_alone'.")
+                    raise TypeError("The deduplication feature for saving checkpoint can only be used "
+                                    "in parallel scenarios, but got 'stand_alone'.")
                 param_layout = network.parameter_layout_dict
                 rank_id = get_rank()
                 if param_layout:
@@ -684,7 +684,7 @@ class ModelCheckpoint(Callback):
                     param_layout_set = set(param_layout.keys())
                     if save_param_names == param_layout.keys():
                         logger.warning(
-                            f"For remove_redundancy save checkpoint, the saved parameters are non-redundant.")
+                            "For remove_redundancy save checkpoint, the saved parameters are non-redundant.")
 
                     def choice_func(x):
                         return x not in param_layout_set or (save_param_names is not None and x in save_param_names)

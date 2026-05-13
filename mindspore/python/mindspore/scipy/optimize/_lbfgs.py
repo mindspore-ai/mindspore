@@ -24,7 +24,7 @@ class SearchVector(Cell):
     """Calculate the search vector"""
     def __init__(self, shape, dtype):
         """Initialize SearchVector."""
-        super(SearchVector, self).__init__()
+        super().__init__()
         # create buffer to save history data to compute new search vector
         zeros = ops.Zeros()
         self._tensor_s = Parameter(zeros(shape, dtype))
@@ -81,7 +81,7 @@ class AlgorithmLbfgs(GradientOptimizationAlgorithm):
 
     def __init__(self, func, jac, history_size):
         """Initialize AlgorithmLbfgs."""
-        super(AlgorithmLbfgs, self).__init__(func, jac)
+        super().__init__(func, jac)
         self.history_size = history_size
         self.search_vector = None
 

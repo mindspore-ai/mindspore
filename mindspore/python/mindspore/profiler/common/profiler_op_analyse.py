@@ -68,7 +68,7 @@ class OpAnalyser:
             framework_file_path = os.path.join(self._output_path, filename)
             PathManager.check_input_file_path(framework_file_path)
             PathManager.check_directory_path_readable(framework_file_path)
-            with open(framework_file_path, 'r') as f_obj:
+            with open(framework_file_path, 'r', encoding='utf-8') as f_obj:
                 framework_info = f_obj.readlines()
             for line_info in framework_info:
                 line_info = line_info.strip(' ').strip('\n').split(';')
@@ -88,7 +88,7 @@ class OpAnalyser:
             op_detail_file_path = os.path.join(self._output_path, filename)
             PathManager.check_input_file_path(op_detail_file_path)
             PathManager.check_directory_path_readable(op_detail_file_path)
-            with open(op_detail_file_path, 'r') as f_obj:
+            with open(op_detail_file_path, 'r', encoding='utf-8') as f_obj:
                 op_detail_info = f_obj.readlines()
             for line_info in op_detail_info[1:]:
                 line_info = line_info.strip(' ').strip('\n').split(',')
@@ -103,7 +103,7 @@ class OpAnalyser:
             gpu_op_type_file_path = os.path.join(self._output_path, self.gpu_op_type_info_dir[0])
             PathManager.check_input_file_path(gpu_op_type_file_path)
             PathManager.check_directory_path_readable(gpu_op_type_file_path)
-            with open(gpu_op_type_file_path, 'r') as fp:
+            with open(gpu_op_type_file_path, 'r', encoding='utf-8') as fp:
                 op_type_info = fp.readlines()
                 for line_info in op_type_info[1:]:
                     line_info = line_info.strip(' ').strip('\n').split(',')
@@ -116,14 +116,14 @@ class OpAnalyser:
             if file_name.startswith('gpu_op_type') and file_name.endswith(f'{self._dev_id}.csv'):
                 self.gpu_op_type_info_dir.append(file_name)
         if not self.gpu_op_type_info_dir and self.activity_info_dir:
-            raise RuntimeError(f'The output file <%s> is not found.' % self.gpu_op_type_info_dir)
+            raise RuntimeError('The output file <%s> is not found.' % self.gpu_op_type_info_dir)
         self.get_execute_times()
         for filename in self.activity_info_dir:
             op_side = filename.split('_')[0]
             activity_file_path = os.path.join(self._output_path, filename)
             PathManager.check_input_file_path(activity_file_path)
             PathManager.check_directory_path_readable(activity_file_path)
-            with open(activity_file_path, 'r') as file:
+            with open(activity_file_path, 'r', encoding='utf-8') as file:
                 activity_info = file.readlines()
             for line_info in activity_info[1:]:
                 line_info = line_info.strip(' ').strip('\n').replace(', ', ';').split(',')
@@ -201,13 +201,13 @@ class OpAnalyser:
                 operation_info['op_total_time(us)'] = op_shape_dict.get(input_shape)[1]
                 operation_info['op_avg_time(us)'] = op_shape_dict.get(input_shape)[2]
             unique_op_info.append(operation_info)
-            operation_info = dict()
+            operation_info = {}
 
         if unique_op_info:
             self.operation_info[op_name] = unique_op_info
         else:
             raise RuntimeError(f'The information of <{op_name}> is not found. Please verify that the operator name is'
-                               f' correct or the operator is used in the network.')
+                               ' correct or the operator is used in the network.')
 
     def get_device_target_filename(self):
         """Get device target filename."""
@@ -217,19 +217,19 @@ class OpAnalyser:
         cpu_op_detail_file = f'cpu_op_detail_info_{self._dev_id}.csv'
         all_file = os.listdir(self._output_path)
         if not all_file:
-            raise RuntimeError(f'No profiler file is found in the path <%s>. '
-                               f'Check whether the profiler path is correct.' % self._output_path)
+            raise RuntimeError('No profiler file is found in the path <%s>. '
+                               'Check whether the profiler path is correct.' % self._output_path)
         if gpu_activity_file in all_file and gpu_framework_file not in all_file:
-            raise RuntimeError(f'The output file <%s> is not found.' % gpu_framework_file)
+            raise RuntimeError('The output file <%s> is not found.' % gpu_framework_file)
         if cpu_op_detail_file in all_file and cpu_framework_file not in all_file:
-            raise RuntimeError(f'The output file <%s> is not found.' % cpu_framework_file)
+            raise RuntimeError('The output file <%s> is not found.' % cpu_framework_file)
         if gpu_framework_file in all_file and gpu_activity_file not in all_file:
-            raise RuntimeError(f'The output file <%s> is not found.' % gpu_activity_file)
+            raise RuntimeError('The output file <%s> is not found.' % gpu_activity_file)
         if cpu_framework_file in all_file and cpu_op_detail_file not in all_file:
-            raise RuntimeError(f'The output file <%s> is not found.' % cpu_op_detail_file)
+            raise RuntimeError('The output file <%s> is not found.' % cpu_op_detail_file)
         if gpu_activity_file not in all_file and cpu_op_detail_file not in all_file:
             raise RuntimeError(f'The profiling data of this card which device_id is equal to {self._dev_id} does not'
-                               f' exist. Check whether device_id is correct.')
+                               ' exist. Check whether device_id is correct.')
         for file_name in all_file:
             if file_name.endswith(f'activity_data_{self._dev_id}.csv'):
                 self.activity_info_dir.append(file_name)

@@ -959,7 +959,7 @@ class UniqueNet(Cell):
     """The operation is wrapped inside a model. """
 
     def __init__(self):
-        super(UniqueNet, self).__init__()
+        super().__init__()
         self.unique = ops.Unique()
 
     def construct(self, x):
@@ -1148,7 +1148,7 @@ def _get_moved_shape(shape, perm):
     Helper function for moveaxis, returns the permuted shape after
     applying perm.
     """
-    return tuple([shape[i] for i in perm])
+    return tuple(shape[i] for i in perm)
 
 
 def moveaxis(a, source, destination):
@@ -1471,7 +1471,7 @@ def convert_neg_indices(indices, ndim):
     """converts negative values in tuple/list indices"""
     def canonicalizer(ax):
         return ax + ndim if ax < 0 else ax
-    indices = tuple([canonicalizer(axis) for axis in indices])
+    indices = tuple(canonicalizer(axis) for axis in indices)
     return indices
 
 
@@ -1632,17 +1632,17 @@ def dsplit(x, indices_or_sections):
 
 @_primexpr
 def _get_flip_start(ndim, shape, axes):
-    return tuple([shape[i] - 1 if i in axes else 0 for i in range(ndim)])
+    return tuple(shape[i] - 1 if i in axes else 0 for i in range(ndim))
 
 
 @_primexpr
 def _get_flip_end(ndim, shape, axes):
-    return tuple([-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim)])
+    return tuple(-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim))
 
 
 @_primexpr
 def _get_flip_strides(ndim, axes):
-    return tuple([-1 if i in axes else 1 for i in range(ndim)])
+    return tuple(-1 if i in axes else 1 for i in range(ndim))
 
 
 def flip(m, axis=None):

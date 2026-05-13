@@ -83,7 +83,7 @@ class _MultiCompatibleRotatingFileHandler(RotatingFileHandler):
         and setting permission of Log file"""
 
         # Attain an exclusive lock with blocking mode by `fcntl` module.
-        with open(self.baseFilename, 'a') as file_pointer:
+        with open(self.baseFilename, 'a', encoding='utf-8') as file_pointer:
             if platform.system() != "Windows":
                 fcntl.lockf(file_pointer.fileno(), fcntl.LOCK_EX)
             os.chmod(self.baseFilename, stat.S_IREAD)
@@ -103,7 +103,7 @@ class _DataFormatter(logging.Formatter):
             sub_module (str): The submodule name.
             fmt (str): Specified format pattern. Default: ``None``.
         """
-        super(_DataFormatter, self).__init__(fmt=fmt, **kwargs)
+        super().__init__(fmt=fmt, **kwargs)
         self.sub_module = sub_module.upper()
 
     def formatTime(self, record, datefmt=None):
@@ -264,7 +264,6 @@ VLOG_VALID, VLOG_INDEX = parse_vlog_level(os.environ.get("VLOG_v"))
 
 def vlog_print(level, module, file, line, message):
     """Read environment variable VLOG_v and print to log"""
-    global VLOG_VALID, VLOG_INDEX
     target_level = int(level)
     if VLOG_VALID and VLOG_INDEX[0] <= target_level <= VLOG_INDEX[1]:
         now = datetime.now()
@@ -352,8 +351,8 @@ def _make_directory(path: str):
             mode = permissions << 6
             os.makedirs(path, mode=mode, exist_ok=True)
             real_path = path
-        except PermissionError:
-            raise TypeError("No write permission on the directory `{path}`.")
+        except PermissionError as exc:
+            raise TypeError("No write permission on the directory `{path}`.") from exc
     return real_path
 
 
@@ -587,8 +586,7 @@ def _setup_logger(kwargs):
 
     global GLOBAL_LOGGER
 
-    _setup_logger_lock.acquire()
-    try:
+    with _setup_logger_lock:
         if GLOBAL_LOGGER:
             return GLOBAL_LOGGER
 
@@ -631,7 +629,7 @@ def _setup_logger(kwargs):
             logfile_handler.formatter = _DataFormatter(sub_module, formatter)
             logger.addHandler(logfile_handler)
 
-            with open(file_name, 'a'):
+            with open(file_name, 'a', encoding='utf-8'):
                 # Modify the permission of Log file
                 os.chmod(file_name, stat.S_IREAD | stat.S_IWRITE)
 
@@ -643,9 +641,6 @@ def _setup_logger(kwargs):
             logger.addHandler(console_handler)
 
         GLOBAL_LOGGER = logger
-
-    finally:
-        _setup_logger_lock.release()
     return GLOBAL_LOGGER
 
 
@@ -658,7 +653,7 @@ class _LogActionOnce:
         logger (logging): The logger object.
 
     """
-    is_logged = dict()
+    is_logged = {}
 
     def __init__(self, logger, key, no_warning=False):
         self.logger = logger

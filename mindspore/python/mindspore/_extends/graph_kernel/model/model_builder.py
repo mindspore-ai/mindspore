@@ -130,7 +130,7 @@ class CompositeGraph:
         """Load Graph from json"""
         def _attr_of(op):
             if not op['attr']:
-                return dict()
+                return {}
             attr = {}
             for a in op['attr']:
                 if a['name'] == 'axis' and op['name'] in ('ReduceSum', 'ReduceMax', 'ReduceMin', 'Argmax', 'Argmin'):

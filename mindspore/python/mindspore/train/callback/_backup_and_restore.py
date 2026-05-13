@@ -63,7 +63,7 @@ class BackupAndRestore(Callback):
         >>> model.train(10, dataset, callbacks=backup_ckpt)
     """
     def __init__(self, backup_dir, save_freq="epoch", delete_checkpoint=True):
-        super(BackupAndRestore, self).__init__()
+        super().__init__()
         ckpt_dir = _make_directory(backup_dir)
         self.backup_file = os.path.join(ckpt_dir, 'backup.ckpt')
         if save_freq != "epoch":

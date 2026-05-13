@@ -157,7 +157,7 @@ class AdaSum(Cell):
         - **adasum_parameters** (tuple(Tensor)) - Tuple of parameters after adasum process.
     """
     def __init__(self, rank, device_number, group_number, parameter_tuple):
-        super(AdaSum, self).__init__()
+        super().__init__()
         self.rank = rank
         self.device_number = device_number
         self.group_number = group_number

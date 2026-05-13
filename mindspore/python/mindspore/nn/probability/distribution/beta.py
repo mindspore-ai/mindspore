@@ -169,7 +169,7 @@ class Beta(Distribution):
         if isinstance(concentration1, float):
             raise TypeError("Input concentration1 can't be scalar")
 
-        super(Beta, self).__init__(seed, dtype, name, param)
+        super().__init__(seed, dtype, name, param)
 
         self._concentration1 = self._add_parameter(
             concentration1, 'concentration1')

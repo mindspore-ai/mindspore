@@ -63,7 +63,7 @@ class J1J2ReLU(nn.Cell):
 
     def __init__(self):
         """Initialize J1J2ReLU."""
-        super(J1J2ReLU, self).__init__()
+        super().__init__()
 
     def construct(self, u: Tensor) -> Tensor:
         u = u / 2

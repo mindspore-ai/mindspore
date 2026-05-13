@@ -143,10 +143,13 @@ class Adam(Optimizer):
         if weight_decay < 0.0:
             raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
 
-        defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, amsgrad=amsgrad,
-                        maximize=maximize)
-        super(Adam, self).__init__(params, defaults)
+        defaults = {"lr": lr,
+                "betas": betas,
+                "eps": eps,
+                "weight_decay": weight_decay,
+                "amsgrad": amsgrad,
+                "maximize": maximize}
+        super().__init__(params, defaults)
 
         self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
         self.exp_avg_sq = self.parameters.clone(prefix="exp_avg_sq", init='zeros')
@@ -166,7 +169,7 @@ class Adam(Optimizer):
         beta1_power = self.op_pow(beta1, self.state_step)
         beta2_power = self.op_pow(beta2, self.state_step)
         params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = tuple(grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id])
         grads = self._decay_weight(weight_decay, params, grads)
         self.hyper_map(ops.partial(_adam_opt, beta1_power, beta2_power, beta1, beta2, eps, lr),
                        grads, params,

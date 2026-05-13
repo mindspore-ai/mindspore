@@ -66,7 +66,7 @@ class LogNormal(msd.TransformedDistribution):
         >>> from mindspore import Tensor
         >>> class Prob(nn.Cell):
         ...     def __init__(self):
-        ...         super(Prob, self).__init__()
+        ...         super().__init__()
         ...         self.ln = msd.LogNormal(np.array([0.3]), np.array([[0.2], [0.4]]), dtype=mindspore.float32)
         ...     def construct(self, x_):
         ...         return self.ln.prob(x_)
@@ -85,7 +85,7 @@ class LogNormal(msd.TransformedDistribution):
         """
         Constructor of LogNormal distribution.
         """
-        super(LogNormal, self).__init__(distribution=msd.Normal(loc, scale, dtype=dtype),
+        super().__init__(distribution=msd.Normal(loc, scale, dtype=dtype),
                                         bijector=msb.Exp(),
                                         seed=seed, name=name)
 

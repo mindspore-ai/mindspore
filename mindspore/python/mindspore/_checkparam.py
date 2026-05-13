@@ -339,8 +339,7 @@ def check_positive_int_sequence(sequence, arg_name=None, prim_name=None):
     - sequence = check_positive_int_sequence(sequence)
     - sequence = check_positive_int_sequence(sequence, "dims")
     """
-    for idx in range(len(sequence)):
-        element = sequence[idx]
+    for idx, element in enumerate(sequence):
         arg_idx = f"{arg_name if arg_name else 'arg_name'}[{idx}]"
         _check_number(element, 0, GT, int, arg_idx, prim_name)
     return sequence
@@ -387,8 +386,7 @@ def check_non_negative_int_sequence(sequence, arg_name=None, prim_name=None):
     - sequence = check_non_negative_int_sequence(sequence)
     - sequence = check_non_negative_int_sequence(sequence, "dims")
     """
-    for idx in range(len(sequence)):
-        element = sequence[idx]
+    for idx, element in enumerate(sequence):
         arg_idx = f"{arg_name if arg_name else 'arg_name'}[{idx}]"
         _check_number(element, 0, GE, int, arg_idx, prim_name)
     return sequence
@@ -436,8 +434,7 @@ def check_positive_float_sequence(sequence, arg_name=None, prim_name=None):
     - sequence = check_positive_float_sequence(sequence)
     - sequence = check_positive_float_sequence(sequence, "dims")
     """
-    for idx in range(len(sequence)):
-        element = sequence[idx]
+    for idx, element in enumerate(sequence):
         arg_idx = f"{arg_name if arg_name else 'arg_name'}[{idx}]"
         _check_number(element, 0, GT, float, arg_idx, prim_name)
     return sequence
@@ -773,7 +770,7 @@ def check_reduce_shape(ori_shape, shape, axis, prim_name, arg_name1, arg_name2):
     """Checks whether shape is ori_shape reduced on axis"""
     axis_origin = axis
     axis = axis if isinstance(axis, Iterable) else (axis,)
-    exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
+    exp_shape = [v for i, v in enumerate(ori_shape) if i not in axis]
     if list(shape) != exp_shape:
         raise ValueError(f"For '{prim_name}', " \
                          f"the shape of parameter '{arg_name1}' reduce on 'axis': {axis_origin} must " \

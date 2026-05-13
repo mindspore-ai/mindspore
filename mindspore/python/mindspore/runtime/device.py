@@ -22,6 +22,6 @@ import mindspore as ms
 def _is_supported():
     device_target = ms.context.get_context("device_target")
     if device_target == 'CPU':
-        logger.error(f"CPU device is not supported. Please use correct device")
+        logger.error("CPU device is not supported. Please use correct device")
         return False
     return True
