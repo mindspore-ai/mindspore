@@ -14,10 +14,10 @@ mindspore.numpy.isclose
         - **b** (Union[Tensor, list, tuple]) - 要比较的第二个输入Tensor。
         - **rtol** (numbers.Number，可选) - 相对容差参数（见说明）。默认值： ``1e-05`` 。
         - **atol** (numbers.Number，可选) - 绝对容差参数（见说明）。默认值： ``1e-08`` 。
-        - **equal_nan** (bool，可选) - 是否将 ``NaN`` 视为相等。如果为True， ``a`` 中的 ``NaN`` 在输出Tensor中将被视为与 ``b`` 中的 ``NaN`` 相等。默认值： ``False`` 。
+        - **equal_nan** (bool，可选) - 是否将 ``NaN`` 视为相等。如果为True， `a` 中的 ``NaN`` 在输出Tensor中将被视为与 `b` 中的 ``NaN`` 相等。默认值： ``False`` 。
 
     返回：
-        在给定容差范围内，表示 ``a`` 和 ``b`` 是否相等的 ``bool`` 类型Tensor。
+        在给定容差范围内，表示 `a` 和 `b` 是否相等的 ``bool`` 类型Tensor。
 
     异常：
         - **TypeError** - 如果输入参数非上述给定的类型。

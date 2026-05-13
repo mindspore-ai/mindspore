@@ -14,5 +14,5 @@ mindspore.numpy.apply_over_axes
         Tensor，维度与 ``a`` 的相同，但shape可以不同。这取决于 ``func`` 函数是否改变输出的shape。
 
     异常：
-        - **TypeError** - 如果输入的 ``a`` 不是类似数组的对象，或者 ``axes`` 参数的类型不是int型或int型的序列。
+        - **TypeError** - 如果 ``a`` 不是类似数组的对象，或者 ``axes`` 参数的类型不是int型或int型的序列。
         - **ValueError** - 如果 ``axes`` 中的轴重复或超出索引范围。

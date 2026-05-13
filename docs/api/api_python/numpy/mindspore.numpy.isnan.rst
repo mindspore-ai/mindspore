@@ -13,4 +13,4 @@ mindspore.numpy.isnan
         - **dtype** (mindspore.dtype, 可选) - 默认值： ``None`` 。覆盖输出Tensor的dtype。
 
     返回：
-        Tensor或标量，当 ``x`` 为NaN时为True，否则为False。如果 ``x`` 是标量，则返回标量。
+        Tensor或标量，当 `x` 为NaN时为True，否则为False。如果 `x` 是标量，则返回标量。

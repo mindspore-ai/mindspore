@@ -15,4 +15,4 @@ mindspore.numpy.append
 
     异常：
         - **TypeError** - 如果输入参数非上述给定的类型。
-        - **ValueError** - 如果输入的 ``axis`` 超过了 ``arr.ndim`` 。
+        - **ValueError** - 如果 ``axis`` 超过了 ``arr.ndim`` 。

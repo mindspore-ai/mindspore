@@ -12,5 +12,5 @@ mindspore.numpy.hstack
         堆叠后的Tensor，由给定的Tensor堆叠而成。
 
     异常：
-        - **TypeError** - 如果 ``tup`` 不是Tensor、list或tuple。
-        - **ValueError** - 如果 ``tup`` 为空。
+        - **TypeError** - 如果 `tup` 不是Tensor、list或tuple。
+        - **ValueError** - 如果 `tup` 为空。

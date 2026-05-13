@@ -11,11 +11,11 @@ mindspore.numpy.copysign
 
     参数：
         - **x1** (Union[int, float, list, tuple, Tensor]) - 需要更改符号的值。
-        - **x2** (Union[int, float, list, tuple, Tensor]) - x1的符号将更改为x2的符号。 如果 ``x1.shape != x2.shape`` ，它们必须能广播到一个共同的shape(即输出的shape)。
-        - **dtype** (mindspore.dtype, 可选) - 默认值： ``None`` 。 覆盖输出Tensor的dtype。
+        - **x2** (Union[int, float, list, tuple, Tensor]) - x1的符号将更改为x2的符号。如果 ``x1.shape != x2.shape`` ，它们必须能广播到一个共同的shape(即输出的shape)。
+        - **dtype** (mindspore.dtype, 可选) - 默认值： ``None`` 。覆盖输出Tensor的dtype。
 
     返回：
-        Tensor或标量。 更改为与 `x2` 相同符号的 `x1` 的值。 如果 `x1` 与 `x2` 都是标量，则结果也是标量。
+        Tensor或标量。更改为与 `x2` 相同符号的 `x1` 的值。如果 `x1` 与 `x2` 都是标量，则结果也是标量。
 
     异常：
         - **TypeError** - 如果输入的dtype不在规定的类型内或输入不能被转换为Tensor。
