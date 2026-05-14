@@ -16,13 +16,13 @@ mindspore.nn.Adadelta
             w_{t} = w_{t-1} - \gamma * update_{t}
         \end{array}
 
-    其中 :math:`g` 代表 `grads` ， :math:`\gamma` 代表 `learning_rate` ， :math:`\rho` 代表 `rho` ，
-    :math:`\epsilon` 代表 `epsilon` ， :math:`w` 代表 `params` ，
+    其中 :math:`g` 表示 `grads` ， :math:`\gamma` 表示 `learning_rate` ， :math:`\rho` 表示 `rho` ，
+    :math:`\epsilon` 表示 `epsilon` ， :math:`w` 表示 `params` ，
     :math:`accum` 表示累加器， :math:`accum\_update` 表示累加器更新，
     :math:`t` 代表当前step。
 
     .. warning::
-        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 和 `epsilon` 将分别改为 `lr` 和 `eps`。
+        2.9.0（不含）之后版本非兼容性变更：`learning_rate` 和 `epsilon` 将分别重命名为 `lr` 和 `eps`。
 
     .. note::
         .. include:: mindspore.nn.optim_note_weight_decay.rst
@@ -62,6 +62,6 @@ mindspore.nn.Adadelta
         - **TypeError** - `params` 的元素既不是 `Parameter` 也不是字典。
         - **TypeError** - `rho` 、 `epsilon` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float、int或cell。
-        - **ValueError** - `rho` 不在范围 [0.0, 1.0] 内。
+        - **ValueError** - `rho` 不在 [0.0, 1.0] 范围内。
         - **ValueError** - `loss_scale` 小于或等于0。
         - **ValueError** - `learning_rate` 、 `epsilon` 或 `weight_decay` 小于0。

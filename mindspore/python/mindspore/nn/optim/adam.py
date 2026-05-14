@@ -563,7 +563,7 @@ class Adam(Optimizer):
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
               convolution layer.
 
-            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+            - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
               order will be followed in optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
@@ -594,15 +594,20 @@ class Adam(Optimizer):
         eps (float, optional): Term added to the denominator to improve numerical stability. Should be greater than 0.
                      Default: ``1e-8`` .
         use_locking (bool, optional): Whether to enable a lock to protect the updating process of variable tensors.
-            If ``true`` , updates of the `w`, `m`, and `v` tensors will be protected by a lock.
-            If ``false`` , the result is unpredictable. Default: ``False`` .
+
+            - If ``True`` , updates of the `w`, `m`, and `v` tensors will be protected by a lock.
+            - If ``False`` , the result is unpredictable. Default: ``False`` .
+
         use_nesterov (bool, optional): Whether to use Nesterov Accelerated Gradient (NAG) algorithm
             to update the gradients.
-            If ``true`` , update the gradients using NAG.
-            If ``false`` , update the gradients without using NAG. Default: ``False`` .
+
+            - If ``True`` , update the gradients using NAG.
+            - If ``False`` , update the gradients without using NAG. Default: ``False`` .
+
         use_amsgrad (bool, optional): Whether to use Amsgrad algorithm to update the gradients.
-            If ``true`` , update the gradients using Amsgrad.
-            If ``false`` , update the gradients without using Amsgrad. Default: ``False`` .
+
+            - If ``True`` , update the gradients using Amsgrad.
+            - If ``False`` , update the gradients without using Amsgrad. Default: ``False`` .
 
         weight_decay (Union[float, int, Cell], optional): Weight decay (L2 penalty). Default: ``0.0`` .
 
@@ -623,13 +628,15 @@ class Adam(Optimizer):
         kwargs:
 
             - use_lazy (bool): Whether to use Lazy Adam algorithm. Default: ``False`` .
-              If ``true`` , apply lazy adam algorithm.
-              If ``false`` , apply normal adam algorithm.
+
+              - If ``True`` , apply lazy adam algorithm.
+              - If ``False`` , apply normal adam algorithm.
 
             - use_offload (bool): Whether to offload adam optimizer to host CPU and keep parameters being updated on
               the device in order to minimize the memory cost. Default: ``False`` .
-              If ``true`` , apply offload adam.
-              If ``false`` , apply normal adam.
+
+              - If ``True`` , apply offload adam.
+              - If ``False`` , apply normal adam.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -671,9 +678,9 @@ class Adam(Optimizer):
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0, use_lazy=False, use_offload=False)
-        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
+        >>> # The parameters in conv_params will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.
-        >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad
+        >>> # The parameters in no_conv_params will use learning rate of 0.01 and default weight decay of 0.0 and grad
         >>> # centralization of False.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
@@ -855,7 +862,7 @@ class AdamWeightDecay(Optimizer):
             &\hline \\[-1.ex]
         \end{array}
 
-    :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
+    :math:`m` represents the first moment vector `moment1`, :math:`v` represents the second moment vector `moment2`,
     :math:`g` represents `gradients`, :math:`\gamma` represents `learning_rate`,
     :math:`\beta_1, \beta_2` represent `beta1` and `beta2`, :math:`t` represents the current step,
     :math:`w` represents `params`, :math:`\lambda` represents `weight_decay`.
@@ -864,14 +871,18 @@ class AdamWeightDecay(Optimizer):
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
-        and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
-        As this optimizer has no argument of `loss_scale`, so `loss_scale` needs to be processed by other means.
+        There is usually no connection between an optimizer and mixed precision.
+          But when `FixedLossScaleManager` is used
+        and `drop_overflow_update` in `FixedLossScaleManager` is set to ``False``,
+          the optimizer needs to set the 'loss_scale'.
+        As this optimizer has no argument of `loss_scale`, `loss_scale` needs to be processed by other means.
 
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
-        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
-        parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
-        applied.
+        - When parameters are not grouped,
+          the `weight_decay` in optimizer will be applied on the network parameters without
+          'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight.
+        - When parameters are grouped, each group can set `weight_decay`.
+          If not, the `weight_decay` in optimizer will be
+          applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -890,7 +901,7 @@ class AdamWeightDecay(Optimizer):
               with global step as input, and during training, the optimizer calls the instance of WeightDecaySchedule
               to get the weight decay value of current step.
 
-            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+            - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
               order will be followed in optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
@@ -940,7 +951,7 @@ class AdamWeightDecay(Optimizer):
         TypeError: If `beta1`, `beta2` or `eps` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
         ValueError: If `eps` is less than or equal to 0.
-        ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
+        ValueError: If `beta1` or `beta2` is not in the range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
@@ -963,9 +974,9 @@ class AdamWeightDecay(Optimizer):
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.AdamWeightDecay(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01.
-        >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0.
-        >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
+        >>> # The parameters in `conv_params` will use default learning rate of 0.1 and weight decay of 0.01.
+        >>> # The parameters in `no_conv_params` will use learning rate of 0.01 and default weight decay of 0.0.
+        >>> # The final order of parameters in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)

@@ -3,8 +3,8 @@ mindspore.mint.unbind
 
 .. py:function:: mindspore.mint.unbind(input, dim=0)
 
-    根据指定轴对Tensor进行分解。给定一个shape为 :math:`(n_1, n_2, ..., n_R)` 的Tensor，在指定 `dim` 上对其分解，
-    结果返回多个shape为 :math:`(n_1, n_2, ..., n_{dim}, n_{dim+2}, ..., n_R)` 的Tensor。
+    沿指定轴分解Tensor。给定一个shape为 :math:`(n_1, n_2, ..., n_R)` 的Tensor，沿指定的 `dim` 对其分解，
+    返回多个shape为 :math:`(n_1, n_2, ..., n_{dim}, n_{dim+2}, ..., n_R)` 的Tensor。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

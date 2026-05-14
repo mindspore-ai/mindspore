@@ -1173,9 +1173,9 @@ def ones_like_ext(input, *, dtype=None):
 
 def zeros_like_ext(input, *, dtype=None):
     r"""
-    Creates a tensor filled with 0, with the same size as input. Its data type is determined by the given dtype.
+    Creates a tensor filled with zeros, with the same size as `input`. Its data type is determined by the given dtype.
 
-    If `dtype = None`, the tensor will have the same dtype as input `input`.
+    If `dtype = None`, the tensor will have the same dtype as `input`.
 
     Args:
         input (Tensor): Tensor of any dimension.
@@ -1185,10 +1185,10 @@ def zeros_like_ext(input, *, dtype=None):
             the dtype of the input tensor will be used. Default: ``None`` .
 
     Returns:
-        Tensor, filled with 0.
+        Tensor, filled with zeros.
 
     Raises:
-        TypeError: If dtype is not a MindSpore dtype.
+        TypeError: If `dtype` is not a MindSpore dtype.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1939,7 +1939,7 @@ def unbind(input, dim=0):
 
 def unbind_ext(input, dim=0):
     r"""
-    Unbind a tensor dimension in specified axis.
+    Unbind a tensor dimension along the specified axis.
 
     Given a tensor of shape :math:`(n_1, n_2, ..., n_R)` and unbinding it in the specified `dim`,
     multiple tensors with shape :math:`(n_1, n_2, ..., n_{dim}, n_{dim+2}, ..., n_R)` are returned.
@@ -1953,7 +1953,7 @@ def unbind_ext(input, dim=0):
         dim (int, optional): Dimension along which to unbind. The range is [-R, R). Default: ``0`` .
 
     Returns:
-        A tuple of tensors, the shape of each objects is the same.
+        A tuple of tensors. Each object has the same shape.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -4707,7 +4707,7 @@ def split_view(tensor, split_size_or_sections, dim=0):
     Args:
         tensor (Tensor): A Tensor to be divided.
         split_size_or_sections (Union[int, tuple(int), list(int)]):
-            If `split_size_or_sections` is an int type, `tensor` will be split into equally sized chunks,
+            If `split_size_or_sections` is an int, `tensor` will be split into equally sized chunks,
             each chunk with size `split_size_or_sections`. Last chunk will be smaller than `split_size_or_sections`
             if `tensor.shape[dim]` is not divisible by `split_size_or_sections`.
             If `split_size_or_sections` is a list type, then `tensor` will be split into len(split_size_or_sections)
@@ -4720,10 +4720,10 @@ def split_view(tensor, split_size_or_sections, dim=0):
     Raises:
         TypeError: If argument `tensor` is not Tensor.
         TypeError: If argument `dim` is not int.
-        ValueError: If argument `dim` is out of range of [-tensor.ndim, tensor.ndim).
+        ValueError: If argument `dim` is out of range [-tensor.ndim, tensor.ndim).
         TypeError: If each element in `split_size_or_sections` is not integer.
         TypeError: If argument `split_size_or_sections` is not int, tuple(int) or list(int).
-        ValueError: The sum of `split_size_or_sections` is not equal to tensor.shape[dim].
+        ValueError: If the sum of `split_size_or_sections` is not equal to tensor.shape[dim].
 
     Supported Platforms:
         ``Ascend``
@@ -4809,11 +4809,11 @@ def tril(input, diagonal=0):  # pylint: disable=redefined-outer-name
 
 def tril_ext(input, diagonal=0):
     """
-    Zero the input tensor above the diagonal specified.
+    Zero the input tensor above the specified diagonal.
 
     Args:
         input (Tensor): The input tensor. The rank must be at least 2.
-        diagonal (int, optional): The diagonal specified of 2-D tensor. Default ``0`` represents the main diagonal.
+        diagonal (int, optional): The specified diagonal of the 2-D tensor. Default ``0`` represents the main diagonal.
 
     Returns:
         Tensor

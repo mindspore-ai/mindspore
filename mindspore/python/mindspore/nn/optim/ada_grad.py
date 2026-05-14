@@ -75,9 +75,9 @@ class Adagrad(Optimizer):
             &\hline \\
         \end{aligned}
 
-    :math:`state\_sum` stands for the accumulated squared sum of the gradients :math:`accum`.
-    :math:`g` stands for `grads`, :math:`\lambda` stands for `weight_decay`.
-    :math:`\gamma` stands for `learning_rate`, :math:`w` stands for `params`.
+    :math:`state\_sum` represents the accumulated squared sum of the gradients :math:`accum`.
+    :math:`g` represents `grads`, :math:`\lambda` stands for `weight_decay`.
+    :math:`\gamma` represents `learning_rate`, :math:`w` represents `params`.
     :math:`t` represents current `step`.
 
     .. warning::
@@ -163,7 +163,7 @@ class Adagrad(Optimizer):
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If an element of `params` is neither Parameter nor dict.
         TypeError: If `accum` or `loss_scale` is not a float.
         TypeError: If `update_slots` is not a bool.
         TypeError: If `weight_decay` is neither float nor int.

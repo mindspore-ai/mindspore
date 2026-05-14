@@ -112,14 +112,14 @@ def mutable(input_data, dynamic_len=False):
     """
     Make a constant value mutable.
 
-    Currently, all the inputs of Cell except Tensor such as scalar, tuple, list and dict, are regarded as constant
+    Currently, all inputs of Cell except Tensor such as scalar, tuple, list and dict, are regarded as constant
     values. The constant values are non-differentiable and used to do constant folding in the optimization process.
 
     Besides, currently when the network input is tuple[Tensor], list[Tensor] or dict[Tensor], even without changing
     the shape and dtype of the Tensors, the network will be re-compiled when calling this network repeatedly because
-    the these inputs are regarded as constant values.
+    these inputs are regarded as constant values.
 
-    To solve the above problems, we provide api `mutable` to make the constant inputs of Cell 'mutable'. A 'mutable'
+    To solve the above problems, we provide an api `mutable` to make the constant inputs of Cell 'mutable'. A 'mutable'
     input means that it is changed to be a variable input just like Tensor and the most important thing is that it
     will be differentiable.
 

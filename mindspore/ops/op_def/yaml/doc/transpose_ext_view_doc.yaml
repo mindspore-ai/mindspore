@@ -3,7 +3,7 @@ transpose_ext_view:
         Interchange two axes of a tensor.
 
         Args:
-            input(Tensor): Input tensor.
+            input (Tensor): Input tensor.
             dim0 (int): First axis.
             dim1 (int): Second axis.
 
@@ -11,8 +11,8 @@ transpose_ext_view:
             Transposed tensor, has the same data type as `input`.
 
         Raises:
-            TypeError: If argument `input` is not Tensor.
-            TypeError: If `dim0` or `dim1` is not integer.
+            TypeError: If argument `input` is not a Tensor.
+            TypeError: If `dim0` or `dim1` is not an integer.
             ValueError: If `dim0` or `dim1` is not in the range of :math:`[-ndim, ndim-1]`.
 
         Supported Platforms:

@@ -3,7 +3,7 @@ mindspore.mint.special.sinc
 
 .. py:function:: mindspore.mint.special.sinc(input)
 
-    计算输入的归一化正弦值。
+    计算输入的正弦归一化值。
 
     .. math::
         out_i = \begin{cases} \frac{\sin(\pi input_i)}{\pi input_i} & input_i\neq 0\\
