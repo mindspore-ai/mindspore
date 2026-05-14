@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for ops.svd operation."""
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
@@ -156,7 +157,7 @@ def svd_self_testcase(shape, dtype, full_matrices):
     if len(shape) > 2:
         matmul_op = ops.BatchMatMul()
     transpose_op = ops.Transpose()
-    perm = [i for i in range(len(shape))]
+    perm = list(range(len(shape)))
     perm[-2], perm[-1] = perm[-1], perm[-2]
 
     if not full_matrices:
@@ -188,6 +189,27 @@ def test_ops_svd_selfcases(mode, dtype):
     svd_self_testcase((5, 3, 3), dtype, True)
     svd_self_testcase((5, 5, 3, 2), dtype, True)
     svd_self_testcase((5, 5, 3, 2), dtype, False)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.0)
+def test_ops_svd_constant_folding():
+    """
+    Feature: Svd
+    Description: test case for svd constant folding in GRAPH_MODE
+    Expectation: the tuple order should be (S, U, V)
+    """
+    def func():
+        x = Tensor([[1., 2.], [3., 5.], [8., 13.]], ms.float32)
+        return ops.svd(x)
+
+    out_pynative = func()
+    pynative_shapes = [t.shape for t in out_pynative]
+    out_graph = ms.jit(func)()
+    graph_shapes = [t.shape for t in out_graph]
+
+    expected_shapes = [(2,), (3, 2), (2, 2)]
+    assert pynative_shapes == expected_shapes
+    assert graph_shapes == expected_shapes
 
 
 def svd_vmap_testcase(shape, dtype, full_matrices, compute_uv):

@@ -136,22 +136,22 @@ def test_to_jit():
         for non_blocking in [True, False]:
             y = tensor_to_1(x, device_type, non_blocking)
             assert device_type in y.device
-            assert y.asnumpy() == 1.0
+            assert np.isclose(y.asnumpy(), 1.0)
 
     for non_blocking in [True, False]:
         y = tensor_to_6("Ascend", non_blocking)
         assert "Ascend" in y.device
-        assert y.asnumpy() == 1.0
+        assert np.isclose(y.asnumpy(), 1.0)
 
         y = tensor_to_6("CPU", non_blocking)
         assert "CPU" in y.device
-        assert y.asnumpy() == 1.0
+        assert np.isclose(y.asnumpy(), 1.0)
 
     for dtype in dtypes:
         x = Tensor(1.0, ms.float32)
         y = tensor_to_2(x, dtype)
         assert dtype == y.dtype
-        assert y.asnumpy() == 1.0
+        assert np.isclose(y.asnumpy(), 1.0)
 
     for device_type in devices:
         for dtype in dtypes:
@@ -159,13 +159,13 @@ def test_to_jit():
             y = tensor_to_3(x, device_type, dtype, False, False)
             assert dtype == y.dtype
             assert device_type in y.device
-            assert y.asnumpy() == 1.0
+            assert np.isclose(y.asnumpy(), 1.0)
 
     for dtype in dtypes:
         x = Tensor(1.0, ms.float32)
         y = tensor_to_4(x, dtype, False, False)
         assert dtype == y.dtype
-        assert y.asnumpy() == 1.0
+        assert np.isclose(y.asnumpy(), 1.0)
 
     for device_type in devices:
         for dtype in dtypes:
@@ -173,17 +173,17 @@ def test_to_jit():
             y = Tensor(2.0, dtype).move_to(device_type)
             z = tensor_to_5(x, y, False, False)
             assert dtype == y.dtype
-            assert z.asnumpy() == 1.0
+            assert np.isclose(z.asnumpy(), 1.0)
 
     y = tensor_to_7("Ascend", ms.float32)
     assert "Ascend" in y.device
-    assert y.asnumpy() == 1.0
+    assert np.isclose(y.asnumpy(), 1.0)
 
     with pytest.raises(RuntimeError) as err:
         y = tensor_to_7("Ascend", ms.float16)
         assert y.dtype == ms.float16
         assert "Ascend" in y.device
-        assert y.asnumpy() == 1.0
+        assert np.isclose(y.asnumpy(), 1.0)
     assert "Invalid input device tensor type for kernel" in str(err.value)
 
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"

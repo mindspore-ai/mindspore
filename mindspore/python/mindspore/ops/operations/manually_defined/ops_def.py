@@ -1535,7 +1535,7 @@ def infer_value_for_Svd(input_x, full_matrices, compute_uv):
     if input_x is None:
         return None
     if bool(compute_uv):
-        s, u, v = np.linalg.svd(input_x.asnumpy(), full_matrices=full_matrices, compute_uv=True)
+        u, s, v = np.linalg.svd(input_x.asnumpy(), full_matrices=full_matrices, compute_uv=True)
         return Tensor(s), Tensor(u), Tensor(v)
     s = np.linalg.svd(input_x.asnumpy(), full_matrices=full_matrices, compute_uv=False)
     return Tensor(s), np.zeros(1), np.zeros(1)
