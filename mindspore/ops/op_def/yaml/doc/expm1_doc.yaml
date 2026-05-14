@@ -1,6 +1,6 @@
 expm1:
   description: |
-    Compute exponential of the input tensor, then minus 1, element-wise.
+    Compute exponential of the input tensor, then subtracts 1, element-wise.
 
     .. math::
 

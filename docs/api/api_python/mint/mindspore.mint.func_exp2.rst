@@ -6,7 +6,7 @@ mindspore.mint.exp2
     逐元素计算tensor `input` 以2为底的指数。
 
     .. math::
-        out_i = 2^{input_i}
+        out_i = 2^{\text{input}_i}
 
     参数：
         - **input** (Tensor) - 输入tensor。
