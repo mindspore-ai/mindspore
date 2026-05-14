@@ -396,7 +396,8 @@ class GradOperation(GradOperation_):
 
     def __call__(self, fn, weights=None):
         weights_id = ''
-        if context.get_context("mode") == context.GRAPH_MODE:
+        mode = context._get_mode()
+        if mode == context.GRAPH_MODE:
             weights_id = _get_grad_weights_id(weights)
             if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
                 return self.grad_fn
@@ -406,7 +407,7 @@ class GradOperation(GradOperation_):
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
         #   In PYNATIVE_MODE calling Grad from functions decorated with 'jit', use the out layer after_grad do
         #   grad in GRAPH_MODE.
-        if context.get_context("mode") == context.GRAPH_MODE:
+        if mode == context.GRAPH_MODE:
             if isinstance(fn, ms.nn.Cell):
                 fn.grad_ops_label = True
             if self.get_by_list:
@@ -439,10 +440,12 @@ class GradOperation(GradOperation_):
                 def after_grad(*args, **kwargs):
                     return grad_(fn)(*args, **kwargs)
 
-        self.grad_fn = after_grad
-        self.fn = fn
-        self.weights_id = weights_id
-        return self.grad_fn
+        if mode == context.GRAPH_MODE:
+            self.grad_fn = after_grad
+            self.fn = fn
+            self.weights_id = weights_id
+            return self.grad_fn
+        return after_grad
 
 
 class _TaylorOperation(TaylorOperation_):
@@ -650,11 +653,13 @@ class _Grad(GradOperation_):
                     def after_grad(*args, **kwargs):
                         return grad_(fn_)(*args, **kwargs)
 
-        self.grad_fn = after_grad
-        self.fn = fn
-        self.grad_position = grad_position
-        self.weights_id = weights_id
-        return self.grad_fn
+        if mode == context.GRAPH_MODE:
+            self.grad_fn = after_grad
+            self.fn = fn
+            self.grad_position = grad_position
+            self.weights_id = weights_id
+            return self.grad_fn
+        return after_grad
 
 
 class _Vmap(VmapOperation_):

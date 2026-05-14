@@ -14,11 +14,11 @@
 # ============================================================================
 """Test test_pynative_recompute.py"""
 
+import gc
 import random
 import numpy as np
 import pytest
 import weakref
-import contextlib
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -1363,3 +1363,90 @@ def test_recompute_with_context_fn():
     _ = ms.grad(model)(x)
     assert forward_count == 1
     assert recompute_count == 1
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_non_reentrant_recompute_nested_grad_no_closure_tensor_cycle():
+    """
+    Feature: Non-reentrant recompute with nested value_and_grad.
+    Description: Test closure tensors are released without relying on cyclic GC.
+    Expectation: No _Grad cycle keeps closure tensors alive.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    class RecomputeBlock(Cell):
+        def __init__(self, hidden_size):
+            super().__init__()
+            self.dense1 = nn.Dense(hidden_size, hidden_size)
+            self.relu = P.ReLU()
+            self.dense2 = nn.Dense(hidden_size, hidden_size)
+
+        def construct(self, x):
+            return self.dense2(self.relu(self.dense1(x)))
+
+    class Net(Cell):
+        def __init__(self, hidden_size):
+            super().__init__()
+            self.gather = P.Gather()
+            self.block = RecomputeBlock(hidden_size)
+            self.block.recompute(use_reentrant=False)
+
+        def construct(self, x, index):
+            out = self.gather(x, index, 0)
+            return self.block(out).sum()
+
+    def is_mindspore_tensor(obj):
+        obj_type = type(obj)
+        return obj_type.__name__ == "Tensor" and obj_type.__module__ == "mindspore.common.tensor"
+
+    def is_grad_operation(obj):
+        obj_type = type(obj)
+        return obj_type.__name__ == "_Grad" and obj_type.__module__ == "mindspore.ops.composite.base"
+
+    node_num = 32
+    edge_num = 128
+    hidden_size = 4
+    net = Net(hidden_size)
+    weights = net.trainable_params()
+    x_np = np.arange(node_num * hidden_size).reshape(node_num, hidden_size).astype(np.float32) / 100.0
+
+    def loss_fn(x, index):
+        def energy_fn(inputs):
+            return net(inputs, index)
+
+        energy, grad_x = ms.value_and_grad(energy_fn, grad_position=0)(x)
+        return energy * 0.0 + (grad_x * grad_x).sum()
+
+    grad_fn = ms.value_and_grad(loss_fn, grad_position=None, weights=weights)
+    old_debug = gc.get_debug()
+    leaked_tensor_shapes = []
+    leaked_grad_count = 0
+    try:
+        gc.set_debug(0)
+        gc.collect()
+        gc.garbage.clear()
+        gc.set_debug(gc.DEBUG_SAVEALL)
+        for step in range(3):
+            x = Tensor(x_np)
+            index = Tensor((np.arange(edge_num, dtype=np.int32) + step) % node_num)
+            grad_fn(x, index)
+
+        gc.collect()
+        for obj in gc.garbage:
+            if is_grad_operation(obj):
+                leaked_grad_count += 1
+            if is_mindspore_tensor(obj):
+                shape = tuple(obj.shape)
+                if shape == (edge_num,):
+                    leaked_tensor_shapes.append(shape)
+    finally:
+        gc.garbage.clear()
+        gc.set_debug(old_debug)
+        gc.collect()
+
+    assert leaked_grad_count == 0 and not leaked_tensor_shapes, (
+        "Non-reentrant recompute nested grad should not leave _Grad cycles that keep closure tensors alive, "
+        f"but found {leaked_grad_count} _Grad objects and tensors {leaked_tensor_shapes}."
+    )
