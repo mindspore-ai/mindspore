@@ -18,14 +18,14 @@ mindspore.nn.AdaptiveMaxPool2d
         \end{align}
 
     .. note::
-        - KBK模式下， `output_size` 不支持mutable类型。
+        KBK模式下， `output_size` 不支持mutable类型。
 
     参数：
         - **output_size** (Union[int, tuple]) - 输出特征图的size。 `output_size` 可以为二元tuple表示 :math:`(H, W)`。或者是单个int表示 :math:`(H, H)` 。 :math:`H` 和 :math:`W` 可以是int或None，如果是None，则意味着输出的size与输入相同。
         - **return_indices** (bool，可选) - 是否输出最大值的索引。如果为 ``True`` ，输出最大值的索引。默认值： ``False`` 。
 
     输入：
-        - **input** (Tensor) - AdaptiveMaxPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
+        - **input** (Tensor) - 为三维或四维的Tensor，数据类型为float16、float32或者float64。
 
     输出：
         Tensor，数据类型与 `input` 相同。
@@ -33,7 +33,7 @@ mindspore.nn.AdaptiveMaxPool2d
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 中的数据不是float16、float32、float64。
+        - **TypeError** - `input` 的数据类型不是float16、float32或float64。
         - **TypeError** - `output_size` 不是int或者tuple。
         - **TypeError** - `return_indices` 不是bool。
         - **ValueError** - `output_size` 是tuple，但大小不是2。

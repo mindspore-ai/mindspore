@@ -5,7 +5,7 @@ mindspore.nn.AdaptiveAvgPool1d
 
     在一个输入Tensor上应用1D自适应平均池化运算，可视为组成一个1D输入平面。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，AdaptiveAvgPool1d在 :math:`L_{in}` 维度上计算区域平均值。
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，该算子在 :math:`L_{in}` 维度上计算区域平均值。
     输出的shape为 :math:`(N_{in}, C_{in}, L_{out})` ，其中， :math:`L_{out}` 为 `output_size`。
 
     .. note::
@@ -24,6 +24,6 @@ mindspore.nn.AdaptiveAvgPool1d
         - **TypeError** - `output_size` 不是int。
         - **TypeError** - `input` 不是float16或float32。
         - **ValueError** - `output_size` 小于1。
-        - **ValueError** -  `input` 的shape长度不等于3。
-        - **ValueError** -  `input` 的最后一个维度小于 `output_size`。
-        - **ValueError** -  `input` 的最后一个维度不能被 `output_size` 整除。
+        - **ValueError** - `input` 的shape长度不等于3。
+        - **ValueError** - `input` 的最后一个维度小于 `output_size`。
+        - **ValueError** - `input` 的最后一个维度不能被 `output_size` 整除。

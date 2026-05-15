@@ -74,9 +74,9 @@ mindspore.nn.AdamWeightDecay
 
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-        - **TypeError** - `parameters` 的元素不是Parameter或字典。
+        - **TypeError** - `params` 的元素不是Parameter或字典。
         - **TypeError** - `beta1` 、 `beta2` 或 `eps` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
-        - **ValueError** - `eps` 小于等于0。
+        - **ValueError** - `eps` 小于等于0.0。
         - **ValueError** - `beta1` 、 `beta2` 不在（0.0,1.0）范围内。
-        - **ValueError** - `weight_decay` 小于0。
+        - **ValueError** - `weight_decay` 小于0.0。

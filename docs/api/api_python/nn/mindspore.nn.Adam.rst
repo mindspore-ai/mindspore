@@ -5,7 +5,7 @@ mindspore.nn.Adam
 
     Adaptive Moment Estimation (Adam)算法的实现。
 
-    Adam optimizer可以使用梯度的first-order moment estimation和second-order moment estimation，动态地调整每一个参数的学习率。
+    Adam 优化器可以使用梯度的first-order moment estimation和second-order moment estimation，动态地调整每一个参数的学习率。
 
     请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 
@@ -55,9 +55,9 @@ mindspore.nn.Adam
 
         .. include:: mindspore.nn.optim_note_weight_decay.rst
 
-        当使用Adam时，如果设置 `use_lazy` =True，需要注意的是，梯度稀疏时该优化器只更新网络参数的当前的索引位置，稀疏行为不等同于Adam算法。如果想执行稀疏策略，那么需要把target设置为CPU。
+        当使用Adam时且设置 `use_lazy` =True，梯度稀疏时该优化器只更新网络参数的当前的索引位置，稀疏行为不等同于Adam算法。如果想执行稀疏策略，那么需要把target设置为CPU。
 
-        当使用Adam时，如果设置 `use_offload` =True，需要注意的是，此优化器目前仅支持图模式。
+        当使用Adam且设置 `use_offload` =True，此优化器目前仅支持图模式。
 
     参数：
         - **params** (Union[list[Parameter], list[dict]]) - 必须是 `Parameter` 组成的列表或字典组成的列表。当列表元素是字典时，字典的键可以是"params"、"lr"、"weight_decay"、"grad_centralization"和"order_params"：
@@ -98,13 +98,13 @@ mindspore.nn.Adam
     异常：
         - **KeyError** - `kwargs` 接收到非 ``'use_lazy'`` 或 ``'use_offload'`` 的关键字。
         - **TypeError** - `learning_rate` 不是int、float、Tensor、iterable或LearningRateSchedule。
-        - **TypeError** - `params` 的元素不是Parameter或字典。
+        - **TypeError** - `params` 的元素既不是Parameter也不是字典。
         - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
         - **TypeError** - `use_locking` 、 `use_nesterov` 、 `use_amsgrad` 、 `use_lazy` 或 `use_offload` 不是bool。
         - **ValueError** - `loss_scale` 或 `eps` 小于或等于0。
-        - **ValueError** - `beta1` 、 `beta2` 不在（0.0, 1.0）范围内。
+        - **ValueError** - `beta1` 或 `beta2` 不在（0.0, 1.0）范围内。
         - **ValueError** - `weight_decay` 小于0。
         - **ValueError** - `use_lazy` 和 `use_offload` 均为 ``True`` 。
-        - **ValueError** - `use_amsgrad` 为True时， `use_lazy` 或 `use_offload` 亦为 ``True`` 。
+        - **ValueError** - `use_amsgrad` 为 ``True`` 时， `use_lazy` 或 `use_offload` 亦为 ``True`` 。
         - **ValueError** - 在分布式训练时， `use_amsgrad` 为 ``True`` 。

@@ -3,7 +3,7 @@ mindspore.nn.AdaSumByGradWrapCell
 
 .. py:class:: mindspore.nn.AdaSumByGradWrapCell(optimizer)
 
-    Adaptive Summation（AdaSum）算法的实现，根据梯度计算。应用于semi_auto_parallel/auto_parallel模式。
+    Adaptive Summation（AdaSum）算法的实现，根据梯度计算。应用于semi_auto_parallel或auto_parallel模式。
 
     请参阅论文 `AdaSum: Scaling Distributed Training with Adaptive Summation <https://arxiv.org/abs/2006.02924>`_。
 
@@ -16,17 +16,17 @@ mindspore.nn.AdaSumByGradWrapCell
           \frac{g_1^{T}\cdot g_2}{2\cdot \left \| g_2 \right \|^2 })\cdot g_2]  \\
         \end{array}
 
-    在本实现中， :math:`g` 代表权重的梯度，下标代表数据并行维度下不同的设备。
+    在本实现中， :math:`g` 表示权重的梯度，下标表示数据并行维度下不同的设备。
 
     .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
+        该接口已废弃，2.9.0（不含）之后版本将被删除。
 
     .. note::
         - 本接口推荐应用于半自动并行或者全自动并行模式。针对数据并行模式，推荐使用mindspore.boost功能以使用AdaSum。
-        - 使用本接口时，训练的卡的数量必须是2的幂，并且至少需要16张卡。目前，使用本接口时不支持优化器并行和流水线并行。
+        - 使用本接口时，训练卡数必须是2的幂，并且至少需要16张卡。目前，使用本接口时不支持优化器并行和流水线并行。
 
     参数：
-        - **optimizer** (Union[Cell]) - 用于更新权重的优化器。优化器的构造函数只允许一个输入。
+        - **optimizer** (Union[Cell]) - 用于更新权重的优化器。优化器的构造函数仅支持一个输入。
 
     输入：
         - **grads** (tuple[Tensor]) - `params` 的梯度，shape与 `params` 相同，与所传优化器的输入一致。

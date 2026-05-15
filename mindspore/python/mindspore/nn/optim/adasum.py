@@ -423,9 +423,9 @@ class AdaSumByGradWrapCell(Cell):
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        - It is recommended to using AdaSumByGradWrapCell in semi auto parallel/auto parallel mode. In data parallel
+        - It is recommended to using AdaSumByGradWrapCell in semi auto parallel or auto parallel mode. In data parallel
           mode, we recommend to using mindspore.boost to applying AdaSum.
-        - When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.
+        - When using AdaSum, the number of training cards needs to be a power of 2 and at least 16 cards are required.
           Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
 
     Args:
@@ -433,10 +433,10 @@ class AdaSumByGradWrapCell(Cell):
             requires only one input.
 
     Inputs:
-        - **grads** (tuple[Tensor]) - Tuple of gradients, same with the input of passed optimizer.
+        - **grads** (tuple[Tensor]) - Tuple of gradients, same as the input of passed optimizer.
 
     Raises:
-        RuntimeError: If `parallel_mode` uses `stand_alone` mode, AdaSum only supports use in distributed scenarios.
+        RuntimeError: If `parallel_mode` uses `stand_alone` mode, AdaSum is only supported in distributed scenarios.
         RuntimeError: If the optimizer parallel is used when using AdaSum.
         RuntimeError: If the pipeline parallel is used when using AdaSum.
         RuntimeError: If `device_num` is not a power of 2, or less than 16.
@@ -495,9 +495,9 @@ class AdaSumByDeltaWeightWrapCell(Cell):
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        When using AdaSum, the number of traning cards needs to be a power of 2 and at least 16 cards are required.
-        Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
-        It is recommended to using AdaSumByDeltaWeightWrapCell in semi auto parallel/auto parallel mode.
+        When using AdaSum, the number of training cards needs to be a power of 2 and at least 16 cards are required.
+        Currently, the optimizer sharding and pipeline parallel are not supported when using AdaSum.
+        It is recommended to using AdaSumByDeltaWeightWrapCell in semi auto parallel or auto parallel mode.
         In data parallel mode, we recommend to using mindspore.boost to applying AdaSum.
 
     Args:
@@ -505,10 +505,10 @@ class AdaSumByDeltaWeightWrapCell(Cell):
             requires only one input.
 
     Inputs:
-        - **grads** (Tuple(Tensor)) - Tuple of gradients, same with the input of passed optimizer.
+        - **grads** (Tuple(Tensor)) - Tuple of gradients, same as the input of passed optimizer.
 
     Raises:
-        RuntimeError: If `parallel_mode` uses `stand_alone` mode, AdaSum only supports use in distributed scenarios.
+        RuntimeError: If `parallel_mode` uses `stand_alone` mode, AdaSum is only supported in distributed scenarios.
         RuntimeError: If the optimizer parallel is used when using AdaSum.
         RuntimeError: If the pipeline parallel is used when using AdaSum.
         RuntimeError: If `device_num` is not a power of 2, or less than 16.

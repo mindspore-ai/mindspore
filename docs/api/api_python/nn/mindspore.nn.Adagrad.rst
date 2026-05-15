@@ -35,9 +35,9 @@ mindspore.nn.Adagrad
             &\hline \\
         \end{array}
 
-    :math:`state\_sum` 表示梯度平方的累加和 :math:`accum` 。:math:`g` 表示 `grads` ，:math:`\lambda` 代表 `weight_decay`  。
-    :math:`\gamma` 代表 `learning_rate`，:math:`w` 代表 `params` 。
-    :math:`t` 代表当前的 `step`。
+    :math:`state\_sum` 表示梯度平方的累加和 :math:`accum` 。:math:`g` 表示 `grads` ，:math:`\lambda` 表示 `weight_decay`  。
+    :math:`\gamma` 表示 `learning_rate`，:math:`w` 表示 `params` 。
+    :math:`t` 表示当前的 `step`。
 
     .. warning::
         2.9.0（不含）之后版本非兼容性变更：构造签名将调整为 ``Adagrad(params, lr=0.01, lr_decay=0, weight_decay=0, initial_accumulator_value=0, eps=1e-10)`` 。其中参数名 `learning_rate` 将改为 `lr`，`accum` 将改为 `initial_accumulator_value`；新增参数 `lr_decay`、`eps`；`update_slots`、`loss_scale` 将被移除；`lr` 默认值由 ``0.001`` 改为 ``0.01`` ，`accum` 默认值由 ``0.1`` 改为 ``0`` 。
@@ -65,9 +65,9 @@ mindspore.nn.Adagrad
 
         - **weight_decay** (Union[float, int, Cell]，可选) - 要乘以权重的权重衰减值，必须大于等于 ``0.0`` 。默认值： ``0.0`` 。
 
-          - float：固定的权量衰减值。必须等于或大于0。
-          - int：固定的权量衰减值。必须等于或大于0。它将会被转换为float类型。
-          - Cell：权重衰减此时是动态的。在训练期间，优化器调用该Cell的实例，以获取当前阶段所要使用的权重衰减值。
+          - float：固定的权重衰减值。必须等于或大于0。
+          - int：固定的权重衰减值。必须等于或大于0。它将会被转换为float类型。
+          - Cell：权重衰减此时是动态的。在训练期间，优化器调用该Cell的实例，以获取当前阶段的权重衰减值。
 
     输入：
         - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）与 `params` 相同。

@@ -53,7 +53,7 @@ mindspore.nn.ASGD
 
     异常：
         - **TypeError** - 如果 `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-        - **TypeError** - 如果 `parameters` 的元素不是Parameter或字典。
+        - **TypeError** - 如果 `params` 的元素不是Parameter或字典。
         - **TypeError** - 如果 `lambd` 、 `alpha` 或 `t0` 不是float。
         - **TypeError** - 如果 `weight_decay` 既不是float也不是int。
         - **ValueError** - 如果 `weight_decay` 小于0。
