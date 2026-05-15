@@ -25,6 +25,7 @@ mindspore_add_pkg(libevent
         URL ${REQ_URL}
         SHA256 ${SHA256}
         PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/libevent/libevent.patch001
+                ${MINDSPORE_PROJECT_DIR}/third_party/patch/libevent/libevent.patch002
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF -DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT}
           -DEVENT__LIBRARY_TYPE:STRING=STATIC)
 
