@@ -362,7 +362,7 @@ class OpsFactory():
             loss_count = np.count_nonzero(greater)
             assert (loss_count / total_count) < rtol, \
                 "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-                    format(expect[greater], actual[greater], error[greater])
+                    format(expect[greater], actual[greater], error[greater],)
 
         def allclose_nparray(expect, actual, rtol, atol, equal_nan=True):
             if not np.allclose(expect, actual, rtol, atol, equal_nan=equal_nan):

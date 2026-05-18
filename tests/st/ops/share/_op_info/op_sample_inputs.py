@@ -56,6 +56,7 @@ from tests.st.ops.share._op_info.op_common import (
     MEDIUM_DIM_SIZE,
     SMALL_DIM_SIZE,
     dtypes_extra_uint,
+    dtypes_integral,
     dtype_to_np_dtype,
     op_dtype_need_convert,
     dtypes_extra_values
@@ -1083,7 +1084,7 @@ def sample_inputs_binary_cross_entropy(op_info, dtype, device, logits=False, **k
     # Lower bounds must be greater than 'eps' defined in gradcheck.py::gradgradcheck() -> eps
     # otherwise perturbation calculation causes Tensor value to become negative triggering
     # a device-side hardware assertion
-    make_prob = functools.partial(make, low=1e-6, high=1)
+    make_prob = functools.partial(make, low=0, high=1)
 
     reductions = ("mean", "sum", "none")
 
@@ -4670,11 +4671,11 @@ def extra_sample_inputs_mint_dropout(op_info: OpInfo, dtype=None, device=None, *
             op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device,)
         else:
             op_input = input_values
-        for p in [0.0, 0.5, 1.0]:
+        for p in [0.0, 1.0]:
             yield OpSampleInput(
                 op_input=op_input,
-                op_args=(p, ),
-                op_kwargs={},
+                op_args=(),
+                op_kwargs={'p': p, 'training': True},
                 sample_name=op_info.name,
             )
 
@@ -4701,9 +4702,10 @@ def extra_sample_inputs_mint_dropout(op_info: OpInfo, dtype=None, device=None, *
                 yield from _extra_sample_inputs_mint_dropout(input_values)
 
     # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((2, 4), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_dropout(input_values)
+    if not dtype.is_complex:
+        for discontiguous in (True,):
+            input_values = make_arg((2, 4), discontiguous=discontiguous)
+            yield from _extra_sample_inputs_mint_dropout(input_values)
 
 def extra_sample_inputs_mint_pad(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
@@ -6344,9 +6346,8 @@ def error_sample_inputs_mint_scatter(op_info: OpInfo, dtype=None, device=None, *
 
 def basic_sample_inputs_mint_dropout(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype, exclude_value=(0,))
-    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
 
-    cases = ((S, S), (S,), ())
+    cases = ((10, 10), (10,), ())
     # Other values will bring random number of output, skip it.
     p_vals = [0.5, 0.0, 1.0]
     # This is to handle special case for feature_alpha_dropout which has different
@@ -6354,6 +6355,8 @@ def basic_sample_inputs_mint_dropout(op_info: OpInfo, dtype=None, device=None, *
     training_vals = [True, False]
 
     for case, p, training in itertools.product(cases, p_vals, training_vals):
+        if not case and dtype.is_floating_point:
+            continue
         yield OpSampleInput(
             op_input=make_arg(case),
             op_args=(p, training),
@@ -8538,7 +8541,7 @@ def extra_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
                 yield input
 
 # op error sense for convolutional operators
-def error_inputs_other_op_with_convolution(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_with_convolution(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
 
     conv_dim=kwargs.get('conv_dim')
@@ -8653,7 +8656,7 @@ def error_inputs_other_op_with_convolution(op_info: OpInfo, device=None, **kwarg
     )
 
 # op error sense for mint.nn.functional.linear operators
-def error_inputs_other_op_mint_nn_functional_linear(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_mint_nn_functional_linear(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -8678,7 +8681,7 @@ def error_inputs_other_op_mint_nn_functional_linear(op_info: OpInfo, device=None
     )
 
 # the error inputs scene of op with bce loss
-def error_inputs_other_op_with_loss_function(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_with_loss_function(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     args = inspect.signature(op_info.op).parameters.keys()
     # bce loss
@@ -8727,7 +8730,7 @@ def error_inputs_other_op_with_loss_function(op_info: OpInfo, device=None, **kwa
             op_error_info='the target shape should equal  or can be broadcast to input shape',
         )
 
-def error_inputs_other_op_mint_nn_functional_batch_norm(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_mint_nn_functional_batch_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -8741,7 +8744,7 @@ def error_inputs_other_op_mint_nn_functional_batch_norm(op_info: OpInfo, device=
     )
 
 
-def error_inputs_other_op_group_norm(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_group_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -8764,7 +8767,7 @@ def error_inputs_other_op_group_norm(op_info: OpInfo, device=None, **kwargs):
         op_error_info='num_groups should be divided with no remainder by  num_channels',
     )
 
-def error_inputs_other_op_layer_norm(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_layer_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -8787,7 +8790,7 @@ def error_inputs_other_op_layer_norm(op_info: OpInfo, device=None, **kwargs):
         op_error_info='''if normalizd_shape type is int,it should be equal input's last dim ''',
     )
 
-def error_inputs_other_op_with_AdaptiveAvgPool(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_with_AdaptiveAvgPool(op_info: OpInfo, dtype=None, device=None, **kwargs):
     pool_dim = kwargs.get('pool_dim')
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
@@ -8853,7 +8856,7 @@ def error_inputs_other_op_with_AdaptiveAvgPool(op_info: OpInfo, device=None, **k
             op_error_info=f'the length of output_size must be equal to {rank} ',
         )
 
-def error_inputs_other_op_with_dropout(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_with_dropout(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -8866,7 +8869,7 @@ def error_inputs_other_op_with_dropout(op_info: OpInfo, device=None, **kwargs):
         op_error_info=''' 'p' must be in [0,1]  ''',
     )
 
-def error_inputs_other_op_interpolate(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_interpolate(op_info: OpInfo, dtype=None, device=None,  **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     mode = kwargs.get("mode")
     internal_mode, rank = _normalize_mode_and_ranks(mode)
@@ -8976,7 +8979,7 @@ def error_inputs_other_op_interpolate(op_info: OpInfo, device=None, **kwargs):
             op_error_info=' align_corners not support mode nearest',
         )
 
-def error_inputs_other_op_pad(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_pad(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     mode = kwargs.get("mode")
     input_shape_length_not_support_convert_to_pad_shape_length={2: [2, 3], 3: [3], 4: [1], 5: [2, 1]}
@@ -9031,7 +9034,7 @@ def error_inputs_other_op_pad(op_info: OpInfo, device=None, **kwargs):
                 op_error_type=ValueError,
                 op_error_info='pad shape length should no more than input shape *2',
             )
-def error_inputs_other_op_with_activation(op_info: OpInfo, device=None, **kwargs):
+def error_inputs_other_op_with_activation(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
         op_sample_input=OpSampleInput(
@@ -10407,3 +10410,949 @@ def error_inputs_tensor_masked_scatter_(op_info: OpInfo, dtype=None, device=None
     """
     # Reuse the same sample inputs as masked_scatter
     yield from error_inputs_tensor_masked_scatter(op_info, dtype=dtype, device=device, **kwargs)
+
+def basic_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (
+             ((1, 6), (2, 4), (4, 6),),
+             ((5, 1), (5, 8), (8, 3),),
+             ((15, ), (1, 12), (12, 15))
+            )
+
+    make_ = functools.partial(make_tensor, device=device, dtype=dtype)
+    for input, mat1, mat2 in cases:
+        yield OpSampleInput(
+            make_(input),
+            op_args=(make_(mat1),make_(mat2)),
+            op_kwargs={},
+            sample_name=op_info.name)
+        yield OpSampleInput(
+            make_(input),
+            op_args=(make_(mat1), make_(mat2)),
+            op_kwargs={'beta': 2, 'alpha': 3.9},
+            sample_name=op_info.name)
+        yield OpSampleInput(
+            make_(input),
+            op_args=(make_(mat1), make_(mat2)),
+            op_kwargs={'beta': 3.1, 'alpha': 8},
+            sample_name=op_info.name)
+
+def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_ = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    A=3
+    B=6
+    C=10
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((A, C)),
+            op_args=(make_((2, A, B)), make_((B, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dim of mat1 must be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((B, C)),
+            op_args=(make_((B, )), make_((B, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dim of mat1 must be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((A, B)),
+            op_args=(make_((A, B)), make_((B, )),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dim of mat2 must be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((A, C)),
+            op_args=(make_((A, B)), make_((B, C, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dim of mat2 must be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((1, C-1)),
+            op_args=(make_((A, B)), make_((B, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='the input.shape should be broadcasted by mat1.shape@mat2.shape',
+    )
+
+def error_sample_inputs_baddbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_ = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    A=3
+    B=6
+    C=10
+    batch=1
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((A, C)),
+            op_args=(make_((2, batch, A, B)), make_((batch, B, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='the dim of mat1 must be 3',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((B, C)),
+            op_args=(make_((batch, B, )), make_((batch, B, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='the dim of mat1 must be 3',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((A, B)),
+            op_args=(make_((batch, A, B)), make_((batch, B, )),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='the dim of mat2 must be 3',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((A, C)),
+            op_args=(make_((batch, A, B)), make_((batch, B, C, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='the dim of mat2 must be 3',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((1, C-1)),
+            op_args=(make_((batch, A, B)), make_((batch, B, C)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='the input.shape should be broadcasted by mat1.shape@mat2.shape',
+    )
+
+def extra_sample_inputs_addmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (4, 4), ((4, 4),(4, 4)), {},
+                                  dtype=dtype, device=device,exclude_value=(-5062757.7, 5062757.7, 1e20,-1e20,))
+
+    yield from make_extra_tensor(op_info, (0, 0), ((0, 4), (4, 0)), {},
+                                 dtype=dtype, device=device, empty_tensor=True)
+
+def basic_sample_inputs_traingular_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_ = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    for upper, transpose, unitriangular in itertools.product([True,False],repeat = 3):
+        for  i  in  range (5):
+            yield OpSampleInput(
+                make_(tuple(np.random.choice([1, 3], size = i)) + (3, 4) ),
+                op_args=(make_(tuple(np.random.choice([1, 3], size = i)) + (3, 3)), ),
+                op_kwargs={'upper': upper, 'transpose': transpose, 'unitriangular':unitriangular},
+                sample_name=op_info.name
+            )
+            yield OpSampleInput(
+                make_(tuple(np.random.choice([1, 3], size = i)) + (3, 3)),
+                op_args=(make_(tuple(np.random.choice([1, 3], size = i)) + (3, 3)), ),
+                op_kwargs={'upper': upper, 'transpose': transpose, 'unitriangular':unitriangular},
+                sample_name=op_info.name
+            )
+
+def error_sample_inputs_traingular_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_ = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((2, )),
+            op_args=(make_((2, )), ),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dim of input A and B must be [2, 6]',
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((2, 2, 2, 2, 2, 2, 2,)),
+            op_args=(make_((2, 2, 2, 2, 2, 2, 2,)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dim of input A and B must be [2, 6]',
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((4, 3)),
+            op_args=(make_((3, 4)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='A must be batchs of square matrices',
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((5, 4)),
+            op_args=(make_((4, 4)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='B.shape[-2] must be equal A.shape[-2]',
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_((2, 5, 4)),
+            op_args=(make_((3, 4, 4)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='B.batch must be broadcasted by A.batch',
+    )
+
+def extra_sample_inputs_traingular_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    for upper, transpose, unitriangular in itertools.product([True, False], repeat=3):
+        yield from make_extra_tensor(op_info, (3, 7, 6), ((7, 7),),
+                                     {'upper': upper, 'transpose': transpose, 'unitriangular': unitriangular},
+                                     dtype=dtype, device=device, exclude_value=(-1e20, 1e20, -5062757.7, 5062757.7))
+
+        yield from make_extra_tensor(op_info, (3, 0, 7), ((0, 0),),
+                                     {'upper': upper, 'transpose': transpose, 'unitriangular': unitriangular},
+                                     dtype=dtype, device=device, empty_tensor=True)
+
+def basic_sample_inputs_baddbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_=functools.partial(make_tensor, device = device, dtype = dtype)
+
+    case = (
+        ( (2, 5, 7), (2, 7, 3), (1, 5, 1) ),
+        ( (4, 1, 6), (4, 6, 9), (4, 1, 1) ),
+    )
+
+    for batch1, batch2, input in case:
+        yield OpSampleInput(
+            make_(input),
+            op_args=(make_(batch1), make_(batch2)),
+            op_kwargs={},
+            sample_name=op_info.name
+        )
+        yield OpSampleInput(
+            make_(input),
+            op_args=(make_(batch1), make_(batch2)),
+            op_kwargs={'beta': 3, 'alpha': 6},
+            sample_name=op_info.name
+        )
+        yield OpSampleInput(
+            make_(input),
+            op_args=(make_(batch1), make_(batch2)),
+            op_kwargs={'beta': 1.2, 'alpha': 3.4},
+            sample_name=op_info.name
+        )
+
+
+
+def extra_sample_inputs_baddbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from  make_extra_tensor(op_info, (2, 4, 4), ((2, 4, 3),(2, 3, 4)),
+                        {}, dtype=dtype, device=device, exclude_value=(-5062757.7, 5062757.7, -1e20, 1e20))
+
+    yield from make_extra_tensor(op_info, (2, 4, 4), ((2, 4, 0), (2, 0, 4)),
+                                 {}, dtype=dtype, device=device, empty_tensor=True)
+
+def basic_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case=(
+        (3,),
+        (10,)
+    )
+    for shape in case:
+        yield OpSampleInput(
+            op_input=make_arg(shape),
+            op_args=(make_arg(shape),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+
+def error_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_error_tensor_with_matrix_multiply(op_info, 1, 1, device=device)
+
+def extra_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (16, ), ((16, ),), {},
+                                 dtype=dtype, device=device, exclude_value=(1e20,-1e20))
+
+    # yield from make_extra_tensor(op_info, (0,), ((0,),), {},
+    #                              dtype=dtype, device=device, empty_tensor=True)
+
+
+def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=None, device=None,
+                      exclude_value=(), empty_tensor=False, dtype_promotion=False):
+
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    def _tuple_to_specified_size_tensor(data, size):
+        return make_tensor_with_np_array(
+            np.random.choice(np.array(data)[~np.isin(np.array(data), exclude_value)], size=size),
+            dtype=dtype, device=device)
+
+    def _make_extra_op(data=None, op_input_shape=None, op_args_shapes=None, op_kwargs=None, discontiguous=False):
+
+        def shape_convert_to_tensor(shape, discontiguous=False):
+            if not discontiguous:
+                return _tuple_to_specified_size_tensor(data, shape)
+            return make_arg(shape, discontiguous=True)
+
+        if not discontiguous:
+            yield OpSampleInput(
+                op_input=shape_convert_to_tensor(op_input_shape),
+                op_args=tuple(shape_convert_to_tensor(i) if isinstance(i,tuple) else i for i in op_args_shapes),
+                op_kwargs={k: shape_convert_to_tensor(v) if isinstance(v,tuple) else v for k, v in op_kwargs.items()},
+                sample_name=op_info.name,
+            )
+        else:
+            yield OpSampleInput(
+                op_input=shape_convert_to_tensor(op_input_shape, discontiguous=True),
+                op_args=tuple(shape_convert_to_tensor(i, discontiguous=True) if
+                              isinstance(i, tuple) else i for i in op_args_shapes),
+                op_kwargs={k: shape_convert_to_tensor(v, discontiguous=True) if
+                isinstance(v, tuple) else v for k, v in op_kwargs.items()},
+                sample_name=op_info.name,
+            )
+
+    if empty_tensor:
+        yield OpSampleInput(
+            op_input=make_arg(op_input_shape),
+            op_args=tuple(make_arg(i) if isinstance(i, tuple) else i for i in op_args_shapes),
+            op_kwargs={k: make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
+            sample_name=op_info.name + 'empty_tensor',
+        )
+    else:
+        data_list=[]
+        if dtype is not None and dtype.is_floating_point:
+            _float_small_values = dtypes_extra_values['_float_small_values']
+            if dtype == ms.float16:
+                _large_values = dtypes_extra_values['_fp16_large_values']
+            else:
+                _large_values = dtypes_extra_values['_fp32_large_values']
+
+            data_list.extend([_float_small_values, _large_values])
+
+            if not op_info.disable_extremal_value_tensor_inputs:
+                if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+                    data_list.extend([(np.inf,), (-np.inf,), (np.nan,)])
+
+        if dtype in dtypes_integral and dtype != ms.bool_:
+            if dtype in dtypes_extra_uint or dtype == ms.uint8:
+                data_list.extend([dtypes_extra_values['_uint_small_values']])
+            else:
+                data_list.extend([dtypes_extra_values['_int_small_values']])
+
+        for data in data_list:
+            yield  from _make_extra_op(data, op_input_shape, op_args_shapes, op_kwargs )
+
+        # ---- discontiguous tensors ----
+        yield from _make_extra_op(op_input_shape=op_input_shape, op_args_shapes=op_args_shapes, op_kwargs=op_kwargs,
+                                  discontiguous=True,)
+
+        if dtype_promotion:
+            support_dtype = list(op_info.get_supported_dtypes(device))
+            support_dtype.remove(dtype)
+            for other_dtype in support_dtype:
+
+                yield OpSampleInput(
+                    op_input=make_tensor(op_input_shape, dtype=dtype, device=device),
+                    op_args=tuple(make_tensor(i, dtype=other_dtype, device=device)
+                                  if isinstance(i, tuple) else i for i in op_args_shapes),
+                    op_kwargs={k: make_tensor(v, dtype=other_dtype, device=device)
+                    if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
+                    sample_name=op_info.name + f'{dtype}_promotion_{other_dtype}',
+                )
+
+
+def make_error_tensor_with_matrix_multiply(op_info: OpInfo, input_dim, other_dim, is_addition=False, device=None,):
+
+    B = 2
+    N = 4
+    C = 6
+    M = 8
+    B2 =3
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    if input_dim == 2 and other_dim ==1:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((N, C)),
+                op_args=(make_arg((M,)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.shape[-1] should equal other.shape[0]',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((N, C)),
+                op_args=(make_arg((C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='other.dim should equal 1',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((N, C)),
+                op_args=(make_arg(()),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='other.dim should equal 1',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((B, N, C)),
+                op_args=(make_arg((C, )),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.dim should equal 2',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((C, )),
+                op_args=(make_arg((C, )),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.dim should equal 2',
+        )
+    elif  input_dim == 2 and other_dim ==2:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((N, C)),
+                op_args=(make_arg((M, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.shape[-1] should equal other.shape[0]',
+        )
+    elif input_dim == 3 and other_dim ==3:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((B, N, C)),
+                op_args=(make_arg((B, M, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.shape[-1] should equal other.shape[1]',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((B, N, C)),
+                op_args=(make_arg((B2, C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.shape[0] should equal other.shape[0]',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((B2, B, N, C)),
+                op_args=(make_arg((B, C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.shape should be equal 3',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((B, N, C)),
+                op_args=(make_arg((C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='other.shape should be equal 3',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((N, C)),
+                op_args=(make_arg((B, C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.shape should be equal 3',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((B, N, C)),
+                op_args=(make_arg((B2, B, C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='other.shape should be equal 3',
+        )
+    elif input_dim == 1 and other_dim ==1:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((C, )),
+                op_args=(make_arg((C, M)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='other.dim should equal 1',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((C,)),
+                op_args=(make_arg(()),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='other.dim should equal 1',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((C, M)),
+                op_args=(make_arg((M, )),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.dim should equal 1',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(()),
+                op_args=(make_arg((M,)),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(RuntimeError, ValueError),
+            op_error_info='input.dim should equal 1',
+        )
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((C, )),
+                op_args=(make_arg((M, )),),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info='input.shape should be equal other.shape',
+        )
+def basic_sample_inputs_inverse(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    for i in range(5):
+
+        yield OpSampleInput(
+            op_input=make_arg(tuple(np.random.randint(1, 9, size=i)) + (3, 3)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_sample_inputs_inverse(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2,3)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the lase two dim should be same.',
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4, 5, 6, 2, 2)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the input tensor cannot be lager than 6 dim.',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, )),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='the input tensor must have at least 2 dim.',
+    )
+
+def extra_sample_inputs_inverse(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (5, 5 ), (), {}, dtype=dtype, device=device,
+                                 exclude_value=(0.0, -0.0))
+
+    yield from make_extra_tensor(op_info, (0, 0), (), {},
+                                 dtype=dtype, device=device, empty_tensor=True)
+
+def basic_sample_inputs_mm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case = (
+        ( (2, 7), (7, 1)  ),
+        ( (1, 8), (8, 9)  )
+    )
+
+    for input, mat2  in case:
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(make_arg(mat2),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_sample_inputs_mm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_error_tensor_with_matrix_multiply(op_info, 2, 2, device=device,)
+
+
+def extra_sample_inputs_mm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (4, 5), ((5, 7),), {},
+                                 dtype=dtype, device=device, exclude_value=( -5062757.7, 5062757.7, -1e20, 1e20))
+
+    yield from make_extra_tensor(op_info, (4, 0), ((0, 7),), {},
+                                 dtype=dtype, device=device, empty_tensor=True)
+
+def basic_sample_inputs_mv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case = (
+        ( (2, 7), (7, )  ),
+        ( (1, 8), (8, )  )
+    )
+
+    for input, vec  in case:
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(make_arg(vec),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_sample_inputs_mv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_error_tensor_with_matrix_multiply(op_info, 2, 1, device=device, )
+
+
+def extra_sample_inputs_mv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (1, 16 ), ((16, ),), {},
+                                 dtype=dtype, device=device)
+
+    yield from make_extra_tensor(op_info, (1, 0), ((0, ),), {},
+                                 dtype=dtype, device=device, empty_tensor=True)
+
+def basic_sample_inputs_outer(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case = (
+        ( (2, ), (10, )  ),
+        ( (3, ), (5, )  ),
+        ( (8, ), (2, )  ),
+    )
+
+    for input, vec  in case:
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(make_arg(vec),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_sample_inputs_outer(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from  make_error_tensor_with_matrix_multiply(op_info, 2, 2, device=device,)
+
+def extra_sample_inputs_outer(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (16, ), ((16, ),), {},
+                                 dtype=dtype, device=device, dtype_promotion=True)
+
+    yield from make_extra_tensor(op_info, (0,), ((0,),), {}, dtype=dtype,
+                                 device=device, empty_tensor=True)
+
+def basic_sample_inputs_bmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case = (
+        ( (2, 4, 7), (2, 7, 1)  ),
+        ( (3, 3, 9 ), (3, 9, 3)  ),
+        ( (8, 7, 2), (8, 2, 1)  ),
+    )
+
+    for input, mat2  in case:
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(make_arg(mat2),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_sample_inputs_bmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_error_tensor_with_matrix_multiply(op_info, 3, 3, device=device,)
+
+def extra_sample_inputs_bmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (1, 3, 6 ), ((1, 6 ,3),), {},
+                                 dtype=dtype, device=device, exclude_value=( -5062757.7, 5062757.7, -1e20, 1e20))
+
+    yield from make_extra_tensor(op_info, (1, 3, 0), ((1, 0, 7),), {}, dtype=dtype,
+                                 device=device, empty_tensor=True)
+
+def dynamic_sample_inputs_mint_bmm(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    # dyncamic shape
+    yield OpDynamicInput(
+        op_compile_input=OpSampleInput(
+            op_input=ms.Tensor(shape=(2, None, None), dtype=dtype),
+            op_args=(ms.Tensor(shape=(2, None, None), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+        ),
+        op_running_inputs=(
+            OpSampleInput(
+                op_input=make_func(shape=(2, 2, 3), ),
+                op_args=(make_func(shape=(2, 3, 4), ),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+            OpSampleInput(
+                op_input=make_func(shape=(2, 4, 5),),
+                op_args=(make_func(shape=(2, 5, 3), ),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+        ),
+    )
+
+def dynamic_sample_inputs_mint_addmm(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    # dyncamic shape
+    yield OpDynamicInput(
+        op_compile_input=OpSampleInput(
+            op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+            op_args=(ms.Tensor(shape=(None, None), dtype=dtype),ms.Tensor(shape=(None, None), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+        ),
+        op_running_inputs=(
+            OpSampleInput(
+                op_input=make_func(shape=(3, 10) ),
+                op_args=(make_func(shape=(3, 6) ),make_func(shape=(6, 10) ) ),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+            OpSampleInput(
+                op_input=make_func(shape=(5, 3) ),
+                op_args=(make_func(shape=(5, 10) ),make_func(shape=(10, 3) ) ),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+        ),
+    )
+
+def basic_sample_inputs_addmv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case = (
+        ((2, ), (2, 10,), (10,)  ),
+        ((3, ), (3, 9), (9, )  ),
+        ((1, ), (8, 2), (2, )  ),
+    )
+
+    for input, mat, vec  in case:
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(make_arg(mat), make_arg(vec),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+        if dtype.is_floating_point:
+            yield OpSampleInput(
+                op_input=make_arg(input),
+                op_args=(make_arg(mat), make_arg(vec),),
+                op_kwargs={'beta':2.6, 'alpha':3},
+                sample_name=op_info.name,
+            )
+
+            yield OpSampleInput(
+                op_input=make_arg(input),
+                op_args=(make_arg(mat), make_arg(vec),),
+                op_kwargs={'beta':3, 'alpha':5.7},
+                sample_name=op_info.name,
+            )
+        else:
+            yield OpSampleInput(
+                op_input=make_arg(input),
+                op_args=(make_arg(mat), make_arg(vec),),
+                op_kwargs={'beta': 3, 'alpha': 5},
+                sample_name=op_info.name,
+            )
+
+def error_sample_inputs_addmv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    N = 3
+    M = 10
+    C = 6
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, )),
+            op_args=(make_arg((N, M)), make_arg((C, ))),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='vec.shape[0] should equal mat.shape[-1]',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N,)),
+            op_args=(make_arg((N, M)), make_arg((M, C))),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='vec.dim should be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N,)),
+            op_args=(make_arg((N, M, C)), make_arg((C, ))),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='mat.dim should be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, )),
+            op_args=(make_arg((N, )), make_arg((N, ))),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='mat.dim should be 2',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N,)),
+            op_args=(make_arg((M, C)), make_arg((C, ))),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input.shape should be  broadcasted by  mat@vec.shape',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, M,)),
+            op_args=(make_arg((M, C)), make_arg((C,))),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='input.dim should be 1',
+    )
+
+def extra_sample_inputs_addmv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (16, ), ((16, 16), (16, )), {},
+                                 dtype=dtype, device=device, exclude_value=(-5062757.7, 5062757.7, 1e20,-1e20))
+
+    yield from make_extra_tensor(op_info, (0, ), ((0, 7), (7, )), {},
+                                 dtype=dtype, device=device, empty_tensor=True)

@@ -136,6 +136,7 @@ class OpInfo:
     gpu_forward_loss_override: Optional[dict] = None
     gpu_backward_loss_override: Optional[dict] = None
     flatten_inputs_for_backward: Optional[bool] = False
+    disable_extremal_value_tensor_inputs: Optional[bool] = False
     #use error type test
     not_support_dtypes:Optional[tuple] = None
 
@@ -174,12 +175,12 @@ def error_inputs_other_op_common_func(op_error_inputs_func = None):
         Callable[..., Generator[OpErrorInput, None, None]] A generator factory
             that yields error samples and expected exception types.
     """
-    def _error_inputs_other_op_func(op_info: OpInfo, device=None, **kwargs):
+    def _error_inputs_other_op_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
         if op_error_inputs_func is not None:
             yield from itertools.chain.from_iterable(
-                func(op_info, device, **kwargs) for func in op_error_inputs_func
+                func(op_info, dtype, device, **kwargs) for func in op_error_inputs_func
                 ) if isinstance(op_error_inputs_func, (list, tuple)) else \
-                    op_error_inputs_func(op_info, device, **kwargs)
+                    op_error_inputs_func(op_info, dtype, device, **kwargs)
         if op_info.not_support_dtypes is not None:
             for input_dtype in op_info.not_support_dtypes:
                 sample_input_iter=op_info.op_basic_reference_inputs_func(op_info, input_dtype, device)

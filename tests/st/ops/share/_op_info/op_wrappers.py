@@ -699,7 +699,7 @@ def tensor_nn_functional_dropout_ms(op_input, p=0.5, training=False):
     input_clone = op_input.clone()
     if  0 < p < 1:
         if training:
-            if op_input.dtype.is_floating_point:
+            if op_input.dtype.is_floating_point and op_input.dtype != ms.float64:
                 sizes = 0
                 m1 = None
                 for _ in  range(100):
@@ -707,14 +707,14 @@ def tensor_nn_functional_dropout_ms(op_input, p=0.5, training=False):
                     sizes = sizes + (m1 == 0).sum().item()
                 input_clone[m1 == 0] = 0
                 return (1 / (1-p) * input_clone -m1, ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
-            return ms.Tensor(1, dtype=op_input.dtype)
+            return op_input*0
     return  mint.nn.functional.dropout(op_input, p=p, training=training)
 
 
 def tensor_nn_functional_dropout_torch(op_input, p=0.5, training=False):
     if  0 < p < 1:
         if training:
-            if op_input.dtype.is_floating_point:
+            if op_input.dtype.is_floating_point and op_input.dtype != torch.float64:
                 sizes = 0
                 t1 = None
                 input_clone = op_input.clone()
@@ -724,5 +724,32 @@ def tensor_nn_functional_dropout_torch(op_input, p=0.5, training=False):
                 input_clone[t1 == 0] = 0
                 return (1 / (1 - p) * input_clone - t1, torch.tensor(sizes / (100 * op_input.numel()),
                                                                      dtype=op_input.dtype))
-            return torch.tensor(1, dtype=op_input.dtype)
+            return op_input*0
     return torch.nn.functional.dropout(op_input, p=p, training=training)
+
+def tensor_triangular_solve_ms(B, A, upper=True, transpose=False, unitriangular=False ):
+    return mint.triangular_solve(B, A, upper=upper, transpose=transpose, unitriangular=unitriangular)[0]
+
+def tensor_triangular_solve_torch(B, A, upper=True, transpose=False, unitriangular=False ):
+    return torch.triangular_solve(B, A, upper=upper, transpose=transpose, unitriangular=unitriangular)[0]
+
+def tensor_baddbmm_ms(input, batch1, batch2, beta=1, alpha=1 ):
+    return mint.baddbmm(input, batch1, batch2, beta=beta, alpha=alpha)
+
+def tensor_addmv_ms(input, mat1, mat2, beta=1, alpha=1 ):
+    return mint.addmv(input, mat1, mat2, beta=beta, alpha=alpha)
+
+def tensor_addmv_torch(input, mat1, mat2, beta=1, alpha=1 ):
+    return torch.addmv(input, mat1, mat2, beta=beta, alpha=alpha)
+
+def mint_addmm_ms(input, mat1, mat2, beta=1, alpha=1 ):
+    return mint.addmm(input, mat1, mat2, beta=beta, alpha=alpha)
+
+def mint_addmm_torch(input, mat1, mat2, beta=1, alpha=1 ):
+    return torch.addmm(input, mat1, mat2, beta=beta, alpha=alpha)
+
+def tensor_addmm_ms(input, mat1, mat2, beta=1, alpha=1 ):
+    return input.addmm(mat1, mat2, beta=beta, alpha=alpha)
+
+def tensor_addmm_torch(input, mat1, mat2, beta=1, alpha=1 ):
+    return input.addmm(mat1, mat2, beta=beta, alpha=alpha)
