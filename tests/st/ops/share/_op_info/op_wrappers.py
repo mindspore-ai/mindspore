@@ -1052,3 +1052,21 @@ def mint_nn_softmax_ms(op_input, dim=None):
 
 def mint_nn_softmax_torch(op_input, dim=None):
     return torch.nn.Softmax(dim=dim)(op_input)
+
+def mint_searchsorted_ms(sorted_sequence, values, out_int32=False, right=False, side=None, sorter=None):
+    return mint.searchsorted(sorted_sequence=sorted_sequence, values=values, out_int32=out_int32, right=right,
+                             side=side, sorter=sorter)
+
+def mint_searchsorted_torch(sorted_sequence, values, out_int32=False, right=False, side=None, sorter=None):
+    if side is None:
+        side = "left"
+    kwargs_p = {
+        "sorted_sequence": sorted_sequence,
+        "input": values,
+        "out_int32": out_int32,
+        "right": right,
+        "side": side,
+    }
+    if sorter is not None:
+        kwargs_p["sorter"] = sorter
+    return torch.searchsorted(**kwargs_p)
