@@ -60,11 +60,6 @@ void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream
   auto tensor_address = std::static_pointer_cast<device::DeviceAddress>(addr);
   if (tensor_address->GetDeviceType() == device_context->GetDeviceType()) {
     MS_LOG(DEBUG) << "Already have device address of tensor " << tensor->id();
-    // The device address may exist without allocated memory (e.g., tensor created via tensor::from_spec).
-    // Dispatch MallocForInput so the kernel sees a valid device pointer; it is a no-op when memory is
-    // already allocated.
-    mindspore::kernel::pyboost::PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
-      [device_context, tensor]() { kernel::pyboost::PyBoostUtils::MallocForInput(device_context, tensor); }));
     return;
   }
 
