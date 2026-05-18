@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace pynative {
 GradState &GradState::Get() {
-  static GradState instance;
+  static thread_local GradState instance;
   return instance;
 }
 }  // namespace pynative

@@ -22,8 +22,8 @@
 #include <memory>
 #include <future>
 
-#include "runtime/pipeline/task/task.h"
 #include "include/backend/common/kernel_graph/session_basic.h"
+#include "include/pynative/utils/runtime/pynative_async_task.h"
 #include "include/pynative/utils/runtime/op_compiler.h"
 
 namespace mindspore {
@@ -54,10 +54,10 @@ class PYNATIVE_UTILS_EXPORT OpTaskContext {
   bool is_pyantive_infer_;
 };
 
-class PYNATIVE_UTILS_EXPORT DeviceOpTask : public AsyncTask {
+class PYNATIVE_UTILS_EXPORT DeviceOpTask : public pynative::PyNativeAsyncTask {
  public:
   DeviceOpTask(std::shared_ptr<OpTaskContext> context, TaskType task_type)
-      : AsyncTask(task_type), context_(std::move(context)) {}
+      : pynative::PyNativeAsyncTask(task_type), context_(std::move(context)) {}
   ~DeviceOpTask() override = default;
 
   void Run() override {}
@@ -79,9 +79,10 @@ class PYNATIVE_UTILS_EXPORT DeviceOpRunTask : public DeviceOpTask {
   std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func_;
 };
 
-class PYNATIVE_UTILS_EXPORT PyBoostDeviceTask : public AsyncTask {
+class PYNATIVE_UTILS_EXPORT PyBoostDeviceTask : public pynative::PyNativeAsyncTask {
  public:
-  explicit PyBoostDeviceTask(std::function<void()> run_func) : AsyncTask(kPyBoostOpTask), run_func_(run_func) {}
+  explicit PyBoostDeviceTask(std::function<void()> run_func)
+      : pynative::PyNativeAsyncTask(kPyBoostOpTask), run_func_(run_func) {}
   ~PyBoostDeviceTask() = default;
 
   void Run() override;
@@ -90,9 +91,10 @@ class PYNATIVE_UTILS_EXPORT PyBoostDeviceTask : public AsyncTask {
   std::function<void()> run_func_;
 };
 
-class PYNATIVE_UTILS_EXPORT DeviceLaunchTask : public AsyncTask {
+class PYNATIVE_UTILS_EXPORT DeviceLaunchTask : public pynative::PyNativeAsyncTask {
  public:
-  explicit DeviceLaunchTask(std::function<void()> run_func) : AsyncTask(kKernelTask), run_func_(std::move(run_func)) {}
+  explicit DeviceLaunchTask(std::function<void()> run_func)
+      : pynative::PyNativeAsyncTask(kKernelTask), run_func_(std::move(run_func)) {}
   ~DeviceLaunchTask() = default;
 
   void Run() override;
@@ -101,10 +103,10 @@ class PYNATIVE_UTILS_EXPORT DeviceLaunchTask : public AsyncTask {
   std::function<void()> run_func_;
 };
 
-class PYNATIVE_UTILS_EXPORT PassthroughDeviceTask : public AsyncTask {
+class PYNATIVE_UTILS_EXPORT PassthroughDeviceTask : public pynative::PyNativeAsyncTask {
  public:
   explicit PassthroughDeviceTask(std::function<void(void)> run_func)
-      : AsyncTask(kDeviceOpTask), run_func_(std::move(run_func)) {}
+      : pynative::PyNativeAsyncTask(kDeviceOpTask), run_func_(std::move(run_func)) {}
   ~PassthroughDeviceTask() override = default;
   void Run() override;
 
@@ -112,10 +114,10 @@ class PYNATIVE_UTILS_EXPORT PassthroughDeviceTask : public AsyncTask {
   std::function<void(void)> run_func_;
 };
 
-class PYNATIVE_UTILS_EXPORT PassthroughNoWaitDeviceTask : public AsyncTask {
+class PYNATIVE_UTILS_EXPORT PassthroughNoWaitDeviceTask : public pynative::PyNativeAsyncTask {
  public:
   explicit PassthroughNoWaitDeviceTask(std::function<void(void)> run_func)
-      : AsyncTask(kDeviceOpTask), run_func_(std::move(run_func)) {}
+      : pynative::PyNativeAsyncTask(kDeviceOpTask), run_func_(std::move(run_func)) {}
   ~PassthroughNoWaitDeviceTask() override = default;
   void Run() override;
 

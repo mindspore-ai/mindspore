@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include "include/utils/tensor_py.h"
 #include "include/utils/pynative/adapter.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "include/utils/pynative/hook.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "pynative/backward/grad_utils.h"
@@ -70,7 +71,7 @@ void PyTensorBackwardNodePreHook::operator()(ValuePtrList *grad) {
   const auto ret = hook_fn_(py_grad);
   if (!ret.is_none()) {
     if (tensor::IsTensorPy(ret)) {
-      (*grad)[output_idx_] = tensor::ConvertToTensor(ret);
+      (*grad)[output_idx_] = ConvertPyObjectToTensorWithSourcePyObj(ret);
     } else {
       MS_LOG(EXCEPTION) << "Tensor hook should be return Tensor, but get type: "
                         << py::str(ret.get_type().attr("__name__")).cast<std::string>() << ".";

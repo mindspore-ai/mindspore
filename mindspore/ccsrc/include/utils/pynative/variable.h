@@ -421,6 +421,7 @@ COMMON_EXPORT ViewAutoGradMetaDataPtr GetViewAutogradMetaImpl(const tensor::Tens
 COMMON_EXPORT BackwardNodePtr GetUnsafeGradNodeImpl(const tensor::TensorPtr &tensor);
 COMMON_EXPORT bool RequiresGrad(const tensor::TensorPtr &tensor);
 COMMON_EXPORT AutoDiffInterfacePtr CurrentAutoDiffEngine();
+COMMON_EXPORT void SetCurrentAutoDiffEngine(const AutoDiffInterfacePtr &auto_diff);
 }  // namespace impl
 }  // namespace mindspore::pynative::autograd
 

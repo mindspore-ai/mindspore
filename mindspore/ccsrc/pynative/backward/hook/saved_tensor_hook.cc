@@ -18,12 +18,13 @@
 #include <utility>
 #include <memory>
 #include "include/utils/tensor_py.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "include/utils/pynative/grad_state.h"
 #include "include/runtime/pipeline/pipeline.h"
 
 namespace mindspore::pynative::autograd {
-std::stack<std::pair<py::function, py::function>> DefaultSavedTensorHookUtil::hook_stack_ = {};
-std::optional<std::string> DefaultSavedTensorHookUtil::disabled_error_message_ = std::nullopt;
+thread_local std::stack<std::pair<py::function, py::function>> DefaultSavedTensorHookUtil::hook_stack_ = {};
+thread_local std::optional<std::string> DefaultSavedTensorHookUtil::disabled_error_message_ = std::nullopt;
 
 PySavedTensorHook::PySavedTensorHook(py::function pack_hook, py::function unpack_hook)
     : pack_hook_(std::move(pack_hook)), unpack_hook_(std::move(unpack_hook)) {}
@@ -44,7 +45,7 @@ void PySavedTensorHook::RunPackHook(const tensor::TensorPtr &tensor) {
 tensor::TensorPtr PySavedTensorHook::RunUnpackHook() {
   py::gil_scoped_acquire gil;
   const auto ret = unpack_hook_(data_);
-  const auto ret_tensor = tensor::ConvertToTensor(ret);
+  const auto ret_tensor = ConvertPyObjectToTensorWithSourcePyObj(ret);
   runtime::Pipeline::Get().WaitFrontend();
   MS_EXCEPTION_IF_NULL(ret_tensor);
   runtime::Pipeline::Get().WaitFrontend();

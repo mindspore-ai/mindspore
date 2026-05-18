@@ -23,11 +23,13 @@
 namespace mindspore {
 namespace pynative {
 void PyboostTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
-                                     op_run_info_ != nullptr ? op_run_info_->op_prim->name() : "Others", false, false,
-                                     task_id_);
-  run_func_(op_run_info_);
-  op_run_info_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(
+      runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+      op_run_info_ != nullptr ? op_run_info_->op_prim->name() : "Others", false, false, task_id_);
+    run_func_(op_run_info_);
+    op_run_info_ = nullptr;
+  });
 }
 
 void PyboostTask::SetException(const std::exception_ptr &e) {
@@ -39,11 +41,13 @@ void PyboostTask::SetException(const std::exception_ptr &e) {
 }
 
 void FrontendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
-                                     op_run_info_ != nullptr ? op_run_info_->base_op_run_info.op_name : "Others", false,
-                                     false, task_id_);
-  run_func_(op_run_info_);
-  op_run_info_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(
+      runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+      op_run_info_ != nullptr ? op_run_info_->base_op_run_info.op_name : "Others", false, false, task_id_);
+    run_func_(op_run_info_);
+    op_run_info_ = nullptr;
+  });
 }
 
 void FrontendTask::SetException(const std::exception_ptr &e) {
@@ -55,9 +59,12 @@ void FrontendTask::SetException(const std::exception_ptr &e) {
 }
 
 void PassthroughFrontendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
-                                     runtime::ProfilerRecorder::kNoName, false, false, task_id_);
-  run_func_();
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                       runtime::ProfilerEvent::kPyNativeFrontendTask,
+                                       runtime::ProfilerRecorder::kNoName, false, false, task_id_);
+    run_func_();
+  });
 }
 
 void PassthroughFrontendTask::SetException(const std::exception_ptr &e) {
@@ -69,10 +76,12 @@ void PassthroughFrontendTask::SetException(const std::exception_ptr &e) {
 }
 
 void ViewPyboostPromiseTask::Run() {
-  static const std::string op_name = "View Operators";
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
-                                     op_name, false, false, task_id_);
-  run_func_();
+  RunWithPyNativeContext([this]() {
+    static const std::string op_name = "View Operators";
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                       runtime::ProfilerEvent::kPyNativeFrontendTask, op_name, false, false, task_id_);
+    run_func_();
+  });
 }
 
 void ViewPyboostPromiseTask::SetException(const std::exception_ptr &e) {
@@ -84,12 +93,15 @@ void ViewPyboostPromiseTask::SetException(const std::exception_ptr &e) {
 }
 
 void SliceOpFrontendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
-                                     "Slice Op", false, false, task_id_);
-  run_func_(input_values_, slice_op_infos_, requires_grad_, stub_output_, stream_id_);
-  input_values_.clear();
-  slice_op_infos_.clear();
-  stub_output_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                       runtime::ProfilerEvent::kPyNativeFrontendTask, "Slice Op", false, false,
+                                       task_id_);
+    run_func_(input_values_, slice_op_infos_, requires_grad_, stub_output_, stream_id_);
+    input_values_.clear();
+    slice_op_infos_.clear();
+    stub_output_ = nullptr;
+  });
 }
 
 void SliceOpFrontendTask::SetException(const std::exception_ptr &e) {
@@ -100,18 +112,22 @@ void SliceOpFrontendTask::SetException(const std::exception_ptr &e) {
 }
 
 void BackendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
-                                     runtime::ProfilerRecorder::kNoName, false, false, task_id_);
-  run_func_(op_run_info_, backend_op_run_info_);
-  op_run_info_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                       runtime::ProfilerRecorder::kNoName, false, false, task_id_);
+    run_func_(op_run_info_, backend_op_run_info_);
+    op_run_info_ = nullptr;
+  });
 }
 
 void AllocViewMemBackendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
-                                     std::string("AllocView"), false, false, task_id_);
-  run_func_(op_run_info_, input_tensor_, input_idx_, need_wait_);
-  op_run_info_ = nullptr;
-  input_tensor_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                       std::string("AllocView"), false, false, task_id_);
+    run_func_(op_run_info_, input_tensor_, input_idx_, need_wait_);
+    op_run_info_ = nullptr;
+    input_tensor_ = nullptr;
+  });
 }
 
 void AllocViewMemBackendTask::SetException(const std::exception_ptr &e) {
@@ -122,17 +138,21 @@ void AllocViewMemBackendTask::SetException(const std::exception_ptr &e) {
 }
 
 void ContiguousBackendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
-                                     std::string("Contiguous"), false, false, task_id_);
-  run_func_(tensor_);
-  tensor_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                       std::string("Contiguous"), false, false, task_id_);
+    run_func_(tensor_);
+    tensor_ = nullptr;
+  });
 }
 
 void ViewKernelBackendTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
-                                     std::string("ViewKernel"), false, false, task_id_);
-  run_func_(op_run_info_, task_type_);
-  op_run_info_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                       std::string("ViewKernel"), false, false, task_id_);
+    run_func_(op_run_info_, task_type_);
+    op_run_info_ = nullptr;
+  });
 }
 }  // namespace pynative
 }  // namespace mindspore

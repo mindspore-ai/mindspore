@@ -255,6 +255,14 @@ inline tensor::TensorPtr WrapTensorWithSourcePyObj(const tensor::TensorPtr &orig
   return new_tensor;
 }
 
+inline tensor::TensorPtr ConvertPyObjectToTensorWithSourcePyObj(const py::object &obj) {
+  auto tensor = tensor::ConvertToTensor(obj);
+  if (tensor != nullptr && tensor->has_ms_dispatch()) {
+    return WrapTensorWithSourcePyObj(tensor, obj);
+  }
+  return tensor;
+}
+
 template <typename T>
 inline py::object GetMsDispatch(const T &) {
   return py::none();

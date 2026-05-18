@@ -128,17 +128,19 @@ class NoFallbackGuard {
  public:
   NoFallbackGuard() {}
   NoFallbackGuard &Enter() {
+    prev_enabled_ = fallback_enable_;
     fallback_enable_ = false;
     return *this;
   }
   bool Exit(py::object /*exc_type*/, py::object /*exc*/, py::object /*tb*/) {
-    fallback_enable_ = true;
+    fallback_enable_ = prev_enabled_;
     return false;  // rethrow exception.
   }
   static bool fallback_enabled() { return fallback_enable_; }
 
  private:
-  inline static bool fallback_enable_{true};
+  bool prev_enabled_{true};
+  inline static thread_local bool fallback_enable_{true};
 };
 
 bool fallback_enabled() { return NoFallbackGuard::fallback_enabled(); }

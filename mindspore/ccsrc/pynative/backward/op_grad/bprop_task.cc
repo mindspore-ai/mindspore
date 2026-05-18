@@ -22,12 +22,14 @@
 namespace mindspore {
 namespace pynative {
 void BpropTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBpropTask,
-                                     runtime::ProfilerRecorder::kNoName, false);
-  MS_LOG(DEBUG) << "run construct bprop task";
-  run_task_();
-  run_task_ = nullptr;
-  MS_LOG(DEBUG) << "finish construct bprop task";
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBpropTask,
+                                       runtime::ProfilerRecorder::kNoName, false);
+    MS_LOG(DEBUG) << "run construct bprop task";
+    run_task_();
+    run_task_ = nullptr;
+    MS_LOG(DEBUG) << "finish construct bprop task";
+  });
 }
 }  // namespace pynative
 }  // namespace mindspore

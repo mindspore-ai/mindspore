@@ -16,6 +16,7 @@
 
 #include "include/utils/pynative/variable.h"
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <utility>
@@ -28,10 +29,9 @@
 
 namespace mindspore::pynative::autograd {
 namespace {
-uint64_t AddId() {
-  static uint64_t id = 0;
-  return id++;
-}
+std::atomic<uint64_t> g_backward_node_id{0};
+
+uint64_t AddId() { return g_backward_node_id.fetch_add(1, std::memory_order_relaxed); }
 
 void RebuildTensorGrad(const BackwardNodePtr &grad_node, const tensor::TensorPtr &tensor, size_t output_index) {
   MS_EXCEPTION_IF_NULL(grad_node);
@@ -51,7 +51,7 @@ bool IsOutputPlaceHolder(const ValuePtr &output) {
   return true;
 }
 
-AutoDiffInterfacePtr local_auto_diff_engine{nullptr};
+thread_local AutoDiffInterfacePtr local_auto_diff_engine{nullptr};
 }  // namespace
 
 ValuePtr SavedNode::Unwrap(BackwardNodePtr grad_node, bool only_tensor) {
@@ -289,6 +289,8 @@ bool RequiresGrad(const tensor::TensorPtr &tensor) {
 }
 
 AutoDiffInterfacePtr CurrentAutoDiffEngine() { return local_auto_diff_engine; }
+
+void SetCurrentAutoDiffEngine(const AutoDiffInterfacePtr &auto_diff) { local_auto_diff_engine = auto_diff; }
 
 }  // namespace impl
 }  // namespace mindspore::pynative::autograd

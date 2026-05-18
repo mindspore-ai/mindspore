@@ -19,6 +19,8 @@
 
 #include <stack>
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
 #include "pybind11/pybind11.h"
 #include "ir/tensor.h"
@@ -47,8 +49,8 @@ struct DefaultSavedTensorHookUtil {
   static bool IsActive();
 
  private:
-  static std::stack<std::pair<py::function, py::function>> hook_stack_;
-  static std::optional<std::string> disabled_error_message_;
+  static thread_local std::stack<std::pair<py::function, py::function>> hook_stack_;
+  static thread_local std::optional<std::string> disabled_error_message_;
 };
 
 }  // namespace mindspore::pynative::autograd

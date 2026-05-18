@@ -21,7 +21,7 @@ namespace mindspore {
 namespace pynative {
 
 namespace {
-bool ms_dispatch_enable_{true};
+thread_local bool ms_dispatch_enable_{true};
 }
 
 bool ms_dispatch_enabled() { return ms_dispatch_enable_; }

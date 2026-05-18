@@ -931,6 +931,12 @@ PyObject *TensorPy_make_subclass(PyTypeObject *, PyObject *args, PyObject *kwarg
     MS_LOG(DEBUG) << "Set ms_dispatch flag to " << new_tensor->ToString();
     new_tensor->set_has_ms_dispatch(true);
     TensorPybind::SetUserData(new_tensor, py::str(pynative::GetMsDispatchStr()), ms_dispatch_attr);
+    // NOTE: Do NOT also stash source_py_obj on ``new_tensor`` here.
+    // ``new_tensor`` is held by ``obj->value`` (shared_ptr), so a
+    // source_py_obj user_data carrying ``obj`` would form a refcount
+    // cycle: Python obj -> C++ tensor -> Python obj.  source_py_obj is
+    // populated only on separate shadow tensors at Python/C++ return
+    // boundaries where the lifetime is short and the cycle resolves naturally.
   }
   return obj;
 }
