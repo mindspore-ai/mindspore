@@ -187,6 +187,12 @@ def tensor_repeat_ms(op_input, *sizes):
 def tensor_repeat_torch(op_input, *sizes):
     return op_input.repeat(*sizes)
 
+def tensor_repeat_ms_overload1(op_input, repeats):
+    return op_input.repeat(repeats)
+
+def tensor_repeat_torch_overload1(op_input, repeats):
+    return op_input.repeat(repeats)
+
 def tensor_reshape_ms(op_input, *sizes):
     return op_input.reshape(*sizes)
 
@@ -310,6 +316,18 @@ def tensor_to_ms(op_input, dtype=ms.float32):
 # tensor.to has keyword parameter
 def tensor_to_torch(op_input, dtype=torch.float32):
     return op_input.to(dtype=dtype)
+
+def tensor_to_ms_overload1(op_input, dtype=None, non_blocking=False, copy=False):
+    return op_input.to(dtype=dtype, non_blocking=non_blocking, copy=copy)
+
+def tensor_to_torch_overload1(op_input, dtype=None, non_blocking=False, copy=False):
+    return op_input.to(dtype=dtype, non_blocking=non_blocking, copy=copy)
+
+def tensor_to_ms_overload2(op_input, device=None, dtype=None, non_blocking=False, copy=False):
+    return op_input.to(device=device, dtype=dtype, non_blocking=non_blocking, copy=copy)
+
+def tensor_to_torch_overload2(op_input, device=None, dtype=None, non_blocking=False, copy=False):
+    return op_input.to(device=device, dtype=dtype, non_blocking=non_blocking, copy=copy)
 
 def tensor_div_ms(op_input, other, rounding_mode=None):
     return mint.div(op_input, other, rounding_mode=rounding_mode)
@@ -493,11 +511,13 @@ def tensor_sin_torch(op_input):
     return op_input.sin()
 
 # wrap tensor method for add
-def tensor_add_ms(op_input, args):
-    return op_input.add(args)
+def tensor_add_ms(op_input, other, alpha=1):
+    cloned_input = op_input.clone()
+    return cloned_input.add(other, alpha=alpha)
 
-def tensor_add_torch(op_input, args):
-    return op_input.add(args)
+def tensor_add_torch(op_input, other, alpha=1):
+    cloned_input_pt = op_input.clone()
+    return cloned_input_pt.add(other, alpha=alpha)
 
 # wrap tensor method for sub
 def tensor_sub_ms(op_input, args):
@@ -584,11 +604,11 @@ def tensor_split_torch(op_input, args, dim):
     return op_input.split(args, dim)
 
 # wrap tensor method for index_select
-def tensor_index_select_ms(op_input, axis, index):
-    return op_input.index_select(axis, index)
+def tensor_index_select_ms(op_input, dim, index):
+    return op_input.index_select(dim, index)
 
-def tensor_index_select_torch(op_input, axis, index):
-    return op_input.index_select(axis, index)
+def tensor_index_select_torch(op_input, dim, index):
+    return op_input.index_select(dim, index)
 
 # wrap tensor method for cos
 def tensor_cos_ms(op_input):
