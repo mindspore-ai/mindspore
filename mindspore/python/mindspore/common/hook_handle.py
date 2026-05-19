@@ -30,7 +30,6 @@ def _update_hook_version():
 
 
 def _hook_version():
-    global _HOOK_VERSION
     return _HOOK_VERSION
 
 
@@ -114,7 +113,10 @@ class HookHandle:
             self.handle_id = HookHandle.unique_id
             HookHandle.unique_id += 1
             if extra_dict is not None:
-                self.extra_dict_ref = weakref.ref(extra_dict)
+                if isinstance(extra_dict, dict):
+                    self.extra_dict_ref = (weakref.ref(extra_dict),)
+                elif isinstance(extra_dict, (list, tuple)):
+                    self.extra_dict_ref = tuple(weakref.ref(ed) for ed in extra_dict)
 
     @jit_forbidden_register
     def remove(self):
@@ -171,9 +173,10 @@ class HookHandle:
                 del hook_dict[self.handle_id]
 
         if self.extra_dict_ref is not None:
-            extra_dict = self.extra_dict_ref()
-            if extra_dict is not None and self.handle_id in extra_dict:
-                del extra_dict[self.handle_id]
+            for dict_ref in self.extra_dict_ref:
+                extra_dict = dict_ref()
+                if extra_dict is not None and self.handle_id in extra_dict:
+                    del extra_dict[self.handle_id]
 
 
 def _check_hook_results(pre_res, new_res, hook_fn):

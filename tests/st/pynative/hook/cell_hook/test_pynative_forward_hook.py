@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test pynative forward hook"""
 
 import pytest
 import numpy as np
@@ -78,7 +79,7 @@ def backward_hook_fn_inner(cell, grad_inp, grad_outp):
 
 class SingleNet(nn.Cell):
     def __init__(self):
-        super(SingleNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.relu = nn.ReLU()
         self.handle1 = self.conv.register_forward_hook(forward_hook_fn_add)
@@ -98,7 +99,7 @@ class SingleNet(nn.Cell):
 
 class SingleNetInConstruct(nn.Cell):
     def __init__(self):
-        super(SingleNetInConstruct, self).__init__()
+        super().__init__()
         self.handle1 = None
         self.handle2 = None
         self.handle3 = None
@@ -122,7 +123,7 @@ class SingleNetInConstruct(nn.Cell):
 
 class SingleNetMsFuncInner(nn.Cell):
     def __init__(self):
-        super(SingleNetMsFuncInner, self).__init__()
+        super().__init__()
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.bn.register_forward_pre_hook(forward_pre_hook_fn_add)
         self.bn.register_forward_pre_hook(forward_pre_hook_fn_mul)
@@ -140,7 +141,7 @@ class SingleNetMsFuncInner(nn.Cell):
 
 class SingleNetMsFunc(nn.Cell):
     def __init__(self):
-        super(SingleNetMsFunc, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.inner = SingleNetMsFuncInner()
         self.inner.register_forward_pre_hook(forward_pre_hook_fn_add)
@@ -158,7 +159,7 @@ class SingleNetMsFunc(nn.Cell):
 
 class CompareSingleNet1(nn.Cell):
     def __init__(self):
-        super(CompareSingleNet1, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -173,7 +174,7 @@ class CompareSingleNet1(nn.Cell):
 
 class CompareSingleNet2(nn.Cell):
     def __init__(self):
-        super(CompareSingleNet2, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -193,7 +194,7 @@ class CompareSingleNet2(nn.Cell):
 
 class CompareSingleNet3(nn.Cell):
     def __init__(self):
-        super(CompareSingleNet3, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -210,7 +211,7 @@ class CompareSingleNet3(nn.Cell):
 
 class CompareSingleNet5(nn.Cell):
     def __init__(self):
-        super(CompareSingleNet5, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -232,7 +233,7 @@ class CompareSingleNet5(nn.Cell):
 
 class MultiNet(nn.Cell):
     def __init__(self):
-        super(MultiNet, self).__init__()
+        super().__init__()
         self.mul1 = nn.MatMul()
         self.handle1 = self.mul1.register_forward_pre_hook(forward_pre_hook_fn_multi_add)
         self.handle2 = self.mul1.register_forward_hook(forward_hook_fn_conv)
@@ -250,7 +251,7 @@ class MultiNet(nn.Cell):
 
 class CompareMultiNet1(nn.Cell):
     def __init__(self):
-        super(CompareMultiNet1, self).__init__()
+        super().__init__()
         self.mul = nn.MatMul()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
@@ -269,7 +270,7 @@ class CompareMultiNet1(nn.Cell):
 
 class CompareMultiNet2(nn.Cell):
     def __init__(self):
-        super(CompareMultiNet2, self).__init__()
+        super().__init__()
         self.mul = nn.MatMul()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
@@ -467,7 +468,7 @@ def forward_pre_hook_fn(cell, inputs):
 
 class TestHookNet(nn.Cell):
     def __init__(self):
-        super(TestHookNet, self).__init__()
+        super().__init__()
         self.relu = nn.ReLU()
         self.handle = self.relu.register_forward_pre_hook(forward_pre_hook_fn)
 
@@ -512,7 +513,7 @@ def forward_pre_hook_input_fn(cell, inputs):
 
 class TestHookInputNet(nn.Cell):
     def __init__(self):
-        super(TestHookInputNet, self).__init__()
+        super().__init__()
         self.relu = nn.ReLU()
         self.handle = self.relu.register_forward_pre_hook(forward_pre_hook_input_fn)
 
@@ -543,6 +544,19 @@ class KwargsNet(nn.Cell):
         if bias is not None:
             return x * x + bias
         return x * x
+
+
+class AlwaysCallNet(nn.Cell):
+    def __init__(self, raise_forward=False):
+        super().__init__()
+        self.raise_forward = raise_forward
+
+    def construct(self, x, bias=None):
+        if self.raise_forward:
+            raise RuntimeError("forward failed")
+        if bias is not None:
+            return x + bias
+        return x + 1.0
 
 
 def test_pynative_forward_pre_hook_with_kwargs():
@@ -605,6 +619,165 @@ def test_pynative_forward_hook_with_kwargs():
     handle1.remove()
     output = net(x, bias=bias)
     assert np.allclose(output.asnumpy(), np.array([9.0], dtype=np.float32), 0.000001, 0.000001)
+
+
+def test_pynative_forward_hook_always_call_success():
+    """
+    Feature: PyNative forward hook always_call.
+    Description: Verify that an always_call forward hook works like a normal hook when forward succeeds.
+    Expectation: Success.
+    """
+
+    def forward_hook_always(cell, args, output):
+        return output + 2.0
+
+    net = AlwaysCallNet()
+    net.register_forward_hook(forward_hook_always, always_call=True)
+
+    x = ms.Tensor(1.0, dtype=ms.float32)
+    output = net(x)
+    assert np.allclose(output.asnumpy(), np.array(4.0, dtype=np.float32), 0.000001, 0.000001)
+
+
+def test_pynative_forward_hook_always_call_on_forward_exception():
+    """
+    Feature: PyNative forward hook always_call.
+    Description: Verify that only always_call forward hooks are executed when forward raises an exception.
+    Expectation: Success.
+    """
+
+    records = []
+
+    def always_hook_default(cell, args, output):
+        records.append(("always_default", output is None))
+
+    def regular_hook(cell, args, output):
+        records.append(("regular", output is None))
+
+    def always_hook_prepend(cell, args, output):
+        records.append(("always_prepend", output is None))
+
+    net = AlwaysCallNet(raise_forward=True)
+    net.register_forward_hook(always_hook_default, always_call=True)
+    net.register_forward_hook(regular_hook)
+    net.register_forward_hook(always_hook_prepend, always_call=True, prepend=True)
+
+    x = ms.Tensor(2.0, dtype=ms.float32)
+    with pytest.raises(RuntimeError, match="forward failed"):
+        net(x)
+
+    assert [item[0] for item in records] == ["always_prepend", "always_default"]
+    assert all(item[1] for item in records)
+
+
+def test_pynative_forward_hook_always_call_with_kwargs():
+    """
+    Feature: PyNative forward hook always_call with kwargs.
+    Description: Verify that always_call forward hooks receive kwargs on the exception path and can be removed.
+    Expectation: Success.
+    """
+
+    records = {}
+
+    def forward_hook_kwargs(cell, args, kwargs, output):
+        records["output_is_none"] = output is None
+        records["x"] = args[0].asnumpy().copy()
+        records["bias"] = kwargs["bias"].asnumpy().copy()
+
+    net = AlwaysCallNet(raise_forward=True)
+    handle = net.register_forward_hook(forward_hook_kwargs, with_kwargs=True, always_call=True)
+
+    x = ms.Tensor(2.0, dtype=ms.float32)
+    bias = ms.Tensor(3.0, dtype=ms.float32)
+    with pytest.raises(RuntimeError, match="forward failed"):
+        net(x, bias=bias)
+
+    assert records["output_is_none"] is True
+    assert np.allclose(records["x"], np.array(2.0, dtype=np.float32), 0.000001, 0.000001)
+    assert np.allclose(records["bias"], np.array(3.0, dtype=np.float32), 0.000001, 0.000001)
+
+    handle.remove()
+    records.clear()
+
+    with pytest.raises(RuntimeError, match="forward failed"):
+        net(x, bias=bias)
+    assert not records
+
+
+def test_pynative_forward_hook_always_call_warns_and_preserves_forward_exception():
+    """
+    Feature: PyNative forward hook always_call.
+    Description: Verify hook exceptions are warned when forward fails and raised when forward succeeds.
+    Expectation: Forward exceptions are preserved and hooks execute in order.
+    """
+
+    records = []
+
+    def bad_hook(cell, args, output):
+        records.append("bad_hook")
+        raise ValueError("hook failed")
+
+    def good_hook(cell, args, output):
+        records.append("good_hook")
+
+    net = AlwaysCallNet(raise_forward=True)
+    net.register_forward_hook(bad_hook, always_call=True)
+    net.register_forward_hook(good_hook, always_call=True)
+
+    x = ms.Tensor(2.0, dtype=ms.float32)
+    with pytest.warns(UserWarning, match="silenced because another error was already raised in forward: hook failed"):
+        with pytest.raises(RuntimeError, match="forward failed"):
+            net(x)
+    assert records == ["bad_hook", "good_hook"]
+
+    records.clear()
+    net = AlwaysCallNet(raise_forward=False)
+    net.register_forward_hook(good_hook, always_call=True)
+    net.register_forward_hook(bad_hook, always_call=True)
+    net.register_forward_hook(good_hook, always_call=True)
+    with pytest.raises(ValueError, match="hook failed"):
+        net(x)
+    assert records == ["good_hook", "bad_hook", "good_hook"]
+
+
+def test_pynative_forward_hook_always_call_with_recompute_early_stop():
+    """
+    Feature: PyNative forward hook always_call.
+    Description: Verify that only always_call forward hooks are executed when recompute early_stop.
+    Expectation: Success.
+    """
+
+    record = []
+
+    def always_call_hook(cell, args, output):
+        record.append(0)
+
+    def no_always_call_hook(cell, args, output):
+        record.append(1)
+
+    class InnerNet(nn.Cell):
+        def construct(self, x, y):
+            x1 = x + 3.0
+            z = x1 * y
+            return z + 2.0    # early stop here
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            inner_net = InnerNet()
+            inner_net.register_forward_hook(always_call_hook, always_call=True)
+            inner_net.register_forward_hook(no_always_call_hook)
+            out = inner_net(x, y)
+            record.append(2)
+            return out
+
+    net = Net()
+    net.recompute(use_reentrant=False, early_stop=True)
+
+    x = ms.Tensor(1.0)
+    y = ms.Tensor(2.0)
+
+    ms.value_and_grad(net, grad_position=(0, 1))(x, y)
+    assert record == [0, 1, 2, 0]
 
 
 class TestNet(nn.Cell):
@@ -752,6 +925,11 @@ def test_pynative_cell_forward_hook_test_suite():
     test_pynative_forward_hook_cell_input()
     test_pynative_forward_pre_hook_with_kwargs()
     test_pynative_forward_hook_with_kwargs()
+    test_pynative_forward_hook_always_call_success()
+    test_pynative_forward_hook_always_call_on_forward_exception()
+    test_pynative_forward_hook_always_call_with_kwargs()
+    test_pynative_forward_hook_always_call_with_recompute_early_stop()
+    test_pynative_forward_hook_always_call_warns_and_preserves_forward_exception()
     test_pynative_forward_pre_hook_prepend()
     test_pynative_forward_hook_prepend()
     test_pynative_forward_pre_hook_prepend_with_kwargs()
