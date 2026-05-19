@@ -908,10 +908,6 @@ def test_with_stream_event_with_morph_cse():
     assert len(stream_recv_num) == 4
 
 
-
-
-
-
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=814.00)
 def test_with_stream_with_morph_for_loop():
     """

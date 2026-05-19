@@ -66,7 +66,7 @@ def read_file(save_path):
     return content
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_with_stream_limit():
     """
     Feature: Support with stream.
@@ -105,7 +105,7 @@ def test_with_stream_limit():
     assert len(cube_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_with_stream_limit_runtime():
     """
     Feature: Support with stream.
@@ -145,7 +145,7 @@ def test_with_stream_limit_runtime():
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level2', card_mark='onecard')
 def test_with_stream_limit_diff_stream():
     """
     Feature: Support with stream limit context.
@@ -255,7 +255,7 @@ def test_with_stream_event_with_morph_multi():
     assert len(cube_num) == 5
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_with_stream_limit_runtime_self():
     """
     Feature: Support with stream.
@@ -297,7 +297,7 @@ def test_with_stream_limit_runtime_self():
     assert len(cube_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_with_stream_limit_diff_stream_list():
     """
     Feature: Support with stream limit context.
@@ -411,7 +411,7 @@ def test_with_stream_event_with_morph_multi_cse():
     assert len(muls_num) == 2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
         card_mark='onecard', mem_peak=0.01)
 def test_with_stream_limit_nested():
     """

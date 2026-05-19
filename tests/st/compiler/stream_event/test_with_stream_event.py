@@ -70,7 +70,7 @@ a = Tensor(np.ones([3, 3]), ms.float32)
 b = Tensor(np.ones([3, 3]), ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_with_stream_event():
     """
     Feature: Support event and with stream in graph mode.
@@ -115,7 +115,7 @@ def test_with_stream_event():
     assert len(event_id_num) == 3
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_with_stream_event_grad():
     """
     Feature: Support event and with stream in graph mode.
@@ -309,7 +309,7 @@ def test_with_stream_event_with_morph():
     assert len(event_id_num) == 3
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_with_stream_event_list():
     """
     Feature: Support event and with stream in graph mode.
@@ -360,7 +360,7 @@ def test_with_stream_event_list():
     assert len(event_id_num) == 8
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_cust_class_record_wait():
     """
     Feature: getattr for custom class.
@@ -396,7 +396,7 @@ def test_cust_class_record_wait():
     assert out == 10
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
         card_mark='onecard', mem_peak=0.01)
 def test_cust_class_record_wait_2():
     """
