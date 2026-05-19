@@ -984,3 +984,71 @@ def mint_randn_like_ms(op_input, dtype=None, **op_kwargs):
 
 def mint_randint_like_ms(op_input, low, high, dtype=None, **op_kwargs):
     return mint.randint_like(op_input, low=low, high=high, dtype=dtype, **op_kwargs)
+
+def mint_nn_elu_ms(op_input, alpha=1.0, inplace=False):
+    cloned_input = op_input.clone()
+    result = mint.nn.ELU(alpha=alpha, inplace=inplace)(cloned_input)
+    return result
+
+def mint_nn_elu_torch(op_input, alpha=1.0, inplace=False):
+    cloned_input = op_input.clone()
+    result =  torch.nn.ELU(alpha=alpha, inplace=inplace)(cloned_input)
+    return result
+
+def mint_nn_hardshrink_ms(op_input, lambd=0.5):
+    return mint.nn.Hardshrink(lambd=lambd)(op_input)
+
+def mint_nn_hardshrink_torch(op_input, lambd=0.5):
+    return torch.nn.Hardshrink(lambd=lambd)(op_input)
+
+def mint_nn_hardsigmoid_ms(op_input):
+    return mint.nn.Hardsigmoid()(op_input)
+
+def mint_nn_hardsigmoid_torch(op_input):
+    return torch.nn.Hardsigmoid()(op_input)
+
+def mint_nn_hardswish_ms(op_input):
+    return mint.nn.Hardswish()(op_input)
+
+def mint_nn_hardswish_torch(op_input):
+    return torch.nn.Hardswish()(op_input)
+
+def mint_nn_logsoftmax_ms(op_input, dim=None):
+    return mint.nn.LogSoftmax(dim=dim)(op_input)
+
+def mint_nn_logsoftmax_torch(op_input, dim=None):
+    return torch.nn.LogSoftmax(dim=dim)(op_input)
+
+def mint_nn_mish_ms(op_input):
+    return mint.nn.Mish()(op_input)
+
+def mint_nn_mish_torch(op_input):
+    return torch.nn.Mish()(op_input)
+
+def mint_nn_selu_ms(op_input):
+    return mint.nn.SELU()(op_input)
+
+def mint_nn_selu_torch(op_input):
+    return torch.nn.SELU()(op_input)
+
+def mint_nn_sigmoid_ms(op_input):
+    return mint.nn.Sigmoid()(op_input)
+
+def mint_nn_sigmoid_torch(op_input):
+    return torch.nn.Sigmoid()(op_input)
+
+def mint_nn_silu_ms(op_input, inplace=False):
+    cloned_input = op_input.clone()
+    result = mint.nn.SiLU(inplace=inplace)(cloned_input)
+    return result
+
+def mint_nn_silu_torch(op_input, inplace=False):
+    cloned_input = op_input.clone()
+    result =  torch.nn.SiLU(inplace=inplace)(cloned_input)
+    return result
+
+def mint_nn_softmax_ms(op_input, dim=None):
+    return mint.nn.Softmax(dim=dim)(op_input)
+
+def mint_nn_softmax_torch(op_input, dim=None):
+    return torch.nn.Softmax(dim=dim)(op_input)
