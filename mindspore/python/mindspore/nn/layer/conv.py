@@ -197,8 +197,8 @@ class Conv2d(_Conv):
         That is, when `group>1`, condition `in\_channels` = `out\_channels` = `group` must be satisfied.
 
     Args:
-        in_channels (int): The channel number of the input tensor of the Conv2d layer.
-        out_channels (int): The channel number of the output tensor of the Conv2d layer.
+        in_channels (int): Number of channels of the input tensor of the Conv2d layer.
+        out_channels (int): Number of channels of the output tensor of the Conv2d layer.
         kernel_size (Union[int, tuple[int]]): Specifies the height and width of the 2D convolution kernel.
             The data type is an integer or a tuple of two integers. An integer represents the height
             and width of the convolution kernel. A tuple of two integers represents the height
@@ -212,7 +212,7 @@ class Conv2d(_Conv):
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              The amount of padding is calculated by the operator internally, If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
@@ -233,7 +233,7 @@ class Conv2d(_Conv):
             It can be a single int or a tuple of 2 or 4 integers. A single int means the dilation size is the same
             in both the height and width directions. A tuple of two ints represents the dilation size in
             the height and width directions, respectively. For a tuple of four ints, the two ints correspond
-            to (N, C) dimension are treated as 1, and the two correspond to (H, W) dimensions is the
+            to (N, C) dimension are treated as 1, and the two correspond to (H, W) dimensions are the
             dilation size in the height and width directions respectively.
             Assuming :math:`dilation=(d0, d1)`, the convolutional kernel samples the input with a
             spacing of :math:`d0-1` elements in the height direction and :math:`d1-1` elements in the width direction.
@@ -253,7 +253,7 @@ class Conv2d(_Conv):
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
-            Available initialization methods are the same as 'weight_init'. Refer to the values of
+            Available initialization methods are the same as `weight_init`. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
@@ -297,7 +297,7 @@ class Conv2d(_Conv):
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
@@ -443,7 +443,7 @@ class Conv1d(_Conv):
 
             - ``"same"``: Pad the input at the begin and end so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally. If the amount is even, it is
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
@@ -685,8 +685,8 @@ class Conv3d(_Conv):
 
             - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally.  If the amount is even,
-              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              The amount of padding is calculated by the operator internally. If the amount is even,
+              it is uniformly distributed around the input, if it is odd, the excess amount goes
               to the front/right/bottom side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
@@ -884,7 +884,7 @@ class Conv3dTranspose(_Conv):
     channels, :math:`D_{in}, H_{in}, W_{in}` are the depth, height and width of the feature layer respectively.
 
     When Conv3d and Conv3dTranspose are initialized with the same parameters, and `pad_mode` is set to ``'pad'``,
-    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the depth, height and width
+    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be padded to the depth, height and width
     directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape.
     For the detailed information of Deconvolutional network,
@@ -914,8 +914,8 @@ class Conv3dTranspose(_Conv):
 
             - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally.  If the amount is even,
-              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              The amount of padding is calculated by the operator internally. If the amount is even,
+              it is uniformly distributed around the input, if it is odd, the excess amount goes
               to the front/right/bottom side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
@@ -1018,7 +1018,7 @@ class Conv3dTranspose(_Conv):
         TypeError: If input data type is not supported.For CPU/GPU: not float16 or float32;for ASCEND, not float16.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
-        ValueError: If `pad_mode` is not one of ``'same'``, ``'valid'``, ``'pad'``.
+        ValueError: If `pad_mode` is not one of ``'same'``, ``'valid'``, or ``'pad'``.
         ValueError: If `padding` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to ``'pad'`` and `padding` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not ``'NCDHW'``.
@@ -1129,7 +1129,7 @@ class Conv2dTranspose(_Conv):
     :math:`H_{in}, W_{in}` are the height and width of the feature layer respectively.
 
     When Conv2d and Conv2dTranspose are initialized with the same parameters, and `pad_mode` is set to 'pad',
-    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to the height and width
+    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be padded to the height and width
     directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape. Deconvolutional network
     can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
@@ -1158,7 +1158,7 @@ class Conv2dTranspose(_Conv):
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
@@ -1382,8 +1382,8 @@ class Conv1dTranspose(_Conv):
     :math:`C_{in}` is a number of channels
     and :math:`L_{in}` is a length of sequence.
 
-    When Conv1d and ConvTranspose1d are initialized with the same parameters, and `pad_mode` is set to 'pad',
-    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be paded to both sizes of input,
+    When Conv1d and Conv1dTranspose are initialized with the same parameters, and `pad_mode` is set to 'pad',
+    :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be padded to both sides of input,
     they are inverses of each other in regard to the input and output shapes in this case.
     However, when `stride` > 1, Conv1d maps multiple input shapes to the same output shape. Deconvolutional network
     can refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
@@ -1397,8 +1397,8 @@ class Conv1dTranspose(_Conv):
         parameters `output_padding` and `padding_mode` will be added.
 
     Args:
-        in_channels (int): The channel number of the input tensor of the Conv1dTranspose layer.
-        out_channels (int): The channel number of the output tensor of the Conv1dTranspose layer.
+        in_channels (int): The number of channels of the input tensor of the Conv1dTranspose layer.
+        out_channels (int): The number of channels of the output tensor of the Conv1dTranspose layer.
         kernel_size (int): Specifies the width of the 1D convolution kernel.
         stride (int): The movement stride of the 1D convolution kernel. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
@@ -1406,14 +1406,14 @@ class Conv1dTranspose(_Conv):
 
             - ``"same"``: Pad the input at the begin and end so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally. If the amount is even, it is
-              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess padding goes to the right side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
               possible length. Extra pixels that could not complete a full stride will
               be discarded. If this mode is set, `padding` must be 0.
             - ``"pad"``: Pad the input with a specified amount. In this mode, the amount of padding
-              at the begin and end is determined by the `padding` parameter.
+              at the beginning and end is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
         padding (int): The number of padding on both sides of input.

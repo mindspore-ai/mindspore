@@ -300,14 +300,14 @@ class EmbeddingLookup(Cell):
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        When 'target' is set to 'CPU', this module will use
-        ops.EmbeddingLookup().set_device('CPU') which
-        specified 'offset = 0' to lookup table.
-        When 'target' is set to 'DEVICE', this module will use ops.Gather() which
-        specified 'axis = 0' to lookup table.
-        In field slice mode, the manual_shapes must be given. It is a tuple ,where
-        the element is vocab[i], vocab[i] is the row numbers for i-th part.
-        This module does not support the PyNative mode.
+        - When `target` is set to 'CPU', this module will use
+          ops.EmbeddingLookup().set_device('CPU') which
+          specified 'offset = 0' to lookup table.
+        - When `target` is set to 'DEVICE', this module will use ops.Gather() which
+          specified 'axis = 0' to lookup table.
+        - In field slice mode, the manual_shapes must be given. It is a tuple ,where
+          the element is vocab[i], vocab[i] is the row numbers for i-th part.
+        - This module does not support the PyNative mode.
 
     Args:
         vocab_size (int): Size of the dictionary of embeddings.

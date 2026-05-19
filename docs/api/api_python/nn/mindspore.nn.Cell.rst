@@ -261,8 +261,6 @@ mindspore.nn.Cell
 
     .. py:method:: insert_param_to_cell(param_name, param, check_name_contain_dot=True)
 
-        向当前Cell添加参数。
-
         将指定名称的参数添加到Cell中。目前在 `mindspore.nn.Cell.__setattr__` 中使用。
 
         参数：
@@ -431,7 +429,7 @@ mindspore.nn.Cell
         .. note::
             - hook_fn必须有如下代码定义：`cell` 是已注册Cell对象的信息， `grad_output` 是反向传递给Cell对象的梯度。用户可以在hook_fn中返回None或者返回新的梯度。
             - hook_fn返回None或者新的相应于 `grad_output` 的梯度：hook_fn(cell, grad_output) -> New grad_output or None。
-            - `register_backward_pre_hook(hook_fn)` 在PyThon环境中运行。为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_backward_pre_hook(hook_fn)` 。
+            - `register_backward_pre_hook(hook_fn)` 在Python环境中运行。为了避免脚本在切换到图模式时运行失败，不建议在Cell对象的 `construct` 函数中调用 `register_backward_pre_hook(hook_fn)` 。
             - PyNative模式下，如果在Cell对象的 `construct` 函数中调用 `register_backward_pre_hook(hook_fn)` ，那么Cell对象每次运行都将增加一个 `hook_fn` 。
 
         参数：

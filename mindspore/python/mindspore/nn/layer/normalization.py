@@ -230,7 +230,7 @@ class BatchNorm1d(_BatchNorm):
             ``false`` , use the mean value and variance value of specified value. If ``None`` , the training process
             will use the mean and variance of current batch data and track the running mean and variance, the
             evaluation process will use the running mean and variance. Default: ``None`` .
-        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+        data_format (str): The optional values for data formats, are ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
@@ -356,7 +356,7 @@ class BatchNorm2d(_BatchNorm):
         TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
-        ValueError: If `data_format` is neither ``'NHWC'`` not ``'NCHW'``.
+        ValueError: If `data_format` is neither ``'NHWC'`` nor ``'NCHW'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -393,7 +393,7 @@ class BatchNorm3d(Cell):
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
     .. warning::
-        After version 2.9.0, the constructor signature will be changed to
+        After version 2.9.0, the constructor signature will change to
         ``BatchNorm3d(num_features, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True, dtype=None)``.
         The default value of `momentum` will change from ``0.9`` to ``0.1``, `use_batch_statistics` will be replaced
         by `track_running_stats`, and `gamma_init`, `beta_init`, `moving_mean_init`, and `moving_var_init` will be
@@ -428,8 +428,8 @@ class BatchNorm3d(Cell):
             The values of str refer to the function `mindspore.common.initializer
             <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
-        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If
-            ``false``, use the mean value and variance value of specified value. If ``None`` , the training process
+        use_batch_statistics (bool): If true, use the mean and variance of current batch data. If
+            ``false``, use the mean and variance of specified value. If ``None`` , the training process
             will use the mean and variance of current batch data and track the running mean and variance, the
             evaluation process will use the running mean and variance. Default: ``None`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
@@ -439,7 +439,7 @@ class BatchNorm3d(Cell):
           Supported types: float16, float32.
 
     Outputs:
-        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, D_{out},H_{out}, W_{out})`.
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
     Raises:
         TypeError: If `num_features` is not an int.

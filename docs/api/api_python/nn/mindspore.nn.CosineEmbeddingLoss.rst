@@ -8,7 +8,7 @@ mindspore.nn.CosineEmbeddingLoss
     .. warning::
         2.9.0（不含）之后版本中，前向输入 `logits_x1`、`logits_x2` 和 `labels` 将分别改为 `input1`、`input2` 和 `target`。
 
-    给定两个Tensor :math:`x1` 和 :math:`x2` ，以及一个Tensor标签 :math:`y` ，值为1或-1，公式如下：
+    给定两个Tensor :math:`x_1` 和 :math:`x_2` ，以及一个Tensor标签 :math:`y` ，值为1或-1，公式如下：
 
     .. math::
         loss(x_1, x_2, y) = \begin{cases}

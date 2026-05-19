@@ -104,18 +104,19 @@ class Cell(Cell_):
     The basic building block of neural networks in MindSpore. The model or neural network layer should inherit this
     base class.
 
-    Layers in `mindspore.nn` are also the subclass of Cell, such as :class:`mindspore.nn.Conv2d`,
+    Layers in `mindspore.nn` are also the subclasses of Cell, such as :class:`mindspore.nn.Conv2d`,
     and :class:`mindspore.nn.ReLU`, etc. Cell will be compiled into a calculation
     graph in GRAPH_MODE (static graph mode) and used as the basic module of neural networks in
     PYNATIVE_MODE (dynamic graph mode).
 
     .. note::
-        Cell is the inference mode by default. For a class that inherits a Cell,
+        Cell is in the inference mode by default. For a class that inherits a Cell,
         if the training and inference have different structures, the subclass performs the inference branch by default.
         To set the training mode, refer to :func:`mindspore.nn.Cell.set_train` .
 
     .. warning::
-        In the subclass of Cell, it's not allowed to define a method named 'cast' and not allowed to define an attribute
+        In the subclass of Cell, it's not allowed to define
+        a method named 'cast' and not allowed to define an attribute
         named 'phase' or 'cells', otherwise, an error will be raised.
 
     Args:
@@ -123,7 +124,7 @@ class Cell(Cell_):
                       affects the names of parameters in the `Cell`. If set to ``True`` , the parameter name will be
                       automatically prefixed, otherwise not. In general, the backbone network should be set to
                       ``True`` , otherwise the duplicate name problem will appear. The cell to train the backbone
-                      network, such as optimizer and :class:`mindspore.nn.TrainOneStepCell`, should be set to
+                      network, such as an optimizer and :class:`mindspore.nn.TrainOneStepCell`, should be set to
                       ``False`` , otherwise the parameter name in backbone will be changed by mistake.
                       Default: ``True`` .
         flags (dict, optional): Network configuration information, currently it is used for the binding of network
@@ -771,8 +772,8 @@ class Cell(Cell_):
         r"""Return an iterator over cell buffers, yielding both the name of the buffer as well as the buffer itself.
 
         Args:
-            prefix (str, optional): prefix to prepend to all buffer names. Default ``""``.
-            recurse (bool, optional): if ``True`` , then yields buffers of this cell
+            prefix (str, optional): Prefix to prepend to all buffer names. Default ``""``.
+            recurse (bool, optional): If ``True`` , then yields buffers of this cell
                 and all sub cells. Otherwise, yields only buffers that
                 are direct members of this cell. Default ``True``.
             remove_duplicate (bool, optional): Whether to remove the duplicated buffers in the result. Default ``True``.
@@ -1175,9 +1176,11 @@ class Cell(Cell_):
 
         Args:
             backward_prefetch(Union[str, int], optional): The timing for prefetching activations in advance in backward
-                                                          pass. Default: ``"Auto"``. If set it to ``"Auto"``, framework
+                                                          pass. Default: ``"Auto"``.
+                                                          If it is set to ``"Auto"``, framework
                                                           will start to prefetch activations one operator in advance.
-                                                          If set it to a positive int value, framework will start to
+                                                          If it is set to a positive int value,
+                                                          framework will start to
                                                           prefetch activations ``backward_prefetch`` operators in
                                                           advance, such as 1, 20, 100.
         Examples:
@@ -1593,16 +1596,16 @@ class Cell(Cell_):
 
     def set_inputs(self, *inputs, **kwargs):
         """
-        Save set inputs for computation graph. The number of inputs should be the same with that of the datasets. When
+        Save set inputs for computation graph. The number of inputs should be the same as that of the datasets. When
         using Model for dynamic shape, please make sure that all networks and loss functions passed to the Model are
-        configured with set_inputs. The shape of input Tensor can be either dynamic or static.
+        configured using set_inputs. The shape of input Tensor can be either dynamic or static.
 
         .. note::
-            There are two mode:
+            There are two modes:
 
-            - Full mode: arguments will be used as all compile inputs for graph-compiling.
+            - Full mode: arguments will be used as all compilation inputs for graph compilation.
             - Incremental mode: arguments will set to some of the Cell inputs, which will be substituted into the input
-              at the corresponding position for graph-compiling.
+              at the corresponding position for graph compilation.
 
             Only one of inputs or kwargs can be set. Inputs for full mode and kwargs for incremental mode.
 
@@ -1654,7 +1657,7 @@ class Cell(Cell_):
 
     def get_inputs(self):
         """
-        Returns the dynamic_inputs of a cell object in one network.
+        Returns the dynamic_inputs of a cell object within a network.
 
         Returns:
             inputs (tuple), Inputs of the Cell object.
@@ -1768,8 +1771,6 @@ class Cell(Cell_):
 
     def insert_param_to_cell(self, param_name, param, check_name_contain_dot=True):
         """
-        Adds a parameter to the current cell.
-
         Inserts a parameter with given name to the cell. The method is currently used in
         `mindspore.nn.Cell.__setattr__`.
 
@@ -1893,11 +1894,11 @@ class Cell(Cell_):
         Initialize all parameters and replace the original saved parameters in cell.
 
         Note:
-            trainable_params() and other similar interfaces may return different parameter instance after
+            trainable_params() and other similar interfaces may return different parameter instances after
             `init_parameters_data`. It is not recommended to save these results.
 
         Args:
-            auto_parallel_mode (bool): If running in auto_parallel_mode. Default: ``False`` .
+            auto_parallel_mode (bool): Whether running in auto_parallel_mode. Default: ``False`` .
 
         Returns:
             Dict[Parameter, Parameter], returns a dict of original parameter and replaced parameter.
@@ -2385,7 +2386,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-                dataset. Users can also customize network attributes by this parameter.
+                dataset. Users can also customize network attributes using this parameter.
 
         Examples:
             >>> import mindspore as ms
@@ -2417,7 +2418,7 @@ class Cell(Cell_):
 
         Args:
             flags (dict): Network configuration information, currently it is used for the binding of network and
-                dataset. Users can also customize network attributes by this parameter.
+                dataset. Users can also customize network attributes using this parameter.
 
         Examples:
             >>> import mindspore as ms
@@ -2472,13 +2473,13 @@ class Cell(Cell_):
 
     def to_float(self, dst_type):
         """
-        Add cast on all inputs of cell and child cells to run with certain float type.
+        Add cast on all inputs of cell and child cells to run with a certain float type.
 
         If `dst_type` is `mindspore.dtype.float16`, all the inputs of Cell, including input, Parameter and Tensor, will
         be cast to float16. Please refer to the usage in source code of :func:`mindspore.amp.build_train_network`.
 
         Note:
-            Multiple calls will overwrite.
+            Multiple calls will overwrite previous settings.
 
         Args:
             dst_type (:class:`mindspore.dtype`): Transfer cell to run with dst_type.
@@ -2643,13 +2644,14 @@ class Cell(Cell_):
             - The `hook_fn` can modify the forward inputs by returning new inputs. If `with_kwargs` is ``False`` , a
               single value (which will be wrapped into a tuple unless already a tuple) or a tuple of args should be
               returned. If `with_kwargs` is ``True`` , both `args` and `kwargs` should be returned.
-            - In order to prevent running failed when switching to graph mode, it is not recommended to call it in the
+            - In order to prevent running failures when switching to graph mode,
+              it is not recommended to call it in the
               `construct` function of Cell object.
             - In the pynative mode, if this method is called inside the `construct` function of the Cell object, a
-              `hook_fn` will be added at each run time of Cell object.
+              `hook_fn` will be added at each runtime of Cell object.
 
         Args:
-            hook_fn (function): Python function. Forward pre hook function.
+            hook_fn (function): Forward pre hook function.
 
         Keyword Args:
             prepend (bool, optional): Whether to insert this hook before existing forward pre-hooks.
@@ -2778,10 +2780,11 @@ class Cell(Cell_):
 
         Note:
             - The `hook_fn` can modify the forward outputs by returning new outputs.
-            - In order to prevent running failed when switching to graph mode, it is not recommended to call it in the
+            - In order to prevent running failures when switching to graph mode,
+              it is not recommended to call it in the
               `construct` function of Cell object.
             - In the pynative mode, if this method is called inside the `construct` function of the Cell object, a
-              `hook_fn` will be added at each run time of Cell object.
+              `hook_fn` will be added at each runtime of Cell object.
 
         Args:
             hook_fn (function): Python function. Forward hook function.
@@ -2896,11 +2899,12 @@ class Cell(Cell_):
               `cell` is the Cell object. `grad_output` is the gradient passed to the Cell.
             - The 'hook_fn' should have the following signature:
               hook_fn(cell, grad_output) -> New grad_output gradient or None.
-            - The 'hook_fn' is executed in the python environment. In order to prevent running failed when switching to
+            - The 'hook_fn' is executed in the python environment.
+              In order to prevent running failures when switching to
               graph mode, it is not recommended to write it in the `construct` function of Cell object.
             - In the pynative
               mode, if the `register_backward_pre_hook` function is called in the `construct` function of the Cell
-              object, a hook function will be added at each run time of Cell object.
+              object, a hook function will be added at each runtime of Cell object.
 
         Args:
             hook_fn (function): Python function. Backward pre hook function.
@@ -2959,8 +2963,8 @@ class Cell(Cell_):
         if you need to store extra state.
 
         Note that extra state should be picklable to ensure working serialization
-        of the state_dict. Only provide backwards compatibility guarantees
-        for serializing tensors; other objects may break backwards compatibility if
+        of the state_dict. Only provide backward compatibility guarantees
+        for serializing tensors; other objects may break backward compatibility if
         their serialized pickled form changes.
 
         Returns:
@@ -3090,7 +3094,7 @@ class Cell(Cell_):
     def state_dict(self, *args, destination=None, prefix="", keep_vars=False):
         r"""Return a dictionary containing references to the whole state of the cell.
 
-        Both parameters and persistent buffers (e.g. running averages) are
+        Both parameters and persistent buffers (e.g., running averages) are
         included. Keys are corresponding parameter and buffer names.
         Parameters and buffers set to ``None`` are not included.
 
@@ -3117,7 +3121,7 @@ class Cell(Cell_):
             keep_vars (bool, optional): Whether the state_dict returns a copy. Default: ``False`` , returns a reference.
 
         Returns:
-            Dict, a dictionary containing a whole state of the cell.
+            Dict, a dictionary containing the complete state of the cell.
 
         Examples:
             >>> import mindspore
@@ -3375,7 +3379,7 @@ class Cell(Cell_):
 
         Note:
             If `strict` is ``True`` and a parameter or buffer is registered as ``None``, but its corresponding key
-            exists in :attr:`state_dict`, and :func:`mindspore.nn.Cell.load_state_dict` will raise a ``RuntimeError``.
+            exists in :attr:`state_dict`. :func:`mindspore.nn.Cell.load_state_dict` will raise a ``RuntimeError``.
 
         Examples:
             >>> import mindspore
@@ -3475,14 +3479,15 @@ class Cell(Cell_):
         Note:
             - The 'hook_fn' must be defined as the following code.
               `cell` is the registered Cell object. `grad_input` is the gradient computed and passed to
-              the next Cell or primitive, which can be return a new gradient or None. `grad_output` is the gradient
+              the next Cell or primitive, which can return a new gradient or None. `grad_output` is the gradient
               passed to the Cell.
             - The 'hook_fn' should have the following signature:
               hook_fn(cell, grad_input, grad_output) -> New grad_input gradient or none.
-            - The 'hook_fn' is executed in the python environment. In order to prevent running failed when switching to
+            - The 'hook_fn' is executed in the python environment.
+              In order to prevent running failures when switching to
               graph mode, it is not recommended to write it in the `construct` function of Cell object. In the pynative
               mode, if the `register_backward_hook` function is called in the `construct` function of the Cell object,
-              a hook function will be added at each run time of Cell object.
+              a hook function will be added at each runtime of Cell object.
 
         Args:
             hook_fn (function): Python function. Backward hook function.
@@ -3495,7 +3500,7 @@ class Cell(Cell_):
             TypeError: If the `hook_fn` is not a function of python.
 
         Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import numpy as np
@@ -3629,30 +3634,30 @@ class Cell(Cell_):
 
         Note:
 
-            - If the computation involves something like randomization or global variable, the equivalence
+            - If the computation involves something like randomization or global variables, the equivalence
               is not guaranteed currently.
             - If the recompute api of a primitive in this cell is also called, the recompute mode of this
               primitive is subject to the recompute api of the primitive.
             - The interface can be configured only once.
               Therefore, when the parent cell is configured, the child cell should not be configured.
             - The outputs of cell are excluded from recomputation by default, which is based on our configuration
-              experience to reduce memory footprint. If a cell has only one primitive and the primitive is wanted
+              experience to reduce memory footprint. If a cell has only one primitive and the primitive needs to be
               to be set recomputed, use the recompute api of the primitive.
             - When the memory remains after applying the recomputation, configuring 'mp_comm_recompute=False'
               to improve performance if necessary.
-            - When the memory still not enough after applying the recompute, configuring
+            - When the memory is still insufficient after applying the recompute, configure
               'parallel_optimizer_comm_recompute=True' to save more memory if necessary.
-              Cells in the same fusion group should have the same parallel_optimizer_comm_recompute configures.
+              Cells in the same fusion group should have the same parallel_optimizer_comm_recompute configurations.
 
         Keyword Arguments:
-            use_reentrant(bool, optional): This keyword is only valid in PyNative mode.
+            use_reentrant (bool, optional): This keyword is only valid in PyNative mode.
                 If use_reentrant=True is set, we will implement recomputation through a custom bprop function,
                 which does not support differentiation of complex types such as List/Tuple; if use_reentrant=False is
                 set, we will use the saved_tensors_hook functionality to implement recomputation, which supports
                 differentiation of tensors inside complex types. Default: ``True`` .
-            output_recompute(bool, optional): If output_recompute=True is set, we will implement recomputation by
-                saved_tensors_hook functionality default. The output of this cell will not be stored by subsequent
-                operations for backward. when there are two adjacent cells both requiring recomputation (where the
+            output_recompute (bool, optional): If output_recompute=True is set, we will implement recomputation by
+                saved_tensors_hook functionality by default. The output of this cell will not be stored by subsequent
+                operations for backward. When there are two adjacent cells both requiring recomputation (where the
                 output of one cell serves as the input to the other), the recomputation of these two operators will
                 be merged. In this case, the output activation values of the first cell will not be saved. If
                 output_recompute=False, we will not merge adjacent cells.

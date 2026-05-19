@@ -3,9 +3,9 @@ mindspore.nn.Dense
 
 .. py:class:: mindspore.nn.Dense(in_channels, out_channels, weight_init=None, bias_init=None, has_bias=True, activation=None, dtype=mstype.float32)
 
-    全连接层。
+    全连接层，对输入执行密集连接操作。
 
-    适用于输入的密集连接层。公式如下：
+    公式如下：
 
     .. math::
         \text{outputs} = \text{activation}(\text{X} * \text{kernel} + \text{bias}),

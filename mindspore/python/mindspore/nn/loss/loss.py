@@ -1745,11 +1745,11 @@ class BCELoss(LossBase):
           of additional dimensions. The same shape and data type as `logits`.
 
     Outputs:
-        Tensor, has the same dtype as `logits`. if `reduction` is ``'none'``, then it has the same shape as `logits`.
+        Tensor, has the same dtype as `logits`. If `reduction` is ``'none'``, then it has the same shape as `logits`.
         Otherwise, it is a scalar Tensor.
 
     Raises:
-        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 not float32.
+        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If shape of `logits` is not the same as `labels` or `weight` (if given).
 
@@ -1787,7 +1787,7 @@ class CosineEmbeddingLoss(LossBase):
         After version 2.9.0, the forward inputs `logits_x1`, `logits_x2`, and `labels` will be renamed to `input1`,
         `input2`, and `target`.
 
-    Given two tensors :math:`x1`, :math:`x2`, and a Tensor label :math:`y` with values 1 or -1:
+    Given two tensors :math:`x_1`, :math:`x_2`, and a Tensor label :math:`y` with values 1 or -1:
 
     .. math::
         loss(x_1, x_2, y) = \begin{cases}
@@ -1996,7 +1996,7 @@ class BCEWithLogitsLoss(LossBase):
         TypeError: If input `input` or `target` is not Tensor.
         TypeError: If data type of `input` or `target` is not float16, float32 or bfloat16.
         TypeError: If `weight` or `pos_weight` is a parameter.
-        TypeError: If data type of `weight` or `pos_weight` is not float16 , float32 or bfloat16.
+        TypeError: If data type of `weight` or `pos_weight` is not float16, float32 or bfloat16.
         TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
@@ -2754,7 +2754,7 @@ class CTCLoss(LossBase):
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, N, C)` or :math:`(T, C)`, where T is length of input,
           N is size of the batch and C is the number of classes. T, N and C are positive integers.
         - **targets** (Tensor) - A tensor of shape :math:`(N, S)` or (sum( `target_lengths` )),
-          where S is max target length, means the target sequences.
+          where :math:`S` is maximum target length, representing the target sequences.
         - **input_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape :math:`(N)`.
           It means the lengths of the input.
         - **target_lengths** (Union[tuple, Tensor]) - A tuple or Tensor of shape :math:`(N)`.

@@ -239,12 +239,12 @@ class ConstantPad1d(_ConstantPadNd):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not a tuple or int.
-        TypeError: If `value` is not int or float.
+        TypeError: If `padding` is not a tuple or an int.
+        TypeError: If `value` is not an int or a float.
         ValueError: If the length of `padding` with tuple type is not equal to 2.
         ValueError: If the output shape after padding is not positive.
-        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
-        ValueError: If `padding` contains negative value while running in Ascend.
+        ValueError: If the rank of `x` is greater than 5 while running on Ascend.
+        ValueError: If `padding` contains negative values while running on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -313,12 +313,12 @@ class ConstantPad2d(_ConstantPadNd):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not a tuple or int.
-        TypeError: If `value` is not int or float.
+        TypeError: If `padding` is not a tuple or an int.
+        TypeError: If `value` is not an int or a float.
         ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
-        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
-        ValueError: If `padding` contains negative value while running in Ascend.
+        ValueError: If the rank of `x` is greater than 5 while running on Ascend.
+        ValueError: If `padding` contains negative values while running on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -376,12 +376,12 @@ class ConstantPad3d(_ConstantPadNd):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not a tuple or int.
-        TypeError: If `value` is not int or float.
+        TypeError: If `padding` is not a tuple or an int.
+        TypeError: If `value` is not an int or a float.
         ValueError: If the length of `padding` is more than 6 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
-        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
-        ValueError: If `padding` contains negative value while running in Ascend.
+        ValueError: If the rank of `x` is greater than 5 while running on Ascend.
+        ValueError: If `padding` contains negative values while running on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

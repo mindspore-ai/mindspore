@@ -533,9 +533,9 @@ class CellDict(_CellDictBase, Cell):
 
     Args:
         args (iterable, optional): An iterable of key-value pairs of (key, Cell), the type of key-value pairs is
-                                   (string, Cell); Or a mapping(dictionary) from string to Cell.
+                                   (string, Cell); or a mapping(dictionary) from string to Cell.
                                    The type of Cell can not be CellDict, CellList or SequentialCell.
-                                   The key can not be same with the attributes of class Cell, can not contain '.',
+                                   The key can not be same as the attributes of class Cell, can not contain '.',
                                    can not be an empty string.
                                    The key of type string is used to search corresponding Cell in the CellDict.
         kwargs (dict): Reserved for keyword argument to be expanded.
@@ -667,7 +667,7 @@ class CellDict(_CellDictBase, Cell):
             key (str): key to pop from the CellDict.
 
         Raises:
-            KeyError: If `key` not exist in CellDict when attempt to access cell.
+            KeyError: If `key` does not exist in CellDict when attempting to access cell.
         """
         value = self[key]
         del self[key]
@@ -708,7 +708,7 @@ class CellDict(_CellDictBase, Cell):
             cells (iterable): An iterable of key-value pairs of (key, Cell), the type of key-value pairs is
                               (string, Cell); Or a mapping(dictionary) from string to Cell.
                               The type of Cell can not be CellDict, CellList or SequentialCell.
-                              The key can not be same with the attributes of class Cell, can not contain '.',
+                              The key can not be same as the attributes of class Cell, can not contain '.',
                               can not be an empty string.
 
         Note:
@@ -723,8 +723,8 @@ class CellDict(_CellDictBase, Cell):
             TypeError: If the type of cell in `cells` is not Cell.
             TypeError: If the type of cell in `cells` is CellDict, CellList or SequentialCell.
             TypeError: If the type of key in `cells` is not string.
-            KeyError: If the key in `cells` is same with the attributes of class Cell.
-            KeyError: If the key in `cells` contain ".".
+            KeyError: If the key in `cells` is same as the attributes of class Cell.
+            KeyError: If the key in `cells` contains ".".
             KeyError: If the key in `cells` is an empty string.
         """
         if not isinstance(cells, abc.Iterable):
