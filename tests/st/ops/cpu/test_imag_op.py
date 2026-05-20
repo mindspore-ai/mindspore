@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test imag operator on CPU."""
+
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -31,7 +33,7 @@ def test_imag_functional_api_modes(mode):
     Expectation: The result match to the expect value.
     """
     context.set_context(mode=mode, device_target="CPU")
-    x = Tensor(np.asarray(np.complex_(1.3 + 0.4j)), mstype.complex64)
+    x = Tensor(np.asarray(np.complex128(1.3 + 0.4j)), mstype.complex64)
     output = F.imag(x)
     expected = np.array(0.4, np.float32)
     np.testing.assert_array_equal(output.asnumpy(), expected)
@@ -46,7 +48,7 @@ def test_imag_tensor_api_modes(mode):
     Expectation: The result match to the expect value.
     """
     context.set_context(mode=mode, device_target="CPU")
-    x = Tensor(np.asarray(np.complex_(1.3 + 0.4j)), mstype.complex64)
+    x = Tensor(np.asarray(np.complex128(1.3 + 0.4j)), mstype.complex64)
     output = x.imag()
     expected = np.array(0.4, np.float32)
     np.testing.assert_array_equal(output.asnumpy(), expected)

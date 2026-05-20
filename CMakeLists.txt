@@ -127,9 +127,13 @@ if(Python3_FOUND)
     endif()
     if(Python3_NumPy_FOUND)
         message(STATUS "Python3_NumPy_INCLUDE_DIRS: ${Python3_NumPy_INCLUDE_DIRS}")
+        # Target NumPy 1.25 API when compiling with NumPy 2.x headers.
+        # This makes the compiled binary backward-compatible with NumPy >= 1.25 at runtime,
+        # while still supporting NumPy 2.x. On NumPy 1.x headers this define is ignored.
+        add_compile_definitions(NPY_TARGET_VERSION=0x00000011)
     else()
         message(WARNING "Numpy not found. Some features may be disabled."
-        "If needed, install Numpy<2.0 and try building MindSpore again.")
+        "If needed, install Numpy and try building MindSpore again.")
     endif()
 else()
     find_python_package(py_inc py_lib)

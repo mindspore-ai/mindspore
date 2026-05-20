@@ -95,7 +95,7 @@ def build_dependencies():
 build_dependencies()
 
 required_package = [
-    'numpy >= 1.20.0,<2.0.0',
+    'numpy >= 1.25.0',
     'protobuf >= 3.13.0',
     'asttokens >= 2.0.4',
     'pillow >= 6.2.0',
@@ -222,7 +222,7 @@ setup(
             'msrun=mindspore.parallel.cluster.run:main'
         ],
     },
-    python_requires='>=3.7',
+    python_requires='>=3.9,<3.13',
     install_requires=required_package,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -231,11 +231,10 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Programming Language :: C++',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',

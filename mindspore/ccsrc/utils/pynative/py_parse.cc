@@ -117,9 +117,15 @@ TensorPtr ConvertTensorValue(const py::object &obj) {
   return pynative::WrapTensorWithSourcePyObj(tensor::ConvertToTensor(obj), obj);
 }
 namespace {
+// Use the public import_array1 macro instead of internal _import_array().
+static int SafeImportArray() {
+  import_array1(-1);  // On failure, expands to return -1
+  return 0;
+}
+
 bool IsNumpyAvailable() {
   static bool available = []() {
-    if (_import_array() >= 0) {
+    if (SafeImportArray() >= 0) {
       return true;
     } else {
       MS_LOG(WARNING) << "Numpy init failed.";

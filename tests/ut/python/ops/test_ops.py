@@ -2630,7 +2630,7 @@ test_case_math_ops = [
         'desc_bprop': [Tensor(np.array([1, 1, 1]).astype(np.float32))]}),
     ('Bucketize', {
         'block': Bucketize(boundaries=[1., 3., 5., 7., 9.]),
-        'desc_inputs': [Tensor(np.array([[-1, 6, 8], [3, 6, 9]]).astype(np.float_))],
+        'desc_inputs': [Tensor(np.array([[-1, 6, 8], [3, 6, 9]]).astype(np.float64))],
         'skip': ['backward']}),
     ('TridiagonalMatMul', {
         'block': TridiagonalMatMul(),

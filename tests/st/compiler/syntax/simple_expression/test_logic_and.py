@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class LogicAnd(nn.Cell):
     def __init__(self):
-        super(LogicAnd, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -37,7 +37,7 @@ class LogicAnd(nn.Cell):
 
 class LogicAndSpec(nn.Cell):
     def __init__(self, x, y):
-        super(LogicAndSpec, self).__init__()
+        super().__init__()
         self.x = x
         self.y = y
 
@@ -105,7 +105,7 @@ def test_ms_syntax_operator_logic_tensor_1_float_and_tensor_1_int():
     """
     with pytest.raises(TypeError, match="Cannot join the return values of different branches"):
         net = LogicAnd()
-        x = Tensor(np.ones([1], np.float_))
+        x = Tensor(np.ones([1], np.float64))
         y = Tensor(np.zeros([1], np.int32))
         ret = net(x, y)
         print(ret)

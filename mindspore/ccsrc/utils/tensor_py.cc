@@ -499,6 +499,8 @@ class TensorDataNumpy : public TensorData {
 
 py::buffer_info GetPyBufferFromPyArray(const py::array &input) {
   py::buffer_info buf;
+  // NOTE: array_descriptor_proxy relies on pybind11 >= 2.12.0 for correct NumPy 2.x
+  // PyArray_Descr field layout. Do not downgrade pybind11 below this version.
   auto descr = py::detail::array_descriptor_proxy(py::detail::array_proxy(input.ptr())->descr);
   // For bfloat16, modify descr->type_num to support acquiring buffer_info from numpy.
   if (descr->type == 'E') {

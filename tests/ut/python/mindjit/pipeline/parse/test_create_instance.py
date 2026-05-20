@@ -40,7 +40,7 @@ class Net(nn.Cell):
     """ Net definition """
 
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.softmax = nn.Softmax(0)
         self.axis = 0
 
@@ -71,7 +71,7 @@ class Net1(nn.Cell):
     """ Net1 definition """
 
     def __init__(self):
-        super(Net1, self).__init__()
+        super().__init__()
         self.add = P.Add()
 
     @jit
@@ -99,7 +99,7 @@ class NetM(nn.Cell):
     """ NetM definition """
 
     def __init__(self, name, axis):
-        super(NetM, self).__init__()
+        super().__init__()
         self.name = name
         self.axis = axis
         self.softmax = nn.Softmax(self.axis)
@@ -113,7 +113,7 @@ class NetC(nn.Cell):
     """ NetC definition """
 
     def __init__(self, tensor):
-        super(NetC, self).__init__()
+        super().__init__()
         self.tensor = tensor
 
     def construct(self, x):
@@ -163,7 +163,7 @@ class NetE(nn.Cell):
     """ NetE definition """
 
     def __init__(self):
-        super(NetE, self).__init__()
+        super().__init__()
         self.w = Parameter(Tensor(np.ones([16, 16, 3, 3]).astype(np.float32)), name='w')
 
     def construct(self, x):
@@ -195,7 +195,7 @@ def test_create_primitive_object_on_construct_use_args_and_kwargs():
 # Test: Create Cell instance in construct
 class SubCell(nn.Cell):
     def __init__(self, t):
-        super(SubCell, self).__init__()
+        super().__init__()
         self.t = t
 
     def construct(self):
@@ -216,7 +216,7 @@ def test_create_cell_with_tensor():
     Expectation: TypeError.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    t = Tensor(np.zeros((2, 2), np.float_), dtype.float32)
+    t = Tensor(np.zeros((2, 2), np.float64), dtype.float32)
     with pytest.raises(TypeError):
         print(WrapCell()(t))
 
@@ -229,7 +229,7 @@ def test_create_grad_operation():
     """
     class NetInner(nn.Cell):
         def __init__(self):
-            super(NetInner, self).__init__()
+            super().__init__()
             self.mul = P.Mul()
             self.p = Parameter(Tensor(np.array([1.0], np.float32)), name='p')
 
@@ -240,7 +240,7 @@ def test_create_grad_operation():
 
     class GradNetWrtInputsAndParams(nn.Cell):
         def __init__(self, net):
-            super(GradNetWrtInputsAndParams, self).__init__()
+            super().__init__()
             self.net = net
             self.params = self.net.trainable_params()
 

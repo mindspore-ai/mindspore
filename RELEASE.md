@@ -40,6 +40,8 @@
 - JSON for Modern C++ dependency pinned to 3.12.0
 - CUB removed
 - jemalloc removed
+- NumPy floor raised to `>=1.25` (from `>=1.20`). NumPy 2.x is now supported as a build target: when built against NumPy 2.x headers, `NPY_TARGET_VERSION=0x00000011` produces a backward-compatible ABI that runs on NumPy 1.25+ and NumPy 2.x.
+- pybind11 unified to 2.13.1 across all supported Python versions (previously branched as 2.4.3 / 2.6.1 / 2.13.1 per Python minor). This version satisfies the `PyArray_Descr` field-layout requirement introduced by NumPy 2.0.
 
 ### Contributors
 

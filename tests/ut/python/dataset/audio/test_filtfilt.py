@@ -508,7 +508,7 @@ def test_filtfilt_param_check():
         filtfilt(waveform)
 
     # Test eager error type parameter 07
-    waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.complex_)
+    waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.complex128)
     with pytest.raises(TypeError, match="cannot be converted into tensor."):
         filtfilt(waveform)
 

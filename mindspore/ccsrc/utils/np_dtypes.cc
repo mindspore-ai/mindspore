@@ -51,6 +51,18 @@ struct PyObjDeleter {
 using PyObjectPtr = std::unique_ptr<PyObject, PyObjDeleter>;
 PyObjectPtr SafePtr(PyObject *object) { return PyObjectPtr(object); }
 
+// Direct field assignment, semantically equivalent to Py_SET_TYPE on Python 3.9-3.12.
+// Does not depend on the Py_SET_TYPE macro being reachable, which avoids two failure modes:
+//   1. gcc two-phase name-lookup errors when Py_SET_TYPE is used inside a template with
+//      non-dependent arguments (observed on Python 3.10 + pybind11 2.13.1).
+//   2. "Py_SET_TYPE was not declared in this scope" on Python 3.10 installs where Python.h
+//      is included under an effective Py_LIMITED_API regime that skips cpython/object.h.
+// Safe on 3.9-3.12 because PyObject::ob_type is a plain struct field with no
+// immortal-object or flag-bit invariants tied to assignment.
+inline void SetDescrProtoType(PyArray_DescrProto *proto) {
+  reinterpret_cast<PyObject *>(proto)->ob_type = &PyArrayDescr_Type;
+}
+
 // Representation of a custom Python type.
 template <typename T>
 struct PyType {
@@ -124,7 +136,7 @@ int NpTypeDescr<float16>::np_type_num = NPY_HALF;
 template <>
 int NpTypeDescr<float>::np_type_num = NPY_FLOAT;
 template <>
-int NpTypeDescr<double>::np_type_num = NPY_ULONG;
+int NpTypeDescr<double>::np_type_num = NPY_DOUBLE;
 template <>
 int NpTypeDescr<long double>::np_type_num = NPY_LONGDOUBLE;
 
@@ -1407,7 +1419,7 @@ bool RegisterNumpyType() {
   // After NumPy 2.0, NumPy allocates and manages the lifetime of the descriptor.
   PyArray_DescrProto &descr_proto = NpTypeDescr<T>::descr_proto;
   descr_proto = GetNpDescrProto<T>();
-  Py_SET_TYPE(&descr_proto, &PyArrayDescr_Type);
+  SetDescrProtoType(&descr_proto);
   descr_proto.typeobj = py_type;
 
   NpTypeDescr<T>::np_type_num = PyArray_RegisterDataType(&descr_proto);
@@ -1416,14 +1428,19 @@ bool RegisterNumpyType() {
   }
   NpTypeDescr<T>::np_descr = PyArray_DescrFromType(NpTypeDescr<T>::Dtype());
 
-  // Support numpy.dtype(type_name)
-  PyObjectPtr np_type_dict = SafePtr(PyObject_GetAttrString(numpy_obj.get(), "sctypeDict"));
-  if (!np_type_dict) {
-    return false;
-  }
-  if (PyDict_SetItemString(np_type_dict.get(), NpTypeDescr<T>::type_name,
-                           reinterpret_cast<PyObject *>(NpTypeDescr<T>::TypePtr())) < 0) {
-    return false;
+  // Support numpy.dtype(type_name) via sctypeDict (removed in NumPy 2.0).
+  // In NumPy 2.x, PyArray_RegisterDataType already makes the type discoverable,
+  // so we skip sctypeDict registration when the attribute doesn't exist.
+  PyObject *np_type_dict = PyObject_GetAttrString(numpy_obj.get(), "sctypeDict");
+  if (np_type_dict) {
+    if (PyDict_SetItemString(np_type_dict, NpTypeDescr<T>::type_name,
+                             reinterpret_cast<PyObject *>(NpTypeDescr<T>::TypePtr())) < 0) {
+      Py_DECREF(np_type_dict);
+      return false;
+    }
+    Py_DECREF(np_type_dict);
+  } else {
+    PyErr_Clear();  // NumPy 2.0+: sctypeDict does not exist, clear error and continue
   }
 
   // Support dtype(type_name)
@@ -1519,16 +1536,16 @@ bool NumpyVersionValid() {
       return (version_parts[0] == 1) && (version_parts[1] >= 23);
     case 0x00000011:  // compiled: 1.25/1.26, running support: 1.20-1.26
       return (version_parts[0] == 1) && (version_parts[1] >= 20);
-    case 0x00000012:  // compiled: 2.0, running support: 1.20-1.26, 2.0+
-      return ((version_parts[0] == 1) && (version_parts[1] >= 20)) ||
+    case 0x00000012:  // compiled: 2.0 with NPY_TARGET_VERSION=0x11, running support: 1.25-1.26, 2.0+
+      return ((version_parts[0] == 1) && (version_parts[1] >= 25)) ||
              ((version_parts[0] == 2) && (version_parts[1] >= 0));
     default:
       if (NPY_API_VERSION < 0x0000000d) {
         // compiled: <1.19, running support: 1.19-1.26
         return (version_parts[0] == 1) && (version_parts[1] >= 19);
       }
-      // compiled: >2.0, running support: 1.20-1.26, 2.0+
-      return ((version_parts[0] == 1) && (version_parts[1] >= 20)) ||
+      // compiled: >2.0 with NPY_TARGET_VERSION=0x11, running support: 1.25-1.26, 2.0+
+      return ((version_parts[0] == 1) && (version_parts[1] >= 25)) ||
              ((version_parts[0] == 2) && (version_parts[1] >= 0));
   }
 }

@@ -121,10 +121,10 @@ class ReduceLROnPlateau(Callback):
             raise ValueError("mode should be 'auto', 'min' or 'max', but got %s." % self.mode)
         if self.mode == 'min' or (self.mode == 'auto' and self.monitor in _smaller_better_metrics):
             self.is_improvement = lambda a, b: np.less(a, b-self.min_delta)
-            self.best = np.Inf
+            self.best = np.inf
         else:
             self.is_improvement = lambda a, b: np.greater(a, b+self.min_delta)
-            self.best = -np.Inf
+            self.best = -np.inf
 
     def on_train_begin(self, run_context):
         """
@@ -137,9 +137,9 @@ class ReduceLROnPlateau(Callback):
         self.cooldown_counter = 0
         self.wait = 0
         if self.mode == 'min' or (self.mode == 'auto' and self.monitor in _smaller_better_metrics):
-            self.best = np.Inf
+            self.best = np.inf
         else:
-            self.best = -np.Inf
+            self.best = -np.inf
 
     def on_train_epoch_end(self, run_context):
         """

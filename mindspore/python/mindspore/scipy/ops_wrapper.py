@@ -49,8 +49,8 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
         >>> from mindspore.scipy.ops_wrapper import matrix_set_diag
         >>> input_x = Tensor(
         >>>     onp.array([[[7, 7, 7, 7],[7, 7, 7, 7], [7, 7, 7, 7]],
-        >>>                 [[7, 7, 7, 7],[7, 7, 7, 7],[7, 7, 7, 7]]])).astype(onp.int)
-        >>> diagonal = Tensor(onp.array([[1, 2, 3],[4, 5, 6]])).astype(onp.int)
+        >>>                 [[7, 7, 7, 7],[7, 7, 7, 7],[7, 7, 7, 7]]])).astype(onp.int_)
+        >>> diagonal = Tensor(onp.array([[1, 2, 3],[4, 5, 6]])).astype(onp.int_)
         >>> output =  matrix_set_diag(input_x, diagonal)
         >>> print(output)
         >>> [[[1 7 7 7]

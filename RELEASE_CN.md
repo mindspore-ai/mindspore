@@ -40,6 +40,8 @@
 - JSON for Modern C++ 依赖升级到 3.12.0
 - 去除 CUB 依赖
 - 去除 jemalloc 依赖
+- NumPy 依赖下界提升为 `>=1.25`（从 `>=1.20` 调整）。支持 NumPy 2.x 构建：使用 NumPy 2.x 头文件构建时通过 `NPY_TARGET_VERSION=0x00000011` 生成向后兼容 1.25+ 的 ABI，产物同时兼容 NumPy 1.25+ 与 2.x 运行时。
+- pybind11 依赖统一升级到 2.13.1（之前按 Python 版本分叉为 2.4.3 / 2.6.1 / 2.13.1）。该版本满足 NumPy 2.0 `PyArray_Descr` 字段布局变化的适配要求。
 
 ### 贡献者
 
