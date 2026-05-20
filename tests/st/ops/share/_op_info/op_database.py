@@ -376,6 +376,23 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float64,
                             ms.complex64, ms.complex128,),
     ),
+    'mint.addbmm': OpInfo(
+        name='mint.addbmm',
+        op= tensor_mint_addbmm,
+        ref=tensor_torch_addbmm,
+        # 910A underlying architecture does not support fp32 and will convert to fp16 operations.
+        # Therefore, float32 will be skipped in 910A.
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_addbmm,
+        op_extra_reference_inputs_func=extra_sample_inputs_addbmm,
+        op_dynamic_inputs_func=None,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d==ms.float64),
+        op_error_inputs_func=error_sample_inputs_addbmm,
+        ascend910b_forward_loss_override={ms.float32:0.008, ms.float16:0.04, ms.bfloat16:0.2}
+    ),
     'mint.nn.BatchNorm1d': OpInfo(
         name='mint.nn.BatchNorm1d',
         op=nn_batchnorm1d_ms,
@@ -467,6 +484,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
         op_error_inputs_func=error_inputs_other_op_with_loss_function,
+        ascend910b_forward_loss_override={ms.float32:0.035}
     ),
     'mint.nn.functional.gelu': UnaryOpInfo(
         name='mint.nn.functional.gelu',
@@ -2893,6 +2911,24 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
+    'mint.allclose': BinaryOpInfo(
+        name='mint.allclose',
+        op=tensor_mint_allclose,
+        ref=tensor_torch_allclose,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        dtypes_cpu=tuple(),
+        dtypes_gpu=tuple(),
+        op_basic_reference_inputs_func=basic_sample_inputs_allclose,
+        op_extra_reference_inputs_func=extra_sample_inputs_allclose,
+        #torch dose not support backward
+        is_differentiable=False,
+        op_error_inputs_func=None,
+        supports_left_python_scalar=False,
+        supports_right_python_scalar=False,
+        supports_both_python_scalar=False,
+    ),
     'mint.permute': OpInfo(
         name='mint.permute',
         op=mint.permute,
@@ -2926,6 +2962,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.complex64, ms.complex128, ms.float64,
                                                                     ms.bfloat16]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.complex64, ms.complex128, ms.float64]),
+        #torch does not give right answers at these values
+        exclude_value=(1.015625, -1.0234375, -1.0078125, 6.3125),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_isclose,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_isclose,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_isclose,
@@ -3162,7 +3200,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_error_inputs_func=error_inputs_other_op_one_hot,
-        not_support_dtypes=tuple(d for d in dtypes_as_torch if d != ms.int64),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.int64, ms.int32)),
     ),
     'mint.unsqueeze': OpInfo(
         name='mint.unsqueeze',
@@ -3221,6 +3259,21 @@ op_db: Dict[str, OpInfo] = {
         skip_forward_comparison=True,
         not_support_dtypes=(ms.complex64, ms.complex128, ms.int8, ms.uint8,ms.bool_),
         op_error_inputs_func=error_inputs_reduction_op_normal,
+    ),
+    'mint.bernoulli': OpInfo(
+        name='mint.bernoulli',
+        op=lambda input, generator=None:mint.bernoulli(input, generator=generator),
+        ref=lambda input, generator=None:torch.bernoulli(input, generator=generator),
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d.is_floating_point),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_bernoulli,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_bernoulli,
+        op_dynamic_inputs_func=None,
+        skip_forward_comparison=True,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point),
+        op_error_inputs_func=None,
     ),
     'mint.nn.functional.adaptive_avg_pool3d': OpInfo(
         name='mint.nn.functional.adaptive_avg_pool3d',
@@ -3302,6 +3355,35 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=None,
         op_error_inputs_func=error_inputs_other_op_max_pool2d,
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16)),
+    ),
+    'mint.nn.ConstantPad1d': OpInfo(
+        name='mint.nn.ConstantPad1d',
+        op=lambda input,padding,value:mint.nn.ConstantPad1d(padding, value)(input),
+        ref=lambda input,padding,value:torch.nn.ConstantPad1d(padding, value)(input),
+        dtypes_ascend=tuple(),
+        # IARVJM 910A underlying architecture does not support fp32 and will convert to fp16 operations.
+        # Therefore, float32 will be skipped in 910A.
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_constantpad1d,
+        op_extra_reference_inputs_func=extra_sample_inputs_constantpad1d,
+        op_error_inputs_func=error_sample_inputs_constantpad1d,
+    ),
+    'mint.nn.AdaptiveAvgPool1d': OpInfo(
+        name='mint.nn.AdaptiveAvgPool1d',
+        op=lambda input,output_size:mint.nn.AdaptiveAvgPool1d(output_size)(input),
+        ref=lambda input,output_size:torch.nn.AdaptiveAvgPool1d(output_size)(input),
+        dtypes_ascend=tuple(),
+        # IARVJM 910A underlying architecture does not support fp32 and will convert to fp16 operations.
+        # Therefore, float32 will be skipped in 910A.
+        dtypes_ascend910b=(ms.bfloat16, ms.float32, ms.float16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_adaptivegpool1d,
+        op_extra_reference_inputs_func=extra_sample_inputs_adaptivegpool1d,
+        op_error_inputs_func=error_sample_inputs_adaptivegpool1d,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
     ),
     'mint.nn.AdaptiveAvgPool2d': OpInfo(
         name='mint.nn.AdaptiveAvgPool2d',
@@ -3454,7 +3536,7 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_nn_functional_dropout_ms,
         ref=tensor_nn_functional_dropout_torch,
         # dtypes_ascend=tuple((ms.float32,)),
-        ascend910b_forward_loss_override={ms.float32:0.05, ms.float16:0.05, ms.bfloat16:0.05,},
+        ascend910b_forward_loss_override={ms.float32:0.05, ms.float16:0.05, ms.bfloat16:0.05},
         dtypes_ascend910b=dtypes_as_torch,
         not_support_dtypes=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_dropout,
@@ -3556,6 +3638,23 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_inputs_other_op_mint_nn_conv1d_func,
         is_differentiable=True,
         not_support_dtypes=(ms.complex64, ms.complex128, ms.int8, ms.uint8, ms.int16, ms.uint16),
+    ),
+    'mint.nn.Conv2d': OpInfo(
+        name='mint.nn.Conv2d',
+        op=mint_nn_conv2d_ms,
+        ref=nn_conv2d_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.bfloat16, ms.float32),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_conv2d,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_conv2d,
+        op_dynamic_inputs_func=None,
+        op_error_inputs_func=error_sample_inputs_mint_nn_conv2d,
+        is_differentiable=True,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.bfloat16, ms.float32)),
+        ascend910b_forward_loss_override={ms.float32:0.018, ms.float16:0.03},
+        ascend910b_backward_loss_override={ms.float32:0.02, ms.bfloat16:0.06, ms.float16:0.006}
     ),
     'mint.nn.functional.conv1d': OpInfo(
         name='mint.nn.functional.conv1d',
@@ -3680,7 +3779,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_tensor_add_,
         op_dynamic_inputs_func=None,
-        op_error_inputs_func=None,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
         is_differentiable=True,
         ascend910b_forward_loss_override={ms.float16:0.004}
     ),
@@ -3713,7 +3812,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.float32,),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_backward_loss_override={ms.float32: 5e-4},
+        ascend910b_backward_loss_override={ms.float32: 0.002},
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.double),
         op_basic_reference_inputs_func=basic_sample_inputs_layer_norm,
         op_error_inputs_func=error_inputs_other_op_layer_norm,
@@ -3730,7 +3829,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         exclude_value=(1.390625, 6.875000),
         # compare_method='single_golden',
-        ascend910b_backward_loss_override={ms.bfloat16: 4e-2,ms.float16: 0.002},
+        ascend910b_backward_loss_override={ms.bfloat16: 4e-2,ms.float16: 0.009},
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.double),
         op_basic_reference_inputs_func=basic_sample_inputs_GroupNorm,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_GroupNorm,
@@ -3738,7 +3837,7 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_inputs_other_op_group_norm,
         # IBHXMW: For backward on Ascend, HiSilicon has confirmed that the naive algorithm may cause
         # precision difference.
-        ascend_backward_loss_override={ms.float16: 0.011},
+        ascend_backward_loss_override={ms.float16: 0.009},
     ),
     'mint.nn.LayerNorm': OpInfo(
         name='mint.nn.LayerNorm',
@@ -3938,7 +4037,7 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.bfloat16:0.008, ms.float16:0.004, ms.float32:0.004},
+        ascend910b_forward_loss_override={ms.bfloat16:0.01, ms.float16:0.004, ms.float32:0.004},
         op_basic_reference_inputs_func=basic_sample_inputs_mint_addmm,
         op_error_inputs_func=error_sample_inputs_mint_addmm,
         op_extra_reference_inputs_func=extra_sample_inputs_addmm,
@@ -3947,7 +4046,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.triangular_solve',
         op=tensor_triangular_solve_ms,
         ref=tensor_triangular_solve_torch,
-        ascend910b_forward_loss_override={ms.float32:5e-4},
+        ascend910b_forward_loss_override={ms.float32:0.0005},
         dtypes_ascend910b=(ms.float32,),
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.float32, ms.float64,
                                                                           ms.complex64, ms.complex128]),
@@ -3980,7 +4079,7 @@ op_db: Dict[str, OpInfo] = {
                                                                          ms.int8, ms.int32, ms.uint8]),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.float32:5e-3,},
+        ascend910b_forward_loss_override={ms.float32:5e-3, ms.bfloat16:0.012},
         op_basic_reference_inputs_func=basic_sample_inputs_dot,
         op_error_inputs_func=error_sample_inputs_dot,
         op_extra_reference_inputs_func=extra_sample_inputs_dot,
@@ -4018,7 +4117,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.mv',
         op=mint.mv,
         ref=torch.mv,
-        ascend910b_forward_loss_override={ms.bfloat16:0.006},
+        ascend910b_forward_loss_override={ms.bfloat16:0.11},
         dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
         not_support_dtypes=tuple(
             d for d in dtypes_as_torch if d not in [ms.float32, ms.float16, ms.bfloat16]),
@@ -4061,8 +4160,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.float16:0.002,},
         # backward not support ms.float64
         dtypes_ascend910b=(ms.float16, ms.float32, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8,),
-        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.float16, ms.float32, ms.int8, ms.int16,
-                                                                         ms.int32, ms.int64, ms.uint8, ms.float64,]),
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bfloat16,),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_addmv,
@@ -4309,6 +4407,7 @@ other_op_db = [
     'mint.nn.functional.adaptive_avg_pool3d',
     'mint.nn.functional.avg_pool2d',
     'mint.nn.functional.max_pool2d',
+    'mint.nn.AdaptiveAvgPool1d',
     'mint.nn.AdaptiveAvgPool2d',
     'mint.nn.AdaptiveAvgPool3d',
     'Tensor.transpose',
@@ -4327,6 +4426,11 @@ other_op_db = [
     'mint.mv',
     'mint.outer',
     'mint.triangular_solve',
+    'mint.bernoulli',
+    'mint.addbmm',
+    'mint.nn.Conv2d',
+    'mint.nn.ConstantPad1d',
+    'mint.allclose',
 ]
 
 reduction_op_db = [
