@@ -5664,7 +5664,7 @@ def bitwise_or(x1, x2, dtype=None):
     r"""
     Computes the bit-wise OR of two arrays element-wise.
     Computes the bit-wise OR of the underlying binary representation of the integers in
-    the input arrays. This ufunc implements the C/Python operator |.
+    the input arrays. This ufunc implements the C/Python operator \|.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
