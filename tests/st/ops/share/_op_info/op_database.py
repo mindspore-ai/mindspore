@@ -1761,6 +1761,8 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_bool_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=dtypes_as_torch,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                        ['Complex64_small_value','Complex128_small_value'],skip=True),
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -4117,7 +4119,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.mv',
         op=mint.mv,
         ref=torch.mv,
-        ascend910b_forward_loss_override={ms.bfloat16:0.11},
+        ascend910b_forward_loss_override={ms.bfloat16:0.007},
         dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
         not_support_dtypes=tuple(
             d for d in dtypes_as_torch if d not in [ms.float32, ms.float16, ms.bfloat16]),
@@ -4158,9 +4160,10 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_addmv_ms,
         ref=tensor_addmv_torch,
         ascend910b_forward_loss_override={ms.float16:0.002,},
-        # backward not support ms.float64
+        # mindspore  backward not support ms.float64
+        # pytorch not support bool
         dtypes_ascend910b=(ms.float16, ms.float32, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8,),
-        not_support_dtypes=(ms.complex64, ms.complex128, ms.bfloat16,),
+        not_support_dtypes=(ms.bfloat16, ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_addmv,
