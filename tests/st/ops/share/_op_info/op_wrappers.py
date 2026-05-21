@@ -957,3 +957,30 @@ def nn_conv2d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
     if bias:
         conv2d_layer.bias = torch.nn.Parameter(bias_init)
     return conv2d_layer(op_input)
+
+def mint_rand_ms(op_input, generator=None, dtype=None, device=None):
+    return mint.rand(op_input.shape, generator=generator, dtype=dtype, device=device)
+
+def mint_rand_torch(op_input, generator=None, dtype=None, device=None):
+    return torch.rand(op_input.shape, generator=generator, dtype=dtype, device=device)
+
+def mint_randn_ms(op_input, generator=None, dtype=None, device=None):
+    return mint.randn(op_input.shape, generator=generator, dtype=dtype, device=device)
+
+def mint_randn_torch(op_input, generator=None, dtype=None, device=None):
+    return torch.randn(op_input.shape, generator=generator, dtype=dtype, device=device)
+
+def mint_randint_ms(op_input, low, high, generator=None, dtype=None, device=None):
+    return mint.randint(low, high, op_input.shape, generator=generator, dtype=dtype, device=device)
+
+def mint_randint_torch(op_input, low, high, generator=None, dtype=None, device=None):
+    return torch.randint(low, high, op_input.shape, generator=generator, dtype=dtype, device=device)
+
+def mint_rand_like_ms(op_input, dtype=None, **op_kwargs):
+    return mint.rand_like(op_input, dtype=dtype, **op_kwargs)
+
+def mint_randn_like_ms(op_input, dtype=None, **op_kwargs):
+    return mint.randn_like(op_input, dtype=dtype, **op_kwargs)
+
+def mint_randint_like_ms(op_input, low, high, dtype=None, **op_kwargs):
+    return mint.randint_like(op_input, low=low, high=high, dtype=dtype, **op_kwargs)
