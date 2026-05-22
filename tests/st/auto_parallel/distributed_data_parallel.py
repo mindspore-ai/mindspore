@@ -22,6 +22,7 @@ from mindspore.parallel.distributed import DistributedDataParallel
 from mindspore.mint.optim import AdamW
 from mindspore.mint.distributed.distributed import init_process_group, get_rank
 from mindspore.communication import GlobalComm
+from mindspore.graph.api import _pynative_executor
 
 
 def get_data_parallel_group():
@@ -357,6 +358,38 @@ def test_accumulate_batch_DDP_without_bucket_rebuilt(reducer_mode="PythonReducer
     loss_dgr = train_step_dgr_accumulate(data_set, grad_fn, accumulator)
 
     assert np.allclose(loss_ddp, loss_dgr, 1e-12, 1e-12)
+
+
+def test_cpp_reducer_bucket_memory_allocated():
+    """
+    Description: CppReducer bucket tensors created from spec have usable device memory.
+    """
+    ms.set_context(
+        device_target="Ascend",
+        mode=ms.PYNATIVE_MODE,
+        pynative_synchronize=True,
+        deterministic="ON",
+    )
+    init_process_group()
+    ms.set_seed(get_rank())
+    net = DistributedDataParallel(
+        module=Network(),
+        init_sync=False,
+        bucket_cap_mb=None,
+        average_in_collective=True,
+        static_graph=False,
+        find_unused_parameters=True,
+        reducer_mode="CppReducer",
+    )
+
+    buckets = net.reducer.get_bucket_for_debug()
+    assert len(buckets) > 1
+    net.zero_grad()
+    _pynative_executor.sync()
+    for bucket in buckets:
+        bucket_data = bucket.asnumpy()
+        assert bucket_data.size > 0
+        assert np.allclose(bucket_data, np.zeros_like(bucket_data))
 
 
 def test_full_batch_DDP_with_bucket_rebuilt_cpp():
