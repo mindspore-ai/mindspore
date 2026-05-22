@@ -85,6 +85,50 @@ def test_matmul_ext():
     _run(ops.auto_generate.BatchMatMulExt(), (4, 4096, 7168), (4, 7168, 2112), "bfloat16")
 
 
+def test_baddbmm():
+    """
+    Feature: Baddbmm
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+
+    def _run(case_name, input_kind, bs, m, n, k, input_type, batch_type, beta, alpha, cmp_precision,
+             transpose_inputs=False):
+        batch1_shape = (bs, m, k)
+        batch2_shape = (bs, k, n)
+        input_shape_map = {
+            "bias": (n,),
+            "full": (bs, m, n),
+            "broadcast": (1, m, n),
+        }
+        input_shape = input_shape_map[input_kind]
+        flag = gen_flag("Baddbmm", case_name, input_shape, batch1_shape, batch2_shape, input_type, batch_type, beta,
+                        alpha, transpose_inputs)
+        input_x = gen_input(input_shape, input_type, data_range=0.01)
+        if transpose_inputs:
+            batch1 = mint.transpose(gen_input((bs, k, m), batch_type, data_range=0.01), -1, -2)
+            batch2 = mint.transpose(gen_input((bs, n, k), batch_type, data_range=0.01), -1, -2)
+        else:
+            batch1 = gen_input(batch1_shape, batch_type, data_range=0.01)
+            batch2 = gen_input(batch2_shape, batch_type, data_range=0.01)
+        y0 = mint.baddbmm(input_x, batch1, batch2, beta=beta, alpha=alpha)
+        compare_outputs(flag, y0, cmp_precision=cmp_precision)
+
+    cases = [
+        ("bias_fast_path_fp16", "bias", "float16", "float16", 1.0, 1.0, 1e-3, False),
+        ("bias_shape_alpha_beta_fp16", "bias", "float16", "float16", 0.5, 1.5, 1e-3, False),
+        ("explicit_alpha_beta_fp16", "full", "float16", "float16", 0.5, 1.5, 1e-3, False),
+        ("beta_zero", "full", "float32", "float16", 0.0, 1.25, 1e-3, False),
+        ("beta_zero_alpha_one", "full", "float16", "float16", 0.0, 1.0, 1e-3, False),
+        ("broadcast_bf16", "broadcast", "bfloat16", "bfloat16", 1.0, 0.5, 4e-3, False),
+        ("mixed_input_float32", "full", "float32", "float16", 0.25, 1.0, 4e-3, False),
+        ("transpose_input_fp16", "full", "float16", "float16", 0.5, 1.5, 1e-3, True),
+    ]
+    bs, m, n, k = 4, 1024, 3096, 1024
+    for case_name, input_kind, input_type, batch_type, beta, alpha, cmp_precision, transpose_inputs in cases:
+        _run(case_name, input_kind, bs, m, n, k, input_type, batch_type, beta, alpha, cmp_precision, transpose_inputs)
+
+
 def test_matmul_ext_view():
     """
     Feature: view + matmul
