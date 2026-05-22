@@ -53,7 +53,7 @@ mindspore.nn.Optimizer
         一种减少深度学习神经网络模型过拟合的方法。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口进行权重衰减。
 
         参数：
-            - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+            - **gradients** (tuple[Tensor]) - 网络参数的梯度，shape与网络参数相同。
 
         返回：
             tuple[Tensor]，衰减权重后的梯度。
@@ -89,7 +89,7 @@ mindspore.nn.Optimizer
         一种优化卷积层参数以提高深度学习神经网络模型训练速度的方法。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口进行梯度中心化。
 
         参数：
-            - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+            - **gradients** (tuple[Tensor]) - 网络参数的梯度，shape与网络参数相同。
 
         返回：
             tuple[Tensor]，梯度中心化后的梯度。
@@ -101,7 +101,7 @@ mindspore.nn.Optimizer
         继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口还原梯度。
 
         参数：
-            - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+            - **gradients** (tuple[Tensor]) - 网络参数的梯度，shape与网络参数相同。
 
         返回：
             tuple[Tensor]，还原后的梯度。

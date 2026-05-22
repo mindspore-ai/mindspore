@@ -19,9 +19,9 @@ mindspore.nn.TrainOneStepWithLossScaleCell
     输出：
         Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
 
-        - **loss** （Tensor） - 标量，表示损失函数值。
-        - **overflow** （Tensor）- 类型为bool的标量，表示是否发生溢出。
-        - **loss scale** （Tensor）- 表示损失放大系数，shape为 :math:`()` 或 :math:`(1,)` 。
+        - **loss** (Tensor) - 标量，表示损失函数值。
+        - **overflow** (Tensor)- 类型为bool的标量，表示是否发生溢出。
+        - **loss scale** (Tensor)- 表示损失放大系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     异常：
         - **TypeError** - `scale_sense` 既不是Cell，也不是Tensor。

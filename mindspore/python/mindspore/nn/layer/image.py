@@ -582,7 +582,8 @@ class PixelShuffle(Cell):
             `upscale_factor` is the above-mentioned :math:`r`.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` . The dimension of `x` is larger than 2,
+        - **input** (Tensor) - Tensor of shape :math:`(*, C \times r^2, H, W)` .
+          The dimension of `input` is larger than 2,
           and the length of third to last dimension can be divisible by `upscale_factor` squared.
 
     Outputs:
@@ -631,7 +632,7 @@ class PixelUnshuffle(Cell):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(*, C, H \times r, W \times r)` . The dimension of `input` is
-          larger than 2, and the length of second to last dimension or last dimension can be divisible by
+          larger than 2, and the length of second-to-last dimension or last dimension can be divisible by
           `downscale_factor` .
 
     Outputs:
@@ -639,7 +640,7 @@ class PixelUnshuffle(Cell):
 
     Raises:
         ValueError: If `downscale_factor` is not a positive integer.
-        ValueError: If the length of second to last dimension or last dimension is not divisible by `downscale_factor` .
+        ValueError: If the length of second-to-last dimension or last dimension is not divisible by `downscale_factor` .
         ValueError: If the dimension of `input` is less than 3.
         TypeError: If `input` is not a Tensor.
 

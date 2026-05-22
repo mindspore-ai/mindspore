@@ -105,9 +105,9 @@ class Rprop(Optimizer):
               with step as the input to get the learning rate of current step.
 
         etas (tuple[float, float], optional): The factor of multiplicative increasing or
-            descreasing(etaminus, etaplus). Default: ``(0.5, 1.2)`` .
-        step_sizes(tuple[float, float], optional): The allowed minimal and maximal
-            step size(min_step_sizes, max_step_size).
+            decreasing (etaminus, etaplus). Default: ``(0.5, 1.2)`` .
+        step_sizes (tuple[float, float], optional): The allowed minimal and maximal
+            step size (min_step_sizes, max_step_size).
             Default: ``(1e-6, 50.)`` .
         weight_decay (Union[float, int, Cell], optional): Weight decay (L2 penalty). Default: ``0.0`` .
 
@@ -126,7 +126,7 @@ class Rprop(Optimizer):
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If an element of `params` is neither Parameter nor dict.
         TypeError: If `step_sizes` or `etas` is not a tuple.
         ValueError: If maximal step size is less than minimal step size.
         ValueError: If the length of `step_sizes` or `etas` is not equal to 2.

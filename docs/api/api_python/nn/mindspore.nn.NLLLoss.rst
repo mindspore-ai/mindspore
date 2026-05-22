@@ -35,7 +35,7 @@ mindspore.nn.NLLLoss
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。`inputs` 需为对数概率。数据类型仅支持float32或float16。
+        - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。 `logits` 需为对数概率。数据类型仅支持float32或float16。
         - **labels** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。
           数据类型仅支持int32。
 
@@ -46,6 +46,6 @@ mindspore.nn.NLLLoss
         - **TypeError** - `weight` 不是Tensor。
         - **TypeError** - `weight` 的dtype既不是float16，也不是float32。
         - **TypeError** - `ignore_index` 不是int。
-        - **ValueError** - `reduction` 不为 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。
+        - **ValueError** - `reduction` 不是 ``"mean"`` 、 ``"sum"`` 或 ``"none"`` 。
         - **TypeError** - `logits` 不是Tensor。
         - **TypeError** - `labels` 不是Tensor。

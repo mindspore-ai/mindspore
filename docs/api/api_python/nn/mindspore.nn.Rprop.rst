@@ -55,7 +55,7 @@ mindspore.nn.Rprop
 
     异常：
         - **TypeError** - 如果 `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-        - **TypeError** - 如果 `parameters` 的元素不是Parameter或字典。
+        - **TypeError** - 如果 `params` 的元素不是Parameter或字典。
         - **TypeError** - 如果 `step_sizes` 或 `etas` 不是tuple。
         - **ValueError** - 如果最大步长小于最小步长。
         - **ValueError** - 如果 `step_sizes` 或 `etas` 的长度不等于2。

@@ -329,7 +329,7 @@ class TrainOneStepCell(Cell):
         sens (numbers.Number, optional): The scaling number to be filled as the input of backpropagation.
             Default value is
             ``None`` , which is ``1.0`` .
-        return_grad (bool, optional): Whether to return gradient. If ``True``,
+        return_grad (bool, optional): Whether to return gradients. If ``True``,
             it will return the gradient in the form of a dict
             while returning loss. The key of the dict is the parameter name corresponding to the gradient, and value
             is the gradient value. Default value is ``False`` .
@@ -338,7 +338,7 @@ class TrainOneStepCell(Cell):
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
-        Tensor, a tensor means the loss value, the shape of which is usually :math:`()`.
+        Tensor, a tensor representing the loss value, usually with shape :math:`()`.
 
     Raises:
         TypeError: If `sens` is not a numbers.Number.

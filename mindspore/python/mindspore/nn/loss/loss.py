@@ -409,7 +409,7 @@ def _check_rmseloss_dtype(param_dtype, not_supported_dtype, cls_name):
 class RMSELoss(LossBase):
     r"""
     RMSELoss creates a criterion to measure the root mean square error between :math:`x` and :math:`y`
-    element-wise, where :math:`x` is the input and :math:`y` is the labels.
+    element-wise, where :math:`x` is the input and :math:`y` is the label.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the loss of :math:`x` and :math:`y` is given as:
@@ -633,7 +633,7 @@ class SmoothL1Loss(LossBase):
     if the absolute error between the predicted value and the target value
     is less than the set threshold `beta`, the square term is used, otherwise the absolute error term is used.
 
-    Given two input :math:`x,\  y`, the SmoothL1Loss can be described as follows:
+    Given two inputs :math:`x,\  y`, the SmoothL1Loss can be described as follows:
 
     .. math::
         L_{i} =
@@ -644,7 +644,7 @@ class SmoothL1Loss(LossBase):
 
     Where :math:`{\text{beta}}` represents the threshold `beta`.
 
-    If `reduction` is not `none`, then:
+    If `reduction` is not ``none``, then:
 
     .. math::
         L =
@@ -656,7 +656,7 @@ class SmoothL1Loss(LossBase):
     .. note::
         - SmoothL1Loss can be regarded as modified version of :class:`mindspore.nn.L1Loss`
           or a combination of :class:`mindspore.nn.L1Loss` and :class:`mindspore.ops.L2Loss`.
-        - :class:`mindspore.nn.L1Loss` computes the element-wise absolute difference between two input tensor
+        - :class:`mindspore.nn.L1Loss` computes the element-wise absolute difference between two input tensors
           while :class:`mindspore.ops.L2Loss` computes the
         - squared difference between two input tensors. :class:`mindspore.ops.L2Loss`
           often leads to faster convergence but it is less
@@ -755,7 +755,7 @@ class SoftMarginLoss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
     Inputs:
-        - **logits** (Tensor) - Predict data. Data type must be float16, float32, bfloat16.
+        - **logits** (Tensor) - Predicted data. Data type must be float16, float32, bfloat16.
         - **labels** (Tensor) - Ground truth data, with the same shape as `logits`.
 
     Outputs:
@@ -1113,11 +1113,11 @@ class SampledSoftmaxLoss(LossBase):
         num_sampled (int): The number of classes to randomly sample per batch.
         num_classes (int): The number of possible classes.
         num_true (int): The number of labels classes per training example. Default: ``1`` .
-        sampled_values (Union[list, tuple]):  List or tuple of (`sampled_candidates`, `true_expected_count`,
+        sampled_values (Union[list, tuple]): List or tuple of (`sampled_candidates`, `true_expected_count`,
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
             Default to None, `UniformCandidateSampler` is applied. Default: ``None`` .
         remove_accidental_hits (bool): Whether to remove "accidental hits"
-            where a sampled class equals to one of the labels classes. Default: ``True`` .
+            where a sampled class equals one of the labels classes. Default: ``True`` .
         seed (int): Random seed for candidate sampling. Default: ``0``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'none'`` .
@@ -1344,7 +1344,7 @@ class TripletMarginWithDistanceLoss(LossBase):
     Creates a criterion that measures the triplet loss given an input
     tensors :math:`x1`, :math:`x2`, :math:`x3` and a margin with a value greater than :math:`0`.
     This is used for measuring a relative similarity between samples. A triplet
-    is composed by `a`, `p` and `n` (i.e., `anchor`, `positive examples` and `negative
+    is composed of `a`, `p` and `n` (i.e., `anchor`, `positive examples` and `negative
     examples` respectively). The shapes of all input tensors should be
     :math:`(N, D)`.
 
@@ -1461,7 +1461,7 @@ class PoissonNLLLoss(LossBase):
     where :math:`\mathcal{L}_{D}` is the loss, :math:`y_{i}` is the `target`,
     :math:`x_{i}` is the `input`.
 
-    If `log_input` is True, use :math:`e^{x_{i}} - y_{i} x_{i}` instead of :math:`x_{i} - y_{i}\ln x_{i}`.
+    If `log_input` is ``True``, use :math:`e^{x_{i}} - y_{i} x_{i}` instead of :math:`x_{i} - y_{i}\ln x_{i}`.
     When calculating logarithms, the lower bound of `input` is set to `eps` to avoid numerical errors.
 
     If `full` is False, the last term :math:`\ln{y_{i}!}` will be omitted,
@@ -1471,12 +1471,12 @@ class PoissonNLLLoss(LossBase):
         n! \approx \sqrt{2\pi n}\left( \frac{n}{e} \right)^{n}
 
     Note:
-        Calculating the logarithm of a negative number or the exponent of a large positive number under Ascend
-        will have a different range of return values and results different from those under GPU and CPU.
+        Calculating the logarithm of a negative number or the exponent of a large positive number on Ascend
+        will have a different range of return values and results different from those on GPU and CPU.
 
     Args:
-        log_input (bool, optional): Whether use log input. Default: ``True`` .
-        full (bool, optional): Whether include the Stirling approximation term in the loss calculation.
+        log_input (bool, optional): Whether to use log input. Default: ``True`` .
+        full (bool, optional): Whether to include the Stirling approximation term in the loss calculation.
             Default: ``False`` .
         eps (float, optional): Lower bound of `input` when calculating logarithms. Default: ``1e-08`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -2290,9 +2290,9 @@ class TripletMarginLoss(LossBase):
     r"""
     TripletMarginLoss operation.
 
-    Triple loss is used to measure the relative similarity between samples,
+    Triplet loss is used to measure the relative similarity between samples,
     which is measured by a triplet and a :math:`margin` with a value greater than :math:`0` .
-    The triplet is composed by :math:`a`, :math:`p`, :math:`n` in the following formula.
+    The triplet is composed of :math:`a`, :math:`p`, :math:`n` in the following formula.
 
     The shapes of all input tensors should be :math:`(N, *)` , where :math:`N` is batch size
     and :math:`*` means any number of additional dimensions.

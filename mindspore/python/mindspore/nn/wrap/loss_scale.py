@@ -273,17 +273,17 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
     r"""
     Network training with loss scaling.
 
-    This is a training step with loss scaling. It takes a network, an optimizer and a scale update Cell(or a Tensor) as
-    args. The loss scale value can be updated in both host side or device side. If you want to update it on
-    host side, using a value of Tensor type as `scale_sense`, otherwise, using a Cell instance for updating loss
+    This is a training step with loss scaling. It takes a network, an optimizer and a scale update Cell (or a Tensor) as
+    args. The loss scale value can be updated on either the host side or device side. To update it on
+    host side, use a value of Tensor type as `scale_sense`. Otherwise, use a Cell instance for updating loss
     scale as `scale_sense`.
 
     Args:
         network (Cell): The training network. The network only supports single output.
         optimizer (Cell): Optimizer for updating the network parameters.
         scale_sense (Union[Tensor, Cell]): If this value is a Cell, it will be called by `TrainOneStepWithLossScaleCell`
-            to update loss scale. If this value is a Tensor, the loss scale can be modified by `set_sense_scale`,
-            the shape should be :math:`()` or :math:`(1,)`.
+            to update loss scale. If this value is a Tensor, the loss scale can be modified by `set_sense_scale`.
+            The shape should be :math:`()` or :math:`(1,)`.
 
     Inputs:
         - **\*inputs** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
@@ -439,7 +439,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         If the user has set the `scale_sense` of Tensor type, he can call this function to reassign the value.
 
         Args:
-            sens(Tensor): The new sense whose shape and type are the same with original `scale_sense`.
+            sens(Tensor): The new scale sense whose shape and type are the same as original `scale_sense`.
         """
         if self.scale_sense and isinstance(sens, Tensor):
             self.scale_sense.set_data(sens)

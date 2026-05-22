@@ -60,4 +60,4 @@ mindspore.nn.SGD
         Tensor[bool]，值为 ``True`` 。
 
     异常：
-        - **ValueError** - 动量、阻尼或重量衰减值小于0.0。
+        - **ValueError** - 动量、阻尼或权重衰减值小于0.0。

@@ -17,7 +17,7 @@ mindspore.nn.PolynomialDecayLR
     .. math::
         tmp\_step= \min(current\_step, decay\_steps)
 
-    如果 `update_decay_steps` 为 ``true`` ，则每 `decay_steps` 更新 :math:`tmp\_decay\_steps` 的值。公式为：
+    如果 `update_decay_steps` 为 ``True`` ，则每 `decay_steps` 更新 :math:`tmp\_decay\_steps` 的值。公式为：
 
     .. math::
         tmp\_decay\_steps = decay\_steps * ceil(current\_step / decay\_steps)
@@ -39,7 +39,7 @@ mindspore.nn.PolynomialDecayLR
         标量Tensor。当前step的学习率值，shape为 :math:`()`。
 
     异常：
-        - **TypeError** - `learning_rate`, `end_learning_rate` 或 `power` 不是float。
-        - **TypeError** - `decay_steps` 不是int或 `update_decay_steps` 不是bool。
+        - **TypeError** - `learning_rate`、 `end_learning_rate` 或 `power` 的类型不是float。
+        - **TypeError** - `decay_steps` 的类型不是int或 `update_decay_steps` 的类型不是bool。
         - **ValueError** - `end_learning_rate` 小于0或 `decay_steps` 小于1。
         - **ValueError** - `learning_rate` 或 `power` 小于或等于0。

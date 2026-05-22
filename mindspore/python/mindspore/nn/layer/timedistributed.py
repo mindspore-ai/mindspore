@@ -69,14 +69,14 @@ class TimeDistributed(Cell):
     r"""
     `nn.TimeDistributed` is deprecated from version 2.8.0 and will be removed in a future version.
 
-    The time distributed layer.
+    The time-distributed layer.
 
-    Time distributed is a wrapper which allows to apply a layer to every temporal slice of an input.
+    TimeDistributed is a wrapper that allows applying a layer to every temporal slice of an input.
     And the `x` should be at least 3D.
     There are two cases in the implementation.
-    When reshape_with_axis provided, the reshape method will be chosen, which is more efficient;
+    When `reshape_with_axis` is provided, the reshape method will be chosen, which is more efficient;
     otherwise, the method of dividing the inputs along time axis will be used, which is more general.
-    For example, reshape_with_axis could not be provided when deal with Batch Normalization.
+    For example, `reshape_with_axis` could not be provided when deal with Batch Normalization.
 
     Args:
         layer(Union[Cell, Primitive]): The Cell or Primitive which will be wrapped.

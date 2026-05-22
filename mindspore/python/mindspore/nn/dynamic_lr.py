@@ -364,7 +364,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     .. math::
         tmp\_decay\_epoch = decay\_epoch
 
-    If `update_decay_epoch` is true, update the value of :math:`tmp\_decay\_epoch` every epoch. The formula is:
+    If `update_decay_epoch` is ``True``, update the value of :math:`tmp\_decay\_epoch` every epoch. The formula is:
 
     .. math::
         tmp\_decay\_epoch = decay\_epoch * ceil(current\_epoch / decay\_epoch)
@@ -379,14 +379,14 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): Number of epochs to decay over.
         power (float): The power of polynomial. It must be greater than 0.
-        update_decay_epoch (bool): If ``true``, update `decay_epoch`. Default: ``False`` .
+        update_decay_epoch (bool): If ``True``, update `decay_epoch`. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.
 
     Raises:
-        TypeError: If `learning_rate` or `end_learning_rate` or `power` is not a float.
-        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        TypeError: If `learning_rate`, `end_learning_rate` or `power` is not a float.
+        TypeError: If `total_step`, `step_per_epoch` or `decay_epoch` is not an int.
         TypeError: If `update_decay_epoch` is not a bool.
         ValueError: If `learning_rate` or `power` is not greater than 0.
 
@@ -451,14 +451,14 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         learning_rate (float): The initial value of learning rate.
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
-        warmup_epoch (int): A value that determines the epochs of the learning rate is warmed up.
+        warmup_epoch (int): The number of epochs for warming up the learning rate.
 
     Returns:
         list[float]. The size of list is `total_step`.
 
     Raises:
         TypeError: If `learning_rate` is not a float.
-        TypeError: If `total_step` or `step_per_epoch` or `decay_epoch` is not an int.
+        TypeError: If `total_step`, `step_per_epoch` or `warmup_epoch` is not an int.
         ValueError: If `learning_rate` is less than 0.
 
     Supported Platforms:
