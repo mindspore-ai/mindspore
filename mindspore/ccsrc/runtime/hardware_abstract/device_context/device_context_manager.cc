@@ -537,6 +537,9 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
 void DeviceContextManager::SyncAllStreams() const {
   for (const auto &item : device_contexts_) {
     auto device_context = item.second;
+    if (device_context->GetDeviceType() == device::DeviceType::kMeta) {
+      continue;
+    }
     if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
       MS_LOG(EXCEPTION) << "SyncStream failed, device info: " << device_context->device_context_key().ToString();
     }
