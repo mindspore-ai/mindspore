@@ -91,6 +91,9 @@ class OpInfo:
             backward wrapper expects flattened positional tensor arguments (e.g. mint.stack/cat).
         not_support_dtypes (tuple, optional): Specifies the dtypes that are not supported by the operator.
         Defaults to ``None``.
+        customize_op_func_for_error_scene: MindSpore callable implementation, for op error scenario. Default is None.
+        not_support_dtypes_check_in_op_error_func (bool, optional): check not support dtypes in the op error func.
+        Default is False.
     """
     # name of primitive, defined in xxx_op.yaml file.
     name: str
@@ -139,6 +142,8 @@ class OpInfo:
     disable_extremal_value_tensor_inputs: Optional[bool] = False
     #use error type test
     not_support_dtypes:Optional[tuple] = None
+    customize_op_func_for_error_scene: Optional[Callable] = None
+    not_support_dtypes_check_in_op_error_func: Optional[bool] = False
 
     def __post_init__(self):
         if not self.dtypes_intersection:
@@ -183,15 +188,16 @@ def error_inputs_other_op_common_func(op_error_inputs_func = None):
                 op_error_inputs_func(op_info, dtype=dtype, device=device, **kwargs)
         if op_info.not_support_dtypes is not None:
             for input_dtype in op_info.not_support_dtypes:
-                sample_input=next(
-                    op_info.op_basic_reference_inputs_func(op_info, input_dtype, device), None)
-                if sample_input is not None:
-                    sample_input.sample_name = f"{op_info.name}_{input_dtype}_dtype_error"
-                    yield OpErrorInput(
-                        op_sample_input=sample_input,
-                        op_error_type=(TypeError, RuntimeError, ValueError),
-                        op_error_info=f'error input dtype {input_dtype} is not supported for {op_info.name}',
-                    )
+                if not op_info.not_support_dtypes_check_in_op_error_func:
+                    sample_input=next(
+                        op_info.op_basic_reference_inputs_func(op_info, input_dtype, device), None)
+                    if sample_input is not None:
+                        sample_input.sample_name = f"{op_info.name}_{input_dtype}_dtype_error"
+                        yield OpErrorInput(
+                            op_sample_input=sample_input,
+                            op_error_type=(TypeError, RuntimeError, ValueError),
+                            op_error_info=f'error input dtype {input_dtype} is not supported for {op_info.name}',
+                        )
     return _error_inputs_other_op_func
 
 # basic op_basic_reference_inputs_func for ops

@@ -1223,7 +1223,8 @@ class OpsFactory():
                     dtype=dtype,
                     device=self._device,
                     only_dynamic_shape=only_dynamic_shape,
-                    only_dynamic_rank=only_dynamic_rank):
+                    only_dynamic_rank=only_dynamic_rank,
+                    grad_cmp=grad_cmp):
                 if grad_cmp:
                     self.compare_with_torch_dynamic(op_dynamic_inputs=op_dynamic_input, grad_cmp=True)
                 else:
@@ -1258,7 +1259,11 @@ class OpsFactory():
 
             got_expected = False
             try:
-                self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
+                if self.op_info.customize_op_func_for_error_scene is not None:
+                    # for op has no input,like mint.rand; remove param: op_input
+                    self.op_info.customize_op_func_for_error_scene(*_sample_input.op_args, **_sample_input.op_kwargs)
+                else:
+                    self.op(_sample_input.op_input, *_sample_input.op_args, **_sample_input.op_kwargs)
                 _pynative_executor.sync()
             except expected_types:
                 got_expected = True
