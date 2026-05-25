@@ -46,7 +46,9 @@ def _run_new_process(file_name, output_dir=None, dump_as_text=False, only_dvm=Fa
         base_env = "DVM_OUTPUT_DIR={}".format(output_dir)
 
     # dvm env
-    non_default_ops = ["Dense", "MatMul", "MatMulExt", "BatchMatMul", "BatchMatMulExt", "GroupedMatmul"]
+    non_default_ops = [
+        "Dense", "MatMul", "MatMulExt", "Baddbmm", "BatchMatMul", "BatchMatMulExt", "GroupedMatmul"
+    ]
     dvm_flags = ["--opt_level=1",
                  "--enable_ops={}".format(",".join(non_default_ops))]
     if dump_as_text:

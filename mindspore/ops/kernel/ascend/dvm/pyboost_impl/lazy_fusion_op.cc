@@ -501,6 +501,34 @@ struct MatMulAdapter {
   }
 };
 
+dvm::NDObject *BuildBaddbmmDvmOutput(LazyFusionKernelAscend *k, const MatMulAdapter &info,
+                                     const TensorPtr &input_tensor, float beta_scalar, float alpha_scalar) {
+  // out = beta * input + alpha * (batch1 @ batch2)
+  auto batch1_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
+  auto batch2_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+  auto y_rank = info.y_shape.size();
+  auto matmul_n = info.trans_b ? info.y_shape[y_rank - kDim2] : info.y_shape[y_rank - kDim1];
+  const auto &input_shape = input_tensor->shape();
+  bool use_bias_fast_path =
+    input_shape.size() == kDim1 && input_shape[0] == matmul_n && beta_scalar == 1.0f && alpha_scalar == 1.0f;
+  if (use_bias_fast_path) {
+    return k->MatMul(batch1_obj, batch2_obj, info.trans_a, info.trans_b, k->Input(input_tensor, false));
+  }
+  auto out_obj = k->MatMul(batch1_obj, batch2_obj, info.trans_a, info.trans_b, nullptr);
+  auto compute_type = dvm::DType::kFloat32;
+  if (alpha_scalar != 1.0f) {
+    out_obj = k->Binary(dvm::BinaryOpType::kMul, k->Cast(out_obj, compute_type), alpha_scalar);
+  }
+  if (beta_scalar == 0.0f) {
+    return out_obj;
+  }
+  auto self_obj = k->Cast(k->Input(input_tensor), compute_type);
+  if (beta_scalar != 1.0f) {
+    self_obj = k->Binary(dvm::BinaryOpType::kMul, self_obj, beta_scalar);
+  }
+  return k->Binary(dvm::BinaryOpType::kAdd, k->Cast(out_obj, compute_type), self_obj);
+}
+
 std::vector<TensorPtr> ConvertOptionalValueTupleToVector(const std::optional<ValueTuplePtr> &tensor_list_opt) {
   if (tensor_list_opt.has_value()) {
     return ConvertValueTupleToVector<TensorPtr>(tensor_list_opt.value());
@@ -1554,36 +1582,26 @@ mindspore::tensor::TensorPtr BaddbmmAscendDvm::Call(const mindspore::tensor::Ten
                                                     const mindspore::ScalarPtr &alpha) {
   auto [beta_succ, beta_scalar] = GetScalarValue<float>(beta);
   auto [alpha_succ, alpha_scalar] = GetScalarValue<float>(alpha);
-  if ((alpha_scalar != 0 && !InputCheck(input_tensor)) || !beta_succ || !alpha_succ) {
+  if (!beta_succ || !alpha_succ) {
     return BaddbmmAscend::Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
   }
-  MatMulAdapter info(batch1_tensor, batch2_tensor, nullptr, false, false);
+  MatMulAdapter info(batch1_tensor, batch2_tensor, input_tensor, false, false);
   if (!info.Check(this)) {
     return BaddbmmAscend::Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
   }
+
   FlushLazyFusion();  // forward fusion not allowed
   auto build_kernel = [&](LazyFusionKernelAscend *k) {
-    auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-    auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
-    auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, nullptr);
-    if (k->GetDType(out_obj) == dvm::kBFloat16) {
-      out_obj = k->Cast(out_obj, dvm::kFloat32);
-    }
-    if (beta_scalar == 0) {
-      out_obj = k->Binary(dvm::BinaryOpType::kMul, out_obj, alpha_scalar);
-    } else {
-      auto scaled_matmul = k->Binary(dvm::BinaryOpType::kMul, out_obj, alpha_scalar);
-      auto scaled_input = k->Binary(dvm::BinaryOpType::kMul, k->Input(input_tensor), beta_scalar);
-      out_obj = k->Binary(dvm::BinaryOpType::kAdd, scaled_matmul, scaled_input);
-    }
-    return k->Output(out_obj, info.x_tensor->data_type(), k->GetShape(out_obj));
+    auto out_obj = BuildBaddbmmDvmOutput(k, info, input_tensor, beta_scalar, alpha_scalar);
+    return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
   };
 
-  if (beta_scalar == 0) {
+  if (beta_scalar == 0.0f) {
     DvmCall(op_name_, this, build_kernel, info.x_tensor, info.y_tensor);
   } else {
     DvmCall(op_name_, this, build_kernel, info.x_tensor, info.y_tensor, input_tensor);
   }
+  DumpOp(op_name_, this, input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
   return outputs_.front();
 }
 
@@ -2024,6 +2042,7 @@ void RegisterLazyFusionOp() {
   MS_REPLACE_DVM_OP(OpLevel_0, InplaceReLU);
   MS_REPLACE_DVM_OP(OpLevel_1, Dense);
   MS_REPLACE_DVM_OP(OpLevel_1, MatMul);
+  MS_REPLACE_DVM_OP(OpLevel_1, Baddbmm);
   MS_REPLACE_DVM_OP(OpLevel_1, BatchMatMul);
   MS_REPLACE_DVM_OP(OpLevel_1, BatchMatMulExt);
   MS_REPLACE_DVM_OP(OpLevel_1, MatMulExt);
