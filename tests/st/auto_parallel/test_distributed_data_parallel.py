@@ -12,9 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Distributed Data Parallel (DDP) system tests."""
 
 import os
 from tests.mark_utils import arg_mark
+
+
+@arg_mark(plat_marks=["platform_ascend910b"],
+    level_mark="level1",
+    card_mark="allcards")
+def test_cpp_reducer_bucket_memory_allocated():
+    """
+    Feature: Distributed Data Parallel(DDP).
+    Description: CppReducer bucket tensors created from spec have usable device memory.
+    Expectation: Run success
+    """
+    ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
+    ret = os.system(
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+            pytest -s distributed_data_parallel.py::test_cpp_reducer_bucket_memory_allocated"
+    )
+    assert ret == 0
 
 
 @arg_mark(plat_marks=["platform_ascend910b"],
@@ -28,7 +46,7 @@ def test_full_batch_DDP_without_bucket_rebuilt():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_full_batch_DDP_without_bucket_rebuilt"
     )
     assert ret == 0
@@ -45,7 +63,7 @@ def test_full_batch_DDP_with_bucket_rebuilt():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_full_batch_DDP_with_bucket_rebuilt"
     )
     assert ret == 0
@@ -62,7 +80,7 @@ def test_accumulate_batch_DDP_with_bucket_rebuilt():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_accumulate_batch_DDP_with_bucket_rebuilt"
     )
     assert ret == 0
@@ -79,7 +97,7 @@ def test_accumulate_batch_DDP_without_bucket_rebuilt():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_accumulate_batch_DDP_without_bucket_rebuilt"
     )
     assert ret == 0
@@ -96,7 +114,7 @@ def test_full_batch_DDP_without_bucket_rebuilt_cpp():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_full_batch_DDP_without_bucket_rebuilt_cpp"
     )
     assert ret == 0
@@ -113,7 +131,7 @@ def test_full_batch_DDP_with_bucket_rebuilt_cpp():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_full_batch_DDP_with_bucket_rebuilt_cpp"
     )
     assert ret == 0
@@ -130,7 +148,7 @@ def test_accumulate_batch_DDP_with_bucket_rebuilt_cpp():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_accumulate_batch_DDP_with_bucket_rebuilt_cpp"
     )
     assert ret == 0
@@ -147,7 +165,7 @@ def test_accumulate_batch_DDP_without_bucket_rebuilt_cpp():
     """
     ret = os.system("sysctl -w net.ipv4.ip_local_reserved_ports=30000-30015")
     ret = os.system(
-        f"msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
+        "msrun --worker_num=4 --local_worker_num=4 --log_dir=msrun_log --join=True --master_port=8129\
             pytest -s distributed_data_parallel.py::test_accumulate_batch_DDP_without_bucket_rebuilt_cpp"
     )
     assert ret == 0

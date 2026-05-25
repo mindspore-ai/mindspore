@@ -23,6 +23,8 @@
 #include "include/cluster/init.h"
 #include "tools/profiler/profiler.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/runtime/op_runner.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "pynative/backward/hook/hook_py.h"
@@ -33,6 +35,15 @@
 namespace mindspore {
 namespace pynative {
 namespace distributed {
+namespace {
+void AllocateBucketGradientMemory(const tensor::TensorPtr &gradients, device::DeviceType device_target) {
+  MS_EXCEPTION_IF_NULL(gradients);
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(device_target);
+  MS_EXCEPTION_IF_NULL(device_context);
+  kernel::pyboost::PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
+    [device_context, gradients]() { kernel::pyboost::PyBoostUtils::MallocForInput(device_context, gradients); }));
+}
+}  // namespace
 
 Reducer::Reducer(tensor::TensorPtrList parameters, std::string process_group, size_t bucket_cap_mb,
                  bool grad_reduce_in_fp32, bool average_in_collective, bool static_graph, bool find_unused_parameters)
@@ -244,6 +255,7 @@ void Reducer::initialize_buckets(tensor::TensorPtrList &parameters) {
       current_bucket.gradients =
         tensor::from_spec(bucket_dtype, ShapeVector({ssize_t(current_bucket_size)}), device_target_);
       MS_EXCEPTION_IF_NULL(current_bucket.gradients);
+      AllocateBucketGradientMemory(current_bucket.gradients, device_target_);
       buckets_.push_back(std::move(current_bucket));
       bucket_indices.push_back(std::move(bucket_indice));  // note
       MS_LOG(DEBUG) << "bucketing " << buckets_[buckets_.size() - 1].parameters.size()
@@ -264,6 +276,7 @@ void Reducer::initialize_buckets(tensor::TensorPtrList &parameters) {
     current_bucket.gradients =
       tensor::from_spec(bucket_dtype, ShapeVector({ssize_t(current_bucket_size)}), device_target_);
     MS_EXCEPTION_IF_NULL(current_bucket.gradients);
+    AllocateBucketGradientMemory(current_bucket.gradients, device_target_);
     buckets_.push_back(std::move(current_bucket));
     bucket_indices.push_back(std::move(bucket_indice));
   }
