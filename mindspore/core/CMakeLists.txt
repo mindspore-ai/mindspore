@@ -133,6 +133,12 @@ if(USE_GLOG)
     target_link_libraries(mindspore_core PRIVATE mindspore::glog)
 endif()
 
+if(NOT TARGET mindspore::crypto)
+    # THIS IS ONLY NEEDED BY MINDSPORE!
+    message(STATUS "MindSporeLite should not aware of mindspore/")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/external_libs/openssl.cmake)
+endif()
+
 if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (NOT TARGET_AOS_ARM) AND (NOT ANDROID_NDK))
     target_link_libraries(mindspore_core PRIVATE mindspore::crypto -pthread)
 endif()
