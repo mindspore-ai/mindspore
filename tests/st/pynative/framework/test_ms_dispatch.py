@@ -15,13 +15,18 @@
 
 """Testcases for Tensor ms dispatch"""
 
+import gc
+import threading
+import weakref
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import Tensor, mint, ops
+from mindspore import _Function
 from mindspore.ops.auto_generate.gen_ops_prim import SelectExtView
 from mindspore.utils.ms_dispatch import MsDispatchMode
-from mindspore._c_expression import _DisableMsDispatchMode
+from mindspore._c_expression import _DisableMsDispatchMode, run_backward
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 RUN_OPS = []
@@ -71,6 +76,382 @@ def _make_base_dtensor(data):
     RUN_OPS = []
     x = DTensor(Tensor(data), Layout())
     return x
+
+
+def _force_gc():
+    for _ in range(8):
+        gc.collect()
+
+
+def _enable_grad_for_current_thread():
+    _pynative_executor.set_enable_grad(True)
+    _pynative_executor.set_grad_flag(True)
+
+
+def _run_backward(loss):
+    run_backward((loss,), None, None, False, None, allow_unreachable=True, accumulate_grad=True)
+
+
+def _make_grad_tensor(data):
+    tensor = Tensor(np.array(data, dtype=np.float32))
+    tensor.requires_grad_()
+    return tensor
+
+
+def _tensor_numpy(tensor):
+    return np.asarray(tensor.asnumpy()).copy()
+
+
+def _tensor_grad_numpy(tensor):
+    assert tensor._grad is not None
+    return np.asarray(tensor._grad.asnumpy()).copy()
+
+
+def _assert_allclose(actual, expected):
+    np.testing.assert_allclose(actual, expected, rtol=1e-5, atol=1e-6)
+
+
+def _ms_dispatch_micro_loss(x, weight, function_cls):
+    hidden = x * weight + Tensor([0.25, -0.5], ms.float32)
+    out = function_cls.apply(hidden)
+    out_ref = weakref.ref(out)
+    loss = out.sum()
+    return loss, out_ref
+
+
+def _run_serial_ms_dispatch_micro_pair():
+    x_bwd = _make_grad_tensor([2.0, 3.0])
+    w_bwd = _make_grad_tensor([0.5, -1.5])
+    loss_bwd, _ = _ms_dispatch_micro_loss(x_bwd, w_bwd, MsDispatchSaveOutputFunction)
+    loss_bwd_value = _tensor_numpy(loss_bwd)
+    _run_backward(loss_bwd)
+
+    x_fwd = _make_grad_tensor([4.0, 5.0])
+    w_fwd = _make_grad_tensor([-2.0, 0.75])
+    loss_fwd, _ = _ms_dispatch_micro_loss(x_fwd, w_fwd, MsDispatchSaveOutputFunction)
+    loss_fwd_value = _tensor_numpy(loss_fwd)
+    _run_backward(loss_fwd)
+
+    return {
+        "loss_bwd": loss_bwd_value,
+        "loss_fwd": loss_fwd_value,
+        "x_bwd_grad": _tensor_grad_numpy(x_bwd),
+        "w_bwd_grad": _tensor_grad_numpy(w_bwd),
+        "x_fwd_grad": _tensor_grad_numpy(x_fwd),
+        "w_fwd_grad": _tensor_grad_numpy(w_fwd),
+    }
+
+
+class _OverlapHandoff:
+    """Coordinate one parked backward thread with one main-thread forward."""
+
+    def __init__(self):
+        self._enabled = False
+        self._worker_parked = threading.Event()
+        self._main_go = threading.Event()
+
+    def arm(self):
+        self._enabled = True
+        self._worker_parked.clear()
+        self._main_go.clear()
+
+    def disarm(self):
+        self._enabled = False
+
+    def worker_park(self):
+        if not self._enabled:
+            return
+        self._worker_parked.set()
+        if not self._main_go.wait(timeout=20.0):
+            raise AssertionError("main thread did not release the parked backward worker")
+
+    def wait_worker_parked(self):
+        return self._worker_parked.wait(timeout=20.0)
+
+    def release_worker(self):
+        self._main_go.set()
+
+    def notify_worker_failed(self):
+        self._worker_parked.set()
+
+
+_OVERLAP_HANDOFF = _OverlapHandoff()
+
+
+class MsDispatchNonDiffFunction(_Function):
+    @staticmethod
+    def forward(ctx, x):
+        out = DTensor(x * x, Layout())
+        ctx.mark_non_differentiable(out)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output * 99
+
+
+class MsDispatchSaveOutputFunction(_Function):
+    @staticmethod
+    def forward(ctx, x):
+        out = DTensor(x * x, Layout())
+        ctx.save_for_backward(out)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        (saved_out,) = ctx.saved_tensors
+        assert isinstance(saved_out, DTensor)
+        return grad_output * saved_out._local_tensor
+
+
+class MsDispatchSaveOutputAndParkFunction(_Function):
+    @staticmethod
+    def forward(ctx, x):
+        out = DTensor(x * x, Layout())
+        ctx.save_for_backward(out)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        (saved_out,) = ctx.saved_tensors
+        assert isinstance(saved_out, DTensor)
+        _OVERLAP_HANDOFF.worker_park()
+        return grad_output * saved_out._local_tensor
+
+
+class MsDispatchReturnInputFunction(_Function):
+    @staticmethod
+    def forward(ctx, x):
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output * 2
+
+
+class MsDispatchNonDiffReturnInputFunction(_Function):
+    @staticmethod
+    def forward(ctx, x):
+        ctx.mark_non_differentiable(x)
+        return x
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output
+
+
+def test_ms_dispatch_custom_function_mark_non_differentiable_output():
+    """
+    Feature: Ms dispatch
+    Description: Custom Function marks a DTensor output as non-differentiable.
+    Expectation: The DTensor output is matched as the forward output and gradients are zero.
+    """
+    x = Tensor([2.0, 3.0], ms.float32)
+
+    def fn(input_x):
+        return MsDispatchNonDiffFunction.apply(input_x).sum()
+
+    value, grad = ms.value_and_grad(fn)(x)
+    assert np.allclose(value.asnumpy(), np.array(13.0, dtype=np.float32))
+    assert np.allclose(grad.asnumpy(), np.zeros_like(x.asnumpy()))
+
+
+def test_ms_dispatch_custom_function_save_output_tensor():
+    """
+    Feature: Ms dispatch
+    Description: Custom Function saves a DTensor output for backward.
+    Expectation: ctx.saved_tensors returns the DTensor wrapper and backward uses it successfully.
+    """
+    x = Tensor([2.0, 3.0], ms.float32)
+
+    def fn(input_x):
+        return MsDispatchSaveOutputFunction.apply(input_x).sum()
+
+    value, grad = ms.value_and_grad(fn)(x)
+    assert np.allclose(value.asnumpy(), np.array(13.0, dtype=np.float32))
+    assert np.allclose(grad.asnumpy(), np.array([4.0, 9.0], dtype=np.float32))
+
+
+def test_ms_dispatch_custom_function_return_input_output():
+    """
+    Feature: Ms dispatch
+    Description: Custom Function returns a DTensor input as its output.
+    Expectation: The internal no-grad view keeps DTensor dispatch metadata.
+    """
+    x = DTensor(Tensor([2.0, 3.0], ms.float32), Layout())
+
+    y = MsDispatchReturnInputFunction.apply(x)
+    assert isinstance(y, DTensor)
+    z = y + 1
+    assert isinstance(z, DTensor)
+    assert np.allclose(z.asnumpy(), np.array([3.0, 4.0], dtype=np.float32))
+
+
+def test_ms_dispatch_custom_function_non_diff_return_input_output():
+    """
+    Feature: Ms dispatch
+    Description: Custom Function marks a DTensor input non-differentiable and returns it as output.
+    Expectation: The non-differentiable no-grad view keeps DTensor dispatch metadata.
+    """
+    x = DTensor(Tensor([2.0, 3.0], ms.float32), Layout())
+
+    y = MsDispatchNonDiffReturnInputFunction.apply(x)
+    assert isinstance(y, DTensor)
+    z = y + 1
+    assert isinstance(z, DTensor)
+    assert np.allclose(z.asnumpy(), np.array([3.0, 4.0], dtype=np.float32))
+
+
+def test_ms_dispatch_custom_function_save_output_with_saved_tensor_hooks():
+    """
+    Feature: Ms dispatch
+    Description: Custom Function saves a DTensor output while saved_tensors_hooks are active.
+    Expectation: Pack and unpack hooks receive the DTensor wrapper.
+    """
+    events = []
+    x = Tensor([2.0, 3.0], ms.float32)
+
+    def pack_hook(tensor):
+        events.append(("pack", type(tensor).__name__))
+        assert isinstance(tensor, DTensor)
+        return tensor
+
+    def unpack_hook(tensor):
+        events.append(("unpack", type(tensor).__name__))
+        assert isinstance(tensor, DTensor)
+        return tensor
+
+    def fn(input_x):
+        with ms.saved_tensors_hooks(pack_hook, unpack_hook):
+            return MsDispatchSaveOutputFunction.apply(input_x).sum()
+
+    value, grad = ms.value_and_grad(fn)(x)
+    assert np.allclose(value.asnumpy(), np.array(13.0, dtype=np.float32))
+    assert np.allclose(grad.asnumpy(), np.array([4.0, 9.0], dtype=np.float32))
+    assert events == [("pack", "DTensor"), ("unpack", "DTensor")]
+
+
+@pytest.mark.parametrize("retain_graph", [None, True])
+def test_ms_dispatch_custom_function_saved_output_releases_forward_wrapper(retain_graph):
+    """
+    Feature: Ms dispatch
+    Description: Custom Function saves a DTensor output without retaining the forward Python wrapper.
+    Expectation: The forward DTensor wrapper is collectable without backward and after retain_graph backward.
+    """
+    prev_grad_flag = _pynative_executor.grad_flag()
+    _pynative_executor.set_grad_flag(True)
+    try:
+        x = Tensor([2.0, 3.0], ms.float32)
+        x.requires_grad_()
+        y = MsDispatchSaveOutputFunction.apply(x)
+        y_ref = weakref.ref(y)
+        z = y.sum()
+        if retain_graph is not None:
+            run_backward((z,), None, retain_graph, False, None, allow_unreachable=True, accumulate_grad=True)
+        del y, z, x
+        _force_gc()
+        assert y_ref() is None
+    finally:
+        _pynative_executor.set_grad_flag(prev_grad_flag)
+
+
+def test_ms_dispatch_overlap_like_threaded_backward_matches_serial_precision():
+    """
+    Feature: Ms dispatch
+    Description: A worker thread runs backward through a saved DTensor output while
+        the main thread builds another graph.
+    Expectation: The saved output wrapper is released, and overlapped loss/dx/dw
+        match the serial baseline.
+    """
+    prev_enable_grad = _pynative_executor.enable_grad()
+    prev_grad_flag = _pynative_executor.grad_flag()
+    _enable_grad_for_current_thread()
+    try:
+        expect = _run_serial_ms_dispatch_micro_pair()
+
+        x_bwd = _make_grad_tensor([2.0, 3.0])
+        w_bwd = _make_grad_tensor([0.5, -1.5])
+        loss_bwd, y_bwd_ref = _ms_dispatch_micro_loss(
+            x_bwd, w_bwd, MsDispatchSaveOutputAndParkFunction)
+        loss_bwd_value = _tensor_numpy(loss_bwd)
+        _force_gc()
+        assert y_bwd_ref() is None
+
+        worker_errors = []
+
+        def run_worker_backward():
+            _enable_grad_for_current_thread()
+            try:
+                _run_backward(loss_bwd)
+            except BaseException as exc:  # pylint: disable=broad-exception-caught
+                worker_errors.append(exc)
+                _OVERLAP_HANDOFF.notify_worker_failed()
+
+        _OVERLAP_HANDOFF.arm()
+        worker = threading.Thread(target=run_worker_backward, name="ms-dispatch-bwd-thread", daemon=True)
+        worker.start()
+        try:
+            assert _OVERLAP_HANDOFF.wait_worker_parked(), "worker backward never parked"
+            assert not worker_errors, f"worker backward raised before parking: {worker_errors[0]!r}"
+
+            x_fwd = _make_grad_tensor([4.0, 5.0])
+            w_fwd = _make_grad_tensor([-2.0, 0.75])
+            loss_fwd, y_fwd_ref = _ms_dispatch_micro_loss(
+                x_fwd, w_fwd, MsDispatchSaveOutputAndParkFunction)
+            loss_fwd_value = _tensor_numpy(loss_fwd)
+            _force_gc()
+            assert y_fwd_ref() is None
+        finally:
+            _OVERLAP_HANDOFF.release_worker()
+            worker.join(timeout=20.0)
+            _OVERLAP_HANDOFF.disarm()
+
+        assert not worker.is_alive(), "worker backward did not exit after release"
+        assert not worker_errors, f"worker backward raised: {worker_errors[0]!r}"
+        _assert_allclose(loss_bwd_value, expect["loss_bwd"])
+        _assert_allclose(_tensor_grad_numpy(x_bwd), expect["x_bwd_grad"])
+        _assert_allclose(_tensor_grad_numpy(w_bwd), expect["w_bwd_grad"])
+
+        _run_backward(loss_fwd)
+        _assert_allclose(loss_fwd_value, expect["loss_fwd"])
+        _assert_allclose(_tensor_grad_numpy(x_fwd), expect["x_fwd_grad"])
+        _assert_allclose(_tensor_grad_numpy(w_fwd), expect["w_fwd_grad"])
+    finally:
+        _OVERLAP_HANDOFF.release_worker()
+        _OVERLAP_HANDOFF.disarm()
+        _pynative_executor.set_enable_grad(prev_enable_grad)
+        _pynative_executor.set_grad_flag(prev_grad_flag)
+
+
+def test_ms_dispatch_tensor_hook_return_dtensor():
+    """
+    Feature: Ms dispatch
+    Description: A tensor hook returns DTensor and the next hook receives the DTensor wrapper.
+    Expectation: source_py_obj is preserved across the hook boundary.
+    """
+    events = []
+    x = Tensor([2.0, 3.0], ms.float32)
+
+    def fn(input_x):
+        out = input_x * input_x
+
+        def hook_dtensor(grad):
+            events.append("hook_dtensor")
+            return DTensor(grad * 2, Layout())
+
+        def hook_check(grad):
+            events.append(type(grad).__name__)
+            assert isinstance(grad, DTensor)
+            return grad._local_tensor * 3
+
+        out.register_hook(hook_dtensor)
+        out.register_hook(hook_check)
+        return out.sum()
+
+    value, grad = ms.value_and_grad(fn)(x)
+    assert np.allclose(value.asnumpy(), np.array(13.0, dtype=np.float32))
+    assert np.allclose(grad.asnumpy(), np.array([24.0, 36.0], dtype=np.float32))
+    assert events == ["hook_dtensor", "DTensor"]
 
 
 # ====== Scenario 1: basic add ======
@@ -847,6 +1228,45 @@ def test_ms_dispatch_disable_mode_guard_bypasses_dispatch():
             _ = x.cos()  # should NOT be recorded
         _ = x.exp()  # should be recorded
     assert RUN_OPS == ["Sin", "Exp"]
+
+
+def test_ms_dispatch_disable_mode_isolated_between_python_threads():
+    """
+    Feature: Ms dispatch
+    Description: Thread A enters _DisableMsDispatchMode while thread B uses MsDispatchMode.
+    Expectation: Thread B still observes its own ms_dispatch mode.
+    """
+    global RUN_OPS
+    RUN_OPS = []
+    holder_entered = threading.Event()
+    release_holder = threading.Event()
+    holder_errors = []
+
+    def disable_holder():
+        try:
+            with _DisableMsDispatchMode():
+                holder_entered.set()
+                if not release_holder.wait(timeout=20.0):
+                    raise AssertionError("main thread did not release disable holder")
+        except BaseException as exc:  # pylint: disable=broad-exception-caught
+            holder_errors.append(exc)
+            holder_entered.set()
+
+    holder = threading.Thread(target=disable_holder, name="ms-dispatch-disable-holder", daemon=True)
+    holder.start()
+    try:
+        assert holder_entered.wait(timeout=20.0), "disable holder did not enter _DisableMsDispatchMode"
+        assert not holder_errors, f"disable holder raised before main thread ran: {holder_errors[0]!r}"
+
+        with TestMsDispatchMode():
+            _ = Tensor([1.0, 2.0, 3.0]).sin()
+    finally:
+        release_holder.set()
+        holder.join(timeout=20.0)
+
+    assert not holder.is_alive(), "disable holder did not exit"
+    assert not holder_errors, f"disable holder raised: {holder_errors[0]!r}"
+    assert RUN_OPS == ["Sin"]
 
 
 def test_ms_dispatch_disable_mode_guard_with_dtensor():

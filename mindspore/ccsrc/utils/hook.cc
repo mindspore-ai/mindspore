@@ -17,6 +17,7 @@
 #include "include/utils/hook.h"
 #include <string>
 #include "include/utils/convert_utils_py.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "include/utils/tensor_py.h"
 #include "pybind11/pytypes.h"
 #include "include/utils/utils.h"
@@ -53,7 +54,7 @@ ValuePtr TensorBackwardHook::operator()(const ValuePtr &grad) {
   const auto ret = RunHook(tensor_id_, hook_, py_arg);
   ValuePtr val;
   if (tensor::IsTensorPy(ret)) {
-    val = tensor::ConvertToTensor(ret);
+    val = pynative::ConvertPyObjectToTensorWithSourcePyObj(ret);
   } else {
     MS_LOG(EXCEPTION) << "Tensor hook should be return Tensor, but get type: "
                       << py::str(ret.get_type().attr("__name__")).cast<std::string>() << ".";

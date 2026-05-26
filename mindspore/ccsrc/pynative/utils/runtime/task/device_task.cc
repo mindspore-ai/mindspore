@@ -36,47 +36,57 @@ DeviceOpRunTask::DeviceOpRunTask(std::shared_ptr<OpTaskContext> context,
 DeviceOpRunTask::~DeviceOpRunTask() { context_->op_compiler_info()->UpdateStatus(true); }
 
 void DeviceOpRunTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     context_->op_run_info()->base_op_run_info.op_name, false, false, task_id_);
-  Pipeline::Get().launch_stage()->Wait();
-  MS_EXCEPTION_IF_NULL(run_func_);
-  run_func_(context_);
-  run_func_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                       context_->op_run_info()->base_op_run_info.op_name, false, false, task_id_);
+    Pipeline::Get().launch_stage()->Wait();
+    MS_EXCEPTION_IF_NULL(run_func_);
+    run_func_(context_);
+    run_func_ = nullptr;
+  });
 }
 
 void DeviceLaunchTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
-                                     kProfilerNamePyboost, false, false, task_id_);
-  if (run_func_) {
-    run_func_();
-  } else {
-    MS_LOG(EXCEPTION) << "No run function!";
-  }
-  run_func_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeLaunchTask,
+                                       kProfilerNamePyboost, false, false, task_id_);
+    if (run_func_) {
+      run_func_();
+    } else {
+      MS_LOG(EXCEPTION) << "No run function!";
+    }
+    run_func_ = nullptr;
+  });
 }
 
 void PyBoostDeviceTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     kProfilerNamePyboost, false, false, task_id_);
-  if (run_func_) {
-    run_func_();
-  } else {
-    MS_LOG(EXCEPTION) << "No run function!";
-  }
-  run_func_ = nullptr;
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                       kProfilerNamePyboost, false, false, task_id_);
+    if (run_func_) {
+      run_func_();
+    } else {
+      MS_LOG(EXCEPTION) << "No run function!";
+    }
+    run_func_ = nullptr;
+  });
 }
 
 void PassthroughDeviceTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     kPassthroughNamePyboost, false, false, task_id_);
-  Pipeline::Get().launch_stage()->Wait();
-  run_func_();
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                       kPassthroughNamePyboost, false, false, task_id_);
+    Pipeline::Get().launch_stage()->Wait();
+    run_func_();
+  });
 }
 
 void PassthroughNoWaitDeviceTask::Run() {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
-                                     kPassthroughNoWaitNamePyboost, false, false, task_id_);
-  run_func_();
+  RunWithPyNativeContext([this]() {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                       kPassthroughNoWaitNamePyboost, false, false, task_id_);
+    run_func_();
+  });
 }
 }  // namespace runtime
 }  // namespace mindspore

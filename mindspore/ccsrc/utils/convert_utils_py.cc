@@ -24,6 +24,7 @@
 #include <utility>
 #include <cfloat>
 
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "primitive/framework_ops.h"
 #include "Eigen/Core"
 #include "abstract/abstract_value.h"
@@ -1056,7 +1057,7 @@ void ConvertPybindTupleGradToCValue(const py::tuple &input_tuple, std::vector<Va
     ValuePtr value;
     const auto item = input_tuple[i];
     if (tensor::IsTensorPy(item)) {
-      value = tensor::ConvertToTensor(item);
+      value = pynative::ConvertPyObjectToTensorWithSourcePyObj(py::reinterpret_borrow<py::object>(item));
     } else if (py::isinstance<py::none>(item)) {
       value = kNone;
     } else {

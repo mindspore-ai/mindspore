@@ -16,6 +16,7 @@
 
 #include "include/utils/pynative/hook.h"
 #include "include/utils/convert_utils_py.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "include/utils/pyobj_manager.h"
 #include "include/utils/tensor_py.h"
 
@@ -63,7 +64,7 @@ void PyTensorBackwardNodePreHook::operator()(ValuePtrList *grad_outputs) {
   const auto ret = hook_fn_(py_grad);
   if (!ret.is_none()) {
     if (tensor::IsTensorPy(ret)) {
-      (*grad_outputs)[output_idx_] = tensor::ConvertToTensor(ret);
+      (*grad_outputs)[output_idx_] = ConvertPyObjectToTensorWithSourcePyObj(ret);
     } else {
       MS_LOG(EXCEPTION) << "Tensor hook should be return Tensor, but get type: "
                         << py::str(ret.get_type().attr("__name__")).cast<std::string>() << ".";

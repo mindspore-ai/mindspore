@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """ test_saved_tensor """
+import threading
+
 import pytest
 import numpy as np
 import mindspore as ms
@@ -914,6 +916,77 @@ def test_saved_tensors_hooks_pre_disable_async():
     ctx3.__enter__()
     assert not ctx3.pre_disable_async
     ctx3.__exit__()
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_saved_tensors_hooks_isolated_between_python_threads():
+    """
+    Features: Saved Tensor Hook.
+    Description: Thread A enters saved_tensors_hooks and waits while thread B saves a tensor without entering hooks.
+    Expectation: Thread B does not observe or run thread A's saved tensor hooks.
+    """
+    events = []
+    holder_entered = threading.Event()
+    release_holder = threading.Event()
+    holder_errors = []
+
+    class SaveForBackwardFunction(_Function):
+        @staticmethod
+        def forward(ctx, x):
+            out = x * x
+            ctx.save_for_backward(out)
+            return out
+
+        @staticmethod
+        def backward(ctx, grad_out):
+            (saved_out,) = ctx.saved_tensors
+            return grad_out * saved_out
+
+    def pack_hook(tensor):
+        events.append(("pack", threading.current_thread().name, type(tensor).__name__))
+        return tensor
+
+    def unpack_hook(tensor):
+        events.append(("unpack", threading.current_thread().name, type(tensor).__name__))
+        return tensor
+
+    def hook_holder():
+        try:
+            with ms.saved_tensors_hooks(pack_hook, unpack_hook):
+                holder_entered.set()
+                if not release_holder.wait(timeout=20.0):
+                    raise AssertionError("main thread did not release hook holder")
+        except BaseException as exc:  # pylint: disable=broad-exception-caught
+            holder_errors.append(exc)
+            holder_entered.set()
+
+    previous_enable_grad = _pynative_executor.enable_grad()
+    previous_grad_flag = _pynative_executor.grad_flag()
+    _pynative_executor.set_enable_grad(True)
+    _pynative_executor.set_grad_flag(True)
+    holder = threading.Thread(target=hook_holder, name="hook-holder", daemon=True)
+    holder.start()
+    try:
+        assert holder_entered.wait(timeout=20.0), "hook holder did not enter saved_tensors_hooks"
+        assert not holder_errors, f"hook holder raised before main thread ran: {holder_errors[0]!r}"
+
+        input_x = Tensor(np.array([2.0, 3.0], dtype=np.float32))
+        input_x.requires_grad_()
+        _ = SaveForBackwardFunction.apply(input_x).sum()
+    finally:
+        release_holder.set()
+        holder.join(timeout=20.0)
+        _pynative_executor.set_enable_grad(previous_enable_grad)
+        _pynative_executor.set_grad_flag(previous_grad_flag)
+
+    assert not holder.is_alive(), "hook holder did not exit"
+    assert not holder_errors, f"hook holder raised: {holder_errors[0]!r}"
+    assert not events, (
+        "saved_tensors_hooks leaked across Python threads: the main thread did not enter "
+        f"the hook context, but observed events={events}"
+    )
 
 
 @arg_mark(plat_marks=['cpu_linux'],

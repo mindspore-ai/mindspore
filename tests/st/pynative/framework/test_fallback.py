@@ -15,6 +15,8 @@
 
 """Testcases for Tensor fallback"""
 
+import threading
+
 import numpy as np
 import pytest
 import mindspore as ms
@@ -73,6 +75,44 @@ def _make_base_dtensor(data):
 def _make_dtensor(data):
     """Create a DTensor from given data without resetting RUN_OPS."""
     return DTensor(Tensor(data), Layout())
+
+
+def test_pynative_fallback_no_fallback_guard_isolated_between_python_threads():
+    """
+    Feature: Pynative fallback
+    Description: Thread A enters NoFallbackGuard while thread B runs fallback on a DTensor.
+    Expectation: Thread B still observes its own fallback state.
+    """
+    holder_entered = threading.Event()
+    release_holder = threading.Event()
+    holder_errors = []
+
+    def fallback_holder():
+        try:
+            with NoFallbackGuard():
+                holder_entered.set()
+                if not release_holder.wait(timeout=20.0):
+                    raise AssertionError("main thread did not release fallback holder")
+        except BaseException as exc:  # pylint: disable=broad-exception-caught
+            holder_errors.append(exc)
+            holder_entered.set()
+
+    holder = threading.Thread(target=fallback_holder, name="fallback-disable-holder", daemon=True)
+    holder.start()
+    try:
+        assert holder_entered.wait(timeout=20.0), "fallback holder did not enter NoFallbackGuard"
+        assert not holder_errors, f"fallback holder raised before main thread ran: {holder_errors[0]!r}"
+
+        x = _make_base_dtensor([1.0, 2.0, 3.0])
+        y = x.add(x)
+        assert isinstance(y, DTensor)
+    finally:
+        release_holder.set()
+        holder.join(timeout=20.0)
+
+    assert not holder.is_alive(), "fallback holder did not exit"
+    assert not holder_errors, f"fallback holder raised: {holder_errors[0]!r}"
+    assert DTensor.RUN_OPS == ["AddExt"]
 
 
 # ====== Scenario 1: basic add ======

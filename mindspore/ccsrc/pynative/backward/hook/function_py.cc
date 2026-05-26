@@ -30,6 +30,8 @@
 #include "pynative/backward/op_grad/func_grad.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/convert_utils_py.h"
+#include "include/utils/pynative/common_utils.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
 #include "include/utils/pynative/grad_state.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
@@ -58,11 +60,50 @@ ValuePtrList ConvertOutputTensorList(const py::object &obj) {
   return res;
 }
 
-TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self) {
+py::object PackOutputTensor(const TensorPtr &tensor, const TensorPtr &original_tensor, const py::handle &source_obj) {
+  if (tensor == original_tensor && tensor != nullptr && tensor->has_ms_dispatch() && tensor::IsTensorPy(source_obj)) {
+    return py::reinterpret_borrow<py::object>(source_obj);
+  }
+  if (tensor != nullptr && tensor->has_ms_dispatch() &&
+      tensor->user_data<tensor::TensorPyUserData>(GetSourcePyObjStr()) == nullptr) {
+    tensor->set_has_ms_dispatch(false);
+  }
+  return CValueToPybindObj(tensor);
+}
+
+TensorPtr EnsureSourcePyObjForMsDispatch(const TensorPtr &tensor, const py::handle &source_obj) {
+  if (tensor == nullptr || !tensor->has_ms_dispatch() || !tensor::IsTensorPy(source_obj)) {
+    return tensor;
+  }
+  if (tensor->user_data<tensor::TensorPyUserData>(GetSourcePyObjStr()) != nullptr) {
+    return tensor;
+  }
+  return WrapTensorWithSourcePyObj(tensor, py::reinterpret_borrow<py::object>(source_obj));
+}
+
+py::object MakeSavedMsDispatchOutput(const TensorPtr &tensor, const py::handle &source_obj) {
+  auto saved_local_tensor = CommonUtils::ShallowCopyAndDetachForTensor(tensor);
+  saved_local_tensor->set_has_ms_dispatch(false);
+  saved_local_tensor->set_user_data<tensor::TensorPyUserData>(GetSourcePyObjStr(), nullptr);
+  auto saved_local_obj = tensor::PackTensorToPyObject(saved_local_tensor);
+  auto source = py::reinterpret_borrow<py::object>(source_obj);
+  py::object saved_obj = source.attr("_make_subclass")(source.get_type(), saved_local_obj);
+  if (py::hasattr(source, "__dict__") && py::hasattr(saved_obj, "__dict__")) {
+    py::dict saved_attrs = py::getattr(saved_obj, "__dict__");
+    saved_attrs.attr("update")(py::getattr(source, "__dict__"));
+  }
+  if (py::hasattr(source, "_local_tensor")) {
+    py::setattr(saved_obj, "_local_tensor", saved_local_obj);
+  }
+  return saved_obj;
+}
+
+TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self, const py::handle &source_obj) {
   kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
-  return kernel::pyboost::view(self, self->shape());
+  auto view_input = EnsureSourcePyObjForMsDispatch(self, source_obj);
+  return kernel::pyboost::view(view_input, view_input->shape());
 }
 
 PyObject *PackForwardInput(PyObject *ctx, PyObject *inputs) {
@@ -193,8 +234,16 @@ static TensorPtrList parse_to_save(const std::shared_ptr<FunctionContext> &conte
     PyObject *elem = PyTuple_GET_ITEM(to_save_obj, i);
     if (tensor::IsPyObjectTensorPy(elem)) {
       tensor = tensor::ConvertToTensor(elem);
-      if (check_is_output(tensor) || has_saved_tensors_hooks) {
+      bool is_output = check_is_output(tensor);
+      if (is_output && tensor->has_ms_dispatch() && !has_saved_tensors_hooks) {
+        auto saved_obj = MakeSavedMsDispatchOutput(tensor, py::handle(elem));
+        PyTuple_SetItem(py_data, i, saved_obj.release().ptr());
         (void)to_save_tensors.emplace_back(tensor);
+        continue;
+      }
+      auto tensor_to_save = has_saved_tensors_hooks ? EnsureSourcePyObjForMsDispatch(tensor, py::handle(elem)) : tensor;
+      if ((is_output && !tensor->has_ms_dispatch()) || has_saved_tensors_hooks) {
+        (void)to_save_tensors.emplace_back(tensor_to_save);
         continue;
       }
     } else if (elem != Py_None && need_do_grad) {
@@ -361,28 +410,30 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
 
   size_t num_output = py::cast<py::tuple>(outputs).size();
   py::tuple output_ret(num_output);
+  auto py_outputs = py::cast<py::tuple>(outputs);
   MS_LOG(DEBUG) << "Output info, modified: " << modified << ", num_output: " << num_output;
   for (size_t i = 0; i < num_output; ++i) {
     if (!flatten_outputs[i]->isa<tensor::Tensor>()) {
-      output_ret[i] = py::cast<py::tuple>(outputs)[i];
+      output_ret[i] = py_outputs[i];
       continue;
     }
     auto tensor = flatten_outputs[i]->cast<tensor::TensorPtr>();
+    const auto original_tensor = tensor;
     bool is_diff = non_diff_tensors.count(tensor) == 0 && need_do_grad;
     bool is_same_as_input = input_tensor_set.count(tensor) > 0;
     bool is_dirty_tensor = dirty_tensor_set.count(tensor) > 0;
     if (is_diff) {
       if (is_same_as_input && !is_dirty_tensor) {
-        tensor = ViewAsSelfWithNoGrad(tensor);
+        tensor = ViewAsSelfWithNoGrad(tensor, py_outputs[i]);
         flatten_outputs[i] = tensor;
       }
       AutoGradUtil::SetValueGradInfo(tensor, InputType::kOpOutput);
-      output_ret[i] = CValueToPybindObj(tensor);
+      output_ret[i] = PackOutputTensor(tensor, original_tensor, py_outputs[i]);
       continue;
     }
     if (!tensor->requires_grad()) {
       if (is_same_as_input && !is_dirty_tensor) {
-        tensor = ViewAsSelfWithNoGrad(tensor);
+        tensor = ViewAsSelfWithNoGrad(tensor, py_outputs[i]);
         flatten_outputs[i] = tensor;
       }
     } else if (is_same_as_input) {
@@ -392,7 +443,7 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
     } else if (impl::GetViewAutogradMetaImpl(tensor) == nullptr) {
       tensor->set_auto_grad_meta_data(nullptr);
     }
-    output_ret[i] = CValueToPybindObj(tensor);
+    output_ret[i] = PackOutputTensor(tensor, original_tensor, py_outputs[i]);
   }
   if (!need_do_grad) {
     MS_LOG(DEBUG) << "no need to do grad.";

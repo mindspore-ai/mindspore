@@ -47,14 +47,18 @@ class DisableMsDispatchGuard {
   DisableMsDispatchGuard() {}
   DisableMsDispatchGuard &__enter__() {
     runtime::Pipeline::Get().WaitFrontend();
+    prev_enabled_ = ms_dispatch_enabled();
     SetMsDispatchEnabled(false);
     return *this;
   }
   bool __exit__(py::object /*exc_type*/, py::object /*exc*/, py::object /*tb*/) {
     runtime::Pipeline::Get().WaitFrontend();
-    SetMsDispatchEnabled(true);
+    SetMsDispatchEnabled(prev_enabled_);
     return false;  // rethrow exception.
   }
+
+ private:
+  bool prev_enabled_{true};
 };
 
 void RegMsDispatch(py::module *m) {

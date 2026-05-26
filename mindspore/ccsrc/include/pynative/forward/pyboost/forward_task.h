@@ -23,7 +23,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "runtime/pipeline/task/task.h"
+#include "include/pynative/utils/runtime/pynative_async_task.h"
 #include "pynative/utils/base.h"
 #include "include/backend/common/kernel_graph/session_basic.h"
 #include "include/utils/visible.h"
@@ -31,10 +31,12 @@
 namespace mindspore {
 namespace pynative {
 
-class PYNATIVE_EXPORT PyboostTask : public runtime::AsyncTask {
+class PYNATIVE_EXPORT PyboostTask : public PyNativeAsyncTask {
  public:
   PyboostTask(std::function<void(const PyboostOpRunInfoPtr &op_run_info)> run_func, PyboostOpRunInfoPtr op_run_info)
-      : AsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
+      : PyNativeAsyncTask(runtime::kFrontendTask),
+        run_func_(std::move(run_func)),
+        op_run_info_(std::move(op_run_info)) {}
   ~PyboostTask() override = default;
   void Run() override;
   void SetException(const std::exception_ptr &e) override;
@@ -44,10 +46,12 @@ class PYNATIVE_EXPORT PyboostTask : public runtime::AsyncTask {
   PyboostOpRunInfoPtr op_run_info_;
 };
 
-class PYNATIVE_EXPORT FrontendTask : public runtime::AsyncTask {
+class PYNATIVE_EXPORT FrontendTask : public PyNativeAsyncTask {
  public:
   FrontendTask(std::function<void(const FrontendOpRunInfoPtr &op_run_info)> run_func, FrontendOpRunInfoPtr op_run_info)
-      : AsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)), op_run_info_(std::move(op_run_info)) {}
+      : PyNativeAsyncTask(runtime::kFrontendTask),
+        run_func_(std::move(run_func)),
+        op_run_info_(std::move(op_run_info)) {}
   ~FrontendTask() override = default;
   void Run() override;
   void SetException(const std::exception_ptr &e) override;
@@ -57,12 +61,12 @@ class PYNATIVE_EXPORT FrontendTask : public runtime::AsyncTask {
   FrontendOpRunInfoPtr op_run_info_;
 };
 
-class PYNATIVE_EXPORT PassthroughFrontendTask : public runtime::AsyncTask {
+class PYNATIVE_EXPORT PassthroughFrontendTask : public PyNativeAsyncTask {
  public:
   explicit PassthroughFrontendTask(std::function<void(void)> run_func)
-      : AsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)) {}
+      : PyNativeAsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)) {}
   explicit PassthroughFrontendTask(std::function<void(void)> run_func, std::function<void()> set_exception_func)
-      : AsyncTask(runtime::kFrontendTask),
+      : PyNativeAsyncTask(runtime::kFrontendTask),
         run_func_(std::move(run_func)),
         set_exception_func_(std::move(set_exception_func)) {}
   ~PassthroughFrontendTask() override = default;
@@ -92,10 +96,10 @@ class PYNATIVE_EXPORT PyboostPromiseTask : public PyboostTask {
   std::function<void()> set_exception_func_;
 };
 
-class PYNATIVE_EXPORT ViewPyboostPromiseTask : public runtime::AsyncTask {
+class PYNATIVE_EXPORT ViewPyboostPromiseTask : public PyNativeAsyncTask {
  public:
   explicit ViewPyboostPromiseTask(std::function<void(void)> run_func, std::function<void()> set_exception_func)
-      : AsyncTask(runtime::kFrontendTask),
+      : PyNativeAsyncTask(runtime::kFrontendTask),
         run_func_(std::move(run_func)),
         set_exception_func_(std::move(set_exception_func)) {}
   ~ViewPyboostPromiseTask() override = default;
@@ -125,7 +129,7 @@ class PYNATIVE_EXPORT FrontendPromiseTask : public FrontendTask {
   std::function<void()> set_exception_func_;
 };
 
-class SliceOpFrontendTask : public runtime::AsyncTask {
+class SliceOpFrontendTask : public PyNativeAsyncTask {
  public:
   SliceOpFrontendTask(
     std::function<void(const std::vector<ValuePtr> &input_values, const std::vector<SliceOpInfoPtr> &slice_op_infos,
@@ -133,7 +137,7 @@ class SliceOpFrontendTask : public runtime::AsyncTask {
       run_func,
     std::vector<ValuePtr> input_values, std::vector<SliceOpInfoPtr> slice_op_infos, bool requires_grad,
     const stub::StubNodePtr &stub_output, size_t stream_id)
-      : AsyncTask(runtime::kFrontendTask),
+      : PyNativeAsyncTask(runtime::kFrontendTask),
         run_func_(std::move(run_func)),
         input_values_(std::move(input_values)),
         slice_op_infos_(std::move(slice_op_infos)),
@@ -156,13 +160,13 @@ class SliceOpFrontendTask : public runtime::AsyncTask {
 };
 
 using BackendOpRunInfoPtr = session::BackendOpRunInfoPtr;
-class BackendTask : public runtime::AsyncTask {
+class BackendTask : public PyNativeAsyncTask {
  public:
   BackendTask(
     std::function<void(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info)>
       run_func,
     FrontendOpRunInfoPtr op_run_info, BackendOpRunInfoPtr backend_op_run_info)
-      : AsyncTask(runtime::kBackendTask),
+      : PyNativeAsyncTask(runtime::kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         backend_op_run_info_(std::move(backend_op_run_info)) {}
@@ -176,12 +180,12 @@ class BackendTask : public runtime::AsyncTask {
   BackendOpRunInfoPtr backend_op_run_info_;
 };
 
-class ViewKernelBackendTask : public runtime::AsyncTask {
+class ViewKernelBackendTask : public PyNativeAsyncTask {
  public:
   ViewKernelBackendTask(
     std::function<void(const FrontendOpRunInfoPtr &op_run_info, const runtime::KernelTaskType &task_type)> run_func,
     FrontendOpRunInfoPtr op_run_info, const runtime::KernelTaskType &task_type)
-      : AsyncTask(runtime::kBackendTask),
+      : PyNativeAsyncTask(runtime::kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         task_type_(task_type) {}
@@ -194,14 +198,14 @@ class ViewKernelBackendTask : public runtime::AsyncTask {
   runtime::KernelTaskType task_type_;
 };
 
-class AllocViewMemBackendTask : public runtime::AsyncTask {
+class AllocViewMemBackendTask : public PyNativeAsyncTask {
  public:
   AllocViewMemBackendTask(
     std::function<void(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                        const size_t &input_idx, bool need_wait)>
       run_func,
     FrontendOpRunInfoPtr op_run_info, const tensor::TensorPtr &input_tensor, const size_t &input_idx, bool need_wait)
-      : AsyncTask(runtime::kBackendTask),
+      : PyNativeAsyncTask(runtime::kBackendTask),
         run_func_(std::move(run_func)),
         op_run_info_(std::move(op_run_info)),
         input_tensor_(input_tensor),
@@ -221,10 +225,10 @@ class AllocViewMemBackendTask : public runtime::AsyncTask {
   bool need_wait_{false};
 };
 
-class ContiguousBackendTask : public runtime::AsyncTask {
+class ContiguousBackendTask : public PyNativeAsyncTask {
  public:
   ContiguousBackendTask(std::function<void(const tensor::TensorPtr &tensor)> run_func, const tensor::TensorPtr &tensor)
-      : AsyncTask(runtime::kBackendTask), run_func_(std::move(run_func)), tensor_(tensor) {}
+      : PyNativeAsyncTask(runtime::kBackendTask), run_func_(std::move(run_func)), tensor_(tensor) {}
   ~ContiguousBackendTask() override = default;
   void Run() override;
 
