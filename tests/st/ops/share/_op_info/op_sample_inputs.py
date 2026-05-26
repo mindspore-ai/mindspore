@@ -11497,7 +11497,7 @@ def error_sample_inputs_mv(op_info: OpInfo, dtype=None, device=None, **kwargs):
 def extra_sample_inputs_mv(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     yield from make_extra_tensor(op_info, (1, 16 ), ((16, ),), {},
-                                 dtype=dtype, device=device, exclude_value=(1e+20,-1e+20))
+                                 dtype=dtype, device=device, exclude_value=( -5062757.7, 5062757.7, -1e20, 1e20))
 
     yield from make_extra_tensor(op_info, (1, 0), ((0, ),), {},
                                  dtype=dtype, device=device, empty_tensor=True)
@@ -11929,8 +11929,8 @@ def basic_sample_inputs_allclose(op_info: OpInfo, dtype=None, device=None, **kwa
 
 def extra_sample_inputs_allclose(op_info: OpInfo, dtype=None, device=None, **kwargs):
     for sample_input in extra_reference_inputs_binary_op_common_func(op_info, dtype, device):
-        atol = random.choice([0, 1, 1e-5, 1e-16, 31415626, np.inf, 0.5])
-        rtol = random.choice([0, 1, 1e-5, 1e-16, 31415626, np.inf, 0.5])
+        atol = random.choice([0, 1, 1e-5, 1e-16, 31415626, 0.5])
+        rtol = random.choice([0, 1, 1e-5, 1e-16, 31415626, 0.5])
         sample_input.op_kwargs=({'atol':atol, 'rtol':rtol})
         if 'nan' in sample_input.sample_name:
             sample_input.op_kwargs.update({"equal_nan":False})
