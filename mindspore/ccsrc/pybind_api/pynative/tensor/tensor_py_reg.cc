@@ -47,6 +47,7 @@
 #include "include/pynative/forward/pyboost/converter.h"
 #include "include/pynative/forward/pyboost/fallback.h"
 #include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/pynative/dispatch/ms_dispatch_py_obj.h"
 #include "mindspore/ops/include/view/view_strides_calculator.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/runtime/op_runner.h"
@@ -1260,6 +1261,9 @@ extern PyObject *TensorPy_set_user_data(PyObject *self, PyObject *args) {
   PyObject *value_obj;
   if (!PyArg_ParseTuple(args, "sO", &key, &value_obj)) {
     return nullptr;
+  }
+  if (pynative::IsSourcePyObjKey(key)) {
+    MS_LOG(EXCEPTION) << "The tensor user data key '" << key << "' is reserved for internal ms_dispatch state.";
   }
   TensorPybind::SetUserData(tensor->value.GetTensor(), py::str(key), py::reinterpret_borrow<py::object>(value_obj));
   Py_RETURN_NONE;

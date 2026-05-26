@@ -24,6 +24,7 @@
 #include <utility>
 #include "pybind11/pybind11.h"
 #include "include/utils/pynative/dispatch/dispatch_stack.h"
+#include "include/utils/pynative/dispatch/ms_dispatch_py_obj.h"
 #include "include/utils/convert_utils_py.h"
 #include "include/utils/tensor_py.h"
 #include "ir/tensor.h"
@@ -39,19 +40,12 @@ inline const std::string &GetMsDispatchStr() {
   return kMsDispatch;
 }
 
-inline const std::string &GetSourcePyObjStr() {
-  static const std::string kSourcePyObj = "source_py_obj";
-  return kSourcePyObj;
-}
-
 inline py::object PackValue(const tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
     return py::none();
   }
   if (tensor->has_ms_dispatch()) {
-    auto py_data = tensor->user_data<tensor::TensorPyUserData>(GetSourcePyObjStr());
-    MS_EXCEPTION_IF_NULL(py_data);
-    return py_data->obj;
+    return PackSourcePyObj(tensor);
   }
   return tensor::PackTensorToPyObject(tensor);
 }
@@ -67,7 +61,7 @@ inline py::object PackValue(const std::optional<tensor::TensorPtr> &opt_tensor) 
   if (!opt_tensor.has_value() || opt_tensor.value() == nullptr) {
     return py::none();
   }
-  return tensor::PackTensorToPyObject(opt_tensor.value());
+  return PackValue(opt_tensor.value());
 }
 
 inline py::object PackValue(const std::vector<tensor::TensorPtr> &tensors) {
@@ -216,51 +210,6 @@ inline py::object GetMsDispatch(const tensor::TensorPtr &tensor) {
     MS_LOG(EXCEPTION) << "Tensor " << tensor->ToString() << " should have dispatch attribute";
   }
   return user_data->obj;
-}
-
-/// \brief Get the original PyObject from tensor's user_data.
-/// This retrieves the original Python Tensor subclass object that was stored
-/// when the tensor was converted with ms_dispatch support.
-/// \param tensor The tensor to get the original PyObject from.
-/// \return The original PyObject, or py::none() if not found.
-inline py::object GetSourcePyObj(const tensor::TensorPtr &tensor) {
-  if (tensor == nullptr) {
-    return py::none();
-  }
-  const auto user_data = tensor->user_data<tensor::TensorPyUserData>(GetSourcePyObjStr());
-  MS_EXCEPTION_IF_NULL(user_data);
-  return user_data->obj;
-}
-
-/// \brief Create a shallow copy of tensor with source_py_obj stored in user_data.
-/// This is used when converting a Python Tensor subclass with __ms_dispatch__ attribute
-/// to preserve the original PyObject reference for later dispatch.
-/// \param original_tensor The tensor to wrap.
-/// \param py_obj The original Python object to store.
-/// \return A new tensor with the original PyObject stored in user_data.
-inline tensor::TensorPtr WrapTensorWithSourcePyObj(const tensor::TensorPtr &original_tensor, const py::object &py_obj) {
-  if (original_tensor == nullptr) {
-    return nullptr;
-  }
-
-  auto new_tensor = std::make_shared<tensor::Tensor>(*original_tensor);
-  if (original_tensor->is_parameter()) {
-    new_tensor->set_param_info(original_tensor->param_info());
-  }
-
-  auto py_obj_data = std::make_shared<tensor::TensorPyUserData>();
-  py_obj_data->obj = py_obj;
-  new_tensor->set_user_data<tensor::TensorPyUserData>(GetSourcePyObjStr(), py_obj_data);
-
-  return new_tensor;
-}
-
-inline tensor::TensorPtr ConvertPyObjectToTensorWithSourcePyObj(const py::object &obj) {
-  auto tensor = tensor::ConvertToTensor(obj);
-  if (tensor != nullptr && tensor->has_ms_dispatch()) {
-    return WrapTensorWithSourcePyObj(tensor, obj);
-  }
-  return tensor;
 }
 
 template <typename T>
