@@ -241,6 +241,14 @@ inline bool CanKeepBF16(const CNodePtr &cnode) {
   const auto &prim = GetCNodePrimitive(cnode);
   return prim != nullptr && kCanKeepBF16Ops.find(prim->name()) != kCanKeepBF16Ops.end();
 }
+
+TypeId GetComputeType(const CNodePtr &cnode, TypeId x0_type, TypeId x1_type) {
+  auto compute_type = ops::PromoteType(x0_type, x1_type, cnode->fullname_with_scope());
+  if (compute_type == kNumberTypeBFloat16) {
+    compute_type = kNumberTypeFloat32;
+  }
+  return compute_type;
+}
 }  // namespace
 
 AnfNodePtr ConvertBFloat16::GetCastedInput(const AnfNodePtr &input_node, TypeId dst_type,
@@ -439,13 +447,24 @@ bool ConvertMixType::ProcessBinary(const CNodePtr &cnode) {
   if (x0_type == out_type && x1_type == out_type) {
     return false;
   }
-  auto compute_type = ops::PromoteType(x0_type, x1_type, cnode->fullname_with_scope());
-  if (compute_type == kNumberTypeBFloat16) {
-    compute_type = kNumberTypeFloat32;
-  }
+  auto compute_type = GetComputeType(cnode, x0_type, x1_type);
   CastInput(cnode, 0, x0_type, compute_type);
   CastInput(cnode, 1, x1_type, compute_type);
   CastOutput(cnode, 0, out_type, compute_type);
+  return true;
+}
+
+bool ConvertMixType::ProcessCompare(const CNodePtr &cnode) {
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto x0_type = cb->GetInputType(cnode, 0);
+  auto x1_type = cb->GetInputType(cnode, 1);
+  auto compute_type = GetComputeType(cnode, x0_type, x1_type);
+  if (x0_type == compute_type && x1_type == compute_type) {
+    return false;
+  }
+  CastInput(cnode, 0, x0_type, compute_type);
+  CastInput(cnode, 1, x1_type, compute_type);
   return true;
 }
 
@@ -454,8 +473,8 @@ bool ConvertMixType::Process(const FuncGraphPtr &func_graph) {
   static const std::map<std::string, ProcessFunc> funcs = {
     {ops::kNameMul, &ConvertMixType::ProcessBinary},
     {ops::kNameDiv, &ConvertMixType::ProcessBinary},
-    {ops::kNameLess, &ConvertMixType::ProcessBinary},
-    {ops::kNameEqual, &ConvertMixType::ProcessBinary},
+    {ops::kNameLess, &ConvertMixType::ProcessCompare},
+    {ops::kNameEqual, &ConvertMixType::ProcessCompare},
   };
 
   bool changed = false;
