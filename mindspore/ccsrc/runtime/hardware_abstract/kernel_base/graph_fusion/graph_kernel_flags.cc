@@ -264,31 +264,31 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
 }
 
 void GraphKernelFlags::CheckSupport() const {
-  if (IsEnableGraphKernel()) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-#ifndef USE_LLVM
-    auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-    if (is_cpu && const_cast<GraphKernelFlags *>(this)->kernel_generator == "AKG") {
-      MS_LOG(WARNING)
-        << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now. Please "
-           "refer to https://www.mindspore.cn/install and install the required version of LLVM.";
-      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
-      return;
-    }
-#endif
-    auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    if (is_ascend) {
-      if (const_cast<GraphKernelFlags *>(this)->kernel_generator == "DVM") {
-        auto const &soc_version = context->ascend_soc_version();
-        if (!soc_version.empty() && !context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureGraphKernelDvm)) {
-          MS_LOG(WARNING) << "DVM does not support " << soc_version << ".";
-          const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
-          return;
-        }
-      }
-    }
+  if (!IsEnableGraphKernel()) {
+    return;
   }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto *flags = const_cast<GraphKernelFlags *>(this);
+  const auto device_target = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+#ifndef USE_LLVM
+  if (device_target == kCPUDevice && flags->kernel_generator == "AKG") {
+    MS_LOG(WARNING)
+      << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now. Please "
+         "refer to https://www.mindspore.cn/install and install the required version of LLVM.";
+    flags->opt_level = OptLevel_0;
+    return;
+  }
+#endif
+  if (device_target != kAscendDevice || flags->kernel_generator != "DVM") {
+    return;
+  }
+  const auto &soc_version = context->ascend_soc_version();
+  if (soc_version.empty() || context->AscendSocSupportsFeature(ascend_soc::kAscendFeatureGraphKernelDvm)) {
+    return;
+  }
+  MS_LOG(WARNING) << "DVM does not support " << soc_version << ".";
+  flags->opt_level = OptLevel_0;
 }
 
 void GraphKernelFlags::Refresh() {
