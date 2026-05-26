@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_PYNATIVE_ASYNC_TASK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_PYNATIVE_ASYNC_TASK_H_
 
+#include <cstdint>
 #include <utility>
 
 #include "include/pynative/utils/runtime/auto_grad_guard.h"
@@ -30,6 +31,7 @@ namespace pynative {
 struct PYNATIVE_UTILS_EXPORT PyNativeThreadContext {
   bool grad_flag{false};
   bool enable_grad{true};
+  uint32_t stream_id{0};
   kernel::pyboost::OpStatus op_status{};
   bool op_require_grad{false};
   bool is_safe_view{true};

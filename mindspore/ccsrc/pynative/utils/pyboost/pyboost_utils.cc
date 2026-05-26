@@ -286,7 +286,7 @@ DeviceAddressPtr PyBoostUtils::MakeContiguousDeviceAddress(const tensor::TensorP
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
 
-  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+  auto stream_id = CurrentStream::id();
   auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(storage_info->shape);
   auto new_device_address =
     std::make_shared<device::DeviceAddress>(nullptr, address_size, device_context->GetDeviceType(), stream_id);
@@ -408,13 +408,13 @@ void PyBoostUtils::MallocForInput(const DeviceContext *device_context, size_t st
   }
 
   if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-    runtime::OpExecutor::DispatchLaunchTask([tensor]() {
+    runtime::OpExecutor::DispatchLaunchTask([tensor, stream_id]() {
       MS_LOG(DEBUG) << "Start lazy copy for tensor " << tensor->ToString();
-      runtime::DeviceAddressUtils::LazyCopy(tensor, CurrentStream::id());
+      runtime::DeviceAddressUtils::LazyCopy(tensor, stream_id);
     });
   } else {
     MS_LOG(DEBUG) << "Start lazy copy for tensor " << tensor->ToString();
-    runtime::DeviceAddressUtils::LazyCopy(tensor, CurrentStream::id());
+    runtime::DeviceAddressUtils::LazyCopy(tensor, stream_id);
   }
 }
 

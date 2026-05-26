@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "include/utils/pynative/grad_state.h"
+#include "utils/current_state.h"
 
 namespace mindspore {
 namespace pynative {
@@ -27,6 +28,7 @@ PyNativeThreadContext CapturePyNativeThreadContext() {
   auto &grad_state = GradState::Get();
   ctx.grad_flag = grad_state.grad_flag();
   ctx.enable_grad = grad_state.enable_grad();
+  ctx.stream_id = CurrentStream::id();
 
   auto &op_run_status = kernel::pyboost::OpRunStatus::Get();
   ctx.op_status = op_run_status.op_status();
@@ -41,6 +43,7 @@ void RestorePyNativeThreadContext(const PyNativeThreadContext &ctx) {
   auto &grad_state = GradState::Get();
   grad_state.set_grad_flag(ctx.grad_flag);
   grad_state.set_enable_grad(ctx.enable_grad);
+  CurrentStream::set_id(ctx.stream_id);
 
   auto &op_run_status = kernel::pyboost::OpRunStatus::Get();
   auto op_status = ctx.op_status;

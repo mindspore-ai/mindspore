@@ -1377,7 +1377,7 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(cons
 
   MS_EXCEPTION_IF_NULL(device_context);
   if (stream_id == SIZE_MAX) {
-    stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+    stream_id = CurrentStream::id();
   }
 
   GilReleaseWithCheck release_gil;

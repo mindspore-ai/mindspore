@@ -21,6 +21,7 @@
 #include "include/pynative/utils/runtime/task/device_task.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "utils/current_state.h"
 #include "utils/ms_exception.h"
 namespace mindspore {
 namespace kernel {
@@ -126,7 +127,11 @@ void CommHandle::ReleaseMultiStreamEvent(size_t cur_stream_id) {
 
 void WaitTaskFunc(CommHandlePtr comm_handle) {
   MS_EXCEPTION_IF_NULL(comm_handle);
-  auto cur_stream_id = comm_handle->device_ctx()->device_res_manager_->GetCurrentStreamId();
+  WaitTaskFunc(comm_handle, CurrentStream::id());
+}
+
+void WaitTaskFunc(CommHandlePtr comm_handle, size_t cur_stream_id) {
+  MS_EXCEPTION_IF_NULL(comm_handle);
   auto wait_fn = [cur_stream_id, comm_handle, del_guard = DelGuard(comm_handle)]() {
     runtime::OpExecutor::DispatchLaunchTask(
       // wait device event, wait_stream_id is the stream id of the device event
@@ -153,7 +158,7 @@ void CommHandle::Wait() {
                   << ", CommHandle=" << this;
   }
   // Wait event async.
-  WaitTaskFunc(shared_from_this());
+  WaitTaskFunc(shared_from_this(), CurrentStream::id());
   return;
 }
 

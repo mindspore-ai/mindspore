@@ -18,7 +18,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-static uint32_t g_current_stream_id = 0;
+static thread_local uint32_t g_current_stream_id = 0;
 uint32_t CurrentStream::id() { return g_current_stream_id; }
 
 void CurrentStream::set_id(uint32_t stream_id) {

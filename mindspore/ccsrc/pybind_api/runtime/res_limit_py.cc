@@ -75,23 +75,26 @@ void SetStreamLimit(const StreamPyPtr &stream, int32_t cube_num, int32_t vector_
 }
 
 void DispatchSetStreamLimitTask(const StreamPyPtr &stream, int32_t cube_num, int32_t vector_num) {
-  // Wait set stream limit async.
   pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([stream, cube_num, vector_num]() {
-    auto wait_fn = [stream, cube_num, vector_num]() {
+    auto set_limit_fn = [stream, cube_num, vector_num]() {
       auto stream_id = stream->stream_id();
-      MS_LOG(DEBUG) << "WaitEvent wait stream id:" << stream_id << ", cube_num:" << cube_num
-                    << ", vectore_num:" << vector_num;
+      MS_LOG(DEBUG) << "Set stream limit, stream id:" << stream_id << ", cube_num:" << cube_num
+                    << ", vector_num:" << vector_num;
       auto device_ctx = stream->device_ctx();
       MS_EXCEPTION_IF_NULL(device_ctx);
-      runtime::OpExecutor::DispatchLaunchTask([stream_id, cube_num, vector_num, device_ctx]() {
-        device_ctx->device_res_manager_->SetStreamLimit(stream_id, cube_num, vector_num);
-      });
+      MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
+      if (!device_ctx->device_res_manager_->BindDeviceToCurrentThread(false)) {
+        MS_LOG(EXCEPTION) << "Bind context to current thread failed";
+      }
+      device_ctx->device_res_manager_->SetStreamLimit(stream_id, cube_num, vector_num);
     };
     if (!runtime::OpExecutor::NeedSync()) {
+      // ACLNN cache hash reads the stream resource limit on the backend thread before launch tasks run.
+      // Keep this ordered in the backend stage, and let PassthroughDeviceTask drain previous launch tasks first.
       runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
-        std::make_shared<runtime::PassthroughNoWaitDeviceTask>(wait_fn));
+        std::make_shared<runtime::PassthroughDeviceTask>(set_limit_fn));
     } else {
-      wait_fn();
+      set_limit_fn();
     }
   }));
 }

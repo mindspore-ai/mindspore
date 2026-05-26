@@ -630,7 +630,7 @@ void ViewBackend::RunViewKernelTaskAsyncImpl(const runtime::KernelTaskType &task
                                              const tensor::TensorPtrList &input_tensors,
                                              const tensor::TensorPtrList &output_tensors,
                                              const size_t &stream_id) const {
-  static auto kernel_task_func = [stream_id, task_type, input_tensors, output_tensors, device_context]() {
+  auto kernel_task_func = [stream_id, task_type, input_tensors, output_tensors, device_context]() {
     runtime::OpRunner::LaunchKernelTask(task_type, device_context, input_tensors, output_tensors, stream_id);
   };
 
