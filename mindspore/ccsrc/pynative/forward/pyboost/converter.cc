@@ -1672,7 +1672,8 @@ void ParserArgs::CheckHasFallback() {
     return;
   }
   for (const auto &arg : arg_list_) {
-    MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(arg) << " for " << PyUnicode_AsUTF8(PyObject_Str(arg));
+    MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(arg) << " for "
+                  << PyParser::BuildPyObjectInputTypeString(arg);
     if (PyObjectHasFallbackAttr(arg)) {
       has_fallback_ = true;
       break;
@@ -1682,7 +1683,7 @@ void ParserArgs::CheckHasFallback() {
   if (ms_dispatch_enabled()) {
     for (const auto &arg : arg_list_) {
       MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(arg) << " for "
-                    << PyUnicode_AsUTF8(PyObject_Str(arg));
+                    << PyParser::BuildPyObjectInputTypeString(arg);
       if (HasActiveDispatchGuard() || PyObjectHasMsDispatchAttr(arg)) {
         has_ms_dispatch_ = true;
         break;
@@ -1695,7 +1696,8 @@ void ParserArgs::CheckHasFallback(PyObject *obj) {
   if (!fallback_enabled()) {
     return;
   }
-  MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(obj) << " for " << PyUnicode_AsUTF8(PyObject_Str(obj));
+  MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(obj) << " for "
+                << PyParser::BuildPyObjectInputTypeString(obj);
   if (PyObjectHasFallbackAttr(obj)) {
     has_fallback_ = true;
   }
