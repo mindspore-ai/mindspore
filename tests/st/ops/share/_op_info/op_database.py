@@ -4566,7 +4566,7 @@ other_op_db = [
     'mint.addbmm',
     'mint.nn.Conv2d',
     'mint.nn.ConstantPad1d',
-    'mint.allclose',
+    #'mint.allclose',
     'mint.multinomial',
     'mint.rand',
     'mint.rand_like',

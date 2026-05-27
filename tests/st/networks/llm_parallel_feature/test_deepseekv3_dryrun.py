@@ -24,7 +24,7 @@ from tests.st.networks.llm_parallel_feature.utils import prepare_deepseekv3_test
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='dryrun_only')
 def test_deepseekv3_cell_dp8mp2ep4pp2mb4gas1bs1_32p():
     """
     Feature: test deepseekv3 cell dp8mp2ep4pp2mb4gas1bs1 32p
