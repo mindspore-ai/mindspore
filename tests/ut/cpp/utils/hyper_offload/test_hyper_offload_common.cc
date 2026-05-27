@@ -48,6 +48,8 @@ class TestHyperOffloadCommon : public UT::Common {
     UT::Common::SetUp();
     // Set environment variables to enable HyperOffload
     (void)common::SetEnv("MS_DEV_HYPER_OFFLOAD", "1");
+    // Disable peak strategy to use distance-based strategy
+    (void)common::SetEnv("MS_DEV_HYPER_OFFLOAD_PEAK_STRATEGY", "0");
     // Set required compile configs to avoid GetConfig errors
     common::SetCompileConfig("COMPILE_DEBUG_MODE", "debug");
     common::SetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID", "0");
@@ -60,11 +62,19 @@ class TestHyperOffloadCommon : public UT::Common {
     common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_COVER_START", "1.0");
     common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_COVER_END", "1.0");
     common::SetCompileConfig("HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT", "1.0");
+    // Add missing compile configs that are accessed by hyper_offload code
+    common::SetCompileConfig("HYPER_OFFLOAD_MEMORY_BLOCK_PATH", "");
+    common::SetCompileConfig("HYPER_OFFLOAD_DYNAMIC_SHAPE_PLACEHOLDER_BYTES", "134217728");
+    common::SetCompileConfig("HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES", "4294967296");
+    common::SetCompileConfig("HYPER_OFFLOAD_D2H_BANDWIDTH_GBPS", "20.0");
+    common::SetCompileConfig("HYPER_OFFLOAD_H2D_BANDWIDTH_GBPS", "55.0");
+    common::SetCompileConfig("HYPER_OFFLOAD_DEFAULT_KERNEL_TIME_US", "400.0");
   }
 
   void TearDown() override {
     // Clean up environment variables (set to empty string or use unsetenv)
     (void)common::SetEnv("MS_DEV_HYPER_OFFLOAD", "", 1);
+    (void)common::SetEnv("MS_DEV_HYPER_OFFLOAD_PEAK_STRATEGY", "", 1);
     // Note: We don't clear compile configs here as they may be needed by other tests
     // The compile config manager is a singleton and will persist across tests
     UT::Common::TearDown();

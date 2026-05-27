@@ -411,6 +411,62 @@ Value Range: Int value (bytes).
 HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES = '4294967296'
 
 """
+Name: HYPER_OFFLOAD_D2H_BANDWIDTH_GBPS
+Function: Device-to-Host memory transfer bandwidth in GB/s.
+    Used for adaptive release_distance calculation.
+Value Range: Float value (GB/s).
+    Default: 20.0 GB/s
+Example: export HYPER_OFFLOAD_D2H_BANDWIDTH_GBPS=20.0
+"""
+HYPER_OFFLOAD_D2H_BANDWIDTH_GBPS = '20.0'
+
+"""
+Name: HYPER_OFFLOAD_H2D_BANDWIDTH_GBPS
+Function: Host-to-Device memory transfer bandwidth in GB/s.
+    Used for adaptive prefetch_distance calculation.
+Value Range: Float value (GB/s).
+    Default: 55.0 GB/s
+Example: export HYPER_OFFLOAD_H2D_BANDWIDTH_GBPS=55.0
+"""
+HYPER_OFFLOAD_H2D_BANDWIDTH_GBPS = '55.0'
+
+"""
+Name: HYPER_OFFLOAD_DEFAULT_KERNEL_TIME_US
+Function: Default kernel execution time in microseconds.
+    Used for adaptive distance calculation.
+Value Range: Float value (microseconds).
+    Default: 400.0 us
+Example: export HYPER_OFFLOAD_DEFAULT_KERNEL_TIME_US=400.0
+"""
+HYPER_OFFLOAD_DEFAULT_KERNEL_TIME_US = '400.0'
+
+"""
+Name: MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_RELEASE_DISTANCE
+Function: Enable adaptive release_distance calculation for peak offload strategy.
+    When enabled, release_distance is calculated based on operator size, D2H bandwidth,
+    and kernel execution time, instead of using the fixed HYPER_OFFLOAD_RELEASE_DISTANCE.
+Value Range:
+    1: Enable adaptive calculation (only for peak strategy)
+    0 or empty: Disable, use fixed HYPER_OFFLOAD_RELEASE_DISTANCE
+    Default: Disable
+Example: export MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_RELEASE_DISTANCE=1
+"""
+MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_RELEASE_DISTANCE = ''
+
+"""
+Name: MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_PREFETCH_DISTANCE
+Function: Enable adaptive prefetch_distance calculation for peak offload strategy.
+    When enabled, prefetch_distance is calculated based on operator size, H2D bandwidth,
+    and kernel execution time, instead of using the fixed HYPER_OFFLOAD_PREFETCH_DISTANCE.
+Value Range:
+    1: Enable adaptive calculation (only for peak strategy)
+    0 or empty: Disable, use fixed HYPER_OFFLOAD_PREFETCH_DISTANCE
+    Default: Disable
+Example: export MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_PREFETCH_DISTANCE=1
+"""
+MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_PREFETCH_DISTANCE = ''
+
+"""
 Name: PIJIT_SUBGRAPH_BREAK_OPTIMIZE
 Function: Whether to enable subgraph break optimization in PIJit.
 Value Range:
@@ -530,6 +586,11 @@ __all__ = [
     "HYPER_OFFLOAD_MEMORY_BLOCK_PATH",
     "HYPER_OFFLOAD_DYNAMIC_SHAPE_PLACEHOLDER_BYTES",
     "HYPER_OFFLOAD_PEAK_MODELED_HEADROOM_BYTES",
+    "HYPER_OFFLOAD_D2H_BANDWIDTH_GBPS",
+    "HYPER_OFFLOAD_H2D_BANDWIDTH_GBPS",
+    "HYPER_OFFLOAD_DEFAULT_KERNEL_TIME_US",
+    "MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_RELEASE_DISTANCE",
+    "MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_PREFETCH_DISTANCE",
     "PIJIT_SUBGRAPH_BREAK_OPTIMIZE",
     "ENABLE_ELIMINATE_UNUSED_PARAMS",
     "PUT_ALL_CNODE_INTO_ORDER_LIST",

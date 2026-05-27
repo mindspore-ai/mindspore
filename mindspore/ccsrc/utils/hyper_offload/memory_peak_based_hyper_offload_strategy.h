@@ -37,6 +37,15 @@ class MemoryPeakBasedHyperOffloadStrategy : public HyperOffloadStrategy {
 };
 using MemoryPeakBasedHyperOffloadStrategyPtr = std::unique_ptr<MemoryPeakBasedHyperOffloadStrategy>;
 
+// Optimize release_distance based on memory constraints (two-phase optimization)
+void OptimizeReleaseDistanceByMemory(std::vector<OffloadInfo> &offload_infos, std::vector<size_t> &memory_profile,
+                                     const CNodePtrList &exec_order, const std::map<AnfNodePtr, size_t> &node_to_index);
+
+// Optimize prefetch_distance based on memory constraints (three-phase optimization)
+void OptimizePrefetchDistanceByMemory(std::vector<OffloadInfo> &offload_infos, std::vector<size_t> &memory_profile,
+                                      const CNodePtrList &exec_order,
+                                      const std::map<AnfNodePtr, size_t> &node_to_index);
+
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore

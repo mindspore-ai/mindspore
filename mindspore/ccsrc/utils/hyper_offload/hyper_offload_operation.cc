@@ -152,9 +152,9 @@ void HyperOffloadOperations::MoveAhead(const CNodePtr &node, size_t ahead_distan
   }
 
   if (min_attach_after_exec_idx.has_value()) {
-    const size_t lo = *min_attach_after_exec_idx;
-    if (use_pre_ops || new_index < lo) {
-      new_index = lo;
+    const size_t min_attach_index = *min_attach_after_exec_idx;
+    if (use_pre_ops || new_index < min_attach_index) {
+      new_index = min_attach_index;
       use_pre_ops = false;
     }
   }

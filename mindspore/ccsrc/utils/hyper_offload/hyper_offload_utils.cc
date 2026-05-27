@@ -54,6 +54,12 @@ constexpr std::string_view kScoreWeightCoverEndConfig = "HYPER_OFFLOAD_SCORE_WEI
 constexpr std::string_view kScoreWeightNeighborImpactConfig = "HYPER_OFFLOAD_SCORE_WEIGHT_NEIGHBOR_IMPACT";
 constexpr std::string_view kEnabledStagesConfig = "MS_DEV_HYPER_OFFLOAD_FOR_STAGE";
 constexpr std::string_view kOffloadPercentageConfig = "MS_DEV_HYPER_OFFLOAD_FILTER_PERCENTAGE";
+constexpr std::string_view kD2HBandwidthConfig = "HYPER_OFFLOAD_D2H_BANDWIDTH_GBPS";
+constexpr std::string_view kH2DBandwidthConfig = "HYPER_OFFLOAD_H2D_BANDWIDTH_GBPS";
+constexpr std::string_view kDefaultKernelTimeConfig = "HYPER_OFFLOAD_DEFAULT_KERNEL_TIME_US";
+constexpr std::string_view kEnableAdaptiveReleaseDistanceEnv = "MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_RELEASE_DISTANCE";
+constexpr std::string_view kEnableAdaptivePrefetchDistanceEnv =
+  "MS_DEV_HYPER_OFFLOAD_ENABLE_ADAPTIVE_PREFETCH_DISTANCE";
 
 constexpr std::string_view kPrefetchDistanceAttr = "prefetch_distance";
 constexpr std::string_view kReleaseDistanceAttr = "release_distance";
@@ -274,9 +280,22 @@ HyperOffloadConfig::HyperOffloadConfig() {
     score_weight_cover_start_ = ParseCompileConfigAsDouble(kScoreWeightCoverStartConfig, 1.0);
     score_weight_cover_end_ = ParseCompileConfigAsDouble(kScoreWeightCoverEndConfig, 1.0);
     score_weight_neighbor_impact_ = ParseCompileConfigAsDouble(kScoreWeightNeighborImpactConfig, 1.0);
+
+    enable_adaptive_release_distance_ = (common::GetEnv(std::string(kEnableAdaptiveReleaseDistanceEnv)) == "1");
+    d2h_bandwidth_gbps_ = ParseCompileConfigAsDouble(kD2HBandwidthConfig, 20.0);
+    default_kernel_time_us_ = ParseCompileConfigAsDouble(kDefaultKernelTimeConfig, 400.0);
+
+    enable_adaptive_prefetch_distance_ = (common::GetEnv(std::string(kEnableAdaptivePrefetchDistanceEnv)) == "1");
+    h2d_bandwidth_gbps_ = ParseCompileConfigAsDouble(kH2DBandwidthConfig, 55.0);
+
     MS_LOG(INFO) << "HyperOffloadConfig initialized: enable=" << enable_hyper_offload_
                  << ", select_distance=" << select_distance_ << ", select_num=" << select_num_
-                 << ", prefetch_distance=" << prefetch_distance_ << ", release_distance=" << release_distance_;
+                 << ", prefetch_distance=" << prefetch_distance_ << ", release_distance=" << release_distance_
+                 << ", enable_adaptive_release_distance=" << enable_adaptive_release_distance_
+                 << ", d2h_bandwidth_gbps=" << d2h_bandwidth_gbps_
+                 << ", default_kernel_time_us=" << default_kernel_time_us_
+                 << ", enable_adaptive_prefetch_distance=" << enable_adaptive_prefetch_distance_
+                 << ", h2d_bandwidth_gbps=" << h2d_bandwidth_gbps_;
   } else {
     MS_LOG(INFO) << "HyperOffloadConfig initialized: hyper offload disabled";
   }
@@ -829,6 +848,70 @@ size_t FindLastUserIndex(const CNodePtrList &exec_order, const AnfNodePtr &data_
     }
   }
   return current_node_index;
+}
+
+size_t GetOperatorSizeBytes(const AnfNodePtr &data_node) {
+  const auto &output_mem_sizes = data_node->user_data<std::vector<size_t>>(kHyperOffloadOutputMemSizes);
+  if (output_mem_sizes == nullptr || output_mem_sizes->empty()) {
+    return 0;
+  }
+  return (*output_mem_sizes)[0];
+}
+
+size_t CalculateDistanceFromCopyTime(double copy_time_us, double kernel_time_us, size_t start_index,
+                                     size_t exec_order_size) {
+  double cumulative_time_us = 0.0;
+  size_t distance = 0;
+  for (size_t i = start_index; i < exec_order_size; ++i) {
+    cumulative_time_us += kernel_time_us;
+    ++distance;
+    if (cumulative_time_us >= copy_time_us) {
+      break;
+    }
+  }
+  return distance;
+}
+
+size_t CalculateAdaptiveReleaseDistance(const AnfNodePtr &data_node, const CNodePtrList &exec_order,
+                                        size_t data_node_index, size_t last_user_index) {
+  MS_EXCEPTION_IF_NULL(data_node);
+  const auto &config = HyperOffloadConfig::GetInstance();
+
+  const size_t operator_size_bytes = GetOperatorSizeBytes(data_node);
+  const double d2h_bandwidth_gbps = config.d2h_bandwidth_gbps();
+  const double d2h_copy_time_us = static_cast<double>(operator_size_bytes) / (d2h_bandwidth_gbps * 1e3);
+  const double kernel_time_us = config.default_kernel_time_us();
+
+  return CalculateDistanceFromCopyTime(d2h_copy_time_us, kernel_time_us, last_user_index + 1, exec_order.size());
+}
+
+size_t CalculateBackwardDistanceFromCopyTime(double copy_time_us, double kernel_time_us, size_t first_use_index) {
+  if (first_use_index == 0) {
+    return 0;
+  }
+  double cumulative_time_us = 0.0;
+  size_t distance = 0;
+  for (size_t i = first_use_index - 1;; --i) {
+    cumulative_time_us += kernel_time_us;
+    ++distance;
+    if (cumulative_time_us >= copy_time_us || i == 0) {
+      break;
+    }
+  }
+  return distance;
+}
+
+size_t CalculateAdaptivePrefetchDistance(const AnfNodePtr &data_node, const CNodePtrList &exec_order,
+                                         size_t first_use_index) {
+  MS_EXCEPTION_IF_NULL(data_node);
+  const auto &config = HyperOffloadConfig::GetInstance();
+
+  const size_t operator_size_bytes = GetOperatorSizeBytes(data_node);
+  const double h2d_bandwidth_gbps = config.h2d_bandwidth_gbps();
+  const double h2d_copy_time_us = static_cast<double>(operator_size_bytes) / (h2d_bandwidth_gbps * 1e3);
+  const double kernel_time_us = config.default_kernel_time_us();
+
+  return CalculateBackwardDistanceFromCopyTime(h2d_copy_time_us, kernel_time_us, first_use_index);
 }
 }  // namespace hyper_offload
 }  // namespace utils

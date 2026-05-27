@@ -26,6 +26,7 @@
 #include "include/utils/anfalgo.h"
 #include "include/utils/utils.h"
 #include "primitive/framework_ops.h"
+#include "utils/hyper_offload/hyper_offload_mem_estimate.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -184,7 +185,7 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
 
   // Shared release-distance policy:
   // distance strategy uses the raw target directly;
-  // peak strategy reuses the same raw target but clamps it to the largest legal slot when needed.
+  // peak strategy uses free_data_after_node as base position, then applies release_distance.
   const bool use_peak_strategy = HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy();
   const auto &[target_node, target_output_index] = GetRealDataNodeWithIndex(data_node);
   size_t last_user_index = node_index;
@@ -192,15 +193,39 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
   if (it != data_node_last_user_index_map.end() && it->second > node_index) {
     last_user_index = it->second;
   }
-  const size_t release_distance =
-    GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
-  const size_t raw_target_index = GetReleaseTargetIndex(exec_order_, node_index, last_user_index, release_distance);
+
+  // Peak strategy: use optimized free_data_after_node as base position if available
+  size_t base_index = node_index;
+  if (use_peak_strategy && d2h_node->HasAttr("peak_free_data_after_node")) {
+    auto free_data_after_node_name = GetValue<std::string>(d2h_node->GetAttr("peak_free_data_after_node"));
+    for (size_t i = 0; i < exec_order_.size(); ++i) {
+      if (exec_order_[i]->fullname_with_scope() == free_data_after_node_name) {
+        base_index = i;
+        break;
+      }
+    }
+  }
+
+  const auto &config = HyperOffloadConfig::GetInstance();
+  auto node_release_distance = GetNodeReleaseDistance(data_node);
+
+  if (!node_release_distance.has_value() && use_peak_strategy && config.enable_adaptive_release_distance()) {
+    node_release_distance = CalculateAdaptiveReleaseDistance(data_node, exec_order_, node_index, last_user_index);
+  }
+
+  const size_t release_distance = node_release_distance.value_or(config.release_distance());
+
+  if (node_release_distance.has_value()) {
+    MS_LOG(INFO) << data_node->fullname_with_scope() << " release_distance=" << release_distance;
+  }
+
+  const size_t raw_target_index = GetReleaseTargetIndex(exec_order_, base_index, last_user_index, release_distance);
   size_t target_index = use_peak_strategy
-                          ? GetGuardedReleaseTargetIndex(data_node, node_index, raw_target_index, h2d_attach_slots)
+                          ? GetGuardedReleaseTargetIndex(data_node, base_index, raw_target_index, h2d_attach_slots)
                           : raw_target_index;
   const auto branch_range = GetInlineBranchIndexRange(graph_, exec_order_, d2h_node);
   if (branch_range.has_value() && target_index > branch_range->second) {
-    target_index = std::max(node_index, branch_range->second);
+    target_index = std::max(base_index, branch_range->second);
   }
   operations_->AddOperationAfter(target_index, recv_completion);
   operations_->AddOperationAfter(target_index, free_cnode);
@@ -362,25 +387,38 @@ void HyperOffloadEventInjector::ProcessH2DGroup(
   MS_LOG(DEBUG) << "Processing H2D group with " << h2d_list.size() << " nodes";
   auto original_data = GetOriginalDataForH2DInput(input_node);
 
+  const auto &config = HyperOffloadConfig::GetInstance();
+  bool use_peak_strategy = config.enable_hyper_offload_peak_strategy();
+
   size_t count = h2d_list.size();
   for (size_t i = 0; i < count; ++i) {
     auto [node_index, h2d_node] = h2d_list[i];
     bool is_last = (i == count - 1);
-
-    // Create Send/Recv pair: Send (Transfer -> Calc), Recv (Calc)
-    auto [send_node, recv_node] =
-      event_factory.CreateSendRecvPair(kTransferStreamId, kCalculateStreamId, kSendRecvAfterH2D, original_data);
-
-    // A. Insert Send node after H2D node
-    operations_->RemoveNode(h2d_node);
-    operations_->AddOperationAfter(node_index, h2d_node);
-    operations_->AddOperationAfter(node_index, send_node);
 
     auto indices_it = h2d_user_indices.find(h2d_node);
     if (indices_it == h2d_user_indices.end()) {
       MS_LOG(EXCEPTION) << "H2D node " << h2d_node->fullname_with_scope() << " has no users in execution order.";
     }
     auto [first_user_idx, last_user_idx] = indices_it->second;
+
+    auto node_prefetch_distance = GetNodePrefetchDistance(original_data);
+
+    if (!node_prefetch_distance.has_value() && use_peak_strategy && config.enable_adaptive_prefetch_distance()) {
+      node_prefetch_distance = CalculateAdaptivePrefetchDistance(original_data, exec_order_, first_user_idx);
+    }
+
+    const size_t prefetch_distance = node_prefetch_distance.value_or(config.prefetch_distance());
+
+    if (node_prefetch_distance.has_value()) {
+      MS_LOG(INFO) << original_data->fullname_with_scope() << " prefetch_distance=" << prefetch_distance;
+    }
+
+    auto [send_node, recv_node] =
+      event_factory.CreateSendRecvPair(kTransferStreamId, kCalculateStreamId, kSendRecvAfterH2D, original_data);
+
+    operations_->RemoveNode(h2d_node);
+    operations_->AddOperationAfter(node_index, h2d_node);
+    operations_->AddOperationAfter(node_index, send_node);
 
     if (!is_last) {
       AddEventNodesForNonLastH2DNode(h2d_node, original_data, first_user_idx, last_user_idx, recv_node);
