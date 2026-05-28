@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ class GradExecutor {
   void ClearRes();
   void WorkerJoin();
   void WaitBpropTask() const;
-  void SaveDynamicInputsCells(const py::object &obj, const py::args &args);
+  void SaveDynamicInputsCells(const py::object &obj);
 
   inline bool forward_use_dynamic_shape_process() const { return forward_use_dynamic_shape_process_; }
   inline void set_forward_use_dynamic_shape_process(bool forward_use_dynamic_shape_process) {

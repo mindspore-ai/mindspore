@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1424,7 +1424,7 @@ RunningStatus MSBackendBase::Run(BackendGraphId graph_id, const VectorRef &input
 
   const auto &context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_PRECOMPILE_ONLY) || common::GetEnv("MS_DEV_PRECOMPILE_ONLY") == "1") {
+  if (common::GetEnv("MS_DEV_PRECOMPILE_ONLY") == "1") {
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return kRunningSuccess;
   }

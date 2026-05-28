@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,15 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test cell backward pre hook.
+"""
+import os
 import pytest
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore import jit, ops
 from mindspore.ops import GradOperation
 from tests.mark_utils import arg_mark
 from tests.st.pynative.hook.cell_hook.common import assert_jit_grad_net_by_grad_op
+
+ENV_VAR = "MS_DEV_JIT_AST_ENABLE_GUARD"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_recompile_check_env():
+    """Set MS_DEV_JIT_AST_ENABLE_GUARD=1 before tests, restore old value after."""
+    old_value = os.environ.get(ENV_VAR)
+    os.environ[ENV_VAR] = "1"
+    yield
+    if old_value is None:
+        del os.environ[ENV_VAR]
+    else:
+        os.environ[ENV_VAR] = old_value
+
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -50,7 +69,7 @@ def backward_hook_with_new_return(cell, grad_inp, grad_outp):
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.mul = nn.MatMul()
         self.mul.a = 1
 
@@ -354,7 +373,7 @@ def test_jit_backward_pre_hook_with_wrong_number_of_output():
 
     class InnerNet(nn.Cell):
         def __init__(self):
-            super(InnerNet, self).__init__()
+            super().__init__()
             self.mul = MulNet()
             self.handle = self.mul.register_backward_pre_hook(double_pback)
 

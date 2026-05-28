@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,8 +113,7 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
 
   // Note: Broaden() may delete inplace_abstract.
   auto depends_abs = depends->Broaden();  // Avoid eliminating the dependent node.
-  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) &&
-      common::GetCompileConfig("GRAD_FOR_SCALAR") != "1") {
+  if (common::GetCompileConfig("GRAD_FOR_SCALAR") != "1") {
     // For scalar, need to set value to kValueAny, because broaden scalar will not change the value.
     if (depends_abs->isa<AbstractScalar>()) {
       depends_abs->set_value(kValueAny);

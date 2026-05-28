@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,15 @@ class FRONTEND_EXPORT ExecutorPy : public std::enable_shared_from_this<ExecutorP
   py::dict weights() const { return weights_; }
   // Check consistency of two arguments for mapping function graph
   void CheckArgumentsConsistency(const py::tuple &compile_args, const py::tuple &args_list, const py::object &target);
+  // Generate compile args with dynamic shapes for enable_dynamic
+  py::list GenerateDynamicTensorArgs(const py::tuple &args_list, const py::object &dynamic_shapes);
+  // Check symbolic shape consistency between dynamic inputs and actual inputs
+  void CheckSymbolicShape(const py::list &dynamic_inputs, const py::tuple &actual_inputs);
+  void CheckSymbolicShape(const py::tuple &dynamic_inputs, const py::tuple &actual_inputs);
+  // Get actual input args and kwargs for runtime
+  py::tuple GetArgsForRun(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
+                          const py::list &has_mutable_args_list, const py::list &sequence_modified,
+                          bool is_predict = false, bool is_in_phase_cache = false);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type, const bool &incremental);
   py::bytes GetOnnxFuncGraphProto(const std::string &phase, const std::vector<std::string> &input_names,
                                   const std::vector<std::string> &outputs_names, const int &opset_version,

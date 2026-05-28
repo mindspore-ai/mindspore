@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -628,14 +628,12 @@ void MsContext::InitBoolTypeDefaultValue() {
   set_param<bool>(MS_CTX_IR_FUSION_FLAG, true);
   set_param<bool>(MS_CTX_ENABLE_HCCL, false);
   set_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY, true);
-  set_param<bool>(MS_CTX_PRECOMPILE_ONLY, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, false);
   set_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL, true);
   set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
   set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
   set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
-  set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE, false);
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
   set_param<bool>(MS_CTX_ENABLE_PROF_MEM, false);

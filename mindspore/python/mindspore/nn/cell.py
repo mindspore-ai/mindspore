@@ -48,11 +48,12 @@ from mindspore import context, ops
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-from mindspore.graph.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache, \
+from mindspore.graph.api import _cell_graph_executor, _pynative_executor, cells_compile_cache, \
     _no_grad, _get_mutable_flags
 from mindspore.graph.api import _convert_python_data
 from mindspore.graph.api import _process_dyn_args, _generate_dyn_compile_args
 from mindspore.graph.api import _register_parameter_forward_hook
+from mindspore.graph.jit_config import _DEFAULT_JIT_CONFIG
 from mindspore.common.parameter import _Buffer, Parameter, ParameterTuple, _is_parameter_generated
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import Primitive
@@ -61,7 +62,6 @@ from mindspore.parallel.shard import Shard
 from mindspore.parallel._utils import _init_auto_parallel_context, _clear_auto_parallel_context
 from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._register_for_recompute import recompute_registry
-from mindspore.graph.jit_config import JitConfig
 
 _global_buffer_registration_hooks: Dict[int, Callable] = OrderedDict()
 _EXTRA_STATE_KEY_SUFFIX = "_extra_state"
@@ -1028,7 +1028,7 @@ class Cell(Cell_):
             # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
             # here using pop(id(self), None) to avoid KeyError exception
             cells_compile_cache.pop(id(self), None)
-        if hasattr(self, "compile_cache") and self.compile_cache:
+        if getattr(self, "compile_cache", False):
             _cell_graph_executor.del_net_res(self, self.compile_cache)
         Cell.total_instance_count -= 1
         Cell.global_cells.pop(self, None)
@@ -1373,12 +1373,11 @@ class Cell(Cell_):
         if not hasattr(self, "phase"):
             return False, None
         if (self.phase == "prefill" or self.phase == 'increment') and self.phase in self.phase_cache:
-            new_args = _get_args_for_run(self, args, kwargs, self._has_mutable_args_list, self.sequence_modified,
-                                         True, True)
-            if self.jit_config_dict:
-                jit_config_dict = self.jit_config_dict
-            else:
-                jit_config_dict = JitConfig().jit_config_dict
+            mutable_flags = list(self._has_mutable_args_list) if self._has_mutable_args_list else []
+            sequence_modified_list = self.sequence_modified if self.sequence_modified else []
+            new_args = _cell_graph_executor._graph_executor.get_args_for_run(
+                self, args, kwargs, mutable_flags, sequence_modified_list, True, True)
+            jit_config_dict = self.jit_config_dict or _DEFAULT_JIT_CONFIG
             _cell_graph_executor._graph_executor.set_jit_config(jit_config_dict)
             res = _cell_graph_executor._graph_executor(tuple(new_args), self.phase_cache[self.phase])
             res = _convert_python_data(res)
@@ -1679,7 +1678,7 @@ class Cell(Cell_):
         if not kwargs:
             self._dynamic_shape_inputs = inputs
             if context._get_mode() == context.PYNATIVE_MODE:
-                _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+                _pynative_executor.set_dynamic_input(self)
             else:
                 self._check_construct_args(*inputs)
         else:
@@ -1755,7 +1754,7 @@ class Cell(Cell_):
             compile_args = _generate_dyn_compile_args(args, self._dynamic_shape_inputs)
             _cell_graph_executor._graph_executor.check_argument_consistency(compile_args, args, "set_inputs")
             self._check_parameter_consistency(compile_args, args)
-            Validator.check_symbolic_shape(compile_args, args)
+            _cell_graph_executor._graph_executor.check_symbolic_shape(compile_args, args)
             return compile_args
         return args
 
@@ -1791,11 +1790,11 @@ class Cell(Cell_):
             Object, the result of executing.
         """
         self.compile(*args, **kwargs)
-        new_args = _get_args_for_run(self, args, kwargs, self._has_mutable_args_list, self.sequence_modified, False)
-        if self.jit_config_dict:
-            jit_config_dict = self.jit_config_dict
-        else:
-            jit_config_dict = JitConfig().jit_config_dict
+        mutable_flags = list(self._has_mutable_args_list) if self._has_mutable_args_list else []
+        sequence_modified_list = self.sequence_modified if self.sequence_modified else []
+        new_args = _cell_graph_executor._graph_executor.get_args_for_run(
+            self, args, kwargs, mutable_flags, sequence_modified_list, False, False)
+        jit_config_dict = getattr(self, "jit_config_dict", None) or _DEFAULT_JIT_CONFIG
         _cell_graph_executor._graph_executor.set_jit_config(jit_config_dict)
         return _cell_graph_executor(self, *new_args, phase=self.phase)
 
@@ -3745,10 +3744,12 @@ class Cell(Cell_):
     def _get_attr_from_cell(self, network):
         if not isinstance(network, Cell):
             return
-        if hasattr(network, "jit_config_dict"):
-            self._jit_config_dict = network.jit_config_dict
-        if hasattr(network, "_amp_level"):
-            self._amp_level = getattr(network, "_amp_level")
+        jit_config = getattr(network, "jit_config_dict", None)
+        if jit_config is not None:
+            self._jit_config_dict = jit_config
+        amp_level = getattr(network, "_amp_level", None)
+        if amp_level is not None:
+            self._amp_level = amp_level
 
     def _set_jit_graph_name(self, key):
         """

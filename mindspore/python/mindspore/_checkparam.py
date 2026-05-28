@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1197,63 +1197,6 @@ def check_size_and_element_type_of_tuple(arg_name, arg_value, expect_size, expec
     check_value_type(arg_name, arg_value, [tuple], prim_name)
     check_equal_int(len(arg_value), expect_size, arg_name + ' size', prim_name)
     check_element_type_of_iterable('arg_name', arg_value, [expect_element_type], prim_name)
-
-
-def _check_symbol(dyn_input, net_input, index, symbolic_shape_data):
-    """Check symbolic shape values."""
-    actual_shape = net_input.shape
-    for i, sym in enumerate(dyn_input.symbolic_shape):
-        # the Symbol is converted to dict
-        if not isinstance(sym, dict):
-            continue
-        # the value of symbols with same "id" should be equal.
-        if "id" in sym:
-            sym_id = sym["id"]
-            k_idval = "unique_id_value_map"
-            if k_idval not in symbolic_shape_data:
-                symbolic_shape_data[k_idval] = {}
-            unique_id_value = symbolic_shape_data[k_idval]
-            if sym_id not in unique_id_value:
-                unique_id_value[sym_id] = actual_shape[i]
-            elif unique_id_value[sym_id] != actual_shape[i]:
-                raise ValueError(
-                    f"The {i + 1}th shape value of {index + 1}th actual input args is a unique symbol, all values must "
-                    f"be the same. The previous value is {unique_id_value[sym_id]}, but the current value is "
-                    f"{actual_shape[i]}. Actual shape: {actual_shape}, axis: {i}.")
-        # check the value in range [min, max].
-        if "min" in sym and actual_shape[i] < sym["min"]:
-            raise ValueError(
-                f"The {i + 1}th shape value of {index + 1}th actual input args must be greater than or equal to the "
-                f"'min' value '{sym['min']}' of `Symbol`, but got '{actual_shape[i]}'.  Actual shape: {actual_shape}, "
-                f"axis: {i}.")
-        if "max" in sym and actual_shape[i] > sym["max"]:
-            raise ValueError(
-                f"The {i + 1}th shape value of {index + 1}th actual input args must be less than or equal to the "
-                f"'max' value '{sym['max']}' of `Symbol`, but got '{actual_shape[i]}'. Actual shape: {actual_shape}, "
-                f"axis: {i}.")
-        # check the shape item that satisfies the "divisor * N + remainder, N >= 1".
-        d = sym.get("divisor", 1)
-        r = sym.get("remainder", 0)
-        if actual_shape[i] < d or actual_shape[i] % d != r:
-            raise ValueError(
-                f"The {i + 1}th shape value of {index + 1}th actual input args must be match the 'divisor'(d) and "
-                f"'remainder'(r) of `Symbol`. The value should be 'd * N + r' for 'N > 0', got d={d} and r={r}, but "
-                f"actual shape value is '{actual_shape[i]}'. Actual shape: {actual_shape}, axis: {i}")
-
-
-def check_symbolic_shape(dynamic_inputs, actual_inputs):
-    """Check the symboic shape"""
-    symbolic_shape_data = {}
-
-    def run_check(dyn_inputs, net_inputs):
-        """the real checking function"""
-        for index, (dyn_input, net_input) in enumerate(zip(dyn_inputs, net_inputs)):
-            if isinstance(dyn_input, (tuple, list)):
-                run_check(dyn_input, net_input)
-            elif hasattr(dyn_input, "symbolic_shape") and getattr(dyn_input, "symbolic_shape") is not None:
-                _check_symbol(dyn_input, net_input, index, symbolic_shape_data)
-
-    run_check(dynamic_inputs, actual_inputs)
 
 
 def check_input_format(input_param):

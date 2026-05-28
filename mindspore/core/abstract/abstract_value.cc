@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,7 +275,7 @@ AbstractBasePtr AbstractScalar::Broaden() const {
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) || common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") {
+  if (common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") {
     return AbstractBase::Broaden();
   }
   auto type_id = GetTypeTrack()->type_id();

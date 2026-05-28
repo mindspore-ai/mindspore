@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2025 Huawei Technologies Co., Ltd
+ * Copyright 2022-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1145,7 +1145,7 @@ void GradExecutor::SetBpropGraphJitLevel(const py::object &obj) const {
   graph_executor->SetJitConfig(jit_config_dict);
 }
 
-void GradExecutor::SaveDynamicInputsCells(const py::object &obj, const py::args &args) {
+void GradExecutor::SaveDynamicInputsCells(const py::object &obj) {
   const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
   MS_LOG(INFO) << "SaveDynamicInputsCells: "
                << (py::isinstance<Cell>(obj) ? obj_id + " " + obj.cast<CellPtr>()->ToString()

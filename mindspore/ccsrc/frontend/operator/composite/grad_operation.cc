@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,8 @@ bool EnableGradFirstForTuple(const AbstractTuplePtr &tuple_arg, bool enable_tupl
 }
 
 bool EnableGradForScalar(const AbstractBasePtr &abs) {
-  return (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) ||
-          common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") &&
-         abs->BuildType() != nullptr && abs->BuildType()->isa<Number>();
+  return (common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") && abs->BuildType() != nullptr &&
+         abs->BuildType()->isa<Number>();
 }
 
 bool CanGradArgument(const AbstractTuplePtr &tuple_arg, size_t pos) {

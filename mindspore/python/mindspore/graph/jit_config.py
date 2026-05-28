@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -103,3 +103,6 @@ class JitConfig:
                 self.jit_config_dict["backend"] = "ms_backend"
             elif jit_level == "O2":
                 self.jit_config_dict["backend"] = "GE"
+
+
+_DEFAULT_JIT_CONFIG = JitConfig().jit_config_dict

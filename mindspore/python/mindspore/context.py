@@ -1297,10 +1297,8 @@ def _check_context_deprecated(key):
     """Checking whether a context key will be deprecated."""
     deprecated_context_dict = {'save_graphs': 'env MS_DEV_SAVE_GRAPHS',
                                'save_graphs_path': 'env MS_DEV_SAVE_GRAPHS_PATH',
-                               'precompile_only': 'env MS_DEV_PRECOMPILE_ONLY',
                                'check_bprop': '',
                                'max_call_depth': 'api mindspore.set_recursion_limit()',
-                               'grad_for_scalar': 'tensor derivative',
                                'enable_compile_cache': 'env MS_COMPILER_CACHE_ENABLE',
                                'enable_cache_path': 'env MS_COMPILER_CACHE_PATH',
                                'debug_level': '',
@@ -1329,7 +1327,9 @@ def _check_context_deprecated(key):
                                                      mindspore.device_context.gpu.op_precision.conv_dgrad_algo()''',
                                'runtime_num_threads': 'api mindspore.device_context.cpu.op_tuning.threads_num()'}
     invalid_context_dict = {
-        'exception_dump': {'version': '2.6', 'interface': 'device_context.ascend.op_debug.aclinit_config()'}
+        'exception_dump': {'version': '2.6', 'interface': 'device_context.ascend.op_debug.aclinit_config()'},
+        'precompile_only': {'version': '2.10', 'interface': 'env MS_DEV_PRECOMPILE_ONLY'},
+        'grad_for_scalar': {'version': '2.10', 'interface': 'tensor derivative'}
     }
     if key in deprecated_context_dict:
         log = f"For 'context.set_context', the parameter '{key}' will be deprecated and removed in a future version."
@@ -1347,14 +1347,14 @@ def _check_context_deprecated(key):
             log += f" Please use the {new_interface} instead."
         raise ValueError(log)
 
-@args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
+@args_type_check(mode=int, device_target=str, device_id=int, save_graphs=(bool, int),
                  save_graphs_path=str, aoe_tune_mode=str, aoe_config=dict,
                  enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
-                 grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
+                 pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
                  op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int, debug_level=int,
                  jit_enable_inplace_ops=bool, gpu_config=dict, jit_config=dict, enable_compile_cache=bool)
 def set_context(**kwargs):
@@ -1423,9 +1423,6 @@ def set_context(**kwargs):
         save_graphs_path (str): Path to save graphs. Default ``"."``.
             This parameter will be deprecated and removed in a future version. Please use the environment variable
             `MS_DEV_SAVE_GRAPHS_PATH` instead.
-        precompile_only (bool): Whether to only precompile the network. Default ``False`` .
-            This parameter will be deprecated and removed in a future version. Please use the environment variable
-            `MS_DEV_PRECOMPILE_ONLY` instead.
         enable_compile_cache (bool): Whether to save or load the compiled cache of the graph.
             Default ``False`` . This is an experimental prototype that is subject to change and/or deletion.
             This parameter will be deprecated and removed in a future version. Please use the environment variable
@@ -1494,14 +1491,12 @@ def set_context(**kwargs):
         reserve_class_name_in_scope (bool): This parameter will be deprecated and removed in future versions.
         check_bprop (bool): This parameter will be deprecated and removed in future versions.
         enable_reduce_precision (bool): This parameter will be deprecated and removed in future versions.
-        grad_for_scalar (bool): This parameter will be deprecated and removed in future versions.
         support_binary (bool): Whether to support run .pyc or .so in graph mode. This parameter will be deprecated and
             removed in future versions. Please use the environment variable `MS_SUPPORT_BINARY` instead.
 
     Examples:
         >>> import mindspore as ms
         >>> ms.set_context(mode=ms.PYNATIVE_MODE)
-        >>> ms.set_context(precompile_only=True)
         >>> ms.set_context(device_target="Ascend")
         >>> ms.set_context(device_id=0)
         >>> ms.set_context(save_graphs=True, save_graphs_path="./model.ms")
@@ -1516,7 +1511,6 @@ def set_context(**kwargs):
         >>> ms.set_context(print_file_path="print.pb")
         >>> ms.set_context(max_call_depth=80)
         >>> ms.set_context(env_config_path="./env_config.json")
-        >>> ms.set_context(grad_for_scalar=True)
         >>> ms.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> ms.set_context(pynative_synchronize=True)
         >>> ms.set_context(runtime_num_threads=10)

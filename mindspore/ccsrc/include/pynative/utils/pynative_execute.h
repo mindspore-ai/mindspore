@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ class PYNATIVE_EXPORT PyNativeExecutor : public std::enable_shared_from_this<PyN
   py::object GradJit(const py::args &args) const;
   py::object CallCustomBprop(const py::object &cell_obj, const py::object &out, const py::args &args) const;
   void set_forward_use_dynamic_shape_process(bool flag) const;
-  void SetDynamicInput(const py::object &obj, const py::args &args) const;
+  void SetDynamicInput(const py::object &obj) const;
   py::object GetDynamicInput(const py::object &actual_input) const;
   bool IsHighOrder() const;
   py::object CheckAlreadyRun(const py::object &obj, const py::args &args, const py::kwargs &kwargs) const;

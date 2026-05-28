@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,7 @@ bool IsMetaTensorTuple(const ValuePtr &value) {
 
 bool EnableArgBroaden(const py::object &obj, const ValuePtr &value, bool enable_tuple_broaden) {
   return IsMutableArg(obj, value) || value->isa<tensor::MetaSparseTensor>() ||
-         (value->isa<Scalar>() && (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) ||
-                                   common::GetCompileConfig("GRAD_FOR_SCALAR") == "1")) ||
+         (value->isa<Scalar>() && (common::GetCompileConfig("GRAD_FOR_SCALAR") == "1")) ||
          (enable_tuple_broaden && IsMetaTensorTuple(value));
 }
 
@@ -103,8 +102,7 @@ bool GraphUtils::IsTupleCanBroaden(const py::object &obj) {
 }
 
 bool GraphUtils::IsGradForScalar(const py::object &obj) {
-  return (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) ||
-          common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") &&
+  return (common::GetCompileConfig("GRAD_FOR_SCALAR") == "1") &&
          (py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj));
 }
 

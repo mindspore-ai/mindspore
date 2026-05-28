@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test cell backward hook.
+"""
+import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -24,6 +28,21 @@ from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs
 from tests.st.pynative.hook.cell_hook.common import assert_jit_net, assert_jit_grad_net_by_grad_op, \
     assert_jit_grad_net_by_grad_of_all_inputs
+
+
+ENV_VAR = "MS_DEV_JIT_AST_ENABLE_GUARD"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_recompile_check_env():
+    """Set MS_DEV_JIT_AST_ENABLE_GUARD=1 before tests, restore old value after."""
+    old_value = os.environ.get(ENV_VAR)
+    os.environ[ENV_VAR] = "1"
+    yield
+    if old_value is None:
+        del os.environ[ENV_VAR]
+    else:
+        os.environ[ENV_VAR] = old_value
 
 
 def forward_pre_hook_fn_add(cell, inp):
@@ -92,7 +111,7 @@ def backward_hook_fn9(cell, grad_input, grad_output):
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.mul = nn.MatMul()
         self.handle = self.mul.register_backward_hook(backward_hook_fn)
 
@@ -104,7 +123,7 @@ class Net(nn.Cell):
 
 class SingleNet(nn.Cell):
     def __init__(self):
-        super(SingleNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.conv.a = 1
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
@@ -117,7 +136,7 @@ class SingleNet(nn.Cell):
 
 class DictNet(nn.Cell):
     def __init__(self):
-        super(DictNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
 
@@ -129,7 +148,7 @@ class DictNet(nn.Cell):
 
 class TestDictNet(nn.Cell):
     def __init__(self):
-        super(TestDictNet, self).__init__()
+        super().__init__()
         self.dict_net = DictNet()
         self.dict_net.a = 2
 
@@ -140,7 +159,7 @@ class TestDictNet(nn.Cell):
 
 class DictInputNet(nn.Cell):
     def __init__(self):
-        super(DictInputNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
 
@@ -152,7 +171,7 @@ class DictInputNet(nn.Cell):
 
 class CmpNet(nn.Cell):
     def __init__(self):
-        super(CmpNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
 
@@ -164,7 +183,7 @@ class CmpNet(nn.Cell):
 
 class CmpNetPreHook(nn.Cell):
     def __init__(self):
-        super(CmpNetPreHook, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
 
@@ -178,7 +197,7 @@ class CmpNetPreHook(nn.Cell):
 
 class CmpNetFWHook(nn.Cell):
     def __init__(self):
-        super(CmpNetFWHook, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
@@ -473,7 +492,7 @@ def test_pynative_backward_hook_param_input():
 
 class HookNet(nn.Cell):
     def __init__(self):
-        super(HookNet, self).__init__()
+        super().__init__()
         self.mul = nn.MatMul()
         self.relu = nn.ReLU()
         self.handle = self.mul.register_backward_hook(backward_hook_fn9)
@@ -950,7 +969,7 @@ def test_pynative_hook_child_cell_record_grad():
 
 class GraphCellHook(nn.Cell):
     def __init__(self):
-        super(GraphCellHook, self).__init__()
+        super().__init__()
         self.relu = nn.ReLU()
         self.relu.register_backward_hook(backward_hook_fn7)
 
@@ -963,7 +982,7 @@ class GraphCellHook(nn.Cell):
 
 class MsFuncCellHook(nn.Cell):
     def __init__(self):
-        super(MsFuncCellHook, self).__init__()
+        super().__init__()
         self.relu = nn.ReLU()
         self.relu.register_backward_hook(backward_hook_fn7)
 
@@ -1047,7 +1066,7 @@ def test_pynative_backward_hook_return_error():
 
 class InplaceNet(nn.Cell):
     def __init__(self):
-        super(InplaceNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
 
     def construct(self, x, is_avoid_view_inplace_error):

@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,14 +21,13 @@ import types
 from functools import wraps
 import mindspore as ms
 from mindspore import log as logger
-from mindspore import context
 from mindspore.graph.jit_context import JitContext, set_jit_context, jit_context
 from mindspore.common.tensor import Tensor as PythonTensor
 from mindspore._c_expression import TraceRecorder as tr
 from mindspore._c_expression import JitExecutor_
 from mindspore._c_expression import TensorPy as Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import typing
-from mindspore.graph.jit_config import JitConfig
+from mindspore.graph.jit_config import _DEFAULT_JIT_CONFIG
 
 
 class TraceJitContext(JitContext):
@@ -158,7 +157,7 @@ def _jit_trace(jit_config):
             if jit_config:
                 jit_config_dict = jit_config.jit_config_dict
             else:
-                jit_config_dict = JitConfig().jit_config_dict
+                jit_config_dict = _DEFAULT_JIT_CONFIG
             if kwargs:
                 bound_arguments = inspect.signature(fn).bind(*args, **kwargs)
                 bound_arguments.apply_defaults()
@@ -217,7 +216,9 @@ def _get_caller_lines():
 
 def _get_args_for_run(args):
     """Get the actual input args and kwargs for runtime."""
+    from mindspore.graph._parse import compile_config
     new_args = []
+    grad_for_scalar = str(compile_config.GRAD_FOR_SCALAR) == '1'
     for arg in args:
         if isinstance(arg, PythonTensor):
             if arg.has_init:
@@ -226,12 +227,15 @@ def _get_args_for_run(args):
                 new_args.append(arg)
         elif isinstance(arg, (Tensor, CSRTensor, COOTensor)):
             new_args.append(arg)
-        elif context.get_context("grad_for_scalar") and isinstance(arg, (int, float)):
+        elif grad_for_scalar and isinstance(arg, (int, float)):
             new_args.append(arg)
-        elif isinstance(arg, dict) and hasattr(arg, "__ms_mutable__"):
-            new_args.append(tuple(arg.values()))
-        elif isinstance(arg, (tuple, list)) and hasattr(arg, "__ms_mutable__"):
-            new_args.append(arg)
+        else:
+            ms_mutable = getattr(arg, "__ms_mutable__", None)
+            if ms_mutable:
+                if isinstance(arg, dict):
+                    new_args.append(tuple(arg.values()))
+                elif isinstance(arg, (tuple, list)):
+                    new_args.append(arg)
     return tuple(new_args)
 
 
@@ -271,7 +275,7 @@ def _jit_trace_begin(fn_name, *args, **kwargs):
     if "jit_config" in kwargs:
         jit_config = kwargs.get("jit_config")
     else:
-        jit_config = JitConfig().jit_config_dict
+        jit_config = _DEFAULT_JIT_CONFIG
     global _using_trace
     if _using_trace:
         raise RuntimeError(
@@ -348,7 +352,7 @@ def _jit_trace_end(*output_args, **kwargs):
     if "jit_config" in kwargs:
         jit_config = kwargs.get("jit_config")
     else:
-        jit_config = JitConfig().jit_config_dict
+        jit_config = _DEFAULT_JIT_CONFIG
     if _trace_jit_context.compiled:
         output = _trace_jit_context.result
         logger.debug(f'jit trace result: {output}')

@@ -28,7 +28,6 @@ mindspore.set_context
         - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，默认 ``30`` 。此参数将在后续版本中废弃。请使用接口 :func:`mindspore.device_context.cpu.op_tuning.threads_num` 代替。
         - **save_graphs** (bool 或 int) - 表示是否保存中间编译图。默认 ``0`` 。此参数将在后续版本中废弃，请使用环境变量 `MS_DEV_SAVE_GRAPHS` 代替。
         - **save_graphs_path** (str) - 表示保存计算图的路径。默认 ``"."`` 。此参数将在后续版本中废弃，请使用环境变量 `MS_DEV_SAVE_GRAPHS_PATH` 代替。
-        - **precompile_only** (bool) - 是否仅预编译网络，默认 ``False`` 。此参数将在后续版本中废弃，请使用环境变量 `MS_DEV_PRECOMPILE_ONLY` 代替。
         - **enable_compile_cache** (bool) - 是否加载或者保存图编译缓存，默认 ``False`` 。此参数将在后续版本中废弃，请使用环境变量 `MS_COMPILER_CACHE_ENABLE` 代替。
         - **ascend_config** (dict) - 设置Ascend硬件平台参数。
 
@@ -57,5 +56,4 @@ mindspore.set_context
         - **reserve_class_name_in_scope** (bool) - 此参数将在后续版本中废弃。
         - **check_bprop** (bool) - 此参数将在后续版本中废弃。
         - **enable_reduce_precision** (bool) - 此参数将在后续版本中废弃。
-        - **grad_for_scalar** (bool) - 此参数将在后续版本中废弃。
         - **support_binary** (bool) - 是否支持在图模式下运行.pyc或.so，默认 ``False`` 。此参数将在后续版本中废弃，请使用环境变量 `MS_SUPPORT_BINARY` 代替。

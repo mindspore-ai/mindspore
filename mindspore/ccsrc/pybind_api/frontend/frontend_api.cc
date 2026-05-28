@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,17 @@ void RegGraphExecutor(py::module *m) {
     .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.")
     .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.")
     .def("check_argument_consistency", &GraphExecutorPy::CheckArgumentsConsistency, "Check equal of arguments.")
+    .def("generate_dynamic_tensor_args", &GraphExecutorPy::GenerateDynamicTensorArgs,
+         "Generate compile args with dynamic shapes for enable_dynamic.")
+    .def("check_symbolic_shape",
+         py::overload_cast<const py::list &, const py::tuple &>(&GraphExecutorPy::CheckSymbolicShape),
+         "Check symbolic shape consistency.")
+    .def("check_symbolic_shape",
+         py::overload_cast<const py::tuple &, const py::tuple &>(&GraphExecutorPy::CheckSymbolicShape),
+         "Check symbolic shape consistency.")
+    .def("get_args_for_run", &GraphExecutorPy::GetArgsForRun, py::arg("obj"), py::arg("args"), py::arg("kwargs"),
+         py::arg("has_mutable_args_list"), py::arg("sequence_modified"), py::arg("is_predict") = py::bool_(false),
+         py::arg("is_in_phase_cache") = py::bool_(false), "Get actual input args and kwargs for runtime.")
     .def("clear_compile_arguments_resource", &GraphExecutorPy::ClearCompileArgumentsResource,
          "Clear resource when phase cached.")
     .def("set_optimize_config", &GraphExecutorPy::SetOptimizeConfig, py::arg("opt_config") = py::list(),
@@ -144,6 +155,17 @@ void RegJitExecutor(py::module *m) {
          "Set values of weights.")
     .def("set_real_args", &JitExecutorPy::SetRealArguments, py::arg("args"), py::arg("kwargs"), "Set run args.")
     .def("check_argument_consistency", &JitExecutorPy::CheckArgumentsConsistency, "Check equal of arguments.")
+    .def("generate_dynamic_tensor_args", &JitExecutorPy::GenerateDynamicTensorArgs,
+         "Generate compile args with dynamic shapes for enable_dynamic.")
+    .def("check_symbolic_shape",
+         py::overload_cast<const py::list &, const py::tuple &>(&JitExecutorPy::CheckSymbolicShape),
+         "Check symbolic shape consistency.")
+    .def("check_symbolic_shape",
+         py::overload_cast<const py::tuple &, const py::tuple &>(&JitExecutorPy::CheckSymbolicShape),
+         "Check symbolic shape consistency.")
+    .def("get_args_for_run", &JitExecutorPy::GetArgsForRun, py::arg("obj"), py::arg("args"), py::arg("kwargs"),
+         py::arg("has_mutable_args_list"), py::arg("sequence_modified"), py::arg("is_predict") = py::bool_(false),
+         py::arg("is_in_phase_cache") = py::bool_(false), "Get actual input args and kwargs for runtime.")
     .def("get_func_graph_proto", &JitExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
          py::arg("type") = py::str("onnx_ir"), py::arg("incremental") = py::bool_(false),
          "Get graph proto string by specifying ir type.");
