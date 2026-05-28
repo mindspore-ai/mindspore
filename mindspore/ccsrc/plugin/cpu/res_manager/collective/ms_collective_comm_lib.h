@@ -126,7 +126,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
   // Random retry interval.
   std::uniform_int_distribution<> rand_distrib_;
-  size_t comm_op_timeout_;
+  size_t comm_op_timeout_{0};
 };
 }  // namespace cpu
 }  // namespace device
