@@ -32,7 +32,9 @@ namespace device {
 namespace ascend {
 namespace {
 constexpr size_t kIndex0 = 0;
-}
+constexpr int32_t kNum2 = 2;
+constexpr int32_t kNum7 = 7;
+}  // namespace
 AscendStreamMng &AscendStreamMng::GetInstance() {
   static AscendStreamMng instance{};
   return instance;
@@ -90,14 +92,14 @@ uint32_t AscendStreamMng::MapPriority(int32_t priority) {
       MS_LOG(WARNING) << "aclrtDeviceGetStreamPriorityRange failed, ret:" << ret
                       << ", fall back to default range [0, 7].";
       least = 0;
-      greatest = 7;
+      greatest = kNum7;
     }
     least_priority_ = least;
     greatest_priority_ = greatest;
     MS_LOG(INFO) << "Device stream priority range: [" << least_priority_ << ", " << greatest_priority_
-                 << "]; user priority 0 maps to " << ((least_priority_ + greatest_priority_) / 2) << ".";
+                 << "]; user priority 0 maps to " << ((least_priority_ + greatest_priority_) / kNum2) << ".";
   });
-  const int32_t middle = (least_priority_ + greatest_priority_) / 2;
+  const int32_t middle = (least_priority_ + greatest_priority_) / kNum2;
   // User priority semantics are "negative => higher priority, positive => lower priority",
   // independent of which numerical convention the device uses for its priority range.
   // Determine the sign of one user-priority step in device space from the actual range:
