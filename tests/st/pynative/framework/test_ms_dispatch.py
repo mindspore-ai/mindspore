@@ -454,6 +454,116 @@ def test_ms_dispatch_tensor_hook_return_dtensor():
     assert events == ["hook_dtensor", "DTensor"]
 
 
+def test_ms_dispatch_source_py_obj_user_data_key_is_reserved():
+    """
+    Feature: Ms dispatch
+    Description: Python code cannot set the reserved source_py_obj user data key.
+    Expectation: User code cannot bypass the internal source_py_obj preservation helper.
+    """
+    x = Tensor([1.0], ms.float32)
+
+    with pytest.raises(RuntimeError, match="reserved for internal ms_dispatch state"):
+        x._set_user_data("source_py_obj", x)
+
+
+def test_ms_dispatch_mode_return_dtensor_preserves_python_wrapper():
+    """
+    Feature: Ms dispatch
+    Description: A guard callback returns a fresh DTensor.
+    Expectation: The C++ dispatch return conversion preserves that exact Python wrapper.
+    """
+    callback_result = {}
+
+    class ReturnDtensorMode(MsDispatchMode):
+        def __ms_dispatch__(self, func, args=(), kwargs=None):
+            if kwargs is None:
+                kwargs = {}
+            with _DisableMsDispatchMode():
+                out = DTensor(func(*args, **kwargs), Layout())
+            callback_result["ref"] = weakref.ref(out)
+            return out
+
+    with ReturnDtensorMode():
+        y = Tensor([1.0, 2.0], ms.float32).add(Tensor([3.0, 4.0], ms.float32))
+
+    assert isinstance(y, DTensor)
+    assert callback_result["ref"]() is y
+
+
+def test_ms_dispatch_custom_backward_return_dtensor_preserves_next_hook_wrapper():
+    """
+    Feature: Ms dispatch
+    Description: Custom Function backward returns a fresh DTensor consumed by a tensor hook.
+    Expectation: The hook receives the same DTensor wrapper returned by backward.
+    """
+    backward_result = {}
+
+    class BackwardReturnsDtensor(_Function):
+        @staticmethod
+        def forward(ctx, x):
+            return x * x
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            out = DTensor(grad_output * 5, Layout())
+            backward_result["ref"] = weakref.ref(out)
+            return out
+
+    def fn(input_x):
+        def input_hook(grad):
+            assert isinstance(grad, DTensor)
+            assert backward_result["ref"]() is grad
+            return grad._local_tensor
+
+        input_x.register_hook(input_hook)
+        return BackwardReturnsDtensor.apply(input_x).sum()
+
+    value, grad = ms.value_and_grad(fn)(Tensor([2.0, 3.0], ms.float32))
+    assert np.allclose(value.asnumpy(), np.array(13.0, dtype=np.float32))
+    assert np.allclose(grad.asnumpy(), np.array([5.0, 5.0], dtype=np.float32))
+
+
+def test_ms_dispatch_saved_tensor_unpack_return_dtensor_preserves_wrapper():
+    """
+    Feature: Ms dispatch
+    Description: saved_tensors_hooks unpack_hook returns a fresh DTensor.
+    Expectation: ctx.saved_tensors returns the same DTensor wrapper produced by unpack_hook.
+    """
+    unpack_result = {}
+
+    class SaveOutputWithHooks(_Function):
+        @staticmethod
+        def forward(ctx, x):
+            out = DTensor(x * x, Layout())
+            ctx.save_for_backward(out)
+            return out
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            (saved_out,) = ctx.saved_tensors
+            assert isinstance(saved_out, DTensor)
+            assert unpack_result["ref"]() is saved_out
+            return grad_output * saved_out._local_tensor
+
+    def pack_hook(tensor):
+        assert isinstance(tensor, DTensor)
+        return tensor
+
+    def unpack_hook(tensor):
+        assert isinstance(tensor, DTensor)
+        out = DTensor(tensor._local_tensor, Layout())
+        unpack_result["ref"] = weakref.ref(out)
+        return out
+
+    def fn(input_x):
+        with ms.saved_tensors_hooks(pack_hook, unpack_hook):
+            return SaveOutputWithHooks.apply(input_x).sum()
+
+    value, grad = ms.value_and_grad(fn)(Tensor([2.0, 3.0], ms.float32))
+    assert np.allclose(value.asnumpy(), np.array(13.0, dtype=np.float32))
+    assert np.allclose(grad.asnumpy(), np.array([4.0, 9.0], dtype=np.float32))
+
+
 # ====== Scenario 1: basic add ======
 
 def test_ms_dispatch_add():
@@ -2131,6 +2241,10 @@ def test_ms_dispatch():
     test_ms_dispatch_guard_as_decorator()
     test_ms_dispatch_dtensor_mul_scalar_inplace_pattern()
     test_ms_dispatch_complex_multi_branch_computation()
+    test_ms_dispatch_source_py_obj_user_data_key_is_reserved()
+    test_ms_dispatch_mode_return_dtensor_preserves_python_wrapper()
+    test_ms_dispatch_custom_backward_return_dtensor_preserves_next_hook_wrapper()
+    test_ms_dispatch_saved_tensor_unpack_return_dtensor_preserves_wrapper()
 
     # Reshape grad coverage tests
     test_ms_dispatch_reshape_grad_when_callback_skipped()

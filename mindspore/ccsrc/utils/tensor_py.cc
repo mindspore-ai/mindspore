@@ -24,6 +24,7 @@
 #include "ir/tensor_new.h"
 #include "utils/log_adapter.h"
 #include "include/utils/convert_utils_py.h"
+#include "include/utils/pynative/dispatch/ms_dispatch_py_obj.h"
 #include "tools/profiler/profiler.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/utils/pyobj_manager.h"
@@ -812,10 +813,7 @@ void SetTensorPyType(PyTypeObject *TensorPyType) { TensorPy_Type = TensorPyType;
 
 py::object PackTensorToPyObject(const TensorPtr &tensor) {
   if (tensor != nullptr && tensor->has_ms_dispatch()) {
-    static const std::string kSourcePyObj = "source_py_obj";
-    auto py_data = tensor->user_data<tensor::TensorPyUserData>(kSourcePyObj);
-    MS_EXCEPTION_IF_NULL(py_data);
-    return py_data->obj;
+    return pynative::PackSourcePyObj(tensor);
   }
   PyObject *tensor_py = TensorPythonInit(tensor);
   return py::reinterpret_steal<py::object>(tensor_py);
@@ -823,11 +821,7 @@ py::object PackTensorToPyObject(const TensorPtr &tensor) {
 
 PyObject *PackTensor(const TensorPtr &tensor, bool has_side_effect) {
   if (tensor != nullptr && tensor->has_ms_dispatch()) {
-    static const std::string kSourcePyObj = "source_py_obj";
-    auto py_data = tensor->user_data<tensor::TensorPyUserData>(kSourcePyObj);
-    MS_EXCEPTION_IF_NULL(py_data);
-    py_data->obj.inc_ref();
-    return py_data->obj.ptr();
+    return pynative::PackSourcePyObjPtr(tensor);
   }
 
   PyObject *python_tensor_class = PyObjManager::Get().GetTensorPythonClass();

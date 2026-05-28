@@ -530,7 +530,7 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
     // FakeValue -> user_data(source_py_obj) -> Python Tensor -> C++ Tensor -> device memory.
     // Without this, the copied user_data holds a Python object reference that prevents
     // the original tensor's device memory from being freed until backward.
-    t->set_user_data<tensor::TensorPyUserData>(pynative::GetSourcePyObjStr(), nullptr);
+    pynative::ClearSourcePyObj(t);
     return t;
   }
   if (value->isa<ValueSequence>()) {

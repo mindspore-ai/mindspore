@@ -34,6 +34,7 @@
 #include "include/utils/operator/primitive_utils.h"
 #include "include/utils/python_attr.h"
 #include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/pynative/dispatch/ms_dispatch_py_obj.h"
 
 #if NPY_API_VERSION < 0x0000000d
 #error Current Numpy version is too low, the required version is not less than 1.19.3.

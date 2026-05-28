@@ -64,27 +64,16 @@ py::object PackOutputTensor(const TensorPtr &tensor, const TensorPtr &original_t
   if (tensor == original_tensor && tensor != nullptr && tensor->has_ms_dispatch() && tensor::IsTensorPy(source_obj)) {
     return py::reinterpret_borrow<py::object>(source_obj);
   }
-  if (tensor != nullptr && tensor->has_ms_dispatch() &&
-      tensor->user_data<tensor::TensorPyUserData>(GetSourcePyObjStr()) == nullptr) {
+  if (tensor != nullptr && tensor->has_ms_dispatch() && !HasSourcePyObj(tensor)) {
     tensor->set_has_ms_dispatch(false);
   }
   return CValueToPybindObj(tensor);
 }
 
-TensorPtr EnsureSourcePyObjForMsDispatch(const TensorPtr &tensor, const py::handle &source_obj) {
-  if (tensor == nullptr || !tensor->has_ms_dispatch() || !tensor::IsTensorPy(source_obj)) {
-    return tensor;
-  }
-  if (tensor->user_data<tensor::TensorPyUserData>(GetSourcePyObjStr()) != nullptr) {
-    return tensor;
-  }
-  return WrapTensorWithSourcePyObj(tensor, py::reinterpret_borrow<py::object>(source_obj));
-}
-
 py::object MakeSavedMsDispatchOutput(const TensorPtr &tensor, const py::handle &source_obj) {
   auto saved_local_tensor = CommonUtils::ShallowCopyAndDetachForTensor(tensor);
   saved_local_tensor->set_has_ms_dispatch(false);
-  saved_local_tensor->set_user_data<tensor::TensorPyUserData>(GetSourcePyObjStr(), nullptr);
+  ClearSourcePyObj(saved_local_tensor);
   auto saved_local_obj = tensor::PackTensorToPyObject(saved_local_tensor);
   auto source = py::reinterpret_borrow<py::object>(source_obj);
   py::object saved_obj = source.attr("_make_subclass")(source.get_type(), saved_local_obj);
@@ -102,7 +91,7 @@ TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self, const py::handle &source_o
   kernel::pyboost::OpStatus status{false, DeviceManagerConf::GetInstance()->device_type()};
   kernel::pyboost::OpRunStatus::Get().set_run_info(std::move(status));
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
-  auto view_input = EnsureSourcePyObjForMsDispatch(self, source_obj);
+  auto view_input = EnsureSourcePyObjForMsDispatch(self, py::reinterpret_borrow<py::object>(source_obj));
   return kernel::pyboost::view(view_input, view_input->shape());
 }
 
@@ -241,7 +230,9 @@ static TensorPtrList parse_to_save(const std::shared_ptr<FunctionContext> &conte
         (void)to_save_tensors.emplace_back(tensor);
         continue;
       }
-      auto tensor_to_save = has_saved_tensors_hooks ? EnsureSourcePyObjForMsDispatch(tensor, py::handle(elem)) : tensor;
+      auto tensor_to_save = has_saved_tensors_hooks
+                              ? EnsureSourcePyObjForMsDispatch(tensor, py::reinterpret_borrow<py::object>(elem))
+                              : tensor;
       if ((is_output && !tensor->has_ms_dispatch()) || has_saved_tensors_hooks) {
         (void)to_save_tensors.emplace_back(tensor_to_save);
         continue;

@@ -26,6 +26,7 @@
 #include "include/utils/convert_utils_py.h"
 #include "include/pynative/forward/pyboost/fallback.h"
 #include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/pynative/dispatch/ms_dispatch_py_obj.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/tensor_utils.h"
