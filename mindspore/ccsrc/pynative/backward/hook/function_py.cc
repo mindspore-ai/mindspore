@@ -44,6 +44,16 @@ namespace mindspore {
 namespace pynative {
 namespace autograd {
 namespace {
+const char CUSTOM_FORWARD_NAME[] = "forward";
+const char CUSTOM_BACKWARD_NAME[] = "backward";
+const char HAS_SETUP_CONTEXT_ATTR_NAME[] = "_has_setup_context";
+const char SETUP_CONTEXT_NAME[] = "setup_context";
+const char ERROR_MSG_INPUT_RETURED_AS_IS[] =
+  "An input tensor was returned directly as an output and is being saved for backward. "
+  "This pattern is not allowed when setup_context is overridden. Please save a view "
+  "of the input instead, for example by using x.view_as(x), or move the context setup "
+  "logic into the forward function.";
+
 ValuePtrList ConvertOutputTensorList(const py::object &obj) {
   auto tuple = py::cast<py::tuple>(obj);
   ValuePtrList res;
@@ -138,10 +148,59 @@ void ProcessInputs(const std::shared_ptr<FunctionContext> &context, FunctionBase
   ctx->needs_input_grad = need_grad_input;
   context->input_base_tensors = input_base_tensors;
 }
-}  // namespace
 
-const char CUSTOM_FORWARD_NAME[] = "forward";
-const char CUSTOM_BACKWARD_NAME[] = "backward";
+PyObject *MakeCtxInputOutputTuple(PyObject *ctx, PyObject *inputs, PyObject *output) {
+  PyObject *result = PyTuple_New(kSizeThree);
+  Py_INCREF(ctx);
+  Py_INCREF(inputs);
+  Py_INCREF(output);
+  PyTuple_SetItem(result, 0, ctx);
+  PyTuple_SetItem(result, 1, inputs);
+  PyTuple_SetItem(result, 2, output);
+  return result;
+}
+
+bool IsSetUpContextDefined(PyObject *cls) {
+  auto has_setup_context_attr =
+    py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, HAS_SETUP_CONTEXT_ATTR_NAME));
+  return has_setup_context_attr.cast<bool>();
+}
+
+PyObject *CallForwardFunction(PyObject *cls, PyObject *forward_fn, PyObject *const ctx_obj, PyObject *inputs,
+                              bool has_override_setup_context) {
+  NoGradGuard no_grad;
+  if (!has_override_setup_context) {
+    auto forward_inputs = py::reinterpret_steal<py::object>(PackForwardInput(ctx_obj, inputs));
+    return PyObject_CallObject(forward_fn, forward_inputs.ptr());
+  }
+
+  auto outputs = PyObject_CallObject(forward_fn, inputs);
+  if (!outputs) {
+    return nullptr;
+  }
+
+  auto ctx_inputs_output_tuple = py::reinterpret_steal<py::object>(MakeCtxInputOutputTuple(ctx_obj, inputs, outputs));
+  auto setup_fn = py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, SETUP_CONTEXT_NAME));
+  auto setup_result =
+    py::reinterpret_steal<py::object>(PyObject_CallObject(setup_fn.ptr(), ctx_inputs_output_tuple.ptr()));
+  if (!setup_result) {
+    return nullptr;
+  }
+  return outputs;
+}
+
+void DispatchCustomPyFunctionTask(std::shared_ptr<FunctionContext> context) {
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward_executor = pynative_executor->forward_executor();
+  const auto &grad_executor = pynative_executor->grad_executor();
+  if (forward_executor->enable_async()) {
+    auto task = [new_context = std::move(context)]() mutable { CallCustomPyFunction(new_context); };
+    grad_executor->DispatchGradQueueTask(std::move(task));
+  } else {
+    CallCustomPyFunction(context);
+  }
+}
+}  // namespace
 
 static TensorPtrSet parse_mark_dirty(FunctionBase *fptr) {
   // versions of modified tensors should be increased.
@@ -270,9 +329,9 @@ void UpdateTensorSetIfNeeded(const std::shared_ptr<FunctionContext> &context, te
   }
 }
 
-void CleanBackwardUnusedTensorDeviceAddress(const std::shared_ptr<FunctionContext> &context) {
+void CleanBackwardUnusedTensorDeviceAddress(const std::shared_ptr<FunctionContext> &context,
+                                            const std::unordered_set<ValuePtr> &save_tensors_set) {
   std::unordered_map<tensor::TensorPtr, tensor::TensorPtr> changed;
-  std::unordered_set<ValuePtr> save_tensors_set(context->to_save_tensors.begin(), context->to_save_tensors.end());
   for (size_t i = 0; i < context->inputs.size(); i++) {
     if (context->inputs[i]->isa<tensor::Tensor>()) {
       auto base_tensor = context->inputs[i]->cast<tensor::TensorPtr>();
@@ -363,6 +422,7 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
   auto context = std::make_shared<FunctionContext>();
   auto forward_fn = py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, CUSTOM_FORWARD_NAME));
   auto backward_fn = py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, CUSTOM_BACKWARD_NAME));
+  bool has_override_setup_context = IsSetUpContextDefined(cls);
   // New a python object.
   auto ctx_obj = py::reinterpret_steal<py::object>(PyObject_CallFunctionObjArgs(cls, nullptr));
   auto ctx = reinterpret_cast<FunctionBase *>(ctx_obj.ptr());
@@ -379,14 +439,10 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
   // Get need grad before forward.
   bool need_do_grad = GradState::Get().RequiresGrad() && AutoGradUtil::NeedGrad(context->inputs);
   // Call forward function.
-  py::object outputs;
-  {
-    NoGradGuard no_grad;
-    auto forward_inputs = py::reinterpret_steal<py::object>(PackForwardInput(ctx_obj.ptr(), inputs));
-    outputs = py::reinterpret_steal<py::object>(PyObject_CallObject(forward_fn.ptr(), forward_inputs.ptr()));
-    if (!outputs) {
-      return nullptr;
-    }
+  auto outputs = py::reinterpret_steal<py::object>(
+    CallForwardFunction(cls, forward_fn.ptr(), ctx_obj.ptr(), inputs, has_override_setup_context));
+  if (!outputs) {
+    return nullptr;
   }
   bool modified = ensure_obj_tuple(&outputs);
 
@@ -403,6 +459,16 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
   py::tuple output_ret(num_output);
   auto py_outputs = py::cast<py::tuple>(outputs);
   MS_LOG(DEBUG) << "Output info, modified: " << modified << ", num_output: " << num_output;
+
+  std::unordered_set<ValuePtr> save_tensors_set(context->to_save_tensors.begin(), context->to_save_tensors.end());
+  auto view_as_self_fn = [has_override_setup_context, &save_tensors_set](const TensorPtr &tensor,
+                                                                         const py::handle &source_obj) {
+    if (has_override_setup_context && save_tensors_set.count(tensor)) {
+      MS_LOG(EXCEPTION) << ERROR_MSG_INPUT_RETURED_AS_IS;
+    }
+    return ViewAsSelfWithNoGrad(tensor, source_obj);
+  };
+
   for (size_t i = 0; i < num_output; ++i) {
     if (!flatten_outputs[i]->isa<tensor::Tensor>()) {
       output_ret[i] = py_outputs[i];
@@ -415,7 +481,7 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
     bool is_dirty_tensor = dirty_tensor_set.count(tensor) > 0;
     if (is_diff) {
       if (is_same_as_input && !is_dirty_tensor) {
-        tensor = ViewAsSelfWithNoGrad(tensor, py_outputs[i]);
+        tensor = view_as_self_fn(tensor, py_outputs[i]);
         flatten_outputs[i] = tensor;
       }
       AutoGradUtil::SetValueGradInfo(tensor, InputType::kOpOutput);
@@ -424,7 +490,7 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
     }
     if (!tensor->requires_grad()) {
       if (is_same_as_input && !is_dirty_tensor) {
-        tensor = ViewAsSelfWithNoGrad(tensor, py_outputs[i]);
+        tensor = view_as_self_fn(tensor, py_outputs[i]);
         flatten_outputs[i] = tensor;
       }
     } else if (is_same_as_input) {
@@ -446,17 +512,9 @@ PyObject *FunctionBase_apply(PyObject *cls, PyObject *inputs) {
   }
 
   // Clean device address to reduce the occupation of resources.
-  CleanBackwardUnusedTensorDeviceAddress(context);
+  CleanBackwardUnusedTensorDeviceAddress(context, save_tensors_set);
 
-  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
-  const auto &forward_executor = pynative_executor->forward_executor();
-  const auto &grad_executor = pynative_executor->grad_executor();
-  if (forward_executor->enable_async()) {
-    auto task = [new_context = std::move(context)]() mutable { CallCustomPyFunction(new_context); };
-    grad_executor->DispatchGradQueueTask(std::move(task));
-  } else {
-    CallCustomPyFunction(context);
-  }
+  DispatchCustomPyFunctionTask(std::move(context));
 
   MS_LOG(DEBUG) << "Leave apply function.";
   if (modified) {
