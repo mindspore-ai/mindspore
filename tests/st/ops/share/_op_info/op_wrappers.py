@@ -1523,3 +1523,107 @@ def mint_nn_smoothl1loss_ms(op_input, op_target, reduction='mean', beta=1.0):
 def mint_nn_smoothl1loss_torch(op_input, op_target, reduction='mean', beta=1.0):
     smoothl1loss = torch.nn.SmoothL1Loss(reduction=reduction, beta=beta)
     return smoothl1loss(op_input, op_target)
+
+def mint_nn_functional_elu_ms(op_input, alpha=1.0, inplace=False):
+    cloned_input = op_input.clone()
+    result = mint.nn.functional.elu(cloned_input, alpha=alpha, inplace=inplace)
+    return result
+
+def mint_nn_functional_elu_torch(op_input, alpha=1.0, inplace=False):
+    cloned_input = op_input.clone()
+    result = torch.nn.functional.elu(cloned_input, alpha=alpha, inplace=inplace)
+    return result
+
+def mint_nn_functional_elu__ms(op_input, alpha=1.0):
+    cloned_input = op_input.clone()
+    result = mint.nn.functional.elu_(cloned_input, alpha=alpha)
+    return result
+
+def mint_nn_functional_elu__torch(op_input, alpha=1.0):
+    cloned_input = op_input.clone()
+    result = torch.nn.functional.elu_(cloned_input, alpha=alpha)
+    return result
+
+def mint_nn_functional_hardshrink_ms(op_input, lambd=0.5):
+    cloned_input = op_input.clone()
+    result = mint.nn.functional.hardshrink(cloned_input, lambd=lambd)
+    return result
+
+def mint_nn_functional_hardshrink_torch(op_input, lambd=0.5):
+    cloned_input = op_input.clone()
+    result = torch.nn.functional.hardshrink(cloned_input, lambd=lambd)
+    return result
+
+def mint_nn_functional_mish_ms(op_input):
+    return mint.nn.functional.mish(op_input)
+
+def mint_nn_functional_mish_torch(op_input):
+    return torch.nn.functional.mish(op_input)
+
+def mint_nn_functional_sigmoid_ms(op_input):
+    return mint.nn.functional.sigmoid(op_input)
+
+def mint_nn_functional_sigmoid_torch(op_input):
+    return torch.nn.functional.sigmoid(op_input)
+
+def mint_nn_functional_silu_ms(op_input, inplace=False):
+    cloned_input = op_input.clone()
+    result = mint.nn.functional.silu(cloned_input, inplace=inplace)
+    return result
+
+def mint_nn_functional_silu_torch(op_input, inplace=False):
+    cloned_input = op_input.clone()
+    result =  torch.nn.functional.silu(cloned_input, inplace=inplace)
+    return result
+
+def mint_nn_functional_group_norm_ms(op_input, num_groups, weight=None, bias=None, eps=1e-5):
+    result = mint.nn.functional.group_norm(op_input, num_groups, weight=weight, bias=bias, eps=eps)
+    return result
+
+def mint_nn_functional_group_norm_torch(op_input, num_groups, weight=None, bias=None, eps=1e-5):
+    result = torch.nn.functional.group_norm(op_input, num_groups, weight=weight, bias=bias, eps=eps)
+    return result
+
+def mint_nn_functional_normalize_ms(op_input, p=2, dim=1, eps=1e-12,):
+    result = mint.nn.functional.normalize(op_input, p=p, dim=dim, eps=eps)
+    return result
+
+def mint_nn_functional_normalize_torch(op_input, p=2, dim=1, eps=1e-12,):
+    result = torch.nn.functional.normalize(op_input, p=p, dim=dim, eps=eps)
+    return result
+
+def mint_nn_functional_prelu_ms(op_input, weight):
+    return mint.nn.functional.prelu(op_input, weight=weight)
+
+def mint_nn_functional_prelu_torch(op_input, weight):
+    return torch.nn.functional.prelu(op_input, weight=weight)
+
+def mint_nn_functional_relu__ms(op_input):
+    cloned_input = op_input.clone()
+    return mint.nn.functional.relu_(cloned_input)
+
+def mint_nn_functional_relu__torch(op_input):
+    cloned_input = op_input.clone()
+    return torch.nn.functional.relu_(cloned_input)
+
+def mint_nn_functional_softplus_ms(op_input, beta=1, threshold=20):
+    return mint.nn.functional.softplus(op_input, beta=beta, threshold=threshold)
+
+def mint_nn_functional_softplus_torch(op_input, beta=1, threshold=20):
+    return torch.nn.functional.softplus(op_input, beta=beta, threshold=threshold)
+
+def mint_nn_functional_softshrink_ms(op_input, lambd=0.5):
+    return mint.nn.functional.softshrink(op_input, lambd=lambd)
+
+def mint_nn_functional_softshrink_torch(op_input, lambd=0.5):
+    return torch.nn.functional.softshrink(op_input, lambd=lambd)
+
+def mint_nn_bceloss_ms(op_input, target, weight=None, reduction='mean'):
+    loss = mint.nn.BCELoss(weight=weight, reduction=reduction)
+    result = loss(op_input, target)
+    return result
+
+def mint_nn_bceloss_torch(op_input, target, weight=None, reduction='mean'):
+    loss = torch.nn.BCELoss(weight=weight, reduction=reduction)
+    result = loss(op_input, target)
+    return result
