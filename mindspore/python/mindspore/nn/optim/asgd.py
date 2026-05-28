@@ -80,7 +80,7 @@ class ASGD(Optimizer):
               will be used. If not, the `grad_centralization` is False by default. This configuration only works on the
               convolution layer.
 
-            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+            - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
               order will be followed in optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
@@ -122,7 +122,7 @@ class ASGD(Optimizer):
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If element of `params` is neither Parameter nor dict.
         TypeError: If `lambd`, `alpha` or `t0` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
         ValueError: If `weight_decay` is less than 0.

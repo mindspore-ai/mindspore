@@ -19,7 +19,7 @@ mindspore.nn.Adadelta
     其中 :math:`g` 表示 `grads` ， :math:`\gamma` 表示 `learning_rate` ， :math:`\rho` 表示 `rho` ，
     :math:`\epsilon` 表示 `epsilon` ， :math:`w` 表示 `params` ，
     :math:`accum` 表示累加器， :math:`accum\_update` 表示累加器更新，
-    :math:`t` 代表当前step。
+    :math:`t` 表示当前step。
 
     .. warning::
         2.9.0（不含）之后版本非兼容性变更：`learning_rate` 和 `epsilon` 将分别重命名为 `lr` 和 `eps`。
@@ -40,19 +40,19 @@ mindspore.nn.Adadelta
 
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-        - **rho** (float，可选) - 衰减率，应在 [0.0, 1.0] 范围内。默认值： ``0.9`` 。
+        - **rho** (float，可选) - 衰减率，取值范围为 [0.0, 1.0]。默认值： ``0.9`` 。
         - **epsilon** (float，可选) - 分母添加项，非负数。默认值： ``1e-6`` 。
 
         .. include:: mindspore.nn.optim_arg_loss_scale.rst
 
         - **weight_decay** (Union[float, int, Cell]，可选) - 权重衰减值，必须大于等于0.0。默认值： ``0.0`` 。
 
-          - float：固定的权量衰减值。必须等于或大于0。
-          - int：固定的权量衰减值。必须等于或大于0。它将会被转换为float类型。
-          - Cell：权重衰减此时是动态的。在训练期间，优化器调用该Cell的实例，以获取当前阶段所要使用的权重衰减值。
+          - float：固定的权重衰减值。必须等于或大于0。
+          - int：固定的权重衰减值。必须等于或大于0。它将会被转换为float类型。
+          - Cell：权重衰减此时是动态的。在训练期间，优化器调用该Cell的实例，以获取当前阶段的权重衰减值。
 
     输入：
-        - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape和数据类型与 `params` 相同。数据类型为float16或float32。
+        - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，与 `params` 具有相同的shape和数据类型。数据类型为float16或float32。
 
     输出：
         Tensor[bool]，值为True。

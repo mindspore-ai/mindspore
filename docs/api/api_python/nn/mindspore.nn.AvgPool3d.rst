@@ -30,7 +30,7 @@ mindspore.nn.AvgPool3d
           - `padding` 为一个整数或包含一个整数的tuple/list，此情况下分别在输入的前后上下左右六个方向进行 `padding` 次的填充。
           - `padding` 为一个包含三个int的tuple/list，此情况下在输入的前后进行 `padding[0]` 次的填充，上下进行 `padding[1]` 次的填充，在输入的左右进行 `padding[2]` 次的填充。
 
-        - **ceil_mode** (bool，可选) - 若为 ``True`` ，使用ceil来计算输出shape。若为 ``False`` ，使用floor来计算输出shape。默认值： ``False`` 。
+        - **ceil_mode** (bool，可选) - 若为 ``True`` ，使用ceil计算输出shape。若为 ``False`` ，使用floor计算输出shape。默认值： ``False`` 。
         - **count_include_pad** (bool，可选) - 平均计算是否包括零填充。默认值： ``True`` 。
         - **divisor_override** (int，可选) - 如果被指定为非0参数，该参数将会在平均计算中被用作除数，否则将会使用 `kernel_size` 作为除数，默认值： ``None`` 。
 
@@ -40,7 +40,7 @@ mindspore.nn.AvgPool3d
     输出：
         shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` 或者 :math:`(C, D_{out}, H_{out}, W_{out})` 的Tensor。数据类型与 `x` 一致。
 
-        其中，如果 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
+        其中， `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
 
         .. math::
             D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] -
@@ -62,8 +62,8 @@ mindspore.nn.AvgPool3d
         - **TypeError** - `divisor_override` 不是整数。
         - **ValueError** - `kernel_size` 或者 `stride` 中的数字不是正数。
         - **ValueError** - `kernel_size` 或 `stride` 是一个长度不为3的tuple。
-        - **ValueError** - `padding` 为一个tuple/list时，长度不为1或者3。
+        - **ValueError** - `padding` 为一个tuple或list时，长度不为1或者3。
         - **ValueError** - `padding` 的元素小于0。
         - **ValueError** - `x` 的shape长度不等于4或5。
         - **ValueError** - `divisor_override` 小于等于0。
-        - **ValueError** -  `pad_mode` 不为 "pad" 的时候 `padding` 为非0。
+        - **ValueError** - `pad_mode` 不为 "pad" 时， `padding` 为非0。

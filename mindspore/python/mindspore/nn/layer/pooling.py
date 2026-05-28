@@ -286,7 +286,7 @@ class MaxPool3d(_PoolNd):
     Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, MaxPool outputs
-    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size is
+    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
     :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride is :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
 
     .. math::
@@ -314,8 +314,8 @@ class MaxPool3d(_PoolNd):
 
             - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally.  If the amount is even,
-              it isuniformly distributed around the input, if it is odd, the excess amount goes
+              The amount of padding is calculated by the operator internally. If the amount is even,
+              it is uniformly distributed around the input, if it is odd, the excess amount goes
               to the front/right/bottom side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
@@ -919,7 +919,7 @@ class AvgPool3d(_PoolNd):
             element tuple that represents the depth, height and width of movement, or a tuple of three positive integers
             that represents depth, height and width of movement respectively. If the value is None, the default value
             `kernel_size` is used. Default: ``1`` .
-        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+        pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to
             ``"same"`` , ``"valid"`` or ``"pad"`` . Default: ``"valid"`` .
 
             - ``"same"``: Pad the input around its depth/height/width dimension so that the shape of input and output
@@ -955,7 +955,7 @@ class AvgPool3d(_PoolNd):
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
           :math:`(C, D_{in}, H_{in}, W_{in})`.
-          Currently support float16, float32 and float64 data type.
+          Currently supports float16, float32 and float64 data type.
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or
@@ -1185,7 +1185,7 @@ class AvgPool2d(_PoolNd):
         count_include_pad (bool): If ``True`` , averaging calculation will include the zero-padding. Default: ``True`` .
         divisor_override (int): If it is specified as a non-zero parameter, this parameter will be used as the divisor
             in the average calculation. Otherwise, `kernel_size` will be used as the divisor. Default: ``None`` .
-        data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
+        data_format (str): The optional values for data format, are ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
     Inputs:
@@ -1205,12 +1205,12 @@ class AvgPool2d(_PoolNd):
             \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
-        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         ValueError: If `pad_mode` is not ``"valid"`` , ``"same"`` or ``"pad"`` with not case sensitive.
         ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'``.
         ValueError: If `padding`, `ceil_mode`, `count_include_pad`, or `divisor_override` is used,
             or `pad_mode` is ``"pad"`` when `data_format` is 'NHWC'.
-        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1 or 2.
         ValueError: If length of shape of `x` is not equal to 3 or 4.
         ValueError: If `divisor_override` is less than or equal to 0.
@@ -1307,7 +1307,7 @@ class AvgPool1d(_PoolNd):
     Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})`, AvgPool1d outputs
-    regional average in the :math:`(L_{in})`-dimension. Given `kernel_size`
+    regional average in the :math:`L_{in}`-dimension. Given `kernel_size`
     :math:`l_{ker}` and `stride` :math:`s_0`, the operation is as follows:
 
     .. math::
@@ -1328,7 +1328,7 @@ class AvgPool1d(_PoolNd):
             - ``"same"``: Pad the input at the begin and end so that the shape of input and output
               are the same when `stride` is set to ``1``.
               The amount of padding to is calculated by the operator internally. If the amount is even, it is
-              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              uniformly distributed around the input, if it is odd, the excess padding goes to the right side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
               possible length. If a full stride cannot be formed, the extra pixels will be discarded.
@@ -1337,7 +1337,7 @@ class AvgPool1d(_PoolNd):
               at the begin and end is determined by the `padding` parameter.
               If this mode is set, `padding` must be greater than or equal to 0.
 
-        padding (Union(int, tuple[int], list[int]), optional): Pooling padding value,
+        padding (Union[int, tuple[int], list[int]], optional): Pooling padding value,
             only ``"pad"`` mode can be set to non-zero.
             Default: ``0`` . padding can only be an integer or a tuple/list containing a single integer, in which case
             padding times or padding[0] times are padded on both sides of the input.
@@ -1543,10 +1543,10 @@ class AdaptiveAvgPool1d(Cell):
 class AdaptiveAvgPool2d(Cell):
     r"""
     This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
-    That is, for any input size, the size of the specified output is H x W.
+    For any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input features.
 
-    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    The input and output data formats can be "NCHW" or "CHW", where N is the batch size, C is the number of channels,
     H is the feature height, and W is the feature width.
 
     .. math::
@@ -1561,7 +1561,7 @@ class AdaptiveAvgPool2d(Cell):
 
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
-            `output_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+            `output_size` can be a tuple of int type H and W, or a single H for H x H, or None.
             If it is None, it means the output size is the same as the input size.
 
     Inputs:
@@ -1765,10 +1765,10 @@ class AdaptiveMaxPool1d(Cell):
 class AdaptiveMaxPool2d(Cell):
     r"""
     This operator applies a 2D adaptive max pooling to an input signal composed of multiple input planes.
-    That is, for any input size, the size of the specified output is H x W.
+    For any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input planes.
 
-    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    The input and output data formats can be "NCHW" or "CHW", where N is the batch size, C is the number of channels,
     H is the feature height, and W is the feature width.
 
     For max adaptive pool2d:
@@ -1784,7 +1784,7 @@ class AdaptiveMaxPool2d(Cell):
         \end{align}
 
     Note:
-        - In KBK mode, `output_size` does not support mutable.
+        In KBK mode, `output_size` does not support mutable types.
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
@@ -1864,7 +1864,7 @@ class AdaptiveMaxPool2d(Cell):
 class AdaptiveMaxPool3d(Cell):
     r"""
     Calculates the 3D adaptive max pooling for an input Tensor.
-    That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
+    For any input size, the size of the specified output is :math:`(D, H, W)`.
 
     Args:
         output_size (Union[int, tuple]): The specified output size, which is a positive integer that represents depth,
@@ -1874,7 +1874,7 @@ class AdaptiveMaxPool3d(Cell):
             Otherwise, the indices will not be returned. Default: ``False`` .
 
     Inputs:
-        - **input** (Tensor) - Tensor, has shape of :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
+        - **input** (Tensor) - Tensor of shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`.
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same number of dims and data type as the `input` .
