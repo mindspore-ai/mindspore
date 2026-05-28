@@ -21,7 +21,7 @@ __all__ = ['ChannelShuffle']
 
 class ChannelShuffle(Cell):
     r"""
-    Divide the channels in a tensor of shape :math:`(*, C, H, W)` into :math:`g` group and
+    Divide the channels in a tensor of shape :math:`(*, C, H, W)` into :math:`g` groups and
     rearrange them as :math:`(*, \frac{C}{g}, g, H*W)`, while retaining the original tensor
     shape in the final output.
 
@@ -29,7 +29,7 @@ class ChannelShuffle(Cell):
         Non-backward-compatible change after version 2.9.0: the forward input name `x` will be renamed to `input`.
 
     Args:
-        groups (int): Number of groups to divide channels in, must be greater than 0.
+        groups (int): Number of groups to divide channels into, must be greater than 0.
             Refer to :math:`g` in the above formula.
 
     Inputs:

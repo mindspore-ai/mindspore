@@ -31,7 +31,7 @@ mindspore.nn.CELU
         Tensor，数据类型和shape与 `x` 相同。
 
     异常：
-        - **TypeError** - 如果 `α` 不是float。
-        - **ValueError** - 如果 `α` 的值为0。
+        - **TypeError** - 如果 `alpha` 不是float。
+        - **ValueError** - 如果 `alpha` 的值为0。
         - **TypeError** - 如果输入 `x` 不是Tensor。
         - **TypeError** - 如果输入 `x` 的数据类型既不是float16也不是float32。

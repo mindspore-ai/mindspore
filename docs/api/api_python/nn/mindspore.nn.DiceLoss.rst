@@ -23,7 +23,7 @@ mindspore.nn.DiceLoss
 
     输入：
         - **logits** (Tensor) - 输入预测值。数据类型必须为float16或float32。
-        - **labels** (Tensor) - 输入目标值，一般与 `logits` 的shape相同。数据类型必须为float16或float32。
+        - **labels** (Tensor) - 输入目标值，shape与 `logits` 的shape相同。数据类型必须为float16或float32。
 
     输出：
         Tensor，shape为每样本采样的Dice系数的Tensor。

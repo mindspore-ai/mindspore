@@ -19,8 +19,8 @@ mindspore.nn.ConstantPad2d
         Tensor，填充后的Tensor。
 
     异常：
-        - **TypeError** - `padding` 既不是tuple或者int。
-        - **TypeError** - `value` 既不是int，也不是float。
+        - **TypeError** - `padding` 不是tuple或int。
+        - **TypeError** - `value` 不是int或float。
         - **ValueError** - tuple类型的 `padding` 长度大于4或者长度不是2的倍数。
         - **ValueError** - 填充后输出的维度不是正数。
         - **ValueError** - 在Ascend后端运行时，`x` 的维度大于5。

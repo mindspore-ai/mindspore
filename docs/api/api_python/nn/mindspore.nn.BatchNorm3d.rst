@@ -5,7 +5,7 @@ mindspore.nn.BatchNorm3d
 
     对输入的五维数据进行批归一化(Batch Normalization Layer)。
 
-    在五维输入（带有附加通道维度的mini-batch 三维输入）上应用批归一化（Batch Normalization Layer），避免内部协变量偏移。归一化在卷积网络中得到了广泛的应用。
+    在五维输入（带有附加通道维度的mini-batch 三维输入）上应用批归一化（Batch Normalization Layer），避免内部协变量偏移。归一化在卷积网络中得到了广泛应用。
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -22,7 +22,7 @@ mindspore.nn.BatchNorm3d
         - **num_features** (int) - 指定输入Tensor的通道数量。输入Tensor的size为 :math:`(N, C, D, H, W)` 。
         - **eps** (float) - 加在分母上的值，以确保数值稳定。默认值： ``1e-5`` 。
         - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值： ``0.9`` 。
-        - **affine** (bool) - bool类型。设置为 ``True`` 时，可以学习gama和beta。默认值： ``True`` 。
+        - **affine** (bool) - bool类型。设置为 ``True`` 时，可以学习gamma和beta。默认值： ``True`` 。
         - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]) - gamma参数的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'ones'`` 。
         - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]) - beta参数的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值： ``'zeros'`` 。
         - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]) - 动态均值和动态方差所使用的动量。平均值的初始化方法。str的值引用自函数 `mindspore.common.initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ ，包括 ``'zeros'`` 、 ``'ones'`` 等。默认值：``'zeros'`` 。

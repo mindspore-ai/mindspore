@@ -141,7 +141,7 @@ class Dropout(Cell):
             E.g. rate=0.9, dropping out 10% of input neurons. Default: ``0.5`` .
         p (Union[float, int, None]): The dropout rate, greater than or equal to 0 and less than 1.
             E.g. rate=0.9, dropping out 90% of input neurons. Default: ``None`` .
-        dtype (:class:`mindspore.dtype`): Data type of `input`. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): This parameter is deprecated and will be removed.
 
     Inputs:
         - **x** (Tensor) - The input of Dropout with data type of float16 or float32.
@@ -447,7 +447,7 @@ class Dropout3d(Cell):
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
-    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    Each channel will be zeroed out independently on every forward call based on Bernoulli distribution
     probability `p`.
 
     `Dropout3d` can improve the independence between channel feature maps.

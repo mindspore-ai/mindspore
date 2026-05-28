@@ -40,7 +40,7 @@ mindspore.nn.BCEWithLogitsLoss
         Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，其shape需和 `input` 相同。否则，将返回Scalar。
 
     异常：
-        - **TypeError** - `input` 或 `target` 的不为Tensor。
+        - **TypeError** - `input` 或 `target` 不是Tensor。
         - **TypeError** - `input` 或 `target` 的数据类型不是float16、float32或bfloat16。
         - **TypeError** - `weight` 或 `pos_weight` 是 Parameter。
         - **TypeError** - `weight` 或 `pos_weight` 的数据类型不是float16、float32或bfloat16。

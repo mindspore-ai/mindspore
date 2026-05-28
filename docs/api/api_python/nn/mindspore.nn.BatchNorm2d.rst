@@ -35,9 +35,9 @@ mindspore.nn.BatchNorm2d
 
           - 如果为 ``True`` ，则使用当前批处理数据的平均值和方差值，并跟踪运行平均值和运行方差。
           - 如果为 ``False`` ，则使用指定值的平均值和方差值，不跟踪统计值。
-          - 如果为 ``None`` ，则根据训练和验证模式自动设置 `use_batch_statistics` 为 ``True`` 或 ``False`` 。在训练时， `use_batch_statistics会` 设置为 ``True`` 。在验证时， `use_batch_statistics` 会自动设置为 ``False`` 。
+          - 如果为 ``None`` ，则根据训练和验证模式自动设置 `use_batch_statistics` 为 ``True`` 或 ``False`` 。在训练时， `use_batch_statistics` 会设置为 ``True`` 。在验证时， `use_batch_statistics` 会自动设置为 ``False`` 。
         - **data_format** (str，可选) - 数据格式可为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值： ``'NCHW'`` 。
-        - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认值： ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`，可选) - 参数的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - 输入shape为 :math:`(N, C, H, W)` 的Tensor。支持数据类型：float16、float32。
