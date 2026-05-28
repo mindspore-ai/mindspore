@@ -3233,7 +3233,7 @@ def softmax(input, axis=-1, *, dtype=None):
 def softmax_ext(input, dim=None, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given axis :math:`dim`, then for each element :math:`input_i`,
+    Supposing a slice in the given axis :math:`dim`, then for each element :math:`input_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -3242,9 +3242,9 @@ def softmax_ext(input, dim=None, dtype=None):
     where :math:`N` is the length of the tensor.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means any number of
             additional dimensions.
-        dim (int, optional): The dim to perform the Softmax operation. Default: ``None`` .
+        dim (int, optional): The dimension to perform the Softmax operation. Default: ``None`` .
         dtype (:class:`mindspore.dtype`, optional): When set, `input` will be converted to the specified type,
             `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
@@ -3866,14 +3866,14 @@ def pad_ext(input, pad, mode='constant', value=None):
             :math:`\left\lfloor\frac{\text{len(pad)}}{2}\right\rfloor` dimensions
             of `input` will be padded.
 
-            Example: to pad only the last dimension of the input tensor, then
+            For example: to pad only the last dimension of the input tensor, then
             :attr:`pad` has the form
             :math:`(\text{padding_left}, \text{padding_right})`;
 
-            Example: to pad the last 2 dimensions of the input tensor, then use
+            For example: to pad the last 2 dimensions of the input tensor, then use
             :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
 
-            Example: to pad the last 3 dimensions, use
+            For example: to pad the last 3 dimensions, use
             :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom},
             \text{padding_front}, \text{padding_back})` and so on.
 
@@ -3907,7 +3907,7 @@ def pad_ext(input, pad, mode='constant', value=None):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `pad` is not an int of tuple or int of list.
+        TypeError: If `pad` is not a tuple of int or a list of int.
         TypeError: If `input` is not a Tensor.
         ValueError: If length of `pad` is not even.
         ValueError: If length of `pad` is greater than 6.
@@ -8100,9 +8100,9 @@ def relu(input, inplace=False):
 
 def relu_(input):
     r"""
-    ReLuComputes ReLU (Rectified Linear Unit activation function) inplace of input tensors element-wise.
+    Computes ReLU (Rectified Linear Unit activation function) in-place on input tensors element-wise.
 
-    It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
+    It returns :math:`\max(input,\  0)` element-wise. Specifically, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     .. math::

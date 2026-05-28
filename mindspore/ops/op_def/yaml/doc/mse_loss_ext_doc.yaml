@@ -23,7 +23,7 @@ mse_loss_ext:
     Raises:
         ValueError: If `reduction` is not one of ``'mean'`` , ``'sum'`` or ``'none'``.
         ValueError: If `input` and `target` are not broadcastable.
-        TypeError: If `input` and `target` are in different data type.
+        TypeError: If `input` and `target` are in different data types.
 
     Supported Platforms:
         ``Ascend``

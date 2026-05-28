@@ -109,7 +109,7 @@ class SGD(Optimizer):
         ValueError: If the `momentum` or `weight_decay` value is less than 0.0.
         ValueError: If the `momentum`, `dampening` or `weight_decay` value is not bool, int or float.
         ValueError: If the `nesterov` and `maximize` are not bool.
-        ValueError: If the `nesterov` is true, `momentum` is not positive or `dampening` is not 0.
+        ValueError: If the `nesterov` is True, `momentum` is not positive or `dampening` is not 0.
 
     Supported Platforms:
         ``Ascend``

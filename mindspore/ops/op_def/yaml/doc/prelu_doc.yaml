@@ -4,12 +4,12 @@ prelu:
 
         PReLU is described in the paper `Delving Deep into Rectifiers: Surpassing Human-Level Performance on
         ImageNet Classification <https://arxiv.org/abs/1502.01852>`_. Defined as follows:
-    
+
         .. math::
             prelu(x_i)= \max(0, x_i) + \min(0, w * x_i),
-    
+
         where :math:`x_i` is an element of a channel of the input, :math:`w` is the weight of the channel.
-    
+
         PReLU Activation Function Graph:
 
         .. image:: ../images/PReLU2.png
@@ -21,19 +21,19 @@ prelu:
 
         Args:
             input (Tensor): The input Tensor of the activation function.
-            weight (Tensor):  Weight Tensor. The size of the weight should be 1 or the number of channels at Tensor `input`.
-    
+            weight (Tensor): Weight Tensor. The size of the weight should be 1 or the number of channels of Tensor `input`.
+
         Returns:
             Tensor, with the same shape and dtype as `input`.
             For detailed information, please refer to :class:`mindspore.mint.nn.PReLU`.
-    
+
         Raises:
             TypeError: If the `input` or the `weight` is not a Tensor.
             ValueError: If the `weight` is not a 0-D or 1-D Tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> import numpy as np

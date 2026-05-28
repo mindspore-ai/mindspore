@@ -24,13 +24,13 @@ selu_ext:
 
       Args:
           input (Tensor): Tensor of any dimension.
-              The data type is float16, float32, bfloat16.
+              The data type can be float16, float32, or bfloat16.
 
       Returns:
           Tensor, with the same type and shape as the `input`.
 
       Raises:
-          TypeError: If dtype of `input` is not float16, float32, bfloat16.
+          TypeError: If dtype of `input` is not float16, float32, or bfloat16.
 
       Supported Platforms:
           ``Ascend``

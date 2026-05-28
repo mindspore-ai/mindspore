@@ -310,8 +310,8 @@ class NLLLoss(Cell):
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}
         \{c \not= \text{ignore_index}\},
 
-    where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
-    :math:`N` is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index,
+    where :math:`x` is the input, :math:`t` is the target, :math:`w` is the weight,
+    :math:`N` is the batch size, :math:`c` in :math:`[0, C-1]` is class index,
     where :math:`C` is the number of classes.
 
     If `reduction` is not ``'None'`` (default ``'mean'``), then
@@ -325,7 +325,7 @@ class NLLLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
+            If `weight` is not ``None``, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
             It should have the same data type as `input` . Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
@@ -761,7 +761,7 @@ class MSELoss(Cell):
         \end{cases}
 
     Args:
-        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+        reduction (str, optional): Apply a specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
@@ -781,7 +781,7 @@ class MSELoss(Cell):
     Raises:
         ValueError: If `reduction` is not one of ``'mean'``, ``'sum'`` or ``'none'``.
         ValueError: If `logits` and `labels` are not broadcastable.
-        TypeError: If `logits` and `labels` are in different data type.
+        TypeError: If `logits` and `labels` are in different data types.
 
     Supported Platforms:
         ``Ascend``

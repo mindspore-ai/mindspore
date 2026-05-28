@@ -3,7 +3,7 @@ mindspore.mint.nn.Identity
 
 .. py:class:: mindspore.mint.nn.Identity(*args, **kwargs)
 
-    网络占位符，返回与输入完全一致。
+    网络占位符，返回与输入完全一致的结果。
 
     参数：
         - **args** (Any) - 任意参数。

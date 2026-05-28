@@ -11,7 +11,7 @@ mindspore.mint.nn.functional.threshold\_
         y =
         \begin{cases}
         x, &\text{ if } x > \text{threshold} \\
-        \text{value}, &\text{ otherwise }
+        \text{value}, &\text{otherwise}
         \end{cases}
 
     参数：

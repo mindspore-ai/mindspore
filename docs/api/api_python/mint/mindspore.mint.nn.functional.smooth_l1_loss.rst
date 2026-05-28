@@ -7,7 +7,7 @@ mindspore.mint.nn.functional.smooth_l1_loss
 
     平滑L1损失是一种类似于MSELoss的损失函数，但对异常值相对不敏感，可以参阅论文 `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ 。
 
-    给定长度为 :math:`N` 的两个输入 :math:`x,\  y` ，平滑L1损失的计算如下：
+    给定长度为 :math:`N` 的两个输入 :math:`x, y` ，平滑L1损失的计算如下：
 
     .. math::
         L_{i} =
@@ -16,7 +16,7 @@ mindspore.mint.nn.functional.smooth_l1_loss
         |x_i - y_i| - 0.5 * \text{beta}, & \text{otherwise. }
         \end{cases}
 
-    当 `reduction` 不是设定为 `none` 时，计算如下：
+    当 `reduction` 不是设定为 ``none`` 时，计算如下：
 
     .. math::
         L =

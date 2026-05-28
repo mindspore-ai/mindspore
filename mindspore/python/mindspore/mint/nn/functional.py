@@ -291,7 +291,7 @@ def silu(input, inplace=False):
 
         \text{SiLU}(x) = x * \sigma(x),
 
-    where :math:`x` is an element of the input, :math:`\sigma(x)` is Sigmoid function.
+    where :math:`x` is an element of the input, :math:`\sigma(x)` is the Sigmoid function.
 
     .. math::
 
@@ -305,7 +305,7 @@ def silu(input, inplace=False):
     Args:
         input (Tensor): `input` is :math:`x` in the preceding formula. Input with the data type
             float16 or float32.
-        inplace (bool, optional): If it is ``True``, enable the in place update function. Default value: ``False``.
+        inplace (bool, optional): If it is ``True``, enable the in-place update function. Default: ``False``.
 
     Returns:
         Tensor, with the same type and shape as the `input`.
@@ -502,7 +502,7 @@ def relu6(input, inplace=False):
         :align: center
 
     Args:
-        input (Tensor): input Tensor. Dtype is in int8, int16, int32, int64, uint8, float16, float32, bfloat16.
+        input (Tensor): Input Tensor. The data type can be int8, int16, int32, int64, uint8, float16, float32, bfloat16.
         inplace (bool, optional): Whether to apply erasing inplace. Default: ``False``.
 
     Returns:
@@ -701,19 +701,19 @@ def one_hot(tensor, num_classes=-1):
     r"""
     Computes a one-hot tensor.
 
-    The locations represented by tensor in `tensor` take value `1`, while all
-    other locations take value `0`.
+    The locations represented by indices in `tensor` take the value `1`, while all
+    other locations take the value `0`.
 
     Args:
         tensor (Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be int32 or int64. Dimension cannot be greater than 7.
-        num_classes (int, optional): A scalar defining the depth of the one-hot dimension, default: ``-1``.
+        num_classes (int, optional): A scalar defining the depth of the one-hot dimension. Default: ``-1``.
 
     Returns:
         Tensor, one-hot tensor.
 
     Raises:
-        TypeError: If `num_classes` is not an int.
+        TypeError: If `num_classes` is not an integer.
         TypeError: If dtype of `tensor` is not int32 or int64.
         ValueError: If `num_classes` is less than -1.
 
@@ -739,10 +739,10 @@ def smooth_l1_loss(input, target, reduction='mean', beta=1.0):
     r"""
     Computes smooth L1 loss, a robust L1 loss.
 
-    SmoothL1Loss is a Loss similar to MSELoss but less sensitive to outliers as described in the
+    SmoothL1Loss is a loss similar to MSELoss but less sensitive to outliers as described in the
     `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ by Ross Girshick.
 
-    Given two inputs :math:`x,\  y` of length :math:`N`, the SmoothL1Loss can be described
+    Given two inputs :math:`x, y` of length :math:`N`, the SmoothL1Loss can be described
     as follows:
 
     .. math::
@@ -787,7 +787,7 @@ def smooth_l1_loss(input, target, reduction='mean', beta=1.0):
             - ``'mean'``: compute the mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
         beta (number, optional): A parameter used to control the point where the function will change between
-            L1 to L2 loss. The value should be greater than or equal to zero. Default: ``1.0`` .
+            L1 and L2 loss. The value should be greater than or equal to zero. Default: ``1.0`` .
 
     Returns:
         Tensor, the data type is the same as `input`.
@@ -836,21 +836,21 @@ def normalize(input, p=2.0, dim=1, eps=1e-12):
     along dimension `dim` is transformed as
 
     .. math::
-        v=\frac{v}{\max(\left \| v \right \| _{p},\in )}
+        v=\frac{v}{\max(\left \| v \right \| _{p},\epsilon )}
 
-    With the default arguments it uses the Euclidean norm over vectors along dimension ``1`` for normalization.
+    With the default arguments, it uses the Euclidean norm over vectors along dimension ``1`` for normalization.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): input tensor of any shape.
-        p (float): the exponent value in the norm formulation. default: ``2``.
-        dim (int): the dimension to reduce. default: ``1``.
-        eps (float): small value to avoid division by zero. default: ``1e-12``.
+        p (float): the exponent value in the norm formulation. Default: ``2``.
+        dim (int): the dimension to reduce. Default: ``1``.
+        eps (float): small value to avoid division by zero. Default: ``1e-12``.
 
     Returns:
-        Tensor, shape and data type are the same as input.
+        Tensor, the shape and data type are the same as `input`.
 
     Supported Platforms:
         ``Ascend``
@@ -887,9 +887,9 @@ def upsample(input, size=None, scale_factor=None, mode="nearest", align_corners=
 
 def threshold(input, threshold, value, inplace=False):  # pylint: disable=W0621
     r"""
-    Compute the Threshold activation function element-wise.
+    Compute the threshold activation function element-wise.
 
-    The Threshold is defined as:
+    The threshold is defined as:
 
     .. math::
         y =

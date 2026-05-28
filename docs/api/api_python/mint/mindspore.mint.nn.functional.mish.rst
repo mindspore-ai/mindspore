@@ -3,7 +3,7 @@ mindspore.mint.nn.functional.mish
 
 .. py:function:: mindspore.mint.nn.functional.mish(input)
 
-    逐元素计算输入Tensor的MISH（A Self Regularized Non-Monotonic Neural Activation Function 自正则化非单调神经激活函数）。
+    逐元素计算输入Tensor的MISH（A Self Regularized Non-Monotonic Neural Activation Function，自正则化非单调神经激活函数）。
 
     公式如下：
 
