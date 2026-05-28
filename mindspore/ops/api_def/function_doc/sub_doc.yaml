@@ -3,17 +3,17 @@ sub:
     sub(input, other, *, alpha=1) -> Tensor
 
     Subtracts scaled other value from self Tensor.
-    
+
     .. math::
-    
+
         out_{i} = self_{i} - alpha \times other_{i}
-    
+
     Note:
         - When the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs and alpha comply with the implicit type conversion rules to make the data types
           consistent.
-    
+
     Args:
         input (Union[Tensor, number.Number, bool]): `input` is a number.Number or a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
@@ -23,20 +23,20 @@ sub:
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
 
     Keyword Args:
-        alpha (number.Number, optional): A scaling factor applied to `other`, default ``1``.
+        alpha (number.Number, optional): A scaling factor applied to `other`. Default ``1``.
 
     Returns:
         Tensor with a shape that is the same as the broadcasted shape of the self `self` and `other`,
-        and the data type is the one with higher precision or higher digits among the two inputs and alpha.
-    
+        and the data type is the one with higher precision among the two inputs and alpha.
+
     Raises:
         TypeError: If the type of `other` or `alpha` is not one of the following: Tensor, number.Number, bool.
         TypeError: If `alpha` is of type float but `input` and `other` are not of type float.
         TypeError: If `alpha` is of type bool but `input` and `other` are not of type bool.
-    
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-    
+
     Examples:
         >>> import numpy as np
         >>> import mindspore

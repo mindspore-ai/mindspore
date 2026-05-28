@@ -1,6 +1,6 @@
 triu:
     description: |
-        Zero the input tensor below the diagonal specified.
+        Zero the input tensor below the specified diagonal.
 
         Args:
             input (Tensor): The input tensor.

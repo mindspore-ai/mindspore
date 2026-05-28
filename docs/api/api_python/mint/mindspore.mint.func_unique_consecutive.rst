@@ -14,8 +14,8 @@ mindspore.mint.unique_consecutive
 
     参数：
         - **input** (Tensor) - 输入Tensor。
-        - **return_inverse** (bool, 可选) - 是否返回每个输入中元素映射到输出中位置的索引。默认值： ``False`` 。
-        - **return_counts** (bool, 可选) - 是否返回每个去重元素在输入所在的连续序列的计数。默认值： ``False`` 。
+        - **return_inverse** (bool, 可选) - 是否返回输入中每个元素映射到输出中位置的索引。默认值： ``False`` 。
+        - **return_counts** (bool, 可选) - 是否返回每个去重元素在输入所在的连续序列的出现次数。默认值： ``False`` 。
         - **dim** (int, 可选) - 维度。如果为 ``None`` ，则对输入进行展平操作。如果指定维度，则必须是int32或int64类型。默认值： ``None`` 。
 
     返回：

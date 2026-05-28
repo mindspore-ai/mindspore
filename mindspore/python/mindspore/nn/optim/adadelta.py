@@ -61,14 +61,16 @@ class Adadelta(Optimizer):
     :math:`t` represents current step.
 
     .. warning::
-        Non-backward-compatible change after version 2.9.0: `learning_rate` and
+        Non-backward-compatible changes after version 2.9.0: `learning_rate` and
         `epsilon` will be renamed to `lr` and `eps`, respectively.
 
     Note:
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
-        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
-        parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
-        applied.
+        - When parameters are not grouped, the `weight_decay`
+          in optimizer will be applied on the network parameters without
+          'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight.
+        - When parameters are grouped, each group can set `weight_decay`.
+          If not, the `weight_decay` in optimizer will be
+          applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -91,7 +93,7 @@ class Adadelta(Optimizer):
               will be used. If not, the `grad_centralization` is ``False``  by default. This configuration only works
               on the convolution layer.
 
-            - order_params: Optional. When parameters is grouped, this usually is used to maintain the order of
+            - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
               order will be followed in optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in

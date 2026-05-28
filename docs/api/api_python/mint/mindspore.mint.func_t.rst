@@ -16,5 +16,5 @@ mindspore.mint.t
 
     异常：
         - **ValueError** - 输入Tensor维度大于2。
-        - **ValueError** - 输入空Tensor。
-        - **TypeError** - 输入非Tensor。
+        - **ValueError** - 输入为空Tensor。
+        - **TypeError** - 输入不是Tensor。

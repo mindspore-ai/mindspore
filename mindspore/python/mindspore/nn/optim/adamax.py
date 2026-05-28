@@ -63,7 +63,7 @@ class AdaMax(Optimizer):
             w = w - \frac{l}{1 - \beta_1^{t+1}} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
         \end{array}
 
-    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector,
+    :math:`m` represents the first moment vector, :math:`v` represents the second moment vector,
     :math:`g` represents `gradients`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
     :math:`t` represents the current step, :math:`beta_1^t` represent `beta1_power`,
     :math:`l` represents `learning_rate`, :math:`w` represents `params`,
@@ -76,10 +76,13 @@ class AdaMax(Optimizer):
         `0.002`.
 
     Note:
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters without
-        'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight. When
-        parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
-        applied.
+        - When parameters are not grouped,
+          the `weight_decay` in the optimizer will be applied on the network parameters without
+          'beta' or 'gamma' in their names. Users can group parameters to change the weight decay strategy. 
+        - When
+          parameters are grouped, each group can set `weight_decay`.
+          Otherwise, the `weight_decay` in the optimizer will be
+          applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
@@ -182,9 +185,9 @@ class AdaMax(Optimizer):
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.AdaMax(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
+        >>> # The parameters in conv_params will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.
-        >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad
+        >>> # The parameters in no_conv_params will use learning rate of 0.01 and default weight decay of 0.0 and grad
         >>> # centralization of False.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>

@@ -1149,7 +1149,7 @@ def squeeze(input, dim):
     r"""
     Return the Tensor after deleting the dimension of size 1 in the specified `dim`.
 
-    If :math:`dim=()`, it will remove all the dimensions of size 1.
+    If :math:`dim=()`, all dimensions of size 1 will be removed.
     If `dim` is specified, it will remove the dimensions of size 1 in the given `dim`.
     For example, if the dimension is not specified :math:`dim=()`, input shape is (A, 1, B, C, 1, D),
     then the shape of the output Tensor is (A, B, C, D). If the dimension is specified, the squeeze operation
@@ -1157,7 +1157,7 @@ def squeeze(input, dim):
     the input tensor is not changed, while when :math:`dim=1`, the input tensor shape is changed to (A, B).
 
     Note:
-        - Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
+        - In dynamic graph mode, the output Tensor will share data with the input Tensor,
           and there is no Tensor data copy process.
         - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
 
@@ -1170,11 +1170,11 @@ def squeeze(input, dim):
             remove all the dimensions of size 1 in the given dim parameter. If specified, it must be int32 or int64.
 
     Returns:
-        Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
+        Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
 
     Raises:
         TypeError: If `input` is not a tensor.
-        TypeError: If `dim` is not an int, tuple.
+        TypeError: If `dim` is not an int or tuple.
         TypeError: If `dim` is a tuple whose elements are not all int.
 
     Supported Platforms:
@@ -1232,21 +1232,22 @@ def unique_consecutive(input, return_inverse=False, return_counts=False, dim=Non
 
     Args:
         input (Tensor): The input tensor.
-        return_inverse (bool, optional): Whether to return the index of where the element in the original input
+        return_inverse (bool, optional): Whether to return the index where the element in the original input
             maps to the position in the output. Default: ``False`` .
         return_counts (bool, optional): Whether to return the counts of each unique element. Default: ``False`` .
-        dim (int, optional): The dimension to apply unique. If ``None`` , the unique of the flattened input is
+        dim (int, optional): The dimension along which to apply unique.
+            If ``None`` , the unique of the flattened input is
             returned. If the dimension is specified, it must be int32 or int64. Default: ``None`` .
 
     Returns:
         A tensor or a tuple of tensors containing tensor objects (`output`, `inverse_indices`, `counts`).
 
-        - **output** (Tensor): the output tensor has the same type as `input` and represents the output list of
+        - **output** (Tensor): The output tensor has the same type as `input` and represents the output list of
           unique scalar elements.
-        - **inverse_indices** (Tensor, optional): if `return_inverse` is True, there will be an additional returned
+        - **inverse_indices** (Tensor, optional): If `return_inverse` is ``True``, there will be an additional returned
           tensor `inverse_indices`. `inverse_indices` has the same shape as `input` and represents the index of where
           the element in the original input maps to the position in the output.
-        - **counts** (Tensor, optional):  if `return_counts` is True, there will be an additional returned tensor
+        - **counts** (Tensor, optional):  If `return_counts` is ``True``, there will be an additional returned tensor
           `counts`. `counts` has the same shape as `output` or `output.shape[dim]` if dim was specified and represents
           the number of occurrences for each unique value or tensor.
 
@@ -1280,11 +1281,11 @@ def unique_consecutive(input, return_inverse=False, return_counts=False, dim=Non
 
 def zeros(size, *, dtype=None):
     """
-    Creates a tensor filled with 0 with shape described by `size` and fills it with value 0 in type of `dtype`.
+    Creates a tensor of shape `size` filled with zeros of type `dtype`.
 
     Args:
-        size (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
-            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+        size (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integers,
+            tuples, or Tensors containing positive integers are allowed. If it is a Tensor,
             it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
 
     Keyword Args:

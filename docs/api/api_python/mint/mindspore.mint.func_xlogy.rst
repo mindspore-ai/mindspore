@@ -3,7 +3,7 @@ mindspore.mint.xlogy
 
 .. py:function:: mindspore.mint.xlogy(input, other) -> Tensor
 
-    计算第一个输入乘以第二个输入的对数。当 `input` 为零时，则返回零。
+    逐元素计算第一个输入乘以第二个输入的对数。当 `input` 为零时，则返回零。
 
     .. math::
         out_i = input_{i} * \log({other_{i}})

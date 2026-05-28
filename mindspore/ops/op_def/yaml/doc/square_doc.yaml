@@ -3,18 +3,18 @@ square:
         Return square of a tensor element-wise.
 
         .. math::
-        
+
             y_i = input_i ^ 2
-    
+
         Args:
             input (Tensor): The input tensor.
-    
+
         Returns:
             Tensor
-    
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-    
+
         Examples:
             >>> import mindspore
             >>> input = mindspore.tensor([1.0, 2.0, 3.0], mindspore.float32)

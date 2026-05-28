@@ -3,7 +3,7 @@ mindspore.mint.special.round
 
 .. py:function:: mindspore.mint.special.round(input)
 
-    对输入数据进行四舍五入到最接近的整数数值。
+    将输入数据四舍五入到最接近的整数。
 
     .. math::
         out_i \approx input_i

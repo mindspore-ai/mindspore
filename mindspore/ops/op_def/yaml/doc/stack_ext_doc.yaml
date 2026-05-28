@@ -1,6 +1,6 @@
 stack_ext:
     description: |
-        Stacks a list of tensors in specified dim.
+        Stacks a list of tensors along the specified dim.
 
         Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
 
