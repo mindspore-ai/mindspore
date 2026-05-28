@@ -122,6 +122,7 @@ class PYBOOST_API CommHandle : public std::enable_shared_from_this<CommHandle> {
 
 using CommHandlePtr = std::shared_ptr<CommHandle>;
 void PYBOOST_API WaitTaskFunc(CommHandlePtr comm_handle);
+void PYBOOST_API WaitTaskFunc(CommHandlePtr comm_handle, size_t cur_stream_id);
 
 }  // namespace pyboost
 }  // namespace kernel

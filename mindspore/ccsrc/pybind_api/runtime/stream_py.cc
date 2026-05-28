@@ -114,7 +114,6 @@ bool StreamPy::StreamEqual(const std::shared_ptr<StreamPy> other_stream) {
 
 void SetCurStream(const StreamPyPtr &cur_stream) {
   MS_EXCEPTION_IF_NULL(cur_stream);
-  runtime::Pipeline::Get().WaitForward();
   MS_LOG(DEBUG) << "current_stream_id:" << cur_stream->stream_id();
   MS_EXCEPTION_IF_NULL(cur_stream->device_ctx());
   MS_EXCEPTION_IF_NULL(cur_stream->device_ctx()->device_res_manager_);
@@ -136,7 +135,7 @@ StreamPyPtr CurrentStream() {
   auto device_ctx = GetDeviceCtx();
   MS_EXCEPTION_IF_NULL(device_ctx);
   MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
-  auto current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
+  auto current_stream_id = mindspore::CurrentStream::id();
   MS_LOG(DEBUG) << "current_stream_id:" << current_stream_id;
   return std::make_shared<StreamPy>(device_ctx, current_stream_id);
 }
@@ -145,7 +144,7 @@ size_t CurrentStreamId() {
   auto device_ctx = GetDeviceCtx();
   MS_EXCEPTION_IF_NULL(device_ctx);
   MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
-  auto current_stream_id = device_ctx->device_res_manager_->GetCurrentStreamId();
+  auto current_stream_id = mindspore::CurrentStream::id();
   MS_LOG(DEBUG) << "current_stream_id:" << current_stream_id;
   return current_stream_id;
 }

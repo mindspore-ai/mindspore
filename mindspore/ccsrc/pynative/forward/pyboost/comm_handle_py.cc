@@ -22,6 +22,7 @@
 #include "include/pynative/forward/pyboost/forward_task.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "pybind_api/runtime/runtime_api.h"
+#include "utils/current_state.h"
 
 namespace mindspore {
 namespace hal {
@@ -34,7 +35,7 @@ void CommHandlePy::Wait() {
   }
 
   MS_EXCEPTION_IF_NULL(device_ctx_);
-  auto cur_stream_id = device_ctx_->device_res_manager_->GetCurrentStreamId();
+  auto cur_stream_id = CurrentStream::id();
   auto ret = wait_streams_.insert(cur_stream_id);
   if (!ret.second) {
     MS_LOG(INFO) << "Event already wait on stream " << cur_stream_id << ". Skip wait.";
@@ -42,8 +43,8 @@ void CommHandlePy::Wait() {
   }
 
   // Wait event async.
-  pynative::DispatchOp(
-    std::make_shared<pynative::PassthroughFrontendTask>([comm_handle = comm_handle_]() { WaitTaskFunc(comm_handle); }));
+  pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>(
+    [comm_handle = comm_handle_, cur_stream_id]() { WaitTaskFunc(comm_handle, cur_stream_id); }));
   MS_LOG(DEBUG) << "release handle after wait";
 }
 
