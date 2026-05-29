@@ -50,6 +50,7 @@ void RegCOOTensor(const py::module *m);
 void RegRowTensor(const py::module *m);
 void RegMapTensor(const py::module *m);
 void RegPyTensor(py::module *m);
+void RegTensorUtilsApi(py::module *m);
 }  // namespace tensor
 
 void RegTensorDoc(py::module *m);

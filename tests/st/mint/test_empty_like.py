@@ -19,6 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore.common import dtype as mstype
 from mindspore import mint, Tensor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 from tests.st.ops.test_tools.test_op import TEST_OP
 
@@ -128,6 +129,33 @@ def test_empty_like_normal5(mode):
     y = net(input_tensor)
     assert np.allclose(y.shape, (1, 2, 3))
     np.testing.assert_equal(y.dtype, input_tensor.dtype)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=1024.00)
+def test_empty_like_meta_tensor_to_real_device():
+    """
+    Feature: empty_like with meta tensor input.
+    Description: empty_like should read shape and dtype from a meta tensor and allocate on a real device.
+    Expectation: Return a non-meta tensor with the expected shape, dtype, and target device.
+    """
+    ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    target_device = "Ascend" if ms.get_context("device_target") == "Ascend" else "CPU"
+
+    meta_tensor = Tensor(np.zeros((3, 4)), dtype=mstype.float32, device="meta")
+    assert meta_tensor.is_meta
+    assert meta_tensor.shape == (3, 4)
+    assert meta_tensor.dtype == mstype.float32
+
+    result = mint.empty_like(meta_tensor, device=target_device)
+    _pynative_executor.sync()
+
+    assert not result.is_meta
+    assert result.shape == (3, 4)
+    np.testing.assert_equal(result.dtype, mstype.float32)
+    assert result.device == target_device or result.device.startswith(f"{target_device}:")
+
 
 def empty_like_forward_func_dyn_test(input_tensor, dtype=None):
     y = Net()(input_tensor, dtype=dtype)

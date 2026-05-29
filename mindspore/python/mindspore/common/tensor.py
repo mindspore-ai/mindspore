@@ -14,10 +14,12 @@
 # ============================================================================
 """Tensor implementation."""
 
-__all__ = ['Tensor']
+__all__ = ['Tensor', 'tensor', 'swap_tensors']
 
 import abc
+import copyreg
 import numbers
+import weakref
 import numpy as np
 
 from mindspore.communication.management import get_group_size
@@ -31,6 +33,7 @@ from mindspore.common.hook_handle import _TensorHookHandle
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore._c_expression import TensorPy as TensorPy_
+from mindspore._c_expression import _swap_tensor_impl
 from mindspore._c_expression import _rmod_instance
 from mindspore import _checkparam as validator
 from mindspore._checkparam import is_stub_tensor, check_hook_fn
@@ -41,6 +44,80 @@ from mindspore._c_expression import is_reboot_node
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
             np.float32, np.float64, np.bool_, np.complex64, np.complex128)
+
+
+def _ensure_no_weakrefs(tensor_obj, arg_name):
+    """Reject tensors with Python weak references."""
+    if weakref.getweakrefs(tensor_obj):
+        raise RuntimeError(f"Cannot swap {arg_name} because it has weakref associated with it")
+
+
+def _tensor_slot_names(tensor_obj):
+    """Return slot names declared by the tensor's Python class hierarchy."""
+    return set(copyreg._slotnames(tensor_obj.__class__) or ())  # pylint: disable=protected-access
+
+
+def _check_slot_layout(t1_slots, t2_slots):
+    """Make sure Python slots can be exchanged symmetrically."""
+    if t1_slots == t2_slots:
+        return
+    raise RuntimeError(
+        f"Cannot swap t1 and t2 if they have different slots. "
+        f"t1 slots: {t1_slots}, t2 slots: {t2_slots}"
+    )
+
+
+def _exchange_optional_attr(left, right, attr_name):
+    """Exchange an attribute even when it exists on only one object."""
+    left_has_attr = hasattr(left, attr_name)
+    right_has_attr = hasattr(right, attr_name)
+    if not left_has_attr and not right_has_attr:
+        return
+
+    if left_has_attr:
+        left_value = getattr(left, attr_name)
+    if right_has_attr:
+        right_value = getattr(right, attr_name)
+
+    if right_has_attr:
+        setattr(left, attr_name, right_value)
+    else:
+        delattr(left, attr_name)
+
+    if left_has_attr:
+        setattr(right, attr_name, left_value)
+    else:
+        delattr(right, attr_name)
+
+
+def swap_tensors(t1, t2):
+    """
+    Swap the content of two Tensor objects in place.
+
+    After this call, t1 contains what t2 had, including class, Python state,
+    and underlying TensorImpl; t2 contains what t1 had. Python object
+    identities, id(t1) and id(t2), are preserved.
+
+    Args:
+        t1 (Tensor): First tensor.
+        t2 (Tensor): Second tensor.
+
+    Raises:
+        RuntimeError: If either tensor has weakrefs, or their slots differ.
+    """
+    _ensure_no_weakrefs(t1, "t1")
+    _ensure_no_weakrefs(t2, "t2")
+
+    slots = _tensor_slot_names(t1)
+    _check_slot_layout(slots, _tensor_slot_names(t2))
+
+    t1.__class__, t2.__class__ = t2.__class__, t1.__class__
+    _exchange_optional_attr(t1, t2, "__dict__")
+
+    for slot in slots:
+        _exchange_optional_attr(t1, t2, slot)
+
+    _swap_tensor_impl(t1, t2)
 
 
 def _check_input_data_type(input_data):

@@ -217,5 +217,6 @@ void RegFrontendModule(py::module *m) {
                py::arg("device_num") = py::int_(8), py::arg("rank_id") = py::int_(0), py::arg("sapp") = py::bool_(true),
                "Split single mindir to distributed mindir");
   RegMemoryRecycle(m);
+  RegCellUtilsApi(m);
 }
 }  // namespace mindspore

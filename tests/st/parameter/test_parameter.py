@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for Parameter behavior."""
+
 import pytest
 import numpy as np
 
@@ -37,7 +39,7 @@ def test_parameter_1_1(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
             self.param_b = Parameter(Tensor([2], ms.float32), name="name_b")
 
@@ -65,7 +67,7 @@ def test_parameter_1_2(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
             self.param_b = ParameterTuple((Parameter(Tensor([2], ms.float32), name="name_b"), self.param_a))
 
@@ -94,7 +96,7 @@ def test_parameter_3(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32))
             self.param_b = Parameter(Tensor([2], ms.float32))
 
@@ -122,7 +124,7 @@ def test_parameter_5_2(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
             self.res1 = ParameterTuple((Parameter(Tensor([2], ms.float32)), self.param_a))
             self.param_a = Parameter(Tensor([3], ms.float32), name="name_b")
@@ -153,7 +155,7 @@ def test_parameter_list_tuple_no_name(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_tuple = (Parameter(Tensor([5], ms.float32)), Parameter(Tensor([6], ms.float32)))
             self.param_list = [Parameter(Tensor([7], ms.float32)), Parameter(Tensor([8], ms.float32))]
 
@@ -189,7 +191,7 @@ def test_parameter_in_tuple(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
             self.param_b = Parameter(Tensor([2], ms.float32), name="name_b")
             self.param_tuple = ParameterTuple((self.param_a, self.param_b))
@@ -220,7 +222,7 @@ def test_parameter_parameter_tuple_2(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
             self.param_tuple = ParameterTuple((self.param_a, self.param_a, self.param_a))
 
@@ -250,7 +252,7 @@ def test_parameter(mode):
 
     class ParamNet(Cell):
         def __init__(self):
-            super(ParamNet, self).__init__()
+            super().__init__()
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
             self.param_b = Parameter(Tensor([2], ms.float32), name="name_b")
             self.param_c = Parameter(Tensor([3], ms.float32))
@@ -329,7 +331,7 @@ def test_parameter_argument_grad():
 
     class ParameterArgumentCell(Cell):
         def __init__(self):
-            super(ParameterArgumentCell, self).__init__()
+            super().__init__()
             self.z = Parameter(Tensor(np.array([[1.0, 4.0], [-1, 8.0]]), ms.float32), name='z')
 
         def construct(self, param, x, y):
@@ -404,3 +406,24 @@ def test_parameter_set_in_class_attributes_between_iterations_name_diff():
     net.inputx.name = "name_changed"
     output = net(Tensor(inputy_2))
     assert output.name == "name_changed"
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_parameter_from_meta_tensor_preserves_meta():
+    """
+    Feature: Parameter meta device.
+    Description: Create a Parameter from a meta tensor.
+    Expectation: The Parameter preserves meta flag, shape and dtype.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    meta_tensor = Tensor(np.zeros((4, 4)), ms.float32, device="meta")
+    assert meta_tensor.is_meta
+
+    param = Parameter(meta_tensor, name="w")
+    assert isinstance(param, Parameter)
+    assert param.is_meta
+    assert param.shape == (4, 4)
+    assert param.dtype == ms.float32

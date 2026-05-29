@@ -23,6 +23,7 @@ from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import nn
 from mindspore import Tensor, value_and_grad, jit
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.auto_generate.gen_ops_prim import to_device_op, to_dtype_op
 
 
@@ -378,6 +379,23 @@ def test_tensor_to_device_for_graph():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
+def test_tensor_to_meta_to_real_device_error():
+    """
+    Feature: tensor.to
+    Description: Moving a meta tensor to a real device with Tensor.to should raise the canonical error.
+    Expectation: Raise RuntimeError with the expected message.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    target_device = "Ascend" if ms.get_context("device_target") == "Ascend" else "CPU"
+
+    meta_tensor = Tensor(np.zeros((2, 2)), dtype=ms.float32, device="meta")
+    assert meta_tensor.is_meta
+
+    with pytest.raises(RuntimeError, match="Cannot copy from tensor which is on meta device"):
+        _ = meta_tensor.to(device=target_device)
+        _pynative_executor.sync()
+
+
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard', mem_peak=30.01)
@@ -403,3 +421,5 @@ def test_tensor_to(mode):
     test_tensor_numpy_non_blocking()
     test_tensor_to_with_numpy_perf()
     test_tensor_to_device_for_graph()
+
+    test_tensor_to_meta_to_real_device_error()
