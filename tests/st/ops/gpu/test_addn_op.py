@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test AddN operator on GPU."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -26,7 +28,7 @@ from mindspore import dtype as mstype
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.add = P.AddN()
 
     @jit
@@ -36,7 +38,7 @@ class Net(nn.Cell):
 
 class DynRankNet(nn.Cell):
     def __init__(self):
-        super(DynRankNet, self).__init__()
+        super().__init__()
         self.op = P.AddN()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
 
@@ -183,10 +185,10 @@ def test_addn_support_type():
     out_uint16 = ops.addn([Tensor([1, 2, 3], mstype.uint16), Tensor([4, 5, 6], mstype.uint16)])
     out_uint32 = ops.addn([Tensor([1, 2, 3], mstype.uint32), Tensor([4, 5, 6], mstype.uint32)])
     out_uint64 = ops.addn([Tensor([1, 2, 3], mstype.uint64), Tensor([4, 5, 6], mstype.uint64)])
-    out_complex64 = ops.addn([Tensor(np.asarray(np.complex_(1.5 + 0.4j)), mstype.complex64),
-                              Tensor(np.asarray(np.complex_(2.5 + 0.4j)), mstype.complex64)])
-    out_complex128 = ops.addn([Tensor(np.asarray(np.complex_(1.5 + 0.4j)), mstype.complex128),
-                               Tensor(np.asarray(np.complex_(2.5 + 0.4j)), mstype.complex128)])
+    out_complex64 = ops.addn([Tensor(np.asarray(np.complex128(1.5 + 0.4j)), mstype.complex64),
+                              Tensor(np.asarray(np.complex128(2.5 + 0.4j)), mstype.complex64)])
+    out_complex128 = ops.addn([Tensor(np.asarray(np.complex128(1.5 + 0.4j)), mstype.complex128),
+                               Tensor(np.asarray(np.complex128(2.5 + 0.4j)), mstype.complex128)])
 
     assert np.allclose(out_fp16.asnumpy(), Tensor([6., 8., 10.], mstype.float16).asnumpy(), rtol=1e-5, atol=1e-5)
     assert np.allclose(out_fp32.asnumpy(), Tensor([6., 8., 10.], mstype.float32).asnumpy(), rtol=1e-5, atol=1e-5)
@@ -199,5 +201,5 @@ def test_addn_support_type():
     assert np.all(out_uint16.asnumpy() == Tensor([5, 7, 9], mstype.uint16).asnumpy())
     assert np.all(out_uint32.asnumpy() == Tensor([5, 7, 9], mstype.uint32).asnumpy())
     assert np.all(out_uint64.asnumpy() == Tensor([5, 7, 9], mstype.uint64).asnumpy())
-    assert np.all(out_complex64.asnumpy() == Tensor(np.asarray(np.complex_(4 + 0.8j)), mstype.complex64).asnumpy())
-    assert np.all(out_complex128.asnumpy() == Tensor(np.asarray(np.complex_(4 + 0.8j)), mstype.complex128).asnumpy())
+    assert np.all(out_complex64.asnumpy() == Tensor(np.asarray(np.complex128(4 + 0.8j)), mstype.complex64).asnumpy())
+    assert np.all(out_complex128.asnumpy() == Tensor(np.asarray(np.complex128(4 + 0.8j)), mstype.complex128).asnumpy())

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test parse exception cases for simple expression syntax."""
 
 import pytest
 
@@ -30,7 +31,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class TestNoReturn(nn.Cell):
     def __init__(self):
-        super(TestNoReturn, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -46,8 +47,8 @@ def test_no_return():
     Expectation: No exception
     """
     net = TestNoReturn()
-    x = Tensor(np.ones([2, 2], np.float_))
-    y = Tensor(np.zeros([2, 2], np.float_))
+    x = Tensor(np.ones([2, 2], np.float64))
+    y = Tensor(np.zeros([2, 2], np.float64))
     ret = net(x, y)
     assert not ret
 
@@ -74,8 +75,8 @@ def test_compare():
 
 class TestMemberChange(nn.Cell):
     def __init__(self):
-        super(TestMemberChange, self).__init__()
-        self.t = Tensor(np.zeros([2, 2], np.float_))
+        super().__init__()
+        self.t = Tensor(np.zeros([2, 2], np.float64))
 
     def construct(self, x, y):
         self.t = x
@@ -90,15 +91,15 @@ def test_member_changer():
     Expectation: No exception
     """
     net = TestMemberChange()
-    x = Tensor(np.ones([2, 2], np.float_))
-    y = Tensor(np.zeros([2, 2], np.float_))
+    x = Tensor(np.ones([2, 2], np.float64))
+    y = Tensor(np.zeros([2, 2], np.float64))
     ret = net(x, y)
     assert ret.all()
 
 
 class TestUnsupportSTMT(nn.Cell):
     def __init__(self):
-        super(TestUnsupportSTMT, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -118,8 +119,8 @@ def test_unsupport_stmt():
     """
     with pytest.raises(RuntimeError) as err:
         net = TestUnsupportSTMT()
-        x = Tensor(np.ones([2, 2], np.float_))
-        y = Tensor(np.zeros([2, 2], np.float_))
+        x = Tensor(np.ones([2, 2], np.float64))
+        y = Tensor(np.zeros([2, 2], np.float64))
         ret = net(x, y)
         print(ret)
     assert "Unsupported statement 'Try'." in str(err)
@@ -127,7 +128,7 @@ def test_unsupport_stmt():
 
 class TestUnsupportNum(nn.Cell):
     def __init__(self):
-        super(TestUnsupportNum, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -144,8 +145,8 @@ def test_unsupport_num():
     """
     with pytest.raises(TypeError) as err:
         net = TestUnsupportNum()
-        x = Tensor(np.ones([2, 2], np.float_))
-        y = Tensor(np.zeros([2, 2], np.float_))
+        x = Tensor(np.ones([2, 2], np.float64))
+        y = Tensor(np.zeros([2, 2], np.float64))
         ret = net(x, y)
         print(ret)
     assert "Only support 'Number' type of 'int` and 'float'" in str(err)
@@ -153,7 +154,7 @@ def test_unsupport_num():
 
 class TestAssignAdd(nn.Cell):
     def __init__(self):
-        super(TestAssignAdd, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -177,7 +178,7 @@ def test_assign_add():
 
 class TestParseListComp(nn.Cell):
     def __init__(self):
-        super(TestParseListComp, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -201,7 +202,7 @@ def test_parse_list_comp():
 
 class TestAssign(nn.Cell):
     def __init__(self):
-        super(TestAssign, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -225,7 +226,7 @@ def test_assign():
 
 class TestAssignList(nn.Cell):
     def __init__(self):
-        super(TestAssignList, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -247,7 +248,7 @@ def test_assign_list():
 
 class TestParaDef(nn.Cell):
     def __init__(self):
-        super(TestParaDef, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x=1, y=1):
@@ -269,7 +270,7 @@ def test_para_def():
 
 class TestParameterNameNone(nn.Cell):
     def __init__(self):
-        super(TestParameterNameNone, self).__init__()
+        super().__init__()
         self.matmul = ops.MatMul()
         self.weight = Parameter(Tensor(np.ones((1, 2)), mindspore.float32), name=None, requires_grad=True)
 
@@ -293,7 +294,7 @@ def test_parameter_name_none():
 
 class TestBranchReturn(nn.Cell):
     def __init__(self):
-        super(TestBranchReturn, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x):
@@ -316,7 +317,7 @@ def test_branch_return():
 
 class TestSliceNotInt(nn.Cell):
     def __init__(self):
-        super(TestSliceNotInt, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x):
@@ -340,7 +341,7 @@ def test_slice_not_int():
 
 class TestSliceNotIntDefInInit(nn.Cell):
     def __init__(self):
-        super(TestSliceNotIntDefInInit, self).__init__()
+        super().__init__()
         self.sl = slice(1, 4.5)
 
     def construct(self, x):
@@ -404,7 +405,7 @@ def test_cell_pipeline_state():
 
 class TestArgsKwArgs(nn.Cell):
     def __init__(self):
-        super(TestArgsKwArgs, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, *args, **kwargs):
@@ -430,7 +431,7 @@ def test_args_kwargs():
 
 class TestArgs(nn.Cell):
     def __init__(self):
-        super(TestArgs, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, *args):

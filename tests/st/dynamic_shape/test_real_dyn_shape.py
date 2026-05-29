@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test real op with dynamic shape inputs."""
+
 import pytest
 import numpy as np
 import mindspore as ms
@@ -31,7 +33,8 @@ def real_backward_func(x):
     return ops.grad(real_forward_func, (0))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_real_forward(mode):
@@ -41,13 +44,14 @@ def test_real_forward(mode):
     Expectation: output the real part of the input.
     """
     context.set_context(mode=mode)
-    x = Tensor(np.asarray(np.complex_(1.3 + 0.4j)).astype(np.complex64))
+    x = Tensor(np.asarray(np.complex128(1.3 + 0.4j)).astype(np.complex64))
     output = real_forward_func(x)
-    expect_output = np.asarray(np.complex_(1.3)).astype(np.float32)
+    expect_output = np.asarray(np.complex128(1.3)).astype(np.float32)
     np.testing.assert_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.75)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_real_backward(mode):
@@ -57,13 +61,14 @@ def test_real_backward(mode):
     Expectation: output the right grad.
     """
     context.set_context(mode=mode)
-    x = Tensor(np.asarray(np.complex_(1.3 + 0.4j)).astype(np.complex64))
+    x = Tensor(np.asarray(np.complex128(1.3 + 0.4j)).astype(np.complex64))
     output = real_backward_func(x)
-    expect_output = np.asarray(np.complex_(1. + 0j)).astype(np.complex64)
+    expect_output = np.asarray(np.complex128(1. + 0j)).astype(np.complex64)
     np.testing.assert_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.99)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', mem_peak=0.99)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_real_dynamic(mode):
     """
@@ -75,12 +80,12 @@ def test_real_dynamic(mode):
     x_dyn = Tensor(shape=None, dtype=ms.complex64)
     test_cell = test_utils.to_cell_obj(ops.real)
     test_cell.set_inputs(x_dyn)
-    x1 = Tensor(np.asarray(np.complex_(1.3 + 0.4j)).astype(np.complex64))
+    x1 = Tensor(np.asarray(np.complex128(1.3 + 0.4j)).astype(np.complex64))
     output1 = test_cell(x1)
     expect_output1 = np.asarray(1.3).astype(np.float32)
     np.testing.assert_equal(output1.asnumpy(), expect_output1)
-    x2 = Tensor(np.asarray([[np.complex_(1.4 + 0.4j), np.complex_(2.5 + 0.6j)],
-                            [np.complex_(3.6 + 0.7j), np.complex_(4.7 + 0.8j)]]).astype(np.complex64))
+    x2 = Tensor(np.asarray([[np.complex128(1.4 + 0.4j), np.complex128(2.5 + 0.6j)],
+                            [np.complex128(3.6 + 0.7j), np.complex128(4.7 + 0.8j)]]).astype(np.complex64))
     output2 = test_cell(x2)
     expect_output2 = np.asarray([[1.4, 2.5],
                                  [3.6, 4.7]]).astype(np.float32)

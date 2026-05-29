@@ -190,7 +190,7 @@ def _nptype_to_prototype(np_value):
     if proto is None:
         raise TypeError("Transform numpy type failed in Summary, expect numpy type is one of ['np.bool_', 'np.int8', "
                         "'np.int16', 'np.int32', 'np.int64', 'np.uint8', 'np.uint16', 'np.uint32', 'np.uint64', "
-                        "'np.float16', 'np.float_', 'np.float64'].")
+                        "'np.float16', 'np.float32', 'np.float64'].")
 
     return proto
 
@@ -307,8 +307,8 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
         # BUG: max of a masked array with dtype np.float16 returns inf
         # See numpy issue#15077
         if issubclass(np_value.dtype.type, np.floating):
-            summary.min = ma_value.min(fill_value=np.PINF)
-            summary.max = ma_value.max(fill_value=np.NINF)
+            summary.min = ma_value.min(fill_value=np.inf)
+            summary.max = ma_value.max(fill_value=-np.inf)
             if summary.min < F32_MIN or summary.max > F32_MAX:
                 logger.warning(f'Values({summary.min}, {summary.max}) are too large, '
                                f'you may encounter some undefined behaviours hereafter.')

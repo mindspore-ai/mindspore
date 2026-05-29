@@ -16,26 +16,70 @@ function(find_required_program prog_name)
 endfunction()
 
 
-## find python, quit if the found python is static
+## find python — follow the active shell context (conda/venv) and verify the
+## packaging stack at configure time, so a misrouted interpreter fails fast
+## instead of after a multi-hour build.
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   set(Python3_FIND_REGISTRY LAST)
   set(Python3_FIND_STRATEGY LOCATION)
 endif()
 set(Python3_USE_STATIC_LIBS FALSE)
-set(Python3_FIND_VIRTUALENV ONLY)
+
+# Lock onto the shell's active environment unless the caller passed
+# -DPython3_EXECUTABLE explicitly. CMake's Python3_FIND_VIRTUALENV does not
+# reliably honor CONDA_PREFIX, which is what causes /usr/local/pythonX.Y to be
+# selected over an active conda env on multi-Python machines.
+if(NOT DEFINED Python3_EXECUTABLE)
+    if(DEFINED ENV{CONDA_PREFIX})
+        set(Python3_ROOT_DIR "$ENV{CONDA_PREFIX}" CACHE PATH "Active conda env" FORCE)
+        set(Python3_EXECUTABLE "$ENV{CONDA_PREFIX}/bin/python" CACHE FILEPATH "Conda python" FORCE)
+    elseif(DEFINED ENV{VIRTUAL_ENV})
+        set(Python3_ROOT_DIR "$ENV{VIRTUAL_ENV}" CACHE PATH "Active virtualenv" FORCE)
+        set(Python3_EXECUTABLE "$ENV{VIRTUAL_ENV}/bin/python" CACHE FILEPATH "Venv python" FORCE)
+    endif()
+endif()
+set(Python3_FIND_VIRTUALENV FIRST)
+set(Python3_FIND_STRATEGY LOCATION)
+
 find_package(Python3 COMPONENTS Interpreter Development)
-if(Python3_FOUND)
-    message("Python3 found, version: ${Python3_VERSION}")
-    message("Python3 library path: ${Python3_LIBRARY}")
-    message("Python3 interpreter: ${Python3_EXECUTABLE}")
-elseif(Python3_LIBRARY AND Python3_EXECUTABLE AND
-        ${Python3_VERSION} VERSION_GREATER_EQUAL "3.7.0" AND ${Python3_VERSION} VERSION_LESS "3.13.0")
-    message(WARNING "Maybe python3 environment is broken.")
-    message("Python3 library path: ${Python3_LIBRARY}")
-    message("Python3 interpreter: ${Python3_EXECUTABLE}")
-else()
-    message(FATAL_ERROR "Python3 not found, please install Python>=3.7.5, and set --enable-shared "
-            "if you are building Python locally")
+if(NOT Python3_FOUND)
+    message(FATAL_ERROR "Python3 not found. Activate a conda env or venv with Python "
+            "3.9-3.12 before running build.sh.")
+endif()
+if(${Python3_VERSION} VERSION_LESS "3.9.0" OR ${Python3_VERSION} VERSION_GREATER_EQUAL "3.13.0")
+    message(FATAL_ERROR "Found Python ${Python3_VERSION} at ${Python3_EXECUTABLE}, "
+            "but MindSpore requires 3.9-3.12 (numpy>=1.25 floor introduced in master).")
+endif()
+message(STATUS "Python3 ${Python3_VERSION} at ${Python3_EXECUTABLE}")
+message(STATUS "Python3 library: ${Python3_LIBRARY}")
+
+# Verify the packaging stack up front. Without this check, a missing 'wheel'
+# in the chosen interpreter only surfaces as "invalid command 'bdist_wheel'"
+# at the end of the build, after CMake/compile have already succeeded.
+foreach(_pkg setuptools wheel)
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} -c "import ${_pkg}; print(${_pkg}.__version__)"
+        RESULT_VARIABLE _rc
+        OUTPUT_VARIABLE _ver
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(NOT _rc EQUAL 0)
+        message(FATAL_ERROR "Python at ${Python3_EXECUTABLE} cannot import '${_pkg}'. "
+                "Install with: ${Python3_EXECUTABLE} -m pip install ${_pkg}")
+    endif()
+    message(STATUS "  ${_pkg}: ${_ver}")
+endforeach()
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "from wheel.bdist_wheel import bdist_wheel"
+    RESULT_VARIABLE _rc OUTPUT_QUIET ERROR_QUIET)
+if(NOT _rc EQUAL 0)
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} -c "from setuptools.command.bdist_wheel import bdist_wheel"
+        RESULT_VARIABLE _rc OUTPUT_QUIET ERROR_QUIET)
+endif()
+if(NOT _rc EQUAL 0)
+    message(FATAL_ERROR "bdist_wheel command not available in ${Python3_EXECUTABLE}. "
+            "Install: ${Python3_EXECUTABLE} -m pip install 'wheel<0.45' 'setuptools<70'")
 endif()
 
 ## packages used both on windows and linux

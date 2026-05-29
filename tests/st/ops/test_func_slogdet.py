@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test slogdet functional API."""
+
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -60,7 +62,7 @@ def test_slogdet_complex(mode):
                 [-3.5 + 5.8j, 63 + 12.75j, -5 + 6.4j]], dtype=ms.complex64)
     net = Net()
     output1, output2 = net(x)
-    expect_output1 = np.array(0.749919 + 0.66153j, dtype=np.complex_)
-    expect_output2 = np.array(12.0614 + 0j, dtype=np.complex_)
+    expect_output1 = np.array(0.749919 + 0.66153j, dtype=np.complex128)
+    expect_output2 = np.array(12.0614 + 0j, dtype=np.complex128)
     assert np.allclose(output1.asnumpy(), expect_output1)
     assert np.allclose(output2.asnumpy(), expect_output2)

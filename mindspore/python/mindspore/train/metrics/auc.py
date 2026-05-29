@@ -76,7 +76,8 @@ def auc(x, y, reorder=False):
                 raise ValueError("For 'auc', if the argument is False, the argument 'x' array must be increasing "
                                  "or decreasing, but got 'x': {}".format(x))
 
-    area = direction * np.trapz(y, x)
+    trapezoid = getattr(np, 'trapezoid', None) or np.trapz
+    area = direction * trapezoid(y, x)
     if isinstance(area, np.memmap):
         area = area.dtype.type(area)
     return area

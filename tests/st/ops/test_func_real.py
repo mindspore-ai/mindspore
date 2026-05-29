@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test real functional API."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -39,7 +41,7 @@ def test_real_normal(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    x = ms.Tensor(np.asarray(np.complex_(1.3 + 0.4j)), ms.complex64)
+    x = ms.Tensor(np.asarray(np.complex128(1.3 + 0.4j)), ms.complex64)
     out = net(x)
     expect_out = np.array(1.3)
     assert np.allclose(out.asnumpy(), expect_out)

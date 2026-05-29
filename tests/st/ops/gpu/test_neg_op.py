@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test Neg operator on GPU."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -26,7 +28,7 @@ from mindspore.common import dtype as mstype
 
 class NetNeg(nn.Cell):
     def __init__(self):
-        super(NetNeg, self).__init__()
+        super().__init__()
         self.neg = P.Neg()
 
     def construct(self, x):
@@ -77,7 +79,7 @@ def test_neg_complex():
     x0 = Tensor(x0_np)
     neg_net = NetNeg()
     output0 = neg_net(x0)
-    expect0 = np.asarray(np.complex_(-3.0 - 5.0j), dtype=np.complex64)
+    expect0 = np.asarray(np.complex128(-3.0 - 5.0j), dtype=np.complex64)
     assert np.allclose(output0.asnumpy(), expect0)
 
 

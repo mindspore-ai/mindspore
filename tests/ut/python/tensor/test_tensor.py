@@ -427,8 +427,8 @@ def test_tensor_input_complex():
 
 def test_tensor_dtype_np_float():
     with pytest.raises(TypeError):
-        input_data = np.random.randn(32, 112, 112, 3).astype(np.float_)
-        ms.Tensor(input_data, np.float_)
+        input_data = np.random.randn(32, 112, 112, 3).astype(np.float64)
+        ms.Tensor(input_data, np.float64)
 
 
 def test_tensor_dtype_np_float16():

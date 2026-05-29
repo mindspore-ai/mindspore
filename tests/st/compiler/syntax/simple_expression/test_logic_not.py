@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class LogicNot(nn.Cell):
     def __init__(self):
-        super(LogicNot, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x):
@@ -37,7 +37,7 @@ class LogicNot(nn.Cell):
 
 class LogicNotSpec(nn.Cell):
     def __init__(self, x):
-        super(LogicNotSpec, self).__init__()
+        super().__init__()
         self.x = x
 
     def construct(self, x):
@@ -90,7 +90,7 @@ def test_ms_syntax_operator_logic_not_tensor_1_float():
     Expectation: No exception
     """
     net = LogicNot()
-    x = Tensor(np.ones([1], np.float_))
+    x = Tensor(np.ones([1], np.float64))
     ret = net(x)
     assert not ret
 
@@ -118,7 +118,7 @@ def test_ms_syntax_operator_logic_not_tensor_2x2_float():
     """
     with pytest.raises(ValueError, match="Only tensor which shape is"):
         net = LogicNot()
-        x = Tensor(np.ones([2, 2], np.float_))
+        x = Tensor(np.ones([2, 2], np.float64))
         ret = net(x)
         print(ret)
 

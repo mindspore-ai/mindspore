@@ -36,9 +36,9 @@ def test_filter_wikipedia_xml_eager():
     logger.info("test FilterWikipediaXML in eager mode")
 
     # Original text
-    input01 = np.array(["Welcome to China"], dtype=np.unicode_)
+    input01 = np.array(["Welcome to China"], dtype=np.str_)
     # Expect text
-    expected = np.array(["welcome to china"], dtype=np.unicode_)
+    expected = np.array(["welcome to china"], dtype=np.str_)
     filter_wikipedia_xml_op = text.FilterWikipediaXML()
     output = filter_wikipedia_xml_op(input01)
     count_unequal_element(expected, output)

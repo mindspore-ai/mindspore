@@ -28,7 +28,7 @@ context.set_context(jit_level='O0')
 
 class LogicOr(nn.Cell):
     def __init__(self):
-        super(LogicOr, self).__init__()
+        super().__init__()
         self.m = 1
 
     def construct(self, x, y):
@@ -38,7 +38,7 @@ class LogicOr(nn.Cell):
 
 class LogicOrSpec(nn.Cell):
     def __init__(self, x, y):
-        super(LogicOrSpec, self).__init__()
+        super().__init__()
         self.x = x
         self.y = y
 
@@ -106,7 +106,7 @@ def test_ms_syntax_operator_logic_tensor_1_float_or_tensor_1_int():
     """
     with pytest.raises(TypeError, match="Cannot join the return values of different branches"):
         net = LogicOr()
-        x = Tensor(np.ones([1], np.float_))
+        x = Tensor(np.ones([1], np.float64))
         y = Tensor(np.zeros([1], np.int32))
         ret = net(x, y)
         print(ret)
