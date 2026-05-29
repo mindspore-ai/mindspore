@@ -159,6 +159,16 @@ def _run_matmul_elemwise_matmul(data_type):
     compare_outputs(flag, y2, cmp_precision=_cmp_precision(data_type))
 
 
+def _run_matmul_transpose_and_viewload_mul(data_type):
+    flag = gen_flag("_run_matmul_transpose_and_viewload_mul", data_type)
+    x = gen_input((1024, 2048), data_type, data_range=0.01).to("Ascend")
+    x_t = mint.transpose(x, -1, -2)
+    x_view = x[:, 1024:]
+    y0 = ops.auto_generate.MatMul(False, False)(x, x_t)
+    y1 = ops.mul(y0, x_view)
+    compare_outputs(flag, [y0, y1], cmp_precision=_cmp_precision(data_type))
+
+
 def _run_batch_matmul_elemwise(data_type):
     flag = gen_flag("_run_batch_matmul_elemwise", data_type)
     x0 = gen_input((4, 2048, 1024), data_type, data_range=0.01).to("Ascend")
@@ -230,6 +240,7 @@ def test_cv_fusion_cases():
     _run_matmul_elemwise_reduce("float16")
     _run_matmul_matmul("float16")
     _run_matmul_elemwise_matmul("bfloat16")
+    _run_matmul_transpose_and_viewload_mul("float16")
     _run_batch_matmul_elemwise("bfloat16")
     _run_matmul_ext_elemwise("bfloat16")
     _run_matmul_ext_add_batch_fold("float16")

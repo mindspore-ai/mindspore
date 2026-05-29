@@ -501,11 +501,11 @@ struct MatMulAdapter {
   }
 };
 
-dvm::NDObject *BuildBaddbmmDvmOutput(LazyFusionKernelAscend *k, const MatMulAdapter &info,
-                                     const TensorPtr &input_tensor, float beta_scalar, float alpha_scalar) {
-  // out = beta * input + alpha * (batch1 @ batch2)
-  auto batch1_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-  auto batch2_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+dvm::NDObject *BuildAddmmDvmOutput(LazyFusionKernelAscend *k, const MatMulAdapter &info, const TensorPtr &input_tensor,
+                                   float beta_scalar, float alpha_scalar) {
+  // out = beta * input + alpha * (mat1 @ mat2)
+  auto batch1_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+  auto batch2_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
   auto y_rank = info.y_shape.size();
   auto matmul_n = info.trans_b ? info.y_shape[y_rank - kDim2] : info.y_shape[y_rank - kDim1];
   const auto &input_shape = input_tensor->shape();
@@ -527,6 +527,32 @@ dvm::NDObject *BuildBaddbmmDvmOutput(LazyFusionKernelAscend *k, const MatMulAdap
     self_obj = k->Binary(dvm::BinaryOpType::kMul, self_obj, beta_scalar);
   }
   return k->Binary(dvm::BinaryOpType::kAdd, k->Cast(out_obj, compute_type), self_obj);
+}
+
+tensor::TensorPtr AddmmDvmCall(const std::string &op_name, OpRunner *op, const TensorPtr &input_tensor,
+                               const TensorPtr &mat1_tensor, const TensorPtr &mat2_tensor, const ScalarPtr &beta,
+                               const ScalarPtr &alpha) {
+  auto [beta_succ, beta_scalar] = GetScalarValue<float>(beta);
+  auto [alpha_succ, alpha_scalar] = GetScalarValue<float>(alpha);
+  if (!beta_succ || !alpha_succ) {
+    return nullptr;
+  }
+  MatMulAdapter info(mat1_tensor, mat2_tensor, input_tensor, false, false);
+  if (!info.Check(op)) {
+    return nullptr;
+  }
+
+  FlushLazyFusion();  // forward fusion not allowed
+  auto build_kernel = [&](LazyFusionKernelAscend *k) {
+    auto out_obj = BuildAddmmDvmOutput(k, info, input_tensor, beta_scalar, alpha_scalar);
+    return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
+  };
+  if (beta_scalar == 0.0f) {
+    DvmCall(op_name, op, build_kernel, info.x_tensor, info.y_tensor);
+  } else {
+    DvmCall(op_name, op, build_kernel, info.x_tensor, info.y_tensor, input_tensor);
+  }
+  return op->output(kIndex0);
 }
 
 std::vector<TensorPtr> ConvertOptionalValueTupleToVector(const std::optional<ValueTuplePtr> &tensor_list_opt) {
@@ -1538,8 +1564,8 @@ tensor::TensorPtr MatMulCall(const std::string &op_name, OpRunner *op, const Ten
   DvmCall(
     op_name, op,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
       auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, nullptr);
       return k->Output(out_obj, x_tensor->data_type(), k->GetShape(out_obj));
     },
@@ -1564,8 +1590,8 @@ tensor::TensorPtr DenseAscendDvm::Call(const TensorPtr &input_tensor, const Tens
   DvmCall(
     op_name_, this,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
       auto bias_obj = bias == nullptr ? nullptr : k->Input(bias, false);
       auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj);
       return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
@@ -1575,34 +1601,29 @@ tensor::TensorPtr DenseAscendDvm::Call(const TensorPtr &input_tensor, const Tens
   return outputs_.front();
 }
 
+mindspore::tensor::TensorPtr AddmmAscendDvm::Call(const mindspore::tensor::TensorPtr &input_tensor,
+                                                  const mindspore::tensor::TensorPtr &mat1_tensor,
+                                                  const mindspore::tensor::TensorPtr &mat2_tensor,
+                                                  const mindspore::ScalarPtr &beta, const mindspore::ScalarPtr &alpha) {
+  tensor::TensorPtr ret = AddmmDvmCall(op_name_, this, input_tensor, mat1_tensor, mat2_tensor, beta, alpha);
+  if (ret == nullptr) {
+    return AddmmAscend::Call(input_tensor, mat1_tensor, mat2_tensor, beta, alpha);
+  }
+  DumpOp(op_name_, this, input_tensor, mat1_tensor, mat2_tensor, beta, alpha);
+  return ret;
+}
+
 mindspore::tensor::TensorPtr BaddbmmAscendDvm::Call(const mindspore::tensor::TensorPtr &input_tensor,
                                                     const mindspore::tensor::TensorPtr &batch1_tensor,
                                                     const mindspore::tensor::TensorPtr &batch2_tensor,
                                                     const mindspore::ScalarPtr &beta,
                                                     const mindspore::ScalarPtr &alpha) {
-  auto [beta_succ, beta_scalar] = GetScalarValue<float>(beta);
-  auto [alpha_succ, alpha_scalar] = GetScalarValue<float>(alpha);
-  if (!beta_succ || !alpha_succ) {
+  tensor::TensorPtr ret = AddmmDvmCall(op_name_, this, input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
+  if (ret == nullptr) {
     return BaddbmmAscend::Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
-  }
-  MatMulAdapter info(batch1_tensor, batch2_tensor, input_tensor, false, false);
-  if (!info.Check(this)) {
-    return BaddbmmAscend::Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
-  }
-
-  FlushLazyFusion();  // forward fusion not allowed
-  auto build_kernel = [&](LazyFusionKernelAscend *k) {
-    auto out_obj = BuildBaddbmmDvmOutput(k, info, input_tensor, beta_scalar, alpha_scalar);
-    return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
-  };
-
-  if (beta_scalar == 0.0f) {
-    DvmCall(op_name_, this, build_kernel, info.x_tensor, info.y_tensor);
-  } else {
-    DvmCall(op_name_, this, build_kernel, info.x_tensor, info.y_tensor, input_tensor);
   }
   DumpOp(op_name_, this, input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
-  return outputs_.front();
+  return ret;
 }
 
 tensor::TensorPtr MatMulAscendDvm::Call(const TensorPtr &input_tensor, const TensorPtr &mat2_tensor,
@@ -1692,8 +1713,8 @@ std::vector<mindspore::tensor::TensorPtr> GroupedMatmulAscendDvm::Call(
   DvmCall(
     op_name_, this,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
       auto group_list_obj = k->Input(group_list);
       auto bias_obj = bias_tensor == nullptr ? nullptr : k->Input(bias_tensor, false);
       auto out_obj = k->GroupedMatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj, group_list_obj,
@@ -2040,6 +2061,7 @@ void RegisterLazyFusionOp() {
   MS_REPLACE_DVM_OP(OpLevel_0, InplaceAddExt);
   MS_REPLACE_DVM_OP(OpLevel_0, InplaceSubExt);
   MS_REPLACE_DVM_OP(OpLevel_0, InplaceReLU);
+  MS_REPLACE_DVM_OP(OpLevel_1, Addmm);
   MS_REPLACE_DVM_OP(OpLevel_1, Dense);
   MS_REPLACE_DVM_OP(OpLevel_1, MatMul);
   MS_REPLACE_DVM_OP(OpLevel_1, Baddbmm);

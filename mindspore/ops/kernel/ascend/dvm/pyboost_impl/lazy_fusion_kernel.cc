@@ -167,14 +167,14 @@ dvm::ShapeRef *LazyFusionKernelAscend::GetShapeRef(const ShapeVector &shape) {
 }
 
 dvm::NDObject *LazyFusionKernelAscend::BuildInputLoad(const TensorPtr &x, dvm::DType input_type, bool cast_to_fp32,
-                                                      const ShapeVector &load_shape) {
+                                                      const ShapeVector &load_shape, bool allow_view_load) {
   if (input_used_ == inputs_.size()) {
     inputs_.push_back(new Load());
   }
   auto load = inputs_[input_used_++];
   load->shape = cached_shape_.emplace_back(load_shape, nullptr).first;
   dvm::NDObject *load_op = nullptr;
-  if (!x->is_contiguous()) {
+  if (allow_view_load && !x->is_contiguous()) {
     load->stride = cached_shape_.emplace_back(x->stride(), nullptr).first;
     load_op = dvm::Kernel::Load(nullptr, &(load->shape), &(load->stride), input_type);
   } else {
@@ -185,9 +185,12 @@ dvm::NDObject *LazyFusionKernelAscend::BuildInputLoad(const TensorPtr &x, dvm::D
   return cast_to_fp32 ? Cast(load_op, dvm::DType::kFloat32) : load_op;
 }
 
-dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cast) {
+dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cast, bool allow_view_load) {
   auto input_type = TransType(x->data_type());
   bool cast_to_fp32 = (enable_cast && input_type == dvm::DType::kBFloat16);
+  if (!allow_view_load) {
+    return BuildInputLoad(x, input_type, cast_to_fp32, x->shape(), false);
+  }
   auto xp = x.get();
   auto iter = ops_map_.find(xp);
   if (iter == ops_map_.end()) {
@@ -201,9 +204,9 @@ dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cas
 }
 
 dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cast,
-                                             const std::optional<ShapeVector> &shape) {
+                                             const std::optional<ShapeVector> &shape, bool allow_view_load) {
   if (!shape.has_value()) {
-    return Input(x, enable_cast);
+    return Input(x, enable_cast, allow_view_load);
   }
   auto input_type = TransType(x->data_type());
   bool cast_to_fp32 = (enable_cast && input_type == dvm::DType::kBFloat16);
@@ -219,7 +222,7 @@ dvm::NDObject *LazyFusionKernelAscend::Input(const TensorPtr &x, bool enable_cas
   //    shape is still [1024, 1024], but x_t is not interchangeable with the
   //    default Input(x_t) path. Reusing a Tensor*-only cache entry here would mix
   //    the transpose-specific input with the later default read of the same tensor.
-  return BuildInputLoad(x, input_type, cast_to_fp32, shape.value());
+  return BuildInputLoad(x, input_type, cast_to_fp32, shape.value(), allow_view_load);
 }
 
 void LazyFusionKernelAscend::Output(const TensorPtr &tensor, dvm::NDObject *obj, bool inplace) {

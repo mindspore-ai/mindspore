@@ -90,8 +90,9 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
   void set_id(size_t id) { id_ = id; }
   size_t id() const { return id_; }
 
-  dvm::NDObject *Input(const TensorPtr &x, bool enable_cast = true);
-  dvm::NDObject *Input(const TensorPtr &x, bool enable_cast, const std::optional<ShapeVector> &shape);
+  dvm::NDObject *Input(const TensorPtr &x, bool enable_cast = true, bool allow_view_load = true);
+  dvm::NDObject *Input(const TensorPtr &x, bool enable_cast, const std::optional<ShapeVector> &shape,
+                       bool allow_view_load = true);
   void Output(const TensorPtr &tensor, dvm::NDObject *obj, bool inplace = false);
 
   TensorPtr Output(dvm::NDObject *obj, TypeId dtype, const ShapeVector &shape) {
@@ -198,7 +199,7 @@ class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator
   void Launch();
   bool MallocIO();
   dvm::NDObject *BuildInputLoad(const TensorPtr &x, dvm::DType input_type, bool cast_to_fp32,
-                                const ShapeVector &load_shape);
+                                const ShapeVector &load_shape, bool allow_view_load = true);
 
   void ClearGraph() {
     for (size_t i = 0; i < input_used_; i++) {

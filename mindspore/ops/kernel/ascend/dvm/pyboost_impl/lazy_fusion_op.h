@@ -24,6 +24,7 @@
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/concat.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/abs.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/add.h"
+#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/addmm.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/cast.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/mul.h"
 #include "kernel/ascend/aclnn/pyboost_impl/auto_generate/muls.h"
@@ -504,6 +505,18 @@ class MaskedFillAscendDvm : public MaskedFillAscend {
   tensor::TensorPtr Call(const mindspore::tensor::TensorPtr &input_x_tensor,
                          const mindspore::tensor::TensorPtr &mask_tensor,
                          const mindspore::tensor::TensorPtr &value_tensor) override;
+};
+
+class AddmmAscendDvm : public AddmmAscend {
+ public:
+  AddmmAscendDvm(PrimitivePtr primitive, const DeviceContext *device_context)
+      : AddmmAscend(std::move(primitive), device_context) {}
+  ~AddmmAscendDvm() = default;
+
+  tensor::TensorPtr Call(const mindspore::tensor::TensorPtr &input_tensor,
+                         const mindspore::tensor::TensorPtr &mat1_tensor,
+                         const mindspore::tensor::TensorPtr &mat2_tensor, const mindspore::ScalarPtr &beta,
+                         const mindspore::ScalarPtr &alpha) override;
 };
 
 class BaddbmmAscendDvm : public BaddbmmAscend {
