@@ -12,6 +12,9 @@ dist_comm_all_gather_into_tensor_uneven:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor

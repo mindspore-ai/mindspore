@@ -7,6 +7,9 @@ dist_comm_all_reduce:
             dtype: str
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     args_signature:
         rw_write: input
     labels:

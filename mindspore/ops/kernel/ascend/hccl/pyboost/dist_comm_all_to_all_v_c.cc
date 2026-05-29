@@ -29,11 +29,13 @@ namespace pyboost {
 void DistCommAllToAllVCAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &other_tensor,
                                        const TensorPtr &input_tensor, const StringImmPtr &group,
                                        const ValueTuplePtr &send_count_matrix, const Int64ImmPtr &rank_size,
-                                       const Int64ImmPtr &rank_id) {
-  OpRunner::InferOpOutput(op, other_tensor, input_tensor, group, send_count_matrix, rank_size, rank_id);
+                                       const Int64ImmPtr &rank_id, const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, other_tensor, input_tensor, group, send_count_matrix, rank_size, rank_id, async_op);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, other_tensor, input_tensor);
   op->set_outputs({other_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, other_tensor, input_tensor, group, send_count_matrix, rank_size, rank_id]() {
     auto device_context = op->device_context();
@@ -64,6 +66,10 @@ void DistCommAllToAllVCAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
     CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

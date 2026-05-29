@@ -32,7 +32,9 @@ using device::CollectiveOpReduceType;
 #endif
 namespace pyboost {
 void DistCommAllReduceCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &tensor,
-                                   const StringImmPtr &op_type, const StringImmPtr &group) {
+                                   const StringImmPtr &op_type, const StringImmPtr &group, const BoolImmPtr &async_op) {
+  // CPU collective (MCCL/MPI) blocks until completion; async_op has no effect on this path.
+  (void)async_op;
 #if defined(__linux__) && defined(WITH_BACKEND)
   MS_LOG(DEBUG) << "Call start";
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, tensor);

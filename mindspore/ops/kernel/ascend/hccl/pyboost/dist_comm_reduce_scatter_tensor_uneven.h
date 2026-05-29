@@ -32,7 +32,7 @@ void DistCommReduceScatterTensorUnevenAscendCustomize(const std::shared_ptr<OpRu
                                                       const TensorPtr &other_tensor, const TensorPtr &input_tensor,
                                                       const ValueTuplePtr &input_split_sizes,
                                                       const Int64ImmPtr &rank_size, const StringImmPtr &op_type,
-                                                      const StringImmPtr &group);
+                                                      const StringImmPtr &group, const BoolImmPtr &async_op);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

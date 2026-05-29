@@ -347,6 +347,15 @@ class PyboostFunctionsImplGenerator(BaseGenerator):
         return cast_args_str
 
     def _get_pyboost_core_body_tpl(self, op_proto: OpProto):
+        """
+        Selects the PyBoost core body template for the operator.
+
+        Args:
+            op_proto (OpProto): The operator prototype containing return and dispatch information.
+
+        Returns:
+            str: The PyBoost core body template.
+        """
         if len(op_proto.op_returns) == 1 and is_tensor_list(op_proto.op_returns[0]):
             # op output size is unknown
             return self.PYBOOST_CORE_BODY_VIEW_SYNC_TEMPLATE\

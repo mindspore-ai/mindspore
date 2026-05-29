@@ -31,13 +31,16 @@ namespace kernel {
 namespace pyboost {
 void DistCommAllGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &gather_list,
                                       const TensorPtr &input_tensor, const Int64ImmPtr &rank_size,
-                                      const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, gather_list, input_tensor, rank_size, group);
+                                      const StringImmPtr &group, const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, gather_list, input_tensor, rank_size, group, async_op);
 
   std::vector<TensorPtr> gather_tensors = ConvertValueTupleToVector<TensorPtr>(gather_list);
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, gather_tensors, input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), kDefaultStreamIndex, op->outputs());
   auto rank_size_imm = GetValue<int64_t>(rank_size);
+
+  const bool is_async_op = GetValue<bool>(async_op);
+
   auto run_func = [op, gather_tensors, input_tensor, group, rank_size_imm]() {
     PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
     PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, gather_tensors);
@@ -125,6 +128,10 @@ void DistCommAllGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

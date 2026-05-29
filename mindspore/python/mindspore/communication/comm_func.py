@@ -985,6 +985,22 @@ def _deal_comm_outputs(output, async_op, exec_sync=False):
     return (output, default_handle)
 
 
+def _deal_dist_comm_outputs(output, async_op, exec_sync=False):
+    """
+    Deal with dist_comm outputs whose sync wait is handled inside the backend op.
+    """
+    if isinstance(output, tuple):
+        if not async_op:
+            if exec_sync:
+                ms.runtime.synchronize()
+            return (output[0], None)
+        return (output[0], CommHandle(output[1], exec_sync))
+
+    if not async_op:
+        return (output, None)
+    return (output, default_handle)
+
+
 @deprecated("2.9.0", "mindspore.ops.communication.send", False)
 def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
@@ -1681,6 +1697,7 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
         _send_count_matrix,
         rank_size,
         rank_id,
+        async_op,
     )
-    _, handle = _deal_comm_outputs(result, async_op)
+    _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle

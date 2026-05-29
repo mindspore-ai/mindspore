@@ -31,8 +31,9 @@ namespace kernel {
 namespace pyboost {
 void DistCommGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                    const ValueTuplePtr &gather_list, const Int64ImmPtr &rank_size,
-                                   const Int64ImmPtr &dst, const Int64ImmPtr &rank_id, const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, input_tensor, gather_list, rank_size, dst, rank_id, group);
+                                   const Int64ImmPtr &dst, const Int64ImmPtr &rank_id, const StringImmPtr &group,
+                                   const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, input_tensor, gather_list, rank_size, dst, rank_id, group, async_op);
   auto dst_rank = GetValue<int64_t>(dst);
   auto local_rank = GetValue<int64_t>(rank_id);
   auto rank_size_imm = GetValue<int64_t>(rank_size);
@@ -43,6 +44,8 @@ void DistCommGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
     PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, input_tensor);
   }
   PyBoostUtils::PrepareOpOutputs(op->device_context(), kDefaultStreamIndex, op->outputs());
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, gather_tensors, input_tensor, local_rank, dst_rank, group, rank_size_imm, dst]() {
     PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensor);
@@ -88,6 +91,10 @@ void DistCommGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const Te
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func, dst_rank);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

@@ -30,7 +30,8 @@ namespace pyboost {
 void DistCommAllGatherIntoTensorUnevenAscendCustomize(const std::shared_ptr<OpRunner> &op,
                                                       const TensorPtr &other_tensor, const TensorPtr &input_tensor,
                                                       const ValueTuplePtr &output_split_sizes,
-                                                      const Int64ImmPtr &rank_size, const StringImmPtr &group);
+                                                      const Int64ImmPtr &rank_size, const StringImmPtr &group,
+                                                      const BoolImmPtr &async_op);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

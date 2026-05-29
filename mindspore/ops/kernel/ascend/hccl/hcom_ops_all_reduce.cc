@@ -31,7 +31,8 @@ bool InnerCommAllReduceKernel::Init(const std::vector<KernelTensor *> &inputs,
 
 int InnerCommAllReduceKernel::Resize(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != kInputNum3) {
+  // This kernel is shared by InnerCommAllReduce(3 inputs) and DistCommAllReduce(4 inputs with async_op).
+  if (inputs.size() != kInputNum3 && inputs.size() != kInputNum4) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl InnerCommAllReduceKernel input size " << inputs.size();
   }
   auto op_type = inputs[kIndex1]->GetValueWithCheck<std::string>();

@@ -44,7 +44,7 @@ uint64_t InnerCommReduceScatterKernel::GetReduceScatterVParam(const std::vector<
     MS_LOG(EXCEPTION) << "GetHcomCount fail!";
   }
 
-  for (size_t i = 1; i < input_list_num - kIndex3; ++i) {
+  for (size_t i = 1; i < input_list_num - kInputNum4; ++i) {
     uint64_t count;
     auto shape = inputs[i]->GetDeviceShapeVector();
     if (!HcomUtil::GetHcomCount(primitive_, {data_type_}, {shape}, 1, rank_size_opt, &count)) {
@@ -73,20 +73,20 @@ uint64_t InnerCommReduceScatterKernel::GetReduceScatterVParam(const std::vector<
 }
 int InnerCommReduceScatterKernel::Resize(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() < kInputNum5) {
+  if (inputs.size() < kIndex6) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl DistCommReduceScatterKernel input size " << inputs.size();
   }
   input_size_ = inputs.size();
-  rank_size_ = inputs[input_size_ - kIndex3]->GetValueWithCheck<int64_t>();
-  if (rank_size_ != static_cast<int64_t>(input_size_ - kIndex4)) {
+  rank_size_ = inputs[input_size_ - kInputNum4]->GetValueWithCheck<int64_t>();
+  if (rank_size_ != static_cast<int64_t>(input_size_ - kInputNum5)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl DistCommReduceScatterKernel rank size " << rank_size_;
   }
-  auto op_type = inputs[input_size_ - kIndex2]->GetValueWithCheck<std::string>();
+  auto op_type = inputs[input_size_ - kIndex3]->GetValueWithCheck<std::string>();
   primitive_->AddAttr(kAttrRankSize, MakeValue(static_cast<int64_t>(rank_size_)));
   is_avg_ = (op_type == "avg");
   auto real_op_type = is_avg_ ? "sum" : op_type;
   op_type_enum_ = HcomUtil::GetHcomReduceOpType(real_op_type);
-  group_ = inputs[input_size_ - kIndex1]->GetValueWithCheck<std::string>();
+  group_ = inputs[input_size_ - kIndex2]->GetValueWithCheck<std::string>();
   comm_ = AscendCollectiveCommLib::GetInstance().GetHcomByGroup(group_);
   const std::optional<int64_t> rank_size_opt;
   auto out_shape = outputs[kIndex0]->GetDeviceShapeVector();

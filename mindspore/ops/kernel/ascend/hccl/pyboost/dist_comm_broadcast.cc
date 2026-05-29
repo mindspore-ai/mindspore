@@ -27,9 +27,12 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 void DistCommBroadcastAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &tensor,
-                                      const Int64ImmPtr &src, const Int64ImmPtr &rank_id, const StringImmPtr &group) {
+                                      const Int64ImmPtr &src, const Int64ImmPtr &rank_id, const StringImmPtr &group,
+                                      const BoolImmPtr &async_op) {
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, tensor);
   op->set_outputs({tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, tensor, src, rank_id, group]() {
     auto device_context = op->device_context();
@@ -62,6 +65,12 @@ void DistCommBroadcastAscendCustomize(const std::shared_ptr<OpRunner> &op, const
     CommonCommAscendFunc(op, tensor, group, launch_func, post_func, src_imm);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    // Sync mode: queue a stream-wait task after run_func completes,
+    // so subsequent ops on the op stream serialize after this collective.
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

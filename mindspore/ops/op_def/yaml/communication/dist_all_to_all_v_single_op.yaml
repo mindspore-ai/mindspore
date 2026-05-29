@@ -17,6 +17,9 @@ dist_comm_all_to_all_v_single:
             dtype: int
         split_sizes_empty:
             dtype: bool
+        async_op:
+            dtype: bool
+            default: True
     args_signature:
         rw_write: other
     returns:

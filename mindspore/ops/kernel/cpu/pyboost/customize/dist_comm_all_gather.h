@@ -30,7 +30,7 @@ namespace kernel {
 namespace pyboost {
 void DistCommAllGatherCPUCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &gather_list,
                                    const TensorPtr &input_tensor, const Int64ImmPtr &rank_size,
-                                   const StringImmPtr &group);
+                                   const StringImmPtr &group, const BoolImmPtr &async_op);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

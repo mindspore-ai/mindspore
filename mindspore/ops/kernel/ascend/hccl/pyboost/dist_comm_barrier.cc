@@ -27,11 +27,15 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void DistCommBarrierAscendCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &group) {
+void DistCommBarrierAscendCustomize(const std::shared_ptr<OpRunner> &op, const StringImmPtr &group,
+                                    const BoolImmPtr &async_op) {
   auto op_type_enum = HCCL_REDUCE_SUM;
   TensorPtr input_tensor = tensor::from_scalar(0.0);
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, input_tensor);
   op->set_outputs({input_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
+
   auto run_func = [op, input_tensor, op_type_enum, group]() {
     PyBoostUtils::MallocOpOutputsWithStream(op->device_context(), kDefaultStreamIndex, {input_tensor});
     auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
@@ -55,6 +59,12 @@ void DistCommBarrierAscendCustomize(const std::shared_ptr<OpRunner> &op, const S
     CommonCommAscendFunc(op, input_tensor, group, launch_func, post_func);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    // Sync mode stream-level wait; the host-blocking synchronize() is added by the Python wrapper
+    // for barrier semantics (full pipeline drain across processes).
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

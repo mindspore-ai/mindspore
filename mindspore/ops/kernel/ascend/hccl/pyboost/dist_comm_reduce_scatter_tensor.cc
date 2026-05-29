@@ -29,11 +29,14 @@ namespace kernel {
 namespace pyboost {
 void DistCommReduceScatterTensorAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &other_tensor,
                                                 const TensorPtr &input_tensor, const Int64ImmPtr &rank_size,
-                                                const StringImmPtr &op_type, const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, other_tensor, input_tensor, rank_size, op_type, group);
+                                                const StringImmPtr &op_type, const StringImmPtr &group,
+                                                const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, other_tensor, input_tensor, rank_size, op_type, group, async_op);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, other_tensor, input_tensor);
   op->set_outputs({other_tensor});
+
+  const bool is_async_op = GetValue<bool>(async_op);
 
   auto run_func = [op, other_tensor, input_tensor, rank_size, op_type, group]() {
     auto device_context = op->device_context();
@@ -63,6 +66,10 @@ void DistCommReduceScatterTensorAscendCustomize(const std::shared_ptr<OpRunner> 
     CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr, -1, is_avg ? output_tensor : nullptr);
   };
   CommonCommRunTask(run_func);
+
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

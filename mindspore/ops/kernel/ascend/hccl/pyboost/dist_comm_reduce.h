@@ -19,6 +19,7 @@
 
 #include <memory>
 #include "ir/tensor.h"
+#include "ir/value.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
 
@@ -26,7 +27,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 void DistCommReduceAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                   const StringImmPtr &op_type, const Int64ImmPtr &dst, const StringImmPtr &group);
+                                   const StringImmPtr &op_type, const Int64ImmPtr &dst, const StringImmPtr &group,
+                                   const BoolImmPtr &async_op);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

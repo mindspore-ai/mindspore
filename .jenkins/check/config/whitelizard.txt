@@ -82,6 +82,8 @@ mindspore/mindspore/ccsrc/utils/ir_dump/onnx/onnx_exporter.cc:mindspore::OnnxExp
 mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/python/mindspore/ops/operations/manually_defined/ops_def.py:flash_attention_score
 mindspore/mindspore/python/mindspore/ops/operations/manually_defined/ops_def.py:fused_infer_attention_score
+mindspore/mindspore/python/mindspore/communication/comm_func.py:all_to_all_v_c
+mindspore/mindspore/python/mindspore/ops/function/comm_func.py:all_to_all_v_c
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv2d_ext
 mindspore/mindspore/python/mindspore/ops/function/array_func.py:scatter_nd
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:interpolate

@@ -9,6 +9,9 @@ dist_comm_broadcast:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor
