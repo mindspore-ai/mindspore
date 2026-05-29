@@ -60,7 +60,7 @@ class AclnnKernelRegisterAutoCcGenerator(BaseGenerator):
         """
         aclnn_reg_code = []
         for op_proto in op_protos:
-            if not op_proto.op_dispatch or not op_proto.op_dispatch.enable:
+            if not op_proto.op_dispatch or not op_proto.op_dispatch.enable or op_proto.struct_info:
                 continue
             if op_proto.op_name in skip_aclnn_list:
                 logging.warning(

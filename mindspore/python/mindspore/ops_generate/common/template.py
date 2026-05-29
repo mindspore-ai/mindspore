@@ -258,9 +258,18 @@ PYBOOST_ASCEND_SINGLE_OP_SOURCE_TEMPLATE = Template.load_from_file(
     os.path.join(K.WORK_DIR, K.MS_OPS_KERNEL_PATH,
                  'ascend/aclnn/pyboost_impl/template/pyboost_aclnn_single_op_source_template.tpl'))
 
+PYBOOST_ASCEND_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR, K.MS_OPS_KERNEL_PATH,
+                 'ascend/aclnn/pyboost_impl/template/pyboost_aclnn_single_structure_op_source_template.tpl'))
+
 PYBOOST_ASCEND_CALL_TEMPLATE = Template.load_from_file(
     os.path.join(K.WORK_DIR,
                  f'./{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/template/pyboost_ascend_call_template.tpl'))
+
+PYBOOST_ASCEND_STRUCTURE_CALL_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR,
+                 f'./{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/template'
+                 '/pyboost_ascend_structure_call_template.tpl'))
 
 PYBOOST_ASCEND_CUSTOMIZE_CALL_TEMPLATE = Template.load_from_file(
     os.path.join(K.WORK_DIR,

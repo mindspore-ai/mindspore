@@ -16,7 +16,8 @@
 """Op Proto module for defining operator prototypes and their arguments."""
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
+from dataclasses import dataclass
 
 from resources.resource_loader import ResourceLoader
 from resources.resource_list import ResourceType
@@ -123,6 +124,20 @@ class OpDispatch:
         self.meta = meta
 
 
+@dataclass(frozen=True)
+class ResInfo:
+    name: str
+    size: str
+    dtype: str
+
+
+@dataclass(frozen=True)
+class StructInfo:
+    cmd_args: List[str]
+    new_params: Dict[str, str]
+    results: List[ResInfo]
+
+
 class OpProto:
     """
     Defines a prototype for an operator in MindSpore.
@@ -156,7 +171,8 @@ class OpProto:
                  op_deprecated=None,
                  bprop_expander=True,
                  non_differentiable=False,
-                 composite=False):
+                 composite=False,
+                 struct_info=None):
         self.op_name = op_name
         self.op_args = op_args
         self.op_function = op_function
@@ -172,6 +188,7 @@ class OpProto:
         self.bprop_expander = bprop_expander
         self.non_differentiable = non_differentiable
         self.composite = composite
+        self.struct_info = struct_info
 
     @staticmethod
     def load_from_yaml(op_name, op_data):
@@ -217,11 +234,12 @@ class OpProto:
         bprop_expander = op_data.get('bprop_expander', True)
         composite = op_data.get('composite', False)
         non_differentiable = op_data.get('non-differentiable', False)
+        struct_info = get_op_struct_info(op_data, op_args, op_returns, op_inplace)
         op_proto = OpProto(op_name=op_name, op_args=op_args, op_returns=op_returns, op_function=op_function,
                            op_class=op_class, op_dispatch=op_dispatch, op_args_signature=op_args_signature,
                            op_view=op_view, op_graph_view=op_graph_view, op_inplace=op_inplace, op_labels=op_labels,
                            op_deprecated=op_deprecated, bprop_expander=bprop_expander,
-                           non_differentiable=non_differentiable, composite=composite)
+                           non_differentiable=non_differentiable, composite=composite, struct_info=struct_info)
         return op_proto
 
 
@@ -234,7 +252,8 @@ class OpProtoLoader(ResourceLoader):
         ops_yaml_path = os.path.join(K.WORK_DIR, K.MS_OP_DEF_YAML_PATH)
         infer_ops_yaml_path = os.path.join(ops_yaml_path, 'infer')
         comm_ops_yaml_path = os.path.join(ops_yaml_path, 'communication')
-        self.yaml_paths = [ops_yaml_path, infer_ops_yaml_path, comm_ops_yaml_path]
+        structure_ops_yaml_path = os.path.join(ops_yaml_path, 'structure')
+        self.yaml_paths = [ops_yaml_path, infer_ops_yaml_path, comm_ops_yaml_path, structure_ops_yaml_path]
         self.type = ResourceType.OP_PROTO
         self.is_deprecated = False
         self.func_op = False
@@ -492,6 +511,55 @@ def get_op_function(op_name, op_data) -> OpFunction:
             f'The function disable value should be bool, but get {type(is_disable)}, op name is {op_name}.')
     function_name = op_function.get('name', op_name)
     return OpFunction(disable=is_disable, name=function_name)
+
+
+def is_in_op_args(exp, op_args):
+    for a in op_args:
+        if exp == a.arg_name:
+            return True
+    return False
+
+
+def get_op_struct_info(op_data, op_args, op_returns, op_inplace) -> Optional[StructInfo]:
+    """
+    Builds structure operator generation info from the operator YAML data.
+    """
+    gen_opapi_info = op_data.get("gen_opapi", None)
+    if gen_opapi_info is None:
+        return None
+
+    res_info_list = []
+    if not op_inplace:
+        for ra in op_returns:
+            res_yaml_info = gen_opapi_info.get(ra.arg_name)
+            size_str = res_yaml_info.get("size")
+            if is_in_op_args(size_str, op_args):
+                size_str = f"{size_str}->shape()"
+
+            dtype_str = res_yaml_info.get("dtype")
+            if is_in_op_args(dtype_str, op_args):
+                dtype_str = f"{dtype_str}->data_type()"
+
+            res_info_list.append(ResInfo(ra.arg_name, size_str, dtype_str))
+
+
+    aclnn_arguments = gen_opapi_info.get('exec', None)
+    if aclnn_arguments is None:
+        raise RuntimeError("structural ops has no exec.")
+
+    aclnn_arguments_list = [argument.strip()
+                            for argument in aclnn_arguments.split(',')]
+
+    # Omit the input parameters of the ACLNN operator.
+    if len(aclnn_arguments_list) == 1:
+        for a in op_args:
+            aclnn_arguments_list.append(a.arg_name)
+        if not op_inplace:
+            for ra in op_returns:
+                aclnn_arguments_list.append(ra.arg_name)
+
+    new_params_dict = gen_opapi_info.get('new_params', {})
+    return StructInfo(aclnn_arguments_list, new_params_dict, res_info_list)
 
 
 def convert_python_func_name_to_c(func_name: str) -> str:

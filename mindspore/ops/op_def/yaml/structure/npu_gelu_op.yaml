@@ -1,0 +1,20 @@
+# operator npu_gelu
+npu_gelu:
+  args:
+    input:
+      dtype: tensor
+    approximate:
+      dtype: str
+      default: "'none'"
+  returns:
+    out:
+      dtype: tensor
+  dispatch:
+    enable: True
+  gen_opapi:
+    out:
+      size: input
+      dtype: input
+    new_params:
+      approximate_mode: 'op_infer::npu_gelu_approximate_mode(approximate)'
+    exec: aclnnGeluV2, input, approximate_mode, out

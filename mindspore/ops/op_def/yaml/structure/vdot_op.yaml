@@ -1,0 +1,17 @@
+# operator vdot
+vdot:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+  returns:
+    out:
+      dtype: tensor
+  dispatch:
+    enable: True
+  gen_opapi:
+    out:
+      size: 'ShapeVector{}'
+      dtype: input
+    exec: aclnnDot

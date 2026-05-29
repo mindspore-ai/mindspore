@@ -26,6 +26,7 @@
 #include <utility>
 #include <set>
 #include <bitset>
+#include <optional>
 
 #include "base/base.h"
 #include "base/effect_info.h"
@@ -1053,6 +1054,16 @@ static S GetValue(const ValuePtr &value) {
                                << ", type: " << value->type_name();
   }
   return v;
+}
+
+template <typename S, typename U,
+          typename std::enable_if<is_shared_ptr<U>::value && std::is_base_of<Value, typename U::element_type>::value,
+                                  int64_t>::type = static_cast<int64_t>(0)>
+static std::optional<S> GetValue(const std::optional<U> &value) {
+  if (!value.has_value() || value.value() == nullptr) {
+    return std::nullopt;
+  }
+  return GetValue<S>(value.value());
 }
 
 MS_CORE_API std::string GetCNodeFuncName(const CNodePtr &cnode);
