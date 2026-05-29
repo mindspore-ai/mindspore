@@ -35,7 +35,7 @@ mindspore.nn.MultiMarginLoss
 
     异常：
         - **TypeError** - `p` 或者 `target` 数据类型不是int。
-        - **TypeError** - `margin` 数据类型不是int。
+        - **TypeError** - `margin` 数据类型不是float。
         - **TypeError** - `reduction` 数据类型不是str。
         - **TypeError** - `x` 数据类型不是以下之一：float16、float、float64。
         - **TypeError** - `weight` 和 `x` 的数据类型不相同。

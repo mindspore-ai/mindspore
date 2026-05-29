@@ -3,7 +3,7 @@ mindspore.nn.natural_exp_decay_lr
 
 .. py:function:: mindspore.nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False)
 
-    基于自然指数衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
+    基于自然指数衰减函数计算学习率。每个step的学习率将存储在一个列表中。
 
     对于第i步，计算decayed_learning_rate[i]的公式为：
 
@@ -21,7 +21,7 @@ mindspore.nn.natural_exp_decay_lr
         - **total_step** (int) - step总数。
         - **step_per_epoch** (int) - 每个epoch的step数。
         - **decay_epoch** (int) - 进行衰减的epoch数。
-        - **is_stair** (bool) - 如果为 ``True`` ，则学习率每 `decay_epoch` 次衰减一次。默认值： ``False`` 。
+        - **is_stair** (bool) - 如果为 ``True`` ，则学习率每隔 `decay_epoch` 个 epoch衰减一次。默认值： ``False`` 。
 
     返回：
         list[float]。`total_step` 表示列表的大小。

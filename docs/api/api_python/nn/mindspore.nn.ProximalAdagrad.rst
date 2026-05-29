@@ -59,7 +59,7 @@ mindspore.nn.ProximalAdagrad
 
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-        - **TypeError** - `parameters` 的元素不是Parameter或字典。
+        - **TypeError** - `params` 的元素不是Parameter或字典。
         - **TypeError** - `accum`、 `l1`、 `l2` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
         - **ValueError** - `loss_scale` 小于或等于0。

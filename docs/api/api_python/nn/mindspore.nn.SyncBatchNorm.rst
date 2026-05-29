@@ -5,7 +5,7 @@ mindspore.nn.SyncBatchNorm
 
     在N维输入上进行跨设备同步批归一化（Batch Normalization，BN）。
 
-    同步BN是跨设备的。BN的实现仅对每个设备中的数据进行归一化。同步BN将归一化组内的输入。描述见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。使用mini-batch数据和和学习参数进行训练，参数见如下公式。
+    同步BN是跨设备的。BN的实现仅对每个设备中的数据进行归一化。同步BN将归一化组内的输入。描述见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。使用mini-batch数据和学习参数进行训练，参数见如下公式。
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -21,7 +21,7 @@ mindspore.nn.SyncBatchNorm
         - **num_features** (int) - 指定输入Tensor的通道数量，输入Tensor的size为 :math:`(N, C, H, W)` 。
         - **eps** (float，可选) - :math:`\epsilon` 添加到分母中的值，以确保数值稳定。默认值： ``1e-5`` 。
         - **momentum** (float，可选) - 动态均值和动态方差所使用的动量。默认值： ``0.9`` 。
-        - **affine** (bool，可选) - bool类型。设置为 ``True`` 时， :math:`\gamma` 和 :math:`\beta` 为可学习参数。设置为 ``False`` 时，:math:`\gamma` 和 :math:`\beta` 为不可学习参数。默认值： ``True`` 。
+        - **affine** (bool，可选) - 设置为 ``True`` 时， :math:`\gamma` 和 :math:`\beta` 为可学习参数。设置为 ``False`` 时，:math:`\gamma` 和 :math:`\beta` 为不可学习参数。默认值： ``True`` 。
         - **gamma_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - :math:`\gamma` 参数的初始化方法。str的值引用自函数 :func:`mindspore.common.initializer.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、 ``'he_uniform'`` 等。默认值： ``'ones'`` 。
         - **beta_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - :math:`\beta` 参数的初始化方法。str的值引用自函数 :func:`mindspore.common.initializer.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、``'he_uniform'`` 等。默认值： ``'zeros'`` 。
         - **moving_mean_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 动态平均值的初始化方法。str的值引用自函数 :func:`mindspore.common.initializer.initializer` ，包括 ``'zeros'`` 、 ``'ones'`` 、 ``'xavier_uniform'`` 、``'he_uniform'`` 等。默认值： ``'zeros'`` 。
@@ -31,7 +31,7 @@ mindspore.nn.SyncBatchNorm
         - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
-        - **x** （Tensor） - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
+        - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
 
     输出：
         Tensor，归一化后的Tensor，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。

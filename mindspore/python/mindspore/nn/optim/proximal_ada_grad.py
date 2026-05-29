@@ -68,7 +68,7 @@ class ProximalAdagrad(Optimizer):
     .. math::
         w_{t+1} = \frac{sign(\text{prox_v})}{1 + \gamma * l2} * \max(\left| \text{prox_v} \right| - \gamma * l1, 0)
 
-    Here : where :math:`g` , :math:`\gamma`, :math:`w` , :math:`accum` and :math:`t` denote the `grads`,
+    where :math:`g` , :math:`\gamma`, :math:`w` , :math:`accum` and :math:`t` denote the `grads`,
     `learning_rate`, `params`, accumulation and current step respectively.
 
     .. warning::
@@ -156,7 +156,7 @@ class ProximalAdagrad(Optimizer):
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If element of `params` is neither Parameter nor dict.
         TypeError: If `accum`, `l1`, `l2` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
         ValueError: If `loss_scale` is less than or equal to 0.

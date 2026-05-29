@@ -16,7 +16,7 @@ mindspore.nn.WithLossCell
         - **label** (Tensor) - shape为 :math:`(N, \ldots)` 的Tensor。 `label` 的数据类型必须是float16或float32。
 
     输出：
-        Tensor，loss值，其shape通常为 :math:`()` 。
+        Tensor，损失值，其shape通常为 :math:`()` 。
 
     异常：
         - **TypeError** - `data` 或 `label` 的数据类型既不是float16也不是float32。

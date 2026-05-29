@@ -18,7 +18,7 @@ mindspore.nn.Unfold
         - **padding** (str) - 填充模式，可选值有： ``"same"`` 或 ``"valid"`` 的字符串，不区分大小写。默认值： ``"valid"`` 。
 
           - ``"same"`` - 指所提取的区域块的部分区域可以在原始图像之外，此部分填充为0。
-          - ``"valid"`` - 表示所取的区域快必须被原始图像所覆盖。
+          - ``"valid"`` - 表示所取的区域块必须被原始图像所覆盖。
 
     输入：
         - **x** (Tensor) - 输入四维Tensor，其shape为 :math:`[in\_batch, in\_depth, in\_row, in\_col]`，其数据类型为int。

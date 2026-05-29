@@ -34,4 +34,4 @@ mindspore.nn.TransformerEncoderLayer
 
     异常：
         - **ValueError** - 如果 `activation` 不是str 、 callable 或 Cell的实例。
-        - **ValueError** - 如果 `activation` 不是 :class:`mindspore.nn.ReLU` 、 :class:`mindspore.nn.GELU` 的子类、 :func:`mindspore.ops.relu` or :func:`mindspore.ops.gelu`、"relu" 或 "gelu"。
+        - **ValueError** - 如果 `activation` 不是 :class:`mindspore.nn.ReLU` 、 :class:`mindspore.nn.GELU` 的子类、 :func:`mindspore.ops.relu` 、 :func:`mindspore.ops.gelu`、"relu" 或 "gelu"。

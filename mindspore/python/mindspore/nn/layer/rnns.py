@@ -621,7 +621,7 @@ class RNN(_RNNBase):
           use this input when `x` has padding elements.
 
     Outputs:
-        Tuple, a tuple contains (`output`, `hx_n`).
+        Tuple, a tuple containing (`output`, `hx_n`).
 
         - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` or
           :math:`(batch\_size, seq\_len, num\_directions * hidden\_size)` .

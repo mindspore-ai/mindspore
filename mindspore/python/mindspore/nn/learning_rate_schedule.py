@@ -359,7 +359,7 @@ class CosineDecayLR(LearningRateSchedule):
 
 class PolynomialDecayLR(LearningRateSchedule):
     r"""
-    Calculates learning rate base on polynomial decay function.
+    Calculates learning rate based on polynomial decay function.
 
     For current step, the formula of computing decayed learning rate is:
 
@@ -373,7 +373,7 @@ class PolynomialDecayLR(LearningRateSchedule):
     .. math::
         tmp\_step= \min(current\_step, decay\_steps)
 
-    If `update_decay_steps` is true, update the value of :math:`tmp\_decay\_steps` every `decay_steps`.
+    If `update_decay_steps` is ``True``, update the value of :math:`tmp\_decay\_steps` every `decay_steps`.
     The formula is :
 
     .. math::
@@ -387,7 +387,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         end_learning_rate (float): The end value of learning rate.
         decay_steps (int): Number of steps to decay over.
         power (float): The power of polynomial. It must be greater than 0.
-        update_decay_steps (bool): If ``true`` , learning rate is decayed once every `decay_steps` time.
+        update_decay_steps (bool): If ``True`` , learning rate is decayed once every `decay_steps` time.
             Default: ``False`` .
 
     Inputs:
@@ -477,7 +477,7 @@ class WarmUpLR(LearningRateSchedule):
 
     Args:
         learning_rate (float): The initial value of learning rate. The value of `learning_rate` must be greater than 0.
-        warmup_steps (int): The warm up steps of learning rate. The value of `warmup_steps` must be greater than
+        warmup_steps (int): The number of warm-up steps. The value of `warmup_steps` must be greater than
             or equal to 1.
 
     Inputs:

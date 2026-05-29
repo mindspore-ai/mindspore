@@ -37,9 +37,9 @@ mindspore.nn.PoissonNLLLoss
         - **target** (Tensor) - 标签Tensor，其shape与 `input` 相同。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为none'，则输出是Tensor，其形状与 `input` 相同。否则，它是Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则输出是Tensor，其形状与 `input` 相同。否则，它是Scalar。
 
     异常：
-        - **TypeError** - `reduction` 不是str类型。
+        - **TypeError** - `reduction` 的类型不是str。
         - **TypeError** - `input` 或 `target` 都不是Tensor。
         - **TypeError** - `input` 或 `target` 的数据类型不支持。

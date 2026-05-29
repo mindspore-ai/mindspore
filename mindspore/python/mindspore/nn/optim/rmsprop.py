@@ -65,7 +65,7 @@ class RMSProp(Optimizer):
         w = w - m_{t+1}
 
     The first equation calculates moving average of the squared gradient for
-    each weight. Then dividing the gradient by :math:`\\sqrt{ms_{t+1} + \\epsilon}`.
+    each weight. Then dividing the gradient by :math:`\\sqrt{s_{t+1} + \\epsilon}`.
 
     If centered is True:
 
@@ -151,7 +151,7 @@ class RMSProp(Optimizer):
             Should be equal to or greater than 0. Default: ``0.0`` .
         epsilon (float, optional): Term added to the denominator to improve numerical stability. Should be greater than
                          0. Default: ``1e-10`` .
-        use_locking (bool, optional):  Whether to enable a lock to protect the updating process of variable tensors.
+        use_locking (bool, optional): Whether to enable a lock to protect the updating process of variable tensors.
             Default: ``False`` .
         centered (bool, optional): If True, gradients are normalized by the estimated variance of the gradient.
             Default: ``False`` .
@@ -179,7 +179,7 @@ class RMSProp(Optimizer):
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
         TypeError: If `decay`, `momentum`, `epsilon` or `loss_scale` is not a float.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If element of `params` is neither Parameter nor dict.
         TypeError: If `weight_decay` is neither float nor int.
         TypeError: If `use_locking` or `centered` is not a bool.
         ValueError: If `epsilon` is less than or equal to 0.

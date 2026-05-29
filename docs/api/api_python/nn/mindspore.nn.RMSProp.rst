@@ -18,7 +18,7 @@ mindspore.nn.RMSProp
     .. math::
         w = w - m_{t+1}
 
-    第一个方程计算每个权重的平方梯度的移动平均。然后将梯度除以 :math:`\sqrt{ms_{t+1} + \epsilon}`。
+    第一个方程计算每个权重的平方梯度的移动平均。然后将梯度除以 :math:`\sqrt{s_{t+1} + \epsilon}`。
 
     如果centered为True：
 
@@ -83,7 +83,7 @@ mindspore.nn.RMSProp
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
         - **TypeError** - `decay` 、 `momentum` 、 `epsilon` 或 `loss_scale` 不是float。
-        - **TypeError** - `parameters` 的元素不是Parameter或字典。
+        - **TypeError** - `params` 的元素不是Parameter或字典。
         - **TypeError** - `weight_decay` 不是float或int。
         - **TypeError** - `use_locking` 或 `centered` 不是bool。
         - **ValueError** - `epsilon` 小于或等于0。

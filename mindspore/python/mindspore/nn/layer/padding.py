@@ -457,7 +457,7 @@ class ReflectionPad1d(_ReflectionPadNd):
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
+        padding (Union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If padding is an integer: all directions will be padded with the same size.
             If padding is a tuple: uses :math:`(\text{padding_left}, \text{padding_right})` to pad.
 
@@ -469,10 +469,10 @@ class ReflectionPad1d(_ReflectionPadNd):
         where :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
-        TypeError: If 'padding' is not a tuple or int.
-        TypeError: If there is an element in 'padding' that is not int.
-        ValueError: If the length of 'padding' is not divisible by 2.
-        ValueError: If there is an element in 'padding' that is negative.
+        TypeError: If `padding` is not a tuple or int.
+        TypeError: If there is an element in `padding` that is not int.
+        ValueError: If the length of `padding` is not divisible by 2.
+        ValueError: If there is an element in `padding` that is negative.
         ValueError: If the there is a dimension mismatch between the padding and the tensor.
 
     Supported Platforms:
@@ -484,7 +484,7 @@ class ReflectionPad1d(_ReflectionPadNd):
         >>> x = ms.Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
         >>> # x has shape (1, 2, 4)
         >>> padding = (3, 1)
-        >>> # The first and the second dimension of x remain the same.
+        >>> # The first and the second dimensions of x remain the same.
         >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 4 + 3 + 1 = 8
         >>> pad1d = ms.nn.ReflectionPad1d(padding)
         >>> out = pad1d(x)
@@ -508,7 +508,7 @@ class ReflectionPad2d(_ReflectionPadNd):
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the input tensor.
+        padding (Union[int, tuple]): The padding size to pad the input tensor.
             If padding is an integer: all directions will be padded with the same size.
             If padding is a tuple: uses
             :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})` to pad.
@@ -522,11 +522,11 @@ class ReflectionPad2d(_ReflectionPadNd):
         :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
-        TypeError: If 'padding' is not a tuple or int.
-        TypeError: If there is an element in 'padding' that is not int.
-        ValueError: If the length of 'padding' is not divisible by 2.
-        ValueError: If there is an element in 'padding' that is negative.
-        ValueError: If the there is a dimension mismatch between the padding and the tensor.
+        TypeError: If `padding` is not a tuple or int.
+        TypeError: If there is an element in `padding` that is not int.
+        ValueError: If the length of `padding` is not divisible by 2.
+        ValueError: If there is an element in `padding` that is negative.
+        ValueError: If there is a dimension mismatch between the padding and the tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -563,13 +563,13 @@ class ReflectionPad3d(_ReflectionPadNd):
     of padding is 3-dimension.
 
     Note:
-        ReflectionPad3d has not supported 5D tensor yet.
+        ReflectionPad3d does not support 5D tensor yet.
 
     .. warning::
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the input tensor.
+        padding (Union[int, tuple]): The padding size to pad the input tensor.
             If padding is an integer: all directions will be padded with the same size.
             If padding is a tuple: uses :math:`(\text{padding_left}, \text{padding_right}, \\
             \text{padding_top}, \text{padding_bottom}, \text{padding_front}, \text{padding_back})`
@@ -585,11 +585,11 @@ class ReflectionPad3d(_ReflectionPadNd):
         :math:`W_{out} = W_{in} + \text{padding_left} + \text{padding_right}`.
 
     Raises:
-        TypeError: If 'padding' is not a tuple or int.
-        TypeError: If there is an element in 'padding' that is not int.
-        ValueError: If the length of 'padding' is not divisible by 2.
-        ValueError: If there is an element in 'padding' that is negative.
-        ValueError: If the there is a dimension mismatch between the padding and the tensor.
+        TypeError: If `padding` is not a tuple or int.
+        TypeError: If there is an element in `padding` that is not int.
+        ValueError: If the length of `padding` is not divisible by 2.
+        ValueError: If there is an element in `padding` that is negative.
+        ValueError: If there is a dimension mismatch between the padding and the tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -635,8 +635,8 @@ class ZeroPad2d(_ConstantPadNd):
 
     Args:
         padding (Union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
-            If is int, uses the same padding in boundaries of input's last two dimensions.
-            If is tuple and length of padding is 4 uses (padding_0, padding_1, padding_2, padding_3) to pad.
+            If an int, the same padding is applied to both boundaries of the input's last two dimensions.
+            If a tuple of length 4, uses (padding_0, padding_1, padding_2, padding_3) to pad.
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The remaining dimensions of the output are consistent with those of the input.
@@ -651,10 +651,10 @@ class ZeroPad2d(_ConstantPadNd):
 
     Raises:
         TypeError: If `padding` is not a tuple or int.
-        ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
+        ValueError: If the length of `padding` is greater than 4 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
-        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
-        ValueError: If `padding` contains negative value while running in Ascend.
+        ValueError: If the rank of `x` is greater than 5 while running in Ascend.
+        ValueError: If `padding` contains negative values while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -730,7 +730,7 @@ class ReplicationPad1d(_ReplicationPadNd):
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last dimension of `x` .
+        padding (Union[int, tuple]): The padding size to pad the last dimension of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
             - If `padding` is a tuple, uses :math:`(\text{padding_left}, \text{padding_right})` to pad.
@@ -788,10 +788,10 @@ class ReplicationPad2d(_ReplicationPadNd):
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last two dimension of `x` .
+        padding (Union[int, tuple]): The padding size to pad the last two dimension of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
-            - If `padding` is a tuple, uses
+            - If `padding` is a tuple, it uses
               :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})` to pad.
 
     Inputs:
@@ -857,10 +857,11 @@ class ReplicationPad3d(_ReplicationPadNd):
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last three dimension of `x` .
+        padding (Union[int, tuple]): The padding size to pad the last three dimensions of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
-            - If `padding` is a tuple, uses :math:`(\text{padding_left}, \text{padding_right}, \\
+            - If `padding` is a tuple, it uses
+              :math:`(\text{padding_left}, \text{padding_right}, \\
               \text{padding_top}, \text{padding_bottom}, \\
               \text{padding_front}, \text{padding_back})` to pad.
 

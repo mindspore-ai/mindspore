@@ -126,10 +126,10 @@ class CELU(Cell):
 class Softmin(Cell):
     r"""
     Softmin activation function, which is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
-    multi-classification, and the purpose is to show the results of multi-classification in the form of probability.
+    multi-classification. Its purpose is to show the results of multi-classification in the form of probability.
 
-    Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
-    normalized to lie in range [0, 1] and sum up to 1.
+    Calculates the value of the exponential function for the elements of the input Tensor on the `axis`, and then
+    normalizes to lie in the range [0, 1] and sum up to 1.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`, and the default value
@@ -186,7 +186,7 @@ class Softmin(Cell):
 
 class Softmax2d(Cell):
     r"""
-    Softmax function applied to 2D features data.
+    Softmax function applied to 2D feature data.
 
     Applies `Softmax` to each location with an input Tensor of shape :math:`(C, H, W)` .
 
@@ -245,7 +245,7 @@ class Softmax(Cell):
     multi-classification, the purpose is to show the results of multi-classification in the form of probability.
 
     Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
-    normalized to lie in range [0, 1] and sum up to 1.
+    normalized to lie in the range [0, 1] and sum up to 1.
 
     Softmax is defined as:
 
@@ -271,7 +271,7 @@ class Softmax(Cell):
     Raises:
         TypeError: If `axis` is neither an int nor a tuple.
         ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in range `[-input.ndim, input.ndim)`.
+        ValueError: If `axis` is a tuple whose elements are not all in the range `[-input.ndim, input.ndim)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -491,7 +491,7 @@ class ReLU(Cell):
     Compute the element-wise :math:`\max(0, input)`.
 
     .. note::
-        Neurons with negative outputs are suppressed, while active neurons stay the same.
+        Neurons with negative outputs are suppressed, while active neurons remain unchanged.
 
     ReLU Activation Function Graph:
 
@@ -529,7 +529,7 @@ class ReLU6(Cell):
     r"""
     Compute ReLU6 activation function element-wise.
 
-    ReLU6 is similar to ReLU with a upper limit of 6, which if the inputs are greater than 6, the outputs
+    ReLU6 is similar to ReLU with an upper limit of 6, where the inputs are greater than 6, the outputs
     will be suppressed to 6.
     It computes element-wise as
 
@@ -642,7 +642,8 @@ class LeakyReLU(Cell):
 
 class RReLU(Cell):
     r"""
-    Applies RReLU (Randomized Leaky ReLU activation function) element-wise.
+    Applies RReLU (Randomized Leaky ReLU activation function) element-wise, as described in the paper:
+    `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     The activation function is defined as:
 
@@ -651,9 +652,6 @@ class RReLU(Cell):
         {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
 
     where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
-
-    Applies the RReLU function elementally, as described in the paper:
-    `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_ .
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: the forward input `x` will be renamed to `input`,
@@ -758,7 +756,7 @@ class SeLU(Cell):
 
 class SiLU(Cell):
     r"""
-    Applies the silu linear unit function element-wise.
+    Applies the SiLU linear unit activation function element-wise.
 
     .. math::
 
@@ -883,7 +881,7 @@ class Tanhshrink(Cell):
         - **x** (Tensor) - Tensor of any dimension.
 
     Outputs:
-        Tensor, with the same shape as the `x`.
+        Tensor, with the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -1222,7 +1220,7 @@ class PReLU(Cell):
 
         PReLU(x_i)= \max(0, x_i) + w * \min(0, x_i),
 
-    where :math:`x_i` is an element of an channel of the input.
+    where :math:`x_i` is an element of a channel of the input.
 
     Here :math:`w` is a learnable parameter with a default initial value ``0.25``.
     Parameter :math:`w` has dimensionality of the argument channel. If called without argument
@@ -1237,14 +1235,14 @@ class PReLU(Cell):
         channel (int, optional): The elements number of parameter :math:`w`.
           It could be an int, and the value is ``1`` or the channels number of input tensor `x`. Default: ``1`` .
         w (Union[float, list, Tensor], optional): The initial value of parameter. It could be a float, a float list or
-          a tensor has the same dtype as the input tensor `x`. Default: ``0.25`` .
+          a tensor with the same dtype as the input tensor `x`. Default: ``0.25`` .
 
     Inputs:
         - **x** (Tensor) - The input of PReLU with data type of float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, with the same dtype and shape as the `x`.
+        Tensor, with the same dtype and shape as `x`.
 
     Raises:
         TypeError: If `channel` is not an int.

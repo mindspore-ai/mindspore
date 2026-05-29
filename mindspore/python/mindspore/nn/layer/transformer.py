@@ -281,8 +281,8 @@ class TransformerEncoderLayer(Cell):
         batch_first (bool): If `batch_first=True` , then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
             Default: ``False``.
-        norm_first (bool): If `norm_first = True`, layer norm is located prior to attention and feedforward
-            operations; if `norm_first = False`, layer norm is located after the attention and feedforward
+        norm_first (bool): If `norm_first = True`, layer normalization is located prior to attention and feedforward
+            operations; if `norm_first = False`, layer normalization is located after the attention and feedforward
             operations. Default: ``False``.
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
@@ -299,7 +299,7 @@ class TransformerEncoderLayer(Cell):
           float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor. The shape and dtype of Tensor is the same with `src` .
+        Tensor. The shape and dtype of Tensor are the same as `src` .
 
     Raises:
         ValueError: If the init argument `activation` is not str, callable or Cell instance.
@@ -415,7 +415,7 @@ class TransformerEncoderLayer(Cell):
 class TransformerDecoderLayer(Cell):
     r"""
     Transformer Decoder Layer. This is an implementation of the single layer of the transformer
-    decoder layer, including self-attention, cross attention and feedward layer.
+    decoder layer, including self-attention, cross attention and feedforward layer.
 
     .. warning::
         Starting after version 2.9.0, a `bias` parameter will be added, and the default `dtype` will change
@@ -434,8 +434,8 @@ class TransformerDecoderLayer(Cell):
         batch_first (bool): If `batch_first=True` , then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)`.
             Default: ``False``.
-        norm_first (bool): If `norm_first = True`, layer norm is located prior to attention and feedforward
-            operations; if `norm_first = False`, layer norm is located after the attention and feedforward
+        norm_first (bool): If `norm_first = True`, layer normalization is located prior to attention and feedforward
+            operations; if `norm_first = False`, layer normalization is located after the attention and feedforward
             operations. Default: ``False``.
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
@@ -458,7 +458,7 @@ class TransformerDecoderLayer(Cell):
           float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor. The shape and dtype of Tensor is the same with `tgt` .
+        Tensor. The shape and dtype of Tensor are the same as `tgt` .
 
     Raises:
         ValueError: If the init argument `activation` is not str, callable or Cell instance.
@@ -598,7 +598,7 @@ class TransformerEncoder(Cell):
         This change is backward-compatible; behavior is unchanged when the new parameters are not specified.
 
     Args:
-        encoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerEncoderLayer` class.
+        encoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerEncoderLayer`.
         num_layers (int): The number of encoder-layers in the encoder.
         norm (Cell, optional): The layer normalization module. Default: ``None``.
 
@@ -609,14 +609,14 @@ class TransformerEncoder(Cell):
           where :math:`(S)` is the source sequence length, :math:`(N)` is the batch number and :math:`(E)` is
           the feature number. Supported types: float16, float32, float64.
         - **src_mask** (Tensor, optional) - The mask of the src sequence. The shape is :math:`(S, S)`
-          or :math:`(N*nhead, S, S)` , where `nhead` is the arguent in :class:`mindspore.nn.TransformerEncoderLayer`.
+          or :math:`(N*nhead, S, S)` , where `nhead` is the argument in :class:`mindspore.nn.TransformerEncoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **src_key_padding_mask** (Tensor, optional) - the mask of the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool.  Default: ``None``.
 
     Outputs:
-        Tensor. The shape and dtype of Tensor is the same with `src` .
+        Tensor. The shape and dtype of Tensor are the same as `src` .
 
     Raises:
         AssertionError: If the input argument `src_key_padding_mask` is not bool or floating types.
@@ -681,7 +681,7 @@ class TransformerDecoder(Cell):
         - **memory** (Tensor) - The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional) - the mask of the tgt sequence. The shape is :math:`(T, T)`
-          or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in :class:`mindspore.nn.TransformerDecoderLayer`.
+          or :math:`(N*nhead, T, T)` , where `nhead` is the argument in :class:`mindspore.nn.TransformerDecoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional) - the mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
@@ -693,7 +693,7 @@ class TransformerDecoder(Cell):
           float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor. The shape and dtype of Tensor is the same with `tgt` .
+        Tensor. The shape and dtype of Tensor is the same as `tgt` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -740,7 +740,7 @@ class TransformerDecoder(Cell):
 
 class Transformer(Cell):
     r"""
-    Transformer module including encoder and decoder. The difference with the original implements is the module use
+    Transformer module including encoder and decoder. The difference with the original implementation is the module uses
     the residual addition before the layer normalization. And the default hidden activation is `gelu`.
     The details can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
@@ -761,12 +761,12 @@ class Transformer(Cell):
             :func:`mindspore.ops.gelu` ). Default: ``"relu"``.
         custom_encoder (Cell): Custom encoder. Default: ``None``.
         custom_decoder (Cell): Custom decoder. Default: ``None``.
-        layer_norm_eps (float): the epsilion value in layer normalization module. Default: ``1e-5``.
+        layer_norm_eps (float): the epsilon value in layer normalization module. Default: ``1e-5``.
         batch_first (bool): If `batch_first=True`, then the shape of input and output tensors is
             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
             Default: ``False``.
-        norm_first (bool): If `norm_first = True`, layer norm is located prior to attention and feedforward
-            operations; if `norm_first = False`, layer norm is located after the attention and feedforward
+        norm_first (bool): If `norm_first = True`, layer normalization is located prior to attention and feedforward
+            operations; if `norm_first = False`, layer normalization is located after the attention and feedforward
             operations. Default: ``False``.
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 

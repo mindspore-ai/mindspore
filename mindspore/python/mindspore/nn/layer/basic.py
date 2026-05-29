@@ -1108,14 +1108,14 @@ class Pad(Cell):
 
         - If `mode` is "CONSTANT", it fills the edge with 0, regardless of the values of the `x`.
           If the `x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
-          Outputs is [[0,0,0,0,0,0,0], [0,0,1,2,3,0,0], [0,0,4,5,6,0,0], [0,0,7,8,9,0,0], [0,0,0,0,0,0,0]].
+          output is [[0,0,0,0,0,0,0], [0,0,1,2,3,0,0], [0,0,4,5,6,0,0], [0,0,7,8,9,0,0], [0,0,0,0,0,0,0]].
         - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
           If the `x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
-          Outputs is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
+          output is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
         - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
           according to the symmetry axis, except that it includes the symmetry axis. If the `x`
-          is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the Outputs is
-          [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
+          is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
+          output is [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
 
     Raises:
         TypeError: If `paddings` is not a tuple.
@@ -1146,26 +1146,26 @@ class Pad(Cell):
          [0. 0. 0. 0. 0. 0. 0.]]
         >>> # Another way to call
         >>> pad = ops.Pad(paddings=((1, 1), (2, 2)))
-        >>> # From the above code, we can see following:
+        >>> # From the above code, we can see the following:
         >>> # "paddings=((1, 1), (2, 2))",
-        >>> # paddings[0][0] = 1, indicates a row of values is filled top of the input data in the 1st dimension.
+        >>> # paddings[0][0] = 1, indicates a row of values is filled top of the input data in the first dimension.
         >>> # Shown as follows:
         >>> # [[0. 0. 0.]
         >>> #  [1. 2. 3.]
         >>> #  [4. 5. 6.]]
-        >>> # paddings[0][1] = 1 indicates a row of values is filled below input data in the 1st dimension.
+        >>> # paddings[0][1] = 1 indicates a row of values is filled below input data in the first dimension.
         >>> # Shown as follows:
         >>> # [[0. 0. 0.]
         >>> #  [1. 2. 3.]
         >>> #  [4. 5. 6.]
         >>> #  [0. 0. 0.]]
-        >>> # paddings[1][0] = 2, indicates 2 rows of values is filled in front of input data in the 2nd dimension.
+        >>> # paddings[1][0] = 2, indicates 2 rows of values are filled in front of input data in the second dimension.
         >>> # Shown as follows:
         >>> # [[0. 0. 0. 0. 0.]
         >>> #  [0. 0. 1. 2. 3.]
         >>> #  [0. 0. 4. 5. 6.]
         >>> #  [0. 0. 0. 0. 0.]]
-        >>> # paddings[1][1] = 2, indicates 2 rows of values is filled in front of input data in the 2nd dimension.
+        >>> # paddings[1][1] = 2, indicates 2 rows of values are filled in front of input data in the second dimension.
         >>> # Shown as follows:
         >>> # [[0. 0. 0. 0. 0. 0. 0.]
         >>> #  [0. 0. 1. 2. 3. 0. 0.]
@@ -1674,18 +1674,18 @@ class Unflatten(Cell):
         axis (int): specifies the dimension of the input Tensor to be unflattened.
         unflattened_size (Union(tuple[int], list[int])): the new shape of the unflattened dimension of
             the Tensor and it can be a tuple of ints or a list of ints. The product of `unflattened_size`
-            must equal to input_shape[axis].
+            must equal input_shape[axis].
 
     Inputs:
         - **input** (Tensor) - The input Tensor to be unflattened.
 
     Outputs:
-        Tensor that has been unflattend.
+        Tensor that has been unflattened.
 
     Raises:
         TypeError: If `axis` is not int.
         TypeError: If `unflattened_size` is neither tuple of ints nor list of ints.
-        TypeError: The product of `unflattened_size` does not equal to input_shape[axis].
+        TypeError: The product of `unflattened_size` does not equal input_shape[axis].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
