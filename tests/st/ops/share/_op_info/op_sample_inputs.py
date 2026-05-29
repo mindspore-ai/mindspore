@@ -11118,6 +11118,11 @@ def extra_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
 def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=None, device=None,
                       exclude_value=(), empty_tensor=False, dtype_promotion=False):
 
+    '''
+    (1, 2, 3) : need to make tensor
+    ((1, 2, 3),): don't need to make tensor
+    '''
+
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
@@ -11126,9 +11131,14 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
             np.random.choice(np.array(data)[~np.isin(np.array(data), exclude_value)], size=size),
             dtype=dtype, device=device)
 
+    def _whether_to_tensor(shape):
+        return not (len(shape) == 1 and isinstance(shape[0], tuple))
+
     def _make_extra_op(data=None, op_input_shape=None, op_args_shapes=None, op_kwargs=None, discontiguous=False):
 
         def shape_convert_to_tensor(shape, discontiguous=False):
+            if not _whether_to_tensor(shape):
+                return shape[0]
             if not discontiguous:
                 return _tuple_to_specified_size_tensor(data, shape)
             return make_arg(shape, discontiguous=True)
@@ -11153,8 +11163,10 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
     if empty_tensor:
         yield OpSampleInput(
             op_input=make_arg(op_input_shape),
-            op_args=tuple(make_arg(i) if isinstance(i, tuple) else i for i in op_args_shapes),
-            op_kwargs={k: make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
+            op_args=tuple( i[0]  if isinstance(i, tuple) and not _whether_to_tensor(i)
+                           else make_arg(i) if  isinstance(i, tuple)  else i for i in op_args_shapes),
+            op_kwargs={k: v[0]  if isinstance(v, tuple) and not _whether_to_tensor(v)
+            else make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
             sample_name=op_info.name + 'empty_tensor',
         )
     else:
@@ -11192,9 +11204,11 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
 
                 yield OpSampleInput(
                     op_input=make_tensor(op_input_shape, dtype=dtype, device=device),
-                    op_args=tuple(make_tensor(i, dtype=other_dtype, device=device)
+                    op_args=tuple(i[0] if isinstance(i, tuple) and not _whether_to_tensor(i) else
+                                  make_tensor(i, dtype=other_dtype, device=device)
                                   if isinstance(i, tuple) else i for i in op_args_shapes),
-                    op_kwargs={k: make_tensor(v, dtype=other_dtype, device=device)
+                    op_kwargs={k: v[0] if isinstance(v, tuple) and not _whether_to_tensor(v)
+                    else make_tensor(v, dtype=other_dtype, device=device)
                     if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
                     sample_name=op_info.name + f'{dtype}_promotion_{other_dtype}',
                 )
@@ -14419,6 +14433,393 @@ def extra_sample_inputs_mint_tril(op_info: OpInfo, dtype=None, device=None, **kw
                 sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
             )
 
+def basic_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    case = (
+        ((3,  10), 7 ),
+        ((1, 3, 10), (3, )),
+        )
+
+    for input, output_size  in case:
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(output_size,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+        yield OpSampleInput(
+            op_input=make_arg(input),
+            op_args=(output_size,),
+            op_kwargs={'return_indices':True},
+            sample_name=op_info.name,
+        )
+
+def error_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    N = 3
+    C = 5
+    L = 10
+    output_size = 6
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, C, L)),
+            op_args=((output_size, 3),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='output_size.length must be 1',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, N, C, L)),
+            op_args=(output_size,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input.dim must be 2 or 3',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((L, )),
+            op_args=(output_size,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input.dim must be 2 or 3',
+    )
+
+def extra_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (1, 1, 16, ), (8, ),
+                                 {'return_indices': True}, dtype=dtype, device=device)
+
+def basic_sample_inputs_pad(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    N = 1
+    C = 3
+    D = 5
+    H = 7
+    W = 10
+    shape = {1: (W, ), 2: (H, W), 3: (D, H, W)}[dim]
+
+    yield OpSampleInput(
+        op_input=make_arg((C, ) + shape),
+        op_args=(3, ) if mode != 'ConstantPad' else (3, 2),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+
+    yield OpSampleInput(
+        op_input=make_arg((N, C,) + shape),
+        op_args=((0, 3) * dim, ) if mode != 'ConstantPad' else ((0, 3) * dim, -8 if dtype != ms.uint8 else 0),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+
+    yield OpSampleInput(
+        op_input=make_arg((N, C,) + shape),
+        op_args=((1, 3) * dim,) if mode != 'ConstantPad' else ((1, 3) * dim, 3.9),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+
+    yield OpSampleInput(
+        op_input=make_arg((0, C,) + shape),
+        op_args=((3, 0) * dim,) if mode != 'ConstantPad' else ((3, 0) * dim, -12.7 if dtype != ms.uint8 else 0),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+
+def extra_sample_inputs_pad(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
+
+    op_args=(8, ) if mode != 'ConstantPad' else  (8, 9)
+
+    yield from make_extra_tensor(op_info, (1, 1,) + (16, ) * dim, op_args, {},
+                                 dtype=dtype, device=device)
+
+def error_sample_inputs_pad(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    N = 1
+    C = 3
+    D = 5
+    H = 7
+    W = 10
+    shape = {1: (W, ), 2: (H, W), 3: (D, H, W)}[dim]
+
+    if mode not in  ['ZeroPad', 'ConstantPad']:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(shape),
+                op_args=(3,),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'input.dim must be {dim+1} or {dim+2}',
+        )
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((1, N, C,) + shape),
+                op_args=(3,),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'input.dim must be {dim+1} or {dim+2}',
+        )
+
+    else:
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(shape[1:]),
+                op_args=(3,) if mode != 'ConstantPad' else (3, 3),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'input.dim must be >={dim}',
+        )
+
+    if mode == 'ReflectionPad':
+        for _index in range(len(shape)):
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=make_arg((C, ) + shape),
+                    op_args=(tuple(itertools.chain.from_iterable([(value, value) if index == _index else
+                                                (value-1, value-1)  for index,value in enumerate(shape[::-1])])) ,),
+                    op_kwargs={},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=RuntimeError,
+                op_error_info=f'input.dim must be {dim+1} or {dim+2}',
+            )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, C,) + shape),
+            op_args=((1, 3) * (dim-1),) if mode != 'ConstantPad' else ((1, 3) * (dim-1), 3),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'pad.length must be {dim*2}',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, C,) + shape),
+            op_args=((1, 3) * (dim + 1 ),) if mode != 'ConstantPad' else ((1, 3) * (dim + 1), 3),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'pad.length must be {dim*2}',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, C,) + shape),
+            op_args=(-3,) if mode != 'ConstantPad' else (-3, 3),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='pad should > 0',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((N, C,) + shape),
+            op_args=((-3,1),) if mode != 'ConstantPad' else ((-3,1), 3),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='pad should > 0',
+    )
+
+def basic_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    case = (
+        ((1, 3, 4, 5), 3, 2, 0, ),                  # mint.nn.MaxPool2d not support 4D input
+        ((3, 6, 6, 10), (4, 6), None, 2,) ,
+        ((2, 5, 7, 20), 5, (2, 6), (2, 1), )
+    )
+
+    def generate_output_size(shape_before_pooling, shape_after_pooling, kernel_size, stride, padding):
+
+        def _pair(obj):
+            return  tuple(itertools.repeat(obj, 2)) if isinstance(obj, int) else obj
+
+        kernel_size = _pair(kernel_size)
+        stride = kernel_size if stride is None else _pair(stride)
+        padding = _pair(padding)
+
+        H_out = (shape_after_pooling[-2] - 1) * stride[0] - 2 * padding[0] + kernel_size[0]
+        W_out = (shape_after_pooling[-1] - 1) * stride[1] - 2 * padding[1] + kernel_size[1]
+
+        # (H_out - (stride[0] - 1), W_out - (stride[1] - 1)) or (H_out, W_out) may be error  because
+        # torch  will detech indices's max index  <= output_size.H * output_size.w
+        output_size_list = [shape_before_pooling, (H_out + (stride[0] - 1), W_out + (stride[1] - 1)),]
+
+        for _index, value  in enumerate(kernel_size):
+            if not ((shape_before_pooling[-len(kernel_size) + _index] + 2 * padding[_index] - value)
+                    % stride[_index] == 0):
+                return random.choice(output_size_list)
+        return None
+
+    # prepare for error scene
+    if dtype not in [ms.float32, ms.float16, ms.float64]:
+        out = mint.nn.MaxPool2d(kernel_size=3, stride=2, padding=0, return_indices=True)(
+            make_tensor((1, 3, 4, 5), dtype=ms.float32 , device=device ))
+        yield OpSampleInput(
+            op_input=out[0].to(dtype),
+            op_args=(out[1].to(ms.int64), 3, 2, 0,
+                generate_output_size((1, 3, 4, 5), out[0].shape, 3, 2, 0)),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    else:
+        for shape_before_pooling, kernel_size, stride, padding in case:
+            out = (mint.nn.MaxPool2d(kernel_size=kernel_size, stride=stride, padding=padding, return_indices=True)
+                (make_tensor(shape_before_pooling,dtype=ms.float32 if dtype == ms.float64 else dtype , device=device)))
+            yield OpSampleInput(
+                op_input=out[0].to(ms.float64) if dtype==ms.float64 else out[0],
+                op_args=(out[1].to(ms.int64), kernel_size, stride, padding,
+                         generate_output_size(shape_before_pooling, out[0].shape, kernel_size, stride, padding)),
+                op_kwargs={},
+                sample_name=op_info.name,
+            )
+
+def error_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
+
+    N = 1
+    C = 3
+    H = 4
+    W = 5
+
+    kernel_size = 3
+    stride = 2
+    padding = 1
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    out = mint.nn.MaxPool2d(kernel_size=kernel_size, stride=stride, padding=padding, return_indices=True)(
+        make_arg((N, C, H, W)))
+
+    input = out[0]
+    indices = out[1]
+
+    for kernel_size_error in [0, (0, 1), (1, 0)]:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(indices, kernel_size_error ),
+                op_kwargs={'stride': stride, 'padding': padding},
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info='kernel_size should be greater than 0',
+        )
+    for stride_error in [0, (0, 0)]:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(indices, kernel_size),
+                op_kwargs={'stride': stride_error, 'padding': padding },
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info='stride should be greater than 0',
+        )
+
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=input.expand_dims(0),
+            op_args=(indices.expand_dims(0), kernel_size),
+            op_kwargs={'stride': stride, 'padding': padding},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input shape should be 3 or 4',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=input[0, 0],
+            op_args=(indices[0, 0], kernel_size),
+            op_kwargs={'stride': stride, 'padding': padding},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input shape should be 3 or 4',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=input,
+            op_args=(indices.transpose(1,0), kernel_size),
+            op_kwargs={'stride': stride, 'padding': padding},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='input shape should be equal indices shape',
+    )
+
+def extra_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+
+    data_list=[]
+
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+
+        data_list.extend([_float_small_values, _large_values])
+
+    if not op_info.disable_extremal_value_tensor_inputs:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            data_list.extend([(np.inf,), (-np.inf,), (np.nan,)])
+
+    for data in data_list:
+
+        out = (mint.nn.MaxPool2d(kernel_size=5, stride=2, padding=2, return_indices=True)
+        (make_tensor_with_np_array(np.random.choice(np.array(data), size=(2, 5, 7, 20)),
+                                   dtype=ms.float32 if dtype==ms.float64 else dtype , device=device)))
+
+        yield OpSampleInput(
+            op_input=out[0].to(ms.float64) if dtype==ms.float64 else out[0],
+            op_args=(out[1].to(ms.int64), 5, 2, 2, (2, 5, 7, 20)),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+    yield OpSampleInput(
+        op_input=make_tensor((0, 1, 2, 3), device=device, dtype=dtype),
+        op_args=(make_tensor((0, 1, 2, 3), device=device, dtype=ms.int64), 5, 2, 2),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+
 def dynamic_sample_inputs_mint_triu(
     op_info: OpInfo,
     dtype=None,
@@ -14483,3 +14884,260 @@ def dynamic_sample_inputs_mint_triu(
                 ),
             )
         )
+
+
+def basic_sample_inputs_Avgpool(op_info: OpInfo, dtype=None, device=None, dim=None, **kwargs):
+
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    if dim == '3d':
+
+        cases = (
+            ((1, 18, 6, 1, 32), (2, 1, 5), None, (1, 0, 2), None),
+            ((8, 30, 150, 120), 7, 4, 0, None),
+            ((1, 8, 8, 32, 64), (4, 9, 7), (2, ), 2 ,3),
+        )
+
+    else :
+
+        cases = (
+            ((1, 18, 6, 32), (2, 5), None, (1, 2), None),
+            ((8, 150, 120), 7, 4, 0, None),
+            ((1, 8, 32, 64), (3, ), (2, ),  1, 3),
+        )
+
+    for ceil_mode, count_include_pad in itertools.product([True, False], repeat=2):
+
+        for input_shape, kernel_size, stride, padding, divisor_override in cases:
+
+            yield OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(kernel_size, ),
+                op_kwargs={'stride': stride,
+                           'padding': padding,
+                           'ceil_mode': ceil_mode,
+                           'count_include_pad': count_include_pad,
+                           'divisor_override': divisor_override
+                           },
+                sample_name=op_info.name,
+            )
+
+def error_sample_inputs_Avgpool3d(op_info: OpInfo, dtype=None, device=None, dim=None, **kwargs):
+
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    N = 1
+    C = 2
+    D = 4
+    H = 6
+    W = 10
+
+    kernel_size = (D, H, W) if dim == '3d' else (H, W)
+
+    input_shape = (C,) + kernel_size
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(kernel_size),
+            op_args=(kernel_size, ),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'input.dim should = {len(kernel_size)+1} or {len(kernel_size)+2}',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, N, C,) + kernel_size),
+            op_args=(kernel_size, ),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input.dim should = 4 or 5',
+    )
+
+    if dim != '2d':      # maybe is bug
+        for index, value in enumerate(kernel_size):
+
+            kernel_size_dim_value_error=list(kernel_size)
+
+            kernel_size_dim_value_error[index] = value + 1
+
+            yield OpErrorInput(
+                op_sample_input=OpSampleInput(
+                    op_input=make_arg(input_shape),
+                    op_args=(tuple(kernel_size_dim_value_error), ),
+                    op_kwargs={},
+                    sample_name=op_info.name,
+                ),
+                op_error_type=RuntimeError,
+                op_error_info=f'kernel_size.dim{index} should <={kernel_size[index]}',
+            )
+
+    for index in range(len(kernel_size)):
+
+        kernel_size_dim_value_error = list(kernel_size)
+
+        kernel_size_dim_value_error[index] = 0
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(tuple(kernel_size_dim_value_error), ),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'kernel_size.dim{index} should > 0',
+        )
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(kernel_size, ),
+                op_kwargs={'stride': tuple(kernel_size_dim_value_error)},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'stride.dim{index} should > 0',
+        )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(0,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'kernel_size.dim{index} should > 0',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(kernel_size,),
+            op_kwargs={'stride': 0},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'stride.dim{index} should > 0',
+    )
+
+    for index in range(len(kernel_size)):
+
+        padding = [math.ceil(D/2), math.ceil(H/2), math.ceil(W/2)] if dim == '3d' else [math.ceil(H/2), math.ceil(W/2)]
+
+        padding[index] = -1
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(kernel_size,),
+                op_kwargs={'padding': tuple(padding)},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'padding.dim{index} should > = 0',
+        )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(kernel_size,),
+            op_kwargs={'padding': -1},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'padding.dim{index} should > = 0',
+    )
+
+    padding = (math.ceil(D / 2), math.ceil(H / 2), math.ceil(W / 2)) if dim == '3d' else (
+        math.ceil(H / 2), math.ceil(W / 2))
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(kernel_size + (1, ),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'kernel_size.length should be 1 or {len(kernel_size)}, but get {len(kernel_size)+1}',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(kernel_size, ),
+            op_kwargs={'stride': kernel_size + (1, )},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'stride.length should be 1 or {len(kernel_size)},but get {len(kernel_size)+1}',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(kernel_size,),
+            op_kwargs={'padding': kernel_size + (1,)},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'padding.length should be 1 or {len(kernel_size)},but get {len(kernel_size) + 1}',
+    )
+
+    if dim != '2d':
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(kernel_size[:-1],),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'kernel_size.length should be 1 or {len(kernel_size)}, but get {len(kernel_size) - 1}',
+        )
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(kernel_size,),
+                op_kwargs={'stride': kernel_size[:-1]},
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'stride.length should be 1 or {len(kernel_size)},but get {len(kernel_size) - 1}',
+        )
+
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(input_shape),
+                op_args=(kernel_size,),
+                op_kwargs={'padding': padding[:-1]},
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'padding.length should be 1 or {len(kernel_size)}, but get {len(kernel_size) - 1}',
+        )
+
+def extra_sample_inputs_Avgpool3d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (2, 10, 32, 64), (5, ),
+                                 {'stride': 3, 'padding':2,} ,dtype=dtype, device=device)
+
+    yield from make_extra_tensor(op_info, (0, 2, 10, 32, 64), (5,),
+                                 {'stride': 3, 'padding': 2, }, dtype=dtype, device=device, empty_tensor=True)
+
+def extra_sample_inputs_Avgpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (10, 32, 64), (5, ),
+                                 {'stride': 3, 'padding':2,} ,dtype=dtype, device=device)
+
+    yield from make_extra_tensor(op_info, (0, 10, 32, 64), (5,),
+                                 {'stride': 3, 'padding': 2, }, dtype=dtype, device=device, empty_tensor=True)
