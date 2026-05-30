@@ -1510,8 +1510,8 @@ tensor::TensorPtr MatMulCall(const std::string &op_name, OpRunner *op, const Ten
   DvmCall(
     op_name, op,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
       auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, nullptr);
       return k->Output(out_obj, x_tensor->data_type(), k->GetShape(out_obj));
     },
@@ -1536,8 +1536,8 @@ tensor::TensorPtr DenseAscendDvm::Call(const TensorPtr &input_tensor, const Tens
   DvmCall(
     op_name_, this,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
       auto bias_obj = bias == nullptr ? nullptr : k->Input(bias, false);
       auto out_obj = k->MatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj);
       return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
@@ -1674,8 +1674,8 @@ std::vector<mindspore::tensor::TensorPtr> GroupedMatmulAscendDvm::Call(
   DvmCall(
     op_name_, this,
     [&](LazyFusionKernelAscend *k) -> TensorPtr {
-      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape);
-      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape);
+      auto input_obj = k->Input(info.x_tensor, false, info.x_dvm_shape, !info.x_dvm_shape.has_value());
+      auto weight_obj = k->Input(info.y_tensor, false, info.y_dvm_shape, !info.y_dvm_shape.has_value());
       auto group_list_obj = k->Input(group_list);
       auto bias_obj = bias_tensor == nullptr ? nullptr : k->Input(bias_tensor, false);
       auto out_obj = k->GroupedMatMul(input_obj, weight_obj, info.trans_a, info.trans_b, bias_obj, group_list_obj,

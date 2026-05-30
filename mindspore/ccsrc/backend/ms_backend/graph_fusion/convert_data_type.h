@@ -92,6 +92,7 @@ class ConvertMixType : public ConvertDataType {
   void CastInput(const CNodePtr &cnode, size_t input_idx, TypeId cur_type, TypeId target_type);
   void CastOutput(const CNodePtr &cnode, size_t output_idx, TypeId cur_type, TypeId target_type);
   bool ProcessBinary(const CNodePtr &cnode);
+  bool ProcessCompare(const CNodePtr &cnode);
   bool Process(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel
