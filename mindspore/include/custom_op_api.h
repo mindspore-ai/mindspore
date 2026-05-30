@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,14 @@
 #include "include/pynative/utils/pyboost/custom/tensor.h"
 #include "include/pynative/utils/pyboost/custom/tensor_utils.h"
 #include "include/pynative/utils/pyboost/custom/pyboost_extension.h"
+#include "include/pynative/utils/pyboost/custom_v2/op_api.h"
 #include "include/kernel/ascend/custom/kernel_mod_impl/custom_register.h"
 #include "include/kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
 
 // ascend files
 #ifdef CUSTOM_ASCEND_OP
 #include "include/kernel/ascend/custom/pyboost_impl/aclnn_op_runner.h"
+#include "include/kernel/ascend/custom/pyboost_impl_v2/aclnn_dispatch.h"
 // MindSpore core includes
 #include "mindspore/core/include/utils/ms_utils.h"
 #include "mindspore/core/include/ops/ops_func_impl/op_func_impl.h"
