@@ -85,6 +85,32 @@ def test_matmul_ext():
     _run(ops.auto_generate.BatchMatMulExt(), (4, 4096, 7168), (4, 7168, 2112), "bfloat16")
 
 
+def test_addmm():
+    """
+    Feature: Addmm
+    Description: pynative mode
+    Expectation: the result match with the expected result
+    """
+
+    def _run(case_name, m, n, k, input_type, mat_type, beta, alpha, cmp_precision):
+        input_shape = (m, n)
+        mat1_shape = (m, k)
+        mat2_shape = (k, n)
+        flag = gen_flag("Addmm", case_name, input_shape, mat1_shape, mat2_shape, input_type, mat_type, beta, alpha)
+        input_x = gen_input(input_shape, input_type, data_range=0.01)
+        mat1 = gen_input(mat1_shape, mat_type, data_range=0.01)
+        mat2 = gen_input(mat2_shape, mat_type, data_range=0.01)
+        y0 = mint.addmm(input_x, mat1, mat2, beta=beta, alpha=alpha)
+        compare_outputs(flag, y0, cmp_precision=cmp_precision)
+
+    cases = [
+        ("full_bias_case1", 64, 64, 64, "bfloat16", "bfloat16", 2.0, 1.1, 4e-3),
+        ("full_bias_case2", 64, 3584, 64, "bfloat16", "bfloat16", 2.0, 1.1, 4e-3),
+    ]
+    for case in cases:
+        _run(*case)
+
+
 def test_baddbmm():
     """
     Feature: Baddbmm
