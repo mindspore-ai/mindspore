@@ -17,6 +17,7 @@
 
 __all__ = ['_Function']
 
+import inspect
 from typing import Any
 from mindspore._c_expression import FunctionBase as FunctionBase_
 from mindspore.common.tensor import Tensor
@@ -34,6 +35,9 @@ class _Function(FunctionBase_):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
+
+    _has_setup_context = False
+
     @staticmethod
     def forward(ctx: Any, *args: Any, **kwars: Any) -> Any:
         raise NotImplementedError("forward function should be customized.")
@@ -42,8 +46,22 @@ class _Function(FunctionBase_):
     def backward(ctx: Any, *grad_outputs: Any) -> Any:
         raise NotImplementedError("backward function should be customized.")
 
+    @staticmethod
+    def setup_context(ctx: Any, inputs: tuple[Any, ...], output: Any) -> Any:
+        raise NotImplementedError("setup_context is not implemented.")
+
     @classmethod
     def apply(cls, *args, **kwargs):
+        """Apply the custom autograd function."""
+        def bind_default_args(func, *args, **kwargs):
+            signature = inspect.signature(func)
+            bound_args = signature.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+            return bound_args.args, bound_args.kwargs
+
+        cls._has_setup_context = cls.setup_context != _Function.setup_context
+        if cls._has_setup_context:
+            args, kwargs = bind_default_args(cls.forward, *args, **kwargs)
         return super().apply(*args, **kwargs)
 
     def save_for_backward(self, *tensors: Tensor):

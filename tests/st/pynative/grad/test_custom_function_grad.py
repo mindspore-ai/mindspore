@@ -1202,3 +1202,196 @@ def test_custom_function_add_saved_tensor_not_tensor_or_none():
     x = Tensor([3, 3, 3], mindspore.float32)
     with pytest.raises(RuntimeError, match="only support None and tensor"):
         _ = mindspore.grad(RaiseErrorNet.apply)(x)
+
+
+class CustomSetupContextFunction(_Function):
+    @staticmethod
+    def forward(x):
+        return x ** 2
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        (x,) = inputs
+        ctx.save_for_backward(x)
+
+    @staticmethod
+    def backward(ctx, grad):
+        (x,) = ctx.saved_tensors
+        return grad * 2 * x
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context():
+    """
+    Feature: Custom autograd function.
+    Description: Test setup_context.
+    Expectation: Success.
+    """
+    x = ops.rand(5)
+    grad_x = mindspore.grad(CustomSetupContextFunction.apply)(x)
+    assert np.allclose(grad_x.asnumpy(), (x * 2).asnumpy(), 0.00001, 0.00001)
+
+
+class CustomSetupContextMultiInputOutputFunction(_Function):
+    @staticmethod
+    def forward(x, y):
+        return x * y, x + y
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, y = inputs
+        out0, out1 = output
+        ctx.save_for_backward(x, y, out0, out1)
+        ctx.output_size = len(output)
+
+    @staticmethod
+    def backward(ctx, grad0, grad1):
+        x, y, out0, out1 = ctx.saved_tensors
+        assert ctx.output_size == 2
+        assert np.allclose(out0.asnumpy(), (x * y).asnumpy(), 0.00001, 0.00001)
+        assert np.allclose(out1.asnumpy(), (x + y).asnumpy(), 0.00001, 0.00001)
+        return grad0 * y + grad1, grad0 * x + grad1
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context_multi_input_multi_output():
+    """
+    Feature: Custom autograd function.
+    Description: Test setup_context with multi input and multi output.
+    Expectation: Success.
+    """
+    x = Tensor([2.0, 3.0], mindspore.float32)
+    y = Tensor([4.0, 5.0], mindspore.float32)
+    grad_net = C.GradOperation(get_all=True)
+    grads = grad_net(CustomSetupContextMultiInputOutputFunction.apply)(x, y)
+    assert np.allclose(grads[0].asnumpy(), np.array([5.0, 6.0], dtype=np.float32), 0.00001, 0.00001)
+    assert np.allclose(grads[1].asnumpy(), np.array([3.0, 4.0], dtype=np.float32), 0.00001, 0.00001)
+
+
+class CustomSetupContextDefaultArgsFunction(_Function):
+    @staticmethod
+    def forward(x, scale=3.0):
+        return x * scale
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        x, scale = inputs
+        ctx.save_for_backward(x)
+        ctx.scale = scale
+
+    @staticmethod
+    def backward(ctx, grad):
+        return grad * ctx.scale, None
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context_default_args():
+    """
+    Feature: Custom autograd function.
+    Description: Test setup_context with default arguments and keyword arguments.
+    Expectation: Success.
+    """
+    x = Tensor([2.0, 3.0], mindspore.float32)
+    grad_x = mindspore.grad(CustomSetupContextDefaultArgsFunction.apply)(x)
+    assert np.allclose(grad_x.asnumpy(), np.array([3.0, 3.0], dtype=np.float32), 0.00001, 0.00001)
+
+    grad_x_with_kwarg = mindspore.grad(CustomSetupContextDefaultArgsFunction.apply)(x, scale=4.0)
+    assert np.allclose(grad_x_with_kwarg.asnumpy(), np.array([4.0, 4.0], dtype=np.float32), 0.00001, 0.00001)
+
+
+class CustomSetupContextNonDiffNet(_Function):
+    @staticmethod
+    def forward(x, y):
+        x2 = x * x
+        z = x2 + y
+        return z
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        ctx.mark_non_differentiable(output)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output, grad_output * 2
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context_non_diff():
+    """
+    Feature: Custom autograd function.
+    Description: The output of forward function is marked non-diff with custom setup_context.
+    Expectation: success.
+    """
+    x = Tensor([1, 2], mindspore.float32)
+    y = Tensor([3, 2], mindspore.float32)
+    net = CustomSetupContextNonDiffNet.apply
+    grads = mindspore.grad(net, grad_position=(0, 1))(x, y)
+    assert np.allclose(grads[0].asnumpy(), np.array([0., 0.], dtype=np.float32), 0.00001, 0.00001)
+    assert np.allclose(grads[1].asnumpy(), np.array([0., 0.], dtype=np.float32), 0.00001, 0.00001)
+
+
+class CustomSetupContextWrongGradNumFunction(_Function):
+    @staticmethod
+    def forward(x, y):
+        return x * y
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        ctx.save_for_backward(*inputs)
+
+    @staticmethod
+    def backward(ctx, grad):
+        return grad
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context_grad_num_wrong():
+    """
+    Feature: Custom autograd function.
+    Description: Test setup_context raises when backward return gradients do not match inputs.
+    Expectation: Raise RuntimeError.
+    """
+    x = Tensor([2.0, 3.0], mindspore.float32)
+    y = Tensor([4.0, 5.0], mindspore.float32)
+    grad_net = C.GradOperation(get_all=True)
+    with pytest.raises(RuntimeError, match="Function backward return a wrong number of gradients"):
+        grad_net(CustomSetupContextWrongGradNumFunction.apply)(x, y)
+
+
+class CustomSetupContextSaveInputAsOutputFunction(_Function):
+    @staticmethod
+    def forward(x):
+        return x
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        (x,) = inputs
+        ctx.save_for_backward(x)
+
+    @staticmethod
+    def backward(ctx, grad):
+        return grad
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context_save_input_as_output_error():
+    """
+    Feature: Custom autograd function.
+    Description: Test setup_context raises when saving an input returned as-is.
+    Expectation: Raise RuntimeError.
+    """
+    x = Tensor([2.0, 3.0], mindspore.float32)
+    with pytest.raises(RuntimeError, match="input tensor was returned directly as an output"):
+        mindspore.grad(CustomSetupContextSaveInputAsOutputFunction.apply)(x)
