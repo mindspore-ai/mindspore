@@ -3,6 +3,8 @@ mindspore.ops.Eps
 
 .. py:class:: mindspore.ops.Eps
 
+    `mindspore.ops.Eps` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     创建一个与输入数据类型和shape都相同的Tensor，元素值为对应数据类型能表达的最小值。
 
     更多参考详见 :func:`mindspore.ops.eps`。

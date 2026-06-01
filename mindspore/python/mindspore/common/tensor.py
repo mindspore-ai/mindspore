@@ -1352,23 +1352,21 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         other = _cast(other, self.dtype)
         return tensor_operator_registry.get('bitwise_right_shift')(self, other)
 
+    @deprecated("2.9.0", None, False)
     def scatter_mul(self, indices, updates):
         """
+        `mindspore.Tensor.scatter_mul` is deprecated from version 2.9.0 and will be removed in a future version.
+
         For details, please refer to :func:`mindspore.ops.scatter_mul`.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
-
         """
         return tensor_operator_registry.get('tensor_scatter_mul')(self, indices, updates)
 
+    @deprecated("2.9.0", None, False)
     def scatter_div(self, indices, updates):
         """
+        `mindspore.Tensor.scatter_div` is deprecated from version 2.9.0 and will be removed in a future version.
+
         For details, please refer to :func:`mindspore.ops.scatter_div`.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
-
         """
         return tensor_operator_registry.get('tensor_scatter_div')(self, indices, updates)
 
@@ -2060,33 +2058,30 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("inplace_scatter_add")(self, dim, index, src)
 
+    @deprecated("2.9.0", None, False)
     def scatter_sub(self, indices, updates):
         """
+        `mindspore.Tensor.scatter_sub` is deprecated from version 2.9.0 and will be removed in a future version.
+
         For details, please refer to :func:`mindspore.ops.tensor_scatter_sub`.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
-
         """
         return tensor_operator_registry.get('tensor_scatter_sub')(self, indices, updates)
 
+    @deprecated("2.9.0", None, False)
     def scatter_min(self, indices, updates):
         """
+        `mindspore.Tensor.scatter_min` is deprecated from version 2.9.0 and will be removed in a future version.
+
         For details, please refer to :func:`mindspore.ops.scatter_min`.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
-
         """
         return tensor_operator_registry.get('tensor_scatter_min')(self, indices, updates)
 
+    @deprecated("2.9.0", None, False)
     def scatter_max(self, indices, updates):
         """
+        `mindspore.Tensor.scatter_max` is deprecated from version 2.9.0 and will be removed in a future version.
+
         For details, please refer to :func:`mindspore.ops.scatter_max`.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
-
         """
         return tensor_operator_registry.get('tensor_scatter_max')(self, indices, updates)
 

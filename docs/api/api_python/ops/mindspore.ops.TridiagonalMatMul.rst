@@ -3,6 +3,8 @@ mindspore.ops.TridiagonalMatMul
 
 .. py:class:: mindspore.ops.TridiagonalMatMul
 
+    `mindspore.ops.TridiagonalMatMul` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     返回两个矩阵的乘积，其中左边的矩阵是三对角矩阵。
 
     输入：

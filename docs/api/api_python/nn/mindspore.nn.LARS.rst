@@ -3,6 +3,8 @@ mindspore.nn.LARS
 
 .. py:class:: mindspore.nn.LARS(optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False, lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name)
 
+    `mindspore.nn.LARS` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     LARS算法的实现。
 
     LARS算法采用大量的优化技术。详见论文 `LARGE BATCH TRAINING OF CONVOLUTIONAL NETWORKS <https://arxiv.org/abs/1708.03888>`_。
@@ -33,9 +35,6 @@ mindspore.nn.LARS
         \end{array}
 
     :math:`w` 表示网络中的param，:math:`g` 表示 `gradients` ，:math:`t` 表示当前step，:math:`\lambda` 表示 `optimizer` 配置的 `weight_decay` ，:math:`\gamma` 表示 `optimizer` 配置的 `learning_rate` ，:math:`\eta` 表示 `coefficient` 。
-
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **optimizer** (:class:`mindspore.nn.Optimizer`) - 待封装和修改梯度的MindSpore优化器。

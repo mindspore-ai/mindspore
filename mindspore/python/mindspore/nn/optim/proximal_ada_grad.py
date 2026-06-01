@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor
+from mindspore.common._decorator import deprecated
 import mindspore.common.dtype as mstype
 from mindspore.graph.api import jit
 from mindspore import _checkparam as validator
@@ -55,6 +56,8 @@ def _check_param_value(accum, l1, l2, use_locking, prim_name=None):
 
 class ProximalAdagrad(Optimizer):
     r"""
+    `mindspore.nn.ProximalAdagrad` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Implements the ProximalAdagrad algorithm that is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
@@ -70,9 +73,6 @@ class ProximalAdagrad(Optimizer):
 
     where :math:`g` , :math:`\gamma`, :math:`w` , :math:`accum` and :math:`t` denote the `grads`,
     `learning_rate`, `params`, accumulation and current step respectively.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
@@ -163,7 +163,7 @@ class ProximalAdagrad(Optimizer):
         ValueError: If `accum`, `l1`, `l2` or `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -192,6 +192,7 @@ class ProximalAdagrad(Optimizer):
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim)
     """
 
+    @deprecated("2.9.0", None, False)
     @opt_init_args_register
     def __init__(self, params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0,
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):

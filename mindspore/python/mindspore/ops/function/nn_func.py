@@ -46,6 +46,7 @@ from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
+from mindspore.common._decorator import deprecated
 from mindspore.graph.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, fast_gelu, silu, elu, sigmoid, relu6, \
     softmax_impl, swiglu, logsigmoid_op, kl_div_op, divs_op, l1_loss_ext, inplace_sigmoid
@@ -5065,12 +5066,12 @@ def leaky_relu(input, alpha=0.2):
     return select_op(alpha * input, input)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def intopk(x1, x2, k):
     r"""
-    Return whether the elements in second input tensor exist among the top `k` elements of the first input tensor.
+    `mindspore.ops.intopk` is deprecated from version 2.9.0 and will be removed in a future version.
 
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
+    Return whether the elements in second input tensor exist among the top `k` elements of the first input tensor.
 
     Args:
         x1 (Tensor): The 2-D input tensor.
@@ -5081,7 +5082,7 @@ def intopk(x1, x2, k):
         A 1-D tensor whose data type is bool, has the same shape as `x2`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore

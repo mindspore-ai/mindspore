@@ -3,10 +3,9 @@ mindspore.ops.intopk
 
 .. py:function:: mindspore.ops.intopk(x1, x2, k)
 
-    返回第二个输入tensor中的元素是否存在于第一个输入tensor的前 `k` 个元素中。
+    `mindspore.ops.intopk` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
+    返回第二个输入tensor中的元素是否存在于第一个输入tensor的前 `k` 个元素中。
 
     参数：
         - **x1** (Tensor) - 二维输入tensor。

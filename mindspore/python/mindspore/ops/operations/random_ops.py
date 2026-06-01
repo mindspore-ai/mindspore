@@ -82,6 +82,8 @@ class NonDeterministicInts(Primitive):
 
 class TruncatedNormal(Primitive):
     """
+    `mindspore.ops.TruncatedNormal` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Returns a Tensor of the specified shape filled with truncated normal values.
 
     The generated values conform to a Gaussian distribution.
@@ -123,7 +125,7 @@ class TruncatedNormal(Primitive):
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> shape = Tensor(np.array([2, 2]), mstype.int32)
@@ -136,6 +138,7 @@ class TruncatedNormal(Primitive):
          [ -0.917926  0.650655 ]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, dtype=mstype.float32, seed=0, seed2=0):
         """Initialize TruncatedNormal"""
@@ -266,6 +269,8 @@ class StandardLaplace(Primitive):
 
 class RandomGamma(Primitive):
     r"""
+    `mindspore.ops.RandomGamma` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Produces random positive floating-point values x, distributed according to probability density function:
 
     Note:
@@ -297,7 +302,7 @@ class RandomGamma(Primitive):
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -312,6 +317,7 @@ class RandomGamma(Primitive):
         (3, 1, 2, 2, 2)
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize Gamma"""
@@ -625,6 +631,8 @@ class Poisson(PrimitiveWithInfer):
 
 class RandomPoisson(Primitive):
     r"""
+    `mindspore.ops.RandomPoisson` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Produces random non-negative values i, distributed according to discrete probability function:
 
     .. math::
@@ -660,7 +668,7 @@ class RandomPoisson(Primitive):
         ValueError: If `shape` elements are negative.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -676,6 +684,7 @@ class RandomPoisson(Primitive):
         (2, 3, 2)
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0, dtype=mstype.int64):
         """Initialize Poisson"""
@@ -690,6 +699,8 @@ class RandomPoisson(Primitive):
 
 class UniformInt(Primitive):
     r"""
+    `mindspore.ops.UniformInt` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Produces random integer values i, uniformly distributed on the closed interval [minval, maxval), that is,
     distributed according to the discrete probability function:
 
@@ -734,7 +745,7 @@ class UniformInt(Primitive):
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -749,6 +760,7 @@ class UniformInt(Primitive):
         (2, 4)
     """
 
+    @deprecated("2.10.0", "mindspore.mint.randint", False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformInt"""
@@ -761,6 +773,8 @@ class UniformInt(Primitive):
 
 class UniformReal(Primitive):
     r"""
+    `mindspore.ops.UniformReal` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Produces random floating-point values, uniformly distributed to the interval [0, 1).
 
     Note:
@@ -798,7 +812,7 @@ class UniformReal(Primitive):
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import ops
@@ -810,6 +824,7 @@ class UniformReal(Primitive):
         (2, 2)
     """
 
+    @deprecated("2.10.0", "mindspore.mint.rand", False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformReal"""
@@ -1057,6 +1072,8 @@ class MultinomialWithReplacement(Primitive):
 
 class UniformCandidateSampler(Primitive):
     r"""
+    `mindspore.ops.UniformCandidateSampler` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Uniform candidate sampler.
 
     This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
@@ -1093,7 +1110,7 @@ class UniformCandidateSampler(Primitive):
           each of sampled_candidates. Shape: :math:`(num\_sampled, )`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1108,6 +1125,7 @@ class UniformCandidateSampler(Primitive):
         (3,)
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, num_true, num_sampled, unique, range_max, seed=0, remove_accidental_hits=False):
         """Initialize UniformCandidateSampler"""
@@ -1136,6 +1154,9 @@ class UniformCandidateSampler(Primitive):
 
 class LogUniformCandidateSampler(Primitive):
     r"""
+    `mindspore.ops.LogUniformCandidateSampler` is deprecated from version 2.10.0 and will be removed
+    in a future version.
+
     Generates random labels with a log-uniform distribution for sampled_candidates.
 
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
@@ -1168,7 +1189,7 @@ class LogUniformCandidateSampler(Primitive):
         - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1184,6 +1205,7 @@ class LogUniformCandidateSampler(Primitive):
 
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
         """Initialize LogUniformCandidateSampler"""

@@ -3,10 +3,9 @@ mindspore.ops.matrix_set_diag
 
 .. py:function:: mindspore.ops.matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT")
 
-    返回一个tensor，使用输入 `diagonal` 中的元素值替换 `x` 矩阵的第 `k[0]` 条到第 `k[1]` 条对角线上的元素值。
+    `mindspore.ops.matrix_set_diag` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
+    返回一个tensor，使用输入 `diagonal` 中的元素值替换 `x` 矩阵的第 `k[0]` 条到第 `k[1]` 条对角线上的元素值。
 
     参数：
         - **x** (Tensor) - 输入tensor，其秩不小于2。

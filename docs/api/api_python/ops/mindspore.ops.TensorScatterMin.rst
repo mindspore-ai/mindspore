@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.TensorScatterMin
 
+    `mindspore.ops.TensorScatterMin` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据指定的更新值 `updates` 和输入索引 `indices` ，计算原值与更新值的较小值并更新原值，返回更新后的Tensor。
 
     更多参考详见 :func:`mindspore.ops.tensor_scatter_min`。

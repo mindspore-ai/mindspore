@@ -3,6 +3,8 @@ mindspore.ops.ApplyAdagradV2
 
 .. py:class:: mindspore.ops.ApplyAdagradV2(epsilon, update_slots=True)
 
+    `mindspore.ops.ApplyAdagradV2` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据Adagrad算法更新相关参数或者Tensor。
 
     Adagrad算法在论文 `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ 中提出。

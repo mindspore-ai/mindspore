@@ -3,6 +3,8 @@ mindspore.ops.ScatterNdMin
 
 .. py:class:: mindspore.ops.ScatterNdMin(use_locking=False)
 
+    `mindspore.ops.ScatterNdMin` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     对Tensor中的单个值或切片应用稀疏最小值。
 
     使用给定值通过最小值运算和输入索引更新 `input_x` 的值。为便于使用更新后的值，函数返回 `input_x` 的副本。

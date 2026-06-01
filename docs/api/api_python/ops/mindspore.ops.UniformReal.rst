@@ -3,6 +3,8 @@ mindspore.ops.UniformReal
 
 .. py:class:: mindspore.ops.UniformReal(seed=0, seed2=0)
 
+    `mindspore.ops.UniformReal` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     生成随机的浮点数，这些数均匀分布在[0,1)范围内。
 
     .. note::

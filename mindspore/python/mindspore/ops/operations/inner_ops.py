@@ -155,6 +155,8 @@ class NoRepeatNGram(Primitive):
 
 class LambApplyOptimizerAssign(PrimitiveWithInfer):
     r"""
+    `mindspore.ops.LambApplyOptimizerAssign` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates gradients by LAMB optimizer algorithm. Get the compute ratio.
 
     The Lamb optimizer is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
@@ -202,9 +204,10 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
                            has the same type as `gradient`.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyOptimizerAssign"""
@@ -231,6 +234,8 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
 
 class LambApplyWeightAssign(PrimitiveWithInfer):
     r"""
+    `mindspore.ops.LambApplyWeightAssign` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates gradients by LAMB optimizer algorithm. The weight update part.
 
     The Lamb optimizer is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
@@ -265,9 +270,10 @@ class LambApplyWeightAssign(PrimitiveWithInfer):
         - **var** (Tensor) - Weights to be updated in place, the same shape and type as `var` in inputs.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize LambApplyWeightAssign"""
@@ -529,7 +535,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
     Inputs:
         - **epsilon** (Tensor) - input epsilon pair.
         - **clip_threshold** (float) - The threshold of root mean square of final gradient update.
-        - **beta1** (float) - The exponential decay rate for the 1nd moment estimations.
+        - **beta1** (float) - The exponential decay rate for the 1st moment estimations.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations.
         - **weight_decay** (float) - The weight decay value, must be a scalar tensor with float data type.
         - **learning_rate** (float) - The learning rate value.
@@ -670,7 +676,7 @@ class ScaleGrad(PrimitiveWithInfer):
     Scale the input grad according to the loss scale.
 
     Inputs:
-        - **gradients** (list of Tensor or tupe of Tensor).
+        - **gradients** (list of Tensor or tuple of Tensor).
 
     Outputs:
         tuple[Tensor], the shape of each output tensor is the same to the input gradient.

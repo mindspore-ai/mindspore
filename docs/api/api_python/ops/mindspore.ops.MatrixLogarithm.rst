@@ -3,6 +3,8 @@ mindspore.ops.MatrixLogarithm
 
 .. py:class:: mindspore.ops.MatrixLogarithm
 
+    `mindspore.ops.MatrixLogarithm` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     返回一个或多个方阵的矩阵对数。
 
     输入：

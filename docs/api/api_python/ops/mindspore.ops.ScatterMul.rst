@@ -3,6 +3,8 @@ mindspore.ops.ScatterMul
 
 .. py:class:: mindspore.ops.ScatterMul(use_locking=False)
 
+    `mindspore.ops.ScatterMul` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据指定更新值和输入索引通过乘法运算更新输入数据的值。
 
     对于 `indices.shape` 的每个 `i, ..., j` ：

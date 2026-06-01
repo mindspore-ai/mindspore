@@ -3,6 +3,8 @@ mindspore.ops.RandomGamma
 
 .. py:class:: mindspore.ops.RandomGamma(seed=0, seed2=0)
 
+    `mindspore.ops.RandomGamma` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据概率密度函数分布生成随机正值浮点数x。
 
     .. note::

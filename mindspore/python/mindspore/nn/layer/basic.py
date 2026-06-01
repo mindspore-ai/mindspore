@@ -1528,6 +1528,8 @@ class MatrixDiagPart(Cell):
 
 class MatrixSetDiag(Cell):
     r"""
+    `mindspore.nn.MatrixSetDiag` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Modifies the batched diagonal part of a batched tensor.
 
     Assume `x` has :math:`k+1` dimensions :math:`[I, J, K, ..., M, N]` and `diagonal` has :math:`k`
@@ -1555,7 +1557,7 @@ class MatrixSetDiag(Cell):
         ValueError: If x_shape[-2] >= x_shape[-1] and x_shape[:-2] + x_shape[-1:] != diagonal_shape.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1573,6 +1575,7 @@ class MatrixSetDiag(Cell):
           [ 0.  1.]]]
     """
 
+    @deprecated("2.10.0", None, False)
     def __init__(self):
         """Initialize MatrixSetDiag."""
         super().__init__()

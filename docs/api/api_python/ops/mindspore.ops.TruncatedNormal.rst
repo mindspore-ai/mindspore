@@ -3,6 +3,8 @@ mindspore.ops.TruncatedNormal
 
 .. py:class:: mindspore.ops.TruncatedNormal(seed=0, seed2=0, dtype=mstype.float32)
 
+    `mindspore.ops.TruncatedNormal` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     返回一个具有指定shape的Tensor，其数值取自正态分布。
 
     生成的值符合正态分布。
@@ -36,4 +38,3 @@ mindspore.ops.TruncatedNormal
         - **ValueError** - `shape` 的元素不全大于零。
         - **ValueError** - `shape` 不是一维Tensor。
         - **ValueError** - 输出Tensor的元素个数大于1000000。
-

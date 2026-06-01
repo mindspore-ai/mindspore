@@ -3,6 +3,8 @@ mindspore.ops.randint
 
 .. py:function:: mindspore.ops.randint(low, high, size, seed=None, *, dtype=None)
 
+    `mindspore.ops.randint` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     返回一个tensor，其元素为 [ `low` , `high` ) 区间的随机整数。
 
     .. warning::

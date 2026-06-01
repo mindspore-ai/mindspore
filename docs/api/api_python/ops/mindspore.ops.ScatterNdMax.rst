@@ -3,6 +3,8 @@ mindspore.ops.ScatterNdMax
 
 .. py:class:: mindspore.ops.ScatterNdMax(use_locking=False)
 
+    `mindspore.ops.ScatterNdMax` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     对张量中的单个值或切片计算稀疏最大值。
 
     使用给定值通过最大值运算和输入索引更新Parameter或Tensor值。在更新完成后输出 `input_x` ，这有利于更加方便地使用更新后的值。

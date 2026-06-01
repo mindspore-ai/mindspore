@@ -3,6 +3,8 @@ mindspore.ops.CheckValid
 
 .. py:class:: mindspore.ops.CheckValid
 
+    `mindspore.ops.CheckValid` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     检查边界框。
 
     检查由 `bboxes` 指定的一些边框是否是有效的。

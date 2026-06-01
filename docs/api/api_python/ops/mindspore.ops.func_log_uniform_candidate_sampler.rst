@@ -3,13 +3,14 @@ mindspore.ops.log_uniform_candidate_sampler
 
 .. py:function:: mindspore.ops.log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0)
 
+    `mindspore.ops.log_uniform_candidate_sampler` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     使用log-uniform(Zipfian)分布对一组类别进行采样。
 
     该操作从整数范围[0, `range_max` )中随机采样一个采样类( `sampled_candidates` )的Tensor。
 
     .. warning::
         - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
-        - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为 :math:`(batch\_size, num\_true)` 。

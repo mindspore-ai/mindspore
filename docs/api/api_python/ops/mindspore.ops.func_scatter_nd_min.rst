@@ -3,14 +3,13 @@ mindspore.ops.scatter_nd_min
 
 .. py:function:: mindspore.ops.scatter_nd_min(input_x, indices, updates, use_locking=False)
 
+    `mindspore.ops.scatter_nd_min` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据指定索引和更新值对 `input_x` 进行稀疏最小值更新。
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]]
         = \min(\text{input_x}[\text{indices}[i, ..., j]], \text{updates}[i, ..., j])
-
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         - 支持隐式类型转换、类型提升。

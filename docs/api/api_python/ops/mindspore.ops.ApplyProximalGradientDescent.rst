@@ -3,6 +3,8 @@ mindspore.ops.ApplyProximalGradientDescent
 
 .. py:class:: mindspore.ops.ApplyProximalGradientDescent
 
+    `mindspore.ops.ApplyProximalGradientDescent` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据FOBOS(Forward Backward Splitting)算法更新网络参数或者Tensor。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_。

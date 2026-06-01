@@ -3,6 +3,8 @@ mindspore.ops.check_valid
 
 .. py:function:: mindspore.ops.check_valid(bboxes, img_metas)
 
+    `mindspore.ops.check_valid` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     检查边界框是否在图片内。
 
     `bboxes` 里包含了多组边界框，每一组边界框用两个横坐标点 :math:`(x0, x1)` 和两个纵坐标点 :math:`(y0, y1)` 表示。

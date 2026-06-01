@@ -45,6 +45,8 @@ from mindspore.ops.auto_generate import (
     CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy, Trunc, Sign, Polar,
     IsInf, Lerp, LerpScalar)
 
+Betainc.__init__ = deprecated("2.10.0", None, False)(Betainc.__init__)
+
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -3084,6 +3086,8 @@ class Invert(Primitive):
 
 class Eps(Primitive):
     """
+    `mindspore.ops.Eps` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Create a Tensor with the same data type and shape as input, and the element value is the minimum value that the
     corresponding data type can express.
 
@@ -3101,7 +3105,7 @@ class Eps(Primitive):
         TypeError: If data type of `x` is neither float16, float32, nor float64.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3112,6 +3116,7 @@ class Eps(Primitive):
         [1.1920929e-07 1.1920929e-07 1.1920929e-07 1.1920929e-07]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize Eps"""
@@ -3223,6 +3228,8 @@ class MatrixPower(Primitive):
 
 class MatrixLogarithm(Primitive):
     """
+    `mindspore.ops.MatrixLogarithm` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Return the matrix logarithm of one or more square matrices.
 
     Inputs:
@@ -3239,7 +3246,7 @@ class MatrixLogarithm(Primitive):
         ValueError: If the size of last two dimensions are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[1 + 2j, 2 + 1j], [4 + 1j, 5 + 2j]])
@@ -3250,6 +3257,7 @@ class MatrixLogarithm(Primitive):
          [1.02426074-0.88736831j 1.44677531+0.6400109j ]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize MatrixLogarithm"""
@@ -3409,6 +3417,8 @@ class Imag(Primitive):
 
 class TridiagonalMatMul(Primitive):
     """
+    `mindspore.ops.TridiagonalMatMul` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Return the result of a multiplication of two matrices, where the left one is a Tridiagonal Matrix.
 
     Inputs:
@@ -3449,7 +3459,7 @@ class TridiagonalMatMul(Primitive):
                     are not same.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> tridiagonalmatmul = ops.TridiagonalMatMul()
@@ -3464,6 +3474,7 @@ class TridiagonalMatMul(Primitive):
          [ 6.  6.  6.]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize TridiagonalMatMul"""
@@ -3610,6 +3621,8 @@ class MatrixSolve(Primitive):
 
 class MatrixSolveLs(Primitive):
     r"""
+    `mindspore.ops.MatrixSolveLs` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Solves one or more linear least-squares problems.
 
     If `fast` is `True`,then the solution is computed by solving the normal equations using Cholesky decomposition.
@@ -3638,7 +3651,7 @@ class MatrixSolveLs(Primitive):
         ValueError: If shape of `matrix` does not match the shape of `rhs`.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> matrix_solve_ls = ops.MatrixSolveLs(fast=True)
@@ -3653,6 +3666,7 @@ class MatrixSolveLs(Primitive):
         [-1.3333333]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, fast=True):
         """Initialize MatrixSolveLs"""
@@ -4234,6 +4248,8 @@ class Bernoulli(Primitive):
 
 class TridiagonalSolve(Primitive):
     """
+    `mindspore.ops.TridiagonalSolve` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Return the results of tridiagonal systems of equations.
 
     Solve the tridiagonal systems of equations like:AX = B.
@@ -4265,7 +4281,7 @@ class TridiagonalSolve(Primitive):
         ValueError: If diagonals and rhs have different rank of shape.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
     Examples:
         >>> diagonals = Tensor(np.array([[1.0,2.0,3.0],[2.0,3.0,4.0],[3.0,4.0,5.0]]).astype(np.float32))
         >>> rhs = Tensor(np.array([[1.0],[2.0],[3.0]]).astype(np.float32))
@@ -4276,6 +4292,7 @@ class TridiagonalSolve(Primitive):
          [-0.5]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, partial_pivoting=True):
         self.init_prim_io_names(inputs=['diagonals', 'rhs'], outputs=['y'])

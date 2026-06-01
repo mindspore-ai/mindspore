@@ -20,6 +20,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore import _checkparam as validator
 from mindspore.common import Tensor, Parameter, dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.graph.api import jit
 from mindspore.nn.optim.optimizer import _grad_scale, Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
@@ -52,6 +53,8 @@ def _check_param_value(optimizer, epsilon, coefficient, use_clip, prim_name):
 
 class LARS(Optimizer):
     r"""
+    `mindspore.nn.LARS` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Implements the LARS algorithm.
 
     LARS is an optimization algorithm employing a large batch optimization technique. Refer to paper `LARGE BATCH
@@ -86,9 +89,6 @@ class LARS(Optimizer):
     :math:`t` represents the current step, :math:`\lambda` represents `weight_decay` in `optimizer`,
     :math:`\gamma` represents `learning_rate` in `optimizer`, :math:`\eta` represents `coefficient`.
 
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
     Args:
         optimizer (:class:`mindspore.nn.Optimizer`): MindSpore optimizer for which to wrap and modify gradients.
         epsilon (float): Term added to the denominator to improve numerical stability. Default: ``1e-05`` .
@@ -102,7 +102,7 @@ class LARS(Optimizer):
           as same as the `params` in the optimizer.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -117,6 +117,7 @@ class LARS(Optimizer):
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=opt_lars, metrics=None)
     """
 
+    @deprecated("2.9.0", None, False)
     @opt_init_args_register
     def __init__(self, optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False,
                  lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name):

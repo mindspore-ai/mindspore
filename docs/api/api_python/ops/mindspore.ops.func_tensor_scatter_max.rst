@@ -3,13 +3,12 @@
 
 .. py:function:: mindspore.ops.tensor_scatter_max(input_x, indices, updates)
 
+    `mindspore.ops.tensor_scatter_max` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     返回一个新tensor，根据指定索引和更新值对 `input_x` 进行最大值更新。
 
     .. math::
         output\left [indices \right ] = \max(input\_x, updates)
-
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         如果 `indices` 中的值超出输入 `input_x` 索引范围：

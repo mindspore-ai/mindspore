@@ -3,6 +3,8 @@ mindspore.ops.random_poisson
 
 .. py:function:: mindspore.ops.random_poisson(shape, rate, seed=None, dtype=mstype.float32)
 
+    `mindspore.ops.random_poisson` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     从指定均值为 `rate` 的泊松分布中，生成指定shape的随机样本。
 
     .. math::

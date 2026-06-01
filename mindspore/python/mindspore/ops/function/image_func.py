@@ -20,9 +20,9 @@ from mindspore.ops.operations import image_ops as IMG
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
-from .._primitive_cache import _get_cache_prim
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.common._decorator import deprecated
 
-check_valid_ = P.CheckValid()
 dtype_ = P.DType()
 
 
@@ -111,6 +111,7 @@ def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
     return bounding_box_encode_op(anchor_box, groundtruth_box)
 
 
+@deprecated("2.10.0", None, False, "ops.")
 def check_valid(bboxes, img_metas):
     r"""
     Checks whether the bounding box is in the image.
@@ -166,7 +167,7 @@ def check_valid(bboxes, img_metas):
         >>> print(output)
         [ True False False]
     """
-    return check_valid_(bboxes, img_metas)
+    return _get_cache_prim(P.CheckValid)()(bboxes, img_metas)
 
 
 def _crop_and_resize_check(image, boxes, box_indices, crop_size):
@@ -181,6 +182,28 @@ def _crop_and_resize_check(image, boxes, box_indices, crop_size):
         raise TypeError("For crop_and_resize, the input crop_size must be a tuple, but got {}".format(type(crop_size)))
     if len(crop_size) != 2:
         raise ValueError("For crop_and_resize, the crop_size's length must be 2, bot got {}".format(len(crop_size)))
+    image_shape = image.shape
+    if len(image_shape) != 4:
+        raise ValueError(
+            "For crop_and_resize, the input image must be 4D Tensor, but got is {}D".format(len(image_shape)))
+    boxes_dtype = dtype_(boxes)
+    if boxes_dtype not in [mstype.float32]:
+        raise TypeError(
+            "For crop_and_resize, the input boxes must be {}, but got {}".format(mstype.float32, boxes_dtype))
+    boxes_shape = boxes.shape
+    if len(boxes_shape) != 2 or boxes_shape[-1] != 4:
+        raise ValueError("For crop_and_resize, the input boxes must be 2D and the second-dim must be 4, "
+                         "but got {}".format(boxes_shape))
+    box_indices_dtype = dtype_(box_indices)
+    if box_indices_dtype not in [mstype.int32]:
+        raise TypeError(
+            "For crop_and_resize, the input box_indices must be {}, but got {}".format(mstype.int32, box_indices_dtype))
+    box_indices_shape = box_indices.shape
+    if len(box_indices_shape) != 1:
+        raise ValueError("For crop_and_resize, the input box_indices must be 1D, but got {}".format(box_indices_shape))
+    if boxes_shape[0] != box_indices_shape[0]:
+        raise ValueError("For crop_and_resize, the first dim of input box_indices must be equal to that of input boxes"
+                         ", but got {} vs {}".format(box_indices_shape[0], boxes_shape[0]))
     if not isinstance(crop_size[0], int) or not isinstance(crop_size[1], int):
         raise TypeError("For crop_and_resize, the crop_size's value must be int.")
     if crop_size[0] <= 0 or crop_size[1] <= 0:
@@ -265,29 +288,6 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
         (5, 24, 24, 3)
     """
     _crop_and_resize_check(image, boxes, box_indices, crop_size)
-    image_shape = image.shape
-    if len(image_shape) != 4:
-        raise ValueError(
-            "For crop_and_resize, the input image must be 4D Tensor, but got is {}D".format(len(image_shape)))
-    boxes_dtype = dtype_(boxes)
-    if boxes_dtype not in [mstype.float32]:
-        raise TypeError(
-            "For crop_and_resize, the input boxes must be {}, but got {}".format(mstype.float32, boxes_dtype))
-    boxes_shape = boxes.shape
-    if len(boxes_shape) != 2 or boxes_shape[-1] != 4:
-        raise ValueError("For crop_and_resize, the input boxes must be 2D and the second-dim must be 4, "
-                         "but got {}".format(boxes_shape))
-    box_indices_dtype = dtype_(box_indices)
-    if box_indices_dtype not in [mstype.int32]:
-        raise TypeError(
-            "For crop_and_resize, the input box_indices must be {}, but got {}".format(mstype.int32, box_indices_dtype))
-    box_indices_shape = box_indices.shape
-    if len(box_indices_shape) != 1:
-        raise ValueError("For crop_and_resize, the input box_indices must be 1D, but got {}".format(box_indices_shape))
-    if boxes_shape[0] != box_indices_shape[0]:
-        raise ValueError("For crop_and_resize, the first dim of input box_indices must be equal to that of input boxes"
-                         ", but got {} vs {}".format(box_indices_shape[0], boxes_shape[0]))
-
     _crop_and_resize = _get_cache_prim(IMG.CropAndResize)(method, extrapolation_value)
     return _crop_and_resize(image, boxes, box_indices, crop_size)
 

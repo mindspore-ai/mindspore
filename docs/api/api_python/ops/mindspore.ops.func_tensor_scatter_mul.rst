@@ -3,13 +3,12 @@ mindspore.ops.tensor_scatter_mul
 
 .. py:function:: mindspore.ops.tensor_scatter_mul(input_x, indices, updates)
 
+    `mindspore.ops.tensor_scatter_mul` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据指定索引和更新值对 `input_x` 进行乘法更新。
 
     .. math::
         output\left [indices \right ] = input\_x\times updates
-
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
         - 如果 `indices` 的某些值超出 `input_x` 的维度范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。

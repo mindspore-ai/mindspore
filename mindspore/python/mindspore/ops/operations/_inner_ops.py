@@ -390,6 +390,8 @@ class MatrixDiagPart(PrimitiveWithInfer):
 
 class MatrixSetDiag(PrimitiveWithInfer):
     r"""
+    `mindspore.ops.MatrixSetDiag` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Modifies the batched diagonal part of a batched tensor.
 
     Inputs:
@@ -401,6 +403,9 @@ class MatrixSetDiag(PrimitiveWithInfer):
     Outputs:
         Tensor, data type same as input `x`. The shape same as `x`.
 
+    Supported Platforms:
+        Deprecated
+
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
@@ -411,6 +416,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
 
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize MatrixSetDiag"""
@@ -990,6 +996,8 @@ class StackDestroy(PrimitiveWithInfer):
 
 class DynamicStitch(PrimitiveWithCheck):
     r"""
+    `mindspore.ops.DynamicStitch` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Interleave the values from the data tensors into a single tensor.
 
     Inputs:
@@ -1004,7 +1012,7 @@ class DynamicStitch(PrimitiveWithCheck):
         ValueError: If the length of `data` or `indices` is not greater than 1.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> x1 = Tensor([6], mstype.int32)
@@ -1025,6 +1033,7 @@ class DynamicStitch(PrimitiveWithCheck):
          [61 62]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize DynamicStitch"""
@@ -1752,7 +1761,7 @@ class KMeansCentroids(PrimitiveWithInfer):
     Outputs:
         - **segment_sum** (Tensor(float32)) - Clustering result w.r.t. each centroid
         - **segment_count** (Tensor(float32)) - Clustering count w.r.t. each centroid
-        - **kmean_total_sum** (Tensor(float32)) - The sum of the distances from all vectors to ther nearest centroid
+        - **kmean_total_sum** (Tensor(float32)) - The sum of the distances from all vectors to their nearest centroid
 
     Supported Platforms:
         ''Ascend''

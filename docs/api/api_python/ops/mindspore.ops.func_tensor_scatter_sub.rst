@@ -3,10 +3,9 @@
 
 .. py:function:: mindspore.ops.tensor_scatter_sub(input_x, indices, updates)
 
-    返回一个新tensor，根据指定索引和更新值对 `input_x` 进行减法更新。
+    `mindspore.ops.tensor_scatter_sub` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
+    返回一个新tensor，根据指定索引和更新值对 `input_x` 进行减法更新。
 
     .. math::
         output[indices] = input\_x - updates

@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.ApplyFtrl(use_locking=False)
 
+    `mindspore.ops.ApplyFtrl` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据FTRL算法更新相关参数或者Tensor。
 
     更多详细信息请参见 :class:`mindspore.nn.FTRL` 。
