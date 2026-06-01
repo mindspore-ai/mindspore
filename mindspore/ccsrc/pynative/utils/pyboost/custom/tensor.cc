@@ -25,6 +25,9 @@
 #include "ir/tensor_new.h"
 #include "include/utils/tensor_utils.h"
 #include "include/pynative/utils/pynative_utils.h"
+#include "include/utils/pynative/dispatch/ms_dispatch_py_obj.h"
+#include "include/utils/pynative/dispatch/py_convert.h"
+#include "include/utils/python_attr.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace ms {
@@ -216,6 +219,17 @@ namespace pybind11 {
 namespace detail {
 bool type_caster<ms::Tensor>::load(handle src, bool) {
   if (mindspore::tensor::IsTensorPy(src)) {
+    if (!mindspore::tensor::IsPyObjectPythonTensorStrict(src.ptr()) &&
+        mindspore::FastGetPyObjectAttr(src.ptr(), mindspore::pynative::GetMsDispatchStr().c_str()).ptr() != nullptr) {
+      auto source_obj = pybind11::reinterpret_borrow<pybind11::object>(src);
+      auto tensor_with_source = mindspore::pynative::ConvertPyObjectToTensorWithSourcePyObj(source_obj);
+      if (tensor_with_source != nullptr && tensor_with_source->has_ms_dispatch()) {
+        tensor_with_source->set_need_pipeline_sync(true);
+        value = ms::Tensor(tensor_with_source);
+        return true;
+      }
+    }
+
     auto v = mindspore::tensor::ConvertToValue(src);
     if (v->isa<mindspore::tensor::Tensor>()) {
       v->cast<mindspore::tensor::TensorPtr>()->set_need_pipeline_sync(true);

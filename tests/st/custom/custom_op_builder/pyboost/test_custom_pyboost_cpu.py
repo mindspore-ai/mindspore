@@ -14,10 +14,62 @@
 # ============================================================================
 """ tests_custom_pyboost_cpu """
 
+import os
 import numpy as np
 import mindspore as ms
+from mindspore import Tensor
+from mindspore._c_expression import _DisableMsDispatchMode
 from mindspore.ops import CustomOpBuilder
 from tests.mark_utils import arg_mark
+
+RUN_OPS = []
+
+
+def _local_ccsrc_include_path():
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(test_dir, "../../../../.."))
+    return os.path.join(repo_root, "mindspore", "ccsrc")
+
+
+class Layout:
+    pass
+
+
+class DTensor(Tensor):
+    def __new__(cls, local_tensor, layout):
+        t = Tensor._make_subclass(cls, local_tensor)
+        t._local_tensor = local_tensor
+        t._layout = layout
+        return t
+
+    def __init__(self, local_tensor, layout):
+        pass
+
+    def asnumpy(self):
+        return self._local_tensor.asnumpy()
+
+    @classmethod
+    def __ms_dispatch__(cls, func, args=(), kwargs=None):
+        def unwrap_dtensor(x):
+            if isinstance(x, DTensor):
+                return x._local_tensor  # pylint: disable=protected-access
+            if isinstance(x, (tuple, list)):
+                return type(x)(unwrap_dtensor(item) for item in x)
+            return x
+
+        def wrap_dtensor(x):
+            if isinstance(x, Tensor):
+                return DTensor(x, Layout())
+            if isinstance(x, (tuple, list)):
+                return type(x)(wrap_dtensor(item) for item in x)
+            return x
+
+        RUN_OPS.append(func.name)
+        if kwargs is None:
+            kwargs = {}
+        new_args = [unwrap_dtensor(arg) for arg in args]
+        with _DisableMsDispatchMode():
+            return wrap_dtensor(func(*new_args, **kwargs))
 
 
 @arg_mark(plat_marks=["cpu_linux"], level_mark="level0", card_mark="onecard")
@@ -28,7 +80,8 @@ def test_pyboost_cpu_add():
     Expectation: success.
     """
     ms.set_device("CPU")
-    my_ops = CustomOpBuilder("pyboost_cpu_add", ['jit_test_files/pyboost_cpu_add.cpp'], backend="CPU").load()
+    my_ops = CustomOpBuilder("pyboost_cpu_add", ['jit_test_files/pyboost_cpu_add.cpp'], backend="CPU",
+                             include_paths=[_local_ccsrc_include_path()]).load()
     x = np.random.randint(0, 100, size=(10, 10, 10)).astype(np.int32)
     y = np.random.randint(0, 100, size=(9, 9, 9)).astype(np.int32)
     # the sliced shape is [4, 4, 4]
@@ -55,6 +108,12 @@ def test_pyboost_cpu_add():
 
     out = my_ops.add4(ms.Tensor(x), ms.Tensor(y), [ms.Tensor(z)])
     assert np.allclose(out.asnumpy(), expect, 1e-3, 1e-3)
+
+    RUN_OPS.clear()
+    out = my_ops.add4(ms.Tensor(x), ms.Tensor(y), [ms.Tensor(z), DTensor(ms.Tensor(z), Layout())])
+    assert isinstance(out, DTensor)
+    assert np.allclose(out.asnumpy(), expect, 1e-3, 1e-3)
+    assert RUN_OPS == ["CustomAdd4::Eval"]
 
     out = my_ops.add5(ms.Tensor(x), ms.Tensor(y), [[ms.Tensor(z)]])
     assert np.allclose(out.asnumpy(), expect, 1e-3, 1e-3)

@@ -14,12 +14,142 @@
 # ============================================================================
 """ tests_custom_pyboost_ascend """
 
+import os
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore._c_expression import typing
+from mindspore import Tensor
+from mindspore._c_expression import NoFallbackGuard, _DisableMsDispatchMode, typing
 from mindspore.ops import CustomOpBuilder
+from mindspore.utils.ms_dispatch import MsDispatchMode
 from tests.mark_utils import arg_mark
+
+
+RUN_OPS = []
+
+
+def _local_ccsrc_include_path():
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(test_dir, "../../../../.."))
+    return os.path.join(repo_root, "mindspore", "ccsrc")
+
+
+class Layout:
+    pass
+
+
+class DTensor(Tensor):
+    def __new__(cls, local_tensor, layout):
+        t = Tensor._make_subclass(cls, local_tensor)
+        t._local_tensor = local_tensor
+        t._layout = layout
+        return t
+
+    def __init__(self, local_tensor, layout):
+        pass
+
+    def asnumpy(self):
+        return self._local_tensor.asnumpy()
+
+    @classmethod
+    def __ms_dispatch__(cls, func, args=(), kwargs=None):
+        def unwrap_dtensor(x):
+            if isinstance(x, DTensor):
+                return x._local_tensor  # pylint: disable=protected-access
+            if isinstance(x, (tuple, list)):
+                return type(x)(unwrap_dtensor(item) for item in x)
+            return x
+
+        def wrap_dtensor(x):
+            if isinstance(x, Tensor):
+                return DTensor(x, Layout())
+            if isinstance(x, (tuple, list)):
+                return type(x)(wrap_dtensor(item) for item in x)
+            return x
+
+        RUN_OPS.append(func.name)
+        if kwargs is None:
+            kwargs = {}
+        new_args = [unwrap_dtensor(arg) for arg in args]
+        with _DisableMsDispatchMode():
+            return wrap_dtensor(func(*new_args, **kwargs))
+
+
+class FallbackDTensor(Tensor):
+    """Tensor subclass used to verify custom PyBoost fallback dispatch."""
+
+    def __new__(cls, local_tensor, layout):
+        t = Tensor._make_subclass(cls, local_tensor)
+        t._local_tensor = local_tensor
+        t._layout = layout
+        return t
+
+    def __init__(self, local_tensor, layout):  # pylint: disable=super-init-not-called
+        pass
+
+    def asnumpy(self):
+        return self._local_tensor.asnumpy()
+
+    @classmethod
+    def __fallback__(cls, func, args=(), kwargs=None):  # pylint: disable=protected-access
+        def unwrap_tensor(x):
+            if isinstance(x, FallbackDTensor):
+                return x._local_tensor  # pylint: disable=protected-access
+            if isinstance(x, (tuple, list)):
+                return type(x)(unwrap_tensor(item) for item in x)
+            return x
+
+        def wrap_tensor(x):
+            if isinstance(x, Tensor):
+                return FallbackDTensor(x, Layout())
+            if isinstance(x, (tuple, list)):
+                return type(x)(wrap_tensor(item) for item in x)
+            return x
+
+        RUN_OPS.append(f"fallback:{func.name}")
+        if kwargs is None:
+            kwargs = {}
+        new_args = [unwrap_tensor(arg) for arg in args]
+        with NoFallbackGuard():
+            return wrap_tensor(func(*new_args, **kwargs))
+
+
+class FallbackAndDispatchDTensor(FallbackDTensor):
+    """Tensor subclass used to verify fallback priority over ms_dispatch."""
+
+    @classmethod
+    def __ms_dispatch__(cls, func, args=(), kwargs=None):
+        RUN_OPS.append(f"dispatch:{func.name}")
+        if kwargs is None:
+            kwargs = {}
+        with _DisableMsDispatchMode():
+            return func(*args, **kwargs)
+
+
+def _make_base_dtensor(data):
+    global RUN_OPS
+    RUN_OPS = []
+    return _make_dtensor(data)
+
+
+def _make_dtensor(data):
+    return DTensor(Tensor(data), Layout())
+
+
+def _make_fallback_dtensor(data):
+    global RUN_OPS
+    RUN_OPS = []
+    return FallbackDTensor(Tensor(data), Layout())
+
+
+def _assert_dtensor_close(output, expect, rtol=1e-3, atol=1e-3):
+    assert isinstance(output, DTensor)
+    assert np.allclose(output.asnumpy(), expect, rtol, atol)
+
+
+def _assert_fallback_dtensor_close(output, expect, rtol=1e-3, atol=1e-3):
+    assert isinstance(output, FallbackDTensor)
+    assert np.allclose(output.asnumpy(), expect, rtol, atol)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
@@ -185,6 +315,144 @@ def test_pyboost_aclnn():
     expect = np.sum(np.abs(x), 1, keepdims=True)
     output = my_ops.npu_abs_reduce_sum(ms.Tensor(x), (1,), True, None)
     assert np.allclose(output.asnumpy(), expect, 1e-3, 1e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2.0)
+def test_pyboost_aclnn_ms_dispatch_all():
+    """
+    Feature: CustomOpBuilder.
+    Description: Custom ACLNN PyBoost op with the required Tensor subclass dispatch cases.
+    Expectation: Tensor subclass dispatch works, MsDispatchMode has priority, and source object is preserved.
+    """
+    global RUN_OPS
+
+    class PriorityGuard(MsDispatchMode):
+        def __ms_dispatch__(self, func, args=(), kwargs=None):
+            RUN_OPS.append("PriorityGuard")
+            RUN_OPS.append(func.name)
+            if kwargs is None:
+                kwargs = {}
+            return func(*args, **kwargs)
+
+    ms.set_device("Ascend")
+    my_ops = CustomOpBuilder("aclnn_op_ms_dispatch_all", ['jit_test_files/pyboost_aclnn_ms_dispatch_all.cpp'],
+                             backend="Ascend", include_paths=[_local_ccsrc_include_path()]).load()
+
+    def check_dispatch_case(op_name, call_fn, check_fn):
+        output = call_fn()
+        check_fn(output)
+        assert RUN_OPS == [op_name]
+
+        with PriorityGuard():
+            output = call_fn()
+        check_fn(output)
+        assert RUN_OPS == ["PriorityGuard", op_name, op_name]
+
+    reduce_sum_x = np.random.rand(4, 5, 6).astype(np.float32)
+    reduce_sum_expect = np.sum(np.abs(reduce_sum_x), 1, keepdims=True)
+    check_dispatch_case(
+        "custom::npu_abs_reduce_sum",
+        lambda: my_ops.npu_abs_reduce_sum(_make_base_dtensor(reduce_sum_x), (1,), True, None),
+        lambda output: _assert_dtensor_close(output, reduce_sum_expect),
+    )
+    reduce_sum_axis0_expect = np.sum(np.abs(reduce_sum_x), 0, keepdims=False)
+    check_dispatch_case(
+        "custom::npu_abs_reduce_sum",
+        lambda: my_ops.npu_abs_reduce_sum(_make_base_dtensor(reduce_sum_x), (0,), False, None),
+        lambda output: _assert_dtensor_close(output, reduce_sum_axis0_expect),
+    )
+
+    RUN_OPS = []
+    assert my_ops.has_ms_dispatch_source(_make_dtensor(reduce_sum_x))
+    assert not RUN_OPS
+
+    RUN_OPS = []
+    output = my_ops.first_tensor_from_list([Tensor(reduce_sum_x), _make_dtensor(reduce_sum_x)])
+    _assert_dtensor_close(output, reduce_sum_x)
+    assert RUN_OPS == ["custom::first_tensor_from_list"]
+
+    arg_min_x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+    arg_min_expect = np.argmin(arg_min_x, 0)
+    check_dispatch_case(
+        "custom::npu_arg_min",
+        lambda: my_ops.npu_arg_min(_make_base_dtensor(arg_min_x), 0, False),
+        lambda output: _assert_dtensor_close(output, arg_min_expect),
+    )
+
+    cast_x = np.random.randn(16, 16).astype(np.float16)
+    dst_type_id = typing.type_to_type_id(ms.dtype.float32)
+    check_dispatch_case(
+        "custom::npu_cast",
+        lambda: my_ops.npu_cast(_make_base_dtensor(cast_x), dst_type_id),
+        lambda output: _assert_dtensor_close(output, cast_x.astype(np.float32)),
+    )
+
+    batch_norm_x = (3 * np.ones(16)).reshape(2, 2, 1, 4).astype(np.float32)
+    batch_norm_scale = np.ones(2).astype(np.float32)
+    batch_norm_bias = np.ones(2).astype(np.float32)
+    batch_norm_mean = np.ones(2).astype(np.float32)
+    batch_norm_var = np.ones(2).astype(np.float32)
+    batch_norm_expect = np.array([2.99999]).repeat(16, axis=0).astype(np.float32).reshape((2, 2, 1, 4))
+
+    def call_batch_norm():
+        return my_ops.npu_batch_norm(_make_base_dtensor(batch_norm_x), _make_dtensor(batch_norm_scale),
+                                     _make_dtensor(batch_norm_bias), _make_dtensor(batch_norm_mean),
+                                     _make_dtensor(batch_norm_var), False, 0.1, 1e-5)
+
+    def check_batch_norm_output(output):
+        assert isinstance(output, (tuple, list))
+        assert len(output) == 3
+        assert all(isinstance(item, DTensor) for item in output)
+        assert np.allclose(output[0].asnumpy(), batch_norm_expect, 1e-3, 1e-3)
+
+    output = call_batch_norm()
+    check_batch_norm_output(output)
+    assert RUN_OPS == ["custom::npu_batch_norm"]
+
+    avg_pool_image = np.array([[[4.1702e-1, 7.2032e-1, 1.1437e-4, 3.0223e-1],
+                                [1.4676e-1, 9.2339e-2, 1.8626e-1, 3.4556e-1],
+                                [3.9677e-1, 5.3882e-1, 4.1919e-1, 6.8522e-1],
+                                [2.0445e-1, 8.7812e-1, 2.7338e-2, 6.7047e-1]]]).astype(np.float32)
+    avg_pool_expect = np.array([[[0.1043, 0.1801, 0.0756],
+                                 [0.1359, 0.3092, 0.2577],
+                                 [0.0511, 0.2264, 0.1676]]]).astype(np.float32)
+    check_dispatch_case(
+        "custom::npu_avgpool2d",
+        lambda: my_ops.npu_avgpool2d(_make_base_dtensor(avg_pool_image), (2, 2), (2, 2), (1, 1), False, True, 0,
+                                     False),
+        lambda output: _assert_dtensor_close(output, avg_pool_expect, rtol=1e-4, atol=1e-4),
+    )
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2.0)
+def test_pyboost_aclnn_fallback():
+    """
+    Feature: CustomOpBuilder.
+    Description: Custom ACLNN PyBoost op with Tensor subclass fallback.
+    Expectation: Tensor subclass fallback works and takes priority over ms_dispatch.
+    """
+    global RUN_OPS
+
+    ms.set_device("Ascend")
+    my_ops = CustomOpBuilder("aclnn_op_fallback", ['jit_test_files/pyboost_aclnn_ms_dispatch_all.cpp'],
+                             backend="Ascend", include_paths=[_local_ccsrc_include_path()]).load()
+    x = np.random.rand(4, 5, 6).astype(np.float32)
+    expect = np.sum(np.abs(x), 1, keepdims=True)
+
+    output = my_ops.npu_abs_reduce_sum(_make_fallback_dtensor(x), (1,), True, None)
+    _assert_fallback_dtensor_close(output, expect)
+    assert RUN_OPS == ["fallback:custom::npu_abs_reduce_sum"]
+
+    RUN_OPS = []
+    output = my_ops.first_tensor_from_list([FallbackDTensor(Tensor(x), Layout())])
+    _assert_fallback_dtensor_close(output, x)
+    assert RUN_OPS == ["fallback:custom::first_tensor_from_list"]
+
+    RUN_OPS = []
+    fallback_dispatch_input = FallbackAndDispatchDTensor(Tensor(x), Layout())
+    output = my_ops.npu_abs_reduce_sum(fallback_dispatch_input, (1,), True, None)
+    _assert_fallback_dtensor_close(output, expect)
+    assert RUN_OPS == ["fallback:custom::npu_abs_reduce_sum"]
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)

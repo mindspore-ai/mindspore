@@ -26,8 +26,12 @@
 #include <type_traits>
 #include "include/pynative/utils/pyboost/custom/tensor.h"
 #include "mindspore/ccsrc/tools/profiler/profiler.h"
+#include "include/pynative/forward/pyboost/fallback.h"
 #include "include/utils/tensor_utils.h"
 #include "include/pynative/utils/pynative_utils.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/python_attr.h"
+#include "include/utils/tensor_py.h"
 
 namespace mindspore {
 namespace stub {
@@ -184,8 +188,8 @@ class PYBOOST_API PyboostRunner : public std::enable_shared_from_this<PyboostRun
    * @throws If the function execution or promise setting fails, the exception is propagated.
    */
   template <int OUT_NUM, typename FuncType, typename... Args>
-  static typename std::enable_if<(OUT_NUM > 0), py::object>::type Call(FuncType func, Args &&...args) {
-    auto op_name = inner::GetFunctionName(typeid(FuncType).name());
+  static typename std::enable_if<(OUT_NUM > 0), py::object>::type Call(const std::string &op_name, FuncType func,
+                                                                       Args &&...args) {
     mindspore::runtime::ProfilerRecorder profiler(mindspore::runtime::ProfilerModule::kPynative,
                                                   mindspore::runtime::ProfilerEvent::kRunOp, op_name);
     auto py_output = mindspore::tensor::MakeTuple<mindspore::tensor::TensorWrapper, OUT_NUM, false>();
@@ -201,8 +205,14 @@ class PYBOOST_API PyboostRunner : public std::enable_shared_from_this<PyboostRun
   }
 
   template <int OUT_NUM, typename FuncType, typename... Args>
-  static typename std::enable_if<(OUT_NUM == 0), py::object>::type Call(FuncType func, Args &&...args) {
+  static typename std::enable_if<(OUT_NUM > 0), py::object>::type Call(FuncType func, Args &&...args) {
     auto op_name = inner::GetFunctionName(typeid(FuncType).name());
+    return Call<OUT_NUM>(op_name, func, std::forward<Args>(args)...);
+  }
+
+  template <int OUT_NUM, typename FuncType, typename... Args>
+  static typename std::enable_if<(OUT_NUM == 0), py::object>::type Call(const std::string &op_name, FuncType func,
+                                                                        Args &&...args) {
     mindspore::runtime::ProfilerRecorder profiler(mindspore::runtime::ProfilerModule::kPynative,
                                                   mindspore::runtime::ProfilerEvent::kRunOp, op_name);
     mindspore::pynative::DispatchOp(std::make_shared<mindspore::pynative::PassthroughFrontendTask>([=]() {
@@ -210,6 +220,12 @@ class PYBOOST_API PyboostRunner : public std::enable_shared_from_this<PyboostRun
       func(args...);  // Call the function without return value
     }));
     return py::none();
+  }
+
+  template <int OUT_NUM, typename FuncType, typename... Args>
+  static typename std::enable_if<(OUT_NUM == 0), py::object>::type Call(FuncType func, Args &&...args) {
+    auto op_name = inner::GetFunctionName(typeid(FuncType).name());
+    return Call<OUT_NUM>(op_name, func, std::forward<Args>(args)...);
   }
 
   /**
@@ -324,21 +340,163 @@ class PYBOOST_API PyboostRunner : public std::enable_shared_from_this<PyboostRun
 };
 
 template <int OUT_NUM, typename Ret, typename... Args, size_t... I>
-py::object PyboostArgsCallerImpl(Ret (*func)(Args...), const py::args &args, std::index_sequence<I...>) {
-  return ms::pynative::PyboostRunner::Call<OUT_NUM>(func, args[I].cast<std::decay_t<Args>>()...);
+py::object PyboostArgsCallerNoDispatchImpl(Ret (*func)(Args...), const std::string &op_name, const py::args &args,
+                                           std::index_sequence<I...>) {
+  return ms::pynative::PyboostRunner::Call<OUT_NUM>(op_name, func, args[I].cast<std::decay_t<Args>>()...);
 }
 
 template <int OUT_NUM, typename Ret, typename... Args>
-py::object PyboostArgsCaller(Ret (*func)(Args...), const py::args &args) {
+py::object PyboostArgsCallerNoDispatch(Ret (*func)(Args...), const std::string &op_name, const py::args &args) {
   constexpr size_t N = sizeof...(Args);
   if (args.size() != N) {
     MS_LOG(EXCEPTION) << "Argument count mismatch: expected " << N << ", got " << args.size();
   }
-  return PyboostArgsCallerImpl<OUT_NUM>(func, args, std::make_index_sequence<N>());
+  return PyboostArgsCallerNoDispatchImpl<OUT_NUM>(func, op_name, args, std::make_index_sequence<N>());
 }
 
-#define PYBOOST_CALLER(OUT_NUM, FUNC) \
-  ([](const py::args &args) -> py::object { return ms::pynative::PyboostArgsCaller<OUT_NUM>(FUNC, args); })
+inline py::object CustomGetFallbackFromPyObject(PyObject *obj) {
+  if (obj == nullptr || mindspore::tensor::IsPyObjectPythonTensorStrict(obj) ||
+      !mindspore::tensor::IsPyObjectTensorPy(obj)) {
+    return {};
+  }
+  auto fallback = mindspore::FastGetPyObjectAttr(obj, mindspore::pynative::GetFallbackStr().c_str());
+  if (fallback.ptr() != nullptr) {
+    MS_LOG(DEBUG) << "[CustomPyBoost] Found __fallback__ from " << Py_TYPE(obj)->tp_name;
+  }
+  return fallback;
+}
+
+inline py::object CustomGetFallbackFromPyObjectOrSequence(PyObject *obj) {
+  if (obj == nullptr) {
+    return {};
+  }
+  if (PyTuple_Check(obj)) {
+    Py_ssize_t size = PyTuple_Size(obj);
+    for (Py_ssize_t i = 0; i < size; ++i) {
+      PyObject *item = PyTuple_GetItem(obj, i);
+      auto fallback = CustomGetFallbackFromPyObjectOrSequence(item);
+      if (fallback.ptr() != nullptr) {
+        MS_LOG(DEBUG) << "[CustomPyBoost] Found __fallback__ in tuple index " << i
+                      << ", item type: " << Py_TYPE(item)->tp_name;
+        return fallback;
+      }
+    }
+    return {};
+  }
+  if (PyList_Check(obj)) {
+    Py_ssize_t size = PyList_Size(obj);
+    for (Py_ssize_t i = 0; i < size; ++i) {
+      PyObject *item = PyList_GetItem(obj, i);
+      auto fallback = CustomGetFallbackFromPyObjectOrSequence(item);
+      if (fallback.ptr() != nullptr) {
+        MS_LOG(DEBUG) << "[CustomPyBoost] Found __fallback__ in list index " << i
+                      << ", item type: " << Py_TYPE(item)->tp_name;
+        return fallback;
+      }
+    }
+    return {};
+  }
+  return CustomGetFallbackFromPyObject(obj);
+}
+
+inline py::object CustomHandleFallback(const std::string &op_name, const py::args &args, const py::object &fallback,
+                                       const py::object &callable) {
+  MS_LOG(DEBUG) << "[CustomPyBoost] Enter fallback for op " << op_name << ", args size: " << args.size();
+  PyObject *ret = PyObject_CallFunctionObjArgs(fallback.ptr(), callable.ptr(), args.ptr(), NULL);
+  if (ret == nullptr) {
+    if (PyErr_Occurred() != nullptr) {
+      MS_LOG(DEBUG) << "[CustomPyBoost] Python fallback raised for op " << op_name;
+      throw py::error_already_set();
+    }
+    MS_LOG(EXCEPTION) << "[CustomPyBoost] Python fallback failed for op " << op_name;
+  }
+  MS_LOG(DEBUG) << "[CustomPyBoost] Finish fallback for op " << op_name;
+  return py::reinterpret_steal<py::object>(ret);
+}
+
+// CustomOpBuilder extensions can load their own copy of pybind type metadata, so create Python wrapper objects through
+// exported MindSpore runtime helpers instead of casting header-defined C++ classes in the extension.
+template <typename CppCallbackWrapper>
+py::object CustomInvokeGuardChain(CppCallbackWrapper cpp_callback, const py::args &args, const std::string &op_name) {
+  auto &stack = mindspore::pynative::DispatchGuardStack::Get();
+  if (stack.NoMoreGuard()) {
+    MS_LOG(DEBUG) << "[CustomPyBoost] Guard chain complete, executing original op: " << op_name;
+    return cpp_callback(args);
+  }
+
+  const py::object &current_guard = stack.GetCurrentGuardAndMoveNext();
+  py::object handler =
+    mindspore::FastGetPyObjectAttr(current_guard.ptr(), mindspore::pynative::GetDispatchGuardCallbackStr().c_str());
+  if (handler.ptr() == nullptr) {
+    MS_LOG(EXCEPTION) << "Guard does not have valid " << mindspore::pynative::GetDispatchGuardCallbackStr()
+                      << " attribute";
+  }
+
+  auto op_func = mindspore::pynative::MakeOpFunc(
+    op_name, py::cpp_function([cpp_callback, op_name](const py::args &inner_args) mutable {
+      return CustomInvokeGuardChain(cpp_callback, inner_args, op_name);
+    }));
+  MS_LOG(DEBUG) << "[CustomPyBoost] Invoke guard ms_dispatch for op " << op_name;
+  return handler(op_func, args);
+}
+
+template <typename CppCallbackWrapper>
+py::object CustomInvokeMsDispatch(const py::object &handler, CppCallbackWrapper cpp_callback, const py::args &args,
+                                  const std::string &op_name) {
+  auto op_func = mindspore::pynative::MakeOpFunc(
+    op_name,
+    py::cpp_function([cpp_callback, op_name](const py::args &inner_args) mutable { return cpp_callback(inner_args); }));
+  MS_LOG(DEBUG) << "[CustomPyBoost] Invoke tensor-level ms_dispatch for op " << op_name;
+  return handler(op_func, args, py::none());
+}
+
+template <int OUT_NUM, typename Ret, typename... Args>
+py::object PyboostArgsCaller(Ret (*func)(Args...), const std::string &op_name, const py::args &args) {
+  constexpr size_t N = sizeof...(Args);
+  if (args.size() != N) {
+    MS_LOG(EXCEPTION) << "Argument count mismatch: expected " << N << ", got " << args.size();
+  }
+
+  MS_LOG(DEBUG) << "[CustomPyBoost] Start op " << op_name << ", args size: " << args.size();
+  const bool fallback_enabled = mindspore::pynative::fallback_enabled();
+  auto fallback = fallback_enabled ? CustomGetFallbackFromPyObjectOrSequence(args.ptr()) : py::object();
+  if (fallback.ptr() != nullptr) {
+    MS_LOG(DEBUG) << "[CustomPyBoost] Route op " << op_name << " to __fallback__ before ms_dispatch";
+    auto op_call_obj = mindspore::pynative::MakeOpCall(
+      op_name, py::cpp_function([func, op_name](const py::args &inner_args, const py::kwargs &) {
+        return PyboostArgsCaller<OUT_NUM>(func, op_name, inner_args);
+      }));
+    return CustomHandleFallback(op_name, args, fallback, op_call_obj);
+  }
+  MS_LOG(DEBUG) << "[CustomPyBoost] No __fallback__ route for op " << op_name
+                << ", fallback enabled: " << fallback_enabled;
+
+  if (mindspore::pynative::ms_dispatch_enabled()) {
+    auto [dispatch_callback, is_guard_callback] = mindspore::pynative::GetDispatchCallbackFromInput(args);
+    auto cpp_callback = [func, op_name](const py::args &inner_args) -> py::object {
+      return PyboostArgsCaller<OUT_NUM>(func, op_name, inner_args);
+    };
+    if (is_guard_callback) {
+      MS_LOG(DEBUG) << "[CustomPyBoost] Route op " << op_name << " to guard-chain ms_dispatch";
+      mindspore::pynative::GuardChainScope guard_chain_scope;
+      return CustomInvokeGuardChain(cpp_callback, args, op_name);
+    }
+    if (!dispatch_callback.is_none()) {
+      MS_LOG(DEBUG) << "[CustomPyBoost] Route op " << op_name << " to tensor-level ms_dispatch";
+      return CustomInvokeMsDispatch(dispatch_callback, cpp_callback, args, op_name);
+    }
+    MS_LOG(DEBUG) << "[CustomPyBoost] No ms_dispatch callback found for op " << op_name;
+  } else {
+    MS_LOG(DEBUG) << "[CustomPyBoost] ms_dispatch disabled for op " << op_name;
+  }
+
+  MS_LOG(DEBUG) << "[CustomPyBoost] Run op " << op_name << " without fallback/ms_dispatch";
+  return PyboostArgsCallerNoDispatch<OUT_NUM>(func, op_name, args);
+}
+
+#define PYBOOST_CALLER_WITH_NAME(OUT_NUM, FUNC, NAME) \
+  ([](const py::args &args) -> py::object { return ms::pynative::PyboostArgsCaller<OUT_NUM>(FUNC, NAME, args); })
+#define PYBOOST_CALLER(OUT_NUM, FUNC) PYBOOST_CALLER_WITH_NAME(OUT_NUM, FUNC, #FUNC)
 }  // namespace pynative
 }  // namespace ms
 #endif  // MINDSPORE_CCSRC_EXTENSION_PYBOOST_EXTENSION_H_

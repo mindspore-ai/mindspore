@@ -283,6 +283,8 @@ class PYNATIVE_EXPORT TensorOverloadCall {
 
 PYNATIVE_EXPORT void RegOpCall(const py::module *m);
 
+PYNATIVE_EXPORT py::object MakeOpCall(const std::string &name, const py::object &callback);
+
 PYNATIVE_EXPORT void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task);
 }  // namespace pynative
 }  // namespace mindspore
