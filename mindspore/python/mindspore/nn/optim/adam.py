@@ -872,9 +872,9 @@ class AdamWeightDecay(Optimizer):
 
     Note:
         There is usually no connection between an optimizer and mixed precision.
-          But when `FixedLossScaleManager` is used
+        But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to ``False``,
-          the optimizer needs to set the 'loss_scale'.
+        the optimizer needs to set the 'loss_scale'.
         As this optimizer has no argument of `loss_scale`, `loss_scale` needs to be processed by other means.
 
         - When parameters are not grouped,
