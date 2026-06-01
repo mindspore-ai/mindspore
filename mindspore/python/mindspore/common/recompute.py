@@ -18,6 +18,7 @@ from types import MethodType  # pylint: disable=wrong-import-position
 import weakref
 import uuid
 import contextlib
+import contextvars
 from collections import OrderedDict
 from collections import defaultdict
 from mindspore import log as logger
@@ -51,6 +52,25 @@ class _StopRecomputationError(Exception):
 _enable_recompute_early_stop = None
 
 
+class _RecomputeSession:
+    """
+    Context-local recompute session.
+
+    Callers can force multiple backward engines to use the same session key.
+    If retain_on_unpack is True, unpack returns recomputed tensors without
+    popping them, allowing a later backward engine to consume them.
+    """
+
+    def __init__(self, session_id, retain_on_unpack):
+        self.session_id = session_id
+        self.retain_on_unpack = retain_on_unpack
+
+
+_recompute_session = contextvars.ContextVar("_recompute_session", default=None)
+_recompute_session_handles = defaultdict(weakref.WeakSet)
+_recompute_handle_collector = contextvars.ContextVar("_recompute_handle_collector", default=None)
+
+
 @contextlib.contextmanager
 def _set_recompute_early_stop(enable):
     """
@@ -75,6 +95,52 @@ def _set_recompute_early_stop(enable):
         _enable_recompute_early_stop = prev
 
 
+@contextlib.contextmanager
+def _recompute_session_ctx(session_id=None, retain_on_unpack=False):
+    """
+    Force non-reentrant recompute to use a caller-provided session key.
+
+    Args:
+        session_id: Stable key shared by related backward engines. If None, a
+            new key is generated and yielded.
+        retain_on_unpack: If True, unpack returns recomputed tensors without
+            popping them from the session cache.
+    """
+    if session_id is None:
+        session_id = uuid.uuid4().hex
+    token = _recompute_session.set(_RecomputeSession(session_id, retain_on_unpack))
+    try:
+        yield session_id
+    finally:
+        _recompute_session.reset(token)
+
+
+def _clear_recompute_session(session_id):
+    """Clear retained recompute data for one dx/dw split session."""
+    if session_id is None:
+        return
+    handles = tuple(_recompute_session_handles.pop(session_id, ()))
+    for handle in handles:
+        handle.clear_session(session_id)
+
+
+@contextlib.contextmanager
+def _recompute_handle_collector_ctx():
+    """
+    Collect non-reentrant recompute handles created inside this context.
+
+    The yielded list is owned by the caller and remains available after the
+    guard exits. The context variable is reset on exit so later recompute calls
+    are not collected into this list.
+    """
+    handles = []
+    token = _recompute_handle_collector.set(handles)
+    try:
+        yield handles
+    finally:
+        _recompute_handle_collector.reset(token)
+
+
 class _WrapCell(Cell):
     """
     The warp cell is used by recompute cell,
@@ -89,7 +155,7 @@ class _WrapCell(Cell):
         return self.function(*args, **kwargs)
 
 
-class _InputSaver(_Function):
+class _InputSaver(_Function):  # pylint: disable=abstract-method
     """
     A custom function saver for recompute inputs, only support tensor.
     """
@@ -116,7 +182,7 @@ class _InputSaver(_Function):
         raise RuntimeError("_InputSaver backward function should not be called.")
 
 
-class _OutputSaver(_Function):
+class _OutputSaver(_Function):  # pylint: disable=abstract-method
     """
     A custom function saver for recompute outputs, Only support tensor.
     """
@@ -139,9 +205,9 @@ class _OutputSaver(_Function):
         return grad_outputs
 
 
-class _RecomputeState:
+class _RecomputeHandle:
     """
-    Record recompute temp state.
+    Record recompute temp handle.
     """
     def __init__(self, recompute_fn, early_stop=True):
         self.input_node = None
@@ -180,6 +246,38 @@ class _RecomputeState:
             return ctx.recover_inputs(ctx.saved_tensors)
         return self.unwrap_original_inputs()
 
+    def recompute(self, recompute_key):
+        """Run recomputation for the given key when it has not run yet."""
+        session = _recompute_session.get()
+        if session is not None:
+            _recompute_session_handles[recompute_key].add(self)
+        if self.is_recomputed[recompute_key]:
+            return
+
+        new_inputs = self.recover_inputs()
+        prev_grad_flag = _pynative_executor.grad_flag()
+        prev_enable_grad = _pynative_executor.enable_grad()
+        _pynative_executor.set_grad_flag(True)
+        _pynative_executor.set_enable_grad(True)
+        try:
+            try:
+                with _RecomputationHook(weakref.ref(self), recompute_key):
+                    _pynative_executor.new_empty_graph()
+                    self.recompute_fn(*new_inputs)
+                    _pynative_executor.end_empty_graph()
+            except _StopRecomputationError:
+                _pynative_executor.end_empty_graph()
+            self.is_recomputed[recompute_key] = True
+        finally:
+            _pynative_executor.set_grad_flag(prev_grad_flag)
+            _pynative_executor.set_enable_grad(prev_enable_grad)
+
+    def clear_session(self, session_id):
+        """Clear retained recompute data associated with a session."""
+        self.recomputed_data.pop(session_id, None)
+        self.is_recomputed.pop(session_id, None)
+        self.placeholder_counter.pop(session_id, None)
+
 
 class _PlaceHolder:
     """
@@ -193,36 +291,29 @@ class _CreatePlaceholderHook(saved_tensors_hooks):
     """
     Placeholder hook for forward function which need recompute.
     """
-    def __init__(self, state: _RecomputeState):
+    def __init__(self, handle: _RecomputeHandle):
         def pack(x):
             holder = _PlaceHolder()
-            state.placeholders.append(weakref.ref(holder))
+            handle.placeholders.append(weakref.ref(holder))
             return holder
 
         def unpack(holder):
-            engine_id = _pynative_executor.get_current_autodiff_engine_id()
-            if engine_id == -1:
-                engine_id = int(uuid.uuid4())
-            if not state.is_recomputed[engine_id]:
-                new_inputs = state.recover_inputs()
-                prev_grad_flag = _pynative_executor.grad_flag()
-                prev_enable_grad = _pynative_executor.enable_grad()
-                _pynative_executor.set_grad_flag(True)
-                _pynative_executor.set_enable_grad(True)
-                try:
-                    with _RecomputationHook(weakref.ref(state), engine_id):
-                        _pynative_executor.new_empty_graph()
-                        state.recompute_fn(*new_inputs)
-                        _pynative_executor.end_empty_graph()
-                except _StopRecomputationError:
-                    _pynative_executor.end_empty_graph()
-                _pynative_executor.set_grad_flag(prev_grad_flag)
-                _pynative_executor.set_enable_grad(prev_enable_grad)
-                state.is_recomputed[engine_id] = True
-            if state.recomputed_data[engine_id].get(holder, default=None) is None:
+            session = _recompute_session.get()
+            if session is not None:
+                recompute_key = session.session_id
+                retain_on_unpack = session.retain_on_unpack
+            else:
+                retain_on_unpack = False
+                recompute_key = _pynative_executor.get_current_autodiff_engine_id()
+                if recompute_key == -1:
+                    recompute_key = int(uuid.uuid4())
+
+            handle.recompute(recompute_key)
+            if handle.recomputed_data[recompute_key].get(holder, None) is None:
                 raise RuntimeError("Unpack is being triggered for a tensor, make sure to do this only once!")
-            val = state.recomputed_data[engine_id][holder]
-            state.recomputed_data[engine_id].pop(holder)
+            val = handle.recomputed_data[recompute_key][holder]
+            if not retain_on_unpack:
+                handle.recomputed_data[recompute_key].pop(holder)
             return val
         super().__init__(pack, unpack)
 
@@ -231,27 +322,27 @@ class _RecomputationHook(saved_tensors_hooks):
     """
     Recompute hook for saved tensor which need get activation value.
     """
-    def __init__(self, weak_state, engine_id):
+    def __init__(self, weak_handle, recompute_key):
         def pack(x):
             x = ops.stop_gradient(x) if x._requires_grad else x  # pylint: disable=protected-access
-            state = weak_state()
-            if state is None:
-                raise RuntimeError("Recompute state has been garbage collected unexpectedly.")
-            current_idx = state.placeholder_counter[engine_id]
-            state.placeholder_counter[engine_id] += 1
+            handle = weak_handle()
+            if handle is None:
+                raise RuntimeError("Recompute handle has been garbage collected unexpectedly.")
+            current_idx = handle.placeholder_counter[recompute_key]
+            handle.placeholder_counter[recompute_key] += 1
 
-            if current_idx >= len(state.placeholders):
-                if not state.early_stop and not state.forward_completed:
+            if current_idx >= len(handle.placeholders):
+                if not handle.early_stop and not handle.forward_completed:
                     return x
                 raise RuntimeError('This forward function contains non-determinism and is non-reentrant, '
                                    'which cannot be recomputed.')
 
-            placeholder = state.placeholders[current_idx]()
+            placeholder = handle.placeholders[current_idx]()
             if placeholder is not None:
-                state.recomputed_data[engine_id][placeholder] = x
+                handle.recomputed_data[recompute_key][placeholder] = x
 
             # Early stop check: if we have recomputed all needed tensors, stop recomputation
-            if state.early_stop and state.placeholder_counter[engine_id] == len(state.placeholders):
+            if handle.early_stop and handle.placeholder_counter[recompute_key] == len(handle.placeholders):
                 raise _StopRecomputationError
             return x
 
@@ -572,18 +663,21 @@ def recompute_without_reentrant(block, output_recompute, early_stop, context_fn,
     if not _pynative_executor.enable_grad():
         return block(*args, **kwargs)
 
-    state = _RecomputeState(recompute_function, early_stop=effective_early_stop)
+    handle = _RecomputeHandle(recompute_function, early_stop=effective_early_stop)
+    handle_collector = _recompute_handle_collector.get()
+    if handle_collector is not None:
+        handle_collector.append(handle)
     if _pynative_executor.is_saved_tensor_hook_active():
         fake_val = ops.zeros((0,))
         fake_val.requires_grad_()
-        state.input_node = _InputSaver.apply(fake_val, kwargs, *args)
+        handle.input_node = _InputSaver.apply(fake_val, kwargs, *args)
     else:
-        state.wrap_original_inputs(*args, **kwargs)
+        handle.wrap_original_inputs(*args, **kwargs)
 
-    with _CreatePlaceholderHook(state), forward_ctx:
+    with _CreatePlaceholderHook(handle), forward_ctx:
         result = wrapper_block(*args, **kwargs)
     # Mark forward as completed for handling grad within recompute scenarios
-    state.forward_completed = True
+    handle.forward_completed = True
     return result
 
 
@@ -612,5 +706,6 @@ def recompute_generator(block, use_reentrant=True, output_recompute=False, early
 
 recompute_registry.register(recompute_generator)
 
-__all__ = ['recompute', '_set_recompute_early_stop']
+__all__ = ['recompute', '_set_recompute_early_stop', '_recompute_session_ctx', '_clear_recompute_session',
+           '_recompute_handle_collector_ctx']
 __all__.sort()

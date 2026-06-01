@@ -20,6 +20,7 @@ import pytest
 import mindspore as ms
 from mindspore import _Function, recompute
 from mindspore import Tensor, jit, _no_grad
+from mindspore.common.recompute import _clear_recompute_session, _recompute_session_ctx, _recompute_handle_collector_ctx
 from mindspore.graph.api import _pynative_executor, _GradientEdge
 from mindspore.ops import stop_gradient
 from mindspore._c_expression import run_backward, pyboost_detach
@@ -521,6 +522,92 @@ def test_backward_with_recompute_non_use_reentrant():
     res.sum().backward()
     assert np.allclose(x.grad.asnumpy(), np.array([2.0, 4.0], dtype=np.float32), 0.00001, 0.00001)
     assert np.allclose(y.grad.asnumpy(), np.array([4.0, 3.0], dtype=np.float32), 0.00001, 0.00001)
+
+
+def test_backward_recompute_auto_session_id():
+    """
+    Feature: Test backward api with non-reentrant recompute session context
+    Description: Test auto-generated recompute session id can retain and then consume recomputed tensors.
+    Expectation: The second backward reuses retained recomputed tensors without rerunning recompute.
+    """
+    class Net:
+        def __init__(self):
+            self.call_count = 0
+
+        def __call__(self, x):
+            self.call_count += 1
+            y = ms.ops.sin(x)
+            return y * y
+
+    x_np = np.array([[0.2, -0.4], [0.7, -0.9]], np.float32)
+    x = Tensor(x_np)
+    x.requires_grad = True
+    net = Net()
+    out = recompute(net, x, use_reentrant=False, early_stop=False)
+    sens = ms.ops.ones_like(out)
+
+    with _recompute_session_ctx(retain_on_unpack=True) as session_id:
+        assert session_id is not None
+        first_grad = run_backward((out,), (sens,), True, False, (x,),
+                                  allow_unreachable=True, accumulate_grad=False)
+
+    assert net.call_count == 2
+
+    try:
+        with _recompute_session_ctx(session_id, retain_on_unpack=False):
+            second_grad = run_backward((out,), (sens,), False, False, (x,),
+                                       allow_unreachable=True, accumulate_grad=False)
+    finally:
+        _clear_recompute_session(session_id)
+
+    expected = 2 * np.sin(x_np) * np.cos(x_np)
+    assert net.call_count == 2
+    assert np.allclose(first_grad[0].asnumpy(), expected, 0.00001, 0.00001)
+    assert np.allclose(second_grad[0].asnumpy(), expected, 0.00001, 0.00001)
+
+
+def test_backward_recompute_handle_collector_ctx():
+    """
+    Feature: Test backward api with non-reentrant recompute handle collector context
+    Description: Test users can collect recompute handles from a forward range and run recompute manually.
+    Expectation: The collected handle can recompute directly; later recompute calls are not appended to that list.
+    """
+    class Net:
+        def __init__(self):
+            self.call_count = 0
+
+        def __call__(self, x):
+            self.call_count += 1
+            return ms.ops.sin(x) * ms.ops.cos(x)
+
+    x_np = np.array([0.2, -0.4], np.float32)
+    x = Tensor(x_np)
+    x.requires_grad = True
+    net = Net()
+
+    with _recompute_handle_collector_ctx() as handles:
+        out = recompute(net, x, use_reentrant=False, early_stop=False)
+        assert len(handles) == 1
+
+    assert len(handles) == 1
+    assert hasattr(handles[0], "recompute")
+
+    session_id = None
+    try:
+        with _recompute_session_ctx(retain_on_unpack=False) as session_id:
+            handles[0].recompute(session_id)
+            sens = ms.ops.ones_like(out)
+            manual_grad = run_backward((out,), (sens,), False, False, (x,),
+                                       allow_unreachable=True, accumulate_grad=False)
+    finally:
+        _clear_recompute_session(session_id)
+
+    expected = np.cos(x_np) * np.cos(x_np) - np.sin(x_np) * np.sin(x_np)
+    assert net.call_count == 2
+    assert np.allclose(manual_grad[0].asnumpy(), expected, 0.00001, 0.00001)
+
+    _ = recompute(net, x, use_reentrant=False, early_stop=False)
+    assert len(handles) == 1
 
 
 class ReturnSelfOps(_Function):
