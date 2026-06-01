@@ -1070,3 +1070,131 @@ def mint_searchsorted_torch(sorted_sequence, values, out_int32=False, right=Fals
     if sorter is not None:
         kwargs_p["sorter"] = sorter
     return torch.searchsorted(**kwargs_p)
+
+def mint_AdaptiveMaxPool1d_ms(input, output_size, return_indices=False):
+    net = mint.nn.AdaptiveMaxPool1d(output_size, return_indices=return_indices)
+    return net(input)
+
+def mint_AdaptiveMaxPool1d_torch(input, output_size, return_indices=False):
+    net = torch.nn.AdaptiveMaxPool1d(output_size, return_indices=return_indices)
+    return net(input)
+
+def mint_ReplicationPad1d_ms(input, padding):
+    net = mint.nn.ReplicationPad1d(padding)
+    return net(input)
+
+def mint_ReplicationPad1d_torch(input, padding):
+    net = torch.nn.ReplicationPad1d(padding)
+    return net(input)
+
+def mint_ReplicationPad2d_ms(input, padding):
+    net = mint.nn.ReplicationPad2d(padding)
+    return net(input)
+
+def mint_ReplicationPad2d_torch(input, padding):
+    net = torch.nn.ReplicationPad2d(padding)
+    return net(input)
+
+def mint_ReplicationPad3d_ms(input, padding):
+    net = mint.nn.ReplicationPad3d(padding)
+    return net(input)
+
+def mint_ReplicationPad3d_torch(input, padding):
+    net = torch.nn.ReplicationPad3d(padding)
+    return net(input)
+
+def mint_ReflectionPad1d_ms(input, padding):
+    net = mint.nn.ReflectionPad1d(padding)
+    return net(input)
+
+def mint_ReflectionPad1d_torch(input, padding):
+    net = torch.nn.ReflectionPad1d(padding)
+    return net(input)
+
+def mint_ReflectionPad2d_ms(input, padding):
+    net = mint.nn.ReflectionPad2d(padding)
+    return net(input)
+
+def mint_ReflectionPad2d_torch(input, padding):
+    net = torch.nn.ReflectionPad2d(padding)
+    return net(input)
+
+def mint_ReflectionPad3d_ms(input, padding):
+    net = mint.nn.ReflectionPad3d(padding)
+    return net(input)
+
+def mint_ReflectionPad3d_torch(input, padding):
+    net = torch.nn.ReflectionPad3d(padding)
+    return net(input)
+
+def mint_ZeroPad1d_ms(input, padding):
+    net = mint.nn.ZeroPad1d(padding)
+    return net(input)
+
+def mint_ZeroPad1d_torch(input, padding):
+    net = torch.nn.ZeroPad1d(padding)
+    return net(input)
+
+def mint_ZeroPad2d_ms(input, padding):
+    net = mint.nn.ZeroPad2d(padding)
+    return net(input)
+
+def mint_ZeroPad2d_torch(input, padding):
+    net = torch.nn.ZeroPad2d(padding)
+    return net(input)
+
+def mint_ZeroPad3d_ms(input, padding):
+    net = mint.nn.ZeroPad3d(padding)
+    return net(input)
+
+def mint_ZeroPad3d_torch(input, padding):
+    net = torch.nn.ZeroPad3d(padding)
+    return net(input)
+
+def mint_ConstantPad2d_ms(input, padding, value):
+    net = mint.nn.ConstantPad2d(padding, value)
+    return net(input)
+
+def mint_ConstantPad2d_torch(input, padding, value):
+    net = torch.nn.ConstantPad2d(padding, value)
+    return net(input)
+
+def mint_ConstantPad3d_ms(input, padding, value):
+    net = mint.nn.ConstantPad3d(padding, value)
+    return net(input)
+
+def mint_ConstantPad3d_torch(input, padding, value):
+    net = torch.nn.ConstantPad3d(padding, value)
+    return net(input)
+
+def mint_MaxUnpool2d_ms(input, indices, kernel_size, stride=None, padding=0, output_size=None):
+    net = mint.nn.MaxUnpool2d(kernel_size=kernel_size, stride=stride, padding=padding)
+    return net(input, indices, output_size)
+
+def mint_MaxUnpool2d_torch(input, indices, kernel_size, stride=None, padding=0, output_size=None):
+    net = torch.nn.MaxUnpool2d(kernel_size=kernel_size, stride=stride, padding=padding)
+    return net(input, indices, output_size)
+
+def mint_AvgPool3d_ms(input, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True,
+                      divisor_override=None):
+    net = mint.nn.AvgPool3d(kernel_size=kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode,
+                            count_include_pad=count_include_pad, divisor_override=divisor_override)
+    return net(input)
+
+def mint_AvgPool3d_torch(input, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True,
+                         divisor_override=None):
+    net = torch.nn.AvgPool3d(kernel_size=kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode,
+                             count_include_pad=count_include_pad, divisor_override=divisor_override)
+    return net(input)
+
+def mint_AvgPool2d_ms(input, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True,
+                      divisor_override=None):
+    net = mint.nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode,
+                            count_include_pad=count_include_pad, divisor_override=divisor_override)
+    return net(input)
+
+def mint_AvgPool2d_torch(input, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True,
+                         divisor_override=None):
+    net = torch.nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode,
+                             count_include_pad=count_include_pad, divisor_override=divisor_override)
+    return net(input)
