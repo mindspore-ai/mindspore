@@ -22,7 +22,7 @@ endif()
 mindspore_add_pkg(absl
         VER 20250127.1
         LIBS absl_strings absl_throw_delegate absl_raw_logging_internal absl_int128 absl_bad_optional_access
-             absl_log_internal_check_op
+        absl_log_internal_check_op
         URL ${REQ_URL}
         SHA256 ${SHA256}
         CMAKE_OPTION

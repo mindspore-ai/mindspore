@@ -49,6 +49,14 @@ diff -Npur grpc-1.73.0/CMakeLists.txt grpc-1.73.0-change/CMakeLists.txt
  if(WIN32 AND MSVC)
    set_target_properties(upb_base_lib PROPERTIES COMPILE_PDB_NAME "upb_base_lib"
      COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+@@ -4309,6 +4317,7 @@ endif()
+ 
+ 
+ add_library(upb_reflection_lib
++  src/core/ext/upb-gen/google/protobuf/descriptor.upb_minitable.c
+   third_party/upb/upb/message/copy.c
+   third_party/upb/upb/message/merge.c
+   third_party/upb/upb/reflection/def_pool.c
 @@ -4694,6 +4702,8 @@ set_target_properties(grpc++ PROPERTIES
    SOVERSION ${gRPC_CPP_SOVERSION}
  )
@@ -83,4 +91,3 @@ diff -Npur grpc-1.73.0/CMakeLists.txt grpc-1.73.0-change/CMakeLists.txt
  target_compile_features(grpc_cpp_plugin PUBLIC cxx_std_17)
  target_include_directories(grpc_cpp_plugin
    PRIVATE
-

@@ -13,7 +13,7 @@ diff -Npur a/CMakeLists.txt b/CMakeLists.txt
 diff -Npur a/src/CMakeLists.txt b/src/CMakeLists.txt
 --- a/src/CMakeLists.txt	2023-04-12 15:41:58.000000000 +0800
 +++ b/src/CMakeLists.txt	2024-12-05 18:48:10.687877613 +0800
-@@ -11,6 +11,57 @@
+@@ -11,6 +11,59 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.!
@@ -73,7 +73,7 @@ diff -Npur a/src/CMakeLists.txt b/src/CMakeLists.txt
 
  if (SPM_USE_EXTERNAL_ABSL)
    set(ABSL_FLAGS_SRCS "")
-@@ -68,12 +119,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
+@@ -68,12 +121,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/protobuf-lite)
    include_directories(builtin_pb)
  else()
@@ -89,7 +89,7 @@ diff -Npur a/src/CMakeLists.txt b/src/CMakeLists.txt
    if (MSVC)
      add_definitions("/D_USE_EXTERNAL_PROTOBUF")
    else()
-@@ -225,11 +273,13 @@ endif()
+@@ -225,11 +275,13 @@ endif()
  add_library(sentencepiece-static STATIC ${SPM_SRCS})
  add_library(sentencepiece_train-static STATIC ${SPM_TRAIN_SRCS})
 
@@ -105,7 +105,7 @@ diff -Npur a/src/CMakeLists.txt b/src/CMakeLists.txt
    target_link_libraries(sentencepiece_train ${SPM_LIBS} sentencepiece)
    set(SPM_INSTALLTARGETS sentencepiece sentencepiece_train sentencepiece-static sentencepiece_train-static)
    set_target_properties(sentencepiece sentencepiece_train PROPERTIES SOVERSION 0 VERSION 0.0.0)
-@@ -308,7 +358,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
+@@ -308,7 +360,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
  endif()
 

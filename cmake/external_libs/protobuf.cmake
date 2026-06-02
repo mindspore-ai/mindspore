@@ -70,6 +70,9 @@ mindspore_add_pkg(protobuf
         PATCHES ${PROTOBUF_PATCHES}
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             ${PROTOBUF_CMAKE_POLICY_OPTION}
+            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_EXTENSIONS=OFF
             -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
             -Dprotobuf_ABSL_PROVIDER:STRING=package
             -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR})
@@ -83,6 +86,9 @@ mindspore_add_pkg(protobuf
         PATCHES ${PROTOBUF_PATCHES}
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             ${PROTOBUF_CMAKE_POLICY_OPTION}
+            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_EXTENSIONS=OFF
             -Dprotobuf_ABSL_PROVIDER:STRING=package
             -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR})
 endif()
@@ -103,15 +109,31 @@ if(EXISTS "${protobuf_DIRPATH}/lib64/libutf8_range${_PROTOBUF_UTF8_EXT}")
 else()
     set(_PROTOBUF_UTF8_DIR "${protobuf_DIRPATH}/lib")
 endif()
-set(_PROTOBUF_UTF8_LIBS
+
+if(APPLE)
+    set(_PROTOBUF_UTF8_LIBS "${_PROTOBUF_UTF8_DIR}/libutf8_validity${_PROTOBUF_UTF8_EXT}")
+    find_library(_PROTOBUF_COREFOUNDATION_LIB CoreFoundation)
+    if(_PROTOBUF_COREFOUNDATION_LIB)
+        list(APPEND _PROTOBUF_PLATFORM_LIBS ${_PROTOBUF_COREFOUNDATION_LIB})
+    endif()
+else()
+    set(_PROTOBUF_UTF8_LIBS
     "${_PROTOBUF_UTF8_DIR}/libutf8_range${_PROTOBUF_UTF8_EXT}"
     "${_PROTOBUF_UTF8_DIR}/libutf8_validity${_PROTOBUF_UTF8_EXT}")
+endif()
+
 if(NOT MSVC AND NOT APPLE)
+    set(_PROTOBUF_LINK_LIBS
+        "-Wl,--start-group"
+        ${_PROTOBUF_ABSL_LIBS}
+        ${_PROTOBUF_UTF8_LIBS}
+        ${_PROTOBUF_PLATFORM_LIBS}
+        "-Wl,--end-group")
     set_target_properties(protobuf::protobuf PROPERTIES
-        INTERFACE_LINK_LIBRARIES "-Wl,--start-group;${_PROTOBUF_ABSL_LIBS};${_PROTOBUF_UTF8_LIBS};-Wl,--end-group")
+        INTERFACE_LINK_LIBRARIES "${_PROTOBUF_LINK_LIBS}")
 else()
     set_target_properties(protobuf::protobuf PROPERTIES
-        INTERFACE_LINK_LIBRARIES "${_PROTOBUF_ABSL_LIBS};${_PROTOBUF_UTF8_LIBS}")
+        INTERFACE_LINK_LIBRARIES "${_PROTOBUF_ABSL_LIBS};${_PROTOBUF_UTF8_LIBS};${_PROTOBUF_PLATFORM_LIBS}")
 endif()
 
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)
