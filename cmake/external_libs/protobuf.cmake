@@ -44,6 +44,10 @@ else()
 endif()
 
 set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
+set(PROTOBUF_PATCHES)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+    set(PROTOBUF_PATCHES ${PROTOBUF_PATCH_ROOT}/protobuf_v34_gcc7_constexpr.patch)
+endif()
 set(PROTOBUF_CMAKE_POLICY_OPTION)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
     set(PROTOBUF_CMAKE_POLICY_OPTION -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
@@ -63,6 +67,7 @@ mindspore_add_pkg(protobuf
         EXE protoc
         URL ${REQ_URL}
         SHA256 ${SHA256}
+        PATCHES ${PROTOBUF_PATCHES}
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             ${PROTOBUF_CMAKE_POLICY_OPTION}
             -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
@@ -75,6 +80,7 @@ mindspore_add_pkg(protobuf
         EXE protoc
         URL ${REQ_URL}
         SHA256 ${SHA256}
+        PATCHES ${PROTOBUF_PATCHES}
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             ${PROTOBUF_CMAKE_POLICY_OPTION}
             -Dprotobuf_ABSL_PROVIDER:STRING=package
