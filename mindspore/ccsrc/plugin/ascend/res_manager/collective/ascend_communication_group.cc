@@ -24,6 +24,7 @@
 #include <variant>
 #include <unordered_map>
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
@@ -47,8 +48,64 @@ constexpr uint32_t kHcclCommConfigDeterministicTrue = 1;
 constexpr uint32_t kHcclCommConfigDeterministicStrict = 2;
 namespace {
 constexpr char kZeroCopyGroupPrefix[] = "hccl_zero_copy_";
+constexpr char kHcclBufferSize[] = "hccl_buffer_size";
+constexpr char kHcclComm[] = "hccl_comm";
+constexpr char kHcclOpExpansionMode[] = "hccl_op_expansion_mode";
+constexpr uint32_t kHcclCommConfigOpExpansionMode = 3;
+constexpr uint32_t kHcclOpExpansionModeDefault = 0;
+constexpr uint32_t kHcclOpExpansionModeHost = 1;
+constexpr uint32_t kHcclOpExpansionModeAicpu = 2;
+constexpr uint32_t kHcclOpExpansionModeAiv = 3;
 
 bool IsZeroCopyGroupName(const std::string &group_name) { return group_name.rfind(kZeroCopyGroupPrefix, 0) == 0; }
+
+std::string ToUpper(const std::string &value) {
+  std::string upper_value = value;
+  std::transform(upper_value.begin(), upper_value.end(), upper_value.begin(),
+                 [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+  return upper_value;
+}
+
+uint32_t ParseHcclOpExpansionMode(const std::variant<int64_t, uint32_t, std::string> &config_value) {
+  if (std::holds_alternative<std::string>(config_value)) {
+    const auto mode = ToUpper(std::get<std::string>(config_value));
+    if (mode == "DEFAULT") {
+      return kHcclOpExpansionModeDefault;
+    }
+    if (mode == "HOST") {
+      return kHcclOpExpansionModeHost;
+    }
+    if (mode == "AICPU") {
+      return kHcclOpExpansionModeAicpu;
+    }
+    if (mode == "AIV") {
+      return kHcclOpExpansionModeAiv;
+    }
+    MS_LOG(EXCEPTION) << "Failed to set hcclOpExpansionMode. Value of " << kHcclOpExpansionMode
+                      << " in GroupOptions should be one of DEFAULT, HOST, AICPU, AIV, but got "
+                      << std::get<std::string>(config_value) << ".";
+    return kHcclOpExpansionModeDefault;
+  }
+  if (std::holds_alternative<int64_t>(config_value)) {
+    int64_t mode = std::get<int64_t>(config_value);
+    if (mode < kHcclOpExpansionModeDefault || mode > kHcclOpExpansionModeAiv) {
+      MS_LOG(EXCEPTION) << "Failed to set hcclOpExpansionMode. Value of " << kHcclOpExpansionMode
+                        << " in GroupOptions should be in range [0, 3], but got " << mode << ".";
+    }
+    return static_cast<uint32_t>(mode);
+  }
+  if (std::holds_alternative<uint32_t>(config_value)) {
+    uint32_t mode = std::get<uint32_t>(config_value);
+    if (mode > kHcclOpExpansionModeAiv) {
+      MS_LOG(EXCEPTION) << "Failed to set hcclOpExpansionMode. Value of " << kHcclOpExpansionMode
+                        << " in GroupOptions should be in range [0, 3], but got " << mode << ".";
+    }
+    return mode;
+  }
+  MS_LOG(EXCEPTION) << "Failed to set hcclOpExpansionMode. Type of " << kHcclOpExpansionMode
+                    << " in GroupOptions should be string or unsigned integer.";
+  return kHcclOpExpansionModeDefault;
+}
 }  // namespace
 
 AscendCommunicationGroup::AscendCommunicationGroup(
@@ -111,7 +168,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   // Call HCCL initialize comm API.
   bool ret = false;
   std::string rank_table_file_path = common::GetEnv("RANK_TABLE_FILE");
-  if (hccl_config_.find("hccl_comm") != hccl_config_.end()) {
+  if (hccl_config_.find(kHcclComm) != hccl_config_.end()) {
     ret = InitByHcclComm();
   } else if (!rank_table_file_path.empty() && common::GetEnv(kSimulationLevel).empty() &&
              !distributed::cluster::ClusterContext::instance()->enable_cross_cluster()) {
@@ -167,7 +224,7 @@ bool AscendCommunicationGroup::Finalize() {
 
   // HcclCommDestroy is only called when the communicator is created by MindSpore. If communicator is passed in via
   // group's options, the finalization of the HCCL communicator is not managed by MindSpore.
-  if (hccl_config_.find("hccl_comm") == hccl_config_.end()) {
+  if (hccl_config_.find(kHcclComm) == hccl_config_.end()) {
     // This function will be called at a lonesome thread that has no rtContext, so HcclCommDestroy will be failed.
     // Delete these codes when these threads can be bind.
     auto ms_context = MsContext::GetInstance();
@@ -254,19 +311,27 @@ HcclCommConfig AscendCommunicationGroup::CreateHcclCommConfig() {
   }
 
   // Parameters passed to HCCL via API's config have higher priority than those set in the environment variableThe.
-  if (hccl_config_.find("hccl_buffer_size") != hccl_config_.end()) {
-    if (std::holds_alternative<int64_t>(hccl_config_["hccl_buffer_size"])) {
-      int64_t size = std::get<int64_t>(hccl_config_["hccl_buffer_size"]);
+  if (hccl_config_.find(kHcclBufferSize) != hccl_config_.end()) {
+    if (std::holds_alternative<int64_t>(hccl_config_[kHcclBufferSize])) {
+      int64_t size = std::get<int64_t>(hccl_config_[kHcclBufferSize]);
       if (size < 0 || size > UINT32_MAX) {
         MS_LOG(EXCEPTION) << "hccl_buffer_size out of uint32_t range: " << size;
       }
       config.hcclBufferSize = static_cast<uint32_t>(size);
-    } else if (std::holds_alternative<uint32_t>(hccl_config_["hccl_buffer_size"])) {
-      config.hcclBufferSize = std::get<uint32_t>(hccl_config_["hccl_buffer_size"]);
+    } else if (std::holds_alternative<uint32_t>(hccl_config_[kHcclBufferSize])) {
+      config.hcclBufferSize = std::get<uint32_t>(hccl_config_[kHcclBufferSize]);
     } else {
       MS_LOG(EXCEPTION)
         << "Failed to set hcclBufferSize. Type of hccl_buffer_size in GroupOptions should be unsigned integer.";
     }
+  }
+
+  if (hccl_config_.find(kHcclOpExpansionMode) != hccl_config_.end()) {
+    if (!IsSupportConfigParameter(kHcclCommConfigOpExpansionMode)) {
+      MS_LOG(EXCEPTION) << "Failed to set hcclOpExpansionMode. The current HCCL version does not support "
+                        << kHcclOpExpansionMode << ".";
+    }
+    config.hcclOpExpansionMode = ParseHcclOpExpansionMode(hccl_config_[kHcclOpExpansionMode]);
   }
 
   return config;
@@ -333,10 +398,10 @@ bool AscendCommunicationGroup::InitByRankTable(std::string rank_table, uint32_t 
 
 bool AscendCommunicationGroup::InitByHcclComm() {
   MS_LOG(INFO) << "Start to initialize communicator by Hcom from hccl config for " << name_;
-  if (!std::holds_alternative<int64_t>(hccl_config_["hccl_comm"])) {
+  if (!std::holds_alternative<int64_t>(hccl_config_[kHcclComm])) {
     MS_LOG(EXCEPTION) << "Failed to get hcom. Type of hccl_comm in GroupOptions should be int64.";
   }
-  comm_ = reinterpret_cast<HcclComm>(static_cast<intptr_t>(std::get<int64_t>(hccl_config_["hccl_comm"])));
+  comm_ = reinterpret_cast<HcclComm>(static_cast<intptr_t>(std::get<int64_t>(hccl_config_[kHcclComm])));
   MS_LOG(INFO) << "End to initialize communicator by Hcom from hccl config for " << name_;
   return true;
 }

@@ -677,11 +677,15 @@ def create_group(group, rank_ids, options=None):
                     hccl_config(dict)
                 }
 
-            `hccl_config` currently only supports "hccl_buffer_size" or "hccl_comm".
+            `hccl_config` currently supports "hccl_buffer_size", "hccl_comm", or
+            "hccl_op_expansion_mode".
 
-            - hccl_buffer_size (uint32): specifies the size of the HCCL communication buffer.
-            - hccl_comm (int64): specifies an existing HcclComm pointer. If "hccl_comm" is set,
-              "hccl_buffer_size" will be ignored.
+            - hccl_buffer_size (uint32): Specifies the size of the HCCL communication buffer.
+            - hccl_comm (int64): Specifies an existing HcclComm pointer. If "hccl_comm" is set,
+              other HCCL config parameters will be ignored.
+            - hccl_op_expansion_mode (str | uint32): Specifies the HCCL operator expansion mode
+              for the communication group. Supported string values are "DEFAULT", "HOST",
+              "AICPU", and "AIV". Supported integer values are 0, 1, 2, and 3.
 
     Raises:
         TypeError: If group is not a string or `rank_ids` is not a list.
