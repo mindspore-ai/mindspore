@@ -353,6 +353,12 @@ def empty_like_ms(op_input, dtype=None, device=None, pin_memory=False):
 def empty_like_torch(op_input, dtype=None, device=None, pin_memory=False):
     return torch.empty_like(op_input, dtype=dtype).shape
 
+def mint_special_log_softmax_ms(op_input, dim=0, dtype=None):
+    return mint.special.log_softmax(op_input, dim=dim, dtype=dtype)
+
+def mint_special_log_softmax_torch(op_input, dim=0, dtype=None):
+    return torch.special.log_softmax(op_input, dim=dim, dtype=dtype)
+
 # wrap nn method for batchnorm1d
 def nn_batchnorm1d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm1d(
@@ -845,6 +851,24 @@ def op_func_grad_without_kwargs(op):
     def op_func(x, y, *args):
         return op(x, y, *args)
     return op_func
+
+def tensor_mint_linalg_matrix_norm(input, ord, dim, keepdim, dtype):
+    return mint.linalg.matrix_norm(input, ord=ord, dim=dim, keepdim=keepdim, dtype=dtype)
+
+def tensor_torch_linalg_matrix_norm(input, ord, dim, keepdim, dtype):
+    return torch.linalg.matrix_norm(input, ord=ord, dim=dim, keepdim=keepdim, dtype=dtype)
+
+def tensor_mint_linalg_vector_norm(input, ord, dim, keepdim, dtype):
+    return mint.linalg.vector_norm(input, ord=ord, dim=dim, keepdim=keepdim, dtype=dtype)
+
+def tensor_torch_linalg_vector_norm(input, ord, dim, keepdim, dtype):
+    return torch.linalg.vector_norm(input, ord=ord, dim=dim, keepdim=keepdim, dtype=dtype)
+
+def tensor_mint_linalg_norm(input, ord, dim, keepdim, dtype):
+    return mint.linalg.norm(input, ord=ord, dim=dim, keepdim=keepdim, dtype=dtype)
+
+def tensor_torch_linalg_norm(input, ord, dim, keepdim, dtype):
+    return torch.linalg.norm(input, ord=ord, dim=dim, keepdim=keepdim, dtype=dtype)
 
 def tensor_mint_allclose(input, other, rtol=1e-5, atol=1e-8, equal_nan=False):
     return ms.Tensor(mint.allclose(input, other, rtol, atol, equal_nan))

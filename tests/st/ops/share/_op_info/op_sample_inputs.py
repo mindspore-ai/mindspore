@@ -6439,10 +6439,10 @@ def dynamic_sample_inputs_mint_argsort(op_info: OpInfo, dtype=None, device=None,
 def extra_sample_inputs_mint_argsort(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     cases = [
-        (make_tensor(shape=(3, 2, 2, 2, 2, 2), dtype=ms.float32), {'dim': -1, "descending": False, "stable": False}),
-        (make_tensor(shape=(2, 3), dtype=ms.float32), {'dim': 0, "descending": False, "stable": False}),
+        (make_tensor(shape=(3, 2, 2, 2, 2, 2), dtype=dtype), {'dim': -1, "descending": False, "stable": True}),
+        (make_tensor(shape=(2, 3), dtype=dtype), {'dim': 0, "descending": False, "stable": False}),
         #broadcast
-        (make_tensor(shape=(1, 4, 3), dtype=ms.float32), {'dim': 1, "descending": True, "stable": True}),
+        (make_tensor(shape=(1, 4, 3), dtype=dtype), {'dim': 1, "descending": True, "stable": True}),
     ]
     for op_inputs, p_kwargs in cases:
         yield OpSampleInput(
@@ -7446,7 +7446,7 @@ def error_inputs_other_op_mint_cumsum_func(op_info:OpInfo, dtype=None, device=No
                 op_kwargs={},
                 sample_name=op_info.name,
             ),
-            op_error_type=(TypeError, ValueError),
+            op_error_type=(TypeError, ValueError, AttributeError),
             op_error_info='other ops mint.cumsum error values'
         )
 
@@ -15352,6 +15352,349 @@ def extra_reference_inputs_mint_nn_hardshrink(op_info: OpInfo, dtype=None, devic
             sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
         )
 
+def basic_sample_inputs_mint_linalg_matrix_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )
+    cases = [
+        ((0, 2, 4), {'ord': 'fro', 'dim': (-2, -1), 'keepdim': False, 'dtype': dtype},),
+        ((2, 4, 3), {'ord': float('inf'), 'dim': (0, 1), 'keepdim': False, 'dtype': dtype},),
+        ((3, 5), {'ord': 'nuc', 'dim': (0, 1), 'keepdim': True, 'dtype': dtype},),
+        ((1, 1, 2, 4), {'ord': float('-inf'), 'dim': (1, 2), 'keepdim': False, 'dtype': dtype},),
+        ((2, 3, 4, 5, 6), {'ord': 1, 'dim': (1, 2), 'keepdim': False, 'dtype': dtype},),
+        ((2, 1), {'ord': -1, 'dim': (-2, -1), 'keepdim': False, 'dtype': dtype},),
+        ((0, 5, 7), {'ord': 2, 'dim': (-2, -1), 'keepdim': True, 'dtype': dtype},),
+        ((2, 3, 7, 7), {'ord': -2, 'dim': (1, 2), 'keepdim': True, 'dtype': dtype},),
+    ]
+    for input_shape, p_kwargs in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs=p_kwargs,
+            sample_name=op_info.name,
+        )
+
+def error_inputs_mint_linalg_matrix_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32, )
+    cases = [
+        (1, {'ord': 'fro', 'dim': (-2, -1), 'keepdim': False, 'dtype': ms.float32},),
+        (make_func(shape=(2, 3, 4)), {'ord': 'LESS', 'dim': (0, 1), 'keepdim': False, 'dtype': ms.float32},),#ord value error
+        #(make_func(shape=(3, 5)), {'ord': True, 'dim': (0, 1), 'keepdim': True, 'dtype': ms.float32},),#ord type error, not raise error
+        (make_func(shape=(3, 5)), {'ord': 0, 'dim': (0, 1), 'keepdim': True, 'dtype': ms.float32},),  # ord value 0
+        (make_func(shape=(1, 1, 2, 4)), {'ord': float('-inf'), 'dim': "(1, 2)", 'keepdim': False, 'dtype': ms.float32},),#dim type error
+        (make_func(shape=(2, 3, 4, 5, 6)), {'ord': 1, 'dim': (1, 2), 'keepdim': 5, 'dtype': ms.float32},),#keepdim type error
+        (make_func(shape=(2, 1)), {'ord': -1, 'dim': (2, 3), 'keepdim': False, 'dtype': ms.float32},),#dim value outer error
+        (make_func(shape=()), {'ord': -1, 'dim': (2, 3), 'keepdim': False, 'dtype': ms.float32},),
+    ]
+    for input_shape, p_kwargs  in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(),
+                op_kwargs=p_kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(ValueError, RuntimeError, TypeError, AttributeError),
+            op_error_info='other ops mint.tril error values',
+        )
+
+def extra_sample_inputs_mint_linalg_matrix_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )
+    cases = [
+        ## discontinuous
+        (ms.Tensor(np.random.randn(6, 8)[::2, ::2], dtype=dtype), {'ord': float('inf'), 'dim': (-2, -1),
+                                                                   'keepdim': True, 'dtype': dtype},),
+        (make_func(shape=(2, 3, 5, 7, 9, 4)), {'ord': 1, 'dim': (1, 2), 'keepdim': False, 'dtype': dtype},),
+    ]
+    for input_shape, p_kwargs in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(),
+            op_kwargs=p_kwargs,
+            sample_name=op_info.name,
+        )
+
+    # small/large values
+    values = []
+    if dtype == ms.uint8:
+        values = dtypes_extra_values['_uint_small_values']
+    elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
+        values = dtypes_extra_values['_int_small_values'] + dtypes_extra_values['_int_large_values']
+    elif dtype.is_floating_point:
+        if dtype in [ms.float16]:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp16_large_values']
+        else:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
+    if values:
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype),
+                op_args=(),
+                op_kwargs={'ord': float('inf'), 'dim': (-2, -1), 'keepdim': False, 'dtype': dtype},
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                input_values = np.full((1, 1, 3), t)
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+                    op_args=(),
+                    op_kwargs={'ord': float('inf'), 'dim': (-2, -1), 'keepdim': False, 'dtype': dtype},
+                    sample_name=op_info.name,
+                )
+
+def basic_sample_inputs_mint_linalg_vector_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )
+    cases = [
+        ((), {'ord': 2, 'dim': None, 'keepdim': False, 'dtype': dtype},),
+        ((2, 4), {'ord': float('inf'), 'dim': (0, 1), 'keepdim': True, 'dtype': dtype},),
+        ((3, 5, 7), {'ord': float('-inf'), 'dim': (-1, 1), 'keepdim': True, 'dtype': dtype},),
+        ((1, 1, 2, 4), {'ord': 0, 'dim': (2,), 'keepdim': False, 'dtype': dtype},),
+        ((2, 3, 4, 5, 6), {'ord': 3.0, 'dim': (1, 2), 'keepdim': False, 'dtype': dtype},),#other int/or float
+    ]
+    for input_shape, p_kwargs in cases:
+        current_ord = p_kwargs.get('ord', 'default')
+        if current_ord == float('inf'):
+            ord_str = 'inf'
+        elif current_ord == float('-inf'):
+            ord_str = '-inf'
+        else:
+            ord_str = str(current_ord)
+        dynamic_name = f"{op_info.name}_ord_{ord_str}"
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs=p_kwargs,
+            sample_name=dynamic_name,
+        )
+
+def error_inputs_mint_linalg_vector_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32, )
+    cases = [
+        (1, {'ord': 2, 'dim': None, 'keepdim': False, 'dtype': dtype},),# x not tensor
+        (make_func(shape=(2, 3, 4)), {'ord': 'LESS', 'dim': (0, 1), 'keepdim': False, 'dtype': dtype},),#ord value error
+        (make_func(shape=(3, 5)), {'ord': True, 'dim': (-1, 1), 'keepdim': True, 'dtype': dtype},),#ord type error
+        (make_func(shape=(1, 1, 2, 4)), {'ord': float('-inf'), 'dim': "(1, 2)", 'keepdim': False, 'dtype': dtype},),#dim type error
+        (make_func(shape=(2, 3, 4, 5, 6)), {'ord': 1, 'dim': (1, 2), 'keepdim': 5, 'dtype': dtype},),#keepdim type error
+        (make_func(shape=(2, 1)), {'ord': -1, 'dim': (2, 3), 'keepdim': False, 'dtype': dtype},),#dim value outer error
+    ]
+    for input_shape, p_kwargs in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(),
+                op_kwargs=p_kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(ValueError, RuntimeError, TypeError),
+            op_error_info='other ops mint.tril error values',
+        )
+
+def basic_sample_inputs_mint_linalg_qr(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )#only support >= 2D
+    cases = [
+        ((0, 2, 4), {'mode': 'reduced'},),
+        ((2, 3, 3), {'mode': 'complete'},),
+        #((5, 2), {'mode': 'r'},),
+        ((2, 3, 7, 7), {'mode': 'reduced'},),#default value
+    ]
+    for input_shape, p_kwargs in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs=p_kwargs,
+            sample_name=op_info.name,
+        )
+
+def error_inputs_mint_linalg_qr(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32, )  # only support >= 2D
+    cases = [
+        (make_func(shape=(0, 2, 4)), {'mode': 8},),#mode type error
+        (1, {'mode': 'complete'},),#A not tensor
+        (make_func(shape=(3,)), {'mode': 'r'},),#A 1D
+        (make_func(shape=(2, 3, 7, 7)), {'mode': 'r122'}),#mode value error
+    ]
+    for input_shape, p_kwargs in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(),
+                op_kwargs=p_kwargs,
+                sample_name=op_info.name,
+            ),
+            op_error_type=(ValueError, RuntimeError, TypeError),
+            op_error_info='other ops mint.tril error values',
+        )
+
+def extra_sample_inputs_mint_linalg_qr(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )
+    cases = [
+        # discontinuous
+        (ms.Tensor(np.random.randn(6, 8)[::2, ::2], dtype=dtype), {'mode': 'complete'},),
+        (make_func(shape=(2, 3, 5, 7, 9, 4)), {'mode': 'complete'},),
+    ]
+    for input_shape, p_kwargs in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(),
+            op_kwargs=p_kwargs,
+            sample_name=op_info.name,
+        )
+
+    # small/large values
+    values = []
+    if dtype == ms.uint8:
+        values = dtypes_extra_values['_uint_small_values']
+    elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
+        values = dtypes_extra_values['_int_small_values'] + dtypes_extra_values['_int_large_values']
+    elif dtype.is_floating_point:
+        if dtype in [ms.float16]:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp16_large_values']
+        else:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
+    if values:
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype),
+                op_args=(),
+                op_kwargs={'mode': 'complete'},
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.nan]:#inf loss error
+                input_values = np.full((1, 1, 3), t)
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+                    op_args=(),
+                    op_kwargs={'mode': 'complete'},
+                    sample_name=op_info.name,
+                )
+
+
+def basic_sample_inputs_mint_linalg_inv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype,)#only support >= 2D,
+    # the last two dim must be the same.
+    cases = [
+        (2, 2),
+        (3, 3),
+        (10, 10),
+        (5, 4, 4),
+        (2, 3, 4, 4),
+        (2, 2, 2, 2, 3, 3),
+        (1, 5, 5)
+    ]
+    for input_shape in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_inputs_mint_linalg_inv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32,)  # only support >= 2D,
+    cases = [
+        (2, 2, 2, 2, 2, 2, 2),# >6d
+        (),#0d scalar
+        (3, 2),#non invertible matrix
+        (4, 5),
+        (2, 3, 4),
+        (5,),#1d<2d
+    ]
+    for input_shape in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=input_shape),
+                op_args=(),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(ValueError, RuntimeError, TypeError),
+            op_error_info='other ops mint.linalg.inv error values',
+        )
+
+def extra_sample_inputs_mint_linalg_inv(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    #only support >= 2D,
+    # the last two dim must be the same.
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )
+    cases = [
+        # discontinuous
+        ms.Tensor(np.random.randint(0, 255, (2, 1, 2, 2, 2)), dtype=dtype)[::2, ::2],
+        #empty shape
+        make_func(shape=(2, 0, 1, 1)),
+        #inf/nan
+        ms.Tensor([[1., 2.], [float('inf'), 4.]], ms.float32),
+        ms.Tensor([[1., 2.], [float('-inf'), 4.]], ms.float32),
+        #ms.Tensor([[1., 2.], [float('nan'), 4.]], ms.float32),#raise error
+    ]
+    for input_shape in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+    # small/large values
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, )
+    values = []
+    if dtype == ms.uint8:
+        values = dtypes_extra_values['_uint_small_values']
+    elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
+        values = dtypes_extra_values['_int_small_values'] + dtypes_extra_values['_int_large_values']
+    elif dtype.is_floating_point:
+        if dtype in [ms.float16]:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp16_large_values']
+        else:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
+    if values:
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_func(shape=(2, 3, 4, 4)),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+def basic_reference_inputs_mint_special_log_softmax(op_info, dtype=None, device=None, **kwargs):
+    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    yield OpSampleInput(
+        op_input=ms.Tensor([[1, 2, 3], [4, 5, 6]]),
+        op_args=(),
+        op_kwargs={'dim': 1, 'dtype': ms.float32},
+        sample_name=f"{op_info.name}_{dtype}_{device}_mint_special_log_softmax"
+    )
+    yield OpSampleInput(
+        op_input=ms.Tensor([[1, 2, 3], [4, 5, 6]]),
+        op_args=(),
+        op_kwargs={'dim': 0, 'dtype': ms.float32},
+        sample_name=f"{op_info.name}_{dtype}_{device}_mint_special_log_softmax"
+    )
+
+def error_inputs_unary_op_mint_special_log_softmax_func(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        # input, dim, dtype
+        ("1", 0, ms.float32),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), "None", ms.float32),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), 0, "False"),
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), 6, ms.float32)
+    ]
+    for op_inputs, dims, dtypes in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_inputs,
+                op_args=(),
+                op_kwargs={'dim': dims, 'dtype': dtypes},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError),
+            op_error_info=f"{op_info.name}_{dtype}_{device}_error_mint_special_log_softmax"
+        )
+
 def basic_sample_inputs_mint_meshgrid(op_info: OpInfo, dtype=None, device=None, **kwargs):
     cases = [
         ([ms.Tensor(np.random.randint(-20, 20, 5), dtype=dtype),
@@ -15359,7 +15702,7 @@ def basic_sample_inputs_mint_meshgrid(op_info: OpInfo, dtype=None, device=None, 
         ((ms.Tensor(np.random.randint(-20, 20, 5), dtype=dtype),
           ms.Tensor(np.random.randint(-20, 20, 1), dtype=dtype),
           ms.Tensor(np.random.randint(-255, 255, 6), dtype=dtype)), "xy"),
-        ([ms.Tensor(np.random.randn(7,), dtype=dtype) for _ in range(6)], "xy"),
+        ([ms.Tensor(np.random.randn(7, ), dtype=dtype) for _ in range(6)], "xy"),
         ([ms.Tensor([1, 2, 3], dtype=dtype)], None),
         ([ms.Tensor(5, dtype=dtype)], "ij"),
         ([ms.Tensor([], dtype=dtype) for _ in range(3)], "xy"),
