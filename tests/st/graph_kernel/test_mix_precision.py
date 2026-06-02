@@ -24,7 +24,7 @@ import mindspore
 from mindspore import ops
 from mindspore import context
 from mindspore.nn import Cell
-from tests.st.graph_kernel.gk_utils import gen_input
+from tests.st.graph_kernel.gk_utils import gen_input, trans_data_type
 from tests.mark_utils import arg_mark
 
 ops_map = {"Add": ops.add,
@@ -102,6 +102,35 @@ def get_output(op_name, net, inputs, jit_level, ir_path="./ir_mix_precision"):
     return output
 
 
+def gen_fixed_input(shape, data_type, values):
+    np_type, ms_type = trans_data_type(data_type)
+    x = np.array(values, dtype=np_type)
+    x = np.reshape(x, shape)
+    return mindspore.Tensor(x, ms_type)
+
+
+def gen_compare_inputs(shape0, shape1, t0, t1):
+    if shape0 == () and shape1 == ():
+        return [
+            (gen_fixed_input(shape0, t0, [1]), gen_fixed_input(shape1, t1, [1]), "equal"),
+            (gen_fixed_input(shape0, t0, [0]), gen_fixed_input(shape1, t1, [1]), "less"),
+            (gen_fixed_input(shape0, t0, [2]), gen_fixed_input(shape1, t1, [1]), "greater"),
+        ]
+
+    if shape0 == ():
+        size = int(np.prod(shape1))
+        pattern = np.resize(np.array([2, 1, 0], dtype=np.int32), size)
+        return [(gen_fixed_input(shape0, t0, [1]), gen_fixed_input(shape1, t1, pattern), "mixed")]
+
+    size = int(np.prod(shape0))
+    pattern = np.resize(np.array([0, 1, 2], dtype=np.int32), size)
+    if shape1 == ():
+        return [(gen_fixed_input(shape0, t0, pattern), gen_fixed_input(shape1, t1, [1]), "mixed")]
+    if shape0 != shape1:
+        raise ValueError("Unsupported compare input shapes: {} vs {}".format(shape0, shape1))
+    return [(gen_fixed_input(shape0, t0, pattern), gen_fixed_input(shape1, t1, np.ones(size)), "mixed")]
+
+
 def run_binary(op_name, types, shapes, eps=0.0):
     for shape in shapes:
         for t0 in types:
@@ -114,6 +143,20 @@ def run_binary(op_name, types, shapes, eps=0.0):
                     np.testing.assert_allclose(output, expect, eps, eps)
                 except Exception as e:
                     raise RuntimeError("precision error: {} {} {} {} eps={}".format(op_name, shape, t0, t1, eps)) from e
+
+
+def run_compare_binary(op_name, types, shapes, eps=0.0):
+    for shape in shapes:
+        for t0 in types:
+            for t1 in types:
+                for x0, x1, case in gen_compare_inputs(shape[0], shape[1], t0, t1):
+                    output = get_output(op_name, Net(op_name), [x0, x1], "O1")
+                    expect = get_output(op_name, Net(op_name), [x0, x1], "O0")
+                    try:
+                        np.testing.assert_allclose(output, expect, eps, eps)
+                    except Exception as e:
+                        raise RuntimeError("precision error: {} {} {} {} case={} eps={}"
+                                           .format(op_name, shape, t0, t1, case, eps)) from e
 
 
 def run_binary_const(op_name, types, eps=0.0):
@@ -189,12 +232,12 @@ def test_mix_precision():
     run_binary("Mul", float_int_types, [[(2, 4), (2, 4)], [(2, 4), ()], [(), (2, 4)], [(), ()]])
     run_binary("Minimum", float_int_types, [[(2, 4), (2, 4)]])
     run_binary("Maximum", float_int_types, [[(2, 4), ()]])
-    run_binary("Equal", float_int_types, [[(2, 4), (2, 4)]])
-    run_binary("NotEqual", float_int_types, [[(2, 4), ()]])
-    run_binary("Greater", float_int_types, [[(), (2, 4)]])
-    run_binary("GreaterEqual", float_int_types, [[(), ()]])
-    run_binary("Less", float_int_types, [[(2, 4), (2, 4)]])
-    run_binary("LessEqual", float_int_types, [[(2, 4), (2, 4)]])
+    run_compare_binary("Equal", float_int_types, [[(2, 4), (2, 4)]])
+    run_compare_binary("NotEqual", float_int_types, [[(2, 4), ()]])
+    run_compare_binary("Greater", float_int_types, [[(), (2, 4)]])
+    run_compare_binary("GreaterEqual", float_int_types, [[(), ()]])
+    run_compare_binary("Less", float_int_types, [[(2, 4), (2, 4)]])
+    run_compare_binary("LessEqual", float_int_types, [[(2, 4), (2, 4)]])
     run_binary("Div", float_types, [[(2, 4), (2, 4)], [(2, 4), ()], [(), (2, 4)]])
     run_binary_const("Add", float_int_types)
     run_binary_const("Sub", float_int_types)
