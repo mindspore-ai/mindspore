@@ -1221,12 +1221,7 @@ void RunSymbolicShapeCheck(const py::object &dyn_input, const py::object &actual
 template <typename DynSeq, typename ActualSeq>
 void RunCheckRecursiveImpl(const DynSeq &dyn_inputs, const ActualSeq &actual_inputs,
                            std::unordered_map<int64_t, int64_t> *unique_id_value_map) {
-  if (dyn_inputs.size() != actual_inputs.size()) {
-    MS_EXCEPTION(ValueError) << "The length of dynamic_inputs (" << dyn_inputs.size()
-                             << ") does not match actual_inputs (" << actual_inputs.size() << ").";
-  }
-
-  for (size_t i = 0; i < dyn_inputs.size(); ++i) {
+  for (size_t i = 0; i < std::min(dyn_inputs.size(), actual_inputs.size()); ++i) {
     auto dyn_input = dyn_inputs[i];
     auto actual_input = actual_inputs[i];
 
@@ -1246,15 +1241,11 @@ void RunCheckRecursiveImpl(const DynSeq &dyn_inputs, const ActualSeq &actual_inp
   }
 }
 
-void RunCheckRecursive(const py::list &dyn_inputs, const py::tuple &actual_inputs,
-                       std::unordered_map<int64_t, int64_t> *unique_id_value_map) {
-  RunCheckRecursiveImpl(dyn_inputs, actual_inputs, unique_id_value_map);
-}
 }  // namespace
 
 void ExecutorPy::CheckSymbolicShape(const py::list &dynamic_inputs, const py::tuple &actual_inputs) {
   std::unordered_map<int64_t, int64_t> unique_id_value_map;
-  RunCheckRecursive(dynamic_inputs, actual_inputs, &unique_id_value_map);
+  RunCheckRecursiveImpl(dynamic_inputs, actual_inputs, &unique_id_value_map);
 }
 
 void ExecutorPy::CheckSymbolicShape(const py::tuple &dynamic_inputs, const py::tuple &actual_inputs) {
