@@ -86,7 +86,7 @@ mindspore.nn.Lamb
 
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或LearningRateSchedule。
-        - **TypeError** - `parameters` 的元素不是Parameter或dict。
+        - **TypeError** - `params` 的元素不是Parameter或dict。
         - **TypeError** - `beta1`、`beta2` 或 `eps` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
         - **ValueError** - `eps` 小于等于0。

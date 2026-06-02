@@ -67,9 +67,9 @@ mindspore.nn.FTRL
 
     异常：
         - **TypeError** - `initial_accum`、`learning_rate`、`lr_power`、`l1`、`l2` 或 `loss_scale` 不是float。
-        - **TypeError** - `parameters` 的元素不是Parameter或dict。
+        - **TypeError** - `params` 的元素不是Parameter或dict。
         - **TypeError** - `weight_decay` 不是float或int。
-        - **TypeError** - `use_nesterov` 不是bool。
+        - **TypeError** - `use_locking` 不是bool。
         - **ValueError** - `lr_power` 大于0。
         - **ValueError** - `loss_scale` 小于等于0。
         - **ValueError** - `initial_accum`、`l1` 或 `l2` 小于0。

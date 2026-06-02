@@ -17,7 +17,7 @@ mindspore.nn.GRU
             h_t = (1 - z_t) * n_t + z_t * h_{(t-1)}
         \end{array}
 
-    其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W, b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
+    其中 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是Hadamard积。 :math:`W, b` 是公式中输出和输入之间的可学习权重。例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
 
     .. warning::
         从2.9.0（不含）之后版本开始，前向调用将从 ``(x, hx, seq_length)`` 调整为 ``(input, h_0)``，且 `has_bias` 将改为 `bias`。
@@ -40,7 +40,7 @@ mindspore.nn.GRU
         - **seq_length** (Tensor) - 输入batch中每个序列的长度。shape为 :math:`(\text{batch_size})` 的Tensor。默认值： ``None`` 。此输入指示填充前的真实序列长度，避免填充元素被用于计算隐藏状态而影响最终输出。当 `x` 含填充元素时，建议使用此输入。
 
     输出：
-        Tuple，包含(`output`, `h_n`)的tuple。
+        Tuple，包含(`output`, `hx_n`)的tuple。
 
         - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 或 :math:`(batch\_size, seq\_len, num\_directions * hidden\_size)` 的Tensor。
         - **hx_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
@@ -48,5 +48,5 @@ mindspore.nn.GRU
     异常：
         - **TypeError** - `input_size` ， `hidden_size` 或 `num_layers` 不是整数。
         - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
-        - **TypeError** - `dropout` 既不是浮点数也不是整数。
+        - **TypeError** - `dropout` 不是浮点数。
         - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。

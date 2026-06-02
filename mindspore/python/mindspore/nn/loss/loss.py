@@ -2085,9 +2085,9 @@ class FocalLoss(LossBase):
         FL(p_t) = -(1-p_t)^\gamma \log(p_t)
 
     Args:
-        gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: ``2.0`` .
         weight (Union[Tensor, None]): A rescaling weight applied to the loss of each batch element. The dimension of
                                       weight should be 1. If None, no weight is applied. Default: ``None`` .
+        gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: ``2.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -2193,10 +2193,10 @@ class FocalLoss(LossBase):
 
 class HuberLoss(LossBase):
     r"""
-    HuberLoss calculate the error between the predicted value and the target value.
+    HuberLoss calculates the error between the predicted value and the target value.
     It has the advantages of both L1Loss and MSELoss.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, then calculate the loss of :math:`x` and
+    Assuming that :math:`x` and :math:`y` are 1-D Tensors, length :math:`N`, then calculate the loss of :math:`x` and
     :math:`y` without dimensionality reduction (the reduction parameter is set to "none"). The formula is as follows:
 
     .. math::
@@ -2231,7 +2231,7 @@ class HuberLoss(LossBase):
             - ``'mean'``: compute and return the mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
 
-        delta (Union[int, float]): The threshold to change between two type of loss.
+        delta (Union[int, float]): The threshold to change between two types of loss.
             The value must be positive. Default: ``1.0`` .
 
     Inputs:
@@ -2927,7 +2927,7 @@ class GaussianNLLLoss(LossBase):
 
 class HingeEmbeddingLoss(LossBase):
     r"""
-    Calculate the Hinge Embedding Loss value based on the input 'logits' and' labels' (only including 1 or -1).
+    Calculate the Hinge Embedding Loss value based on the input 'logits' and 'labels' (only including 1 or -1).
     Usually used to measure the similarity between two inputs.
 
     The loss function for :math:`n`-th sample in the mini-batch is
@@ -2938,7 +2938,7 @@ class HingeEmbeddingLoss(LossBase):
         \max \{0, \Delta - x_n\}, & \text{if}\; y_n = -1,
         \end{cases}
 
-    and the total loss functions is
+    and the total loss function is
 
     .. math::
         \ell(x, y) = \begin{cases}

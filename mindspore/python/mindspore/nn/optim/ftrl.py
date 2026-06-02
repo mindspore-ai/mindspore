@@ -211,13 +211,13 @@ class FTRL(Optimizer):
           in optimizer.
 
     Outputs:
-        Tuple[Parameter], the updated parameters, the shape is the same as `params`.
+        tuple[Parameter], the updated parameters, the shape is the same as `params`.
 
     Raises:
         TypeError: If `initial_accum`, `learning_rate`, `lr_power`, `l1`, `l2` or `loss_scale` is not a float.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If an element of `params` is neither Parameter nor dict.
         TypeError: If `weight_decay` is neither float nor int.
-        TypeError: If `use_nesterov` is not a bool.
+        TypeError: If `use_locking` is not a bool.
         ValueError: If `lr_power` is greater than 0.
         ValueError: If `loss_scale` is less than or equal to 0.
         ValueError: If `initial_accum`, `l1` or `l2` is less than 0.

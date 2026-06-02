@@ -44,7 +44,7 @@ mindspore.nn.HuberLoss
         - **labels** (Tensor) - 目标值，通常情况下与 `logits` 的shape和dtype相同。但是如果 `logits` 和 `labels` 的shape不同，需要保证他们之间可以互相广播。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为"none"，返回与 `logits` 具有相同shape和dtype的Tensor。否则，将返回一个Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``"none"``，返回与 `logits` 具有相同shape和dtype的Tensor。否则，将返回一个Scalar。
 
     异常：
         - **TypeError** - `logits` 或 `labels` 的数据类型既不是float16也不是float32。

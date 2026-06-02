@@ -3,7 +3,7 @@ mindspore.nn.GRUCell
 
 .. py:class:: mindspore.nn.GRUCell(input_size, hidden_size, has_bias=True, dtype=mstype.float32)
 
-    GRU（Gate Recurrent Unit）称为门控循环单元。
+    GRU（Gated Recurrent Unit）称为门控循环单元。
 
     .. math::
 
@@ -14,7 +14,7 @@ mindspore.nn.GRUCell
         h' = (1 - z) * n + z * h
         \end{array}
 
-    这里 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是乘积。 :math:`W, b` 是公式中输出和输入之间的可学习权重， :math:`h` 是隐藏层状态(hidden state)， :math:`r` 是重置门(reset gate)， :math:`z` 是更新门(update gate)， :math:`n` 是第n层。
+    这里 :math:`\sigma` 是sigmoid激活函数， :math:`*` 是Hadamard积。 :math:`W, b` 是公式中输出和输入之间的可学习权重， :math:`h` 是隐藏层状态(hidden state)， :math:`r` 是重置门(reset gate)， :math:`z` 是更新门(update gate)， :math:`n` 是新的记忆状态。
     例如， :math:`W_{ir}, b_{ir}` 是用于将输入 :math:`x` 转换为 :math:`r` 的权重和偏置。详见论文 `Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation <https://aclanthology.org/D14-1179.pdf>`_ 。
 
     .. warning::

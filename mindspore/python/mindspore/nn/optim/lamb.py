@@ -134,7 +134,8 @@ class Lamb(Optimizer):
           distributed parallel may affect the update result.
 
     Note:
-        There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
+        There is usually no connection between an optimizer and mixed precision.
+        But when `FixedLossScaleManager` is used
         and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
         As this optimizer has no argument of `loss_scale`, so `loss_scale` needs to be processed by other means.
 
@@ -210,7 +211,7 @@ class Lamb(Optimizer):
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If an element of `params` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2` or `eps` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
         ValueError: If `eps` is less than or equal to 0.
@@ -237,7 +238,7 @@ class Lamb(Optimizer):
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
         ...                 {'params': no_conv_params, 'lr': poly_decay_lr},
-        ...                 {'order_params': net.trainable_params(0.01)}]
+        ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.Lamb(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.

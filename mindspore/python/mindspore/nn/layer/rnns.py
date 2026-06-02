@@ -677,7 +677,7 @@ class GRU(_RNNBase):
     from perturbation by irrelevant inputs and past hidden state. Reset gate :math:`r_t` determines how much
     information should be reset from old hidden state. New memory state :math:`n_t` is
     calculated with the current input, on which the reset gate will be applied. Finally, current hidden state
-    :math:`h_{t}` is computed with the calculated update grate and new memory state. The complete
+    :math:`h_{t}` is computed with the calculated update gate and new memory state. The complete
     formulation is as follows:
 
     .. math::
@@ -722,11 +722,11 @@ class GRU(_RNNBase):
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements
-          have been used to compute hidden state and affect the final output. It is recommended to
+          being used to compute hidden state and affect the final output. It is recommended to
           use this input when **x** has padding elements.
 
     Outputs:
-        Tuple, a tuple contains (`output`, `h_n`).
+        Tuple, a tuple contains (`output`, `hx_n`).
 
         - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` or
           :math:`(batch\_size, seq\_len, num\_directions * hidden\_size)`.
@@ -769,9 +769,9 @@ class LSTM(_RNNBase):
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
-    Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}` and an cell
+    Given an input :math:`x_t` at time :math:`t`, a hidden state :math:`h_{t-1}` and a cell
     state :math:`c_{t-1}` of the layer at time :math:`{t-1}`, the cell state and hidden state at
-    time :math:`t` is computed using an gating mechanism. Input gate :math:`i_t` is designed to protect the cell
+    time :math:`t` is computed using a gating mechanism. Input gate :math:`i_t` is designed to protect the cell
     from perturbation by irrelevant inputs. Forget gate :math:`f_t` affords protection of the cell by forgetting
     some information in the past, which is stored in :math:`h_{t-1}`. Output gate :math:`o_t` protects other
     units from perturbation by currently irrelevant memory contents. Candidate cell state :math:`\tilde{c}_t` is
@@ -830,7 +830,7 @@ class LSTM(_RNNBase):
           use this input when **x** has padding elements.
 
     Outputs:
-        Tuple, a tuple contains (`output`, (`h_n`, `c_n`)).
+        Tuple, a tuple contains (`output`, `hx_n`).
 
         - **output** (Tensor) - Tensor of shape :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` .
         - **hx_n** (tuple) - A tuple of two Tensor (h_n, c_n) both of shape
