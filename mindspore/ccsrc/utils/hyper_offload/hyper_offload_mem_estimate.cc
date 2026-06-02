@@ -254,15 +254,15 @@ std::unordered_map<std::string, size_t> g_name_to_workspace_pulse_bytes;
 size_t g_csv_baseline_bytes = 0;
 
 static std::string TrimCell(const std::string &s) {
-  size_t lo = 0;
-  while (lo < s.size() && std::isspace(static_cast<unsigned char>(s[lo]))) {
-    ++lo;
+  size_t start_pos = 0;
+  while (start_pos < s.size() && std::isspace(static_cast<unsigned char>(s[start_pos]))) {
+    ++start_pos;
   }
-  size_t hi = s.size();
-  while (hi > lo && std::isspace(static_cast<unsigned char>(s[hi - 1]))) {
-    --hi;
+  size_t end_pos = s.size();
+  while (end_pos > start_pos && std::isspace(static_cast<unsigned char>(s[end_pos - 1]))) {
+    --end_pos;
   }
-  return s.substr(lo, hi - lo);
+  return s.substr(start_pos, end_pos - start_pos);
 }
 
 static void SplitCsvLineToCells(const std::string &line, std::vector<std::string> *cols) {
@@ -291,14 +291,14 @@ static bool ParseFColumnBytes(const std::string &cell, size_t *out_bytes) {
     return false;
   }
   try {
-    const auto v = std::stoull(t, nullptr, 10);
-    if (v == 0ULL) {
+    const auto parsed_value = std::stoull(t, nullptr, 10);
+    if (parsed_value == 0ULL) {
       return false;
     }
-    if (v > std::numeric_limits<size_t>::max()) {
+    if (parsed_value > std::numeric_limits<size_t>::max()) {
       return false;
     }
-    *out_bytes = static_cast<size_t>(v);
+    *out_bytes = static_cast<size_t>(parsed_value);
     return true;
   } catch (const std::exception &) {
     return false;
@@ -750,10 +750,7 @@ static bool TableHasKeyForOutput(const AnfNodePtr &node, size_t out_idx) {
   }
   std::string map_key;
   size_t row_in_vector = 0;
-  if (ResolveCsvRowBinding(node, out_idx, &map_key, &row_in_vector)) {
-    return true;
-  }
-  return false;
+  return ResolveCsvRowBinding(node, out_idx, &map_key, &row_in_vector);
 }
 
 static bool NodeNameListedInCsvNColumn(const AnfNodePtr &node) {
@@ -776,22 +773,22 @@ static bool ProducerOutputListedInCsvNColumn(const AnfNodePtr &producer, size_t 
 // After FillLastUsageFromUserInfo only: max exec index and max per-output last for this producer.
 static size_t ProducerLastInBase(const AnfNodePtr &producer, const OutputLastUsageMap &base_last,
                                  const std::map<AnfNodePtr, size_t> &node_to_index) {
-  size_t mx = 0;
+  size_t max_exec_index = 0;
   bool any = false;
   auto it = node_to_index.find(producer);
   if (it != node_to_index.end()) {
-    mx = it->second;
+    max_exec_index = it->second;
     any = true;
   }
   for (const auto &kv : base_last) {
     if (kv.first.first == producer) {
       any = true;
-      if (kv.second > mx) {
-        mx = kv.second;
+      if (kv.second > max_exec_index) {
+        max_exec_index = kv.second;
       }
     }
   }
-  return any ? mx : 0;
+  return any ? max_exec_index : 0;
 }
 
 // Return true when every scheduled user of the producer can be found in the CSV.
@@ -974,8 +971,8 @@ void ExtendOutputLastUsageForBufferAliasing(const UserInfoList &user_info_list,
       continue;
     }
     auto pit = out_last_usage->find(prod_ki);
-    const size_t cur = (pit != out_last_usage->end()) ? pit->second : p_exec_it->second;
-    size_t ext = cur;
+    const size_t current_last_usage = (pit != out_last_usage->end()) ? pit->second : p_exec_it->second;
+    size_t extended_last_usage = current_last_usage;
     std::unordered_map<AnfNodePtr, size_t> memo;
     for (const auto &user_ki : info.users) {
       const AnfNodePtr &user_node = user_ki.first;
@@ -991,19 +988,21 @@ void ExtendOutputLastUsageForBufferAliasing(const UserInfoList &user_info_list,
         if (IsViewOrInplaceNode(user_node)) {
           std::unordered_set<AnfNodePtr> rec_stack;
           const HorizonSearchState horizon_state{&memo, &rec_stack};
-          ext = std::max(ext, HorizonFromAliasConsumer(user_node, horizon_context, horizon_state));
+          extended_last_usage =
+            std::max(extended_last_usage, HorizonFromAliasConsumer(user_node, horizon_context, horizon_state));
         }
         continue;
       }
       if (NodeNameListedInCsvNColumn(user_node)) {
-        ext = std::max(ext, u_exec);
+        extended_last_usage = std::max(extended_last_usage, u_exec);
       } else {
         std::unordered_set<AnfNodePtr> rec_stack;
         const HorizonSearchState horizon_state{&memo, &rec_stack};
-        ext = std::max(ext, HorizonFromMissingTableConsumer(user_node, horizon_context, horizon_state));
+        extended_last_usage =
+          std::max(extended_last_usage, HorizonFromMissingTableConsumer(user_node, horizon_context, horizon_state));
       }
     }
-    (*out_last_usage)[prod_ki] = ext;
+    (*out_last_usage)[prod_ki] = extended_last_usage;
   }
 }
 
@@ -1059,11 +1058,11 @@ void BuildProfileBaselineAndDiff(const CNodePtrList &index_order, size_t order_s
     }
     const size_t output_count = TableOutputCount(kernel);
     for (size_t out_idx = 0; out_idx < output_count; ++out_idx) {
-      const size_t sz_raw = GetNodeSizeForProfile(kernel, out_idx, i);
-      if (sz_raw == 0) {
+      const size_t raw_tensor_size = GetNodeSizeForProfile(kernel, out_idx, i);
+      if (raw_tensor_size == 0) {
         continue;
       }
-      const size_t sz = sz_raw;
+      const size_t aligned_tensor_size = raw_tensor_size;
       auto fl_it = node_first_last.find(kernel);
       const size_t creation = (fl_it != node_first_last.end()) ? fl_it->second.first : i;
       auto ol_it = out_last_usage.find({kernel, out_idx});
@@ -1072,11 +1071,11 @@ void BuildProfileBaselineAndDiff(const CNodePtrList &index_order, size_t order_s
         continue;
       }
       if (creation < profile_size) {
-        delta[creation] += static_cast<int64_t>(sz);
+        delta[creation] += static_cast<int64_t>(aligned_tensor_size);
       }
       const size_t drop_at = last + 1;
       if (drop_at < profile_size) {
-        delta[drop_at] -= static_cast<int64_t>(sz);
+        delta[drop_at] -= static_cast<int64_t>(aligned_tensor_size);
       }
     }
   }

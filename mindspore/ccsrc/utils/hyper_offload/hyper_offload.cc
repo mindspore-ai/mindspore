@@ -310,6 +310,18 @@ CNodePtr AddActivationD2HOperation(const ActivationOperationContext &context, co
   MS_EXCEPTION_IF_NULL(context.graph);
   MS_EXCEPTION_IF_NULL(context.operations);
   auto to_remote_node = BuildToHostNode(context.graph, data_node, context.callback);
+
+  // Attach free_data_after_node info for peak strategy
+  if (is_peak_strategy && !offload_info.replace_info_list.empty()) {
+    auto it =
+      std::find_if(offload_info.replace_info_list.begin(), offload_info.replace_info_list.end(),
+                   [](const ReplaceInfo &replace_info) { return replace_info.free_data_after_node.first != nullptr; });
+    if (it != offload_info.replace_info_list.end()) {
+      to_remote_node->AddAttr("peak_free_data_after_node",
+                              MakeValue(it->free_data_after_node.first->fullname_with_scope()));
+    }
+  }
+
   const auto d2h_after_node = GetActivationD2HInsertAfterNode(offload_info, is_peak_strategy);
   AddActivationD2HAfterNode(context.exec_order, context.operations, d2h_after_node, to_remote_node);
   return to_remote_node;

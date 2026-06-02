@@ -85,6 +85,7 @@ using UserInfoList = std::vector<UserInfo>;
 struct ReplaceInfo {
   KernelWithIndex replace_start_node;
   std::vector<KernelWithIndex> replace_rest_nodes;
+  KernelWithIndex free_data_after_node = KernelWithIndex();
 };
 using ReplaceInfoList = std::vector<ReplaceInfo>;
 
@@ -94,6 +95,7 @@ using ReplaceInfoList = std::vector<ReplaceInfo>;
 struct OffloadInfo {
   KernelWithIndex data_node;
   ReplaceInfoList replace_info_list;
+  size_t optimized_release_distance = 0;
 };
 using OffloadInfoList = std::vector<OffloadInfo>;
 
@@ -121,6 +123,11 @@ class COMMON_EXPORT HyperOffloadConfig {
   double score_weight_neighbor_impact() const { return score_weight_neighbor_impact_; }
   const std::set<int64_t> &enabled_stages() const { return enabled_stages_; }
   const std::string &offload_percentage() const { return offload_percentage_; }
+  double d2h_bandwidth_gbps() const { return d2h_bandwidth_gbps_; }
+  double h2d_bandwidth_gbps() const { return h2d_bandwidth_gbps_; }
+  double default_kernel_time_us() const { return default_kernel_time_us_; }
+  bool enable_adaptive_release_distance() const { return enable_adaptive_release_distance_; }
+  bool enable_adaptive_prefetch_distance() const { return enable_adaptive_prefetch_distance_; }
 
  private:
   HyperOffloadConfig();
@@ -138,6 +145,11 @@ class COMMON_EXPORT HyperOffloadConfig {
   double score_weight_neighbor_impact_{1.0};
   std::set<int64_t> enabled_stages_;
   std::string offload_percentage_;
+  double d2h_bandwidth_gbps_{20.0};
+  double h2d_bandwidth_gbps_{55.0};
+  double default_kernel_time_us_{400.0};
+  bool enable_adaptive_release_distance_{false};
+  bool enable_adaptive_prefetch_distance_{false};
 };
 
 // Check if a node is a D2H (Device to Host) node.
@@ -224,9 +236,12 @@ COMMON_EXPORT std::optional<size_t> GetNodePrefetchDistance(const AnfNodePtr &no
 COMMON_EXPORT std::optional<size_t> GetNodeReleaseDistance(const AnfNodePtr &node);
 // Get enable_offload from node attribute, return nullopt if not found.
 COMMON_EXPORT std::optional<bool> GetNodeEnableOffload(const AnfNodePtr &node);
-// Find the last user of a data node in the execution order, considering TupleGetItem.
 COMMON_EXPORT size_t FindLastUserIndex(const CNodePtrList &exec_order, const AnfNodePtr &data_node,
                                        size_t current_node_index);
+COMMON_EXPORT size_t CalculateAdaptiveReleaseDistance(const AnfNodePtr &data_node, const CNodePtrList &exec_order,
+                                                      size_t data_node_index, size_t last_user_index);
+COMMON_EXPORT size_t CalculateAdaptivePrefetchDistance(const AnfNodePtr &data_node, const CNodePtrList &exec_order,
+                                                       size_t first_use_index);
 
 }  // namespace hyper_offload
 }  // namespace utils
