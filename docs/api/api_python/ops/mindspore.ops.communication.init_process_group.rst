@@ -8,6 +8,7 @@ mindspore.ops.communication.init_process_group
     .. note::
         - 此方法在GPU和CPU版本的MindSpore中不受支持。
         - 在Ascend硬件平台上，此API应在定义任何Tensor和Parameter之前设置，以及在实例化和执行任何操作和网络之前设置。
+        - MCCL通信组不支持重复初始化和销毁。
 
     参数：
         - **backend** (str, 可选) - 要使用的后端。默认值为 ``"hccl"``，目前仅支持 ``"hccl"``。

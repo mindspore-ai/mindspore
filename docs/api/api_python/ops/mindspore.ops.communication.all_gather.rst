@@ -5,6 +5,9 @@ mindspore.ops.communication.all_gather
 
     从指定通信组中收集张量，并返回收集的张量列表。
 
+    .. note::
+        MCCL通信组场景不支持 `tensor_list` 中元素的shape不一样。
+
     参数：
         - **tensor_list** (list[Tensor]) - 输出列表。
         - **tensor** (Tensor) - 要收集到张量中的输入张量。

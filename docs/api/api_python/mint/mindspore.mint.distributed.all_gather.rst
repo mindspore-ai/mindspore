@@ -6,7 +6,8 @@ mindspore.mint.distributed.all_gather
     汇聚指定的通信组中的tensor，并返回汇聚后的tensor列表。
 
     .. note::
-        当前仅支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
+        - MCCL通信组场景不支持 `tensor_list` 中元素的shape不一样。
 
     参数：
         - **tensor_list** (list[Tensor]) - 输出汇聚的tensor列表。
