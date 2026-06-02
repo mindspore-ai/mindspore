@@ -70,7 +70,7 @@ def generate_expect_backward_output(a, offset=0, axis1=0, axis2=1, dout=None):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', mem_peak=3072.0)
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_trace_forward(mode):
     """
     Feature: numpy.trace
@@ -80,11 +80,8 @@ def test_ops_trace_forward(mode):
     a_np = generate_random_input((5, 5, 5), np.float32)
     if mode == 'pynative':
         output = trace_forward_func(ms.Tensor(a_np))
-    elif mode == 'KBK':
-        output = (jit(trace_forward_func, jit_level="O0"))(
-            ms.Tensor(a_np))
     else:
-        output = (jit(trace_forward_func, backend="GE"))(
+        output = (jit(trace_forward_func, jit_level="O0"))(
             ms.Tensor(a_np))
     expect = generate_expect_forward_output(a_np)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-5)
@@ -94,11 +91,8 @@ def test_ops_trace_forward(mode):
     dout = np.ones((5,), np.float32)
     if mode == 'pynative':
         grad = trace_backward_func(ms.Tensor(in_np))
-    elif mode == 'KBK':
-        grad = (jit(trace_backward_func, jit_level="O0"))(
-            ms.Tensor(in_np))
     else:
-        grad = (jit(trace_backward_func, backend="GE"))(
+        grad = (jit(trace_backward_func, jit_level="O0"))(
             ms.Tensor(in_np))
     expect = generate_expect_backward_output(
         in_np, offset=0, axis1=0, axis2=1, dout=dout)

@@ -46,6 +46,31 @@ device::DeviceType GetDeviceName(const tensor::TensorPtr &input_tensor, const st
   return device_type;
 }
 
+void CheckRandomDeviceSupported(const std::string &op_name, const std::optional<Int64ImmPtr> &device) {
+  auto device_type = device.has_value() ? GetDeviceName(nullptr, device) : OpRunStatus::Get().device_target();
+  if (device_type != device::DeviceType::kAscend && device_type != device::DeviceType::kMeta) {
+    MS_EXCEPTION(RuntimeError) << "For '" << op_name << "', it does not support "
+                               << device::GetDeviceNameByType(device_type)
+                               << " device. Only 'Ascend', 'npu' and 'meta' are "
+                                  "supported.";
+  }
+}
+
+void CheckLikeRandomDeviceSupported(const std::string &op_name, const tensor::TensorPtr &input_tensor,
+                                    const std::optional<Int64ImmPtr> &device) {
+  if (device.has_value()) {
+    CheckRandomDeviceSupported(op_name, device);
+    return;
+  }
+
+  if (input_tensor != nullptr && input_tensor->device_type() != device::DeviceType::kAscend &&
+      input_tensor->device_type() != device::DeviceType::kMeta) {
+    MS_EXCEPTION(RuntimeError) << "For '" << op_name << "', it does not support input tensor on "
+                               << device::GetDeviceNameByType(input_tensor->device_type())
+                               << " when device is None. Only 'Ascend', 'npu' and 'meta' are supported.";
+  }
+}
+
 void HandlePinMemory(const std::vector<tensor::TensorPtr> &outputs, device::DeviceType device_type) {
   if (device_type != device::DeviceType::kCPU) {
     MS_LOG(EXCEPTION) << "Only CPU tensor can be pinned. device should be CPU.";

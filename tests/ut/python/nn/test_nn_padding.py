@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test nn pad """
+"""test nn pad."""
+# pylint: disable=arguments-differ
 import numpy as np
 import pytest
 
-import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, nn
 from mindspore.nn import ConstantPad1d, ConstantPad2d, ConstantPad3d, ZeroPad2d
 from mindspore.ops.composite import GradOperation
 
 
 class ConstantPad1dNet(nn.Cell):
+    """Cell wrapper for ConstantPad1d tests."""
+
     def __init__(self, padding, value):
-        super(ConstantPad1dNet, self).__init__()
+        super().__init__()
         self.pad = ConstantPad1d(padding, value)
         self.value = value
 
@@ -33,8 +35,10 @@ class ConstantPad1dNet(nn.Cell):
 
 
 class ConstantPad2dNet(nn.Cell):
+    """Cell wrapper for ConstantPad2d tests."""
+
     def __init__(self, padding, value):
-        super(ConstantPad2dNet, self).__init__()
+        super().__init__()
         self.pad = ConstantPad2d(padding, value)
         self.value = value
 
@@ -43,8 +47,10 @@ class ConstantPad2dNet(nn.Cell):
 
 
 class ConstantPad3dNet(nn.Cell):
+    """Cell wrapper for ConstantPad3d tests."""
+
     def __init__(self, padding, value):
-        super(ConstantPad3dNet, self).__init__()
+        super().__init__()
         self.pad = ConstantPad3d(padding, value)
         self.value = value
 
@@ -53,8 +59,10 @@ class ConstantPad3dNet(nn.Cell):
 
 
 class ZeroPad2dNet(nn.Cell):
+    """Cell wrapper for ZeroPad2d tests."""
+
     def __init__(self, padding):
-        super(ZeroPad2dNet, self).__init__()
+        super().__init__()
         self.pad = ZeroPad2d(padding)
 
     def construct(self, x):
@@ -62,8 +70,10 @@ class ZeroPad2dNet(nn.Cell):
 
 
 class Grad(nn.Cell):
+    """Gradient wrapper used by padding tests."""
+
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = GradOperation(get_all=True, sens_param=False)
         self.network = network
 
@@ -130,6 +140,22 @@ def test_constant_pad_1d_train():
     grad = Grad(ConstantPad1dNet(padding, value))
     output = grad(Tensor(x))
     print(output)
+
+
+@pytest.mark.parametrize("padding, expected", [
+    (0, (0, 0)),
+    (-1, (-1, -1)),
+    ((-1, 2), (-1, 2)),
+])
+def test_constant_pad_1d_accepts_zero_and_negative_padding(padding, expected):
+    """
+    Feature: ConstantPad1d
+    Description: ConstantPad1d should normalize integer padding and accept
+    crop-style negative padding.
+    Expectation: success
+    """
+    pad = ConstantPad1d(padding, 0.0)
+    assert pad.padding == expected
 
 
 def test_constant_pad_2d_infer():

@@ -16,14 +16,35 @@
 
 #include "include/pynative/utils/pyboost/functions/composite/rand_like_ext.h"
 #include "include/pynative/utils/pyboost/functions/composite/empty_like.h"
+#include "include/pynative/utils/pyboost/functions/composite/composite_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
+bool IsRandLikeExtFloatType(TypeId output_type) {
+  switch (output_type) {
+    case kNumberTypeFloat:
+    case kNumberTypeFloat16:
+    case kNumberTypeBFloat16:
+    case kNumberTypeFloat32:
+    case kNumberTypeFloat64:
+      return true;
+    default:
+      return false;
+  }
+}
+}  // namespace
+
 tensor::TensorPtr rand_like_ext(const tensor::TensorPtr &tensor_tensor, const tensor::TensorPtr &seed,
                                 const tensor::TensorPtr &offset, const std::optional<Int64ImmPtr> &dtype,
                                 const std::optional<Int64ImmPtr> &device) {
+  auto output_type = GetDataType(tensor_tensor, dtype);
+  if (!IsRandLikeExtFloatType(output_type)) {
+    MS_EXCEPTION(ValueError) << "For 'rand_like_ext', the 'dtype' must be a float type, but got "
+                             << TypeIdToString(output_type) << ".";
+  }
   tensor::TensorPtr output_empty = empty_like(tensor_tensor, dtype, device, std::make_shared<BoolImm>(false));
   if (output_empty->device_address() != nullptr &&
       output_empty->device_address()->GetDeviceType() == device::DeviceType::kMeta) {

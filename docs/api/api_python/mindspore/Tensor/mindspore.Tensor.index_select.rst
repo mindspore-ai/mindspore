@@ -10,7 +10,7 @@ mindspore.Tensor.index_select
         2.9.0（不含）之后版本非兼容性变更：删除 `index_select(axis, index)` 重载，仅支持 `index_select(dim, index)`。
 
     .. note::
-        index的值必须在 `[0, self.shape[axis])` 范围内，超出该范围结果未定义。
+        `index` 的值必须在 `[0, self.shape[axis])` 范围内；负数或超出该范围的值会导致未定义行为。
 
     参数：
         - **axis** (int) - 根据索引进行选择的维度。
@@ -32,7 +32,7 @@ mindspore.Tensor.index_select
     返回的Tensor和输入Tensor( `self` )的维度数量相同，其第 `dim` 维度的大小和 `index` 的长度相同；其他维度和 `self` 相同。
 
     .. note::
-        index的值必须在 `[0, self.shape[dim])` 范围内，超出该范围结果未定义。
+        `index` 的值必须在 `[0, self.shape[dim])` 范围内；负数或超出该范围的值会导致未定义行为。
 
     参数：
         - **dim** (int) - 根据索引进行选择的维度。

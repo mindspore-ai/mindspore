@@ -16,7 +16,6 @@
 
 #include "infer/ops_func_impl/rand_like_ext.h"
 #include <memory>
-#include <string>
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "ops_utils/op_constants.h"
@@ -41,8 +40,10 @@ TypeIdList RandLikeExtFuncImpl::InferType(const PrimitivePtr &primitive, const I
   }
   if (prim_name == kNameRandIntLike) {
     CheckRandRange(input_infos[kInputIndex1], input_infos[kInputIndex2], prim_name, (output_type == kNumberTypeBool));
+    CheckAndConvertUtils::CheckTypeIdValid("dtype", output_type, common_mint_valid_type_ids_with_bool, prim_name);
+    return {output_type};
   }
-  CheckAndConvertUtils::CheckTypeIdValid("dtype", output_type, common_mint_valid_type_ids_with_bool, primitive->name());
+  CheckAndConvertUtils::CheckTypeIdValid("dtype", output_type, common_float_type_ids, prim_name);
   return {output_type};
 }
 }  // namespace ops

@@ -30,3 +30,4 @@ randint_like:
     dispatch:
         enable: True
         Ascend: RandIntLikeAscend
+        CPU: RandIntLikeCPU

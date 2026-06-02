@@ -24,3 +24,4 @@ randn_like:
     dispatch:
         enable: True
         Ascend: RandnLikeAscend
+        CPU: RandnLikeCPU

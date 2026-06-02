@@ -22,8 +22,6 @@ scatter_:
     .. warning::
         - If multiple indexes point to the same position in `self` , the final value of
           this position in `self` is uncertain.
-        - On Ascend, behavior is unpredictable when the value of `index` is not in the
-          range `[-self.shape[dim], self.shape[dim])` in forward.
         - Non-backward-compatible change after version 2.9.0: the ``scatter_(dim, index, value, ...)``
           overloads will be removed, and only ``scatter_(dim, index, src, *, reduce=None)`` will be
           supported, where `src` accepts both tensors and scalars.
@@ -36,8 +34,9 @@ scatter_:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
             or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
-            its rank must be the same as `self` and the value range of each element must be `[-s, s)`
-            where `s` is the size of `self` along axis `dim` .
+            its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
+            `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
+            input and will lead to undefined behavior.
         src (Tensor): The data to doing the update operation with `self` . It should have the same dtype and rank
             as `self` .
 
@@ -93,26 +92,26 @@ scatter_:
     .. warning::
         - If multiple indexes point to the same position in `self` , the final value of
           this position in `self` is uncertain.
-        - On Ascend, behavior is unpredictable when the value of `index` is not in the
-          range `[-self.shape[dim], self.shape[dim])` in forward.
         - This is an experimental API that is subject to change or deletion.
 
     .. note::
-        This overload function does not support reverse gradient calculation and will return zeros if calculate gradient.
+        This overload function does not support reverse gradient calculation and
+        will return zeros if calculate gradient.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
             or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
-            its rank must be the same as `self` and the value range of each element must be `[-s, s)`
-            where `s` is the size of `self` along axis `dim` .
+            its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
+            `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
+            input and will lead to undefined behavior.
         src (Tensor): The data to doing the accumulate or multiply operation with `self` . It should have the
             same dtype and rank as `self` .
 
     Keyword Args:
         reduce (str): Reduce operation, supports ``"add"`` and ``"multiply"`` . When `reduce` is ``"add"`` , `src`
-            is accumulated to `input` base on `index` . When `reduce` is ``"multiply"`` , `src` is multiplied
-            to `input` base on `index` .
+            is accumulated to `self` base on `index` . When `reduce` is ``"multiply"`` , `src` is multiplied
+            to `self` base on `index` .
 
     Returns:
         Tensor, the modified `self` itself.
@@ -166,16 +165,15 @@ scatter_:
     .. warning::
         - If multiple indexes point to the same position in `self` , the final value of
           this position in `self` is uncertain.
-        - On Ascend, behavior is unpredictable when the value of `index` is not in the
-          range `[-self.shape[dim], self.shape[dim])` in forward.
         - This is an experimental API that is subject to change or deletion.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
             or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
-            its rank must be the same as `self` and the value range of each element must be `[-s, s)`
-            where `s` is the size of `self` along axis `dim` .
+            its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
+            `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
+            input and will lead to undefined behavior.
         value (int, float, bool): The data to doing the update operation with `self` . It can be considered as being
             broadcasted into a Tensor whose shape and dtype are the same as `self` , and then be regarded as `src`
             for calculation.
@@ -229,27 +227,27 @@ scatter_:
     .. warning::
         - If multiple indexes point to the same position in `self` , the final value of
           this position in `self` is uncertain.
-        - On Ascend, behavior is unpredictable when the value of `index` is not in the
-          range `[-self.shape[dim], self.shape[dim])` in forward.
         - This is an experimental API that is subject to change or deletion.
 
     .. note::
-        This overload function does not support reverse gradient calculation and will return zeros if calculate gradient.
+        This overload function does not support reverse gradient calculation and
+        will return zeros if calculate gradient.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
             or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
-            its rank must be the same as `self` and the value range of each element must be `[-s, s)`
-            where `s` is the size of `self` along axis `dim` .
+            its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
+            `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
+            input and will lead to undefined behavior.
         value (int, float, bool): The data to doing the accumulate or multiply operation with `self` . It can be
             considered as being broadcasted into a Tensor whose shape and dtype are the same as `self` , and then
             be regarded as `src` for calculation.
 
     Keyword Args:
         reduce (str): Reduce operation, supports ``"add"`` and ``"multiply"`` . When `reduce` is ``"add"`` , `value`
-            is accumulated to `input` base on `index` . When `reduce` is ``"multiply"`` , `value` is multiplied
-            to `input` base on `index` .
+            is accumulated to `self` base on `index` . When `reduce` is ``"multiply"`` , `value` is multiplied
+            to `self` base on `index` .
 
     Returns:
         Tensor, the modified `self` itself.

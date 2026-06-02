@@ -3776,26 +3776,42 @@ DEF_PURE_SHAPE_CALC(g_trace_ext_shapecalc)
     return {SizeToLong(inputs.at(i0).size())};
   });
 
+DEF_PURE_SHAPE_CALC(g_trace_ext_grad_shapecalc)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(i0);
+    if (input_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "Trace gradient requires input rank >= 2, but got " << input_shape.size() << ".";
+    }
+    return {ShapeVector{input_shape[0] * input_shape[1]}, ShapeVector{input_shape[1] + 1}};
+  })
+  .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> std::vector<int64_t> { return {1, 1}; });
+
 REG_BPROP_BUILDER("TraceExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &out = ib->GetInput(i1);
   const auto &dout = ib->GetInput(i2);
   auto shape = ib->GetShape(x);
   auto dtype_id = ib->GetDtypeId(out);
-  NodePtr eye = nullptr;
-  TypeId eye_dtype_id = kTypeUnknown;
+  NodePtr trace_indices = nullptr;
+  TypeId grad_dtype_id = kTypeUnknown;
   if (dtype_id == kNumberTypeBFloat16) {
-    eye_dtype_id = kNumberTypeFloat32;
+    grad_dtype_id = kNumberTypeFloat32;
   } else {
-    eye_dtype_id = dtype_id;
+    grad_dtype_id = dtype_id;
   }
   if (IsDynamicShape(shape) || IsDynamicRank(shape)) {
-    auto shapes = ib->ShapeCalc(g_trace_ext_shapecalc, {x});
-    eye = ib->Eye(ib->TupleGetItem(shapes[0], 0), ib->TupleGetItem(shapes[0], 1), ib->Value<int64_t>(eye_dtype_id));
+    auto shapes = ib->ShapeCalc(g_trace_ext_grad_shapecalc, {x});
+    trace_indices = ib->Arange(ib->Value<int64_t>(0), ib->TupleGetItem(shapes[0], 0), ib->TupleGetItem(shapes[1], 0),
+                               ib->Value<int64_t>(kNumberTypeInt64));
   } else {
-    eye = ib->Eye(ib->Value(shape[0]), ib->Value(shape[1]), ib->Value<int64_t>(eye_dtype_id));
+    trace_indices = ib->Arange(ib->Value<int64_t>(0), ib->Value<int64_t>(shape[0] * shape[1]),
+                               ib->Value<int64_t>(shape[1] + 1), ib->Value<int64_t>(kNumberTypeInt64));
   }
-  auto dx = ib->Mul(eye, dout);
+  auto zero_input = ib->Zeros(ib->Shape(x), ib->Value(static_cast<int64_t>(grad_dtype_id)));
+  auto flat_zero_input = ib->Reshape(zero_input, {-1});
+  auto dout_scalar = ib->Reshape(dout, ShapeVector{});
+  auto dx = ib->IndexFillTensor(flat_zero_input, ib->Value<int64_t>(0), trace_indices, dout_scalar);
+  dx = ib->Reshape(dx, ib->Shape(x));
   if (dtype_id == kNumberTypeBFloat16) {
     dx = ib->Cast(dx, kBFloat16);
     return {dx};

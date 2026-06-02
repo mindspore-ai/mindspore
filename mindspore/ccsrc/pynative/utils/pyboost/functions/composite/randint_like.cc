@@ -16,6 +16,7 @@
 
 #include "include/pynative/utils/pyboost/functions/composite/randint_like.h"
 #include "include/pynative/utils/pyboost/functions/composite/empty_like.h"
+#include "include/pynative/utils/pyboost/functions/composite/composite_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {

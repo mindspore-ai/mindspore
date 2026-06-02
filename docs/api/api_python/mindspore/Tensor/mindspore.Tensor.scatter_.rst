@@ -20,15 +20,18 @@ mindspore.Tensor.scatter\_
 
     .. warning::
         - 如果 `index` 有多个索引指向 `self` 内的同一个位置，则 `self` 中该位置的最终值是不确定的。
-        - 在Ascend平台上，如果 `index` 中元素的值不在 `[-self.shape[dim], self.shape[dim])` 的范围内，则其行为是不确定的。
-        - 2.9.0（不含）之后版本非兼容性变更：删除 ``scatter_(dim, index, value, ...)`` 重载，仅支持 ``scatter_(dim, index, src, *, reduce=None)`` ，其中 `src` 同时支持张量与标量。
+        - 2.9.0（不含）之后版本非兼容性变更：删除 ``scatter_(dim, index, value, ...)`` 重载，
+          仅支持 ``scatter_(dim, index, src, *, reduce=None)`` ，其中 `src` 同时支持张量与标量。
 
     .. note::
         仅当 `src` 的shape和 `index` 的shape相同时，支持求 `self` 向 `src` 的反向梯度。
 
     参数：
         - **dim** (int) - 要进行操作的轴。取值范围是 `[-r, r)` ，其中 `r` 是 `self` 的秩。
-        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，且每个元素取值范围是 `[-s, s)` ，这里的 `s` 是 `self` 在 `dim` 指定轴的大小。
+        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。
+          如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，
+          且每个元素的取值范围必须在 `[0, s)` 内，这里的 `s` 是 `self` 在 `dim`
+          指定轴的大小。负数或超出该范围的值都是非法输入，会导致未定义行为。
         - **src** (Tensor) - 指定对 `self` 进行更新操作的数据。其rank与dtype必须与 `self` 的相同。
 
     返回：
@@ -63,7 +66,6 @@ mindspore.Tensor.scatter\_
 
     .. warning::
         - 如果 `index` 有多个索引指向 `self` 内的同一个位置，则 `self` 中该位置的最终值是不确定的。
-        - 在Ascend平台上，如果 `index` 中元素的值不在 `[-self.shape[dim], self.shape[dim])` 的范围内，则其行为是不确定的。
         - 这是一个实验性API，后续可能修改或删除。
 
     .. note::
@@ -71,11 +73,16 @@ mindspore.Tensor.scatter\_
 
     参数：
         - **dim** (int) - 要进行操作的轴。取值范围是 `[-r, r)` ，其中 `r` 是 `self` 的秩。
-        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，且每个元素取值范围是 `[-s, s)` ，这里的 `s` 是 `self` 在 `dim` 指定轴的大小。
+        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。
+          如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，
+          且每个元素的取值范围必须在 `[0, s)` 内，这里的 `s` 是 `self` 在 `dim`
+          指定轴的大小。负数或超出该范围的值都是非法输入，会导致未定义行为。
         - **src** (Tensor) - 指定对 `self` 进行更新操作的数据。其rank与dtype必须与 `self` 的相同。
 
     关键字参数：
-        - **reduce** (str) - 进行的归约操作，支持 ``"add"`` ， ``"multiply"`` 。当 `reduce` 设置为 ``"add"`` 时，`src` 将根据 `index` 累加到 `self` 。当 `reduce` 设置为 ``"multiply"`` 时，`src` 将根据 `index` 累乘到 `self` 。
+        - **reduce** (str) - 进行的归约操作，支持 ``"add"`` ， ``"multiply"`` 。
+          当 `reduce` 设置为 ``"add"`` 时，`src` 将根据 `index` 累加到 `self` 。
+          当 `reduce` 设置为 ``"multiply"`` 时，`src` 将根据 `index` 累乘到 `self` 。
 
     返回：
         Tensor，返回被修改后的 `self` 自身。
@@ -110,12 +117,14 @@ mindspore.Tensor.scatter\_
 
     .. warning::
         - 如果 `index` 有多个索引指向 `self` 内的同一个位置，则 `self` 中该位置的最终值是不确定的。
-        - 在Ascend平台上，如果 `index` 中元素的值不在 `[-self.shape[dim], self.shape[dim])` 的范围内，则其行为是不确定的。
         - 这是一个实验性API，后续可能修改或删除。
 
     参数：
         - **dim** (int) - 要进行操作的轴。取值范围是 `[-r, r)` ，其中 `r` 是 `self` 的秩。
-        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，且每个元素取值范围是 `[-s, s)` ，这里的 `s` 是 `self` 在 `dim` 指定轴的大小。
+        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。
+          如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，
+          且每个元素的取值范围必须在 `[0, s)` 内，这里的 `s` 是 `self` 在 `dim`
+          指定轴的大小。负数或超出该范围的值都是非法输入，会导致未定义行为。
         - **value** (int, float, bool) - 指定对 `self` 进行更新操作的数据。可视为将尝试将其广播为shape及dtype与 `self` 一致的Tensor并视为 `src` 参与运算。
 
     返回：
@@ -148,7 +157,6 @@ mindspore.Tensor.scatter\_
 
     .. warning::
         - 如果 `index` 有多个索引指向 `self` 内的同一个位置，则 `self` 中该位置的最终值是不确定的。
-        - 在Ascend平台上，如果 `index` 中元素的值不在 `[-self.shape[dim], self.shape[dim])` 的范围内，则其行为是不确定的。
         - 这是一个实验性API，后续可能修改或删除。
 
     .. note::
@@ -156,11 +164,16 @@ mindspore.Tensor.scatter\_
 
     参数：
         - **dim** (int) - 要进行操作的轴。取值范围是 `[-r, r)` ，其中 `r` 是 `self` 的秩。
-        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，且每个元素取值范围是 `[-s, s)` ，这里的 `s` 是 `self` 在 `dim` 指定轴的大小。
+        - **index** (Tensor) - 在 `dim` 指定的目标轴上访问 `self` 时使用的索引，数据类型为int32或int64。
+          如果为空Tensor，则将直接返回，不进行任何操作；否则其rank必须和 `self` 一致，
+          且每个元素的取值范围必须在 `[0, s)` 内，这里的 `s` 是 `self` 在 `dim`
+          指定轴的大小。负数或超出该范围的值都是非法输入，会导致未定义行为。
         - **value** (int, float, bool) - 指定对 `self` 进行更新操作的数据。可视为将尝试将其广播为shape及dtype与 `self` 一致的Tensor并视为 `src` 参与运算。
 
     关键字参数：
-        - **reduce** (str) - 进行的归约操作，支持 ``"add"`` ， ``"multiply"`` 。当 `reduce` 设置为 ``"add"`` 时， `src` 将根据 `index` 累加到 `self` 。当 `reduce` 设置为 ``"multiply"`` 时， `src` 将根据 `index` 累乘到 `self` 。
+        - **reduce** (str) - 进行的归约操作，支持 ``"add"`` ， ``"multiply"`` 。
+          当 `reduce` 设置为 ``"add"`` 时，`value` 将根据 `index` 累加到 `self` 。
+          当 `reduce` 设置为 ``"multiply"`` 时，`value` 将根据 `index` 累乘到 `self` 。
 
     返回：
         Tensor，返回被修改后的 `self` 自身。

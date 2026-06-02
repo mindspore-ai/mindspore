@@ -24,7 +24,10 @@
 namespace mindspore::ops {
 class OPS_API RandIntLikeFuncImpl : public RandLikeExtFuncImpl {
  public:
-  RandIntLikeFuncImpl() { dtype_idx_ = 5; }
+  RandIntLikeFuncImpl() {
+    dtype_idx_ = 5;
+    device_idx_ = 6;
+  }
   // For aclnn GetWorkspace
   std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex3, kInputIndex4}; };
 };

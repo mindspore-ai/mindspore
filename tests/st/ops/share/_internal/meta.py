@@ -1119,7 +1119,9 @@ class OpsFactory():
         """
         self._dynamic_inputs = op_dynamic_inputs
 
-        if grad_cmp and self.op_info.is_differentiable:
+        if grad_cmp:
+            if not self.op_info.is_differentiable:
+                return
             ms_out = self.grad_mindspore_dynamic_shape_impl()
             pt_out = self.grad_pytorch_dynamic_shape_impl()
         else:

@@ -80,7 +80,7 @@ ShapeArray RandpermExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   int64_t n = n_opt.value();
-  if (n <= 0) {
+  if (n < 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the input 'n' must be >= 0, but got data: " << n << ".";
   }
   auto out_type = static_cast<TypeId>(type_opt.value());

@@ -58,10 +58,10 @@ ShapeArray DiagExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Infe
   int row = diagonal > 0 ? 0 : -diagonal;
   int col = diagonal > 0 ? diagonal : 0;
   out_len = std::min(input_shape[0] - row, input_shape[1] - col);
-  ShapeVector out_shape;
   if (out_len == 0) {
-    return {out_shape};
+    return {ShapeVector{0}};
   }
+  ShapeVector out_shape;
   out_shape.emplace_back(out_len);
   return {out_shape};
 }

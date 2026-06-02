@@ -248,6 +248,7 @@ kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, con
   }
 
   static const auto ms_op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
+  bool op_plugin_init_failed = false;
   if (ms_op_plugin_path != nullptr) {
     // if env var MS_OP_PLUGIN_PATH is set, then use custom op plugin to load op
     constexpr auto custom_op_name = "CustomOpPlugin";
@@ -260,12 +261,18 @@ kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, con
       PyboostKernelExtraFuncFactory::GetInstance().SetThreadPool(device::GetDeviceTypeByName(device_name), kernel_mod);
       return kernel_mod;
     }
+    op_plugin_init_failed = true;
     cache_helper.SetCache(key, kernel_mod);
     PyboostKernelExtraFuncFactory::GetInstance().SetThreadPool(device::GetDeviceTypeByName(device_name), kernel_mod);
   }
 
   kernel_mod = device_context->GetKernelExecutor()->CreateKernelMod(op_name);
   if (kernel_mod == nullptr) {
+    if (ms_op_plugin_path != nullptr && op_plugin_init_failed) {
+      MS_LOG(EXCEPTION) << "Create kernelmod for op " << op_name
+                        << " failed. The builtin kernel is not registered, and the op_plugin kernel is unavailable "
+                           "or its initialization failed.";
+    }
     MS_LOG(EXCEPTION) << "Create kernelmod for op " << op_name << " failed";
   }
 

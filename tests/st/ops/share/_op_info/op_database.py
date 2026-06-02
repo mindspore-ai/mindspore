@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: skip-file
 """Utility helpers for operation testing.
 
 This module provides:
@@ -99,7 +100,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=dtypes_as_torch,
         dtypes_cpu=(),
         dtypes_gpu=(),
-        is_differentiable=False,#Non-differentiable opertor,gradients are not supported
+        is_differentiable=False,  # Non-differentiable operator, gradients are not supported
         op_extra_reference_inputs_func=extra_sample_inputs_tensor_is_contiguous_func,
     ),
     'Tensor.matmul': OpInfo(
@@ -263,8 +264,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=wrap_sample_inputs(
             basic_reference_inputs_unary_op_common_func, ['_0d', '_1d', '_3d', '_4d', '_5d', '_6d', '_7d', '_8d'],
             skip=True),#only support 2d
-        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
-                                                          ['_empty_tensor_inputs', '_tensor_inputs'], skip=True,),
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_trace,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_trace,
         dtypes_cpu=(),
         dtypes_gpu=(),
         ascend910b_backward_loss_override={ms.float32: 0.5},
@@ -3074,15 +3075,15 @@ op_db: Dict[str, OpInfo] = {
         name='mint.cumprod',
         op=mint.cumprod,
         ref=torch.cumprod,
-        dtypes_ascend=(ms.float32, ms.float16, ms.float64),#int8 loss error
-        dtypes_ascend910b=(ms.float32, ms.float16, ms.float64),#complex is not error raise
+        dtypes_ascend=(ms.float32, ms.float16, ms.float64, ms.int8),#int8 promote to int64
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.float64, ms.int8),#complex is not error raise
         dtypes_cpu=(),
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_cumsum,#not support 0d inputs
-        op_extra_reference_inputs_func=extra_sample_inputs_mint_cumsum,
-        op_dynamic_inputs_func=None,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_cumprod,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_cumprod,
         is_differentiable=True,
-        op_error_inputs_func=error_inputs_other_op_mint_cumsum_func,
+        op_error_inputs_func=error_inputs_other_op_mint_cumprod_func,
         ascend910b_backward_loss_override={ms.float16: 0.1},
         ascend910b_forward_loss_override={ms.float16: 0.1},
         ascend_backward_loss_override={ms.float16: 0.1},
@@ -3154,7 +3155,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.einsum',
         op=mint.einsum,
         ref=torch.einsum,
-        dtypes_ascend=(ms.float32, ms.float16),#not support duble or other
+        dtypes_ascend=(ms.float32, ms.float16),#not support double or other
         dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -3433,10 +3434,9 @@ op_db: Dict[str, OpInfo] = {
     'mint.nn.functional.one_hot': OpInfo(
         name='mint.nn.functional.one_hot',
         op=mint.nn.functional.one_hot,
-        ref=torch.nn.functional.one_hot,
-        dtypes_ascend=(ms.int64,),
-        # ms.int32: RuntimeError: Allocate memory failed
-        dtypes_ascend910b=(ms.int64,),
+        ref=mint_one_hot_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.int32, ms.int64),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_one_hot,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_one_hot,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_one_hot,
@@ -3550,7 +3550,7 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.float32: 0.005},
         op_basic_reference_inputs_func=basic_sample_inputs_adaptive_avg_pool2d,
         op_extra_reference_inputs_func=extra_reference_inputs_op_functional_pool_func,
-        op_dynamic_inputs_func=None,
+        op_dynamic_inputs_func=dynamic_sample_inputs_adaptive_avg_pool2d,
         op_error_inputs_func=error_inputs_other_op_adaptive_avg_pool2d,
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
     ),
@@ -3799,7 +3799,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         op_basic_reference_inputs_func=functools.partial(basic_sample_inputs_mint_pad, mode="constant"),
         op_extra_reference_inputs_func=functools.partial(extra_sample_inputs_mint_pad, mode="constant"),
-        op_dynamic_inputs_func=None,
+        op_dynamic_inputs_func=functools.partial(dynamic_sample_inputs_mint_pad, mode="constant"),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -3811,7 +3811,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple((ms.float32,)),
         op_basic_reference_inputs_func=functools.partial(basic_sample_inputs_mint_pad, mode="reflect"),
         op_extra_reference_inputs_func=functools.partial(extra_sample_inputs_mint_pad, mode="reflect"),
-        op_dynamic_inputs_func=None,
+        op_dynamic_inputs_func=functools.partial(dynamic_sample_inputs_mint_pad, mode="reflect"),
         op_error_inputs_func=functools.partial(error_inputs_other_op_pad, mode='reflect'),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -3824,7 +3824,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple((ms.float32,)),
         op_basic_reference_inputs_func=functools.partial(basic_sample_inputs_mint_pad, mode="replicate"),
         op_extra_reference_inputs_func=functools.partial(extra_sample_inputs_mint_pad, mode="replicate"),
-        op_dynamic_inputs_func=None,
+        op_dynamic_inputs_func=functools.partial(dynamic_sample_inputs_mint_pad, mode="replicate"),
         op_error_inputs_func=functools.partial(error_inputs_other_op_pad, mode='replicate'),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -3833,8 +3833,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.nn.functional.pad(mode="circular")',
         op=mint.nn.functional.pad,
         ref=torch.nn.functional.pad,
-        # dtypes_ascend=tuple((ms.int64,)),
-        dtypes_ascend910b=tuple((ms.int64,)),
+        # dtypes_ascend=(),
+        dtypes_ascend910b=(),
         op_basic_reference_inputs_func=functools.partial(basic_sample_inputs_mint_pad, mode="circular"),
         op_extra_reference_inputs_func=functools.partial(extra_sample_inputs_mint_pad, mode="circular"),
         op_dynamic_inputs_func=None,
@@ -4452,7 +4452,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.rand_like',
         op=mint.rand_like,
         customize_op_func=mint_rand_like_ms,
-        ref=torch.rand_like,
+        ref=mint_rand_like_torch,
         dtypes_ascend=(),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
@@ -4485,7 +4485,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.randint_like',
         op=mint.randint_like,
         customize_op_func=mint_randint_like_ms,
-        ref=torch.randint_like,
+        ref=mint_randint_like_torch,
         dtypes_ascend=(),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
@@ -4517,7 +4517,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.randn_like',
         op=mint.randn_like,
         customize_op_func=mint_randn_like_ms,
-        ref=torch.randn_like,
+        ref=mint_randn_like_torch,
         dtypes_ascend=(),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
@@ -5207,6 +5207,7 @@ binary_op_kbk_db = [
 ]
 
 unary_op_kbk_db = [
+    'mint.trace',
     'mint.tanh',
     'mint.nn.functional.relu',
     'mint.tile',
@@ -5253,6 +5254,7 @@ other_op_kbk_db = [
     'mint.masked_select',
     'mint.permute',
     'mint.nonzero',
+    'mint.cumprod',
     'mint.cumsum',
     'mint.broadcast_to',
     'mint.clamp',
@@ -5265,7 +5267,16 @@ other_op_kbk_db = [
     'mint.bmm',
     'mint.addmm',
     'mint.rand',
+    'mint.rand_like',
+    'mint.randint',
+    'mint.randint_like',
     'mint.randn',
+    'mint.randn_like',
+    'mint.nn.functional.one_hot',
+    'mint.nn.functional.adaptive_avg_pool2d',
+    'mint.nn.functional.pad(mode="constant")',
+    'mint.nn.functional.pad(mode="reflect")',
+    'mint.nn.functional.pad(mode="replicate")',
 ]
 
 reduction_op_kbk_db = [

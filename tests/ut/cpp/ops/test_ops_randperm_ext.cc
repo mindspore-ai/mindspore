@@ -27,6 +27,12 @@ std::vector<GeneralInferParam> prepare_params() {
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(kNumberTypeUInt8)}})
     .FeedExpectedOutput({{256}}, {kNumberTypeUInt8});
   generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(kNumberTypeInt64)}})
+    .FeedExpectedOutput({{0}}, {kNumberTypeInt64});
+  generator
     .FeedInputArgs({InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(128)},
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)},

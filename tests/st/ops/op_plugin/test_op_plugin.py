@@ -166,6 +166,7 @@ def test_scalar_tuple_input(mode):
     @test_utils.run_with_cell
     def randn_forward_func(shape):
         return mint.randn(shape, dtype=ms.float32)
+
     set_mode(mode)
     shape = (2, 3)
     expect = np.arange(0, shape[0] * shape[1]).reshape(shape)
@@ -177,6 +178,7 @@ def test_scalar_tuple_input(mode):
         return mint.sum(x, [0, 1])
     x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
     sum_ext_func(x) # should not raise any exception
+
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])

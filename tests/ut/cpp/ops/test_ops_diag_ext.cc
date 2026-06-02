@@ -38,7 +38,12 @@ std::vector<GeneralInferParam> prepare_params() {
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{2, 5}, kNumberTypeInt64},                          // input
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(-2)}})  // diagonal
-    .FeedExpectedOutput({{}}, {kNumberTypeInt64});
+    .FeedExpectedOutput({{0}}, {kNumberTypeInt64});
+
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{2, 5}, kNumberTypeBool},                           // input
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(-2)}})  // diagonal
+    .FeedExpectedOutput({{0}}, {kNumberTypeBool});
 
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{5}, kNumberTypeInt64},                             // input

@@ -17,14 +17,16 @@ scatter:
     .. note::
         The backward is supported only for the case `src.shape == index.shape` when `src` is a tensor.
         The rank of the input tensor `self` must be at least 1.
+        Negative `index` values are illegal input and will lead to undefined behavior.
 
     .. warning::
-        Non-backward-compatible change after version 2.9.0: overload `scatter(axis, index, src)` will be removed, and only `scatter(dim, index, src)` will be supported.
+        Non-backward-compatible change after version 2.9.0: overload `scatter(axis, index, src)`
+        will be removed, and only `scatter(dim, index, src)` will be supported.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(self).
-        index (Tensor): The index to do update operation whose data must be positive number with type of int32
-            or int64. Same rank as `self` . And accepted range is [-s, s) where s is the size along axis.
+        index (Tensor): The index to do update operation whose data type must be int32 or int64.
+            Same rank as `self` .
         src (Tensor, float): The data doing the update operation with `self`. Can be a tensor with the same data type
             as `self` or a float number to scatter.
 
@@ -36,7 +38,6 @@ scatter:
         ValueError: If rank of any of `self` , `index` and `src` is less than 1.
         ValueError: If the rank of `src` is not equal to the rank of `self` .
         TypeError: If the data types of `self` and `src` have different dtypes.
-        RuntimeError: If `index` has negative elements.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -81,11 +82,12 @@ scatter:
     .. note::
         The backward is supported only for the case `src.shape == index.shape`.
         The rank of the input tensor `self` must be at least 1.
+        Negative `index` values are illegal input and will lead to undefined behavior.
 
     Args:
         axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(self).
-        index (Tensor): The index to do update operation whose data must be positive number with type of int32
-            or int64. Same rank as `self` . And accepted range is [-s, s) where s is the size along axis.
+        index (Tensor): The index to do update operation whose data type must be int32 or int64.
+            Same rank as `self` .
         src (Tensor, float): The data doing the update operation with `self`. Can be a tensor with the same data type
             as `self` or a float number to scatter.
 
@@ -97,7 +99,6 @@ scatter:
         ValueError: If rank of any of `self` , `index` and `src` is less than 1.
         ValueError: If the rank of `src` is not equal to the rank of `self` .
         TypeError: If the data types of `self` and `src` have different dtypes.
-        RuntimeError: If `index` has negative elements.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -35,6 +35,7 @@ class OPS_API RandLikeExtFuncImpl : public OpFuncImpl {
 
  protected:
   size_t dtype_idx_{3};
+  size_t device_idx_{4};
 };
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_RAND_LIKE_EXT_H

@@ -16,6 +16,7 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/randint.h"
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "include/pynative/utils/pyboost/functions/composite/composite_utils.h"
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "include/pynative/utils/pyboost/tensor_memory.h"
@@ -28,6 +29,7 @@ tensor::TensorPtr RandIntAscendCustomize(const Int64ImmPtr low, const Int64ImmPt
                                          const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
                                          const std::optional<Int64ImmPtr> &dtype,
                                          const std::optional<Int64ImmPtr> &device) {
+  CheckRandomDeviceSupported("randint", device);
   auto output = InferOutput<1>(prim::kPrimRandInt, low, high, shape, seed, offset, dtype, device);
   auto [seed_imm, offset_imm] = GetGeneratorState(seed, offset);
   auto low_imm = GetValueWithCheck<int64_t>(low);

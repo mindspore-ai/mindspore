@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: skip-file
 """API wrapper functions for operation testing.
 
 This module provides wrapper functions that adapt MindSpore and PyTorch
@@ -21,6 +22,7 @@ import mindspore as ms
 from mindspore import mint
 from mindspore.common.parameter import Parameter
 import torch
+from torch.nn import functional as torch_F
 
 # =====================================wrap tensor/nn method====================================
 
@@ -72,6 +74,10 @@ def tensor_numpy_ms(op_input):
 
 def tensor_numpy_torch(op_input):
     return op_input.numpy()
+
+
+def mint_one_hot_torch(op_input, *args, **kwargs):
+    return torch_F.one_hot(op_input.to(torch.long), *args, **kwargs)
 
 # wrap tensor method for tanh
 def tensor_tanh_ms(op_input):
@@ -410,7 +416,7 @@ def nn_functional_gelu_ms(op_input, approximate='none'):
     return mint.nn.functional.gelu(op_input, approximate=approximate)
 
 def nn_functional_gelu_torch(op_input, approximate='none'):
-    return torch.nn.functional.gelu(op_input, approximate=approximate)
+    return torch_F.gelu(op_input, approximate=approximate)
 
 def nn_functional_leaky_relu_ms(op_input, negative_slope=0.01):
     return mint.nn.functional.leaky_relu(op_input, negative_slope=negative_slope)
@@ -728,7 +734,7 @@ def tensor_nn_functional_dropout_ms(op_input, p=0.5, training=False):
                     sizes = sizes + (m1 == 0).sum().item()
                 input_clone[m1 == 0] = 0
                 return (1 / (1-p) * input_clone -m1, ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
-            #torch backward must hava revalance with input tensor, so return value is related to input
+            # torch backward must have relevance with input tensor, so return value is related to input
             return op_input*0
     return  mint.nn.functional.dropout(op_input, p=p, training=training)
 
@@ -961,29 +967,54 @@ def nn_conv2d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
 def mint_rand_ms(op_input, generator=None, dtype=None, device=None):
     return mint.rand(op_input.shape, generator=generator, dtype=dtype, device=device)
 
+def _drop_torch_random_device(device):
+    """PyTorch benchmark for random ops always runs on default CPU."""
+    del device
+
+
+def _drop_torch_random_device_kwarg(op_kwargs):
+    op_kwargs = dict(op_kwargs)
+    op_kwargs.pop('device', None)
+    return op_kwargs
+
 def mint_rand_torch(op_input, generator=None, dtype=None, device=None):
-    return torch.rand(op_input.shape, generator=generator, dtype=dtype, device=device)
+    _drop_torch_random_device(device)
+    return torch.rand(op_input.shape, generator=generator, dtype=dtype)
 
 def mint_randn_ms(op_input, generator=None, dtype=None, device=None):
     return mint.randn(op_input.shape, generator=generator, dtype=dtype, device=device)
 
 def mint_randn_torch(op_input, generator=None, dtype=None, device=None):
-    return torch.randn(op_input.shape, generator=generator, dtype=dtype, device=device)
+    _drop_torch_random_device(device)
+    return torch.randn(op_input.shape, generator=generator, dtype=dtype)
 
 def mint_randint_ms(op_input, low, high, generator=None, dtype=None, device=None):
     return mint.randint(low, high, op_input.shape, generator=generator, dtype=dtype, device=device)
 
 def mint_randint_torch(op_input, low, high, generator=None, dtype=None, device=None):
-    return torch.randint(low, high, op_input.shape, generator=generator, dtype=dtype, device=device)
+    _drop_torch_random_device(device)
+    return torch.randint(low, high, op_input.shape, generator=generator, dtype=dtype)
 
 def mint_rand_like_ms(op_input, dtype=None, **op_kwargs):
     return mint.rand_like(op_input, dtype=dtype, **op_kwargs)
 
+def mint_rand_like_torch(op_input, dtype=None, **op_kwargs):
+    op_kwargs = _drop_torch_random_device_kwarg(op_kwargs)
+    return torch.rand_like(op_input, dtype=dtype, **op_kwargs)
+
 def mint_randn_like_ms(op_input, dtype=None, **op_kwargs):
     return mint.randn_like(op_input, dtype=dtype, **op_kwargs)
 
+def mint_randn_like_torch(op_input, dtype=None, **op_kwargs):
+    op_kwargs = _drop_torch_random_device_kwarg(op_kwargs)
+    return torch.randn_like(op_input, dtype=dtype, **op_kwargs)
+
 def mint_randint_like_ms(op_input, low, high, dtype=None, **op_kwargs):
-    return mint.randint_like(op_input, low=low, high=high, dtype=dtype, **op_kwargs)
+    return mint.randint_like(op_input, low, high, dtype=dtype, **op_kwargs)
+
+def mint_randint_like_torch(op_input, low, high, dtype=None, **op_kwargs):
+    op_kwargs = _drop_torch_random_device_kwarg(op_kwargs)
+    return torch.randint_like(op_input, low=low, high=high, dtype=dtype, **op_kwargs)
 
 def mint_nn_elu_ms(op_input, alpha=1.0, inplace=False):
     cloned_input = op_input.clone()
