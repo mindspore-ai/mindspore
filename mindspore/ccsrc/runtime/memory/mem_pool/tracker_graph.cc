@@ -137,6 +137,10 @@ std::string TrackerOperator::ToString() {
 }
 
 void TrackerGraph::RaceCheck() {
+  if (runtime::RuntimeConf::GetInstance()->mem_optimize_level() != kOptimizeO0) {
+    MS_LOG(WARNING) << "Memory level is not 0, skip dump.";
+    return;
+  }
   MS_LOG(WARNING) << "Begin race check";
   auto race_checker = RaceChecker(GetAllAddresses(), GetStreamSize());
   for (const auto &op : operators_) {
@@ -186,10 +190,6 @@ void TrackerGraph::RaceCheck() {
 
 void TrackerGraph::Dump(const std::string &graph_path) {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (runtime::RuntimeConf::GetInstance()->mem_optimize_level() != kOptimizeO0) {
-    MS_LOG(WARNING) << "Memory level is not 0, skip dump.";
-    return;
-  }
   RaceCheck();
 
   static bool is_simple_tracker = memory::mem_pool::IsEnableAllocConfig(memory::mem_pool::kAllocSimpleTracker);
