@@ -57,7 +57,7 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 | CHIP_ARCH        | 昇腾芯片架构标识                         | 是  | Tag 规范             | 参考下文                                   |
 | OS_SYSTEM        | 基础镜像操作系统及版本                      | 是  | Tag 规范             | ubuntu22.04 / openeuler24.03                      |
 | PY_VERSION       | 基础镜像内置 Python 版本                 | 是  | Tag 规范             | py3.11                           |
-| MINDSPORE_VERSION | MindSpore 版本号                       | 是  | MindSpore 仓库发行版         | 2.9.0                                              |
+| MINDSPORE_VERSION | MindSpore 版本号                       | 是  | [MindSpore 仓库发行版](https://atomgit.com/mindspore/mindspore/releases)         | 2.9.0                                              |
 | PIP_INDEX_URL    | pip 安装源地址（默认华为云源）                 | 否  | PyPI 镜像源          | https://mirrors.huaweicloud.com/repository/pypi/simple |
 
 ## 快速开始
@@ -66,14 +66,14 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 
 ```bash
 docker build \
---build-arg CANN_VERSION=9.0.0 \
---build-arg CHIP_ARCH=910b \
---build-arg OS_SYSTEM=ubuntu22.04 \
---build-arg PY_VERSION=py3.11 \
---build-arg MINDSPORE_VERSION=2.9.0 \
---build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
--t mindspore:2.9.0-910b-ubuntu22.04-py3.11 \
--f Dockerfile .
+    --build-arg CANN_VERSION=9.0.0 \
+    --build-arg CHIP_ARCH=910b \
+    --build-arg OS_SYSTEM=ubuntu22.04 \
+    --build-arg PY_VERSION=py3.11 \
+    --build-arg MINDSPORE_VERSION=2.9.0 \
+    --build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
+    -t mindspore:2.9.0-910b-ubuntu22.04-py3.11 \
+    -f Dockerfile .
 ```
 
 ### 运行 MindSpore 容器
@@ -91,8 +91,12 @@ docker run \
     -v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ \
     -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
     -v /etc/ascend_install.info:/etc/ascend_install.info \
-    -it mindspore:tag bash
+    -it mindspore:{tag} bash
 ```
+
+其中：
+
+- `{tag}` 对应上述构建MindSpore镜像操作中指定的标签，例如 `mindspore:2.9.0-910b-ubuntu22.04-py3.11`。
 
 ### 如何二次开发
 
