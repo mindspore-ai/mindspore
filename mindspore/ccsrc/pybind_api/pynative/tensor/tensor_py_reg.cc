@@ -33,6 +33,7 @@
 #include "tools/profiler/profiler.h"
 #include "ir/tensor_data.h"
 #include "utils/ms_context.h"
+#include "utils/device_manager_conf.h"
 #include "pybind_api/pynative/tensor/tensor_register/tensor_func_reg.h"
 #include "pybind_api/pynative/tensor/tensor_register/auto_generate/tensor_py_gen.h"
 #include "include/utils/pynative/adapter.h"
@@ -1440,8 +1441,8 @@ extern PyObject *TensorPython_GetItem(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "O", &py_index)) {
     return nullptr;
   }
-  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !trace::IsTracing() &&
-      !Tensor::CheckStub()) {
+  const auto device_type = DeviceManagerConf::GetInstance()->device_type();
+  if (device_type == device::DeviceType::kAscend && !trace::IsTracing() && !Tensor::CheckStub()) {
     return TensorIndex::TensorGetItem(self, py::reinterpret_borrow<py::object>(py_index));
   }
   py::object self_obj = py::reinterpret_borrow<py::object>(self);
@@ -1458,8 +1459,8 @@ extern PyObject *TensorPython_SetItem(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "|OO", &py_index, &py_value)) {
     return nullptr;
   }
-  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !trace::IsTracing() &&
-      !Tensor::CheckStub()) {
+  const auto device_type = DeviceManagerConf::GetInstance()->device_type();
+  if (device_type == device::DeviceType::kAscend && !trace::IsTracing() && !Tensor::CheckStub()) {
     return TensorIndex::TensorSetItem(self, py::reinterpret_borrow<py::object>(py_index),
                                       py::reinterpret_borrow<py::object>(py_value));
   }

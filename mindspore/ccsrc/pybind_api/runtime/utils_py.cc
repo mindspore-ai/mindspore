@@ -70,6 +70,8 @@ std::vector<size_t> PyListToVectorSize(const py::object &py_list) {
 }
 }  // namespace
 
+void WaitPipeline() { runtime::Pipeline::Get().WaitAll(); }
+
 device::DeviceContext *GetDeviceCtx() {
   const auto &device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto device_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -119,6 +121,7 @@ py::object GetSliceByPaddingShapeHandle(const py::object &object, size_t start, 
 }
 
 void RegUtils(py::module *m) {
+  (void)m->def("_wait_pipeline", &mindspore::hal::WaitPipeline, "Wait all tasks in PyNative pipeline");
   (void)m->def("combine_tensor_list_contiguous", &mindspore::hal::AllocDeviceMemoryForTensorList,
                "Alloc contiguous memory");
   (void)m->def("slice_by_tensor_index", &mindspore::hal::GetSliceByTensorListIndexHandle, "Slice By TensorList Index");

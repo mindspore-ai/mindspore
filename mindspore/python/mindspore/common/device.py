@@ -16,7 +16,7 @@
 
 import threading
 from mindspore.device_manager import get_current_device
-from mindspore._c_expression import DeviceManagerConf, MSContext
+from mindspore._c_expression import DeviceManagerConf, MSContext, _wait_pipeline
 
 
 class _ThreadLocalStack:
@@ -49,6 +49,11 @@ class _ThreadLocalStack:
 _DEVICE_STACK = _ThreadLocalStack()
 
 
+def _is_same_device(device_info, device_target, device_id):
+    """Return True if the device info matches the target device."""
+    return device_info.device_target == device_target and device_info.device_id == device_id
+
+
 class DeviceCtx:
     """ Device context. """
     def __init__(self, name: str, device_id=None):
@@ -56,19 +61,29 @@ class DeviceCtx:
         self.device_id = device_id
 
     def __enter__(self):
-        if self.name != "meta":
-            raise ValueError(f"For DeviceCtx, the name only support 'meta' currently, but got {self.name}")
+        valid_targets = ["CPU", "GPU", "Ascend", "meta"]
+        if self.name not in valid_targets:
+            raise ValueError(f"For DeviceCtx, the name must be one of {valid_targets}, but got {self.name}.")
+        if self.device_id is not None and self.device_id < 0:
+            raise ValueError("For DeviceCtx, the device_id must be greater than or equal to 0.")
         device_info = get_current_device()
-        _DEVICE_STACK.push(device_info)
         is_default = False
         if self.device_id is None:
             self.device_id = 0
             is_default = True
+        if not _is_same_device(device_info, self.name, self.device_id):
+            _wait_pipeline()
+        _DEVICE_STACK.push(device_info)
         MSContext.get_instance().set_device_target_inner(self.name)
         DeviceManagerConf.get_instance().set_device(self.name, self.device_id, is_default)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         device_info = _DEVICE_STACK.pop()
-        MSContext.get_instance().set_device_target_inner(device_info.device_target)
-        DeviceManagerConf.get_instance().set_device(device_info.device_target, device_info.device_id, False)
+        try:
+            current_device = get_current_device()
+            if not _is_same_device(current_device, device_info.device_target, device_info.device_id):
+                _wait_pipeline()
+        finally:
+            MSContext.get_instance().set_device_target_inner(device_info.device_target)
+            DeviceManagerConf.get_instance().set_device(device_info.device_target, device_info.device_id, False)
