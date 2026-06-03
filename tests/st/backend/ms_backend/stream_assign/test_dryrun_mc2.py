@@ -20,6 +20,11 @@ import re
 from tests.mark_utils import arg_mark
 
 
+COMM_OP_NAMES = (
+    'AllGatherMatmul', 'MatmulReduceScatter', 'AllReduce', 'AllGather', 'ReduceScatter'
+)
+
+
 def extract_stream_id(log_line):
     pattern = r'stream id\[(\d+)\]'
     match = re.search(pattern, log_line)
@@ -39,6 +44,12 @@ def extract_group(log_line):
         group = match.group(0)
         group_id = match.group(1)
         return group, group_id
+    pattern = r'ValueNode<StringImm> ([^,\]]+)'
+    match = re.search(pattern, log_line)
+    if match:
+        group = match.group(0)
+        group_id = match.group(1)
+        return group, group_id
     return None, None
 
 
@@ -47,10 +58,10 @@ def run_command(cmd, log_path):
         os.remove(log_path)
     os.system(cmd)
     order = []
-    with open(log_path, 'r') as file:
+    with open(log_path, 'r', encoding='utf-8') as file:
         for line in file:
-            has_exec_order = ('PrintGraphExecuteOrder' in line)
-            has_hccl_op = any(keyword in line for keyword in ['AllGatherMatmul', 'MatmulReduceScatter', 'AllReduce'])
+            has_exec_order = 'PrintGraphExecuteOrder' in line
+            has_hccl_op = any(keyword in line for keyword in COMM_OP_NAMES)
             if has_exec_order and has_hccl_op:
                 order.append(line)
     stream_dict = {}
@@ -59,6 +70,7 @@ def run_command(cmd, log_path):
         _, number = extract_stream_id(line)
         _, group_id = extract_group(line)
         assert number != "0"
+        assert group_id is not None
         if group_id not in stream_dict:
             stream_dict[group_id] = number
         else:
