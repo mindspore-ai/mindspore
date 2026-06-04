@@ -171,7 +171,7 @@ def svd_self_testcase(shape, dtype, full_matrices):
     np.testing.assert_allclose(output.asnumpy(), x.asnumpy(), loss, loss)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
           mem_peak=4.00)

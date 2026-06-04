@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test hal event cases """
 import mindspore.context as context
 from mindspore import Tensor, ops
 import mindspore as ms
@@ -62,8 +63,7 @@ def test_hal_event_elapsed_time():
     assert elapsed_time > 0
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
-          card_mark='onecard', mem_peak=6.00)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=6.00)
 def test_hal_event_wait():
     """
     Feature: runtime event api.

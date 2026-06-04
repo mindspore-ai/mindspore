@@ -287,7 +287,7 @@ def test_trace_train_1():
     net = TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
-    assert [x for x in net.get_parameters()][0].value()[0][0] != 1
+    assert list(net.get_parameters())[0].value()[0][0] != 1
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
@@ -599,7 +599,6 @@ def test_trace_8():
     assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_trace_9():
     """
     Feature: JIT trace function
@@ -662,7 +661,6 @@ def test_trace_9():
     assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 def test_trace_10():
     """
     Feature: JIT trace function

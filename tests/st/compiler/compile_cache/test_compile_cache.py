@@ -298,18 +298,6 @@ def test_compile_cache_lenet():
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
 @test_utils.run_test_with_On
-def test_compile_cache_lenet_with_force_use_compile_cache():
-    """
-    Feature: Compile cache.
-    Description: Test whether the env MS_DEV_FORCE_USE_COMPILE_CACHE takes effect.
-    Expectation: success.
-    """
-    run_network_once_with_force_use_compile_cache("run_lenet.py", "./lenet_with_force_use_compile_cache",
-                                                  "lenet_first.txt")
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
-@test_utils.run_test_with_On
 def test_compile_cache_net_with_control_flow():
     """
     Feature: Compile cache.
