@@ -28,12 +28,13 @@ mindspore.runtime.set_cpu_affinity
         - **bind_file** (str，可选) - 统一绑定JSON文件的路径。设置该参数后，当前设备的 ``affinity_cpu_list`` 和 ``module_to_cpu_dict`` 会从该文件中读取并填充，手动配置项将被忽略。绑定JSON文件示例如下：
 
           .. code-block::
+
               {
                   "bind_config": {"bind_cpu_mode": "cpu", "bind_memory_mode": "numa", "actor_thread_fix_bind": true},
                   "bind_cpu": {
-                  "scheduler": {"main": "40-45"},
-                  "device0": {"main": "0-4", "runtime": "5-9", "pynative": "10-14", "minddata": "15-19"},
-                  "device1": {"main": "20-24", "runtime": "25-29", "pynative": "30-34", "minddata": "35-39"}
+                      "scheduler": {"main": "40-45"},
+                      "device0": {"main": "0-4", "runtime": "5-9", "pynative": "10-14", "minddata": "15-19"},
+                      "device1": {"main": "20-24", "runtime": "25-29", "pynative": "30-34", "minddata": "35-39"}
                   },
                   "bind_memory": {"device0": 0, "device1": 1, "scheduler": 2}
               }

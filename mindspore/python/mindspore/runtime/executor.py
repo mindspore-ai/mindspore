@@ -119,6 +119,7 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
             are ignored. An example of a binding JSON file is:
 
             .. code-block::
+            
                 {
                   "bind_config": {"bind_cpu_mode": "cpu", "bind_memory_mode": "numa", "actor_thread_fix_bind": true},
                   "bind_cpu": {
