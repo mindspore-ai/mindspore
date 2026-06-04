@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Test transformers related testcases"""
 import numpy as np
 import pytest
 
@@ -137,53 +137,6 @@ def test_transformerencoder_square_input_cpu(dtype, training, jit):
 @pytest.mark.parametrize('training', [True, False])
 @pytest.mark.parametrize('jit', [False, True])
 def test_transformerencoder_square_input_ascend(dtype, training, jit):
-    """
-    Feature: TransformerEncoder
-    Description: Test for edge cases when input of shape (batch size, sequence length, embedding dimension) has
-    batch size == sequence length
-    Expectation: success
-    """
-    model = TransformerEncoder(
-        TransformerEncoderLayer(d_model=4, nhead=2, dim_feedforward=16, dropout=0.0, batch_first=True, dtype=dtype),
-        num_layers=2)
-
-    # set constant weights of the model
-    for _, p in model.parameters_and_names():
-        x = p.data
-        sz = x.view(-1).shape[0]
-        shape = x.shape
-        x = ops.cos(ops.arange(0, sz).astype(dtype).view(shape))
-        p.set_dtype(dtype)
-
-    if training:
-        model = model.set_train()
-    else:
-        model = model.set_train(False)
-    x = ops.arange(0, 16).reshape(2, 2, 4).astype(dtype)
-    src_mask = Tensor([[0, 1], [0, 0]]).to(ms.bool_)
-
-    def forward(x, mask):
-        result = model(x, src_mask=mask)
-        return result
-
-    if jit:
-        forward = ms.jit(forward)
-
-    result = forward(x, src_mask)
-    ref_output = ms.Tensor([[[2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351],
-                             [2.420306205749512, 0.017629241570830, -0.607857942581177, -0.085519507527351]],
-                            [[2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689],
-                             [2.419836044311523, 0.017548924311996, -0.608187675476074, -0.085347734391689]]],
-                           dtype)
-    assert tuple(result.shape) == tuple(ref_output.shape)
-    np.allclose(result.asnumpy(), ref_output.asnumpy(), rtol=1e-7, atol=1e-5)
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
-@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
-@pytest.mark.parametrize('training', [True, False])
-@pytest.mark.parametrize('jit', [False, True])
-def test_transformerencoder_square_input_gpu(dtype, training, jit):
     """
     Feature: TransformerEncoder
     Description: Test for edge cases when input of shape (batch size, sequence length, embedding dimension) has

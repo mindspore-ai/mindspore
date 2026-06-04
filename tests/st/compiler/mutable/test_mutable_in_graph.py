@@ -872,7 +872,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
     assert id(m_x.__ms_origin_object__) == id(x)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_grad_const_dict_tensor_to_mutable():
     """
     Feature: Support mutable in graph.

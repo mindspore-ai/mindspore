@@ -32,7 +32,7 @@ class LeNet5(nn.Cell):
     """LeNet network"""
 
     def __init__(self, num_class=10, num_channel=1, include_top=True):
-        super(LeNet5, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
         self.relu = nn.ReLU()
@@ -132,7 +132,7 @@ def test_pynative_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level0", card_mark="onecard", mem_peak=1.00)
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", mem_peak=1.00)
 def test_kernel_by_kernel_summary_ops():
     """
     Feature: Test kernel by kernel summary ops
@@ -205,7 +205,7 @@ def test_summary_op_in_duplicate_name():
 
     class SummaryDemo(nn.Cell):
         def __init__(self):
-            super(SummaryDemo, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.summary = P.TensorSummary()
 

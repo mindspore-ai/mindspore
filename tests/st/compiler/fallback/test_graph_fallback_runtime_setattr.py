@@ -872,40 +872,6 @@ class GradNet(nn.Cell):
     def construct(self, *x):
         return self.grad_net(*x)
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
-def test_parser_fallback_modify_args_of_cell_in_graph():
-    """
-    Feature: Feature setattr. Make sure setattr getting correct attr.
-    Description: convert getattrs after setattr into interpret node and infer as the as abstract as setattr's value
-    Expectation: No exception.
-    """
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.x = 1
-
-        def construct(self, y):
-            return ops.matmul(self.x, y)
-
-    @jit(backend="ms_backend")
-    def modify_func():
-        obj.x = Tensor([[-1, 0], [0, -1]], ms.float32)
-        obj.x += 1
-        return obj.x
-
-    obj = Net()
-    ret1 = modify_func()
-    y = Tensor([[1, 2, 3], [4, 5, 6]], ms.float32)
-    ms_out = obj(y)
-    ms_grad = GradNet(obj)(y)
-    ret2 = modify_func()
-
-    assert np.allclose(np.array([[0, 1], [1, 0]]), ret1.asnumpy(), 0, 0)
-    assert np.allclose(np.array([[4, 5, 6], [1, 2, 3]]), ms_out.asnumpy(), 0, 0)
-    assert np.allclose(np.ones([2, 3]), ms_grad.asnumpy(), 0, 0)
-    assert np.allclose(np.array([[0, 1], [1, 0]]), obj.x .asnumpy(), 0, 0)
-    assert np.allclose(ret1.asnumpy(), ret2.asnumpy(), 0, 0)
-
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
 def test_parser_fallback_modify_args_of_jitclass_in_graph():

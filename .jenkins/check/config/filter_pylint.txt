@@ -369,6 +369,8 @@
 "mindspore/tests/st/ops/share/_op_info/op_database.py"                                                  "superfluous-parens"
 "mindspore/tests/st/compiler/fallback/python_builtin_funtions/test_graph_fallback_runtime_iter.py"      "deprecated-class"
 "mindspore/tests/st/compiler/fallback/python_builtin_funtions/test_graph_fallback_runtime_zip.py"      "deprecated-class"
+"mindspore/tests/st/compiler/fallback/test_graph_fallback_runtime_setattr.py"                           "super-with-arguments"
+"mindspore/tests/st/compiler/trace/test_trace_grad.py"                                                  "super-with-arguments"
 
 #MindSpore Lite
 "mindspore/mindspore/ops/kernel/cpu/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"

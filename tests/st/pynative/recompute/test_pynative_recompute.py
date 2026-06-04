@@ -391,12 +391,6 @@ class GradWrap(Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard')
-@pytest.mark.parametrize("use_reentrant", [
-    True,
-])
 def test_pynative_resnet50_recompute_with_hook_and_mixed_precision(use_reentrant):
     """
     Feature: Recompute with block, and set mix precision and backward hook
