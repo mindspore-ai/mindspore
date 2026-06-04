@@ -138,7 +138,7 @@ std::string TrackerOperator::ToString() {
 
 void TrackerGraph::RaceCheck() {
   if (runtime::RuntimeConf::GetInstance()->mem_optimize_level() != kOptimizeO0) {
-    MS_LOG(WARNING) << "Memory level is not 0, skip dump.";
+    MS_LOG(WARNING) << "Memory level is not 0, skip race check.";
     return;
   }
   MS_LOG(WARNING) << "Begin race check";
