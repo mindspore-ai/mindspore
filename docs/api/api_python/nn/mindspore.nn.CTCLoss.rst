@@ -5,7 +5,7 @@ mindspore.nn.CTCLoss
 
     CTCLoss损失函数。主要用来计算连续未分段的时间序列与目标序列之间的损失。
 
-    关于CTCLoss算法详细介绍，请参考 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data withRecurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 。
+    关于CTCLoss算法详细介绍，请参考 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 。
 
     参数：
         - **blank** (int，可选) - 空白标签。默认值：``0`` 。
