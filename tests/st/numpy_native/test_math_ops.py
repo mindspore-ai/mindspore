@@ -343,7 +343,7 @@ def test_nanstd():
 def mnp_var(x):
     a = mnp.var(x)
     b = mnp.var(x, axis=0)
-    c = mnp.var(x, axis=(0))
+    c = mnp.var(x, axis=0)
     d = mnp.var(x, axis=(0, 1, 2))
     e = mnp.var(x, axis=(-1, 1, 2), ddof=1, keepdims=True)
     return a, b, c, d, e
@@ -352,7 +352,7 @@ def mnp_var(x):
 def onp_var(x):
     a = onp.var(x)
     b = onp.var(x, axis=0)
-    c = onp.var(x, axis=(0))
+    c = onp.var(x, axis=0)
     d = onp.var(x, axis=(0, 1, 2))
     e = onp.var(x, axis=(-1, 1, 2), ddof=1, keepdims=True)
     return a, b, c, d, e
@@ -370,7 +370,7 @@ def test_var():
 def mnp_nanvar(x):
     a = mnp.var(x)
     b = mnp.var(x, axis=0)
-    c = mnp.var(x, axis=(0))
+    c = mnp.var(x, axis=0)
     d = mnp.var(x, axis=(0, 1, 2))
     e = mnp.var(x, axis=(-1, 1, 2), ddof=1, keepdims=True)
     return a, b, c, d, e
@@ -379,7 +379,7 @@ def mnp_nanvar(x):
 def onp_nanvar(x):
     a = onp.var(x)
     b = onp.var(x, axis=0)
-    c = onp.var(x, axis=(0))
+    c = onp.var(x, axis=0)
     d = onp.var(x, axis=(0, 1, 2))
     e = onp.var(x, axis=(-1, 1, 2), ddof=1, keepdims=True)
     return a, b, c, d, e
@@ -1711,8 +1711,8 @@ def test_corrcoef():
     match_all_arrays(mnp_res, onp_res, error=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multi_dot():
     arrays = [rand_int(3), rand_int(3, 5), rand_int(5, 2), rand_int(2, 7), rand_int(7)]
     mnp_arrays = [to_tensor(arr) for arr in arrays]

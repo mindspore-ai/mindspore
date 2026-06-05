@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""test for index copy"""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -78,7 +78,7 @@ def index_copy__binary_case3(input_binary_data=None, output_binary_data=None):
     index_copy__binary_compare(input_binary_data, output_binary_data, 0)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_tensor_index_copy__normal(mode):
     """
@@ -96,7 +96,7 @@ def test_tensor_index_copy__normal(mode):
     index_copy__binary_case3()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 def test_tensor_index_copy__test_op():
     """
     Feature: Tensor.index_copy_
