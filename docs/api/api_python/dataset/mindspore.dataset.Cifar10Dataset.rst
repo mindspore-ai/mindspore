@@ -55,7 +55,7 @@ mindspore.dataset.Cifar10Dataset
             ├── data_batch_5.bin
             ├── test_batch.bin
             ├── readme.html
-            └── batches.meta.text
+            └── batches.meta.txt
 
     **引用：**
 

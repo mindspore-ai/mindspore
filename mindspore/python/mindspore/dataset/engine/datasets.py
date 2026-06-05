@@ -3017,7 +3017,7 @@ class BatchInfo(cde.CBatchInfo):
 
     def get_batch_num(self):
         """
-        Return the batch number being processed in current epoch, starting from 0.
+        Return the batch number being processed in the current epoch, starting from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
@@ -3036,7 +3036,7 @@ class BatchInfo(cde.CBatchInfo):
 
     def get_epoch_num(self):
         """
-        Return the epoch number, starting from 0.
+        Return the current epoch number, starting from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic

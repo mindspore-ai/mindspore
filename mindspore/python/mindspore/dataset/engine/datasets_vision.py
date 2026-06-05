@@ -127,7 +127,7 @@ class Caltech101Dataset(GeneratorDataset):
             subdirectories, one is called 101_ObjectCategories, which stores images,
             and the other is called Annotations, which stores annotations.
         target_type (str, optional): Target of the image. If `target_type` is ``'category'``,
-            return category represents the target class. If `target_type` is ``'annotation'``,
+            return the category representing the target class. If `target_type` is ``'annotation'``,
             return annotation. If `target_type` is ``'all'``, return category and annotation.
             Default: ``None`` , means ``'category'``.
         num_samples (int, optional): The number of images to be included in the dataset.
@@ -277,7 +277,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -323,7 +323,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
 
     About Caltech256Dataset:
 
-    Caltech-256 is an object recognition dataset containing 30,607 real-world images, of different sizes,
+    Caltech-256 is an object recognition dataset containing 30,607 real-world images of different sizes,
     spanning 257 classes (256 object classes and an additional clutter class).
     Each class is represented by at least 80 images. The dataset is a superset of the Caltech-101 dataset.
 
@@ -387,7 +387,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` .
         usage (str, optional): Specify the ``'train'``, ``'valid'``, ``'test'`` part or ``'all'``
@@ -437,7 +437,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         >>> # Read 5 samples from CelebA dataset
         >>> dataset = ds.CelebADataset(dataset_dir=celeba_dataset_dir, usage='train', num_samples=5)
         >>>
-        >>> # Note: In celeba dataset, each data dictionary owns keys "image" and "attr"
+        >>> # Note: In celeba dataset, each data dictionary has keys "image" and "attr"
 
     About CelebA dataset:
 
@@ -662,7 +662,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
@@ -670,7 +670,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum number of samples per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -940,7 +940,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum number of samples per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1014,6 +1014,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
     Note:
         - When the parameter `extra_metadata` is set to ``True``, use the rename operation to remove the prefix
           `_meta-` from the additional data column `_meta-filename`.
+          Otherwise, this additional data column will not appear in the rows returned by the iteration.
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
           used in the dataset, and their effects when combined with parameter `sampler` are as follows.
@@ -1058,7 +1059,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
     with several features: Object segmentation, Recognition in context, Superpixel stuff segmentation,
     330K images (>200K labeled), 1.5 million object instances, 80 object categories, 91 stuff categories,
     5 captions per image, 250,000 people with keypoints. In contrast to the popular ImageNet dataset, COCO has fewer
-    categories but more instances in per category.
+    categories but more instances per category.
 
     You can unzip the original COCO-2017 dataset files into this directory structure and read by MindSpore's API.
 
@@ -1184,7 +1185,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum number of samples per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1354,7 +1355,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum number of samples per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1387,7 +1388,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
         >>> # Read 3 samples from EMNIST dataset
         >>> dataset = ds.EMnistDataset(dataset_dir=emnist_dataset_dir, name="mnist", num_samples=3)
         >>>
-        >>> # Note: In emnist_dataset dataset, each dictionary has keys "image" and "label"
+        >>> # Note: In EMNIST dataset, each dictionary has keys "image" and "label"
 
     About EMNIST dataset:
 
@@ -1470,7 +1471,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1543,7 +1544,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
         sampler (Sampler, optional): Object used to choose samples from the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1632,7 +1633,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has two columns :py:obj:`[image, annotation]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`annotation` is a tensor which contains 5 annotations string,
+    The tensor of column :py:obj:`annotation` is a tensor which contains 5 annotations strings,
     such as ["a", "b", "c", "d", "e"].
 
     Args:
@@ -1650,7 +1651,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1666,8 +1667,8 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `dataset_dir` is not exist.
-        ValueError: If `annotation_file` is not exist.
+        ValueError: If `dataset_dir` does not exist.
+        ValueError: If `annotation_file` does not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -1880,7 +1881,7 @@ class Flowers102Dataset(GeneratorDataset):
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
@@ -2028,7 +2029,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into.
             Default: ``None`` . When this argument
-            is specified, `num_samples` reflects the maximum sample number of per shard.
+            is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
@@ -2046,7 +2047,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If the value of `usage` is not ``'train'``, ``'test'``, or ``'all'``.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
@@ -2068,7 +2069,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
     About Food101 dataset:
 
     The Food101 is a dataset of 101 food categories, with 101,000 images.
-    There are 250 test imgaes and 750 training images in each class. All images were rescaled
+    There are 250 test images and 750 training images in each class. All images were rescaled
     to have a maximum side length of 512 pixels.
 
     The following is the original Food101 dataset structure.
@@ -2311,7 +2312,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -3161,7 +3162,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
         ValueError: If `usage` is not ``'train'`` or ``'test'``.
         ValueError: If name is not ``'notredame'``, ``'yosemite'``, ``'liberty'``,
             ``'notredame_harris'``, ``'yosemite_harris'`` or ``'liberty_harris'``.
@@ -3799,7 +3800,7 @@ class SBDataset(GeneratorDataset):
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `task` is not ``'Boundaries'`` or ``'Segmentation'``.
         ValueError: If `usage` is not ``'train'``, ``'val'``, ``'train_noval'`` or ``'all'``.
@@ -4626,7 +4627,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `task` is not equal ``'Segmentation'`` or ``'Detection'``.
         ValueError: If `task` is ``'Segmentation'`` but `class_indexing` is not ``None``.
-        ValueError: If txt related to mode is not exist.
+        ValueError: If txt related to mode does not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Tutorial Examples:
@@ -4803,7 +4804,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `usage` is not ``'train'``, ``'test'``, ``'valid'``, ``'all'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `dataset_dir` is not exist.
+        ValueError: If `dataset_dir` does not exist.
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline

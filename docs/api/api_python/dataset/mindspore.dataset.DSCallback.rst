@@ -3,7 +3,7 @@ mindspore.dataset.DSCallback
 
 .. py:class:: mindspore.dataset.DSCallback(step_size=1)
 
-    数据处理回调类的抽象基类，用户可以基于此类实现自己的回调操作。
+    数据处理回调类的抽象基类。
 
     用户可通过 `ds_run_context` 获取数据处理管道相关信息，包括 `cur_epoch_num` (当前epoch数)、 `cur_step_num_in_epoch` (当前epoch的step数)、 `cur_step_num` (当前step数)。
 

@@ -48,8 +48,8 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
             ``'awb'``, ``'axb'``, ``'bdl'``, ``'clb'``, ``'eey'``, ``'fem'``, ``'gka'``, ``'jmk'``,
             ``'ksp'``, ``'ljm'``, ``'lnh'``, ``'rms'``, ``'rxr'``, ``'slp'`` or ``'slt'``.
             Default: ``None``, means ``'aew'``.
-        num_samples (int, optional): The number of audio to be included in the dataset.
-            Default: ``None``, will read all audio.
+        num_samples (int, optional): The number of audio files to be included in the dataset.
+            Default: ``None``, will read all audio files.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None``, will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -100,9 +100,9 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
 
     About CMUArctic dataset:
 
-    The CMU Arctic databases are designed for the purpose of speech synthesis research.
+    The CMU Arctic databases are designed for speech synthesis research.
     These single speaker speech databases have been carefully recorded under studio conditions
-    and consist of approximately 1200 phonetically balanced English utterances. In addition to wavefiles,
+    and consist of approximately 1200 phonetically balanced English utterances. In addition to wave files,
     the databases provide complete support for the Festival Speech Synthesis System, including pre-built
     voices that may be used as is. The entire package is distributed as free software, without restriction
     on commercial or non-commercial use.
@@ -201,7 +201,7 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
+        - Does not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
           used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
@@ -298,7 +298,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
