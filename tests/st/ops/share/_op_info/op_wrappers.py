@@ -1431,3 +1431,95 @@ def torch_nn_dropout_decorator(op_class):
             net.eval()
         return net(op_input)
     return _dropout_func
+
+def mint_nn_softshrink_ms(op_input, lambd=0.5):
+    softshrink = mint.nn.Softshrink(lambd=lambd)
+    return softshrink(op_input)
+
+def mint_nn_softshrink_torch(op_input, lambd=0.5):
+    softshrink = torch.nn.Softshrink(lambd=lambd)
+    return softshrink(op_input)
+
+def mint_nn_threshold_ms(op_input, threshold, value, inplace=False):
+    threshold = mint.nn.Threshold(threshold=threshold, value=value, inplace=inplace)
+    return threshold(op_input.clone())
+
+def mint_nn_threshold_torch(op_input, threshold, value, inplace=False):
+    threshold = torch.nn.Threshold(threshold=threshold, value=value, inplace=inplace)
+    return threshold(op_input.clone())
+
+def mint_nn_bcewithlogitsloss_ms(op_input, op_target, weight=None, reduction='mean', pos_weight=None):
+    bcewithlogitsloss = mint.nn.BCEWithLogitsLoss(weight=weight, reduction=reduction, pos_weight=pos_weight)
+    return bcewithlogitsloss(op_input, op_target)
+
+def mint_nn_bcewithlogitsloss_torch(op_input, op_target, weight=None, reduction='mean', pos_weight=None):
+    bcewithlogitsloss = torch.nn.BCEWithLogitsLoss(weight=weight, reduction=reduction, pos_weight=pos_weight)
+    return bcewithlogitsloss(op_input, op_target)
+
+def mint_nn_cosineembeddingloss_ms(op_input, op_target, target, margin=0.0, reduction='mean'):
+    cosineembeddingloss = mint.nn.CosineEmbeddingLoss(margin=margin, reduction=reduction)
+    return cosineembeddingloss(op_input, op_target, target)
+
+def mint_nn_cosineembeddingloss_torch(op_input, op_target, target, margin=0.0, reduction='mean'):
+    cosineembeddingloss = torch.nn.CosineEmbeddingLoss(margin=margin, reduction=reduction)
+    return cosineembeddingloss(op_input, op_target, target)
+
+def mint_nn_crossentropyloss_ms(op_input, op_target, weight=None, ignore_index=-100,
+                                reduction='mean', label_smoothing=0.0):
+    crossentropyloss = mint.nn.CrossEntropyLoss(
+        weight=weight,
+        ignore_index=ignore_index,
+        reduction=reduction,
+        label_smoothing=label_smoothing
+    )
+    return crossentropyloss(op_input, op_target)
+
+def mint_nn_crossentropyloss_torch(op_input, op_target, weight=None, ignore_index=-100,
+                                reduction='mean', label_smoothing=0.0):
+    crossentropyloss = torch.nn.CrossEntropyLoss(
+        weight=weight,
+        ignore_index=ignore_index,
+        reduction=reduction,
+        label_smoothing=label_smoothing
+    )
+    return crossentropyloss(op_input, op_target)
+
+def mint_nn_kldivloss_ms(op_input, op_target, reduction='mean', log_target=False):
+    kldivloss = mint.nn.KLDivLoss(reduction=reduction, log_target=log_target)
+    return kldivloss(op_input, op_target)
+
+def mint_nn_kldivloss_torch(op_input, op_target, reduction='mean', log_target=False):
+    kldivloss = torch.nn.KLDivLoss(reduction=reduction, log_target=log_target)
+    return kldivloss(op_input, op_target)
+
+def mint_nn_l1loss_ms(op_input, op_target, reduction='mean'):
+    l1loss = mint.nn.L1Loss(reduction=reduction)
+    return l1loss(op_input, op_target)
+
+def mint_nn_l1loss_torch(op_input, op_target, reduction='mean'):
+    l1loss = torch.nn.L1Loss(reduction=reduction)
+    return l1loss(op_input, op_target)
+
+def mint_nn_mseloss_ms(op_input, op_target, reduction='mean'):
+    mseloss = mint.nn.MSELoss(reduction=reduction)
+    return mseloss(op_input, op_target)
+
+def mint_nn_mseloss_torch(op_input, op_target, reduction='mean'):
+    mseloss = torch.nn.MSELoss(reduction=reduction)
+    return mseloss(op_input, op_target)
+
+def mint_nn_nllloss_ms(op_input, op_target, weight=None, ignore_index=-100, reduction='mean'):
+    nllloss = mint.nn.NLLLoss(weight=weight, ignore_index=ignore_index, reduction=reduction)
+    return nllloss(op_input, op_target)
+
+def mint_nn_nllloss_torch(op_input, op_target, weight=None, ignore_index=-100, reduction='mean'):
+    nllloss = torch.nn.NLLLoss(weight=weight, ignore_index=ignore_index, reduction=reduction)
+    return nllloss(op_input, op_target)
+
+def mint_nn_smoothl1loss_ms(op_input, op_target, reduction='mean', beta=1.0):
+    smoothl1loss = mint.nn.SmoothL1Loss(reduction=reduction, beta=beta)
+    return smoothl1loss(op_input, op_target)
+
+def mint_nn_smoothl1loss_torch(op_input, op_target, reduction='mean', beta=1.0):
+    smoothl1loss = torch.nn.SmoothL1Loss(reduction=reduction, beta=beta)
+    return smoothl1loss(op_input, op_target)
