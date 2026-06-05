@@ -538,7 +538,7 @@ def test_ops_reduce_scatter_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
 @test_utils.run_test_with_On
 def test_ops_all_to_all_single_net():
     """
