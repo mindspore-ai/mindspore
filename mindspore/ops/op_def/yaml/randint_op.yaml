@@ -31,3 +31,4 @@ randint:
     dispatch:
         enable: True
         Ascend: RandIntAscend
+        CPU: RandIntCPU

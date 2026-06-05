@@ -28,6 +28,24 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
+int64_t GetCpuScalarInt64(const TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto *data_ptr = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data_ptr);
+  switch (tensor->data_type_c()) {
+    case kNumberTypeInt32:
+      return static_cast<int64_t>(*static_cast<const int32_t *>(data_ptr));
+    case kNumberTypeInt64:
+      return *static_cast<const int64_t *>(data_ptr);
+    default:
+      auto dtype = static_cast<TypeId>(tensor->data_type_c());
+      MS_LOG(EXCEPTION) << "For 'OneHotExt', max result dtype must be int32 or int64, but got " << TypeIdToString(dtype)
+                        << ".";
+  }
+}
+}  // namespace
+
 tensor::TensorPtr OneHotExtAscendCustomize(const TensorPtr &tensor_tensor, const Int64ImmPtr &num_classes,
                                            const TensorPtr &on_value, const TensorPtr &off_value,
                                            const Int64ImmPtr &axis) {
@@ -39,7 +57,7 @@ tensor::TensorPtr OneHotExtAscendCustomize(const TensorPtr &tensor_tensor, const
     auto max_op = CREATE_PYBOOST_OP(Max, device::DeviceType::kAscend);
     auto max_tensor = max_op->Call(tensor_tensor);
     auto max_tensor_cpu = max_tensor->cpu();
-    auto max_data = *static_cast<const int64_t *>(max_tensor_cpu->data_c());
+    auto max_data = GetCpuScalarInt64(max_tensor_cpu);
     num_class_imm = max_data + 1;
     if (num_class_imm < MIN_DEPTH) {
       num_class_imm = MIN_DEPTH;

@@ -10215,10 +10215,12 @@ def cumprod(input, dim, dtype=None):
         [[  1,   2,   6],
          [  4,  20, 120]])
     """
-    output = cumprod_(input, dim)
-    if dtype:
-        output = cast_(output, dtype)
-    return output
+    compute_input = input
+    if dtype is not None:
+        compute_input = cast_(compute_input, dtype)
+    elif input.dtype in mstype.int_type + mstype.uint_type + (mstype.bool_,):
+        compute_input = cast_(compute_input, mstype.int64)
+    return cumprod_(compute_input, dim)
 
 
 def igamma(input, other):

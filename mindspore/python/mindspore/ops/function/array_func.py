@@ -3122,13 +3122,14 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         - This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        If some values of the `indices` exceed the upper or lower bounds of the index of `input_x`, instead of raising
-        an index error, the corresponding `updates` will not be updated to `input_x`.
+        If some non-negative values of the `indices` exceed the upper bounds of the index of `input_x`, instead of
+        raising an index error, the corresponding `updates` will not be updated to `input_x`.
+        Negative `indices` are illegal input and will lead to undefined behavior.
         The backward is supported only for the case `updates.shape == indices.shape`.
 
     Args:
         input_x (Tensor): The input tensor. The rank must be at least 1.
-        indices (Tensor): The specified indices.
+        indices (Tensor): The specified indices whose data type must be int32 or int64.
         updates (Tensor): The update values.
         axis (int): The axis along which to index. Default ``0``.
         reduction (str): The specified operation, supports ``none`` , ``add`` .
@@ -3167,11 +3168,12 @@ def scatter(input, axis, index, src):
 
     .. note::
         If `src` is a tensor, the backward is supported only for the case `src.shape == index.shape`.
+        Negative `index` values are illegal input and will lead to undefined behavior.
 
     Args:
         input (Tensor): The input tensor.
         axis (int): The axis to do update operation.
-        index (Tensor): The index to do update operation.
+        index (Tensor): The index to do update operation whose data type must be int32 or int64.
         src (Tensor, float): The data to do the update operation with `input` .
 
     Returns:
@@ -4143,7 +4145,8 @@ def index_select(input, axis, index):
         After version 2.9.0, the parameter `axis` will be renamed to `dim`.
 
     .. note::
-        - The value of `index` must be in the range of `[0, input.shape[axis])`, the result is undefined out of range.
+        - The value of `index` must be in the range `[0, input.shape[axis])`.
+          Negative or out-of-range values will lead to undefined behavior.
         - The returned tensor has the same number of dimensions as the input tensor. The `axis` dimension has the same
           size as the length of `index` , other dimensions have the same size as the input tensor.
 
@@ -6526,7 +6529,7 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
             float32, int8, uint8, int16, int32, or int64.
         repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
         dim (int, optional): The dim along which to repeat, Default: ``None``. if dims is None,
-            the input Tensor will be flattened and the output will alse be flattened.
+            the input Tensor will be flattened and the output will also be flattened.
         output_size (int, optional): Total output size for the given axis (e.g. sum of repeats),
             Default: ``None``.
 

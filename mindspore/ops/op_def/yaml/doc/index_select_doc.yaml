@@ -6,7 +6,8 @@ index_select:
         dimensions unchanged from the original `input` tensor.
 
         .. note::
-            The value of `index` must be in the range of `[0, input.shape[dim])`. The result is undefined when out of range.
+            The value of `index` must be in the range `[0, input.shape[dim])`.
+            Negative or out-of-range values will lead to undefined behavior.
 
         Args:
             input (Tensor): The input tensor.

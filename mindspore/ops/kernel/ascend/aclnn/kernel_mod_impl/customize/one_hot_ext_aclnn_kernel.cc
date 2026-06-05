@@ -14,22 +14,155 @@
  * limitations under the License.
  */
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/one_hot_ext_aclnn_kernel.h"
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <vector>
+#include "ir/tensor.h"
+#include "kernel/ascend/acl_ir/op_api_convert.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
 namespace one_hot_ext {
+namespace {
+constexpr int64_t kMinDepth = 1;
+constexpr int64_t kAutoDepth = -1;
+constexpr int64_t kDefaultAxis = -1;
+
+int64_t GetValueFromTensorToInt64(KernelTensor *tensor) {
+  auto data_type = tensor->dtype_id();
+  switch (data_type) {
+    case kNumberTypeInt32:
+      return static_cast<int64_t>(tensor->GetValueWithCheck<int32_t>());
+    case kNumberTypeInt64:
+      return static_cast<int64_t>(tensor->GetValueWithCheck<int64_t>());
+    default:
+      MS_LOG(EXCEPTION) << "For 'OneHotExt', max result dtype must be int32 or int64, but got " << data_type;
+  }
+  return 0;
+}
+
+void SetKernelTensorShapeAndType(KernelTensor *tensor, const ShapeVector &shape_vector, const TypePtr &type_ptr) {
+  tensor->SetType(type_ptr);
+  tensor->SetShape(std::make_shared<abstract::TensorShape>(shape_vector));
+}
+
+void SetKernelTensorSize(KernelTensor *tensor) {
+  size_t type_size = UnitSizeInBytes(tensor->dtype_id());
+  size_t size = SizeOf(tensor->GetShapeVector()) * type_size;
+  tensor->set_size(size);
+}
+
+void ResetMaxOutputTensor(KernelTensor *max_output_tensor, KernelTensor *input_tensor, KernelTensor *depth_tensor) {
+  SetKernelTensorShapeAndType(max_output_tensor, depth_tensor->GetShapeVector(), input_tensor->GetType());
+  SetKernelTensorSize(max_output_tensor);
+}
+
+ShapeVector BuildOutputShape(const ShapeVector &input_shape, int64_t depth, int64_t axis) {
+  auto output_shape = input_shape;
+  if (axis >= 0) {
+    (void)output_shape.insert(output_shape.begin() + axis, depth);
+    return output_shape;
+  }
+  output_shape.push_back(depth);
+  return output_shape;
+}
+}  // namespace
+
+int OneHotExtAscend::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  const auto depth = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
+  auto_depth_ = (depth == kAutoDepth);
+  need_update_output_shape_ = auto_depth_;
+  const auto output_depth = auto_depth_ ? kMinDepth : depth;
+  const auto output_shape = BuildOutputShape(inputs[kIndex0]->GetShapeVector(), output_depth, kDefaultAxis);
+  SetKernelTensorShapeAndType(outputs[kIndex0], output_shape, outputs[kIndex0]->GetType());
+  SetKernelTensorSize(outputs[kIndex0]);
+  return AclnnKernelMod::Resize(inputs, outputs);
+}
+
 void OneHotExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
+  ClearOpsWorkSpaceList();
+  auto_depth_ = false;
+  need_update_output_shape_ = false;
   depth_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
-  axis_ = -1;
-  GetWorkspaceForResize(inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_, outputs[kIndex0]);
+  axis_ = kDefaultAxis;
+  origin_output_typeptr_ = outputs[kIndex0]->GetType();
+  output_shape_[kIndex0] = inputs[kIndex0]->GetShapeVector();
+  if (depth_ == kAutoDepth) {
+    auto_depth_ = true;
+    depth_ = kMinDepth;
+  }
+  need_update_output_shape_ = auto_depth_;
+  output_shape_[kIndex0] = BuildOutputShape(output_shape_[kIndex0], depth_, axis_);
+  SetKernelTensorShapeAndType(outputs[kIndex0], output_shape_[kIndex0], origin_output_typeptr_);
+  SetKernelTensorSize(outputs[kIndex0]);
+  GetWorkspaceForResizeDoOneHot(inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_, outputs[kIndex0]);
+  if (auto_depth_) {
+    max_output_tensor_ = outputs[kIndex0];
+    ResetMaxOutputTensor(max_output_tensor_, inputs[kIndex0], inputs[kIndex1]);
+    GetWorkspaceForResizeDoMax(inputs[kIndex0], max_output_tensor_);
+  }
 }
 
 bool OneHotExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  RunOp(stream_ptr, workspace, inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_, outputs[kIndex0]);
+  if (!auto_depth_) {
+    RunOpDoOneHot(stream_ptr, workspace, inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_,
+                  outputs[kIndex0]);
+    return true;
+  }
+
+  ResetMaxOutputTensor(max_output_tensor_, inputs[kIndex0], inputs[kIndex1]);
+  RunOpDoMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_);
+  const auto max_value = GetValueFromTensorToInt64(max_output_tensor_);
+  depth_ = std::max(max_value + 1, kMinDepth);
+  output_shape_[kIndex0] = BuildOutputShape(inputs[kIndex0]->GetShapeVector(), depth_, axis_);
+  SetKernelTensorShapeAndType(outputs[kIndex0], output_shape_[kIndex0], origin_output_typeptr_);
+  SetKernelTensorSize(outputs[kIndex0]);
+
+  hash_id_DoOneHot_ = 0;
+  auto res = GEN_EXECUTOR_CUST(op_type_DoOneHot_, inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_,
+                               outputs[kIndex0]);
+  UpdateWorkspace(res);
+  auto op_one_hot_pair =
+    GetExecutorDoOneHot(inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_, outputs[kIndex0]);
+  executor_DoOneHot_ = op_one_hot_pair.first;
+  auto release_func = op_one_hot_pair.second;
+  auto ws_size = std::get<kIndex0>(res);
+  const auto &iter = ops_workspace_size_map_.find("DoOneHot");
+  if (iter == ops_workspace_size_map_.end() || ws_size == 0) {
+    RUN_OP_API_ASYNC(op_type_DoOneHot_, nullptr, 0, executor_DoOneHot_, stream_ptr, release_func);
+    return true;
+  }
+
+  auto workspace_size_idx = iter->second.first;
+  auto workspace_size = iter->second.second;
+  if (!workspace.empty() && workspace.size() > workspace_size_idx &&
+      workspace[workspace_size_idx]->size() == workspace_size && workspace_size == ws_size) {
+    RUN_OP_API_ASYNC(op_type_DoOneHot_, workspace[workspace_size_idx]->device_ptr(), workspace_size, executor_DoOneHot_,
+                     stream_ptr, release_func);
+    return true;
+  }
+
+  // The placeholder depth=1 used during Resize may not match the runtime depth=max(input)+1.
+  // Rebuild the one-hot executor with the real depth and allocate a temporary workspace when needed.
+  static device::DeviceContext *device_context =
+    device::DeviceContextManager::GetInstance().GetDeviceContext("Ascend").get();
+  auto ws_ptr = std::make_shared<kernel::MemBlock>(device_context, ws_size, stream_ptr);
+  RUN_OP_API_ASYNC(op_type_DoOneHot_, ws_ptr->ptr_, ws_size, executor_DoOneHot_, stream_ptr, release_func);
   return true;
+}
+
+void OneHotExtAscend::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  if (!auto_depth_) {
+    output_shape_[kIndex0] = BuildOutputShape(inputs[kIndex0]->GetShapeVector(), depth_, axis_);
+  }
+  outputs[kIndex0]->SetShapeVector(output_shape_[kIndex0]);
+  SetKernelTensorSize(outputs[kIndex0]);
 }
 
 MS_ACLNN_KERNEL_FACTORY_REG(OneHotExt, OneHotExtAscend);

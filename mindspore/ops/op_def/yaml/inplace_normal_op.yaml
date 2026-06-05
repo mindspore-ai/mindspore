@@ -26,3 +26,4 @@ inplace_normal:
   dispatch:
     enable: True
     Ascend: InplaceNormalAscend
+    CPU: InplaceNormalCPU

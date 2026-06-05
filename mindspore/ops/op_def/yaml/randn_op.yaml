@@ -25,3 +25,4 @@ randn:
     dispatch:
         enable: True
         Ascend: RandnAscend
+        CPU: RandnCPU

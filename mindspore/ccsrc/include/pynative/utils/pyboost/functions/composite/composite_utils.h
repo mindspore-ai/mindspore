@@ -26,6 +26,9 @@ namespace kernel {
 namespace pyboost {
 device::DeviceType PYBOOST_API GetDeviceName(const tensor::TensorPtr &input_tensor,
                                              const std::optional<Int64ImmPtr> &device);
+void PYBOOST_API CheckRandomDeviceSupported(const std::string &op_name, const std::optional<Int64ImmPtr> &device);
+void PYBOOST_API CheckLikeRandomDeviceSupported(const std::string &op_name, const tensor::TensorPtr &input_tensor,
+                                                const std::optional<Int64ImmPtr> &device);
 void PYBOOST_API HandlePinMemory(const std::vector<tensor::TensorPtr> &outputs, device::DeviceType device_type);
 ShapeVector PYBOOST_API GetShape(const ValueTuplePtr &shape);
 TypeId PYBOOST_API GetDataType(const tensor::TensorPtr &input_tensor, const std::optional<Int64ImmPtr> &dtype);

@@ -31,7 +31,7 @@ namespace mindspore {
 namespace ops {
 class OPS_API RandExtFuncImpl : public OnesFuncImpl {
  public:
-  RandExtFuncImpl() : dtype_idx_(3) {}
+  RandExtFuncImpl() : dtype_idx_(3), device_idx_(4) {}
   TypeIdList InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 
   // For aclnn GetWorkspace
@@ -39,6 +39,7 @@ class OPS_API RandExtFuncImpl : public OnesFuncImpl {
 
  protected:
   size_t dtype_idx_;
+  size_t device_idx_;
 };
 }  // namespace ops
 }  // namespace mindspore

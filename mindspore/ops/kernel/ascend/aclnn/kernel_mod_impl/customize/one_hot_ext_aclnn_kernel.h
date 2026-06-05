@@ -30,15 +30,25 @@ class OneHotExtAscend : public AclnnKernelMod {
   OneHotExtAscend() : AclnnKernelMod(std::move("aclnnOneHot")) {}
 
   ~OneHotExtAscend() = default;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return need_update_output_shape_; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
-  DEFINE_GET_WORKSPACE_FOR_RESIZE()
+  DEFINE_GET_WORKSPACE_FOR_OPS(aclnnMax, DoMax)
+  DEFINE_GET_WORKSPACE_FOR_OPS(aclnnOneHot, DoOneHot)
 
   int64_t depth_;
   int64_t axis_;
+  bool auto_depth_{false};
+  bool need_update_output_shape_{false};
+  KernelTensor *max_output_tensor_{nullptr};
+  std::vector<ShapeVector> output_shape_{{0}};
+  TypePtr origin_output_typeptr_;
 };
 }  // namespace one_hot_ext
 }  // namespace kernel

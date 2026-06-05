@@ -18,7 +18,6 @@
 #include <set>
 #include <vector>
 #include <memory>
-#include <string>
 #include "infer/ops_func_impl/ones.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 #include "primitive/op_name.h"

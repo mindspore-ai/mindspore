@@ -20,6 +20,16 @@ from mindspore.nn.cell import Cell
 from mindspore import _checkparam as validator
 
 
+def _check_padding_tuple_or_list(padding, padding_length, cls_name):
+    """Validate tuple/list padding values without forbidding zero or negative integers."""
+    if len(padding) != padding_length:
+        msg = f"For '{cls_name}', the length of parameter 'padding' with tuple type must equal to " \
+              f"{padding_length}, but got {len(padding)}."
+        raise ValueError(msg)
+    for index, pad_value in enumerate(padding):
+        validator.check_value_type(f"padding[{index}]", pad_value, [int], cls_name)
+
+
 class ConstantPadNd_(Cell):
     """
     Base class for N-dimensional constant padding.
@@ -30,17 +40,13 @@ class ConstantPadNd_(Cell):
         self.value = value
 
         if isinstance(self.padding, int):
-            validator.check_positive_int(self.padding, "padding", self.cls_name)
+            validator.check_value_type("padding", self.padding, [int], self.cls_name)
             self.padding = (self.padding,) * padding_length
         elif isinstance(self.padding, (tuple, list)):
-            if len(padding) != padding_length:
-                msg = f"For '{self.cls_name}', the length of parameter 'padding' with tuple " \
-                      f"type must equal to {padding_length}, but got {len(padding)}."
-                raise ValueError(msg)
-            validator.check_non_negative_int_sequence(self.padding, "padding", self.cls_name)
+            _check_padding_tuple_or_list(self.padding, padding_length, self.cls_name)
         else:
-            msg = f"For '{self.cls_name}', 'padding' must be positive integer or tuple/list of {padding_length}" \
-                  f" positive integers, but got {padding}."
+            msg = f"For '{self.cls_name}', 'padding' must be integer or tuple/list of {padding_length} integers, " \
+                  f"but got {padding}."
             raise ValueError(msg)
 
     def construct(self, input):

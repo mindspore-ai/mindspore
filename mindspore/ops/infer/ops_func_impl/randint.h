@@ -27,6 +27,7 @@ class OPS_API RandIntFuncImpl : public RandExtFuncImpl {
  public:
   RandIntFuncImpl() {
     dtype_idx_ = 5;
+    device_idx_ = 6;
     shape_idx_ = 2;
   }
   // For aclnn GetWorkspace

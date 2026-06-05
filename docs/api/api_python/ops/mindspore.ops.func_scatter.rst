@@ -1,4 +1,4 @@
-﻿mindspore.ops.scatter
+mindspore.ops.scatter
 =======================================
 
 .. py:function:: mindspore.ops.scatter(input, axis, index, src)
@@ -11,11 +11,12 @@
 
     .. note::
         如果src为tensor，则仅当src的shape和index的shape相同时支持求反向梯度。
+        负数 `index` 是非法输入，会导致未定义行为。
 
     参数：
         - **input** (Tensor) - 输入tensor。
         - **axis** (int) - 要进行更新操作的轴。
-        - **index** (Tensor) - 要进行更新操作的索引。
+        - **index** (Tensor) - 要进行更新操作的索引，数据类型为int32或int64。
         - **src** (Tensor, float) - 指定对 `input` 进行更新操作的数据。
 
     返回：

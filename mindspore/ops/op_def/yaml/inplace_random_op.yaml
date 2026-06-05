@@ -30,3 +30,4 @@ inplace_random:
     dispatch:
         enable: True
         Ascend: InplaceRandomAscend
+        CPU: InplaceRandomCPU

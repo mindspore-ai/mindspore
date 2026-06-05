@@ -4531,6 +4531,7 @@ class TensorScatterElements(TensorScatterElementsExt):
     .. warning::
         If there are multiple index vectors in `indices` that correspond to the same position,
         the value of that position in the output will be nondeterministic.
+        Negative `indices` are illegal input and will lead to undefined behavior.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -4545,7 +4546,7 @@ class TensorScatterElements(TensorScatterElementsExt):
     Inputs:
         - **data** (Tensor) - The target tensor. Its rank must be at least 1.
         - **indices** (Tensor) - The index of `input_x` to do scatter operation whose data type must be int32 or
-          int64. It has the same rank as `data`. And accepted range is [-s, s) where s is the size along axis.
+          int64. It has the same rank as `data`. And accepted range is [0, s) where s is the size along axis.
         - **updates** (Tensor) - The tensor doing the scatter operation with `data`,
           it has the same type as `data`.
 

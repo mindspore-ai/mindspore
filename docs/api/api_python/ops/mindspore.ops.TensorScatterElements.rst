@@ -10,6 +10,7 @@ mindspore.ops.TensorScatterElements
 
     .. warning::
         如果 `indices` 中有多个索引向量对应于同一位置，则输出中该位置值是不确定的。
+        负数 `indices` 是非法输入，会导致未定义行为。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
@@ -20,7 +21,8 @@ mindspore.ops.TensorScatterElements
 
     输入：
         - **data** (Tensor) - 输入Tensor。其rank必须至少为1。
-        - **indices** (Tensor) - `data` 执行scatter操作的目标索引，数据类型为int32或int64。其rank必须和 `data` 一致。取值范围是[-s, s)，s是 `data` 在 `axis` 指定轴的size。
+        - **indices** (Tensor) - `data` 执行scatter操作的目标索引，数据类型为int32或int64。
+          其rank必须和 `data` 一致。取值范围是[0, s)，s是 `data` 在 `axis` 指定轴的size。
         - **updates** (Tensor) - 指定与 `data` 进行scatter操作的Tensor，其数据类型与 `data` 类型相同，shape与 `indices` 的shape相同。
 
     输出：

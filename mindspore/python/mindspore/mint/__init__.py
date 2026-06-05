@@ -1349,12 +1349,13 @@ def scatter(input, dim, index, src):
 
     .. note::
         The backward propagation is supported only for the case `src.shape == index.shape` when `src` is a tensor.
+        Negative `index` values are illegal input and will lead to undefined behavior.
 
     Args:
         input (Tensor): The target tensor. The rank of `input` must be at least 1.
         dim (int): The axis along which to scatter. Accepted range is [-r, r) where r = rank(input).
-        index (Tensor): The index to do update operation whose data must be positive number with type of mindspore.int32
-            or mindspore.int64. Same rank as `input` . The accepted range is [-s, s) where s is the size along axis.
+        index (Tensor): The index to do update operation whose data type must be mindspore.int32
+            or mindspore.int64. Same rank as `input`.
         src (Tensor, float): The data doing the update operation with `input`. Can be a tensor with the same data type
             as `input` or a float number to scatter.
 
@@ -1366,8 +1367,6 @@ def scatter(input, dim, index, src):
         ValueError: If rank of any of `input` , `index` and `src` is less than 1.
         ValueError: If the rank of `src` is not equal to the rank of `input` .
         TypeError: If the data types of `input` and `src` have different dtypes.
-        RuntimeError: If `index` has negative elements.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

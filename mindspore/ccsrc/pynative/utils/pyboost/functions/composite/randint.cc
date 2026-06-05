@@ -16,6 +16,7 @@
 
 #include "include/pynative/utils/pyboost/functions/composite/randint.h"
 #include "include/pynative/utils/pyboost/functions/composite/empty.h"
+#include "include/pynative/utils/pyboost/functions/composite/composite_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "mindspore/core/include/mindapi/base/type_id.h"
 

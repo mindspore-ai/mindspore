@@ -1,4 +1,4 @@
-﻿mindspore.ops.tensor_scatter_elements
+mindspore.ops.tensor_scatter_elements
 =======================================
 
 .. py:function:: mindspore.ops.tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
@@ -24,12 +24,13 @@
         - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     .. note::
-        如果 `indices` 的值超出 `input_x` 索引上下界，则相应的 `updates` 不会更新到 `input_x` ，也不会抛出索引错误。
+        如果 `indices` 中的非负值超出 `input_x` 索引上界，则相应的 `updates` 不会更新到 `input_x` ，也不会抛出索引错误。
+        负数 `indices` 是非法输入，会导致未定义行为。
         仅当indices的shape和updates的shape相同时支持求反向梯度。
 
     参数：
         - **input_x** (Tensor) - 输入tensor，秩大于等于1。
-        - **indices** (Tensor) - 指定索引。
+        - **indices** (Tensor) - 指定索引，数据类型为int32或int64。
         - **updates** (Tensor) - 更新值。
         - **axis** (int) - 指定索引所在的轴。默认 ``0`` 。
         - **reduction** (str) - 指定操作。支持 ``none`` ， ``add`` 。默认 ``none`` 。

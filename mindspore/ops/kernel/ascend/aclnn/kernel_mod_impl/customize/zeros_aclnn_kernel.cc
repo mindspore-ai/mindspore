@@ -21,7 +21,6 @@
 #include <memory>
 #include <functional>
 #include "ir/tensor.h"
-#include "runtime/stream.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"

@@ -336,11 +336,16 @@ def adaptive_avg_pool2d_ext(input, output_size):
     output_size_ = None
     if isinstance(output_size, int):
         output_size_ = output_size
-    else:
+    elif isinstance(output_size, (tuple, list)):
+        if len(output_size) != 2:
+            raise ValueError(f"For 'AdaptiveAvgPool2DExt', the length of 'output_size' must be 2, "
+                             f"but got {len(output_size)}.")
         origin_shape = shape_(input)
         w_ = origin_shape[-2] if output_size[-2] is None else output_size[-2]
         h_ = origin_shape[-1] if output_size[-1] is None else output_size[-1]
         output_size_ = (w_, h_)
+    else:
+        output_size_ = output_size
     return adaptive_avg_pool2d_ext_op(input, output_size_)
 
 
@@ -350,8 +355,8 @@ def adaptive_avg_pool3d(input, output_size):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
-    Suppose the last 3 dimension size of x is :math:`(inD, inH, inW)`, the last 3 dimension size of output is
-    :math:`(outD, outH, outW)`.
+    Suppose the last 3 dimension size of x is :math:`(D_{in}, H_{in}, W_{in})`, the last 3 dimension size of output is
+    :math:`(D_{out}, H_{out}, W_{out})`.
 
     .. math::
         \begin{array}{ll} \\
@@ -361,8 +366,8 @@ def adaptive_avg_pool3d(input, output_size):
             where,\\
             \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
             \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
-            \qquad istartH=\left\lceil \frac{oh * inH}{outH} \right\rceil \\
-            \qquad iendH=\left\lfloor \frac{(oh+1) * inH}{outH} \right\rfloor \\
+            \qquad istartH=\left\lceil \frac{oh * H_{in}}{H_{out}} \right\rceil \\
+            \qquad iendH=\left\lfloor \frac{(oh+1) * H_{in}}{H_{out}} \right\rfloor \\
             \qquad istartW=\left\lceil \frac{ow * inW}{outW} \right\rceil \\
             \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
         \end{array}
@@ -858,7 +863,7 @@ def avg_pool3d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
             Can be a single number or a tuple :math:`(sD, sH, sW)` or a list :math:`[sD, sH, sW]`. Default: ``None``,
             where its value is equal to `kernel_size`.
         padding (Union[int, tuple[int], list[int]], optional): Implicit zero padding to be added on both sides.
-            Can be a single number or a tuple :math:`(padD, padH, padW)` or a list :math:`[padD, padH, padW]`.
+            Can be a single number or a tuple :math:`(pad_d, pad_h, pad_w)` or a list :math:`[pad_d, pad_h, pad_w]`.
             Default: ``0``.
         ceil_mode (bool, optional): If True, apply ceil instead of floor to compute the output shape.
             Default: ``False``.
@@ -906,7 +911,7 @@ def avg_pool3d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
 
 @constexpr
 def is_ascend_backend():
-    """Check if the Ascend is used"""
+    """Check if the Ascend backend is used."""
     return context.get_context('device_target') == 'Ascend'
 
 
@@ -3859,6 +3864,7 @@ def pad_ext(input, pad, mode='constant', value=None):
 
     .. warning::
         `circular` mode has poor performance and is not recommended.
+        `circular` mode is not supported on Ascend.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
@@ -3910,7 +3916,7 @@ def pad_ext(input, pad, mode='constant', value=None):
         TypeError: If `pad` is not a tuple of int or a list of int.
         TypeError: If `input` is not a Tensor.
         ValueError: If length of `pad` is not even.
-        ValueError: If length of `pad` is greater than 6.
+        ValueError: If `mode` is ``'reflect'`` , ``'replicate'`` and length of `pad` is not 2, 4 or 6.
         ValueError: If `mode` is not ``'constant'`` and `value` is neither ``None`` nor 0.
 
     Supported Platforms:
@@ -4023,7 +4029,7 @@ def pad(input_x, padding, mode='constant', value=None):
         TypeError: If `padding` is not an int of tuple or int of list.
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
-        ValueError: If length of `padding` is greater than 6.
+        ValueError: If `mode` is ``'reflect'`` , ``'replicate'`` and length of `padding` is not 2, 4 or 6.
         ValueError: If `mode` is not ``'constant'`` and `value` is not ``None``.
         ValueError: If rank of `input_x` is more than 5 while running in Ascend.
         ValueError: If `paddings` contains negative value while running in Ascend.
