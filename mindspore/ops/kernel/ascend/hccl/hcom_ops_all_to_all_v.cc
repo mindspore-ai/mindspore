@@ -53,7 +53,9 @@ int InnerCommAllToAllVSingleKernel::Resize(const std::vector<KernelTensor *> &in
   output_size_list_.clear();
   std::vector<int64_t> send_numel_list;
   std::vector<int64_t> recv_numel_list;
-  if (inputs.size() == kIndex6 + inplace_num_) {
+  // InnerCommAllToAllV has 6 inputs; DistCommAllToAllVSingle also has output tensor and async_op.
+  const auto expected_input_num = inplace_num_ == 0 ? kIndex6 : kIndex8;
+  if (inputs.size() == expected_input_num) {
     send_numel_list = inputs[kIndex2 + inplace_num_]->GetValueWithCheck<std::vector<int64_t>>();
     recv_numel_list = inputs[kIndex3 + inplace_num_]->GetValueWithCheck<std::vector<int64_t>>();
     GetAllToAllVParam(send_numel_list, recv_numel_list);
