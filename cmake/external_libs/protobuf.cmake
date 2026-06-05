@@ -84,15 +84,22 @@ include_directories(${protobuf_INC})
 include_directories(${CMAKE_BINARY_DIR}/proto_py)
 
 # protobuf 34.1 statically depends on absl and utf8_range; add them as transitive link deps
-file(GLOB _PROTOBUF_ABSL_LIBS "${absl_ROOT}/lib/libabsl_*.a")
-if(EXISTS "${protobuf_DIRPATH}/lib64/libutf8_range.a")
+if(MSVC)
+    # Windows absl libs are named absl_*.lib (no leading "lib")
+    file(GLOB _PROTOBUF_ABSL_LIBS "${absl_ROOT}/lib/absl_*.lib")
+    set(_PROTOBUF_UTF8_EXT ".lib")
+else()
+    file(GLOB _PROTOBUF_ABSL_LIBS "${absl_ROOT}/lib/libabsl_*.a")
+    set(_PROTOBUF_UTF8_EXT ".a")
+endif()
+if(EXISTS "${protobuf_DIRPATH}/lib64/libutf8_range${_PROTOBUF_UTF8_EXT}")
     set(_PROTOBUF_UTF8_DIR "${protobuf_DIRPATH}/lib64")
 else()
     set(_PROTOBUF_UTF8_DIR "${protobuf_DIRPATH}/lib")
 endif()
 set(_PROTOBUF_UTF8_LIBS
-    "${_PROTOBUF_UTF8_DIR}/libutf8_range.a"
-    "${_PROTOBUF_UTF8_DIR}/libutf8_validity.a")
+    "${_PROTOBUF_UTF8_DIR}/libutf8_range${_PROTOBUF_UTF8_EXT}"
+    "${_PROTOBUF_UTF8_DIR}/libutf8_validity${_PROTOBUF_UTF8_EXT}")
 if(NOT MSVC AND NOT APPLE)
     set_target_properties(protobuf::protobuf PROPERTIES
         INTERFACE_LINK_LIBRARIES "-Wl,--start-group;${_PROTOBUF_ABSL_LIBS};${_PROTOBUF_UTF8_LIBS};-Wl,--end-group")
