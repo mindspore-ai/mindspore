@@ -90,7 +90,7 @@ def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num, obs_runt
     if num_shards <= 8 or shard_id % 8 != 0:
         return
 
-    sync_dir = "/cache/sync_data/" + str(epoch_num)
+    sync_dir = os.path.join("/cache/sync_data", str(epoch_num))
     while True:
         if os.path.exists(sync_dir) and len(os.listdir(sync_dir)) >= min(num_shards - 1, 7):
             break
@@ -130,7 +130,7 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num, obs_runtime):
     if num_shards <= 8 or shard_id % 8 == 0:
         return
 
-    sync_dir = "/cache/sync_data/" + str(epoch_num)
+    sync_dir = os.path.join("/cache/sync_data", str(epoch_num))
 
     if not os.path.exists(sync_dir):
         try:
@@ -299,29 +299,14 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch, obs_runtime):
     Wait until the dataset files required by all devices are downloaded.
 
     Note:
-        It should be used together with :class:`mindspore.dataset.OBSMindDataset` and
-        be called before each epoch.
+        This function will be automatically executed during the iteration of :class:`mindspore.dataset.OBSMindDataset`,
+        and no manual call is required.
 
     Args:
         rank_id (int): Rank ID of the device.
         rank_size (int): Rank size.
         current_epoch (int): Number of current epochs.
         obs_runtime (OBSRuntime): OBS runtime from the corresponding OBSMindDataset instance.
-
-    Examples:
-        >>> # Create a synchronization callback
-        >>> import mindspore as ms
-        >>> from mindspore.dataset import sync_wait_for_dataset
-        >>>
-        >>> class SyncForDataset(ms.Callback):
-        ...     def __init__(self):
-        ...         super(SyncForDataset, self).__init__()
-        ...
-        ...     def epoch_begin(self, run_context):
-        ...         cb_params = run_context.original_args()
-        ...         epoch_num = cb_params.cur_epoch_num
-        ...         sync_wait_for_dataset(rank_id, rank_size, epoch_num, obs_runtime=dataset.source.get_obs_runtime())
-
     """
 
     runtime_config = obs_runtime.config

@@ -214,6 +214,5 @@ Tools
     mindspore.dataset.deserialize
     mindspore.dataset.serialize
     mindspore.dataset.show
-    mindspore.dataset.sync_wait_for_dataset
     mindspore.dataset.utils.imshow_det_bbox
     mindspore.dataset.utils.LineReader

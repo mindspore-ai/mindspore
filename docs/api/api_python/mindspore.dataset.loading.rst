@@ -268,6 +268,5 @@ config模块能够设置或获取数据处理管道的全局配置参数。
     mindspore.dataset.deserialize
     mindspore.dataset.serialize
     mindspore.dataset.show
-    mindspore.dataset.sync_wait_for_dataset
     mindspore.dataset.utils.imshow_det_bbox
     mindspore.dataset.utils.LineReader
