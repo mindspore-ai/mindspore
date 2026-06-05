@@ -181,7 +181,7 @@ class AdaMax(Optimizer):
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization': True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.AdaMax(group_params, learning_rate=0.1, weight_decay=0.0)

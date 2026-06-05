@@ -1657,7 +1657,7 @@ class AdaptiveAvgPool3d(Cell):
         >>> output = net(input_x)
         >>> print(output.shape)
         (4, 3, 3, 3, 4)
-        >>> # case 2: output_size=4
+        >>> # case 2: output_size=5
         >>> output_size=5
         >>> input_x_val = np.random.randn(2, 3, 8, 6, 12)
         >>> input_x = ms.Tensor(input_x_val, ms.float32)

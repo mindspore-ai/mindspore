@@ -9,7 +9,7 @@ mindspore.nn.ReplicationPad2d
         从2.9.0（不含）之后版本开始，前向输入 `x` 将改为 `input`。
 
     参数：
-        - **padding** (union[int, tuple]) - 填充 `x` 最后两个维度的大小。
+        - **padding** (Union[int, tuple]) - 填充 `x` 最后两个维度的大小。
 
           - 如果输入为int，则对所有边界进行相同大小的填充。
           - 如果是tuple，则顺序为 :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`。
