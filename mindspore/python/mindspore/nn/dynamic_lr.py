@@ -100,7 +100,7 @@ def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_e
 
 def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculates learning rate base on exponential decay function. The learning rate for each step will
+    Calculates learning rate based on exponential decay function. The learning rate for each step will
     be stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
@@ -117,9 +117,9 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         total_step (int): The total number of steps.
-        step_per_epoch (int): The number of steps in per epoch.
+        step_per_epoch (int): The number of steps per epoch.
         decay_epoch (int): Number of epochs to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. Default: ``False`` .
+        is_stair (bool): If true, learning rate decays once every `decay_epoch` times. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.
@@ -217,7 +217,7 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
 
 def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
-    Calculates learning rate base on inverse-time decay function. The learning rate for each step
+    Calculates learning rate based on inverse-time decay function. The learning rate for each step
     will be stored in a list.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
@@ -234,10 +234,10 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         learning_rate (float): The initial value of learning rate.
         decay_rate (float): The decay rate.
         total_step (int): The total number of steps.
-        step_per_epoch (int): The number of steps in per epoch.
+        step_per_epoch (int): The number of steps per epoch.
         decay_epoch (int): Number of epochs to decay over.
-        is_stair (bool): If true, learning rate is decayed once every `decay_epoch` times. If False, the learning rate
-            decays for every epoch. Default: ``False`` .
+        is_stair (bool): If true, learning rate decays once every `decay_epoch` times. If False, the learning rate
+            decays every epoch. Default: ``False`` .
 
     Returns:
         list[float]. The size of list is `total_step`.

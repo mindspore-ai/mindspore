@@ -35,7 +35,7 @@ mindspore.nn.LSTM
         - **num_layers** (int) - 网络层数。默认值： ``1`` 。
         - **has_bias** (bool) - Cell是否有偏置项 :math:`b_{ih}` 和 :math:`b_{fh}`。默认值： ``True`` 。
         - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值： ``False`` 。
-        - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值： ``0`` 。dropout的范围为[0.0, 1.0)。
+        - **dropout** (float, int) - 除最后一层外每层输出时的dropout概率。默认值： ``0`` 。dropout的范围为[0.0, 1.0)。
         - **bidirectional** (bool) - 是否为双向LSTM。 如果 `bidirectional` 是 ``True``，directions数量为2，否则directions数量为1。默认值： ``False`` 。
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
@@ -45,7 +45,7 @@ mindspore.nn.LSTM
         - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 :math:`(batch\_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
 
     输出：
-        Tuple，包含 (`output`, (`h_n`, `c_n`))的元组。
+        Tuple，包含 (`output`, `hx_n`)的元组。
 
         - **output** (Tensor) - shape为 :math:`(seq\_len, batch\_size, num\_directions * hidden\_size)` 的Tensor。
         - **hx_n** (tuple) - 两个Tensor (h_n, c_n)的元组，shape都是 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 。

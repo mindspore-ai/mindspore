@@ -725,7 +725,7 @@ class LayerNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
     Normalization, Layer Normalization performs exactly the same computation at training and
-    testing time. It is applied across all channels and pixel but only one batch size.
+    testing time. It is applied across all channels and pixels but only one batch size.
     :math:`\gamma` and :math:`\beta` are trainable scale and shift.
     It can be described using the following formula:
 
@@ -770,7 +770,7 @@ class LayerNorm(Cell):
         >>> import numpy as np
         >>> x = ms.Tensor(np.ones([20, 5, 10, 10]), ms.float32)
         >>> shape1 = x.shape[1:]
-        >>> m = ms.nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
+        >>> m = ms.nn.LayerNorm(shape1, begin_norm_axis=1, begin_params_axis=1)
         >>> output = m(x).shape
         >>> print(output)
         (20, 5, 10, 10)
@@ -1029,12 +1029,12 @@ class InstanceNorm1d(_InstanceNorm):
         TypeError: If the type of `eps` is not float.
         TypeError: If the type of `momentum` is not float.
         TypeError: If the type of `affine` is not bool.
-        TypeError: If the type of `gamma_init`/`beta_init` is not same, or if the initialized element type is not
+        TypeError: If the types of `gamma_init` and `beta_init` is not same, or if the initialized element type is not
             float32.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
-        ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
-        KeyError: If any of `gamma_init`/`beta_init` is str and
+        ValueError: If the shape of `gamma_init` or `beta_init` is not :math:`(C)`.
+        KeyError: If any of `gamma_init` or `beta_init` is str and
             there is no homonymous class inheriting from `Initializer`.
 
     Supported Platforms:
@@ -1113,12 +1113,13 @@ class InstanceNorm2d(_InstanceNorm):
         TypeError: If the type of `eps` is not float.
         TypeError: If the type of `momentum` is not float.
         TypeError: If the type of `affine` is not bool.
-        TypeError: If the type of `gamma_init`/`beta_init` is not same, or if the initialized element type is not
+        TypeError: If the types of `gamma_init` and `beta_init` are not the same,
+            or if the initialized element type is not
             float32.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
-        ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
-        KeyError: If any of `gamma_init`/`beta_init` is str and
+        ValueError: If the shape of `gamma_init` or `beta_init` is not :math:`(C)`.
+        KeyError: If any of `gamma_init` or `beta_init` is str and
             there is no homonymous class inheriting from `Initializer`.
 
     Supported Platforms:
@@ -1196,13 +1197,14 @@ class InstanceNorm3d(_InstanceNorm):
         TypeError: If the type of `eps` is not float.
         TypeError: If the type of `momentum` is not float.
         TypeError: If the type of `affine` is not bool.
-        TypeError: If the type of `gamma_init`/`beta_init` is not same, or if the initialized element type is not
+        TypeError: If the types of `gamma_init` and `beta_init` are not the same,
+            or if the initialized element type is not
             float32.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
-        ValueError: If the shape of `gamma_init` / `beta_init` is not :math:`(C)`.
-        KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
-            exists.
+        ValueError: If the shape of `gamma_init` or `beta_init` is not :math:`(C)`.
+        KeyError: If any of `gamma_init` or `beta_init` is str and the homonymous class
+            inheriting from `Initializer` does not exist.
 
     Supported Platforms:
         ``GPU``

@@ -43,8 +43,8 @@ mindspore.nn.InstanceNorm1d
         - **TypeError** - `eps` 的类型不是float。
         - **TypeError** - `momentum` 的类型不是float。
         - **TypeError** - `affine` 不是bool。
-        - **TypeError** - `gamma_init` / `beta_init` 的类型不相同，或者初始化的元素类型不是float32。
+        - **TypeError** - `gamma_init` 和 `beta_init` 的类型不相同，或者初始化的元素类型不是float32。
         - **ValueError** - `num_features` 小于1。
         - **ValueError** - `momentum` 不在范围[0, 1]内。
-        - **ValueError** - `gamma_init` / `beta_init` 的shape不为 :math:`(C)` 。
-        - **KeyError** - `gamma_init` / `beta_init` 中的任何一个是str，并且不存在继承自 `Initializer` 的同名类。
+        - **ValueError** - `gamma_init` 和 `beta_init` 的shape不为 :math:`(C)` 。
+        - **KeyError** - `gamma_init` 和 `beta_init` 中的任何一个是str，并且不存在继承自 `Initializer` 的同名类。

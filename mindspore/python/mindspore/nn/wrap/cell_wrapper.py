@@ -215,7 +215,7 @@ class ForwardValueAndGrad(Cell):
     Encapsulate training network.
 
     Including the network and a gradient function. The resulting Cell is trained with input '\*inputs'.
-    The backward graph will be created in the gradient function to calculating gradient.
+    The backward graph will be created in the gradient function to calculate gradient.
 
     Args:
         network (Union[Cell, Function, MethodType]): The training network.

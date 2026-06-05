@@ -101,7 +101,7 @@ class LPPool1d(Cell):
     Args:
         norm_type (Union[int, float]): Type of normalization, represents :math:`p` in the formula, can not be 0.
 
-            - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
+            - if p = 1, the result is the sum of the elements within the pooling kernel (proportional to average
               pooling).
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
@@ -163,10 +163,10 @@ class LPPool1d(Cell):
 
 class LPPool2d(Cell):
     r"""
-    Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
+    Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 2D input plane.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
-    :math:`(N, C, H_{in}, W_{in})`, with the same shape as input, the operation is as follows.
+    :math:`(N, C, H_{out}, W_{out})`, with the same shape as input, the operation is as follows.
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
@@ -177,7 +177,7 @@ class LPPool2d(Cell):
     Args:
         norm_type(Union[int, float]): Type of normalization, represents :math:`p` in the formula, can not be 0.
 
-            - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
+            - if p = 1, the result is the sum of the elements within the pooling kernel (proportional to average
               pooling).
             - if p = :math:`\infty`, the result is the result of maximum pooling.
 
@@ -467,8 +467,9 @@ class MaxPool2d(_PoolNd):
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally, If the amount is even, it is
-              uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess amount goes
+              to the right and bottom sides.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
               possible height and width. Extra pixels that could not complete a full stride will
@@ -525,7 +526,7 @@ class MaxPool2d(_PoolNd):
         ValueError: If `pad_mode` is not ``"pad"``, `padding`, `dilation`, `return_indices`, `ceil_mode` parameters
             are not set to their default values.
         ValueError: If the length of the tuple/list `padding` parameter is not 2.
-        ValueError: If The length of the tuple dilation parameter is not 2.
+        ValueError: If the length of the tuple dilation parameter is not 2.
         ValueError: If dilation parameter is neither an integer nor a tuple.
         ValueError: If `pad_mode` is ``"pad"`` and `data_format` is ``'NHWC'``.
         ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
@@ -725,8 +726,8 @@ class MaxPool1d(_PoolNd):
 
             - ``"same"``: Pad the input at the begin and end so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally. If the amount is even, it is
-              uniformly distributed around the input, if it is odd, the excess padding is goes to the right side.
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
+              uniformly distributed around the input, if it is odd, the excess padding goes to the right side.
               If this mode is set, `padding` must be 0.
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
               possible length. Extra pixels that could not complete a full stride will
@@ -767,15 +768,14 @@ class MaxPool1d(_PoolNd):
                 \times (\text{kernel_size} - 1) - 1}{\text{stride}} + 1\right\rfloor
 
     Raises:
-        TypeError: If `kernel_size` or `strides` is not an int.
+        TypeError: If `kernel_size` or `stride` is not an int.
         ValueError: If `pad_mode` is not ``"valid"``, ``"same"`` or ``"pad"``, case-insensitive.
-        ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'``.
-        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
         ValueError: If `pad_mode` is not ``"pad"``, `padding`, `dilation`, `return_indices`, `ceil_mode` parameters
             are not set to their default values.
         ValueError: If the length of the tuple/list `padding` parameter is not 1.
-        ValueError: If The length of the tuple dilation parameter is not 1.
+        ValueError: If the length of the tuple dilation parameter is not 1.
         ValueError: If dilation parameter is neither an integer nor a tuple.
         ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
 
@@ -2071,14 +2071,14 @@ class FractionalMaxPool3d(Cell):
     Raises:
         TypeError: If `input` is not a 4D or 5D tensor.
         TypeError: If `_random_samples` is not a 3D tensor.
-        TypeError: If data type of `imput_x` is not float16, float32, float64.
+        TypeError: If data type of `input` is not float16, float32, float64.
         TypeError: If dtype of `_random_samples` is not float16, float32, float64.
         TypeError: If dtype of `argmax` is not int32, int64.
-        TypeError: if _random_samples to have the different dtypes as input.
+        TypeError: If `_random_samples` has different dtypes as `input`.
         ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
         ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
         ValueError: If numbers in `output_size` or `kernel_size` is not positive.
-        ValueError: if `output_size` and `output_ratio` are None at the same time.
+        ValueError: If `output_size` and `output_ratio` are None at the same time.
         ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
         ValueError: If the third dimension size of `_random_samples` is not 3.
@@ -2126,7 +2126,7 @@ class MaxUnpool1d(Cell):
     r"""
     Computes the inverse of :class:`mindspore.nn.MaxPool1d`.
 
-    MaxUnpool1d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
+    MaxUnpool1d keeps the maximal value and set all positions of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
@@ -2214,7 +2214,7 @@ class MaxUnpool2d(Cell):
     .. warning::
         After version 2.9.0, the parameter `x` will be renamed to `input`.
 
-    MaxUnpool2d keeps the maximal value and set all position of non-maximal values to zero. Typically the input
+    MaxUnpool2d keeps the maximal value and set all positions of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of
     shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
 
@@ -2231,7 +2231,7 @@ class MaxUnpool2d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
-            If stride is ``None``, then stride equal to kernel_size. Default: ``None`` .
+            If stride is ``None``, then stride is equal to kernel_size. Default: ``None`` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
@@ -2244,7 +2244,7 @@ class MaxUnpool2d(Cell):
           Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
-          If output_size is ``None``, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is ``None``, then the shape of output is computed by kernel_size, stride and padding.
           If output_size is not ``None``, then output_size must be :math:`(N, C, H, W)`, :math:`(C, H, W)` or
           :math:`(H, W)` and output_size must belong to
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`.
@@ -2259,10 +2259,10 @@ class MaxUnpool2d(Cell):
         ValueError: If numbers in `stride`, `padding` (also support 0 and (0, 0)) or `kernel_size` is not positive.
         ValueError: If the shape of `x` and `indices` are not equal.
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 2.
-        ValueError: If `x` whose length is not 3 or 4.
-        ValueError: If `output_size` whose type is not tuple.
-        ValueError: If `output_size` whose length is not 0, 3 or 4.
-        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
+        ValueError: If the length of `x` is not 3 or 4.
+        ValueError: If the type of `output_size` is not tuple.
+        ValueError: If the length of `output_size` is not 0, 3 or 4.
+        ValueError: If `output_size` is not close to output size computed by `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2305,7 +2305,7 @@ class MaxUnpool3d(Cell):
     r"""
     Computes the inverse of :class:`mindspore.nn.MaxPool3d`.
 
-    MaxUnpool3d keeps the maximal value and set all position of non-maximal values to zero.
+    MaxUnpool3d keeps the maximal value and set all positions of non-maximal values to zero.
     Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`,
     and the output is of shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})`.
     The operation is as follows.
@@ -2327,7 +2327,7 @@ class MaxUnpool3d(Cell):
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
-            If stride is ``None``, then stride equal to kernel_size. Default: ``None`` .
+            If stride is ``None``, then stride is equal to kernel_size. Default: ``None`` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of depth, height and width are the same, equal to padding. If `padding` is a tuple of three
             integers, the padding of depth, height and width equal to padding[0], padding[1] and padding[2]
@@ -2341,7 +2341,7 @@ class MaxUnpool3d(Cell):
           Values of indices must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
           Data type must be in int32 or int64.
         - **output_size** (tuple[int], optional) - The output size. Default: ``None`` .
-          If output_size is ``None``, then the shape of output computed by kernel_size, stride and padding.
+          If output_size is ``None``, then the shape of output is computed by kernel_size, stride and padding.
           If output_size is not ``None``, then output_size must be :math:`(N, C, D, H, W)` , :math:`(C, D, H, W)` or
           :math:`(D, H, W)` and output_size must belong to
           :math:`[(N, C, D_{out} - stride[0], H_{out} - stride[1], W_{out} - stride[2]),
@@ -2357,10 +2357,10 @@ class MaxUnpool3d(Cell):
         ValueError: If numbers in `stride` or `padding` (also support 0 and (0, 0, 0)) or `kernel_size` is not positive.
         ValueError: If the shape of `x` and `indices` are not equal.
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 3.
-        ValueError: If `x` whose length is not 4 or 5.
-        ValueError: If `output_size` whose length is not 0, 4 or 5.
-        ValueError: If `output_size` whose type is not tuple.
-        ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
+        ValueError: If the length of `x` is not 4 or 5.
+        ValueError: If the length of `output_size` is not 0, 4 or 5.
+        ValueError: If the type of `output_size` is not tuple.
+        ValueError: If `output_size` is not close to output size computed by `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
         ``GPU`` ``CPU``

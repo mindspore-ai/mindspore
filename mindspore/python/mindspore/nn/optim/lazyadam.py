@@ -248,7 +248,7 @@ class LazyAdam(Optimizer):
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable,
             LearningRateSchedule.
-        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If an element of `params` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
         TypeError: If `use_locking` or `use_nesterov` is not a bool.

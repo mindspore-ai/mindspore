@@ -64,7 +64,7 @@ mindspore.nn.LazyAdam
 
     异常：
         - **TypeError** - `learning_rate` 不是int、float、Tensor、Iterable或 `LearningRateSchedule <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.nn.html#learningrateschedule%E7%B1%BB>`_ 。
-        - **TypeError** - `parameters` 的元素不是Parameter或字典。
+        - **TypeError** - `params` 的元素不是Parameter或字典。
         - **TypeError** - `beta1`、`beta2`、`eps` 或 `loss_scale` 不是float。
         - **TypeError** - `weight_decay` 不是float或int。
         - **TypeError** - `use_locking` 或 `use_nesterov` 不是bool。
