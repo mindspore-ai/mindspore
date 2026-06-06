@@ -478,6 +478,7 @@ def init_process_group(
         - On Ascend hardware platforms, this API should be called before the definition of any Tensor and Parameter,
           and before the instantiation and execution of any operation and net.
         - Only support PyNative mode, Graph mode is not currently supported.
+        - The MCCL communication group does not support repeated initialization and destruction.
 
     Args:
         backend (str, optional): The backend to use. Default is ``"hccl"`` and now only support ``"hccl"``.
@@ -2189,7 +2190,9 @@ def send(tensor, dst=0, group=None, tag=0):
     Send the tensor to the specified destination rank.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - In the MCCL communication group scenario, :func:`mindspore.mint.distributed.send` and
+          :func:`mindspore.mint.distributed.recv` are not strongly synchronized.
 
     Args:
         tensor (Tensor): The tensor to send.
@@ -2263,7 +2266,9 @@ def recv(tensor, src=0, group=None, tag=0):
     Receive the tensor from the specified source rank.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - In the mccl communication group scenario, :func:`mindspore.mint.distributed.send` and
+          :func:`mindspore.mint.distributed.recv` are not strongly synchronized.
 
     Args:
         tensor (Tensor): The tensor to fill with the received data.
@@ -2520,7 +2525,9 @@ def isend(tensor, dst=0, group=None, tag=0):
     Send the tensor to the specified destination rank asynchronously.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - In the MCCL communication group scenario, :func:`mindspore.mint.distributed.isend` and
+          :func:`mindspore.mint.distributed.irecv` are not strongly synchronized.
 
     Args:
         tensor (Tensor): The tensor to send.
@@ -2600,7 +2607,9 @@ def irecv(tensor, src=0, group=None, tag=0):
     Receive the tensor from the specified source rank asynchronously.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - In the mccl communication group scenario, :func:`mindspore.mint.distributed.isend` and
+          :func:`mindspore.mint.distributed.irecv` are not strongly synchronized.
 
     Args:
         tensor (Tensor): The tensor to fill with received data.
@@ -2947,7 +2956,9 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
     Gathers tensors from the specified communication group and returns the tensor list which is all gathered.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - In the MCCL communication group scenario, elements in `tensor_list` with different shapes
+          are not supported.
 
     Args:
         tensor_list (list[Tensor]): Output list.

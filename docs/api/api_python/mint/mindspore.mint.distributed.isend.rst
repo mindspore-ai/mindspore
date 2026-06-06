@@ -6,7 +6,8 @@ mindspore.mint.distributed.isend
     异步发送张量到指定线程。
 
     .. note::
-        当前仅支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
+        - 在MCCL通信组场景， :func:`mindspore.mint.distributed.isend` 和 :func:`mindspore.mint.distributed.irecv` 非强同步执行。
 
     参数：
         - **tensor** (Tensor) - 输入发送tensor。

@@ -6,7 +6,8 @@ mindspore.ops.communication.irecv
     异步从src接收张量。
 
     .. note::
-        当前仅支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
+        - 在MCCL通信组场景， :func:`mindspore.ops.communication.isend` 和 :func:`mindspore.ops.communication.irecv` 非强同步执行。
 
     参数：
         - **tensor** (Tensor) - 如果函数以in-place模式运行，则用于填充接收数据的张量。否则，表示用于接收张量的shape和dtype，但输入 `tensor` 的值不会生效。

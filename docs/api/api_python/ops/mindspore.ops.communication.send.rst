@@ -6,7 +6,8 @@ mindspore.ops.communication.send
     将张量发送到指定的目标rank。
 
     .. note::
-        当前仅支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
+        - 在MCCL通信组场景， :func:`mindspore.ops.communication.send` 和 :func:`mindspore.ops.communication.recv` 非强同步执行。
 
     参数：
         - **tensor** (Tensor) - 要发送的张量。
