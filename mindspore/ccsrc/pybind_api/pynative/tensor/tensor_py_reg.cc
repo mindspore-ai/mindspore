@@ -1009,7 +1009,12 @@ extern PyObject *TensorPython_data_sync(PyObject *self, PyObject *args) {
 extern PyObject *TensorPython_repr(PyObject *self, PyObject *args) {
   HANDLE_MS_EXCEPTION
   PyType<TensorPy> *py_tensor = (PyType<TensorPy> *)self;
-  std::string repr = py_tensor->value.GetTensor()->cpu()->ToStringRepr();
+  const auto &tensor = py_tensor->value.GetTensor();
+  MS_EXCEPTION_IF_NULL(tensor);
+  const auto &device_address = tensor->device_address();
+  std::string repr = (device_address != nullptr && device_address->GetDeviceType() == device::DeviceType::kMeta)
+                       ? tensor->ToStringRepr()
+                       : tensor->cpu()->ToStringRepr();
   return PyUnicode_FromString(repr.c_str());
   HANDLE_MS_EXCEPTION_END
 }
