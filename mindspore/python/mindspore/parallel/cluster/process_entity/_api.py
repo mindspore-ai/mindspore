@@ -590,7 +590,8 @@ class _ProcessManager:
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
         if os.path.exists(scheduler_log_path):
-            os.system(f"cat {scheduler_log_path} | grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
+            subprocess.run(["grep", "-E", "-C", "5", "--", "ERROR|CRITICAL|Traceback|Error",
+                            scheduler_log_path], check=False)
 
     def format_worker_log_name(self):
         """

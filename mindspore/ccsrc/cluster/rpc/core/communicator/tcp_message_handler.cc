@@ -17,7 +17,9 @@
 #include "cluster/rpc/core/communicator/tcp_message_handler.h"
 
 #include <arpa/inet.h>
+#include <cstdint>
 #include <iostream>
+#include <limits>
 #include <utility>
 #include <memory>
 #include "include/utils/utils.h"
@@ -26,6 +28,10 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+namespace {
+constexpr uint64_t kMaxMessageLength = 16ULL << 30;  // 16 GiB
+}  // namespace
+
 void TcpMessageHandler::SetCallback(const messageReceive &message_receive) { message_callback_ = message_receive; }
 
 void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
@@ -52,7 +58,7 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
             *reinterpret_cast<const uint32_t *>(header_ + sizeof(message_header_.message_proto_));
           message_header_.message_length_ = *reinterpret_cast<const uint64_t *>(
             header_ + sizeof(message_header_.message_proto_) + sizeof(message_header_.message_meta_length_));
-          if (message_header_.message_length_ >= UINT64_MAX) {
+          if (message_header_.message_length_ > kMaxMessageLength) {
             MS_LOG(WARNING)
               << "The message len:" << message_header_.message_length_
               << " is too long.! Failed to parse the message header and the message body will fail to be received.";
