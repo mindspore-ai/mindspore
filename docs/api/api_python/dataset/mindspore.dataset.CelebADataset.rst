@@ -12,7 +12,7 @@ mindspore.dataset.CelebADataset
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8）。也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值： ``None`` 。下表中会展示不同参数配置的预期行为。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'valid'`` 、 ``'test'`` 或 ``'all'`` 。默认值： ``'all'`` ，全部样本图片。
+        - **usage** (str, 可选) - 指定要使用的数据集部分，可取值为 ``'train'`` 、 ``'valid'`` 、 ``'test'`` 或 ``'all'`` 。默认值： ``'all'`` ，全部样本图片。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值： ``None`` 。下表中会展示不同配置的预期行为。
         - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值： ``False`` ，不解码。
         - **extensions** (list[str], 可选) - 指定文件的扩展名，仅读取与指定扩展名匹配的文件到数据集中。默认值： ``None`` 。

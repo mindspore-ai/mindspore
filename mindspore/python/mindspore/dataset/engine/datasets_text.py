@@ -41,8 +41,8 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
     """
     AG News dataset.
 
-    The generated dataset has three columns: :py:obj:`[index, title, description]` ,
-    and the data type of three columns is string type.
+    The generated dataset contains three columns: :py:obj:`[index, title, description]` ,
+    and the data type of all three columns is string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -145,8 +145,8 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
     """
     Amazon Review Polarity and Amazon Review Full datasets.
 
-    The generated dataset has three columns: :py:obj:`[label, title, content]` ,
-    and the data type of three columns is string.
+    The generated dataset contains three columns: :py:obj:`[label, title, content]` ,
+    and the data type of all three columns is string.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the Amazon Review Polarity dataset
@@ -255,12 +255,12 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for
             a pattern of files. The list will be sorted in a lexicographical order.
-        task (str, optional): The kind of task, one of ``'AFQMC'`` , ``'TNEWS'``, ``'IFLYTEK'``, ``'CMNLI'``,
+        task (str, optional): The type of task, one of ``'AFQMC'`` , ``'TNEWS'``, ``'IFLYTEK'``, ``'CMNLI'``,
             ``'WSC'`` and ``'CSL'``. Default: ``'AFQMC'`` .
         usage (str, optional): Specify the ``'train'``, ``'test'`` or ``'eval'`` part of dataset.
             Default: ``'train'``.
         num_samples (int, optional): The number of samples to be included in the dataset.
-            Default: ``None`` , will include all images.
+            Default: ``None`` , will include all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -283,7 +283,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
-    The generated dataset with different task setting has different output columns:
+    The generated dataset with different task settings has different output columns:
 
     +-------------------------+------------------------------+-----------------------------+
     | `task`                  |   `usage`                    |   Output column             |
@@ -493,7 +493,7 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
 
 class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
     """
-    CoNLL-2000(Conference on Computational Natural Language Learning) chunking dataset.
+    CoNLL-2000 (Conference on Computational Natural Language Learning) chunking dataset.
 
     The generated dataset has three columns: :py:obj:`[word, pos_tag, chunk_tag]` .
     The tensors of column :py:obj:`word` , column :py:obj:`pos_tag` ,
@@ -549,7 +549,7 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
 
     The CoNLL2000 chunking dataset consists of the text from sections 15-20 of the Wall Street Journal corpus.
     Texts are chunked using IOB notation, and the chunk type has NP, VP, PP, ADJP and ADVP.
-    The dataset consist of three columns separated by spaces. The first column contains the current word,
+    The dataset consists of three columns separated by spaces. The first column contains the current word,
     the second is part-of-speech tag as derived by the Brill tagger and the third is chunk tag as derived from
     the WSJ corpus. Text chunking consists of dividing a text in syntactically correlated parts of words.
 
@@ -655,7 +655,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
     The DBpedia dataset consists of 630,000 text samples in 14 classes, there are 560,000 samples in the train.csv
     and 70,000 samples in the test.csv.
-    The 14 different classes represent Company, EducationaInstitution, Artist, Athlete, OfficeHolder,
+    The 14 different classes represent Company, EducationalInstitution, Artist, Athlete, OfficeHolder,
     MeanOfTransportation, Building, NaturalPlace, Village, Animal, Plant, Album, Film, WrittenWork.
 
     Here is the original DBpedia dataset structure.
@@ -721,7 +721,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum number of samples per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -749,7 +749,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
     About EnWik9 dataset:
 
     The data of EnWik9 is UTF-8 encoded XML consisting primarily of English text. It contains 243,426 article titles,
-    of which 85,560 are #REDIRECT to fix broken links, and the rest are regular articles.
+    of which 85,560 are redirect pages to fix broken links, and the rest are regular articles.
 
     The data is UTF-8 clean. All characters are in the range U'0000 to U'10FFFF with valid encodings of 1 to
     4 bytes. The byte values 0xC0, 0xC1, and 0xF5-0xFF never occur. Also, in the Wikipedia dumps,
@@ -811,7 +811,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -851,8 +851,8 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
 
     About IMDBDataset:
 
-    The IMDB dataset contains 50, 000 highly polarized reviews from the Internet Movie Database (IMDB). The dataset
-    was divided into 25 000 comments for training and 25 000 comments for testing, with both the training set and test
+    The IMDB dataset contains 50,000 highly polarized reviews from the Internet Movie Database (IMDB). The dataset
+    was divided into 25,000 comments for training and 25,000 comments for testing, with both the training set and test
     set containing 50% positive and 50% negative comments. Train labels and test labels are all lists of 0 and 1, where
     0 stands for negative and 1 for positive.
 
@@ -947,7 +947,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1080,7 +1080,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -2013,7 +2013,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
 
     About YahooAnswers dataset:
 
-    The YahooAnswers dataset consists of 630,000 text samples in 10 classes,
+    The YahooAnswers dataset consists of 630,000 text samples in 10 classes.
     There are 560,000 samples in the train.csv and 70,000 samples in the test.csv.
     The 10 different classes represent Society & Culture, Science & Mathematics, Health, Education & Reference,
     Computers & Internet, Sports, Business & Finance, Entertainment & Music, Family & Relationships,

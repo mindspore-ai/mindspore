@@ -56,7 +56,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
             for a pattern of files. The list will be sorted in a lexicographical order.
         field_delim (str, optional): A string that indicates the char delimiter to separate fields.
             Default: ``','``.
-        column_defaults (list, optional): List of default values for the CSV field. Default: ``None``. Each item
+        column_defaults (list, optional): List of default data types for the CSV columns. Default: ``None``. Each item
             in the list is either a valid type (float, int, or string). If this is not provided, treats all
             columns as string type.
         column_names (list[str], optional): List of column names of the dataset. Default: ``None``. If this

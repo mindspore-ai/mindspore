@@ -3,14 +3,14 @@
 
 .. py:class:: mindspore.dataset.CSVDataset(dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None)
 
-    `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ 文件数据集。
+    CSVDataset用于读取并解析逗号分隔值 `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ 文件，并作为数据集。
 
     生成的数据集的列名和列类型取决于输入的CSV文件。
 
     参数：
         - **dataset_files** (Union[str, list[str]]) - 数据集文件路径，支持单文件路径字符串、多文件路径字符串列表或可被glob库模式匹配的字符串，文件列表将在内部进行字典排序。
         - **field_delim** (str, 可选) - 指定用于分隔字段的分隔符。默认值： ``','`` 。
-        - **column_defaults** (list, 可选) - 指定每个数据列的数据类型，有效的类型包括float、int或string。默认值： ``None`` ，不指定。如果未指定该参数，则所有列的数据类型将被视为string。
+        - **column_defaults** (list, 可选) - 指定每个数据列的默认数据类型，有效的类型包括float、int或string。默认值： ``None`` ，不指定。如果未指定该参数，则所有列的数据类型将被视为string。
         - **column_names** (list[str], 可选) - 指定数据集生成的列名。默认值： ``None`` ，不指定。如果未指定该列表，则将CSV文件首行提供的字段作为列名生成。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
