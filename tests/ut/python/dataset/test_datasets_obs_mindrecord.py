@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,22 +15,23 @@
 """
 Test OBSMindDataset operations
 """
-import os
-import sys
-import types
+
 import importlib
+import os
 import sqlite3
+import sys
 import threading
 import time as pytime
+import types
 import uuid
 
 import pytest
 
+from mindspore import log as logger
 from mindspore.dataset.engine import datasets_standard_format
 from mindspore.dataset.engine.datasets_standard_format import OBSMindDataset
-from mindspore.dataset.engine.obs.config_loader import create_obs_config
 from mindspore.dataset.engine.obs import obs_mindrecord_dataset
-from mindspore import log as logger
+from mindspore.dataset.engine.obs.config_loader import create_obs_config
 
 DATA_DIR = ["s3://dataset/imagenet0", "s3://dataset/imagenet1"]
 _REAL_SLEEP = pytime.sleep
@@ -96,8 +97,7 @@ class FakeObsService:
     def list_object_keys(self, bucket, prefix):
         """List object keys with prefix."""
         with self._lock:
-            return [key for stored_bucket, key in self._objects
-                    if stored_bucket == bucket and key.startswith(prefix)]
+            return [key for stored_bucket, key in self._objects if stored_bucket == bucket and key.startswith(prefix)]
 
     def has_object(self, bucket, key):
         with self._lock:
@@ -121,8 +121,12 @@ class FakeObsService:
             @staticmethod
             def _resp(status, body=None, error_code="", error_message=""):
                 return types.SimpleNamespace(
-                    status=status, requestId="fake-request-id", body=body,
-                    errorCode=error_code, errorMessage=error_message)
+                    status=status,
+                    requestId="fake-request-id",
+                    body=body,
+                    errorCode=error_code,
+                    errorMessage=error_message,
+                )
 
             def headBucket(self, bucket_name):
                 has_bucket = service.has_bucket(bucket_name)
@@ -144,8 +148,7 @@ class FakeObsService:
                 if not self._authorized(bucket_name):
                     return self._resp(403, error_code="AccessDenied", error_message="Forbidden")
                 content = service.fetch_object(bucket_name, object_key)
-                service.append_download_record(
-                    bucket_name, object_key, self.access_key_id, self.secret_access_key)
+                service.append_download_record(bucket_name, object_key, self.access_key_id, self.secret_access_key)
                 if content is None:
                     return self._resp(404, error_code="NoSuchKey", error_message="Object not found")
                 parent = os.path.dirname(local_path)
@@ -174,12 +177,15 @@ class FakeObsService:
                 body = types.SimpleNamespace(contents=contents)
                 return self._resp(200, body=body)
 
+            def close(self):
+                pass
+
         return _FakeObsClient
 
 
 def _create_meta_db_bytes(tmp_path, row_count):
     """Create sqlite metadata bytes with INDEXES table."""
-    db_path = tmp_path / "fake_meta_{}_{}.db".format(row_count, uuid.uuid4().hex)
+    db_path = tmp_path / f"fake_meta_{row_count}_{uuid.uuid4().hex}.db"
     conn = sqlite3.connect(str(db_path))
     try:
         conn.execute("CREATE TABLE INDEXES(id INTEGER)")
@@ -206,8 +212,7 @@ def _setup_fake_obs_e2e_env(monkeypatch, tmp_path, service):
     monkeypatch.setenv("RETRY_DELTA_TIME", "0")
     monkeypatch.setenv("MAX_RETRY", "3")
     monkeypatch.setenv("BATCH_JOB_ID", "job-ut")
-    monkeypatch.setattr(obs_mindrecord_dataset.time, "sleep",
-                        lambda *_args, **_kwargs: _REAL_SLEEP(0.001))
+    monkeypatch.setattr(obs_mindrecord_dataset.time, "sleep", lambda *_args, **_kwargs: _REAL_SLEEP(0.001))
 
     class FakeMindDataset:
         def __init__(self, dataset_files, columns_list=None, sampler=None, shuffle=None):
@@ -293,19 +298,23 @@ def test_obs_mindrecord_exception():
 
     error_msg_5 = "Input shard_id is not within the required interval"
     with pytest.raises(ValueError, match=error_msg_5):
-        OBSMindDataset(DATA_DIR, "https://dummy_site", "dummy_ak",
-                       "dummy_sk", "s3://dummy_sync_dir", num_shards=2, shard_id=-1)
+        OBSMindDataset(
+            DATA_DIR, "https://dummy_site", "dummy_ak", "dummy_sk", "s3://dummy_sync_dir", num_shards=2, shard_id=-1
+        )
     with pytest.raises(ValueError, match=error_msg_5):
-        OBSMindDataset(DATA_DIR, "https://dummy_site", "dummy_ak",
-                       "dummy_sk", "s3://dummy_sync_dir", num_shards=4, shard_id=4)
+        OBSMindDataset(
+            DATA_DIR, "https://dummy_site", "dummy_ak", "dummy_sk", "s3://dummy_sync_dir", num_shards=4, shard_id=4
+        )
     with pytest.raises(ValueError, match=error_msg_5):
-        OBSMindDataset(DATA_DIR, "https://dummy_site", "dummy_ak",
-                       "dummy_sk", "s3://dummy_sync_dir", num_shards=2, shard_id=4)
+        OBSMindDataset(
+            DATA_DIR, "https://dummy_site", "dummy_ak", "dummy_sk", "s3://dummy_sync_dir", num_shards=2, shard_id=4
+        )
 
     error_msg_7 = "Argument shard_equal_rows"
     with pytest.raises(TypeError, match=error_msg_7):
-        OBSMindDataset(DATA_DIR, "https://dummy_site", "dummy_ak",
-                       "dummy_sk", "s3://dummy_sync_dir", shard_equal_rows=1)
+        OBSMindDataset(
+            DATA_DIR, "https://dummy_site", "dummy_ak", "dummy_sk", "s3://dummy_sync_dir", shard_equal_rows=1
+        )
 
 
 def test_obs_mindrecord_uses_instance_config_without_mutating_global_config(monkeypatch):
@@ -318,8 +327,7 @@ def test_obs_mindrecord_uses_instance_config_without_mutating_global_config(monk
     class DummyMindRecordFromOBS:
         instances = []
 
-        def __init__(self, dataset_files, columns_list, shuffle, num_shards, shard_id,
-                     shard_equal_rows, obs_config):
+        def __init__(self, dataset_files, columns_list, shuffle, num_shards, shard_id, shard_equal_rows, obs_config):
             self.dataset_files = dataset_files
             self.columns_list = columns_list
             self.shuffle = shuffle
@@ -387,6 +395,9 @@ def test_get_obs_client_uses_explicit_obs_config(monkeypatch):
         def __init__(self, **kwargs):
             created_clients.append(kwargs)
 
+        def close(self):
+            pass
+
     explicit_config = create_obs_config()
     explicit_config.AK = "instance-ak"
     explicit_config.SK = "instance-sk"
@@ -397,11 +408,78 @@ def test_get_obs_client_uses_explicit_obs_config(monkeypatch):
     runtime = obs_util.OBSRuntime(explicit_config)
     runtime.get_obs_client()
 
-    assert created_clients == [{
+    assert created_clients == [
+        {"access_key_id": "instance-ak", "secret_access_key": "instance-sk", "server": "https://instance-server"}
+    ]
+
+
+def test_get_obs_client_reuses_runtime_client(monkeypatch):
+    """
+    Feature: OBS util
+    Description: Reuse the OBS client owned by one OBSRuntime instance
+    Expectation: Repeated calls return the same client and initialize ObsClient only once
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    created_clients = []
+
+    class RecordingObsClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            created_clients.append(self)
+
+        def close(self):
+            pass
+
+    explicit_config = create_obs_config()
+    explicit_config.AK = "instance-ak"
+    explicit_config.SK = "instance-sk"
+    explicit_config.SERVER = "https://instance-server"
+
+    monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
+
+    runtime = obs_util.OBSRuntime(explicit_config)
+    first_client = runtime.get_obs_client()
+    second_client = runtime.get_obs_client()
+
+    assert first_client is second_client
+    assert created_clients == [first_client]
+    assert first_client.kwargs == {
         "access_key_id": "instance-ak",
         "secret_access_key": "instance-sk",
-        "server": "https://instance-server"
-    }]
+        "server": "https://instance-server",
+    }
+
+
+def test_obs_runtime_close_closes_cached_client(monkeypatch):
+    """
+    Feature: OBS util
+    Description: Close the OBS client cached by one OBSRuntime instance
+    Expectation: close() releases the cached client and remains idempotent
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    close_calls = []
+
+    class RecordingObsClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def close(self):
+            close_calls.append(self)
+
+    explicit_config = create_obs_config()
+    explicit_config.AK = "instance-ak"
+    explicit_config.SK = "instance-sk"
+    explicit_config.SERVER = "https://instance-server"
+
+    monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
+
+    runtime = obs_util.OBSRuntime(explicit_config)
+    obs_client = runtime.get_obs_client()
+    runtime.close()
+    runtime.close()
+
+    assert close_calls == [obs_client]
+    assert runtime.obs_client is None
 
 
 def test_minddataset_normalizes_windows_list_paths(monkeypatch):
@@ -414,8 +492,7 @@ def test_minddataset_normalizes_windows_list_paths(monkeypatch):
     monkeypatch.setattr(datasets_standard_format.platform, "system", lambda: "Windows")
 
     # pylint: disable=protected-access
-    normalized_files = dataset._normalize_dataset_files(
-        [r"C:\tmp\data.mindrecord", r"D:\meta\file.mindrecord"])
+    normalized_files = dataset._normalize_dataset_files([r"C:\tmp\data.mindrecord", r"D:\meta\file.mindrecord"])
 
     assert normalized_files == ["C:/tmp/data.mindrecord", "D:/meta/file.mindrecord"]
 
@@ -484,14 +561,24 @@ def test_init_shard_files_uses_instance_config_for_meta_fetch(monkeypatch):
             captured["runtime"] = self
 
     runtime = DummyRuntime(obs_config)
-    monkeypatch.setattr(obs_mindrecord_dataset, "make_dataset_tuple",
-                        lambda dataset_files, local_path: (6, [(dataset_files[0], 6)]))
+    monkeypatch.setattr(
+        obs_mindrecord_dataset, "make_dataset_tuple", lambda dataset_files, local_path: (6, [(dataset_files[0], 6)])
+    )
     monkeypatch.setattr(obs_mindrecord_dataset.random, "shuffle", lambda dataset_files: None)
 
     # pylint: disable=protected-access
     shard_files, size_per_shard = obs_mindrecord_dataset._init_shard_files(
-        DATA_DIR[:1], shuffle=False, seed=1, num_shards=1, shard_id=0, shard_equal_rows=True,
-        size_per_shard=None, local_path="/tmp/local_dataset", current_epoch=1, obs_runtime=runtime)
+        DATA_DIR[:1],
+        shuffle=False,
+        seed=1,
+        num_shards=1,
+        shard_id=0,
+        shard_equal_rows=True,
+        size_per_shard=None,
+        local_path="/tmp/local_dataset",
+        current_epoch=1,
+        obs_runtime=runtime,
+    )
 
     assert shard_files == [(DATA_DIR[0], 0, 6, True)]
     assert size_per_shard == 6
@@ -536,8 +623,13 @@ def test_download_work_uses_instance_config():
     with pytest.raises(RuntimeError, match="stop-download-loop"):
         # pylint: disable=protected-access
         obs_mindrecord_dataset._download_work(
-            shard_id=0, current_idx=types.SimpleNamespace(value=0), local_path="/tmp/local_dataset",
-            cache={"data.mindrecord": (0, False)}, q=OneShotQueue(), obs_runtime=runtime)
+            shard_id=0,
+            current_idx=types.SimpleNamespace(value=0),
+            local_path="/tmp/local_dataset",
+            cache={"data.mindrecord": (0, False)},
+            q=OneShotQueue(),
+            obs_runtime=runtime,
+        )
 
     assert captured["remote_path"] == "s3://bucket"
     assert captured["dataset_file"] == "data.mindrecord"
@@ -562,18 +654,24 @@ def test_mindrecord_from_obs_len_returns_cached_size(monkeypatch):
             captured["dataset_files"] = list(dataset_files)
             captured["local_path"] = local_path
 
-    monkeypatch.setattr(obs_mindrecord_dataset_module, "make_dataset_tuple",
-                        lambda dataset_files, local_path: (6, [(dataset_files[0], 6)]))
+        def close(self):
+            pass
 
-    dataset = obs_mindrecord_dataset_module.MindRecordFromOBS.__new__(
-        obs_mindrecord_dataset_module.MindRecordFromOBS)
-    setattr(dataset, "_size_per_shard", None)
-    setattr(dataset, "_shard_files", [("s3://bucket/data.mindrecord", 0, 6, True)])
-    setattr(dataset, "_local_path", "/tmp/local_dataset")
-    setattr(dataset, "_obs_runtime", DummyRuntime())
+    monkeypatch.setattr(
+        obs_mindrecord_dataset_module,
+        "make_dataset_tuple",
+        lambda dataset_files, local_path: (6, [(dataset_files[0], 6)]),
+    )
+
+    # pylint: disable=protected-access
+    dataset = obs_mindrecord_dataset_module.MindRecordFromOBS.__new__(obs_mindrecord_dataset_module.MindRecordFromOBS)
+    dataset._size_per_shard = None
+    dataset._shard_files = [("s3://bucket/data.mindrecord", 0, 6, True)]
+    dataset._local_path = "/tmp/local_dataset"
+    dataset._obs_runtime = DummyRuntime()
 
     assert len(dataset) == 6
-    assert getattr(dataset, "_size_per_shard") == 6
+    assert dataset._size_per_shard == 6
     assert captured["dataset_files"] == ["s3://bucket/data.mindrecord"]
     assert captured["local_path"] == "/tmp/local_dataset"
 
@@ -617,8 +715,8 @@ def test_sync_wait_for_dataset_uses_instance_config(monkeypatch):
             captured["bucket_name"] = bucket_name
             captured["prefix"] = prefix
             return types.SimpleNamespace(
-                status=200,
-                body=types.SimpleNamespace(contents=[types.SimpleNamespace(key=prefix + "ready_0.txt")]))
+                status=200, body=types.SimpleNamespace(contents=[types.SimpleNamespace(key=prefix + "ready_0.txt")])
+            )
 
     class DummyRuntime:
         def __init__(self, runtime_config):
@@ -674,9 +772,9 @@ def test_remove_unused_dataset_handles_raced_entries(monkeypatch):
     def fake_unlink(path, dir_fd=None):
         unlinked.append((path, dir_fd))
         if path == "gone.mindrecord":
-            raise FileNotFoundError()
+            raise FileNotFoundError
         if path == "subdir":
-            raise IsADirectoryError()
+            raise IsADirectoryError
 
     monkeypatch.setattr(obs_mindrecord_dataset.os, "path", obs_mindrecord_dataset.os.path)
     monkeypatch.setattr(obs_mindrecord_dataset.os.path, "exists", fake_exists)
@@ -689,10 +787,76 @@ def test_remove_unused_dataset_handles_raced_entries(monkeypatch):
 
     # pylint: disable=protected-access
     obs_mindrecord_dataset._remove_unused_dataset(
-        local_path, num_shards=16, shard_id=0, epoch_num=1, obs_runtime=runtime)
+        local_path, num_shards=16, shard_id=0, epoch_num=1, obs_runtime=runtime
+    )
 
     assert ("gone.mindrecord", local_path_fd) in unlinked
     assert ("subdir", local_path_fd) in unlinked
+
+
+def test_wait_remove_dataset_uses_runtime_config(monkeypatch):
+    """
+    Feature: OBSMindDataset cleanup
+    Description: Wait for dataset removal with the runtime config object
+    Expectation: The wait path reads WARMINGUP_TIME directly from obs_runtime.config
+    """
+    sync_dir = "/cache/sync_data/2"
+    sync_file = os.path.join(sync_dir, "ready_1")
+    sleep_calls = []
+    listdir_results = iter([["ready_0"], []])
+
+    class FakeFile:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def write(self, content):
+            assert content == "ok"
+
+    def fake_sleep(value):
+        sleep_calls.append(value)
+
+    monkeypatch.setattr(obs_mindrecord_dataset.os.path, "exists", lambda path: path in (sync_dir, sync_file))
+    monkeypatch.setattr(obs_mindrecord_dataset.os, "listdir", lambda _path: next(listdir_results))
+    monkeypatch.setattr(obs_mindrecord_dataset.os, "chmod", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(obs_mindrecord_dataset.time, "sleep", fake_sleep)
+    monkeypatch.setattr("builtins.open", lambda *_args, **_kwargs: FakeFile())
+    runtime = types.SimpleNamespace(config=types.SimpleNamespace(WARMINGUP_TIME=0.25))
+
+    # pylint: disable=protected-access
+    obs_mindrecord_dataset._wait_remove_dataset(num_shards=16, shard_id=1, epoch_num=2, obs_runtime=runtime)
+
+    assert sleep_calls == [0.25]
+
+
+def test_mindrecord_from_obs_close_closes_runtime_after_pool():
+    """
+    Feature: OBSMindDataset cleanup
+    Description: Close dataset-owned OBS runtime after stopping the download pool
+    Expectation: close() terminates the pool first, then closes the runtime once
+    """
+    close_order = []
+
+    class FakePool:
+        def terminate(self):
+            close_order.append("pool")
+
+    class FakeRuntime:
+        def close(self):
+            close_order.append("runtime")
+
+    source = obs_mindrecord_dataset.MindRecordFromOBS.__new__(obs_mindrecord_dataset.MindRecordFromOBS)
+    source._pool = FakePool()  # pylint: disable=protected-access
+    source._obs_runtime = FakeRuntime()  # pylint: disable=protected-access
+
+    source.close()
+    source.close()
+
+    assert close_order == ["pool", "runtime"]
+    assert source._pool is None  # pylint: disable=protected-access
+    assert source._obs_runtime is None  # pylint: disable=protected-access
 
 
 def test_obsminddataset_e2e_with_fake_obs_service(monkeypatch, tmp_path):
@@ -707,16 +871,24 @@ def test_obsminddataset_e2e_with_fake_obs_service(monkeypatch, tmp_path):
     data_bucket = "data-bucket"
     sync_bucket = "sync-bucket"
     dataset_key = "records/train.mindrecord"
-    dataset_uri = "s3://{}/{}".format(data_bucket, dataset_key)
-    sync_uri = "s3://{}/sync-root".format(sync_bucket)
+    dataset_uri = f"s3://{data_bucket}/{dataset_key}"
+    sync_uri = f"s3://{sync_bucket}/sync-root"
     service.set_bucket_auth(data_bucket, ("ak-single", "sk-single"))
     service.set_bucket_auth(sync_bucket, None)
     service.put_object(data_bucket, dataset_key, b"mindrecord-data")
     service.put_object(data_bucket, dataset_key + ".db", _create_meta_db_bytes(tmp_path, 3))
     service.put_object(sync_bucket, "sync-root/", b"")
 
-    dataset = OBSMindDataset([dataset_uri], "https://fake-server", "ak-single", "sk-single", sync_uri,
-                             shuffle=False, num_shards=1, shard_id=0)
+    dataset = OBSMindDataset(
+        [dataset_uri],
+        "https://fake-server",
+        "ak-single",
+        "sk-single",
+        sync_uri,
+        shuffle=False,
+        num_shards=1,
+        shard_id=0,
+    )
     source = dataset.source
     try:
         sample = next(iter(source))
@@ -748,12 +920,26 @@ def test_obsminddataset_e2e_with_fake_obs_service_isolates_credentials(monkeypat
     service.put_object("bucket-b", "records/b.mindrecord.db", _create_meta_db_bytes(tmp_path, 4))
     service.put_object("sync-bucket", "sync-root/", b"")
 
-    dataset_a = OBSMindDataset(["s3://bucket-a/records/a.mindrecord"], "https://fake-server",
-                               "ak-a", "sk-a", "s3://sync-bucket/sync-root",
-                               shuffle=False, num_shards=1, shard_id=0)
-    dataset_b = OBSMindDataset(["s3://bucket-b/records/b.mindrecord"], "https://fake-server",
-                               "ak-b", "sk-b", "s3://sync-bucket/sync-root",
-                               shuffle=False, num_shards=1, shard_id=0)
+    dataset_a = OBSMindDataset(
+        ["s3://bucket-a/records/a.mindrecord"],
+        "https://fake-server",
+        "ak-a",
+        "sk-a",
+        "s3://sync-bucket/sync-root",
+        shuffle=False,
+        num_shards=1,
+        shard_id=0,
+    )
+    dataset_b = OBSMindDataset(
+        ["s3://bucket-b/records/b.mindrecord"],
+        "https://fake-server",
+        "ak-b",
+        "sk-b",
+        "s3://sync-bucket/sync-root",
+        shuffle=False,
+        num_shards=1,
+        shard_id=0,
+    )
     source_a = dataset_a.source
     source_b = dataset_b.source
     try:
@@ -770,5 +956,5 @@ def test_obsminddataset_e2e_with_fake_obs_service_isolates_credentials(monkeypat
             assert (access_key, secret_key) == expected[bucket]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_obs_mindrecord_exception()

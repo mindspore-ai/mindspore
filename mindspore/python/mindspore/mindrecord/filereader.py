@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,19 @@
 """
 This module is to read data from MindRecord.
 """
+
+import os
 import platform
+
 from mindspore import log as logger
 
-from .core.shardreader import ShardReader
-from .core.shardheader import ShardHeader
-from .core.shardutils import populate_data
-from .core.shardutils import check_parameter
 from .common.exceptions import ParamTypeError
-from .config import _get_enc_key, _get_dec_mode, decrypt, cleanup_decrypt_files
+from .config import _get_dec_mode, _get_enc_key, cleanup_decrypt_files, decrypt
+from .core.shardheader import ShardHeader
+from .core.shardreader import ShardReader
+from .core.shardutils import check_parameter, populate_data
 
-__all__ = ['FileReader']
+__all__ = ["FileReader"]
 
 
 class FileReader:
@@ -69,7 +71,7 @@ class FileReader:
             if isinstance(columns, list):
                 self._columns = columns
             else:
-                raise ParamTypeError('columns', 'list')
+                raise ParamTypeError("columns", "list")
         else:
             self._columns = None
 
