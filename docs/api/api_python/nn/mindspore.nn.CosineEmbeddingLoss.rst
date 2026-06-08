@@ -30,7 +30,7 @@ mindspore.nn.CosineEmbeddingLoss
         - **labels** (Tensor) - 输入值为1或-1。假设 `logits_x1` 的shape是 :math:`(x_1, x_2, x_3, ..., x_R)` ，那么 `labels` 的shape必须是 :math:`(x_1, x_3, x_4, ..., x_R)` 。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `labels` 相同。否则，将返回为Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``"none"`` ，其shape与 `labels` 相同。否则，将返回为Scalar。
 
     异常：
         - **TypeError** - `margin` 不是float。

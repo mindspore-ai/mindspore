@@ -2511,7 +2511,7 @@ class CrossEntropyLoss(LossBase):
     .. warning::
         After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
 
-    The CrossEntropyLoss support two kind of targets:
+    The CrossEntropyLoss support two kinds of targets:
 
     - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
       when reduction is ``none``, the loss can be described as:
