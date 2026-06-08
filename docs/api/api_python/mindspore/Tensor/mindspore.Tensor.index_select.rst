@@ -14,7 +14,7 @@ mindspore.Tensor.index_select
 
     参数：
         - **axis** (int) - 根据索引进行选择的维度。
-        - **index** (Tensor) - 包含索引的一维Tensor。
+        - **index** (Tensor) - 包含索引的一维Tensor，数据类型为int32或int64。
 
     返回：
         Tensor，数据类型与输入 `self` 相同。
@@ -36,7 +36,7 @@ mindspore.Tensor.index_select
 
     参数：
         - **dim** (int) - 根据索引进行选择的维度。
-        - **index** (Tensor) - 包含索引的一维Tensor。
+        - **index** (Tensor) - 包含索引的一维Tensor，数据类型为int32或int64。
 
     返回：
         Tensor，数据类型与输入 `self` 相同。

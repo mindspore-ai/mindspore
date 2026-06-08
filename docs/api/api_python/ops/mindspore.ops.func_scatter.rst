@@ -11,7 +11,8 @@ mindspore.ops.scatter
 
     .. note::
         如果src为tensor，则仅当src的shape和index的shape相同时支持求反向梯度。
-        负数 `index` 是非法输入，会导致未定义行为。
+        `index` 的每个元素都必须位于归一化后 `axis` 对应维度的合法范围 ``[0, input.shape[axis])`` 内。
+        负数 `index` 或正向越界 `index` 都是非法输入，会导致未定义行为。
 
     参数：
         - **input** (Tensor) - 输入tensor。

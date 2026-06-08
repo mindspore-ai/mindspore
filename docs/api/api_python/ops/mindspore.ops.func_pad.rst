@@ -22,7 +22,7 @@ mindspore.ops.pad
           - 对于 ``'constant'`` 模式，请参考 :class:`mindspore.nn.ConstantPad1d` 作为示例来理解这个填充模式，并将这个模式扩展到n维。
           - 对于 ``'reflect'`` 模式，请参考 :class:`mindspore.nn.ReflectionPad1d` 作为示例来理解这个填充模式，reflect模式用于填充三维或者四维输入的最后两个维度，或者二维或三维输入的最后一个维度。
           - 对于 ``'replicate'`` 模式，请参考 :class:`mindspore.nn.ReplicationPad1d` 作为示例来理解这个填充模式，replicate模式用于填充四维或五维输入的最后三个维度、三维或四维输入的最后两个维度，或者二维或三维输入的最后一个维度。
-          - 对于 ``'circular'`` 模式，circular模式用于将图像的像素从一侧循环地填充到另一侧。例如，右侧的像素将被替换为左侧的像素，底部的像素将被替换为顶部的像素。circular模式用于填充四维或五维输入的最后三个维度、三维或四维输入的最后两个维度，或者二维或三维输入的最后一个维度。
+          - 对于 ``'circular'`` 模式，circular模式用于将图像的像素从一侧循环地填充到另一侧。例如，右侧的像素将被替换为左侧的像素，底部的像素将被替换为顶部的像素。circular模式用于填充四维或五维输入的最后三个维度、三维或四维输入的最后两个维度，或者二维或三维输入的最后一个维度。当前该模式已在 CPU 后端支持上述场景；Ascend 后端不支持该模式。
 
         - **value** (Union[int, float, None]，可选) - 仅在 ``'constant'`` 模式下生效，设置在 ``'constant'`` 模式下的填充值，如果值为 ``None`` ，则会使用0作为默认填充值。默认 ``None`` 。
 
@@ -33,7 +33,7 @@ mindspore.ops.pad
         - **TypeError** - `padding` 不是全为int的tuple或者list。
         - **TypeError** - `input_x` 不是Tensor。
         - **ValueError** - `padding` 的长度不为偶数。
-        - **ValueError** - `padding` 的长度大于6。
+        - **ValueError** - `mode` 为 ``'reflect'`` 或 ``'replicate'`` 且 `padding` 的长度不为2、4或6。
         - **ValueError** - `mode` 不为 ``'constant'`` 并且 `value` 不为 ``None`` 。
         - **ValueError** - 在Ascend后端运行时，`input_x` 的维度大于5。
         - **ValueError** - 在Ascend后端运行时，`padding` 中包含负值。

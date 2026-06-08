@@ -3168,7 +3168,8 @@ def scatter(input, axis, index, src):
 
     .. note::
         If `src` is a tensor, the backward is supported only for the case `src.shape == index.shape`.
-        Negative `index` values are illegal input and will lead to undefined behavior.
+        Each value of `index` must be in the valid range ``[0, input.shape[axis])`` for the normalized `axis`.
+        Negative or out-of-range `index` values are illegal input and will lead to undefined behavior.
 
     Args:
         input (Tensor): The input tensor.

@@ -12,7 +12,7 @@ index_select:
         Args:
             input (Tensor): The input tensor.
             dim (int): The dimension to be indexed.
-            index (Tensor): A 1-D tensor with the indices.
+            index (Tensor): A 1-D tensor with the indices, whose dtype must be int32 or int64.
 
         Returns:
             Tensor, has the same dtype as the `input` tensor.
