@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 #include <memory>
 
 #include "primitive/structure_op_name.h"
@@ -135,9 +136,7 @@ void OpBackend::Run(const BackendOpRunInfoPtr &op_run_info, device::DeviceType d
     std::vector<tensor::TensorPtr> meta_outputs;
     runtime::CreateMetaOutputTensors(op_run_info->base_op_run_info.abstract, &meta_outputs);
     outputs->clear();
-    for (const auto &output : meta_outputs) {
-      outputs->emplace_back(output);
-    }
+    std::copy(meta_outputs.begin(), meta_outputs.end(), std::back_inserter(*outputs));
     return;
   }
   ViewBackend::ContiguousInputByRunInfo(op_run_info);

@@ -183,8 +183,14 @@ PyObject *HandleFallback(PyObject *self, PyObject *py_args, PyObject *py_kwargs,
   }
   // combine `self` and `py_args` to `new_args`
   PyObject *new_args = MergeSelfAndArgs(self, py_args);
+  if (new_args == nullptr) {
+    if (PyErr_Occurred() != nullptr) {
+      throw py::error_already_set();
+    }
+    MS_LOG(EXCEPTION) << "Failed to merge self and args for fallback.";
+  }
   PyObject *ret = PyObject_CallFunctionObjArgs(fallback.ptr(), callable.ptr(), new_args, py_kwargs, NULL);
-  Py_DECREF(new_args);
+  Py_XDECREF(new_args);
   CheckCallResult(ret);
   MS_LOG(DEBUG) << "End HandleFallback";
   return ret;
