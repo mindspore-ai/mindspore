@@ -200,7 +200,7 @@ class OBSRuntime:
             else:
                 raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
 
-        _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "file_upload_to_obs", _upload)
+        return _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "file_upload_to_obs", _upload)
 
     def _check_file_exists_in_obs(self, obs_path):
         """Detect that file exists in OBS."""
@@ -226,7 +226,7 @@ class OBSRuntime:
                 logger.error(err_msg)
                 raise RuntimeError(err_msg)
 
-        _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_check_file_exists_in_obs", _check)
+        return _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_check_file_exists_in_obs", _check)
 
     def _file_download_from_obs(self, obs_path, local_path):
         """Download one file from OBS."""
@@ -242,7 +242,7 @@ class OBSRuntime:
             else:
                 raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
 
-        _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_file_download_from_obs", _download)
+        return _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_file_download_from_obs", _download)
 
     @exclusive_lock
     def _download_file(self, remote_path, object_name, des_path, lock_file="tmp"):
