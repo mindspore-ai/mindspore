@@ -174,19 +174,23 @@ PyObject *CallForwardFunction(PyObject *cls, PyObject *forward_fn, PyObject *con
     return PyObject_CallObject(forward_fn, forward_inputs.ptr());
   }
 
-  auto outputs = PyObject_CallObject(forward_fn, inputs);
+  auto outputs = py::reinterpret_steal<py::object>(PyObject_CallObject(forward_fn, inputs));
   if (!outputs) {
     return nullptr;
   }
 
-  auto ctx_inputs_output_tuple = py::reinterpret_steal<py::object>(MakeCtxInputOutputTuple(ctx_obj, inputs, outputs));
+  auto ctx_inputs_output_tuple =
+    py::reinterpret_steal<py::object>(MakeCtxInputOutputTuple(ctx_obj, inputs, outputs.ptr()));
   auto setup_fn = py::reinterpret_steal<py::object>(PyObject_GetAttrString(cls, SETUP_CONTEXT_NAME));
+  if (!setup_fn) {
+    return nullptr;
+  }
   auto setup_result =
     py::reinterpret_steal<py::object>(PyObject_CallObject(setup_fn.ptr(), ctx_inputs_output_tuple.ptr()));
   if (!setup_result) {
     return nullptr;
   }
-  return outputs;
+  return outputs.release().ptr();
 }
 
 void DispatchCustomPyFunctionTask(std::shared_ptr<FunctionContext> context) {

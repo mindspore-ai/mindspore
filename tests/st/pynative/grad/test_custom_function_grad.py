@@ -14,6 +14,9 @@
 # ============================================================================
 """ test_custom_function """
 
+import gc
+import weakref
+
 import numpy as np
 import pytest
 import mindspore
@@ -1366,6 +1369,47 @@ def test_custom_function_setup_context_grad_num_wrong():
     grad_net = C.GradOperation(get_all=True)
     with pytest.raises(RuntimeError, match="Function backward return a wrong number of gradients"):
         grad_net(CustomSetupContextWrongGradNumFunction.apply)(x, y)
+
+
+class CustomSetupContextRaiseFunction(_Function):
+    output_ref = None
+
+    @staticmethod
+    def forward(x):
+        class ForwardOutput:
+            pass
+
+        output = ForwardOutput()
+        CustomSetupContextRaiseFunction.output_ref = weakref.ref(output)
+        return output
+
+    @staticmethod
+    def setup_context(ctx, inputs, output):
+        raise RuntimeError("setup_context failed")
+
+    @staticmethod
+    def backward(ctx, grad):
+        return grad
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_setup_context_raise_releases_output():
+    """
+    Feature: Custom autograd function.
+    Description: Test setup_context releases forward output when setup_context raises.
+    Expectation: Raise RuntimeError and release forward output.
+    """
+
+    def run_apply():
+        x = Tensor([2.0, 3.0], mindspore.float32)
+        with pytest.raises(RuntimeError, match="setup_context failed"):
+            CustomSetupContextRaiseFunction.apply(x)
+
+    run_apply()
+    gc.collect()
+    assert CustomSetupContextRaiseFunction.output_ref() is None  # pylint: disable=not-callable
 
 
 class CustomSetupContextSaveInputAsOutputFunction(_Function):
