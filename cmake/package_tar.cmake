@@ -181,6 +181,14 @@ if(MS_BUILD_GRPC)
             DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_message_lib.so.48 COMPONENT mindspore)
     install(FILES ${grpc_LIBPATH}/libupb_mem_lib.so.48.0.0
             DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mem_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_lex_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_lex_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_hash_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_hash_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mini_table_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mini_table_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_reflection_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_reflection_lib.so.48 COMPONENT mindspore)
     install(FILES ${grpc_LIBPATH}/libutf8_range_lib.so.48.0.0
             DESTINATION ${INSTALL_LIB_DIR} RENAME libutf8_range_lib.so.48 COMPONENT mindspore)
 endif()
