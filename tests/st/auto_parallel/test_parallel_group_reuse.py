@@ -58,7 +58,7 @@ def test_parallel_creat_group_reuse_001():
     Description: Test parallel create group reuse.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10812 "
                     "--join=True --log_dir=./parallel_group_reuse pytest -s -v "
                     "parallel_group_reuse.py::test_parallel_creat_group_reuse_001")
     assert ret == 0

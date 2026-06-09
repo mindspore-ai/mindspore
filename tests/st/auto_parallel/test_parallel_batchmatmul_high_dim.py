@@ -46,7 +46,7 @@ def test_parallel_batchmatmul_enable_nd_tp_002():
     Description: Test bmm nd tp.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10810 "
                     "--join=True --log_dir=./parallel_batchmatmul_high_dim pytest -s -v "
                     "parallel_batchmatmul_high_dim.py::test_parallel_batchmatmul_enable_nd_tp_002")
     assert ret == 0

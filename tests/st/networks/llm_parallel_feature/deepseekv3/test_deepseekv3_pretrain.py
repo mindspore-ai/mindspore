@@ -252,7 +252,7 @@ def test_deepseekv3_cell_dp2mp2ep2pp2mb4gas1bs1_8p_1b1f_performance():
 
     # set the communication parameters
     device_num = 8
-    master_port = 7125
+    master_port = 7126
     hccl_if_base_port = 63415
 
     # set env for training

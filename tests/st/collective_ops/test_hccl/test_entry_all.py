@@ -468,7 +468,7 @@ def test_ops_all_gather_into_tensor_net():
     Description: msrun 2P case of 'all_gather_into_tensor' dynamic and static unified ops.
     Expectation: success
     """
-    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
+    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --master_port=8292 --join=True "
                             "pytest -s test_ops_all_gather_into_tensor.py")
     assert return_code == 0
 
@@ -481,7 +481,7 @@ def test_ops_all_gather_net():
     Description: msrun 2P case of 'all_gather' dynamic and static unified ops.
     Expectation: success
     """
-    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
+    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --master_port=8290 --join=True "
                             "pytest -s test_ops_all_gather.py")
     assert return_code == 0
 
@@ -546,7 +546,7 @@ def test_ops_all_to_all_single_net():
     Description: msrun 2P case of 'test_ops_all_to_all_single' dynamic and static unified ops.
     Expectation: success
     """
-    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
+    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --master_port=8293 --join=True "
                             "pytest -s test_ops_all_to_all_single.py")
     assert return_code == 0
 
@@ -559,7 +559,7 @@ def test_alltoall_grad_net():
     Description: msrun 2P case of 'test_grad_alltoall' dynamic and static unified ops.
     Expectation: success
     """
-    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
+    return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --master_port=8291 --join=True "
                             "pytest -s test_grad_alltoall.py")
     assert return_code == 0
 
