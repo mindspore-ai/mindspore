@@ -1276,11 +1276,14 @@ class NumpySlicesDataset(GeneratorDataset):
         num_parallel_workers (int, optional): Number of worker subprocesses used to
             fetch the dataset in parallel. Default: ``1``.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
+            Only specify the `data` parameter if it has a random-access property (`__getitem__`).
             Default: ``None`` , expected order behavior shown in the table below.
         sampler (Union[Sampler, Iterable], optional): Object used to choose samples from the dataset.
+            Only specify the `data` parameter if it has a random-access property (`__getitem__`).
             Default: ``None`` , expected order behavior shown in the table below.
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        num_shards (int, optional): Number of shards that the dataset
+            will be divided into during distributed training. Default: ``None`` .
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This argument must be
@@ -1296,7 +1299,8 @@ class NumpySlicesDataset(GeneratorDataset):
         RuntimeError: If len of column_names does not match output len of data.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If sampler and shuffle are specified at the same time.
-        ValueError: If sampler and sharding are specified at the same time.
+        ValueError: If both the `sampler` and `num_shards` parameters are specified,
+            or both the `sampler` and `shard_id` parameters are specified.
         ValueError: If `num_shards` is specified but shard_id is None.
         ValueError: If shard_id is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
@@ -1357,7 +1361,8 @@ class PaddedDataset(GeneratorDataset):
     """
     Creates a dataset with filler data provided by user.
 
-    Mainly used to add to the original dataset and assign it to the corresponding shard.
+    Mainly used to add samples to the original dataset for distributed training,
+    so that samples can be evenly distributed across shards.
 
     Args:
         padded_samples (list[dict]): Samples provided by user.

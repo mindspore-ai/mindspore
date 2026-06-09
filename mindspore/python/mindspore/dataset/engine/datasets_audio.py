@@ -321,7 +321,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
           <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
-        - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
+        - Does not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
           used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 
@@ -425,9 +425,9 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
             order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
-        num_shards (int, optional): Number of shards that the dataset will be divided into.
+        num_shards (int, optional): Number of shards that the dataset will be divided into during distributed training.
             Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -552,7 +552,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         sampler (Sampler, optional): Object used to choose samples from the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .

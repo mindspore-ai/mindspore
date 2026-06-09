@@ -7,7 +7,7 @@
 
     生成的数据集有两列： `[image, label]` 。
     `image` 列的数据类型为uint8。
-    `label` 列的数据类型为int32。
+    `label` 列的数据类型为uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
