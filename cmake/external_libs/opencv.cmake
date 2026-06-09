@@ -65,6 +65,7 @@ if(MSVC)
             -DBUILD_TIFF=ON
             -DWITH_JASPER=OFF
             -DBUILD_JASPER=OFF
+            -DWITH_EIGEN=OFF
             -DCV_TRACE=OFF    # cause memory usage increacing
             -DWITH_OPENJPEG=OFF
             PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2024-7006.patch
@@ -93,6 +94,7 @@ elseif(WIN32)
                 -DBUILD_TIFF=ON
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
+                -DWITH_EIGEN=OFF
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 -DWITH_OPENJPEG=OFF
@@ -120,6 +122,7 @@ elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
             -DBUILD_TIFF=ON
             -DWITH_JASPER=OFF
             -DBUILD_JASPER=OFF
+            -DWITH_EIGEN=OFF
             -DCV_TRACE=OFF    # cause memory usage increacing
             -DWITH_LAPACK=OFF
             -DWITH_OPENJPEG=OFF
@@ -149,6 +152,7 @@ else()
                 -DBUILD_TIFF=ON
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
+                -DWITH_EIGEN=OFF
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
                 -DWITH_OPENJPEG=OFF
