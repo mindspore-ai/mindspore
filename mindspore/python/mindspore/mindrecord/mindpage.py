@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 This module is to support reading page from MindRecord.
 """
 
+import os
+
+from .common.exceptions import MRMDefineCategoryError, ParamTypeError, ParamValueError
+from .config import _get_dec_mode, _get_enc_key, cleanup_decrypt_files, decrypt
 from .core.shardsegment import ShardSegment
 from .core.shardutils import check_parameter
-from .common.exceptions import ParamValueError, ParamTypeError, MRMDefineCategoryError
-from .config import _get_enc_key, _get_dec_mode, decrypt, cleanup_decrypt_files
 
-__all__ = ['MindPage']
+__all__ = ["MindPage"]
 
 
 class MindPage:
@@ -58,6 +60,7 @@ class MindPage:
         >>> # get the row by name which is from category info
         >>> row_by_name = mind_page.read_at_page_by_name("8.jpg", 0, 1)
     """
+
     @check_parameter
     def __init__(self, file_name, num_consumer=4):
         self._segment = ShardSegment()
@@ -99,7 +102,7 @@ class MindPage:
         try:
             self._segment.open(file_name, num_consumer)
             self._category_field = None
-            self._candidate_fields = [field[:field.rfind('_')] for field in self._segment.get_category_fields()]
+            self._candidate_fields = [field[: field.rfind("_")] for field in self._segment.get_category_fields()]
         except Exception:
             cleanup_decrypt_files(self._decrypted_files)
             raise
@@ -139,9 +142,9 @@ class MindPage:
             Please refer to the Examples of :class:`mindspore.mindrecord.MindPage` .
         """
         if not category_field or not isinstance(category_field, str):
-            raise ParamTypeError('category_fields', 'str')
+            raise ParamTypeError("category_fields", "str")
         if category_field not in self._candidate_fields:
-            raise MRMDefineCategoryError("Field '{}' is not a candidate category field.".format(category_field))
+            raise MRMDefineCategoryError(f"Field '{category_field}' is not a candidate category field.")
         self._category_field = category_field
         return self._segment.set_category_field(self._category_field)
 

@@ -123,7 +123,7 @@ def _remove_unused_dataset(local_path, num_shards, shard_id, epoch_num, obs_runt
         os.remove(os.path.join(sync_dir, ready_file))
 
 
-def _wait_remove_datset(num_shards, shard_id, epoch_num, obs_runtime):
+def _wait_remove_dataset(num_shards, shard_id, epoch_num, obs_runtime):
     """Rank(rank_id mod 8 not equal to 0) wait for removing dataset files."""
     if not num_shards:
         return
@@ -148,7 +148,7 @@ def _wait_remove_datset(num_shards, shard_id, epoch_num, obs_runtime):
     while True:
         if os.path.exists(sync_dir) and not os.listdir(sync_dir):
             break
-        time.sleep(obs_runtime.config.runtime_config.WARMINGUP_TIME)
+        time.sleep(obs_runtime.config.WARMINGUP_TIME)
         logger.info(
             f"[{_current_func_name()} FUNCTION] Shard: {shard_id} wait for removing dataset files "
             f"in epoch: {epoch_num}."
@@ -513,7 +513,7 @@ class MindRecordFromOBS:
             pass
 
         _remove_unused_dataset(self._local_path, self._num_shards, self._shard_id, self._curr_epoch, self._obs_runtime)
-        _wait_remove_datset(self._num_shards, self._shard_id, self._curr_epoch, self._obs_runtime)
+        _wait_remove_dataset(self._num_shards, self._shard_id, self._curr_epoch, self._obs_runtime)
 
         self._cache, self._queue = _init_cache_and_working_queue(
             self._cache, self._queue, self._shard_files, self._local_path
@@ -561,6 +561,9 @@ class MindRecordFromOBS:
         if hasattr(self, "_pool") and self._pool:
             self._pool.terminate()
             self._pool = None
+        if hasattr(self, "_obs_runtime") and self._obs_runtime:
+            self._obs_runtime.close()
+            self._obs_runtime = None
 
     def __del__(self):
         self.close()
