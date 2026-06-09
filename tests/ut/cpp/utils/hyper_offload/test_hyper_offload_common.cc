@@ -523,7 +523,7 @@ TEST_F(TestHyperOffloadCommon, TestH2DAndD2HShareTransferStreamAssignment) {
   }
   ASSERT_NE(h2d_node, nullptr) << "H2D node consuming D2H output should exist";
 
-  auto prim_stream_attr = [](const CNodePtr &cn) -> ValuePtr {
+  auto prim_stream_attr = [kStreamIdAttr](const CNodePtr &cn) -> ValuePtr {
     auto prim = common::AnfAlgo::GetCNodePrimitive(cn);
     if (prim == nullptr) {
       return nullptr;
