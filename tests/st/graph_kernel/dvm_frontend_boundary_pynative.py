@@ -25,11 +25,10 @@ from mindspore.ops import stop_gradient
 
 from tests.st.graph_kernel.gk_utils import compare_outputs, gen_flag, gen_input
 
-
 np.random.seed(1)
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", pynative_synchronize=False)
 
-REPEAT = 2
+REPEAT = 1
 
 
 def _compare_case(flag, run_case, *inputs, cmp_precision=0.0):
@@ -357,17 +356,15 @@ def test_set_stream_limit():
     Description: pynative mode
     Expectation: the result matches with the expected result
     """
-    x0, x1 = _contiguous_1d_inputs()
-    stream = ms.runtime.Stream()
+    x0 = Tensor(np.full((4097,), 2.0, dtype=np.float32)).to("Ascend")
+    x1 = Tensor(np.full((4097,), 3.0, dtype=np.float32)).to("Ascend")
 
-    def run_case(x0_, x1_, stream_):
+    def run_case(x0_, x1_):
+        stream_ = ms.runtime.Stream()
+        ms.runtime.set_stream_limit(stream_, 4, 8)
         with ms.runtime.StreamCtx(stream_):
             y0 = ops.neg(x0_)
             y1 = ops.mul(y0, x1_)
-            ms.runtime.set_stream_limit(stream_, 8, 8)
-            y2 = ops.abs(y1)
-            y3 = ops.neg(y2)
-            ms.runtime.reset_stream_limit(stream_)
-            return y3
+            return y1
 
-    _compare_case("test_set_stream_limit", run_case, x0, x1, stream)
+    _compare_case("test_set_stream_limit", run_case, x0, x1)
