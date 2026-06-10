@@ -25,6 +25,7 @@
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "runtime/pipeline/task/task.h"
+#include "include/pynative/utils/runtime/pynative_async_task.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
@@ -43,16 +44,18 @@ device::DeviceAddressPtr CreateTempDeviceAddress(const device::DeviceAddressPtr 
   return new_device_address;
 }
 
-class StorageCopyTask : public runtime::AsyncTask {
+class StorageCopyTask : public pynative::PyNativeAsyncTask {
  public:
   explicit StorageCopyTask(std::function<void(void)> run_func)
-      : AsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)) {}
+      : pynative::PyNativeAsyncTask(runtime::kFrontendTask), run_func_(std::move(run_func)) {}
   explicit StorageCopyTask(std::function<void(void)> run_func, std::function<void()> set_exception_func)
-      : AsyncTask(runtime::kFrontendTask),
+      : pynative::PyNativeAsyncTask(runtime::kFrontendTask),
         run_func_(std::move(run_func)),
         set_exception_func_(std::move(set_exception_func)) {}
   ~StorageCopyTask() override = default;
-  void Run() override { run_func_(); };
+  void Run() override {
+    RunWithPyNativeContext([this]() { run_func_(); });
+  };
   void SetException(const std::exception_ptr &e) override {
     if (set_exception_func_ == nullptr) {
       MS_LOG(ERROR) << "set_exception_func_ is null";
