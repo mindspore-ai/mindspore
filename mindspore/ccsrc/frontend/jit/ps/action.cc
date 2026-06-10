@@ -2192,6 +2192,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
       (void)actions.emplace_back(std::make_pair(kOffloadAnnotation, ProcessOffloadAnnotationPass));
     }
 
+    // Eliminate Partial unused args again after recompute/grad transforms, before validate.
+    (void)actions.emplace_back(
+      std::make_pair(kPartialUnusedArgsEliminateAfterRecompute, PartialUnusedArgsEliminatePass));
+
     // Mind Compiler finish.
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
 
@@ -2287,6 +2291,7 @@ std::vector<PassItem> JitPipeline(const ResourcePtr &resource, bool build_top_gr
     if ((common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1")) {
       (void)jit_passes.emplace(kOffloadAnnotation, ProcessOffloadAnnotationPass);
     }
+    (void)jit_passes.emplace(kPartialUnusedArgsEliminateAfterRecompute, PartialUnusedArgsEliminatePass);
     (void)jit_passes.emplace(kValidate, ValidatePass);
     (void)jit_passes.emplace(kBackendPass, BackendPass);
     for (const auto &action : jit_passes) {
