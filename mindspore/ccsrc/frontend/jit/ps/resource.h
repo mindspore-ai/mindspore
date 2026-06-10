@@ -103,6 +103,7 @@ const char kLoopUnroll[] = "loop_unroll";
 const char kJitOptPassAfterCconv[] = "jit_opt_after_cconv";
 const char kRemoveDupValue[] = "remove_dup_value";
 const char kPartialUnusedArgsEliminate[] = "partial_unused_args_eliminate";
+const char kPartialUnusedArgsEliminateAfterRecompute[] = "partial_unused_args_eliminate_after_recompute";
 const char kMutableEliminate[] = "mutable_eliminate";
 const char kEnvironConv[] = "environ_conv";
 const char kTupleTransform[] = "tuple_transform";
