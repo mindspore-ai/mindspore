@@ -261,6 +261,101 @@ inline NodePtr BroadcastReduceToInputShape(BpropBuilder *ib, const NodePtr &inpu
   return input_grad;
 }
 
+inline ShapeVector CalcCdistBroadcastGradShape(ShapeVector x_shape, ShapeVector y_shape) {
+  (void)x_shape.insert(x_shape.cend() - 1, 1);
+  (void)y_shape.insert(y_shape.cend() - 2, 1);
+  ShapeVector broadcast_shape;
+  broadcast_shape.reserve(x_shape.size());
+  for (size_t i = 0; i < x_shape.size(); ++i) {
+    if (x_shape[i] == 1) {
+      broadcast_shape.push_back(y_shape[i]);
+    } else if (y_shape[i] == 1 || x_shape[i] == y_shape[i]) {
+      broadcast_shape.push_back(x_shape[i]);
+    } else {
+      MS_LOG(EXCEPTION) << "The two input shape can not broadcast, x_shape: " << x_shape << ", y_shape: " << y_shape;
+    }
+  }
+  return broadcast_shape;
+}
+
+inline NodePtr ExpandAndBroadcastForCdist(BpropBuilder *ib, const NodePtr &input, int64_t axis,
+                                          const ShapeVector &shape) {
+  return ib->BroadcastToView(ib->ExpandDimsView(input, ib->Value(axis)), ib->Value<ShapeVector>(shape));
+}
+
+inline bool NeedCdistGradOpsFallback(const ShapeVector &x_shape, const ShapeVector &y_shape) {
+  if (x_shape.size() != y_shape.size() || x_shape.size() < 2 || x_shape.size() > 3) {
+    return false;
+  }
+  if (x_shape.size() == 2) {
+    return true;
+  }
+  bool need_fallback = false;
+  for (size_t i = 0; i < x_shape.size() - 2; ++i) {
+    if (x_shape[i] == y_shape[i]) {
+      continue;
+    }
+    if (x_shape[i] == 1 || y_shape[i] == 1) {
+      need_fallback = true;
+      continue;
+    }
+    return false;
+  }
+  return need_fallback;
+}
+
+inline NodePtr EmitBroadcastCdistGradByOps(BpropBuilder *ib, const NodePtr &grad, const NodePtr &input_x,
+                                           const NodePtr &input_y, const NodePtr &cdist, double p_scalar,
+                                           const ShapeVector &input_x_shape, const ShapeVector &input_y_shape) {
+  auto broadcast_shape = CalcCdistBroadcastGradShape(input_x_shape, input_y_shape);
+  auto broadcast_grad = ExpandAndBroadcastForCdist(ib, grad, -1, broadcast_shape);
+  auto broadcast_out = ExpandAndBroadcastForCdist(ib, cdist, -1, broadcast_shape);
+  auto broadcast_x = ExpandAndBroadcastForCdist(ib, input_x, -2, broadcast_shape);
+  auto broadcast_y = ExpandAndBroadcastForCdist(ib, input_y, -3, broadcast_shape);
+  const auto input_x_dtype = ib->GetDtype(input_x);
+  const auto input_x_dtype_id = ib->GetDtypeId(input_x);
+  const bool promote_fp32 = input_x_dtype_id == kNumberTypeFloat16 || input_x_dtype_id == kNumberTypeBFloat16;
+  if (promote_fp32) {
+    broadcast_grad = ib->Cast(broadcast_grad, kFloat32);
+    broadcast_out = ib->Cast(broadcast_out, kFloat32);
+    broadcast_x = ib->Cast(broadcast_x, kFloat32);
+    broadcast_y = ib->Cast(broadcast_y, kFloat32);
+  }
+  auto diff = ib->Sub(broadcast_x, broadcast_y);
+  NodePtr pairwise_grad = nullptr;
+  if (p_scalar == 1.0) {
+    pairwise_grad = ib->Mul(ib->Sign(diff), broadcast_grad);
+  } else {
+    auto out_zero_mask =
+      ib->BroadcastToView(ib->Equal(broadcast_out, ib->Tensor(0.0, ib->GetDtype(broadcast_out))), ib->Shape(diff));
+    auto safe_out = ib->MaskedFillScalar(
+      broadcast_out, ib->Equal(broadcast_out, ib->Tensor(0.0, ib->GetDtype(broadcast_out))), ib->Value<float>(1.0f));
+    NodePtr input_scaled = nullptr;
+    NodePtr scale_v = nullptr;
+    if (p_scalar == 2.0) {
+      input_scaled = diff;
+      scale_v = ib->Div(broadcast_grad, safe_out);
+    } else {
+      auto abs_diff = ib->Abs(diff);
+      auto safe_abs_diff = ib->MaskedFillScalar(abs_diff, ib->Equal(abs_diff, ib->Tensor(0.0, ib->GetDtype(abs_diff))),
+                                                ib->Value<float>(1.0f));
+      input_scaled =
+        ib->Mul(diff, ib->PowTensorScalar(safe_abs_diff, ib->ValueByType(p_scalar - 2, ib->GetDtype(abs_diff))));
+      scale_v = ib->Div(broadcast_grad,
+                        ib->PowTensorScalar(safe_out, ib->ValueByType(p_scalar - 1, ib->GetDtype(broadcast_out))));
+    }
+    pairwise_grad = ib->Select(out_zero_mask, ib->ZerosLike(diff), ib->Mul(input_scaled, scale_v));
+  }
+  auto reduce_axis = static_cast<int64_t>(broadcast_shape.size() - 2);
+  auto reduced =
+    ib->SumExt(pairwise_grad, ib->Value(std::vector<int64_t>{reduce_axis}), ib->Value(false), ib->EmitValue(kNone));
+  reduced = BroadcastReduceToInputShape(ib, input_x, reduced, reduced);
+  if (promote_fp32) {
+    reduced = ib->Cast(reduced, input_x_dtype);
+  }
+  return reduced;
+}
+
 NodePtrList MinimumMaximumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
   NodePtr grad_x = nullptr;
@@ -3131,6 +3226,37 @@ REG_BPROP_BUILDER("Cdist").SetBody(BODYFUNC(ib) {
   const auto &p = ib->GetInput(i2);
   const auto &out = ib->GetInput(i3);
   const auto &dout = ib->GetInput(i4);
+  const auto p_value = p->BuildValue();
+  const auto p_is_const = !p_value->ContainsValueAny();
+  const auto p_scalar = p_is_const ? PowFetchScalarValue(p_value, "p", "Cdist") : 0.0;
+  if (p_is_const && p_scalar == 0.0) {
+    return {ib->OutZeros(input_x), ib->OutZeros(input_y), ib->OutZeros(p)};
+  }
+  auto input_x_shape = ib->GetShape(input_x);
+  auto input_y_shape = ib->GetShape(input_y);
+  const auto device_target = ib->GetTargetFromContext();
+  const bool use_ascend_rank3_ops_fallback =
+    device_target == "Ascend" && input_x_shape.size() == 3 && input_y_shape.size() == 3 &&
+    input_x_shape[input_x_shape.size() - 2] != input_y_shape[input_y_shape.size() - 2];
+  const auto use_broadcast_ops_fallback =
+    p_is_const && std::isfinite(p_scalar) && p_scalar > 0.0 && !IsDynamic(input_x_shape) && !IsDynamic(input_y_shape) &&
+    (NeedCdistGradOpsFallback(input_x_shape, input_y_shape) || use_ascend_rank3_ops_fallback);
+  if (use_broadcast_ops_fallback) {
+    // Expand pairwise dimensions explicitly and reduce them back to the original input contract.
+    auto dx = ib->OutZeros(input_x);
+    auto dy = ib->OutZeros(input_y);
+    if (input_x->need_compute_grad_out()) {
+      dx = EmitBroadcastCdistGradByOps(ib, dout, input_x, input_y, out, p_scalar, input_x_shape, input_y_shape);
+    }
+    if (input_y->need_compute_grad_out()) {
+      auto res = ib->ShapeCalc(g_cdist, {dout})[0];
+      auto dout_transpose = ib->TransposeView(dout, res);
+      auto out_transpose = ib->TransposeView(out, res);
+      dy = EmitBroadcastCdistGradByOps(ib, dout_transpose, input_y, input_x, out_transpose, p_scalar, input_y_shape,
+                                       input_x_shape);
+    }
+    return {dx, dy, ib->OutZeros(p)};
+  }
   auto res = ib->ShapeCalc(g_cdist, {dout})[0];
   auto dout_transpose = ib->Transpose(dout, res);
   auto out_transpose = ib->Transpose(out, res);
@@ -4626,13 +4752,13 @@ REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
   }
   if (p == 2) {
     auto input_scaled = input_x;
-    auto scale_v = ib->RealDiv(dout, out);
+    auto scale_v = ib->Div(dout, out);
     return {ib->Mul(input_scaled, scale_v)};
   } else {
     auto input_x_abs = ib->Abs(input_x);
     auto input_scaled =
       ib->Mul(ib->PowTensorScalar(input_x_abs, ib->ValueByType(p - 2, ib->GetDtype(input_x_abs))), input_x);
-    auto scale_v = ib->RealDiv(dout, ib->PowTensorScalar(out, ib->ValueByType(p - 1, ib->GetDtype(out))));
+    auto scale_v = ib->Div(dout, ib->PowTensorScalar(out, ib->ValueByType(p - 1, ib->GetDtype(out))));
     auto equal_zero = ib->Equal(input_scaled, ib->Tensor(0, ib->GetDtype(input_scaled)));
     return {ib->Select(equal_zero, ib->Fill(0.0, ib->Shape(input_scaled), ib->GetDtype(input_scaled)->type_id()),
                        ib->Mul(input_scaled, scale_v))};

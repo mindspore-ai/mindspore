@@ -88,7 +88,6 @@
 #include "backend/common/pass/mindir/space_batch_nd_attr_update.h"
 #include "backend/common/pass/mindir/adam_weight_decay_unify_mindir.h"
 #include "backend/common/pass/mindir/add_depend_for_adamw.h"
-#include "backend/common/pass/ir_fission/cdist_fission.h"
 #include "backend/common/pass/ir_fusion/batchmatmul_reducescatter_alltoall_fusion.h"
 #include "backend/common/pass/ir_fusion/alltoall_allgather_batch_matmul_fusion.h"
 #include "backend/common/pass/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
@@ -230,8 +229,6 @@ mindspore::opt::PassManagerPtr GetBackendCommonUnifyMindIRPassManager() {
 mindspore::opt::PassManagerPtr GetBackendFusionGroupPassManager() {
   auto pm = std::make_shared<mindspore::opt::PassManager>("backend_fusion");
   pm->AddFusionPass(std::make_shared<mindspore::opt::ClipByNormFission>());
-  pm->AddFusionPass(std::make_shared<mindspore::opt::CdistFission>());
-  pm->AddFusionPass(std::make_shared<mindspore::opt::CdistGradFission>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::BatchMatMulReduceScatterAllToAllFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::AllToAllAllGatherBatchMatMulFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::LambFissionGe>());
