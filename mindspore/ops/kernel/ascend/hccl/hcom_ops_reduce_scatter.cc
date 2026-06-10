@@ -115,7 +115,7 @@ int InnerCommReduceScatterKernel::Resize(const std::vector<KernelTensor *> &inpu
     auto group_size = distributed::collective::CollectiveManager::instance()->GetGroupSize(group_);
     avg_div_scalar_ = std::make_shared<FP32Imm>(static_cast<float>(group_size));
     const std::string aclnn_api_name = "aclnnInplaceDivs";
-    auto [ws_size, executor, cache, repeat_ret] = GEN_EXECUTOR_FOR_RESIZE(aclnn_api_name, outputs[0], avg_div_scalar_);
+    auto [ws_size, executor, cache, repeat_ret] = GEN_EXECUTOR_FOR_RESIZE(aclnn_api_name, inputs[0], avg_div_scalar_);
     (void)executor;
     (void)cache;
     (void)repeat_ret;
@@ -181,7 +181,7 @@ bool InnerCommReduceScatterKernel::Launch(const std::vector<KernelTensor *> &inp
     std::function<void()> release_func = nullptr;
     uint64_t hash_id = 0;
     std::tie(ws_size, executor, release_func, hash_id, std::ignore) =
-      GEN_EXECUTOR_BOOST(aclnn_api_name, hash_id, outputs[0], avg_div_scalar_);
+      GEN_EXECUTOR_BOOST(aclnn_api_name, hash_id, inputs[0], avg_div_scalar_);
     void *ws_ptr = (ws_size != 0 && !workspace.empty()) ? workspace[0]->device_ptr() : nullptr;
     RUN_OP_API_ASYNC(aclnn_api_name, ws_ptr, ws_size, executor, stream_ptr, release_func);
   }
