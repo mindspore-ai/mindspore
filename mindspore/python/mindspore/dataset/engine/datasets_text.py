@@ -1173,7 +1173,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
             Default: ``None`` , will read all samples.
         language_pair (Sequence[str, str], optional): Acceptable language_pair include ``['en', 'de']``,
             ``['de', 'en']``. Default: ``None`` , means ``['en', 'de']``.
-        num_samples (int, optional): The number of images to be included in the dataset.
+        num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , will read all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
@@ -1191,7 +1191,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
 
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1301,7 +1301,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This

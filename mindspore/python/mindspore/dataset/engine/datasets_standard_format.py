@@ -151,15 +151,16 @@ class MindDataset(MappableDataset, UnionBaseDataset):
 
             - ``Shuffle.INFILE`` : Keep the file sequence the same but shuffle the data within each file.
 
-        num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        num_shards (int, optional): Number of shards that the dataset will be divided into during distributed training.
+            Default: ``None`` .
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , sampler is exclusive
-            with shuffle and block_reader. Support list: :class:`mindspore.dataset.SubsetRandomSampler`,
+            with shuffle. Support list: :class:`mindspore.dataset.SubsetRandomSampler`,
             :class:`mindspore.dataset.PKSampler`, :class:`mindspore.dataset.RandomSampler`,
             :class:`mindspore.dataset.SequentialSampler`, :class:`mindspore.dataset.DistributedSampler`.
         padded_sample (dict, optional): Samples will be appended to dataset, where
@@ -522,21 +523,21 @@ class OBSMindDataset(GeneratorDataset):
             - ``Shuffle.INFILE`` : Keep the file sequence the same but shuffle the data within each file.
 
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into. Default: ``None`` .
+            into during distributed training. Default: ``None`` .
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within num_shards. Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards. Default: ``True``. If shard_equal_rows
             is false, number of rows of each shard may be not equal, and may lead to a failure in distributed training.
-            When the number of samples of per MindRecord file are not equal, it is suggested to set to ``True``.
+            When the number of samples per MindRecord file are not equal, it is suggested to set to ``True``.
             This argument should only be specified when `num_shards` is also specified.
 
     Raises:
         RuntimeError: If `sync_obs_path` does not exist.
-        ValueError: If `columns_list` is invalid.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+        ValueError: If `columns_list` is invalid.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
     Note:

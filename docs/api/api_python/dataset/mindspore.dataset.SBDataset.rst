@@ -17,13 +17,13 @@ mindspore.dataset.SBDataset
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，所有图像样本。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数。默认值： ``1`` 。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值： ``None`` 。下表中会展示不同参数配置的预期行为。
-        - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值： ``None`` ，默认为 ``False`` ，不解码。
+        - **decode** (bool, 可选) - 是否对读取的图片进行解码操作。默认值： ``None`` ，值为 ``False`` ，不解码。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值： ``None`` 。下表中会展示不同配置的预期行为。
         - **num_shards** (int, 可选) - 指定分布式训练时数据集划分的片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
+        - **RuntimeError** - `dataset_dir` 路径无效或路径下不包含任何数据文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数，或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
