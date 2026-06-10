@@ -28,6 +28,22 @@ bool ms_dispatch_enabled() { return ms_dispatch_enable_; }
 
 void SetMsDispatchEnabled(bool enabled) { ms_dispatch_enable_ = enabled; }
 
+py::object MakeOpFunc(const std::string &name, const py::object &callback) {
+  if (callback.ptr() == nullptr || PyCallable_Check(callback.ptr()) == 0) {
+    MS_LOG(EXCEPTION) << "OpFunc '" << name << "' callback is not callable";
+  }
+  OpFunc op_func(
+    [callback](const py::args &args) {
+      PyObject *ret = PyObject_CallObject(callback.ptr(), args.ptr());
+      if (ret == nullptr) {
+        throw py::error_already_set();
+      }
+      return py::reinterpret_steal<py::object>(ret);
+    },
+    name);
+  return py::cast(op_func);
+}
+
 // ============================================================================
 // Handler functions
 // ============================================================================

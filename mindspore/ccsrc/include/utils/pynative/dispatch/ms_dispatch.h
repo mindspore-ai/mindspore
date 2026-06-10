@@ -65,6 +65,8 @@ class COMMON_EXPORT OpFunc {
   std::string op_name_;
 };
 
+COMMON_EXPORT py::object MakeOpFunc(const std::string &name, const py::object &callback);
+
 COMMON_EXPORT bool ms_dispatch_enabled();
 COMMON_EXPORT void SetMsDispatchEnabled(bool enabled);
 
@@ -140,13 +142,10 @@ py::object InvokeGuardChain(CppCallbackWrapper cpp_callback, const py::args &arg
     MS_LOG(EXCEPTION) << "Guard does not have valid " << kCallbackAttr << " attribute";
   }
 
-  // OPT: Pass op_name by reference capture to avoid string copy
-  OpFunc::PyCallable callable = [cb = std::move(cpp_callback),
-                                 &op_name](const py::args &inner_args) mutable -> py::object {
-    return InvokeGuardChain(std::move(cb), inner_args, op_name);
-  };
-
-  OpFunc op_func(std::move(callable), op_name);
+  auto op_func =
+    MakeOpFunc(op_name, py::cpp_function([cb = std::move(cpp_callback), op_name](const py::args &inner_args) mutable {
+                 return InvokeGuardChain(std::move(cb), inner_args, op_name);
+               }));
   MS_LOG(DEBUG) << "Invoke guard: " << op_name;
   return handler(op_func, args);
 }
@@ -157,10 +156,8 @@ py::object InvokeGuardChain(CppCallbackWrapper cpp_callback, const py::args &arg
 template <typename CppCallbackWrapper>
 py::object InvokeMsDispatch(const py::object &handler, CppCallbackWrapper &&cpp_callback, const py::args &packed_args,
                             const std::string &op_name) {
-  OpFunc::PyCallable callable =
-    [cb = std::forward<CppCallbackWrapper>(cpp_callback)](const py::args &args) -> py::object { return cb(args); };
-
-  OpFunc op_func(std::move(callable), op_name);
+  auto op_func = MakeOpFunc(op_name, py::cpp_function([cb = std::forward<CppCallbackWrapper>(cpp_callback)](
+                                                        const py::args &args) mutable { return cb(args); }));
   MS_LOG(DEBUG) << "Invoke tensor-level ms dispatch: " << op_name;
   return handler(op_func, packed_args, py::none());
 }
@@ -307,7 +304,7 @@ inline py::object GetMsDispatchFromObj(PyObject *py_args) {
     for (Py_ssize_t i = 0; i < size; ++i) {
       PyObject *item = PyList_GetItem(py_args, i);
       auto ms_dispatch = GetMsDispatchFromObj(item);
-      if (ms_dispatch != nullptr) {
+      if (!ms_dispatch.is_none()) {
         MS_LOG(DEBUG) << "Get ms_dispatch from " << Py_TYPE(item)->tp_name;
         return ms_dispatch;
       }

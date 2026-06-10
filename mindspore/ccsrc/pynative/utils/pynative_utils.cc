@@ -1468,6 +1468,20 @@ void RegOpCall(const py::module *m) {
          [](const std::shared_ptr<TensorOverloadCall> &op_call) { return "<OpCall name=" + op_call->name() + ">"; });
 }
 
+py::object MakeOpCall(const std::string &name, const py::object &callback) {
+  if (callback.ptr() == nullptr || PyCallable_Check(callback.ptr()) == 0) {
+    MS_LOG(EXCEPTION) << "OpCall '" << name << "' callback is not callable";
+  }
+  auto op_call = std::make_shared<OpCall>(name, [callback](const py::args &args, const py::kwargs &kwargs) {
+    PyObject *ret = PyObject_Call(callback.ptr(), args.ptr(), kwargs.ptr());
+    if (ret == nullptr) {
+      throw py::error_already_set();
+    }
+    return py::reinterpret_steal<py::object>(ret);
+  });
+  return py::cast(op_call);
+}
+
 void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
   GilReleaseWithCheck no_gil;
   static bool need_sync = runtime::OpExecutor::NeedSync();
