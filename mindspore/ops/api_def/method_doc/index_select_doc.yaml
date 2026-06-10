@@ -17,7 +17,8 @@ index_select:
 
     Args:
         axis (int): The dimension to be indexed.
-        index (Tensor): A 1-D Tensor with the indices to access in `self` along the specified axis.
+        index (Tensor): A 1-D Tensor with the indices to access in `self` along the specified axis,
+            whose dtype must be int32 or int64.
 
     Returns:
         Tensor, has the same dtype as `self` Tensor.
@@ -61,7 +62,8 @@ index_select:
 
     Args:
         dim (int): The dimension to be indexed.
-        index (Tensor): A 1-D Tensor with the indices to access in `self` along the specified dim.
+        index (Tensor): A 1-D Tensor with the indices to access in `self` along the specified dim,
+            whose dtype must be int32 or int64.
 
     Returns:
         Tensor, has the same dtype as `self` Tensor.

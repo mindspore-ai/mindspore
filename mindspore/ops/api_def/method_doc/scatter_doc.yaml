@@ -17,7 +17,8 @@ scatter:
     .. note::
         The backward is supported only for the case `src.shape == index.shape` when `src` is a tensor.
         The rank of the input tensor `self` must be at least 1.
-        Negative `index` values are illegal input and will lead to undefined behavior.
+        Each value of `index` must be in the valid range ``[0, self.shape[dim])`` for the normalized `dim`.
+        Negative or out-of-range `index` values are illegal input and will lead to undefined behavior.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: overload `scatter(axis, index, src)`
@@ -82,7 +83,8 @@ scatter:
     .. note::
         The backward is supported only for the case `src.shape == index.shape`.
         The rank of the input tensor `self` must be at least 1.
-        Negative `index` values are illegal input and will lead to undefined behavior.
+        Each value of `index` must be in the valid range ``[0, self.shape[axis])`` for the normalized `axis`.
+        Negative or out-of-range `index` values are illegal input and will lead to undefined behavior.
 
     Args:
         axis (int): Which axis to scatter. Accepted range is [-r, r) where r = rank(self).

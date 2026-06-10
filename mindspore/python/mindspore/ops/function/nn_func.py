@@ -3858,12 +3858,30 @@ def _replication_pad(input, pad):
     return out
 
 
+def _pad_ext_constant(input_x, pad, value):
+    """Apply constant padding for pad_ext."""
+    value = 0 if value is None else value
+    return constant_pad_nd_op(input_x, pad, value)
+
+
+def _pad_ext_non_constant(input_x, pad, mode, value):
+    """Apply non-constant padding for pad_ext."""
+    if value is not None and value != 0:
+        raise ValueError("Padding mode does not take in a value argument.")
+    if mode == "circular":
+        return _circular_pad(input_x, pad)
+    if mode == "reflect":
+        return _reflection_pad(input_x, pad)
+    if mode == "replicate":
+        return _replication_pad(input_x, pad)
+    raise ValueError("Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
+
+
 def pad_ext(input, pad, mode='constant', value=None):
     r"""
     Pads the input tensor according to the pad.
 
     .. warning::
-        `circular` mode has poor performance and is not recommended.
         `circular` mode is not supported on Ascend.
 
     Args:
@@ -3903,21 +3921,37 @@ def pad_ext(input, pad, mode='constant', value=None):
             such that the pixel on the right edge of the image is replaced with the pixel on the left edge,
             and the pixel on the bottom edge is replaced with the pixel on the top edge.
             The circular mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
-            or 4D input, or the last dimension of 2D or 3D input.
+            or 4D input, or the last dimension of 2D or 3D input. These shape patterns are currently supported on CPU.
 
         value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
             Set the padding value in ``'constant'`` mode. If the value is None, 0 is used as the default padding value.
             Default: ``None`` .
+
+    .. note::
+        While running on Ascend, the following scenes are currently supported:
+
+        - ``'constant'`` mode: constant padding on the last :math:`\frac{\text{len(pad)}}{2}` dimensions.
+          The length of `pad` must be even and no more than `2 * input.ndim`.
+        - ``'reflect'`` mode: only 1D/2D/3D reflection padding is supported. When `len(pad)` is 2, the input rank
+          must be 2 or 3; when `len(pad)` is 4, the input rank must be 3 or 4; when `len(pad)` is 6, the input rank
+          must be 4 or 5.
+        - ``'replicate'`` mode: only 1D/2D/3D replication padding is supported. When `len(pad)` is 2, the input rank
+          must be 2 or 3; when `len(pad)` is 4, the input rank must be 3 or 4; when `len(pad)` is 6, the input rank
+          must be 4 or 5.
+        - ``'circular'`` mode is not supported on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
 
     Raises:
         TypeError: If `pad` is not a tuple of int or a list of int.
-        TypeError: If `input` is not a Tensor.
         ValueError: If length of `pad` is not even.
+        ValueError: If `mode` is ``'constant'`` and length of `pad` is greater than `2 * input.ndim`.
         ValueError: If `mode` is ``'reflect'`` , ``'replicate'`` and length of `pad` is not 2, 4 or 6.
+        ValueError: If `mode` is ``'reflect'`` or ``'replicate'`` and the combination of `pad` and input rank is not
+            supported on Ascend.
         ValueError: If `mode` is not ``'constant'`` and `value` is neither ``None`` nor 0.
+        RuntimeError: If `mode` is ``'circular'`` while running on Ascend.
 
     Supported Platforms:
         ``Ascend``
@@ -3938,24 +3972,11 @@ def pad_ext(input, pad, mode='constant', value=None):
     """
     if not isinstance(input, Tensor):
         raise TypeError(f"For 'pad', the type of 'input' must be Tensor, but got {type(input)}.")
-    out = input
     if (isinstance(pad, tuple) and not pad):
-        return out
+        return input
     if mode == "constant":
-        value = 0 if value is None else value
-        out = constant_pad_nd_op(input, pad, value)
-    else:
-        if value is not None and value != 0:
-            raise ValueError("Padding mode does not take in a value argument.")
-        if mode == "circular":
-            out = _circular_pad(input, pad)
-        elif mode == "reflect":
-            out = _reflection_pad(input, pad)
-        elif mode == "replicate":
-            out = _replication_pad(input, pad)
-        else:
-            raise ValueError("Pad filling mode must be 'constant' 'circular' 'reflect' or 'replicate'.")
-    return out
+        return _pad_ext_constant(input, pad, value)
+    return _pad_ext_non_constant(input, pad, mode, value)
 
 
 def _check_pad_inputs(padding):
@@ -4016,7 +4037,8 @@ def pad(input_x, padding, mode='constant', value=None):
             such that the pixel on the right edge of the image is replaced with the pixel on the left edge,
             and the pixel on the bottom edge is replaced with the pixel on the top edge.
             The circular mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
-            or 4D input, or the last dimension of 2D or 3D input.
+            or 4D input, or the last dimension of 2D or 3D input. These shape patterns are currently supported on CPU.
+            `circular` mode is not supported on Ascend.
 
         value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
             Set the padding value in ``'constant'`` mode. If the value is None, 0 is used as the default padding value.

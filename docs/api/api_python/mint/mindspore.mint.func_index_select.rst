@@ -13,7 +13,7 @@ mindspore.mint.index_select
     参数：
         - **input** (Tensor) - 输入tensor。
         - **dim** (int) - 根据索引进行选择的维度。
-        - **index** (Tensor) - 包含索引的一维tensor。
+        - **index** (Tensor) - 包含索引的一维tensor，数据类型为int32或int64。
 
     返回：
         Tensor，数据类型与输入 `input` 相同。

@@ -20,7 +20,8 @@ mindspore.Tensor.scatter
     .. note::
         如果src为Tensor，则仅当src的shape和index的shape相同时，支持求反向梯度。
         输入Tensor `self` 的秩必须至少为1。
-        负数 `index` 是非法输入，会导致未定义行为。
+        `index` 的每个元素都必须位于归一化后 `dim` 对应维度的合法范围 ``[0, self.shape[dim])`` 内。
+        负数 `index` 或正向越界 `index` 都是非法输入，会导致未定义行为。
 
     参数：
         - **dim** (int) - 要进行更新操作的轴。取值范围是[-r, r)，其中r是 `self` 的秩。
@@ -45,7 +46,8 @@ mindspore.Tensor.scatter
     .. note::
         如果src为Tensor，则仅当src的shape和index的shape相同时，支持求反向梯度。
         输入Tensor `self` 的秩必须至少为1。
-        负数 `index` 是非法输入，会导致未定义行为。
+        `index` 的每个元素都必须位于归一化后 `axis` 对应维度的合法范围 ``[0, self.shape[axis])`` 内。
+        负数 `index` 或正向越界 `index` 都是非法输入，会导致未定义行为。
 
     参数：
         - **axis** (int) - 要进行更新操作的轴。取值范围是[-r, r)，其中r是 `self` 的秩。

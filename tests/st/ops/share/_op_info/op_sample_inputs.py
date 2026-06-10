@@ -6373,7 +6373,9 @@ def dynamic_sample_inputs_mint_pad(op_info: OpInfo, dtype=None, device=None, mod
     """
     Generate dynamic-shape/rank inputs for mint.nn.functional.pad.
     """
-    assert mode in ('constant', 'reflect', 'replicate')
+    assert mode in ('constant', 'reflect', 'replicate', 'circular')
+    if mode == 'circular' and device != 'cpu':
+        return
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
 
     if not kwargs.get("only_dynamic_rank", False):
@@ -6401,8 +6403,32 @@ def dynamic_sample_inputs_mint_pad(op_info: OpInfo, dtype=None, device=None, mod
                     ),
                 ),
             )
+        elif mode in ('reflect', 'replicate'):
+            pad = (1, 1, 1, 1)
+            yield OpDynamicInput(
+                op_compile_input=OpSampleInput(
+                    op_input=ms.Tensor(shape=compile_shape, dtype=dtype),
+                    op_args=(pad, mode),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+                ),
+                op_running_inputs=(
+                    OpSampleInput(
+                        op_input=make_func(shape=(2, 3, 4, 5)),
+                        op_args=(pad, mode),
+                        op_kwargs={},
+                        sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                    ),
+                    OpSampleInput(
+                        op_input=make_func(shape=(3, 4, 5, 6)),
+                        op_args=(pad, mode),
+                        op_kwargs={},
+                        sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                    ),
+                ),
+            )
         else:
-            pad = (1, 1, 1, 1) if mode in ('reflect', 'replicate') else (1, 1)
+            pad = (1, 1, 1, 1)
             yield OpDynamicInput(
                 op_compile_input=OpSampleInput(
                     op_input=ms.Tensor(shape=compile_shape, dtype=dtype),
@@ -6428,28 +6454,60 @@ def dynamic_sample_inputs_mint_pad(op_info: OpInfo, dtype=None, device=None, mod
 
     if not kwargs.get("only_dynamic_shape", False):
         if mode == 'constant':
-            yield OpDynamicInput(
-                op_compile_input=OpSampleInput(
-                    op_input=ms.Tensor(shape=None, dtype=dtype),
-                    op_args=((1, 1), mode, 1.0),
-                    op_kwargs={},
-                    sample_name=f"{op_info.name}_dynamic_rank_compile_input",
-                ),
-                op_running_inputs=(
-                    OpSampleInput(
-                        op_input=make_func(shape=(2, 3, 4)),
-                        op_args=((1, 1, 1, 1), mode, 1.0),
+            for pad, run_shapes in (
+                    ((1, 1), ((2, 3), (2, 3, 4))),
+                    ((1, 1, 1, 1), ((2, 3, 4), (3, 4, 5, 6))),
+                    ((1, 1, 1, 1, 1, 1), ((2, 3, 4, 5), (3, 4, 5, 6, 7))),
+            ):
+                yield OpDynamicInput(
+                    op_compile_input=OpSampleInput(
+                        op_input=ms.Tensor(shape=None, dtype=dtype),
+                        op_args=(pad, mode, 1.0),
                         op_kwargs={},
-                        sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                        sample_name=f"{op_info.name}_dynamic_rank_compile_input",
                     ),
-                    OpSampleInput(
-                        op_input=make_func(shape=(3, 4, 5, 6)),
-                        op_args=((1, 1, 1, 1, 1, 1), mode, 1.0),
+                    op_running_inputs=(
+                        OpSampleInput(
+                            op_input=make_func(shape=run_shapes[0]),
+                            op_args=(pad, mode, 1.0),
+                            op_kwargs={},
+                            sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                        ),
+                        OpSampleInput(
+                            op_input=make_func(shape=run_shapes[1]),
+                            op_args=(pad, mode, 1.0),
+                            op_kwargs={},
+                            sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                        ),
+                    ),
+                )
+        elif mode in ('reflect', 'replicate'):
+            for pad, run_shapes in (
+                    ((1, 1), ((2, 3), (2, 3, 4))),
+                    ((1, 1, 1, 1), ((2, 3, 4), (3, 4, 5, 6))),
+            ):
+                yield OpDynamicInput(
+                    op_compile_input=OpSampleInput(
+                        op_input=ms.Tensor(shape=None, dtype=dtype),
+                        op_args=(pad, mode),
                         op_kwargs={},
-                        sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                        sample_name=f"{op_info.name}_dynamic_rank_compile_input",
                     ),
-                ),
-            )
+                    op_running_inputs=(
+                        OpSampleInput(
+                            op_input=make_func(shape=run_shapes[0]),
+                            op_args=(pad, mode),
+                            op_kwargs={},
+                            sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                        ),
+                        OpSampleInput(
+                            op_input=make_func(shape=run_shapes[1]),
+                            op_args=(pad, mode),
+                            op_kwargs={},
+                            sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                        ),
+                    ),
+                )
         else:
             pad = (1, 1, 1, 1)
             yield OpDynamicInput(
@@ -6462,13 +6520,13 @@ def dynamic_sample_inputs_mint_pad(op_info: OpInfo, dtype=None, device=None, mod
                 op_running_inputs=(
                     OpSampleInput(
                         op_input=make_func(shape=(2, 3, 4)),
-                        op_args=((1, 1), mode),
+                        op_args=(pad, mode),
                         op_kwargs={},
                         sample_name=f"{op_info.name}_dynamic_rank_running_input",
                     ),
                     OpSampleInput(
                         op_input=make_func(shape=(3, 4, 5, 6)),
-                        op_args=((1, 1, 1, 1), mode),
+                        op_args=(pad, mode),
                         op_kwargs={},
                         sample_name=f"{op_info.name}_dynamic_rank_running_input",
                     ),
@@ -9633,6 +9691,17 @@ def error_inputs_other_op_pad(op_info: OpInfo, dtype=None, device=None, **kwargs
                 op_error_type=ValueError,
                 op_error_info='pad shape length should no more than input shape *2',
             )
+    if mode == 'circular' and device == 'ascend':
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg((1, 3, 3)),
+                op_args=((1, 2),),
+                op_kwargs={'mode': mode},
+                sample_name=op_info.name,
+            ),
+            op_error_type=RuntimeError,
+            op_error_info='circular mode is not supported on Ascend',
+        )
 def error_inputs_other_op_with_activation(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(

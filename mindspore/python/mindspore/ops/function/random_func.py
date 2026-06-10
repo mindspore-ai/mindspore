@@ -1760,7 +1760,8 @@ def randperm_ext(n, *, generator=None, dtype=mstype.int64):
 
     Args:
         n (Union[Tensor, int]): Size of the permutation. int or Tensor with shape: () or (1,) and
-            data type int64. The value of `n` must be greater than zero.
+            data type int64. The value of `n` must be greater than or equal to zero. When `n` is 0,
+            an empty Tensor is returned.
 
     Keyword Args:
         generator (:class:`mindspore.Generator`, optional): A pseudorandom number generator.
@@ -1772,7 +1773,7 @@ def randperm_ext(n, *, generator=None, dtype=mstype.int64):
 
     Raises:
         TypeError: If `dtype` is not supported.
-        ValueError: If `n` is a negative or 0 element.
+        ValueError: If `n` is negative.
         ValueError: If `n` is larger than the maximal data of the set dtype.
 
     Supported Platforms:

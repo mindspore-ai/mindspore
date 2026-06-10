@@ -1349,7 +1349,8 @@ def scatter(input, dim, index, src):
 
     .. note::
         The backward propagation is supported only for the case `src.shape == index.shape` when `src` is a tensor.
-        Negative `index` values are illegal input and will lead to undefined behavior.
+        Each value of `index` must be in the valid range ``[0, input.shape[dim])`` for the normalized `dim`.
+        Negative or out-of-range `index` values are illegal input and will lead to undefined behavior.
 
     Args:
         input (Tensor): The target tensor. The rank of `input` must be at least 1.
