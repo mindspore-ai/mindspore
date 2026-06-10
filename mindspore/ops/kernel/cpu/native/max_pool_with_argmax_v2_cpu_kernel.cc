@@ -70,6 +70,9 @@ std::vector<int64_t> MaxPoolWithArgmaxV2CpuKernelMod::GetValidAttr(const std::ve
   } else if (src_attr.size() == kShape4dDims) {
     return {src_attr[kDim2], src_attr[kDim3]};
   } else {
+    if (src_attr.size() < kDim2) {
+      MS_LOG(EXCEPTION) << "Invalid attr size: " << src_attr.size();
+    }
     return {src_attr[kDim0], src_attr[kDim1]};
   }
 }
@@ -159,14 +162,14 @@ void MaxPoolWithArgmaxV2CpuKernelMod::MaxPoolWithArgmaxV2SingleCompute(DATA_T *i
   output_argmax[i] = max_idx;
 }
 
+// clang-format off
 #define MAX_POOL_WITH_ARGMAX_V2_ADD_KERNEL(x_dtype, shape_dtype, x_type, shape_type) \
-  {                                                                                  \
-    KernelAttr()                                                                     \
-      .AddInputAttr(kNumberType##x_dtype)                                            \
-      .AddOutputAttr(kNumberType##x_dtype)                                           \
-      .AddOutputAttr(kNumberType##shape_dtype),                                      \
-      &MaxPoolWithArgmaxV2CpuKernelMod::LaunchKernel<x_type, shape_type>             \
-  }
+  {KernelAttr()                                                                      \
+     .AddInputAttr(kNumberType##x_dtype)                                             \
+     .AddOutputAttr(kNumberType##x_dtype)                                            \
+     .AddOutputAttr(kNumberType##shape_dtype),                                       \
+  &MaxPoolWithArgmaxV2CpuKernelMod::LaunchKernel<x_type, shape_type>}
+// clang-format on
 
 std::vector<std::pair<KernelAttr, MaxPoolWithArgmaxV2CpuKernelMod::MaxPoolWithArgmaxV2Func>>
   MaxPoolWithArgmaxV2CpuKernelMod::func_list_ = {MAX_POOL_WITH_ARGMAX_V2_ADD_KERNEL(Float16, Int32, float16, int32_t),
