@@ -35,5 +35,5 @@ mindspore.nn.ELU
 
     异常：
         - **TypeError** - `alpha` 不是浮点数。
-        - **TypeError** - `intpu_x` 的数据类型既不是float16，也不是float32。
+        - **TypeError** - `input_x` 的数据类型既不是float16，也不是float32。
         - **ValueError** - `alpha` 不等于1.0。

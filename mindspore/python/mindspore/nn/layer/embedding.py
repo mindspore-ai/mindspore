@@ -363,7 +363,7 @@ class EmbeddingLookup(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
-        >>> result = nn.EmbeddingLookup(4,2)(input_indices)
+        >>> result = nn.EmbeddingLookup(4, 2)(input_indices)
         >>> print(result.shape)
         (2, 2, 2)
     """
