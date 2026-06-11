@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test for linalg.qr operator"""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -114,7 +115,7 @@ def test_ops_qr_forward(context_mode):
     np.testing.assert_allclose(out_r.asnumpy(), expect_r, atol=1e-3, rtol=1e-3)
 
 
-@arg_mark(plat_marks=["platform_ascend"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard", mem_peak=1.00
 )

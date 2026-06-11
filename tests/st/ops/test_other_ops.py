@@ -143,7 +143,7 @@ def test_other_op_dynamic_backward(mode, op_info):
     fact.test_op_dynamic(only_dynamic_rank=True, grad_cmp=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_error'][0])

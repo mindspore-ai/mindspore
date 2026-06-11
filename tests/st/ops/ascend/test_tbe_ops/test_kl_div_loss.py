@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test for KLDivLoss operator"""
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -26,7 +27,7 @@ from mindspore.ops.functional import vmap
 
 class TestKLDivLossNet(nn.Cell):
     def __init__(self, reduction):
-        super(TestKLDivLossNet, self).__init__()
+        super().__init__()
         self.kl_div_loss = P.KLDivLoss(reduction=reduction)
 
     def construct(self, x, target):
@@ -87,7 +88,7 @@ def test_kl_div_loss_multi_dim(reduction, data_type):
     compare_with_numpy(x, target, reduction)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize("reduction", ["none", "sum", "batchmean"])
 def test_kl_div_loss_vmap(reduction):
     """

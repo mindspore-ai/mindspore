@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test for parameter broadcast"""
+
 import os
 import pytest
 from mindspore import context
@@ -20,7 +22,7 @@ from tests.mark_utils import arg_mark
 
 os.environ['HCCL_IF_BASE_PORT'] = '30001'
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_parameter_broadcast(mode):
     """

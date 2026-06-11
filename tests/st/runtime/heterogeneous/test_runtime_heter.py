@@ -227,7 +227,7 @@ def test_heter_lenet():
     print(out_ascend)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
 @test_utils.run_test_with_On
 def test_heter_lenet_pynative():
     """
