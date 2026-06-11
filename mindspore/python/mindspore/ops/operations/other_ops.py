@@ -198,6 +198,9 @@ class BoundingBoxDecode(Primitive):
 
 class SampleDistortedBoundingBoxV2(Primitive):
     r"""
+    `mindspore.ops.SampleDistortedBoundingBoxV2` is deprecated from version 2.10.0 and will be removed
+    in a future version.
+
     Creates a single bounding box that is randomly distorted for an image.
 
     It is often used for object localization and image recognition tasks.
@@ -282,7 +285,7 @@ class SampleDistortedBoundingBoxV2(Primitive):
         RuntimeError: If the value of `min_object_covered` is out of range [0.0, 1.0].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> image_size = Tensor([640, 480, 3], mindspore.int32)
@@ -302,6 +305,7 @@ class SampleDistortedBoundingBoxV2(Primitive):
         [[[0.2078125  0.00208333 0.9921875  0.95416665]]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0, \
                  aspect_ratio_range=(0.75, 1.33), \
@@ -322,6 +326,8 @@ class SampleDistortedBoundingBoxV2(Primitive):
 
 class CheckValid(Primitive):
     """
+    `mindspore.ops.CheckValid` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Checks bounding box.
 
     Checks whether the bounding boxes specified by `bboxes` is valid.
@@ -342,7 +348,7 @@ class CheckValid(Primitive):
         TypeError: If dtype of `bboxes` or `img_metas` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -365,6 +371,7 @@ class CheckValid(Primitive):
         [ True False False]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize CheckValid."""

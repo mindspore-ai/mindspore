@@ -3,10 +3,9 @@ mindspore.ops.matrix_band_part
 
 .. py:function:: mindspore.ops.matrix_band_part(x, lower, upper)
 
-    返回一个tensor，保留指定对角线的值，其余设为0。
+    `mindspore.ops.matrix_band_part` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
-    .. warning::
-        该接口已废弃，2.9.0（不含）之后版本将删除。
+    返回一个tensor，保留指定对角线的值，其余设为0。
 
     参数：
         - **x** (Tensor) - 输入tensor。

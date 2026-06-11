@@ -3,6 +3,8 @@ mindspore.ops.ScatterMax
 
 .. py:class:: mindspore.ops.ScatterMax(use_locking=False)
 
+    `mindspore.ops.ScatterMax` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     通过最大操作更新输入张量的值。
 
     根据指定更新值和输入索引通过最大值操作更新输入数据的值。

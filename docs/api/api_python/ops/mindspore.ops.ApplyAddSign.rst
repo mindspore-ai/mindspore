@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.ApplyAddSign
 
+    `mindspore.ops.ApplyAddSign` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据AddSign算法更新相关参数或者Tensor。
 
     .. math::

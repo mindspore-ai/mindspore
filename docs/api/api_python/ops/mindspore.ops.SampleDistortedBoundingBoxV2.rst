@@ -3,6 +3,8 @@ mindspore.ops.SampleDistortedBoundingBoxV2
 
 .. py:class:: mindspore.ops.SampleDistortedBoundingBoxV2(seed=0, seed2=0, aspect_ratio_range=(0.75, 1.33), area_range=(0.05, 1.0), max_attempts=100, use_image_if_no_bounding_boxes=False)
 
+    `mindspore.ops.SampleDistortedBoundingBoxV2` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     在图像中创建一个随机扭曲的边界框。
 
     该函数常用于目标定位和图像识别任务。在这样的任务中，除了提供基准标签之外，还提供了边界框注释。通常使用数据增强技术对图像进行随机扭曲，同时保持其内容不变。

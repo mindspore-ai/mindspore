@@ -3,6 +3,8 @@ mindspore.ops.Betainc
 
 .. py:class:: mindspore.ops.Betainc
 
+    `mindspore.ops.Betainc` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     计算正则化不完全beta函数 :math:`I_{x}(a, b)`。
 
     正则化的不完全beta函数定义为：

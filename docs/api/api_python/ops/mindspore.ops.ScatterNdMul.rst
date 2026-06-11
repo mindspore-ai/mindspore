@@ -3,12 +3,11 @@ mindspore.ops.ScatterNdMul
 
 .. py:class:: mindspore.ops.ScatterNdMul(use_locking=False)
 
+    `mindspore.ops.ScatterNdMul` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     对张量中的单个值或切片应用稀疏乘法。
 
     使用给定值通过乘法运算和输入索引更新Parameter或Tensor值。在更新完成后输出 `input_x` ，这有利于更加方便地使用更新后的值。
-
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
 
     更多参考详见 :func:`mindspore.ops.scatter_nd_mul` 。
 

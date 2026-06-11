@@ -3,6 +3,8 @@ mindspore.ops.ApplyProximalAdagrad
 
 .. py:class:: mindspore.ops.ApplyProximalAdagrad(use_locking=False)
 
+    `mindspore.ops.ApplyProximalAdagrad` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据Proximal Adagrad算法更新网络参数或者Tensor。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ 。
 

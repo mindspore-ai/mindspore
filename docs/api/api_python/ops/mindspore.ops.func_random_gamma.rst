@@ -3,6 +3,8 @@ mindspore.ops.random_gamma
 
 .. py:function:: mindspore.ops.random_gamma(shape, alpha, seed=None)
 
+    `mindspore.ops.random_gamma` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据伽马分布生成随机数。
 
     .. warning::

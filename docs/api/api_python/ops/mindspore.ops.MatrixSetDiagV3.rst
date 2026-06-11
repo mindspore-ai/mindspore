@@ -3,6 +3,8 @@ mindspore.ops.MatrixSetDiagV3
 
 .. py:class:: mindspore.ops.MatrixSetDiagV3(align="RIGHT_LEFT")
 
+    `mindspore.ops.MatrixSetDiagV3` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     更新批处理矩阵对角线的值。
     给定输入 `x` 和对角线 `diagonal` ，此操作返回一个Tensor。该Tensor最内层矩阵的对角线的值将被 `diagonal` 中的值替换。
 

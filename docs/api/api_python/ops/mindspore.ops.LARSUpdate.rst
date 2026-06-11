@@ -3,6 +3,8 @@ mindspore.ops.LARSUpdate
 
 .. py:class:: mindspore.ops.LARSUpdate(epsilon=1e-05, hyperpara=0.001, use_clip=False)
 
+    `mindspore.ops.LARSUpdate` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     对梯度的平方和应用LARS（layer-wise adaptive rate scaling）算法。
 
     更多细节请参考 :class:`mindspore.nn.LARS` 。

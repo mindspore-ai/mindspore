@@ -129,7 +129,6 @@ gather_nd_ = P.GatherNd()
 ger_ = P.Ger()
 index_fill_ = IndexFill()
 lstsq_ = Lstsq()
-matrix_band_part_ = P.array_ops.MatrixBandPart()
 ones_ = P.Ones()
 population_count_ = P.PopulationCount()
 range_ = P.Range()
@@ -139,10 +138,6 @@ reduce_min_ = P.ReduceMin()
 reshape_ = P.Reshape()
 scalar_to_tensor_ = P.ScalarToTensor()
 scatter_add_ = P.ScatterAdd()
-scatter_div_ = P.ScatterDiv()
-scatter_max_ = P.ScatterMax()
-scatter_min_ = P.ScatterMin()
-scatter_mul_ = P.ScatterMul()
 scatter_nd_ = P.ScatterNd()
 scatter_update_ = P.ScatterUpdate()
 search_sorted_ = _PyboostSearchSortedPrim()
@@ -150,11 +145,6 @@ shape_ = P.Shape()
 split_tensor = SplitTensor()
 split_with_size = SplitWithSize()
 size_ = P.Size()
-tensor_scatter_div_ = P.TensorScatterDiv()
-tensor_scatter_max_ = P.TensorScatterMax()
-tensor_scatter_min_ = P.TensorScatterMin()
-tensor_scatter_mul_ = P.TensorScatterMul()
-tensor_scatter_sub_ = P.TensorScatterSub()
 tensor_select_ = P.Select()
 tensor_shape_ = P.TensorShape()
 tensor_slice = slice_op
@@ -552,12 +542,12 @@ def ravel(input):
     return ops.reshape(input, (-1,))
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def matrix_band_part(x, lower, upper):
     r"""
-    Copy a tensor setting everything outside a central band in each innermost matrix to zero.
+    `mindspore.ops.matrix_band_part` is deprecated from version 2.9.0 and will be removed in a future version.
 
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
+    Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
     Args:
         x (Tensor): The input tensor.
@@ -568,7 +558,7 @@ def matrix_band_part(x, lower, upper):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -584,7 +574,7 @@ def matrix_band_part(x, lower, upper):
           [1. 1. 1. 1.]
           [0. 1. 1. 1.]]]
     """
-    return matrix_band_part_(x, lower, upper)
+    return _get_cache_prim(P.array_ops.MatrixBandPart)()(x, lower, upper)
 
 
 @deprecated("2.8.0", "ops.pad", False, "ops.")
@@ -2073,16 +2063,16 @@ def squeeze(input, axis=None):
     return squeeze_impl(input, axis)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_mul(input_x, indices, updates):
     r"""
+    `mindspore.ops.scatter_mul` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a multiplication update on `input_x` based on the specified indices and update values.
 
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{*}= \text{updates}[i, ..., j, :]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2099,7 +2089,7 @@ def scatter_mul(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2163,20 +2153,21 @@ def scatter_mul(input_x, indices, updates):
         [[ 7.  7.  7.]
          [54. 54. 54.]]
     """
-    return scatter_mul_(input_x, indices, updates)
+    scatter_mul_inner = _get_cache_prim(P.ScatterMul)()
+    return scatter_mul_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_max(input_x, indices, updates):
     r"""
+    `mindspore.ops.scatter_max` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a maximum update on `input_x` based on the specified indices and update values.
 
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :]
         = \max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2193,7 +2184,7 @@ def scatter_max(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2206,7 +2197,8 @@ def scatter_max(input_x, indices, updates):
         [[88. 88. 88.]
          [88. 88. 88.]]
     """
-    return scatter_max_(input_x, indices, updates)
+    scatter_max_inner = _get_cache_prim(P.ScatterMax)()
+    return scatter_max_inner(input_x, indices, updates)
 
 
 def scatter_add(input_x, indices, updates):
@@ -2252,17 +2244,17 @@ def scatter_add(input_x, indices, updates):
     return scatter_add_(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_min(input_x, indices, updates):
     r"""
+    `mindspore.ops.scatter_min` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a minimum update on `input_x` based on the specified indices and update values.
 
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :]
         = \min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2279,7 +2271,7 @@ def scatter_min(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2292,19 +2284,20 @@ def scatter_min(input_x, indices, updates):
         [[0. 0. 0.]
          [0. 0. 0.]]
     """
-    return scatter_min_(input_x, indices, updates)
+    scatter_min_inner = _get_cache_prim(P.ScatterMin)()
+    return scatter_min_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_div(input_x, indices, updates):
     r"""
+    `mindspore.ops.scatter_div` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a division update on `input_x` based on the specified indices and update values.
 
     .. math::
 
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{/}= \text{updates}[i, ..., j, :]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2321,7 +2314,7 @@ def scatter_div(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2368,7 +2361,8 @@ def scatter_div(input_x, indices, updates):
         [[35. 35. 35.]
          [ 9.  9.  9.]]
     """
-    return scatter_div_(input_x, indices, updates)
+    scatter_div_inner = _get_cache_prim(P.ScatterDiv)()
+    return scatter_div_inner(input_x, indices, updates)
 
 
 def scatter_update(input_x, indices, updates):
@@ -2480,15 +2474,15 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
     return scatter_nd_add_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_nd_sub(input_x, indices, updates, use_locking=False):
     r"""
+    `mindspore.ops.scatter_nd_sub` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a sparse subtraction update on `input_x` based on the specified indices and update values.
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{-}= \text{updates}[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2505,7 +2499,7 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2543,15 +2537,15 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
     return scatter_nd_sub_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_nd_mul(input_x, indices, updates, use_locking=False):
     r"""
+    `mindspore.ops.scatter_nd_mul` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a sparse multiplication update on `input_x` based on the specified indices and update values.
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{*}= \text{updates}[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2568,7 +2562,7 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
         Tensor
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2606,15 +2600,15 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
     return scatter_nd_mul_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_nd_div(input_x, indices, updates, use_locking=False):
     r"""
+    `mindspore.ops.scatter_nd_div` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a sparse division update on `input_x` based on the specified indices and update values.
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]] \mathrel{/}= \text{updates}[i, ..., j]
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2631,7 +2625,7 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
         Tensor
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2670,16 +2664,16 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
     return scatter_nd_div_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_nd_max(input_x, indices, updates, use_locking=False):
     r"""
+    `mindspore.ops.scatter_nd_max` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a sparse maximum update on `input_x` based on the specified indices and update values.
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]]
         = \max(\text{input_x}[\text{indices}[i, ..., j]], \text{updates}[i, ..., j])
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2696,7 +2690,7 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2734,16 +2728,16 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
     return scatter_nd_max_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def scatter_nd_min(input_x, indices, updates, use_locking=False):
     r"""
+    `mindspore.ops.scatter_nd_min` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Perform a sparse minimum update on `input_x` based on the specified indices and update values.
 
     .. math::
         \text{input_x}[\text{indices}[i, ..., j]]
         = \min(\text{input_x}[\text{indices}[i, ..., j]], \text{updates}[i, ..., j])
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
         - Support implicit type conversion and type promotion.
@@ -2760,7 +2754,7 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2970,16 +2964,16 @@ def gather_elements(input, dim, index):
     return gather_d_(input, dim, index)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def tensor_scatter_sub(input_x, indices, updates):
     r"""
+    `mindspore.ops.tensor_scatter_sub` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Return a new tensor by performing a subtraction update on `input_x` at the specified indices with the given update
     values.
 
     .. math::
         output[indices] = input\_x - updates
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -2996,7 +2990,7 @@ def tensor_scatter_sub(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3009,19 +3003,20 @@ def tensor_scatter_sub(input_x, indices, updates):
          [ 4.00000000e+00,  0.00000000e+00,  6.00000000e+00]])
     """
 
-    return tensor_scatter_sub_(input_x, indices, updates)
+    tensor_scatter_sub_inner = _get_cache_prim(P.TensorScatterSub)()
+    return tensor_scatter_sub_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def tensor_scatter_max(input_x, indices, updates):
     r"""
+    `mindspore.ops.tensor_scatter_max` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Return a new tensor by performing a maximum update on `input_x` at the specified indices with the given update
     values.
 
     .. math::
         output\left [indices \right ] = \max(input\_x, updates)
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -3039,7 +3034,7 @@ def tensor_scatter_max(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3051,19 +3046,20 @@ def tensor_scatter_max(input_x, indices, updates):
         [[5, 2, 3],
          [4, 5, 6]])
     """
-    return tensor_scatter_max_(input_x, indices, updates)
+    tensor_scatter_max_inner = _get_cache_prim(P.TensorScatterMax)()
+    return tensor_scatter_max_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def tensor_scatter_min(input_x, indices, updates):
     r"""
+    `mindspore.ops.tensor_scatter_min` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Return a new tensor by performing a minimum update on `input_x` at the specified indices with the given update
     values.
 
     .. math::
         output\left [indices  \right ] = \min(input\_x, updates)
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -3081,7 +3077,7 @@ def tensor_scatter_min(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3093,7 +3089,8 @@ def tensor_scatter_min(input_x, indices, updates):
         [[ 1.00000000e+00,  2.00000000e+00,  3.00000000e+00],
          [ 4.00000000e+00,  1.00000000e+00,  6.00000000e+00]])
     """
-    return tensor_scatter_min_(input_x, indices, updates)
+    tensor_scatter_min_inner = _get_cache_prim(P.TensorScatterMin)()
+    return tensor_scatter_min_inner(input_x, indices, updates)
 
 
 def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none"):
@@ -3635,13 +3632,13 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
     return matrix_diag_part_v3(x, k, padding_value)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=redefined-outer-name
     r"""
+    `mindspore.ops.matrix_set_diag` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Return a tensor by replacing the elements on the k[0]-th to k[1]-th diagonals of the matrix `x` with the values
     from the input `diagonal` .
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         x (Tensor): The input tensor with rank r, where r >= 2.
@@ -3668,7 +3665,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=re
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4276,16 +4273,16 @@ def is_nonzero(input):
     return bool(out)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def tensor_scatter_mul(input_x, indices, updates):
     r"""
+    `mindspore.ops.tensor_scatter_mul` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Return a new tensor by performing a multiplication update on `input_x` at the specified indices with the given
     update values.
 
     .. math::
         output\left [indices \right ] = input\_x\times updates
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - If some values of the `indices` are out of bounds, instead of raising an index error,
@@ -4300,7 +4297,7 @@ def tensor_scatter_mul(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4312,18 +4309,19 @@ def tensor_scatter_mul(input_x, indices, updates):
         [[ 5,  2,  3],
          [ 4, 25,  6]])
     """
-    return tensor_scatter_mul_(input_x, indices, updates)
+    tensor_scatter_mul_inner = _get_cache_prim(P.TensorScatterMul)()
+    return tensor_scatter_mul_inner(input_x, indices, updates)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 def tensor_scatter_div(input_x, indices, updates):
     r"""
+    `mindspore.ops.tensor_scatter_div` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Return a new tensor in which `input_x` is divided by the values from `updates` indicated by `indices` .
 
     .. math::
         output\left [indices \right ] = input\_x \div updates
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
@@ -4343,7 +4341,7 @@ def tensor_scatter_div(input_x, indices, updates):
         Tensor
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4355,7 +4353,8 @@ def tensor_scatter_div(input_x, indices, updates):
         [[-0.05  0.3  3.6  ]
          [ 0.4   0.5  -3.2 ]]
     """
-    return tensor_scatter_div_(input_x, indices, updates)
+    tensor_scatter_div_inner = _get_cache_prim(P.TensorScatterDiv)()
+    return tensor_scatter_div_inner(input_x, indices, updates)
 
 
 def scalar_to_array(input_x):

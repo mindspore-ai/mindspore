@@ -3,6 +3,8 @@ mindspore.ops.LogUniformCandidateSampler
 
 .. py:class:: mindspore.ops.LogUniformCandidateSampler(num_true=1, num_sampled=5, unique=True, range_max=5, seed=0)
 
+    `mindspore.ops.LogUniformCandidateSampler` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     使用log-uniform(Zipfian)分布对一组类别进行采样。
 
     该操作从整数范围[0, `range_max` )中随机采样一个采样类( `sampled_candidates` )的Tensor。

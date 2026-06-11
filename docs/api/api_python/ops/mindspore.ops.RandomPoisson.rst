@@ -3,6 +3,8 @@ mindspore.ops.RandomPoisson
 
 .. py:class:: mindspore.ops.RandomPoisson(seed=0, seed2=0, dtype=mstype.int64)
 
+    `mindspore.ops.RandomPoisson` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据离散概率密度函数分布生成随机非负数浮点数i。函数定义如下：
 
     .. math::

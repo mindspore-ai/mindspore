@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.ApplyPowerSign
 
+    `mindspore.ops.ApplyPowerSign` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据AddSign算法更新相关参数或者Tensor。
 
     AddSign算法可参阅论文 `Neural Optimizer Search with Reinforcement Learning <https://arxiv.org/abs/1709.07417>`_ 。

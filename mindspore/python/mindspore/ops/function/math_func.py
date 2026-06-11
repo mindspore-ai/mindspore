@@ -275,7 +275,6 @@ cumsum_ = P.CumSum()
 cumulative_logsumexp_ = CumulativeLogsumexp()
 digamma_ = P.Digamma()
 dtype_ = P.DType()
-eps_ = P.Eps()
 erf_ = P.Erf()
 erfc_ = P.Erfc()
 erfinv_ext_ = P.Erfinv()
@@ -2634,6 +2633,7 @@ def bessel_y1(x):
     return bessel_y1_(x)
 
 
+@deprecated("2.10.0", None, False, "ops.")
 def eps(x):
     r"""
     Create a tensor with the same data type and shape as input, and the element value is the minimum value that the
@@ -2654,7 +2654,7 @@ def eps(x):
         >>> mindspore.ops.eps(x)
         Tensor(shape=[4], dtype=Float32, value= [ 1.19209290e-07,  1.19209290e-07,  1.19209290e-07,  1.19209290e-07])
     """
-    return eps_(x)
+    return _get_cache_prim(P.Eps)()(x)
 
 
 def erfinv_(input):

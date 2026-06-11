@@ -3,6 +3,8 @@ mindspore.ops.gamma
 
 .. py:function:: mindspore.ops.gamma(shape, alpha, beta, seed=None)
 
+    `mindspore.ops.gamma` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据伽马分布生成随机数。
 
     支持广播。

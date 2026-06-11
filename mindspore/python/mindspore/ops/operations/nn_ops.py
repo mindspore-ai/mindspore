@@ -4491,6 +4491,8 @@ class ApplyAdagrad(Primitive):
 
 class ApplyAdagradV2(Primitive):
     r"""
+    `mindspore.ops.ApplyAdagradV2` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates relevant entries according to the adagradv2 scheme.
 
     .. math::
@@ -4533,7 +4535,7 @@ class ApplyAdagradV2(Primitive):
         TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4570,6 +4572,7 @@ class ApplyAdagradV2(Primitive):
         sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, epsilon, update_slots=True):
         """Initialize ApplyAdagradV2."""
@@ -4702,6 +4705,8 @@ class SparseApplyAdagradV2(Primitive):
 
 class ApplyProximalAdagrad(Primitive):
     r"""
+    `mindspore.ops.ApplyProximalAdagrad` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates relevant entries according to the proximal adagrad algorithm.
     The proximal adagrad algorithm was proposed in `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
@@ -4749,7 +4754,7 @@ class ApplyProximalAdagrad(Primitive):
         TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -4789,6 +4794,7 @@ class ApplyProximalAdagrad(Primitive):
         sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ApplyProximalAdagrad."""
@@ -4906,6 +4912,8 @@ class SparseApplyProximalAdagrad(Primitive):
 
 class ApplyAddSign(Primitive):
     r"""
+    `mindspore.ops.ApplyAddSign` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates relevant entries according to the AddSign algorithm.
 
     .. math::
@@ -4950,7 +4958,7 @@ class ApplyAddSign(Primitive):
         TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -4992,6 +5000,7 @@ class ApplyAddSign(Primitive):
         sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize ApplyAddSign."""
@@ -5000,6 +5009,8 @@ class ApplyAddSign(Primitive):
 
 class ApplyPowerSign(Primitive):
     r"""
+    `mindspore.ops.ApplyPowerSign` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates relevant entries according to the AddSign algorithm.
 
     The AddSign algorithm was proposed in `Neural Optimizer Search with Reinforcement Learning
@@ -5054,7 +5065,7 @@ class ApplyPowerSign(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -5097,6 +5108,7 @@ class ApplyPowerSign(Primitive):
         sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize ApplyPowerSign."""
@@ -5169,6 +5181,9 @@ class ApplyGradientDescent(Primitive):
 
 class ApplyProximalGradientDescent(Primitive):
     r"""
+    `mindspore.ops.ApplyProximalGradientDescent` is deprecated from version 2.10.0 and will be removed
+    in a future version.
+
     Updates relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
     Refer to the paper `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ for more details.
@@ -5205,7 +5220,7 @@ class ApplyProximalGradientDescent(Primitive):
         TypeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -5238,6 +5253,7 @@ class ApplyProximalGradientDescent(Primitive):
         sig.make_sig('delta', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize ApplyGradientDescent."""
@@ -5246,6 +5262,8 @@ class ApplyProximalGradientDescent(Primitive):
 
 class LARSUpdate(PrimitiveWithInfer):
     """
+    `mindspore.ops.LARSUpdate` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Conducts LARS (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
 
     For more details, please refer to :class:`mindspore.nn.LARS`.
@@ -5278,7 +5296,7 @@ class LARSUpdate(PrimitiveWithInfer):
         TypeError: If shape of `gradient` is not the same as `weight`.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -5304,6 +5322,7 @@ class LARSUpdate(PrimitiveWithInfer):
          [0.00026325 0.0005265 0.00039488]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, epsilon=1e-05, hyperpara=0.001, use_clip=False):
         """Initialize LARSUpdate."""
@@ -5314,6 +5333,8 @@ class LARSUpdate(PrimitiveWithInfer):
 
 class ApplyFtrl(Primitive):
     """
+    `mindspore.ops.ApplyFtrl` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates relevant entries according to the FTRL scheme.
 
     For more details, please refer to :class:`mindspore.nn.FTRL`.
@@ -5359,7 +5380,7 @@ class ApplyFtrl(Primitive):
             and the precision is greater than `var`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -5403,6 +5424,7 @@ class ApplyFtrl(Primitive):
         sig.make_sig('lr_power', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ApplyFtrl."""
@@ -6143,6 +6165,8 @@ class DynamicGRUV2(Primitive):
 
 class InTopK(Primitive):
     r"""
+    `mindspore.ops.InTopK` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Determines whether the targets are in the top `k` predictions.
 
     Refer to :func:`mindspore.ops.intopk` for more details.
@@ -6163,7 +6187,7 @@ class InTopK(Primitive):
         otherwise ``False`` .
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -6177,6 +6201,7 @@ class InTopK(Primitive):
         [ True  False]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, k):
         """Initialize InTopK"""
@@ -7336,6 +7361,8 @@ class Dilation2D(Primitive):
 
 class ApplyAdagradDA(Primitive):
     r"""
+    `mindspore.ops.ApplyAdagradDA` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Update `var` according to the proximal adagrad scheme.
     The Adagrad algorithm was proposed in
     `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization
@@ -7396,7 +7423,7 @@ class ApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -7444,6 +7471,7 @@ class ApplyAdagradDA(Primitive):
         sig.make_sig('global_step', dtype=sig.sig_dtype.T4)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ApplyAdagradDA"""

@@ -3,6 +3,8 @@ mindspore.ops.rand_like
 
 .. py:function:: mindspore.ops.rand_like(input, seed=None, *, dtype=None)
 
+    `mindspore.ops.rand_like` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     返回一个与输入shape相同的tensor，其元素为服从均匀分布的 :math:`[0, 1)` 区间的随机数。
 
     .. warning::

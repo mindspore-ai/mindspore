@@ -23,6 +23,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
@@ -64,6 +65,7 @@ def _set_prim_op_user_data(prim, key, value):
     return prim
 
 
+@deprecated("2.10.0", None, False, "ops.")
 @_function_forbid_reuse
 def random_gamma(shape, alpha, seed=None):
     r"""
@@ -83,7 +85,7 @@ def random_gamma(shape, alpha, seed=None):
         The data type is the same as `alpha`.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -452,6 +454,7 @@ def standard_normal(shape, seed=None):
     return standard_normal_op(shape)
 
 
+@deprecated("2.9.0", None, False, "ops.")
 @_function_forbid_reuse
 def uniform_candidate_sampler(true_classes,
                               num_true,
@@ -461,6 +464,8 @@ def uniform_candidate_sampler(true_classes,
                               seed=0,
                               remove_accidental_hits=False):
     r"""
+    `mindspore.ops.uniform_candidate_sampler` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Uniform candidate sampler.
 
     This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
@@ -470,7 +475,6 @@ def uniform_candidate_sampler(true_classes,
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
         - The Ascend backend does not support dynamic shape scenarios currently.
-        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         true_classes (Tensor): A Tensor. The target classes with a Tensor shape of :math:`(batch\_size, num\_true)` .
@@ -502,7 +506,7 @@ def uniform_candidate_sampler(true_classes,
         TypeError: If `true_classes` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -528,9 +532,12 @@ def uniform_candidate_sampler(true_classes,
     return sampled_candidates, true_expected_count, sampled_expected_count
 
 
+@deprecated("2.10.0", None, False, "ops.")
 @_function_forbid_reuse
 def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
     r"""
+    `mindspore.ops.random_poisson` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Generate random number Tensor with `shape` according to a Poisson distribution with mean `rate`.
 
 
@@ -557,7 +564,7 @@ def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
         Tensor, the shape is `mindspore.ops.concat([shape, rate.shape], axis=0)`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -615,9 +622,13 @@ def shuffle(x, seed=None):
     return output
 
 
+@deprecated("2.9.0", None, False, "ops.")
 @_function_forbid_reuse
 def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
     r"""
+    `mindspore.ops.log_uniform_candidate_sampler` is deprecated from version 2.9.0 and will be removed
+    in a future version.
+
     Generates random labels with a log-uniform distribution for sampled_candidates.
 
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
@@ -625,7 +636,6 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
     .. warning::
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
-        - This interface is deprecated and will be removed after version 2.9.0.
 
     Args:
         true_classes (Tensor): The target classes. With data type of int64 and
@@ -653,7 +663,7 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
         TypeError: If `true_classes` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1034,6 +1044,7 @@ def laplace(shape, mean, lambda_param, seed=None):
     return value
 
 
+@deprecated("2.10.0", None, False, "ops.")
 @_function_forbid_reuse
 def gamma(shape, alpha, beta, seed=None):
     r"""
@@ -1058,7 +1069,7 @@ def gamma(shape, alpha, beta, seed=None):
         Tensor
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1178,6 +1189,7 @@ def rand(*size, dtype=None, seed=None):
     return cast_(output, dtype)
 
 
+@deprecated("2.10.0", "mindspore.mint.rand_like", False, "ops.")
 @_function_forbid_reuse
 def rand_like(input, seed=None, *, dtype=None):
     r"""
@@ -1202,7 +1214,7 @@ def rand_like(input, seed=None, *, dtype=None):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1637,6 +1649,7 @@ def randn_like(input, seed=None, *, dtype=None):
     return cast_(output, dtype)
 
 
+@deprecated("2.10.0", "mindspore.mint.randint", False, "ops.")
 @_function_forbid_reuse
 def randint(low, high, size, seed=None, *, dtype=None):
     r"""
@@ -1662,7 +1675,7 @@ def randint(low, high, size, seed=None, *, dtype=None):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1693,6 +1706,7 @@ def randint(low, high, size, seed=None, *, dtype=None):
     return cast_(output, dtype)
 
 
+@deprecated("2.10.0", "mindspore.mint.randint_like", False, "ops.")
 @_function_forbid_reuse
 def randint_like(input, low, high, seed=None, *, dtype=None):
     r"""
@@ -1720,7 +1734,7 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
        >>> import mindspore

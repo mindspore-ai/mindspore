@@ -3,6 +3,8 @@ mindspore.ops.UniformInt
 
 .. py:class:: mindspore.ops.UniformInt(seed=0, seed2=0)
 
+    `mindspore.ops.UniformInt` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     生成均匀分布在区间 `[minval, maxval)` 中的随机数。离散概率函数定义如下：
 
     .. math::

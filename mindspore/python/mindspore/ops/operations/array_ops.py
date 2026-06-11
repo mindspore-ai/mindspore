@@ -887,6 +887,8 @@ class MatrixDiagPartV3(Primitive):
 
 class MatrixSetDiagV3(Primitive):
     r"""
+    `mindspore.ops.MatrixSetDiagV3` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates the diagonal part of a batched tensor.
     It takes a Tensor `x` and `diagonal` as input and returns a Tensor in which
     the specified diagonal values in the innermost matrices will be replaced
@@ -962,7 +964,7 @@ class MatrixSetDiagV3(Primitive):
             :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -991,6 +993,7 @@ class MatrixSetDiagV3(Primitive):
         sig.make_sig('k', dtype=sig.sig_dtype.T2)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, align="RIGHT_LEFT"):
         """"Initialize MatrixSetDiagV3"""
@@ -1002,6 +1005,8 @@ class MatrixSetDiagV3(Primitive):
 
 class MatrixBandPart(Primitive):
     r"""
+    `mindspore.ops.MatrixBandPart` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Extracts the central diagonal band of each matrix in a tensor, with all values outside
     the central band set to zero.
 
@@ -1021,7 +1026,7 @@ class MatrixBandPart(Primitive):
         Tensor, has the same type and shape as `x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1040,6 +1045,7 @@ class MatrixBandPart(Primitive):
           [0. 1. 1. 1.]]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         super().__init__(name="MatrixBandPart")
@@ -2181,6 +2187,8 @@ class ScatterNdUpdate(Primitive):
 
 class ScatterMax(_ScatterOpDynamic):
     r"""
+    `mindspore.ops.ScatterMax` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates the value of the input tensor through the maximum operation.
 
     Using given values to update tensor value through the max operation, along with the input indices.
@@ -2222,7 +2230,7 @@ class ScatterMax(_ScatterOpDynamic):
                       and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2239,9 +2247,17 @@ class ScatterMax(_ScatterOpDynamic):
          [88. 88. 88.]]
     """
 
+    @deprecated("2.10.0", None, False)
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterMax."""
+        super().__init__(use_locking)
+
 
 class ScatterMin(_ScatterOpDynamic):
     r"""
+    `mindspore.ops.ScatterMin` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates the value of the input tensor through the minimum operation.
 
     Using given values to update tensor value through the min operation, along with the input indices.
@@ -2283,7 +2299,7 @@ class ScatterMin(_ScatterOpDynamic):
                       and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2299,6 +2315,12 @@ class ScatterMin(_ScatterOpDynamic):
         [[0. 1. 1.]
          [0. 0. 0.]]
     """
+
+    @deprecated("2.10.0", None, False)
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterMin."""
+        super().__init__(use_locking)
 
 
 class ScatterAdd(Primitive):
@@ -2426,6 +2448,8 @@ class ScatterAdd(Primitive):
 
 class ScatterSub(Primitive):
     r"""
+    `mindspore.ops.ScatterSub` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates the value of the input tensor through the subtraction operation.
 
     Using given values to update tensor value through the subtraction operation, along with the input indices.
@@ -2464,7 +2488,7 @@ class ScatterSub(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2536,6 +2560,7 @@ class ScatterSub(Primitive):
         sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ScatterSub"""
@@ -2546,6 +2571,8 @@ class ScatterSub(Primitive):
 
 class ScatterMul(_ScatterOpDynamic):
     r"""
+    `mindspore.ops.ScatterMul` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates the value of the input tensor through the multiply operation.
 
     Using given values to update tensor value through the mul operation, along with the input indices.
@@ -2583,7 +2610,7 @@ class ScatterMul(_ScatterOpDynamic):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -2650,9 +2677,17 @@ class ScatterMul(_ScatterOpDynamic):
          [54. 54. 54.]]
     """
 
+    @deprecated("2.10.0", None, False)
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterMul."""
+        super().__init__(use_locking)
+
 
 class ScatterDiv(_ScatterOpDynamic):
     r"""
+    `mindspore.ops.ScatterDiv` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Updates the value of the input tensor through the divide operation.
 
     Using given values to update tensor value through the div operation, along with the input indices.
@@ -2693,7 +2728,7 @@ class ScatterDiv(_ScatterOpDynamic):
                       and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -2762,6 +2797,12 @@ class ScatterDiv(_ScatterOpDynamic):
         [[21. 21. 21.]
          [15. 15. 15.]]
     """
+
+    @deprecated("2.10.0", None, False)
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterDiv."""
+        super().__init__(use_locking)
 
 
 class ScatterNdAdd(Primitive):
@@ -2843,6 +2884,8 @@ class ScatterNdAdd(Primitive):
 
 class ScatterNdSub(Primitive):
     r"""
+    `mindspore.ops.ScatterNdSub` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Applies sparse subtraction to individual values or slices in a tensor.
 
     Using given values to update tensor value through the subtraction operation, along with the input indices.
@@ -2865,7 +2908,7 @@ class ScatterNdSub(Primitive):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2911,6 +2954,7 @@ class ScatterNdSub(Primitive):
         sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ScatterNdSub"""
@@ -2921,13 +2965,12 @@ class ScatterNdSub(Primitive):
 
 class ScatterNdMul(_ScatterNdOp):
     r"""
+    `mindspore.ops.ScatterNdMul` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Applies sparse multiplication to individual values or slices in a tensor.
 
     Using given values to update parameter value through the multiplication operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.scatter_nd_mul` for more details.
 
@@ -2945,7 +2988,7 @@ class ScatterNdMul(_ScatterNdOp):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -2983,16 +3026,21 @@ class ScatterNdMul(_ScatterNdOp):
           [1 1 1 1]]]
     """
 
+    @deprecated("2.10.0", None, False)
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterNdMul."""
+        super().__init__(use_locking)
+
 
 class ScatterNdDiv(_ScatterNdOp):
     r"""
+    `mindspore.ops.ScatterNdDiv` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Applies sparse division to individual values or slices in a tensor.
 
     Using given values to update tensor value through the division operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Refer to :func:`mindspore.ops.scatter_nd_div` for more details.
 
@@ -3010,7 +3058,7 @@ class ScatterNdDiv(_ScatterNdOp):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3051,9 +3099,17 @@ class ScatterNdDiv(_ScatterNdOp):
           [1.         1.         1.         1.        ]]]
     """
 
+    @deprecated("2.10.0", None, False)
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ScatterNdDiv."""
+        super().__init__(use_locking)
+
 
 class ScatterNdMax(_ScatterNdOp):
     r"""
+    `mindspore.ops.ScatterNdMax` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Computes sparse maximum to individual values or slices in a tensor.
 
     Using given values to update parameter value through the maximum operation, along with the input indices.
@@ -3075,7 +3131,7 @@ class ScatterNdMax(_ScatterNdOp):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3113,6 +3169,7 @@ class ScatterNdMax(_ScatterNdOp):
           [1 1 1 1]]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ScatterNdMax"""
@@ -3121,6 +3178,8 @@ class ScatterNdMax(_ScatterNdOp):
 
 class ScatterNdMin(_ScatterNdOp):
     r"""
+    `mindspore.ops.ScatterNdMin` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Applies sparse minimum to individual values or slices in a tensor.
 
     Using given values to update tensor value through the minimum operation, along with the input indices.
@@ -3142,7 +3201,7 @@ class ScatterNdMin(_ScatterNdOp):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -3182,6 +3241,7 @@ class ScatterNdMin(_ScatterNdOp):
           [10 10 10 10]]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self, use_locking=False):
         """Initialize ScatterNdMin"""
@@ -4109,6 +4169,8 @@ class TensorScatterUpdate(_TensorScatterOp):
 
 class TensorScatterMax(Primitive):
     r"""
+    `mindspore.ops.TensorScatterMax` is deprecated from version 2.10.0 and will be removed in a future version.
+
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
@@ -4125,7 +4187,7 @@ class TensorScatterMax(Primitive):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4150,6 +4212,7 @@ class TensorScatterMax(Primitive):
          [ 0.4  0.5 -3.2]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
@@ -4157,6 +4220,8 @@ class TensorScatterMax(Primitive):
 
 class TensorScatterMin(Primitive):
     r"""
+    `mindspore.ops.TensorScatterMin` is deprecated from version 2.10.0 and will be removed in a future version.
+
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
@@ -4173,7 +4238,7 @@ class TensorScatterMin(Primitive):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4198,6 +4263,7 @@ class TensorScatterMin(Primitive):
          [ 0.4  0.5 -3.2]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
@@ -4205,6 +4271,8 @@ class TensorScatterMin(Primitive):
 
 class TensorScatterSub(Primitive):
     r"""
+    `mindspore.ops.TensorScatterSub` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will subtract these values respectively. This operation is almost
@@ -4240,7 +4308,7 @@ class TensorScatterSub(Primitive):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4265,6 +4333,7 @@ class TensorScatterSub(Primitive):
          [ 0.4        0.5       -3.2      ]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
@@ -4272,6 +4341,8 @@ class TensorScatterSub(Primitive):
 
 class TensorScatterMul(_TensorScatterOp):
     r"""
+    `mindspore.ops.TensorScatterMul` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to multiply these values respectively.
@@ -4293,7 +4364,7 @@ class TensorScatterMul(_TensorScatterOp):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4318,6 +4389,7 @@ class TensorScatterMul(_TensorScatterOp):
          [ 0.4   0.5   -3.2 ]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
@@ -4325,6 +4397,8 @@ class TensorScatterMul(_TensorScatterOp):
 
 class TensorScatterDiv(_TensorScatterOp):
     r"""
+    `mindspore.ops.TensorScatterDiv` is deprecated from version 2.10.0 and will be removed in a future version.
+
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
     index, the result of the update will be to divided these values respectively. Except that
@@ -4343,7 +4417,7 @@ class TensorScatterDiv(_TensorScatterOp):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -4368,6 +4442,7 @@ class TensorScatterDiv(_TensorScatterOp):
          [ 0.4   0.5  -3.2 ]]
     """
 
+    @deprecated("2.10.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])

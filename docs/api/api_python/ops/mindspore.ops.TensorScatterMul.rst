@@ -3,6 +3,8 @@ mindspore.ops.TensorScatterMul
 
 .. py:class:: mindspore.ops.TensorScatterMul
 
+    `mindspore.ops.TensorScatterMul` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据指定的更新值 `updates` 和输入索引 `indices` ，使用乘法运算更新输入Tensor的值。当同一索引有不同更新值时，更新的结果将是累积乘法的结果。此操作与 :class:`mindspore.ops.ScatterNdMul` 类似，但更新后的结果是返回一个新的输出Tensor，而不是直接更新 `input_x` 。
 
     .. math::

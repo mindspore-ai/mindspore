@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.TensorScatterMax
 
+    `mindspore.ops.TensorScatterMax` 从2.10.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据指定的更新值 `updates` 和输入索引 `indices` ，通过最大值运算将结果赋值到输出Tensor中。
 
     更多参考详见 :func:`mindspore.ops.tensor_scatter_max`。

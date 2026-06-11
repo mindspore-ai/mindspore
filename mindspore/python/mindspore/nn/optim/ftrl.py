@@ -19,6 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.graph.api import jit
 from mindspore import _checkparam as validator
+from mindspore.common._decorator import deprecated
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register
 
@@ -116,6 +117,8 @@ def _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, pr
 
 class FTRL(Optimizer):
     r"""
+    `mindspore.nn.FTRL` is deprecated from version 2.9.0 and will be removed in a future version.
+
     Implements the FTRL algorithm.
 
     FTRL is an online convex optimization algorithm that adaptively chooses its regularization function
@@ -141,9 +144,6 @@ class FTRL(Optimizer):
     :math:`m` represents accumulators, :math:`g` represents `grads`, :math:`t` represents the current step,
     :math:`u` represents the linear coefficient to be updated, :math:`p` represents `lr_power`, :math:`\alpha`
     represents `learning_rate`, :math:`\omega` represents `params`.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
         The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
@@ -223,7 +223,7 @@ class FTRL(Optimizer):
         ValueError: If `initial_accum`, `l1` or `l2` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -252,6 +252,7 @@ class FTRL(Optimizer):
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim)
     """
 
+    @deprecated("2.9.0", None, False)
     @opt_init_args_register
     def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
