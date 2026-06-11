@@ -34,7 +34,7 @@ mindspore.nn.AvgPool1d
     输出：
         shape为 :math:`(N, C_{out}, L_{out})` 或 :math:`(C_{out}, L_{out})` 的Tensor。
 
-        其中，如果 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
+        其中，当 `pad_mode` 为 `pad` 模式时，输出的shape计算公式如下：
 
         .. math::
             L_{out} = \left\lfloor \frac{L_{in} +
@@ -42,7 +42,7 @@ mindspore.nn.AvgPool1d
 
     异常：
         - **TypeError** - `kernel_size` 或 `stride` 不是int。
-        - **ValueError** - `pad_mode` 既不是"valid"，也不是"same" 或者 "pad"，不区分大小写。
+        - **ValueError** - `pad_mode` 既不是 ``"valid"`` ，也不是 ``"same"`` 或者 ``"pad"`` ，不区分大小写。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `padding` 为tuple/list时长度不为1。
         - **ValueError** - `x` 的shape长度不等于2或3。

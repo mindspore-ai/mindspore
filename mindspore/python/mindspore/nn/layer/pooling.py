@@ -1361,7 +1361,7 @@ class AvgPool1d(_PoolNd):
     Raises:
         TypeError: If `kernel_size` or `stride` is not an int.
         ValueError: If `pad_mode` is not ``"valid"`` , ``"same"`` or ``"pad"`` with not case sensitive.
-        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `kernel_size` or `stride` is less than 1.
         ValueError: If length of `padding` tuple/list is not 1.
         ValueError: If length of shape of `x` is not equal to 2 or 3.
         ValueError: If `padding` is non-zero when `pad_mode` is not ``"pad"``.
