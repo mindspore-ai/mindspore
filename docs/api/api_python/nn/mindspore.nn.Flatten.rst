@@ -16,10 +16,10 @@ mindspore.nn.Flatten
         - **x** (Tensor) - 要展平的输入Tensor。
 
     输出：
-        Tensor。如果没有维度被展平，返回原始的输入 `input`，否则返回展平后的Tensor。如果 `input` 是零维Tensor，将会返回一个一维Tensor。
+        Tensor。如果没有维度被展平，返回原始的输入 `x`，否则返回展平后的Tensor。如果 `x` 是零维Tensor，将会返回一个一维Tensor。
 
     异常：
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `start_dim` 或 `end_dim` 不是int类型。
         - **ValueError** - 规范化后，`start_dim` 大于 `end_dim`。
-        - **ValueError** - `start_dim` 或 `end_dim` 不在 [-input.dim, input.dim-1] 范围内。例如参数使用默认值且输入为零维或一维Tensor。
+        - **ValueError** - `start_dim` 或 `end_dim` 不在 [-x.dim, x.dim-1] 范围内。例如参数使用默认值且输入为零维或一维Tensor。

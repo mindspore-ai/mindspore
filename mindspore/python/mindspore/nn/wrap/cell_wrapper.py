@@ -476,7 +476,7 @@ class GetNextSingleOp(Cell):
         >>> from mindspore import dataset as ds
         >>> from mindspore import dtype as mstype
         >>>
-        >>> data_path =  "/path/to/MNIST_Data/train/"
+        >>> data_path = "/path/to/MNIST_Data/train/"
         >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> dataset = dataset_helper.iter.dataset
