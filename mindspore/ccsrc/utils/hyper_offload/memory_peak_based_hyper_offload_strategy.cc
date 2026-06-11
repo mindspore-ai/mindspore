@@ -77,6 +77,7 @@ struct PeakSelectionOutputs {
   std::vector<std::optional<size_t>> *selected_producer_anchors;
   std::set<KernelWithIndex> *successfully_offloaded;
   std::set<KernelWithIndex> *excluded_from_selection;
+  std::vector<GapRangeList> *selected_gap_ranges;
 };
 
 struct PeakCoverageContext {
@@ -98,6 +99,7 @@ struct PeakSelectionLoopOutputs {
   UserInfoList *selected_user_infos;
   std::vector<std::optional<size_t>> *selected_producer_anchors;
   std::set<KernelWithIndex> *successfully_offloaded;
+  std::vector<GapRangeList> *selected_gap_ranges;
 };
 
 void BuildNodeToIndexMap(const CNodePtrList &execution_order, std::map<AnfNodePtr, size_t> *node_to_index) {
@@ -451,35 +453,78 @@ struct CandidateScoreNormalizers {
   double denom_end;
 };
 
+struct CandidateScoreNormalizerRawValues {
+  size_t max_candidate_size{0};
+  size_t max_cover_start_raw{0};
+  size_t max_cover_end_raw{0};
+};
+
+void UpdateCandidateScoreNormalizerRawValues(const PeakEstimateCandidate &candidate, size_t peak_index,
+                                             size_t profile_size, const std::map<AnfNodePtr, size_t> &node_to_index,
+                                             CandidateScoreNormalizerRawValues *raw_values) {
+  MS_EXCEPTION_IF_NULL(raw_values);
+  raw_values->max_candidate_size = std::max(raw_values->max_candidate_size, candidate.size);
+  raw_values->max_cover_start_raw = std::max(raw_values->max_cover_start_raw, peak_index - candidate.creation_index);
+
+  size_t first_use_after_peak = FindFirstUseAfterPeak(candidate, peak_index, profile_size, node_to_index);
+  if (first_use_after_peak < profile_size) {
+    raw_values->max_cover_end_raw = std::max(raw_values->max_cover_end_raw, first_use_after_peak - peak_index);
+  }
+}
+
+CandidateScoreNormalizers BuildCandidateScoreNormalizers(const CandidateScoreNormalizerRawValues &raw_values) {
+  return CandidateScoreNormalizers{static_cast<double>(std::max(kMinScoreDenominator, raw_values.max_candidate_size)),
+                                   static_cast<double>(std::max(kMinScoreDenominator, raw_values.max_cover_start_raw)),
+                                   static_cast<double>(std::max(kMinScoreDenominator, raw_values.max_cover_end_raw))};
+}
+
 CandidateScoreNormalizers ComputeScoreNormalizers(const std::vector<PeakEstimateCandidate> &all_candidates,
                                                   const std::set<KernelWithIndex> &excluded_from_selection,
                                                   size_t peak_index, size_t profile_size,
                                                   const CandidateGapRangeMap &candidate_gap_ranges,
                                                   const std::vector<size_t> &sorted_indices_by_creation,
                                                   const std::map<AnfNodePtr, size_t> &node_to_index) {
-  size_t max_candidate_size = 0;
-  size_t max_cover_start_raw = 0;
-  size_t max_cover_end_raw = 0;
+  CandidateScoreNormalizerRawValues raw_values;
 
   for (size_t idx : sorted_indices_by_creation) {
     const auto &candidate = all_candidates[idx];
     if (!IsCandidateEligible(candidate, idx, peak_index, excluded_from_selection, candidate_gap_ranges)) {
       continue;
     }
-    max_candidate_size = std::max(max_candidate_size, candidate.size);
-    const size_t cover_start_raw = peak_index - candidate.creation_index;
-    max_cover_start_raw = std::max(max_cover_start_raw, cover_start_raw);
-
-    size_t first_use_after_peak = FindFirstUseAfterPeak(candidate, peak_index, profile_size, node_to_index);
-    if (first_use_after_peak < profile_size) {
-      const size_t cover_end_raw = first_use_after_peak - peak_index;
-      max_cover_end_raw = std::max(max_cover_end_raw, cover_end_raw);
-    }
+    UpdateCandidateScoreNormalizerRawValues(candidate, peak_index, profile_size, node_to_index, &raw_values);
   }
 
-  return CandidateScoreNormalizers{static_cast<double>(std::max(kMinScoreDenominator, max_candidate_size)),
-                                   static_cast<double>(std::max(kMinScoreDenominator, max_cover_start_raw)),
-                                   static_cast<double>(std::max(kMinScoreDenominator, max_cover_end_raw))};
+  return BuildCandidateScoreNormalizers(raw_values);
+}
+
+struct CandidateScoreWeights {
+  double size;
+  double cover_start;
+  double cover_end;
+  double neighbor_impact;
+};
+
+CandidateScoreWeights GetCandidateScoreWeights() {
+  const auto &config = HyperOffloadConfig::GetInstance();
+  return CandidateScoreWeights{config.score_weight_size(), config.score_weight_cover_start(),
+                               config.score_weight_cover_end(), config.score_weight_neighbor_impact()};
+}
+
+double ComputeCandidateScore(const PeakEstimateCandidate &candidate, size_t peak_index, size_t profile_size,
+                             const CandidateScoreNormalizers &normalizers,
+                             const std::vector<std::pair<size_t, size_t>> &offloaded_lifecycles,
+                             const CandidateScoreWeights &weights, const std::map<AnfNodePtr, size_t> &node_to_index) {
+  const double norm_size = static_cast<double>(candidate.size) / normalizers.denom_size;
+  const size_t cover_start_raw = peak_index - candidate.creation_index;
+  const double norm_cover_start = static_cast<double>(cover_start_raw) / normalizers.denom_start;
+
+  size_t first_use_after_peak = FindFirstUseAfterPeak(candidate, peak_index, profile_size, node_to_index);
+  const size_t cover_end_raw = (first_use_after_peak < profile_size) ? (first_use_after_peak - peak_index) : 0;
+  const double norm_cover_end = static_cast<double>(cover_end_raw) / normalizers.denom_end;
+  const double norm_neighbor = ComputeNormalizedNeighborImpact(candidate, offloaded_lifecycles);
+
+  return weights.size * norm_size + weights.cover_start * norm_cover_start + weights.cover_end * norm_cover_end -
+         weights.neighbor_impact * norm_neighbor;
 }
 
 std::optional<size_t> SelectBestCandidateIdx(const std::vector<PeakEstimateCandidate> &all_candidates,
@@ -488,12 +533,7 @@ std::optional<size_t> SelectBestCandidateIdx(const std::vector<PeakEstimateCandi
                                              size_t profile_size, const CandidateGapRangeMap &candidate_gap_ranges,
                                              const std::vector<size_t> &sorted_indices_by_creation,
                                              const std::map<AnfNodePtr, size_t> &node_to_index) {
-  const auto &config = HyperOffloadConfig::GetInstance();
-  const double weight_size = config.score_weight_size();
-  const double weight_cover_start = config.score_weight_cover_start();
-  const double weight_cover_end = config.score_weight_cover_end();
-  const double weight_neighbor_impact = config.score_weight_neighbor_impact();
-
+  const auto weights = GetCandidateScoreWeights();
   const auto offloaded_lifecycles = BuildOffloadedLifecycles(all_candidates, successfully_offloaded);
   const auto normalizers = ComputeScoreNormalizers(all_candidates, excluded_from_selection, peak_index, profile_size,
                                                    candidate_gap_ranges, sorted_indices_by_creation, node_to_index);
@@ -518,47 +558,14 @@ std::optional<size_t> SelectBestCandidateIdx(const std::vector<PeakEstimateCandi
       continue;
     }
 
-    const double norm_size = static_cast<double>(candidate.size) / normalizers.denom_size;
-    const size_t cover_start_raw = peak_index - candidate.creation_index;
-    const double norm_cover_start = static_cast<double>(cover_start_raw) / normalizers.denom_start;
-
-    size_t first_use_after_peak = FindFirstUseAfterPeak(candidate, peak_index, profile_size, node_to_index);
-    const size_t cover_end_raw = (first_use_after_peak < profile_size) ? (first_use_after_peak - peak_index) : 0;
-    const double norm_cover_end = static_cast<double>(cover_end_raw) / normalizers.denom_end;
-    const double norm_neighbor = ComputeNormalizedNeighborImpact(candidate, offloaded_lifecycles);
-
-    const double score = weight_size * norm_size + weight_cover_start * norm_cover_start +
-                         weight_cover_end * norm_cover_end - weight_neighbor_impact * norm_neighbor;
+    const double score = ComputeCandidateScore(candidate, peak_index, profile_size, normalizers, offloaded_lifecycles,
+                                               weights, node_to_index);
     if (score > best_score) {
       best_score = score;
       best_candidate_idx = idx;
     }
   }
   return best_candidate_idx;
-}
-
-OffloadInfoList MergeOffloadInfosByDataNode(const OffloadInfoList &list) {
-  if (list.size() <= 1) {
-    return list;
-  }
-  std::vector<KernelWithIndex> first_seen_order;
-  std::map<KernelWithIndex, ReplaceInfoList> by_data_node;
-  for (const auto &info : list) {
-    auto it = by_data_node.find(info.data_node);
-    if (it == by_data_node.end()) {
-      (void)first_seen_order.emplace_back(info.data_node);
-      by_data_node[info.data_node] = info.replace_info_list;
-    } else {
-      auto &replace_infos = it->second;
-      replace_infos.insert(replace_infos.end(), info.replace_info_list.begin(), info.replace_info_list.end());
-    }
-  }
-  OffloadInfoList merged_offload_info_list;
-  merged_offload_info_list.reserve(first_seen_order.size());
-  for (const auto &data_node : first_seen_order) {
-    (void)merged_offload_info_list.emplace_back(OffloadInfo{data_node, by_data_node[data_node]});
-  }
-  return merged_offload_info_list;
 }
 
 void ReduceWorkingProfileForGaps(const GapRangeList &gap_ranges, size_t reduce_size,
@@ -570,99 +577,15 @@ void ReduceWorkingProfileForGaps(const GapRangeList &gap_ranges, size_t reduce_s
 }
 
 void RecordSelectedOffload(const PeakEstimateCandidate &candidate, UserInfoList *selected_user_infos,
-                           std::vector<std::optional<size_t>> *selected_producer_anchors) {
+                           std::vector<std::optional<size_t>> *selected_producer_anchors,
+                           std::vector<GapRangeList> *selected_gap_ranges, const GapRangeList &gap_ranges) {
   MS_EXCEPTION_IF_NULL(selected_user_infos);
   selected_user_infos->push_back(candidate.user_info);
   if (selected_producer_anchors != nullptr) {
     selected_producer_anchors->push_back(candidate.creation_index);
   }
-}
-
-std::optional<size_t> FindPeakCoveringGapIndex(const ReplaceInfoList &replace_info_list, size_t peak_index,
-                                               const std::map<AnfNodePtr, size_t> &node_to_index) {
-  for (size_t i = 0; i < replace_info_list.size(); ++i) {
-    const auto &replace_info = replace_info_list[i];
-    if (replace_info.replace_rest_nodes.empty() || replace_info.replace_start_node.first == nullptr) {
-      continue;
-    }
-    const AnfNodePtr end_node = replace_info.replace_rest_nodes[0].first;
-    if (end_node == nullptr) {
-      continue;
-    }
-    auto start_it = node_to_index.find(replace_info.replace_start_node.first);
-    auto end_it = node_to_index.find(end_node);
-    if (start_it == node_to_index.end() || end_it == node_to_index.end()) {
-      continue;
-    }
-    const size_t gap_start = start_it->second + 1;
-    const size_t gap_end = end_it->second;
-    if (gap_start <= peak_index && peak_index < gap_end) {
-      return i;
-    }
-  }
-  return std::nullopt;
-}
-
-void MergeAllGapsIntoFirst(ReplaceInfoList *replace_info_list) {
-  if (replace_info_list->size() <= 1) {
-    return;
-  }
-  auto &first_info = (*replace_info_list)[0];
-  for (size_t i = 1; i < replace_info_list->size(); ++i) {
-    const auto &rest_nodes = (*replace_info_list)[i].replace_rest_nodes;
-    first_info.replace_rest_nodes.insert(first_info.replace_rest_nodes.end(), rest_nodes.begin(), rest_nodes.end());
-  }
-  replace_info_list->erase(replace_info_list->begin() + 1, replace_info_list->end());
-}
-
-void AdjustForPeakInFirstGap(OffloadInfo *offload_info) {
-  offload_info->replace_info_list[0].free_data_after_node = offload_info->replace_info_list[0].replace_start_node;
-  MergeAllGapsIntoFirst(&offload_info->replace_info_list);
-}
-
-void AdjustForPeakInLaterGap(OffloadInfo *offload_info, size_t peak_gap_idx) {
-  std::vector<KernelWithIndex> users_after_peak;
-  for (size_t i = peak_gap_idx + 1; i < offload_info->replace_info_list.size(); ++i) {
-    const auto &rest_nodes = offload_info->replace_info_list[i].replace_rest_nodes;
-    users_after_peak.insert(users_after_peak.end(), rest_nodes.begin(), rest_nodes.end());
-  }
-
-  offload_info->replace_info_list[0].free_data_after_node =
-    offload_info->replace_info_list[peak_gap_idx].replace_start_node;
-
-  std::vector<KernelWithIndex> merged_users;
-  const auto &peak_gap_rest_nodes = offload_info->replace_info_list[peak_gap_idx].replace_rest_nodes;
-  merged_users.reserve(peak_gap_rest_nodes.size() + users_after_peak.size());
-  merged_users.insert(merged_users.end(), peak_gap_rest_nodes.begin(), peak_gap_rest_nodes.end());
-  merged_users.insert(merged_users.end(), users_after_peak.begin(), users_after_peak.end());
-
-  auto &first_info = offload_info->replace_info_list[0];
-  first_info.replace_rest_nodes = merged_users;
-
-  if (offload_info->replace_info_list.size() > 1) {
-    offload_info->replace_info_list.erase(offload_info->replace_info_list.begin() + 1,
-                                          offload_info->replace_info_list.end());
-  }
-}
-
-void AdjustFreeDataPositionForPeak(OffloadInfo *offload_info, size_t peak_index,
-                                   const std::map<AnfNodePtr, size_t> &node_to_index) {
-  MS_EXCEPTION_IF_NULL(offload_info);
-  if (offload_info->replace_info_list.empty()) {
-    return;
-  }
-
-  const auto peak_gap_index = FindPeakCoveringGapIndex(offload_info->replace_info_list, peak_index, node_to_index);
-
-  if (!peak_gap_index.has_value()) {
-    offload_info->replace_info_list[0].free_data_after_node = offload_info->replace_info_list[0].replace_start_node;
-    return;
-  }
-
-  if (peak_gap_index.value() == 0) {
-    AdjustForPeakInFirstGap(offload_info);
-  } else {
-    AdjustForPeakInLaterGap(offload_info, peak_gap_index.value());
+  if (selected_gap_ranges != nullptr) {
+    selected_gap_ranges->push_back(gap_ranges);
   }
 }
 
@@ -675,7 +598,8 @@ bool ApplySingleOffload(const PeakEstimateCandidate &best_cand, const PeakSelect
     return false;
   }
   ReduceWorkingProfileForGaps(gap_ranges.value(), best_cand.size, outputs.working_profile);
-  RecordSelectedOffload(best_cand, outputs.selected_user_infos, outputs.selected_producer_anchors);
+  RecordSelectedOffload(best_cand, outputs.selected_user_infos, outputs.selected_producer_anchors,
+                        outputs.selected_gap_ranges, gap_ranges.value());
   return true;
 }
 
@@ -693,6 +617,7 @@ void ValidatePeakSelectionOutputs(const PeakSelectionOutputs &outputs) {
   MS_EXCEPTION_IF_NULL(outputs.selected_producer_anchors);
   MS_EXCEPTION_IF_NULL(outputs.successfully_offloaded);
   MS_EXCEPTION_IF_NULL(outputs.excluded_from_selection);
+  MS_EXCEPTION_IF_NULL(outputs.selected_gap_ranges);
 }
 
 std::optional<size_t> FindPeakIndexForSelection(const PeakSelectionInputs &inputs,
@@ -747,14 +672,15 @@ void ValidatePeakSelectionLoopOutputs(const PeakSelectionLoopOutputs &outputs) {
   MS_EXCEPTION_IF_NULL(outputs.selected_user_infos);
   MS_EXCEPTION_IF_NULL(outputs.selected_producer_anchors);
   MS_EXCEPTION_IF_NULL(outputs.successfully_offloaded);
+  MS_EXCEPTION_IF_NULL(outputs.selected_gap_ranges);
 }
 
 void RunPeakOffloadSelectionWithCaches(const PeakSelectionInputs &inputs,
                                        const PeakSelectionLoopOutputs &loop_outputs) {
   std::set<KernelWithIndex> excluded_from_selection;
-  const PeakSelectionOutputs outputs{loop_outputs.working_profile, loop_outputs.selected_user_infos,
-                                     loop_outputs.selected_producer_anchors, loop_outputs.successfully_offloaded,
-                                     &excluded_from_selection};
+  const PeakSelectionOutputs outputs{
+    loop_outputs.working_profile,        loop_outputs.selected_user_infos, loop_outputs.selected_producer_anchors,
+    loop_outputs.successfully_offloaded, &excluded_from_selection,         loop_outputs.selected_gap_ranges};
   RunPeakOffloadSelectionRounds(inputs, outputs);
 }
 
@@ -887,38 +813,59 @@ void UpdateMemoryProfileWithReleaseDistance(const OffloadInfo &info, size_t old_
   UpdateMemoryProfileWithDistanceChange(data_size, old_free_index, new_free_index, memory_profile, true);
 }
 
+struct SafeDistanceSearchState {
+  size_t left;
+  size_t right;
+  size_t best_distance;
+};
+
+bool UpdateSafeDistanceSearchState(size_t mid, size_t simulated_peak, size_t memory_threshold,
+                                   SafeDistanceSearchState *state) {
+  MS_EXCEPTION_IF_NULL(state);
+  if (simulated_peak <= memory_threshold) {
+    state->best_distance = mid;
+    state->left = mid + 1;
+    return true;
+  }
+  if (mid == 0) {
+    return false;
+  }
+  state->right = mid - 1;
+  return true;
+}
+
 size_t FindMaxSafeDistanceValue(size_t data_size, size_t anchor_index, size_t min_distance, size_t max_distance,
                                 const std::vector<size_t> &memory_profile, size_t memory_threshold, bool is_release,
                                 size_t profile_size) {
-  size_t left = min_distance;
-  size_t right = max_distance;
-  size_t best_distance = min_distance;
+  SafeDistanceSearchState state{min_distance, max_distance, min_distance};
 
   size_t min_index = CalculateFreeIndex(anchor_index, min_distance, profile_size, is_release);
 
-  while (left <= right) {
-    size_t mid = left + (right - left) / 2;
+  while (state.left <= state.right) {
+    size_t mid = state.left + (state.right - state.left) / 2;
     size_t mid_index = CalculateFreeIndex(anchor_index, mid, profile_size, is_release);
     size_t simulated_peak =
       SimulateMemoryPeakWithDistanceChange(data_size, min_index, mid_index, memory_profile, is_release);
-
-    if (simulated_peak <= memory_threshold) {
-      best_distance = mid;
-      left = mid + 1;
-    } else {
-      if (mid == 0) break;
-      right = mid - 1;
+    if (!UpdateSafeDistanceSearchState(mid, simulated_peak, memory_threshold, &state)) {
+      break;
     }
   }
-  return best_distance;
+  return state.best_distance;
 }
 
-size_t FindMaxSafeReleaseDistanceValue(const OffloadInfo &info, size_t min_distance, size_t max_distance,
-                                       size_t last_user_index, const std::vector<size_t> &memory_profile,
-                                       size_t memory_threshold) {
-  size_t data_size = GetDataNodeSizeBytes(info.data_node.first);
-  return FindMaxSafeDistanceValue(data_size, last_user_index, min_distance, max_distance, memory_profile,
-                                  memory_threshold, true, memory_profile.size());
+struct SafeReleaseDistanceSearchInput {
+  const OffloadInfo &info;
+  size_t min_distance;
+  size_t max_distance;
+  size_t last_user_index;
+  const std::vector<size_t> &memory_profile;
+  size_t memory_threshold;
+};
+
+size_t FindMaxSafeReleaseDistanceValue(const SafeReleaseDistanceSearchInput &input) {
+  size_t data_size = GetDataNodeSizeBytes(input.info.data_node.first);
+  return FindMaxSafeDistanceValue(data_size, input.last_user_index, input.min_distance, input.max_distance,
+                                  input.memory_profile, input.memory_threshold, true, input.memory_profile.size());
 }
 
 size_t GetIdealReleaseDistance(const AnfNodePtr &data_node, const CNodePtrList &exec_order,
@@ -1004,14 +951,14 @@ void PhaseThreeDownwardAdjustmentForSafety(std::vector<OffloadInfo> &offload_inf
 
     size_t simulated_peak =
       SimulateMemoryPeakWithReleaseDistance(info, 0, expanded_distance, last_user_index, memory_profile);
-
     if (simulated_peak <= memory_threshold) {
       UpdateMemoryProfileWithReleaseDistance(info, 0, expanded_distance, last_user_index, memory_profile);
       continue;
     }
 
-    size_t safe_distance =
-      FindMaxSafeReleaseDistanceValue(info, 0, expanded_distance, last_user_index, memory_profile, memory_threshold);
+    const SafeReleaseDistanceSearchInput search_input{
+      info, 0, expanded_distance, last_user_index, memory_profile, memory_threshold};
+    size_t safe_distance = FindMaxSafeReleaseDistanceValue(search_input);
 
     UpdateMemoryProfileWithReleaseDistance(info, 0, safe_distance, last_user_index, memory_profile);
     info.optimized_release_distance = safe_distance;
@@ -1081,15 +1028,22 @@ void UpdateMemoryProfileWithPrefetchDistance(const PrefetchInfo &info, size_t ol
   UpdateMemoryProfileWithDistanceChange(data_size, old_prefetch_index, new_prefetch_index, memory_profile, false);
 }
 
-size_t FindMaxSafePrefetchDistanceValue(const PrefetchInfo &info, size_t min_distance, size_t max_distance,
-                                        size_t first_use_index, const std::vector<size_t> &memory_profile,
-                                        size_t memory_threshold) {
-  if (first_use_index == 0) {
-    return min_distance;
+struct SafePrefetchDistanceSearchInput {
+  const PrefetchInfo &info;
+  size_t min_distance;
+  size_t max_distance;
+  size_t first_use_index;
+  const std::vector<size_t> &memory_profile;
+  size_t memory_threshold;
+};
+
+size_t FindMaxSafePrefetchDistanceValue(const SafePrefetchDistanceSearchInput &input) {
+  if (input.first_use_index == 0) {
+    return input.min_distance;
   }
-  size_t data_size = GetDataNodeSizeBytes(info.data_node.first);
-  return FindMaxSafeDistanceValue(data_size, first_use_index, min_distance, max_distance, memory_profile,
-                                  memory_threshold, false, memory_profile.size());
+  size_t data_size = GetDataNodeSizeBytes(input.info.data_node.first);
+  return FindMaxSafeDistanceValue(data_size, input.first_use_index, input.min_distance, input.max_distance,
+                                  input.memory_profile, input.memory_threshold, false, input.memory_profile.size());
 }
 
 void PhaseOneGetIdealPrefetchDistance(std::vector<PrefetchInfo> &prefetch_infos,
@@ -1163,15 +1117,15 @@ void PhaseThreeDownwardAdjustmentForMemoryPrefetch(std::vector<PrefetchInfo> &pr
     size_t expanded_distance = info.expanded_prefetch_distance;
     size_t simulated_peak =
       SimulateMemoryPeakWithPrefetchDistance(info, 0, expanded_distance, info.first_use_index, memory_profile);
-
     if (simulated_peak <= memory_threshold) {
       UpdateMemoryProfileWithPrefetchDistance(info, 0, expanded_distance, info.first_use_index, memory_profile);
       info.optimized_prefetch_distance = expanded_distance;
       continue;
     }
 
-    size_t safe_distance = FindMaxSafePrefetchDistanceValue(info, 0, expanded_distance, info.first_use_index,
-                                                            memory_profile, memory_threshold);
+    const SafePrefetchDistanceSearchInput search_input{
+      info, 0, expanded_distance, info.first_use_index, memory_profile, memory_threshold};
+    size_t safe_distance = FindMaxSafePrefetchDistanceValue(search_input);
     UpdateMemoryProfileWithPrefetchDistance(info, 0, safe_distance, info.first_use_index, memory_profile);
     info.optimized_prefetch_distance = safe_distance;
   }
@@ -1203,8 +1157,27 @@ void OptimizeReleaseDistanceByMemory(std::vector<OffloadInfo> &offload_infos, st
   }
 }
 
-void OptimizePrefetchDistanceByMemory(std::vector<OffloadInfo> &offload_infos, std::vector<size_t> &memory_profile,
-                                      const CNodePtrList &exec_order,
+void ApplyOptimizedPrefetchDistance(const PrefetchInfo &prefetch_info, const OffloadInfo &offload_info) {
+  if (prefetch_info.optimized_prefetch_distance == 0 || offload_info.data_node.first == nullptr) {
+    return;
+  }
+  auto cnode = offload_info.data_node.first->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return;
+  }
+  cnode->AddAttr("prefetch_distance", MakeValue<size_t>(prefetch_info.optimized_prefetch_distance));
+}
+
+void ApplyOptimizedPrefetchDistances(const std::vector<PrefetchInfo> &prefetch_infos,
+                                     const std::vector<OffloadInfo> &offload_infos) {
+  const size_t apply_count = std::min(prefetch_infos.size(), offload_infos.size());
+  for (size_t i = 0; i < apply_count; ++i) {
+    ApplyOptimizedPrefetchDistance(prefetch_infos[i], offload_infos[i]);
+  }
+}
+
+void OptimizePrefetchDistanceByMemory(const std::vector<OffloadInfo> &offload_infos,
+                                      std::vector<size_t> &memory_profile, const CNodePtrList &exec_order,
                                       const std::map<AnfNodePtr, size_t> &node_to_index) {
   if (offload_infos.empty() || memory_profile.empty() || exec_order.empty()) {
     return;
@@ -1213,21 +1186,71 @@ void OptimizePrefetchDistanceByMemory(std::vector<OffloadInfo> &offload_infos, s
   const auto &config = HyperOffloadConfig::GetInstance();
   size_t memory_threshold = EffectiveMemoryThresholdBytes(config.max_device_memory());
 
-  if (config.enable_adaptive_prefetch_distance()) {
-    std::vector<PrefetchInfo> prefetch_infos;
-    PhaseOneGetIdealPrefetchDistance(prefetch_infos, offload_infos, exec_order, node_to_index);
-    PhaseTwoOrderedExpansion(prefetch_infos, offload_infos, exec_order, node_to_index);
-    PhaseThreeDownwardAdjustmentForMemoryPrefetch(prefetch_infos, memory_profile, memory_threshold);
+  if (!config.enable_adaptive_prefetch_distance()) {
+    return;
+  }
 
-    for (size_t i = 0; i < prefetch_infos.size() && i < offload_infos.size(); ++i) {
-      if (prefetch_infos[i].optimized_prefetch_distance > 0 && offload_infos[i].data_node.first != nullptr) {
-        auto cnode = offload_infos[i].data_node.first->cast<CNodePtr>();
-        if (cnode != nullptr) {
-          cnode->AddAttr("prefetch_distance", MakeValue<size_t>(prefetch_infos[i].optimized_prefetch_distance));
-        }
+  std::vector<PrefetchInfo> prefetch_infos;
+  PhaseOneGetIdealPrefetchDistance(prefetch_infos, offload_infos, exec_order, node_to_index);
+  PhaseTwoOrderedExpansion(prefetch_infos, offload_infos, exec_order, node_to_index);
+  PhaseThreeDownwardAdjustmentForMemoryPrefetch(prefetch_infos, memory_profile, memory_threshold);
+  ApplyOptimizedPrefetchDistances(prefetch_infos, offload_infos);
+}
+
+std::vector<KernelWithIndex> FindUsersAtExecutionIndex(const UserInfo &user_info,
+                                                       const std::map<AnfNodePtr, size_t> &node_to_index,
+                                                       size_t target_index) {
+  std::vector<KernelWithIndex> users_at_index;
+  for (const auto &user : user_info.users) {
+    const auto user_it = node_to_index.find(user.first);
+    if (user_it != node_to_index.end() && user_it->second == target_index) {
+      users_at_index.push_back(user);
+    }
+  }
+  return users_at_index;
+}
+
+std::optional<ReplaceInfo> GenerateReplaceInfoFromSelectedGap(const UserInfo &user_info, const GapRange &gap_range,
+                                                              const CNodePtrList &execution_order,
+                                                              const std::map<AnfNodePtr, size_t> &node_to_index) {
+  const size_t gap_start = gap_range.first;
+  const size_t gap_end = gap_range.second;
+  if (gap_start == 0 || gap_start >= gap_end || gap_start > execution_order.size() ||
+      gap_end >= execution_order.size()) {
+    return std::nullopt;
+  }
+  const auto &free_data_after_node = execution_order[gap_start - 1];
+  if (free_data_after_node == nullptr) {
+    return std::nullopt;
+  }
+  auto replace_rest_nodes = FindUsersAtExecutionIndex(user_info, node_to_index, gap_end);
+  if (replace_rest_nodes.empty()) {
+    return std::nullopt;
+  }
+  const KernelWithIndex gap_start_node{free_data_after_node, 0};
+  return ReplaceInfo{gap_start_node, replace_rest_nodes, gap_start_node};
+}
+
+OffloadInfoList GenerateOffloadInfoFromSelectedGaps(const UserInfoList &selected_user_infos,
+                                                    const std::vector<GapRangeList> &selected_gap_ranges,
+                                                    const CNodePtrList &execution_order,
+                                                    const std::map<AnfNodePtr, size_t> &node_to_index) {
+  OffloadInfoList offload_info_list;
+  if (selected_user_infos.size() != selected_gap_ranges.size()) {
+    MS_LOG(WARNING) << "[HyperOffload] selected user count " << selected_user_infos.size()
+                    << " does not match selected gap range count " << selected_gap_ranges.size();
+    return offload_info_list;
+  }
+  for (size_t i = 0; i < selected_user_infos.size(); ++i) {
+    for (const auto &gap_range : selected_gap_ranges[i]) {
+      const auto replace_info =
+        GenerateReplaceInfoFromSelectedGap(selected_user_infos[i], gap_range, execution_order, node_to_index);
+      if (replace_info.has_value()) {
+        offload_info_list.emplace_back(OffloadInfo{selected_user_infos[i].node, ReplaceInfoList{replace_info.value()}});
       }
     }
   }
+  return offload_info_list;
 }
 
 OffloadInfoList MemoryPeakBasedHyperOffloadStrategy::Run(const CNodePtrList &execution_order,
@@ -1265,26 +1288,18 @@ OffloadInfoList MemoryPeakBasedHyperOffloadStrategy::Run(const CNodePtrList &exe
   UserInfoList selected_user_infos;
   std::vector<std::optional<size_t>> selected_producer_anchors;
   std::set<KernelWithIndex> successfully_offloaded;
+  std::vector<GapRangeList> selected_gap_ranges;
 
   const PeakSelectionLoopInputs selection_inputs{all_candidates, execution_order, node_to_index, profile_size, max_mem};
   const PeakSelectionLoopOutputs selection_outputs{&working_profile, &selected_user_infos, &selected_producer_anchors,
-                                                   &successfully_offloaded};
+                                                   &successfully_offloaded, &selected_gap_ranges};
   RunPeakOffloadSelectionLoop(selection_inputs, selection_outputs);
 
   const auto final_peak_opt = FindGlobalPeak(working_profile);
   LogPeakReductionFailureIfNeeded(initial_peak_opt, final_peak_opt, max_mem, execution_order, selected_user_infos);
 
   offload_info_list =
-    GeneratePeakOffloadInfoFromUserList(execution_order, selected_user_infos, &selected_producer_anchors);
-
-  if (initial_peak_opt.has_value()) {
-    const size_t peak_index = initial_peak_opt->first;
-    for (auto &offload_info : offload_info_list) {
-      AdjustFreeDataPositionForPeak(&offload_info, peak_index, node_to_index);
-    }
-  }
-
-  offload_info_list = MergeOffloadInfosByDataNode(offload_info_list);
+    GenerateOffloadInfoFromSelectedGaps(selected_user_infos, selected_gap_ranges, execution_order, node_to_index);
 
   OptimizeReleaseDistanceByMemory(offload_info_list, working_profile, execution_order, node_to_index);
   OptimizePrefetchDistanceByMemory(offload_info_list, working_profile, execution_order, node_to_index);

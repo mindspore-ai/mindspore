@@ -148,8 +148,6 @@ void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
   for (size_t i = 0; i < node->inputs().size(); ++i) {
     const auto &input = node->input(i);
     if (IsRefInputUser({node, i})) {
-      MS_LOG(INFO) << "Skip HyperOffload parameter input replacement for ref input, node: "
-                   << node->fullname_with_scope() << ", input index: " << i;
       continue;
     }
     auto real_input = common::AnfAlgo::VisitKernelWithReturnType(input, 0, false, {prim::kPrimLoad}).first;
@@ -380,7 +378,7 @@ ReplaceInfoList FilterReplaceInfosWithRefInputs(const ReplaceInfoList &replace_i
   for (const auto &replace_info : replace_info_list) {
     if (std::any_of(replace_info.replace_rest_nodes.begin(), replace_info.replace_rest_nodes.end(),
                     [](const auto &replace_node) { return IsRefInputUser(replace_node); })) {
-      MS_LOG(INFO) << "Skip HyperOffload replace range because it would replace a ref input.";
+      MS_LOG(WARNING) << "Skip HyperOffload replace range because it would replace a ref input.";
       continue;
     }
     filtered_replace_info_list.emplace_back(replace_info);
@@ -466,7 +464,7 @@ void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &off
   const bool is_peak_strategy = HyperOffloadConfig::GetInstance().enable_hyper_offload_peak_strategy();
   const auto &replace_info_list = FilterReplaceInfosWithRefInputs(offload_info.replace_info_list);
   if (replace_info_list.empty()) {
-    MS_LOG(INFO) << "Skip HyperOffload activation candidate because all replace ranges touch ref inputs.";
+    MS_LOG(WARNING) << "Skip HyperOffload activation candidate because all replace ranges touch ref inputs.";
     return;
   }
   const ActivationOperationContext context{graph_, callback_, exec_order_, &operations_};
@@ -510,7 +508,7 @@ HyperOffloadPlan HyperOffloadOptimizer::Run() {
   plan.graph = graph_;
   plan.exec_order = exec_order_;
   if (SkipHyperOffloadOptimizer()) {
-    MS_LOG(INFO) << "SkipHyperOffloadOptimizer triggered, skip hyper offload optimization";
+    MS_LOG(WARNING) << "SkipHyperOffloadOptimizer triggered, skip hyper offload optimization";
     return plan;
   }
 
@@ -549,7 +547,7 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
     auto stage_id = GetPipelineStageId();
     const auto &config = HyperOffloadConfig::GetInstance();
     if (!IsStageEnabled(stage_id, config.enabled_stages())) {
-      MS_LOG(INFO) << "Skip hyper offload activation optimizer for pipeline stage " << stage_id;
+      MS_LOG(WARNING) << "Skip hyper offload activation optimizer for pipeline stage " << stage_id;
       return;
     }
   }
@@ -565,11 +563,11 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
       node_to_index_for_span[exec_order_[ei]] = ei;
     }
     AugmentUserInfoListForOffloadSpan(&user_info_list, exec_order_, node_to_index_for_span, exec_order_.size());
-    MS_LOG(INFO) << "Using MemoryPeakBasedHyperOffloadStrategy with max_device_memory="
-                 << HyperOffloadConfig::GetInstance().max_device_memory();
+    MS_LOG(WARNING) << "Using MemoryPeakBasedHyperOffloadStrategy with max_device_memory="
+                    << HyperOffloadConfig::GetInstance().max_device_memory();
     strategy = std::make_unique<MemoryPeakBasedHyperOffloadStrategy>();
   } else {
-    MS_LOG(INFO) << "Using DistanceBaseHyperOffloadStrategy";
+    MS_LOG(WARNING) << "Using DistanceBaseHyperOffloadStrategy";
     strategy = std::make_unique<DistanceBaseHyperOffloadStrategy>();
     use_filter = true;
   }
@@ -584,14 +582,29 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
   }
 
   if (offload_info_list.empty()) {
-    MS_LOG(INFO) << "No activation offload candidates found";
+    MS_LOG(WARNING) << "No activation offload candidates found";
     return;
   }
 
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(graph_->output());
   MS_LOG(INFO) << "Processing " << offload_info_list.size() << " activation offload candidates";
-  for (const auto &offload_info : offload_info_list) {
-    AddSingleActivationOperations(offload_info, outputs);
+  std::map<KernelWithIndex, size_t> last_peak_graph_output_offload_index;
+  if (use_peak_strategy) {
+    for (size_t i = 0; i < offload_info_list.size(); ++i) {
+      if (IsActivationGraphOutput(outputs, offload_info_list[i].data_node, nullptr, true)) {
+        last_peak_graph_output_offload_index[offload_info_list[i].data_node] = i;
+      }
+    }
+  }
+  for (size_t i = 0; i < offload_info_list.size(); ++i) {
+    const auto &offload_info = offload_info_list[i];
+    if (!use_peak_strategy) {
+      AddSingleActivationOperations(offload_info, outputs);
+      continue;
+    }
+    const auto output_it = last_peak_graph_output_offload_index.find(offload_info.data_node);
+    const bool remap_graph_output = output_it != last_peak_graph_output_offload_index.end() && output_it->second == i;
+    AddSingleActivationOperations(offload_info, remap_graph_output ? outputs : std::vector<KernelWithIndex>{});
   }
 }
 

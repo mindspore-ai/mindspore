@@ -132,6 +132,10 @@ class COMMON_EXPORT HyperOffloadConfig {
  private:
   HyperOffloadConfig();
 
+  static constexpr double kDefaultD2HBandwidthGbps = 20.0;
+  static constexpr double kDefaultH2DBandwidthGbps = 55.0;
+  static constexpr double kDefaultKernelTimeUs = 400.0;
+
   bool enable_hyper_offload_{false};
   bool enable_hyper_offload_peak_strategy_{false};
   size_t select_distance_{0};
@@ -145,9 +149,9 @@ class COMMON_EXPORT HyperOffloadConfig {
   double score_weight_neighbor_impact_{1.0};
   std::set<int64_t> enabled_stages_;
   std::string offload_percentage_;
-  double d2h_bandwidth_gbps_{20.0};
-  double h2d_bandwidth_gbps_{55.0};
-  double default_kernel_time_us_{400.0};
+  double d2h_bandwidth_gbps_{kDefaultD2HBandwidthGbps};
+  double h2d_bandwidth_gbps_{kDefaultH2DBandwidthGbps};
+  double default_kernel_time_us_{kDefaultKernelTimeUs};
   bool enable_adaptive_release_distance_{false};
   bool enable_adaptive_prefetch_distance_{false};
 };

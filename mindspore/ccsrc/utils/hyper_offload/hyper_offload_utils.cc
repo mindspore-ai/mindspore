@@ -282,22 +282,11 @@ HyperOffloadConfig::HyperOffloadConfig() {
     score_weight_neighbor_impact_ = ParseCompileConfigAsDouble(kScoreWeightNeighborImpactConfig, 1.0);
 
     enable_adaptive_release_distance_ = (common::GetEnv(std::string(kEnableAdaptiveReleaseDistanceEnv)) == "1");
-    d2h_bandwidth_gbps_ = ParseCompileConfigAsDouble(kD2HBandwidthConfig, 20.0);
-    default_kernel_time_us_ = ParseCompileConfigAsDouble(kDefaultKernelTimeConfig, 400.0);
+    d2h_bandwidth_gbps_ = ParseCompileConfigAsDouble(kD2HBandwidthConfig, kDefaultD2HBandwidthGbps);
+    default_kernel_time_us_ = ParseCompileConfigAsDouble(kDefaultKernelTimeConfig, kDefaultKernelTimeUs);
 
     enable_adaptive_prefetch_distance_ = (common::GetEnv(std::string(kEnableAdaptivePrefetchDistanceEnv)) == "1");
-    h2d_bandwidth_gbps_ = ParseCompileConfigAsDouble(kH2DBandwidthConfig, 55.0);
-
-    MS_LOG(INFO) << "HyperOffloadConfig initialized: enable=" << enable_hyper_offload_
-                 << ", select_distance=" << select_distance_ << ", select_num=" << select_num_
-                 << ", prefetch_distance=" << prefetch_distance_ << ", release_distance=" << release_distance_
-                 << ", enable_adaptive_release_distance=" << enable_adaptive_release_distance_
-                 << ", d2h_bandwidth_gbps=" << d2h_bandwidth_gbps_
-                 << ", default_kernel_time_us=" << default_kernel_time_us_
-                 << ", enable_adaptive_prefetch_distance=" << enable_adaptive_prefetch_distance_
-                 << ", h2d_bandwidth_gbps=" << h2d_bandwidth_gbps_;
-  } else {
-    MS_LOG(INFO) << "HyperOffloadConfig initialized: hyper offload disabled";
+    h2d_bandwidth_gbps_ = ParseCompileConfigAsDouble(kH2DBandwidthConfig, kDefaultH2DBandwidthGbps);
   }
 }
 

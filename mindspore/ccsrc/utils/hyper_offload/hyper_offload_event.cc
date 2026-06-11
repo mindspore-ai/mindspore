@@ -208,16 +208,11 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
 
   const auto &config = HyperOffloadConfig::GetInstance();
   auto node_release_distance = GetNodeReleaseDistance(data_node);
-
   if (!node_release_distance.has_value() && use_peak_strategy && config.enable_adaptive_release_distance()) {
     node_release_distance = CalculateAdaptiveReleaseDistance(data_node, exec_order_, node_index, last_user_index);
   }
 
   const size_t release_distance = node_release_distance.value_or(config.release_distance());
-
-  if (node_release_distance.has_value()) {
-    MS_LOG(INFO) << data_node->fullname_with_scope() << " release_distance=" << release_distance;
-  }
 
   const size_t raw_target_index = GetReleaseTargetIndex(exec_order_, base_index, last_user_index, release_distance);
   size_t target_index = use_peak_strategy
@@ -387,9 +382,6 @@ void HyperOffloadEventInjector::ProcessH2DGroup(
   MS_LOG(DEBUG) << "Processing H2D group with " << h2d_list.size() << " nodes";
   auto original_data = GetOriginalDataForH2DInput(input_node);
 
-  const auto &config = HyperOffloadConfig::GetInstance();
-  bool use_peak_strategy = config.enable_hyper_offload_peak_strategy();
-
   size_t count = h2d_list.size();
   for (size_t i = 0; i < count; ++i) {
     auto [node_index, h2d_node] = h2d_list[i];
@@ -400,18 +392,6 @@ void HyperOffloadEventInjector::ProcessH2DGroup(
       MS_LOG(EXCEPTION) << "H2D node " << h2d_node->fullname_with_scope() << " has no users in execution order.";
     }
     auto [first_user_idx, last_user_idx] = indices_it->second;
-
-    auto node_prefetch_distance = GetNodePrefetchDistance(original_data);
-
-    if (!node_prefetch_distance.has_value() && use_peak_strategy && config.enable_adaptive_prefetch_distance()) {
-      node_prefetch_distance = CalculateAdaptivePrefetchDistance(original_data, exec_order_, first_user_idx);
-    }
-
-    const size_t prefetch_distance = node_prefetch_distance.value_or(config.prefetch_distance());
-
-    if (node_prefetch_distance.has_value()) {
-      MS_LOG(INFO) << original_data->fullname_with_scope() << " prefetch_distance=" << prefetch_distance;
-    }
 
     auto [send_node, recv_node] =
       event_factory.CreateSendRecvPair(kTransferStreamId, kCalculateStreamId, kSendRecvAfterH2D, original_data);

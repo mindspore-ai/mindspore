@@ -75,6 +75,7 @@ constexpr size_t kMinimumAlignedBytes = 1;
 constexpr size_t kDefaultDynamicShapePlaceholderBytes = 128ULL * 1024 * 1024;
 constexpr char kCsvNodeNameUnavailable[] = "N/A";
 constexpr char kCsvWorkspacePulseMarker[] = "{}";
+constexpr char kCsvTrimWhitespaceChars[] = " \t\n\r\f\v";
 constexpr char kOpSuffixPrefix[] = "-op";
 constexpr size_t kOpSuffixPrefixLength = sizeof(kOpSuffixPrefix) - 1;
 
@@ -254,15 +255,12 @@ std::unordered_map<std::string, size_t> g_name_to_workspace_pulse_bytes;
 size_t g_csv_baseline_bytes = 0;
 
 static std::string TrimCell(const std::string &s) {
-  size_t start_pos = 0;
-  while (start_pos < s.size() && std::isspace(static_cast<unsigned char>(s[start_pos]))) {
-    ++start_pos;
+  const size_t start_pos = s.find_first_not_of(kCsvTrimWhitespaceChars);
+  if (start_pos == std::string::npos) {
+    return "";
   }
-  size_t end_pos = s.size();
-  while (end_pos > start_pos && std::isspace(static_cast<unsigned char>(s[end_pos - 1]))) {
-    --end_pos;
-  }
-  return s.substr(start_pos, end_pos - start_pos);
+  const size_t end_pos = s.find_last_not_of(kCsvTrimWhitespaceChars);
+  return s.substr(start_pos, end_pos - start_pos + 1);
 }
 
 static void SplitCsvLineToCells(const std::string &line, std::vector<std::string> *cols) {
@@ -645,7 +643,6 @@ static bool ResolveCsvRowBinding(const AnfNodePtr &node, size_t output_index, st
   const size_t output_count = TableOutputCount(node);
   const std::string fullname = node->fullname_with_scope();
   const std::string explicit_key = MemoryBlockTableKeyForOutput(fullname, output_index);
-
   if (TryResolveExplicitCsvRowBinding(explicit_key, output_index, output_count, map_key, row_in_vector)) {
     return true;
   }
@@ -899,15 +896,17 @@ static size_t ComputeAliasConsumerHorizon(const AnfNodePtr &node, const HorizonS
   if (!IsViewOrInplaceNode(node)) {
     return result;
   }
-  for (const auto &info : context.user_info_list) {
-    if (info.node.first != node) {
-      continue;
-    }
-    for (const auto &uk : info.users) {
-      result = std::max(result, AliasUserHorizon(uk.first, context, state));
-    }
-  }
-  return result;
+  return std::accumulate(context.user_info_list.begin(), context.user_info_list.end(), result,
+                         [&node, &context, &state](size_t current_result, const auto &info) {
+                           if (info.node.first != node) {
+                             return current_result;
+                           }
+                           return std::accumulate(info.users.begin(), info.users.end(), current_result,
+                                                  [&context, &state](size_t user_result, const auto &uk) {
+                                                    return std::max(user_result,
+                                                                    AliasUserHorizon(uk.first, context, state));
+                                                  });
+                         });
 }
 
 static size_t HorizonFromAliasConsumer(const AnfNodePtr &node, const HorizonSearchContext &context,
@@ -1123,8 +1122,6 @@ static bool LoadMemoryBlockTableForModeling(const CNodePtrList &index_order) {
     g_name_to_g_column_bytes.clear();
     g_name_to_workspace_pulse_bytes.clear();
     g_csv_baseline_bytes = 0;
-    MS_LOG(INFO) << "[HyperOffload] memory_block.csv is unavailable, falling back to static tensor-size estimation. "
-                 << "path=" << path;
     return false;
   }
   if (ApplyProfileBaselineFromFirstExecOrderTableHit(index_order)) {
