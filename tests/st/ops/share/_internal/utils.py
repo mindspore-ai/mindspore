@@ -80,7 +80,6 @@ class OpSampleInput:
         def _transform(x):
             def _transform_to(x):
                 return fn(x)
-
             if getattr(x, '__ms_mutable__', False):
                 return _transform_to(x.__ms_origin_object__)
             elif isinstance(x, ms.Tensor):
@@ -99,16 +98,18 @@ class OpSampleInput:
                 else:
                     return x
 
-        transformed_op_input, transformed_op_args, transformed_op_kwargs = (
+        transformed_op_input, transformed_op_args, transformed_op_kwargs, transformed_op_grad_position = (
             _transform(self.op_input),
             _transform(self.op_args),
             _transform(self.op_kwargs),
+            _transform(self.grad_position),
         )
 
         return OpSampleInput(
             transformed_op_input,
             op_args=transformed_op_args,
             op_kwargs=transformed_op_kwargs,
+            grad_position=transformed_op_grad_position,
             sample_name=self.sample_name + "_transformed_" + method_name,
             loss=self.loss,
         )
