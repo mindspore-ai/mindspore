@@ -28,6 +28,20 @@ if errorlevel 1 (
 SET /p file_path=<%TEMP_FILE%
 del %TEMP_FILE%
 
+echo Checking for running %PROCESS_NAME% process...
+tasklist /FI "IMAGENAME eq %PROCESS_NAME%" 2>NUL | find /I "%PROCESS_NAME%" >NUL
+if %errorlevel%==0 (
+    echo Found running %PROCESS_NAME% process. Attempting to terminate...
+    taskkill /F /IM %PROCESS_NAME% >NUL 2>&1
+    if %errorlevel%==0 (
+        echo %PROCESS_NAME% process terminated successfully.
+    ) else (
+        echo Warning: Failed to terminate %PROCESS_NAME% process.
+    )
+) else (
+    echo No running %PROCESS_NAME% process found.
+)
+
 SET MSYS64_PATH=%file_path:~0,-12%
 SET FFMPEG_DLL_SOURCE_PATH=%MSYS64_PATH%\home\ffmpeg\install_ffmpeg_lib\bin
 SET FFMPEG_COMPILE_SOURCE_PATH=%MSYS64_PATH%\home\ffmpeg\install_ffmpeg_lib
@@ -134,6 +148,7 @@ echo for patch in /home/patch/*.patch >> %MSYS_FFMPEG_PATCH_SHELL%\patch_script.
 echo do echo "Applying $patch" >> %MSYS_FFMPEG_PATCH_SHELL%\patch_script.sh
 echo patch -p1 ^< "$patch" >> %MSYS_FFMPEG_PATCH_SHELL%\patch_script.sh
 echo done >> %MSYS_FFMPEG_PATCH_SHELL%\patch_script.sh
+echo echo "Complete patching." >> %MSYS_FFMPEG_PATCH_SHELL%\patch_script.sh
 
 rem Execute compilation
 start cmd /c "msys2_shell.cmd -mingw64 -no-start -c 'cd /home; rm -rf ffmpeg; mkdir ffmpeg; cd /home/ffmpeg; wget %FFMPEG_DOWNLOAD_PATH%; tar -xzvf ffmpeg-%SOFTWARE_VERSION%.tar.gz; cd /home/shell; bash patch_script.sh; cd /home/ffmpeg; mkdir build; mkdir install_ffmpeg_lib; cd build; ../ffmpeg-%SOFTWARE_VERSION%/configure --prefix=/home/ffmpeg/install_ffmpeg_lib %FFMPEG_COMPILATION_OPTIONS%; make -j4; make install'"
