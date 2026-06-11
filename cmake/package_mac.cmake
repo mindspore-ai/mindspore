@@ -65,16 +65,38 @@ if(ENABLE_CPU AND NOT WIN32)
 endif()
 
 if(MS_BUILD_GRPC)
-    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.1.36.1.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.1.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.15.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.15.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_upb.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb.15.dylib COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.15.0.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.15.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.1.73.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.1.73.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_upb_base_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb_base_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_json_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_json_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_textformat_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_textformat_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mini_descriptor_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mini_descriptor_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_wire_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_wire_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_message_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_message_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mem_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mem_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_lex_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_lex_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_hash_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_hash_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mini_table_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mini_table_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_reflection_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_reflection_lib.48.dylib COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libutf8_range_lib.48.0.0.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libutf8_range_lib.48.dylib COMPONENT mindspore)
 endif()
 
 if(ENABLE_MINDDATA)

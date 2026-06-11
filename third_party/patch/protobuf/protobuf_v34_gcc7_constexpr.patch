@@ -1,0 +1,152 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 99fb86d9d..f065171d5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -17,6 +17,52 @@ if(CMAKE_CXX_STANDARD AND CMAKE_CXX_STANDARD LESS 17)
+   message(FATAL_ERROR "The minimum supported C++ standard is C++ 17")
+ endif()
+
++# MindSpore builds protobuf v34.1 with C++17 on Linux x86 GNU 7.3.0.  That
++# compiler rejects protobuf's generated constexpr default-instance constructors
++# because the wrapped message and repeated-field types have non-trivial
++# destructors.  Strip constexpr only from those ConstantInitialized paths and
++# from the C++ generator templates so generated project protos use the same
++# C++17-compatible form.
++function(protobuf_strip_constexpr_default_instances path)
++  file(READ "${path}" content)
++  set(old_content "${content}")
++
++  string(REGEX REPLACE
++    "explicit constexpr ([A-Za-z0-9_:]+\\(::google::protobuf::internal::ConstantInitialized\\);)"
++    "explicit \\1" content "${content}")
++  string(REPLACE "inline explicit constexpr Impl_(" "inline explicit Impl_(" content "${content}")
++  string(REPLACE "explicit constexpr ImplicitWeakMessage(ConstantInitialized);"
++    "explicit ImplicitWeakMessage(ConstantInitialized);" content "${content}")
++
++  string(REGEX REPLACE
++    "(^|\n)([ ]*)inline constexpr ([A-Za-z0-9_:]+::Impl_::Impl_\\()"
++    "\\1\\2inline \\3" content "${content}")
++  string(REGEX REPLACE
++    "(^|\n)([ ]*)constexpr ([A-Za-z0-9_:]+::[A-Za-z0-9_]+\\(::_pbi::ConstantInitialized\\))"
++    "\\1\\2\\3" content "${content}")
++  string(REGEX REPLACE
++    "(^|\n)([ ]*)constexpr ([A-Za-z0-9_]+DefaultTypeInternal\\(\\))"
++    "\\1\\2\\3" content "${content}")
++  string(REPLACE "constexpr ImplicitWeakMessage::ImplicitWeakMessage(ConstantInitialized)"
++    "ImplicitWeakMessage::ImplicitWeakMessage(ConstantInitialized)" content "${content}")
++  string(REPLACE "constexpr ImplicitWeakMessageDefaultType()"
++    "ImplicitWeakMessageDefaultType()" content "${content}")
++
++  string(REPLACE "constexpr $type$() : _instance" "$type$() : _instance" content "${content}")
++  string(REPLACE "explicit constexpr $classname$($pbi$::ConstantInitialized);"
++    "explicit $classname$($pbi$::ConstantInitialized);" content "${content}")
++  string(REPLACE "inline explicit constexpr Impl_($pbi$::InternalVisibility visibility,"
++    "inline explicit Impl_($pbi$::InternalVisibility visibility," content "${content}")
++  string(REPLACE "constexpr $classname$::$classname$(::_pbi::ConstantInitialized)"
++    "$classname$::$classname$(::_pbi::ConstantInitialized)" content "${content}")
++  string(REPLACE "inline constexpr $classname$::Impl_::Impl_("
++    "inline $classname$::Impl_::Impl_(" content "${content}")
++
++  if(NOT "${content}" STREQUAL "${old_content}")
++    file(WRITE "${path}" "${content}")
++  endif()
++endfunction()
++
+ if(protobuf_DEPRECATED_CMAKE_SUBDIRECTORY_USAGE)
+   if(CMAKE_PROJECT_NAME STREQUAL "protobuf")
+     get_filename_component(CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
+@@ -68,6 +114,18 @@ if(WITH_PROTOC)
+   set_property(TARGET protoc PROPERTY IMPORTED_LOCATION ${WITH_PROTOC})
+ endif()
+ 
++file(GLOB_RECURSE protobuf_constexpr_default_instance_files
++  "${protobuf_SOURCE_DIR}/src/google/protobuf/*.pb.cc"
++  "${protobuf_SOURCE_DIR}/src/google/protobuf/*.pb.h")
++list(APPEND protobuf_constexpr_default_instance_files
++  "${protobuf_SOURCE_DIR}/src/google/protobuf/implicit_weak_message.cc"
++  "${protobuf_SOURCE_DIR}/src/google/protobuf/implicit_weak_message.h"
++  "${protobuf_SOURCE_DIR}/src/google/protobuf/compiler/cpp/file.cc"
++  "${protobuf_SOURCE_DIR}/src/google/protobuf/compiler/cpp/message.cc")
++foreach(protobuf_constexpr_default_instance_file ${protobuf_constexpr_default_instance_files})
++  protobuf_strip_constexpr_default_instances("${protobuf_constexpr_default_instance_file}")
++endforeach()
++
+ # User options
+ include(${protobuf_SOURCE_DIR}/cmake/protobuf-options.cmake)
+ 
+diff --git a/src/google/protobuf/compiler/main.cc b/src/google/protobuf/compiler/main.cc
+index c305ee3c1..54590fb97 100644
+--- a/src/google/protobuf/compiler/main.cc
++++ b/src/google/protobuf/compiler/main.cc
+@@ -8,16 +8,8 @@
+ #include "absl/log/initialize.h"
+ #include "google/protobuf/compiler/command_line_interface.h"
+ #include "google/protobuf/compiler/cpp/generator.h"
+-#include "google/protobuf/compiler/csharp/csharp_generator.h"
+-#include "google/protobuf/compiler/java/generator.h"
+-#include "google/protobuf/compiler/kotlin/generator.h"
+-#include "google/protobuf/compiler/objectivec/generator.h"
+-#include "google/protobuf/compiler/php/php_generator.h"
+ #include "google/protobuf/compiler/python/generator.h"
+ #include "google/protobuf/compiler/python/pyi_generator.h"
+-#include "google/protobuf/compiler/ruby/rbs_generator.h"
+-#include "google/protobuf/compiler/ruby/ruby_generator.h"
+-#include "google/protobuf/compiler/rust/generator.h"
+ #ifdef GOOGLE_PROTOBUF_RUNTIME_INCLUDE_BASE
+ #include "google/protobuf/compiler/code_generator_lite.h"
+ #endif
+@@ -60,18 +52,6 @@ int ProtobufMain(int argc, char* argv[]) {
+   cpp_generator.set_opensource_runtime(true);
+   cpp_generator.set_runtime_include_base(GOOGLE_PROTOBUF_RUNTIME_INCLUDE_BASE);
+ #endif
+-
+-  // Proto2 Java
+-  java::JavaGenerator java_generator;
+-  cli.RegisterGenerator("--java_out", "--java_opt", &java_generator,
+-                        "Generate Java source file.");
+-
+-  // Proto2 Kotlin
+-  kotlin::KotlinGenerator kt_generator;
+-  cli.RegisterGenerator("--kotlin_out", "--kotlin_opt", &kt_generator,
+-                        "Generate Kotlin file.");
+-
+-
+   // Proto2 Python
+   python::Generator py_generator;
+   cli.RegisterGenerator("--python_out", "--python_opt", &py_generator,
+@@ -85,35 +65,6 @@ int ProtobufMain(int argc, char* argv[]) {
+   python::PyiGenerator pyi_generator;
+   cli.RegisterGenerator("--pyi_out", &pyi_generator,
+                         "Generate python pyi stub.");
+-
+-  // PHP
+-  php::Generator php_generator;
+-  cli.RegisterGenerator("--php_out", "--php_opt", &php_generator,
+-                        "Generate PHP source file.");
+-
+-  // Ruby
+-  ruby::Generator rb_generator;
+-  cli.RegisterGenerator("--ruby_out", "--ruby_opt", &rb_generator,
+-                        "Generate Ruby source file.");
+-
+-  ruby::RBSGenerator rbs_generator;
+-  cli.RegisterGenerator("--rbs_out", "--rbs_opt", &rbs_generator,
+-                        "Generate RBS type definition.");
+-
+-  // CSharp
+-  csharp::Generator csharp_generator;
+-  cli.RegisterGenerator("--csharp_out", "--csharp_opt", &csharp_generator,
+-                        "Generate C# source file.");
+-
+-  // Objective-C
+-  objectivec::ObjectiveCGenerator objc_generator;
+-  cli.RegisterGenerator("--objc_out", "--objc_opt", &objc_generator,
+-                        "Generate Objective-C header and source.");
+-
+-  // Rust
+-  rust::RustGenerator rust_generator;
+-  cli.RegisterGenerator("--rust_out", "--rust_opt", &rust_generator,
+-                        "Generate Rust sources.");
+ #ifdef DISABLE_PROTOC_CONFIG
+   auto cleanup = internal::DisableAllowlistInternalOnly();
+ #endif  // DISABLE_PROTOC_CONFIG

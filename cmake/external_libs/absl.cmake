@@ -7,11 +7,11 @@ if(ENABLE_GITEE_EULER)
     execute_process(COMMAND tar -xf ${ABSL_SRC}/abseil-cpp-20210324.2.tar.gz --strip-components 1 -C ${ABSL_SRC})
 else()
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/abseil-cpp/repository/archive/20210324.2.tar.gz")
-    set(SHA256 "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f")
+    set(REQ_URL "https://gitee.com/mirrors/abseil-cpp/repository/archive/20250127.1.tar.gz")
+    set(SHA256 "b396401fd29e2e679cace77867481d388c807671dc2acc602a0259eeb79b7811")
 else()
-    set(REQ_URL "https://github.com/abseil/abseil-cpp/archive/20210324.2.tar.gz")
-    set(SHA256 "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f")
+    set(REQ_URL "https://github.com/abseil/abseil-cpp/archive/20250127.1.tar.gz")
+    set(SHA256 "b396401fd29e2e679cace77867481d388c807671dc2acc602a0259eeb79b7811")
 endif()
 endif()
 
@@ -20,14 +20,18 @@ if(NOT ENABLE_GLIBCXX)
 endif()
 
 mindspore_add_pkg(absl
-        VER 20210324.2
+        VER 20250127.1
         LIBS absl_strings absl_throw_delegate absl_raw_logging_internal absl_int128 absl_bad_optional_access
+        absl_log_internal_check_op
         URL ${REQ_URL}
         SHA256 ${SHA256}
         CMAKE_OPTION
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=TRUE
-        -DCMAKE_CXX_STANDARD=11
+        -DCMAKE_CXX_STANDARD=17
+        -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        -DCMAKE_CXX_EXTENSIONS=OFF
+        -DCMAKE_INSTALL_LIBDIR=lib
         )
 
 include_directories(${absl_INC})
@@ -37,3 +41,4 @@ add_library(mindspore::absl_throw_delegate ALIAS absl::absl_throw_delegate)
 add_library(mindspore::absl_raw_logging_internal ALIAS absl::absl_raw_logging_internal)
 add_library(mindspore::absl_int128 ALIAS absl::absl_int128)
 add_library(mindspore::absl_bad_optional_access ALIAS absl::absl_bad_optional_access)
+add_library(mindspore::absl_log_internal_check_op ALIAS absl::absl_log_internal_check_op)

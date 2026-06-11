@@ -36,48 +36,106 @@ string(REPLACE " -Wall" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 if(ENABLE_GITEE OR ENABLE_GITEE_EULER) # Channel GITEE_EULER is NOT supported now, use GITEE instead.
-    set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v3.13.0.tar.gz")
-    set(SHA256 "ab9b39e7053a6fb06b01bf75fb6ec6a71a1ada5a5f8e2446f927336e97b9e7bb")
+    set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v34.1.tar.gz")
+    set(SHA256 "25a88b23229a878989336faeedaab4cf75dd124ad2de608bc925892ab58797cf")
 else()
-    set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.tar.gz")
-    set(SHA256 "9b4ee22c250fe31b16f1a24d61467e40780a3fbb9b91c3b65be2a376ed913a1a")
+    set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v34.1.tar.gz")
+    set(SHA256 "a83103b7ed3afaeedee9a212c8f65825444f58144f5e075b73c83f2b4ff27b62")
 endif()
 
 set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
+set(PROTOBUF_PATCHES)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+    set(PROTOBUF_PATCHES ${PROTOBUF_PATCH_ROOT}/protobuf_v34_gcc7_constexpr.patch)
+endif()
 set(PROTOBUF_CMAKE_POLICY_OPTION)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
     set(PROTOBUF_CMAKE_POLICY_OPTION -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
 endif()
 
+if(EXISTS ${absl_ROOT}/lib64)
+    set(_FINDPACKAGE_ABSL_CONFIG_DIR "${absl_ROOT}/lib64/cmake/absl")
+else()
+    set(_FINDPACKAGE_ABSL_CONFIG_DIR "${absl_ROOT}/lib/cmake/absl")
+endif()
+message("protobuf using absl_DIR : " ${_FINDPACKAGE_ABSL_CONFIG_DIR})
+
 if(MSVC)
 mindspore_add_pkg(protobuf
-        VER 3.13.0
+        VER 34.1
         LIBS protobuf
         EXE protoc
         URL ${REQ_URL}
         SHA256 ${SHA256}
-        CMAKE_PATH cmake/
+        PATCHES ${PROTOBUF_PATCHES}
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             ${PROTOBUF_CMAKE_POLICY_OPTION}
+            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_EXTENSIONS=OFF
             -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
+            -Dprotobuf_ABSL_PROVIDER:STRING=package
+            -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR})
 else()
 mindspore_add_pkg(protobuf
-        VER 3.13.0
+        VER 34.1
         LIBS protobuf
         EXE protoc
         URL ${REQ_URL}
         SHA256 ${SHA256}
-        CMAKE_PATH cmake/
+        PATCHES ${PROTOBUF_PATCHES}
         CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
             ${PROTOBUF_CMAKE_POLICY_OPTION}
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch
-        PATCHES ${PROTOBUF_PATCH_ROOT}/protobuf.patch001)
+            -DCMAKE_CXX_STANDARD=17
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON
+            -DCMAKE_CXX_EXTENSIONS=OFF
+            -Dprotobuf_ABSL_PROVIDER:STRING=package
+            -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR})
 endif()
 include_directories(${protobuf_INC})
 include_directories(${CMAKE_BINARY_DIR}/proto_py)
+
+# protobuf 34.1 statically depends on absl and utf8_range; add them as transitive link deps
+if(MSVC)
+    # Windows absl libs are named absl_*.lib (no leading "lib")
+    file(GLOB _PROTOBUF_ABSL_LIBS "${absl_ROOT}/lib/absl_*.lib")
+    set(_PROTOBUF_UTF8_EXT ".lib")
+else()
+    file(GLOB _PROTOBUF_ABSL_LIBS "${absl_ROOT}/lib/libabsl_*.a")
+    set(_PROTOBUF_UTF8_EXT ".a")
+endif()
+if(EXISTS "${protobuf_DIRPATH}/lib64/libutf8_range${_PROTOBUF_UTF8_EXT}")
+    set(_PROTOBUF_UTF8_DIR "${protobuf_DIRPATH}/lib64")
+else()
+    set(_PROTOBUF_UTF8_DIR "${protobuf_DIRPATH}/lib")
+endif()
+
+if(APPLE)
+    set(_PROTOBUF_UTF8_LIBS "${_PROTOBUF_UTF8_DIR}/libutf8_validity${_PROTOBUF_UTF8_EXT}")
+    find_library(_PROTOBUF_COREFOUNDATION_LIB CoreFoundation)
+    if(_PROTOBUF_COREFOUNDATION_LIB)
+        list(APPEND _PROTOBUF_PLATFORM_LIBS ${_PROTOBUF_COREFOUNDATION_LIB})
+    endif()
+else()
+    set(_PROTOBUF_UTF8_LIBS
+    "${_PROTOBUF_UTF8_DIR}/libutf8_range${_PROTOBUF_UTF8_EXT}"
+    "${_PROTOBUF_UTF8_DIR}/libutf8_validity${_PROTOBUF_UTF8_EXT}")
+endif()
+
+if(NOT MSVC AND NOT APPLE)
+    set(_PROTOBUF_LINK_LIBS
+        "-Wl,--start-group"
+        ${_PROTOBUF_ABSL_LIBS}
+        ${_PROTOBUF_UTF8_LIBS}
+        ${_PROTOBUF_PLATFORM_LIBS}
+        "-Wl,--end-group")
+    set_target_properties(protobuf::protobuf PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${_PROTOBUF_LINK_LIBS}")
+else()
+    set_target_properties(protobuf::protobuf PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${_PROTOBUF_ABSL_LIBS};${_PROTOBUF_UTF8_LIBS};${_PROTOBUF_PLATFORM_LIBS}")
+endif()
+
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)
 set(CMAKE_CXX_FLAGS  ${_ms_tmp_CMAKE_CXX_FLAGS})
 # recover original value
@@ -87,7 +145,7 @@ endif()
 
 if(ENABLE_NATIVE_PROTOBUF)
     set(PROTOC ${native_protobuffer_path}/bin/protoc)
-    set(PROTOBUF_LIB ${native_protobuffer_path}/lib/libprotobuf.so.3.13.0.0)
+    set(PROTOBUF_LIB ${native_protobuffer_path}/lib/libprotobuf.so.34.1.0)
     set(protobuf_LIBPATH ${native_protobuffer_path}/lib)
     set(protobuf_INC ${native_protobuffer_path}/include)
 

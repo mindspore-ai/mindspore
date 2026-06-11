@@ -1,7 +1,6 @@
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 1b3af04..9190430 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
+diff -Npur sentencepiece-0.1.98/CMakeLists.txt sentencepiece-0.1.98-change/CMakeLists.txt
+--- sentencepiece-0.1.98/CMakeLists.txt	2023-04-12 15:41:58.000000000 +0800
++++ sentencepiece-0.1.98-change/CMakeLists.txt	2026-06-02 16:44:26.181244000 +0800
 @@ -76,10 +76,10 @@ endif()
  if (MSVC)
    add_definitions("/wd4267 /wd4244 /wd4305 /Zc:strictStrings /utf-8")
@@ -17,14 +16,39 @@ index 1b3af04..9190430 100644
    endif()
  endif()
  
-diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 1c7726e..7974f17 100644
---- a/src/CMakeLists.txt
-+++ b/src/CMakeLists.txt
-@@ -11,6 +11,41 @@
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@@ -147,7 +147,7 @@ if (SPM_BUILD_TEST)
+ endif()
+ 
+ if (SPM_USE_EXTERNAL_ABSL)
+- add_subdirectory(third_party/abseil-cpp)
++ find_package(absl REQUIRED CONFIG)
+ endif()
+ 
+ add_subdirectory(src)
+diff -Npur sentencepiece-0.1.98/src/CMakeLists.txt sentencepiece-0.1.98-change/src/CMakeLists.txt
+--- sentencepiece-0.1.98/src/CMakeLists.txt	2023-04-12 15:41:58.000000000 +0800
++++ sentencepiece-0.1.98-change/src/CMakeLists.txt	2026-06-03 10:53:51.234521000 +0800
+@@ -12,6 +12,59 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.!
+ 
++# Replace bundled absl stubs with symlinks to real absl to avoid header conflicts
++# with protobuf v34.1 which depends on abseil 20240722.
++# Keep random/ stubs intact - they define sentencepiece-specific types (SharedBitGen).
++if (DEFINED ABSL_INC AND EXISTS ${ABSL_INC}/absl)
++    set(_spm_absl_dir ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/absl)
++    # Replace all absl subdirs except random/ with copies from the external absl
++    foreach(_subdir base algorithm container crc log functional time flags profiling debugging hash memory meta numeric strings synchronization types utility status copts)
++        if (EXISTS ${ABSL_INC}/absl/${_subdir})
++            file(REMOVE_RECURSE ${_spm_absl_dir}/${_subdir})
++            execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory
++                ${ABSL_INC}/absl/${_subdir} ${_spm_absl_dir}/${_subdir})
++        endif()
++    endforeach()
++    message(STATUS "Replaced bundled absl stubs with copies from ${ABSL_INC}/absl")
++endif()
++
++
 +function(protobuf_generate c_var h_var)
 +  if(NOT ARGN)
 +    message(SEND_ERROR "Error: ms_protobuf_generate() called without any proto files")
@@ -60,10 +84,11 @@ index 1c7726e..7974f17 100644
 +  set(${h_var} ${${h_var}} PARENT_SCOPE)
 +
 +endfunction()
- 
++
  if (SPM_USE_EXTERNAL_ABSL)
    set(ABSL_FLAGS_SRCS "")
-@@ -68,12 +103,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
+   set(ABSL_STRINGS_SRCS "")
+@@ -68,12 +121,9 @@ if (SPM_USE_BUILTIN_PROTOBUF)
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/protobuf-lite)
    include_directories(builtin_pb)
  else()
@@ -79,24 +104,22 @@ index 1c7726e..7974f17 100644
    if (MSVC)
      add_definitions("/D_USE_EXTERNAL_PROTOBUF")
    else()
-@@ -225,11 +257,14 @@ endif()
+@@ -225,11 +275,12 @@ endif()
  add_library(sentencepiece-static STATIC ${SPM_SRCS})
  add_library(sentencepiece_train-static STATIC ${SPM_TRAIN_SRCS})
  
 -target_link_libraries(sentencepiece-static INTERFACE ${SPM_LIBS})
-+MESSAGE("============= ${PROTOBUF_INC}")
-+find_library(PROTO_LIB NAMES "libprotobuf.lib" PATHS ${PROTOBUF_INC}/../lib NO_DEFAULT_PATH)
-+
-+target_link_libraries(sentencepiece-static INTERFACE ${PROTO_LIB} ${SPM_LIBS})
++find_package(Protobuf CONFIG REQUIRED)
++target_link_libraries(sentencepiece-static INTERFACE protobuf::libprotobuf ${SPM_LIBS})
  target_link_libraries(sentencepiece_train-static INTERFACE sentencepiece-static ${SPM_LIBS})
  
  if (SPM_ENABLE_SHARED)
 -  target_link_libraries(sentencepiece ${SPM_LIBS})
-+  target_link_libraries(sentencepiece ${SPM_LIBS} ${PROTO_LIB})
++  target_link_libraries(sentencepiece ${SPM_LIBS} protobuf::libprotobuf)
    target_link_libraries(sentencepiece_train ${SPM_LIBS} sentencepiece)
    set(SPM_INSTALLTARGETS sentencepiece sentencepiece_train sentencepiece-static sentencepiece_train-static)
    set_target_properties(sentencepiece sentencepiece_train PROPERTIES SOVERSION 0 VERSION 0.0.0)
-@@ -308,7 +343,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
+@@ -308,7 +359,7 @@ install(TARGETS ${SPM_INSTALLTARGETS}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
  endif()
  

@@ -18,6 +18,7 @@
 #include <event2/buffer.h>
 #include <event2/buffer_compat.h>
 #include <event2/bufferevent.h>
+#include <event2/bufferevent_ssl.h>
 #include <event2/event.h>
 #include <ifaddrs.h>
 #include <net/if.h>

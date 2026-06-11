@@ -1260,7 +1260,7 @@ def _load_ckpt_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, f
                 continue
             if use_choice_func and not choice_func(element.tag):
                 continue
-            if element.tensor.ByteSize() == 0:
+            if not element.HasField('tensor'):
                 _load_map_parameter(checkpoint_list, element, element_id, map_data_list, map_shape_list,
                                     parameter_dict)
                 if element.tag in parameter_dict:

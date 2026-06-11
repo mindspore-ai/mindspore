@@ -159,16 +159,38 @@ if(ENABLE_CPU)
 endif()
 
 if(MS_BUILD_GRPC)
-    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.36.1
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.so.1 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.15.0.0
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.so.15 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.15.0.0
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.so.15 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_upb.so.15.0.0
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb.so.15 COMPONENT mindspore)
-    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.15.0.0
-            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.so.15 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.73.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc++.so.1.73 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_grpc.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_gpr.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_upb_base_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_upb_base_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_address_sorting.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_json_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_json_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_textformat_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_textformat_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mini_descriptor_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mini_descriptor_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_wire_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_wire_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_message_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_message_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mem_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mem_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_lex_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_lex_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_hash_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_hash_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_mini_table_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_mini_table_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libupb_reflection_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libupb_reflection_lib.so.48 COMPONENT mindspore)
+    install(FILES ${grpc_LIBPATH}/libutf8_range_lib.so.48.0.0
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libutf8_range_lib.so.48 COMPONENT mindspore)
 endif()
 
 ## Public header files for mindapi
