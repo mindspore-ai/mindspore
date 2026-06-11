@@ -428,13 +428,12 @@ class CrossEntropyLoss(Cell):
         This is an experimental API that is subject to change or deletion.
 
     Note:
-        Dynamic shape, dynamic rank and variable constant input are not supported in `strict graph mode
-        (jit_syntax_level=mindspore.STRICT)
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_.
+        Dynamic shape, dynamic rank and variable constant input are not supported in
+        `strict graph mode (jit_syntax_level=mindspore.STRICT) <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_.
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not ``None``, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
+            If not ``None``, the shape is :math:`(C,)`, supported data types include float16, float32 or bfloat16.
             Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
@@ -452,14 +451,17 @@ class CrossEntropyLoss(Cell):
     Inputs:
         - **input** (Tensor) - :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
           in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
-          `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16.
+          `input` is expected to be unnormalized logits, supported data types include float16, float32 or bfloat16.
         - **target** (Tensor) - For class indices, tensor of shape :math:`()`, :math:`(N)` or
           :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32 or int64. For probabilities, tensor of shape
-          :math:`(N,)` , :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32
-          or bfloat16.
+          :math:`(N,)` , :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , supported data types include float16,
+          float32 or bfloat16.
 
     Outputs:
-        Tensor, the data type is the same as `input` .
+        Tensor.
+
+        - For class indices, the output data type is the same as `input`.
+        - For probabilities, the output data type is float32.
 
     Supported Platforms:
         ``Ascend``
@@ -969,8 +971,8 @@ class KLDivLoss(Cell):
 
     Inputs:
         - **input** (Tensor) - The input Tensor. The data type must be float16, float32 or bfloat16.
-        - **target** (Tensor) - The target Tensor which has the same type as `input`. The shapes of `target` and `input`
-          should be broadcastable.
+        - **target** (Tensor) - The target Tensor. The data type must be float16, float32 or bfloat16. The shapes of
+          `target` and `input` should be broadcastable.
 
     Outputs:
         Tensor, has the same dtype as `input`. If `reduction` is ``'none'``, then output has the shape as broadcast
@@ -979,7 +981,6 @@ class KLDivLoss(Cell):
     Raises:
         TypeError: If neither `input` nor `target` is a Tensor.
         TypeError: If dtype of `input` or `target` is not float16, float32 or bfloat16.
-        TypeError: If dtype of `target` is not the same as `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``, ``'batchmean'``.
         ValueError: If shapes of `target` and `input` can not be broadcastable.
 
@@ -1051,10 +1052,10 @@ class UpsamplingNearest2d(Cell):
         >>> import numpy as np
         >>> from mindspore import Tensor, nn
         >>> from mindspore import dtype as mstype
-        >>> inut = Tensor(np.arange(12).astype(np.float32).reshape(1, 2, 2, 3))
+        >>> input = Tensor(np.arange(12).astype(np.float32).reshape(1, 2, 2, 3))
         >>> size = [4, 4]
         >>> net = nn.UpsamplingNearest2d(size, None)
-        >>> output = net(inut)
+        >>> output = net(input)
         >>> print(output)
         [[[[0., 0., 1., 2.],
             [0., 0., 1., 2.],

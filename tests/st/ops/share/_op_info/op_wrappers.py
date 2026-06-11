@@ -737,17 +737,18 @@ def tensor_nn_functional_dropout_ms_decorator(op):
         if 0 < p < 1:
             if training:
                 if op_input.dtype.is_floating_point and op_input.dtype != ms.float64 and op_input.size != 0:
+                    repeat_count = 400
                     sizes = 0
                     m1 = None
                     input_clone = None
-                    for _ in range(100):
+                    for _ in range(repeat_count):
                         input_clone = op_input.clone()
                         m1 = op(input_clone, p=p, training=training, inplace=inplace)
                         sizes = sizes + (m1 == 0).sum().item()
                     mask = (m1 == 0).astype(op_input.dtype)
                     modified_input = op_input * (1 - mask)
                     result = (1 / (1 - p) * modified_input - m1,
-                              ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
+                              ms.Tensor(sizes / (repeat_count * op_input.size), dtype=op_input.dtype))
                     if inplace:
                         result = result + (m1 - input_clone,)
                     return result
@@ -760,17 +761,18 @@ def tensor_nn_functional_dropout_torch_decorator(op):
         if 0 < p < 1:
             if training:
                 if op_input.dtype.is_floating_point and op_input.dtype != torch.float64 and op_input.numel() != 0:
+                    repeat_count = 400
                     sizes = 0
                     t1 = None
                     input_clone = None
-                    for _ in range(100):
+                    for _ in range(repeat_count):
                         input_clone = op_input.clone()
                         t1 = op(input_clone, p=p, training=training, inplace=inplace)
                         sizes = sizes + (t1 == 0).sum().item()
                     mask = (t1 == 0).to(op_input.dtype)
                     modified_input = op_input * (1 - mask)
                     result = (1 / (1 - p) * modified_input - t1,
-                              torch.tensor(sizes / (100 * op_input.numel()), dtype=op_input.dtype))
+                              torch.tensor(sizes / (repeat_count * op_input.numel()), dtype=op_input.dtype))
                     if inplace:
                         result = result + (t1 - input_clone,)
                     return result
@@ -1227,6 +1229,8 @@ def mint_MaxUnpool2d_ms(input, indices, kernel_size, stride=None, padding=0, out
     return net(input, indices, output_size)
 
 def mint_MaxUnpool2d_torch(input, indices, kernel_size, stride=None, padding=0, output_size=None):
+    if output_size is not None and len(input.shape) == 3 and len(output_size) == 3:
+        output_size = output_size[-2:]
     net = torch.nn.MaxUnpool2d(kernel_size=kernel_size, stride=stride, padding=padding)
     return net(input, indices, output_size)
 
@@ -1395,17 +1399,18 @@ def ms_nn_dropout_decorator(op_class):
             net.set_train()
             if 0 < p < 1:
                 if op_input.dtype.is_floating_point and op_input.dtype != ms.float64 and op_input.size != 0:
+                    repeat_count = 400
                     sizes = 0
                     m1 = None
                     input_clone = None
-                    for _ in range(100):
+                    for _ in range(repeat_count):
                         input_clone = op_input.clone()
                         m1 = net(input_clone)
                         sizes = sizes + (m1 == 0).sum().item()
                     mask = (m1 == 0).astype(op_input.dtype)
                     modified_input = op_input * (1 - mask)
                     result = (1 / (1 - p) * modified_input - m1,
-                              ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
+                              ms.Tensor(sizes / (repeat_count * op_input.size), dtype=op_input.dtype))
                     if inplace:
                         result = result + (m1 - input_clone,)
                     return result
@@ -1421,17 +1426,18 @@ def torch_nn_dropout_decorator(op_class):
         if training:
             if 0 < p < 1:
                 if op_input.dtype.is_floating_point and op_input.dtype != torch.float64 and op_input.numel() != 0:
+                    repeat_count = 400
                     sizes = 0
                     t1 = None
                     input_clone = None
-                    for _ in range(100):
+                    for _ in range(repeat_count):
                         input_clone = op_input.clone()
                         t1 = net(input_clone)
                         sizes = sizes + (t1 == 0).sum().item()
                     mask = (t1 == 0).to(op_input.dtype)
                     modified_input = op_input * (1 - mask)
                     result = (1 / (1 - p) * modified_input - t1,
-                              torch.tensor(sizes / (100 * op_input.numel()), dtype=op_input.dtype))
+                              torch.tensor(sizes / (repeat_count * op_input.numel()), dtype=op_input.dtype))
                     if inplace:
                         result = result + (t1 - input_clone,)
                     return result
@@ -1440,7 +1446,6 @@ def torch_nn_dropout_decorator(op_class):
             net.eval()
         return net(op_input)
     return _dropout_func
-
 def mint_nn_softshrink_ms(op_input, lambd=0.5):
     softshrink = mint.nn.Softshrink(lambd=lambd)
     return softshrink(op_input)
@@ -1456,14 +1461,6 @@ def mint_nn_threshold_ms(op_input, threshold, value, inplace=False):
 def mint_nn_threshold_torch(op_input, threshold, value, inplace=False):
     threshold = torch.nn.Threshold(threshold=threshold, value=value, inplace=inplace)
     return threshold(op_input.clone())
-
-def mint_nn_bcewithlogitsloss_ms(op_input, op_target, weight=None, reduction='mean', pos_weight=None):
-    bcewithlogitsloss = mint.nn.BCEWithLogitsLoss(weight=weight, reduction=reduction, pos_weight=pos_weight)
-    return bcewithlogitsloss(op_input, op_target)
-
-def mint_nn_bcewithlogitsloss_torch(op_input, op_target, weight=None, reduction='mean', pos_weight=None):
-    bcewithlogitsloss = torch.nn.BCEWithLogitsLoss(weight=weight, reduction=reduction, pos_weight=pos_weight)
-    return bcewithlogitsloss(op_input, op_target)
 
 def mint_nn_cosineembeddingloss_ms(op_input, op_target, target, margin=0.0, reduction='mean'):
     cosineembeddingloss = mint.nn.CosineEmbeddingLoss(margin=margin, reduction=reduction)
@@ -1636,3 +1633,67 @@ def mint_nn_bceloss_torch(op_input, target, weight=None, reduction='mean'):
     loss = torch.nn.BCELoss(weight=weight, reduction=reduction)
     result = loss(op_input, target)
     return result
+
+def mint_MaxPool2d_ms(input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False, return_indices=False):
+    net = mint.nn.MaxPool2d(kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation,
+                            return_indices=return_indices, ceil_mode=ceil_mode)
+    return net(input)
+
+def mint_MaxPool2d_torch(input, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=False,
+                         return_indices=False):
+    net = torch.nn.MaxPool2d(kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation,
+                             return_indices=return_indices, ceil_mode=ceil_mode)
+    return net(input)
+
+
+def _cross_entropy_cast_torch_target(target):
+    if torch.is_floating_point(target):
+        return target
+    return target.long()
+
+
+def mint_nn_functional_cross_entropy_ms(input, target, weight=None, ignore_index=-100,
+                                        reduction='mean', label_smoothing=0.0):
+    return mint.nn.functional.cross_entropy(input, target, weight, ignore_index, reduction, label_smoothing)
+
+
+def mint_nn_functional_cross_entropy_torch(input, target, weight=None, ignore_index=-100,
+                                           reduction='mean', label_smoothing=0.0):
+    target = _cross_entropy_cast_torch_target(target)
+    return torch_F.cross_entropy(
+        input,
+        target,
+        weight=weight,
+        ignore_index=ignore_index,
+        reduction=reduction,
+        label_smoothing=label_smoothing,
+    )
+
+
+def mint_BCEWithLogitsLoss_ms(input, target, weight=None, reduction='mean', pos_weight=None):
+    return mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)
+
+
+def mint_BCEWithLogitsLoss_torch(input, target, weight=None, reduction='mean', pos_weight=None):
+    return torch_F.binary_cross_entropy_with_logits(input, target, weight=weight,
+                                                    reduction=reduction, pos_weight=pos_weight)
+
+
+def mint_BCEWithLogitsLoss_ms_grad(input, target, *args):
+    weight = None
+    reduction = 'mean'
+    pos_weight = None
+    for arg in args:
+        if isinstance(arg, str):
+            reduction = arg
+        elif weight is None:
+            weight = arg
+        elif pos_weight is None:
+            pos_weight = arg
+        else:
+            raise TypeError(f"Unexpected extra argument for mint_BCEWithLogitsLoss_ms_grad: {arg}")
+    return mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)
+
+
+def mint_binary_cross_entropy_with_logits_ms(input, target, weight=None, reduction='mean', pos_weight=None):
+    return mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)

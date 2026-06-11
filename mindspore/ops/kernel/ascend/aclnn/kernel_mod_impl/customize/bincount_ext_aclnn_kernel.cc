@@ -26,6 +26,23 @@ namespace mindspore {
 namespace kernel {
 namespace bincount_ext {
 namespace {
+std::shared_ptr<KernelTensor> CreateTempKernelTensor(const KernelTensor *base_tensor, const ShapeVector &shape_vector,
+                                                     const TypePtr &type_ptr) {
+  MS_EXCEPTION_IF_NULL(base_tensor);
+  auto tensor = std::make_shared<KernelTensor>();
+  tensor->SetType(type_ptr);
+  tensor->SetShape(std::make_shared<abstract::TensorShape>(shape_vector));
+  tensor->SetDeviceType(base_tensor->GetDeviceType());
+  tensor->set_stream_id(base_tensor->stream_id());
+  tensor->set_alloc_stream_id(base_tensor->alloc_stream_id());
+  tensor->set_format(base_tensor->format());
+  return tensor;
+}
+
+device::DeviceContext *GetAscendDeviceContext() {
+  return device::DeviceContextManager::GetInstance().GetDeviceContext("Ascend").get();
+}
+
 int64_t GetValueFromTensorToInt64(KernelTensor *tensor) {
   auto data_type = tensor->dtype_id();
   switch (data_type) {
@@ -55,6 +72,26 @@ void SetKernelTensorSize(KernelTensor *tensor) {
   size_t size = SizeOf(tensor->GetShapeVector()) * type_size;
   tensor->set_size(size);
 }
+
+void EnsureOutputDeviceMemory(KernelTensor *tensor, device::DeviceContext *device_context, void *stream_ptr,
+                              size_t previous_size) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto device_address = tensor->device_address();
+  MS_EXCEPTION_IF_NULL(device_address);
+  auto current_size = device_address->GetSize();
+  if (device_address->GetPtr() != nullptr && previous_size >= current_size) {
+    return;
+  }
+
+  if (device_address->GetPtr() != nullptr) {
+    device_context->device_res_manager_->FreeMemory(device_address.get());
+  }
+  auto stream_id = device::ascend::AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get(), stream_id)) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed for BincountExt output, size: " << current_size;
+  }
+}
 }  // namespace
 
 void BincountExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
@@ -67,15 +104,18 @@ void BincountExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inpu
 
   min_length_ = device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
   outputs[kIndex0]->SetShapeVector({min_length_});
+  outputs[kIndex0]->set_tensor_storage_info(nullptr);
   GetWorkspaceForResizeBincount(inputs[kIndex0], inputs[kIndex1], min_length_, outputs[kIndex0]);
   // Check if null tensor
   if (!(input_dim_ == 1 && input_numel_ == 0)) {
-    min_output_tensor_ = outputs[0];
-    max_output_tensor_ = outputs[0];
-    SetKernelTensorShapeAndType(min_output_tensor_, inputs[kIndex2]->GetShapeVector(), inputs[kIndex0]->GetType());
-    SetKernelTensorShapeAndType(max_output_tensor_, inputs[kIndex2]->GetShapeVector(), inputs[kIndex0]->GetType());
-    GetWorkspaceForResizeMin(inputs[kIndex0], min_output_tensor_);
-    GetWorkspaceForResizeMax(inputs[kIndex0], max_output_tensor_);
+    min_output_tensor_ =
+      CreateTempKernelTensor(outputs[kIndex0], inputs[kIndex2]->GetShapeVector(), inputs[kIndex0]->GetType());
+    max_output_tensor_ =
+      CreateTempKernelTensor(outputs[kIndex0], inputs[kIndex2]->GetShapeVector(), inputs[kIndex0]->GetType());
+    SetKernelTensorSize(min_output_tensor_.get());
+    SetKernelTensorSize(max_output_tensor_.get());
+    GetWorkspaceForResizeMin(inputs[kIndex0], min_output_tensor_.get());
+    GetWorkspaceForResizeMax(inputs[kIndex0], max_output_tensor_.get());
   }
 }
 
@@ -88,22 +128,30 @@ bool BincountExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
 
   // Check if null tensor
   if (!(input_dim_ == 1 && input_numel_ == 0)) {
+    auto device_context = GetAscendDeviceContext();
+
     // Calculate min value to avoid negative integer
-    RunOpMin(stream_ptr, workspace, inputs[kIndex0], min_output_tensor_);
-    SetKernelTensorSize(min_output_tensor_);
-    auto min_value = GetValueFromTensorToInt64(min_output_tensor_);
+    auto min_output_mem = std::make_shared<kernel::MemBlock>(device_context, min_output_tensor_->size(), stream_ptr);
+    min_output_tensor_->set_device_ptr(min_output_mem->ptr_);
+    RunOpMin(stream_ptr, workspace, inputs[kIndex0], min_output_tensor_.get());
+    auto min_value = GetValueFromTensorToInt64(min_output_tensor_.get());
     if (min_value < 0) {
       MS_LOG(EXCEPTION) << "Bincount only supports non-negative input values.";
     }
 
     // Calculate max value for output shape
-    RunOpMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_);
-    SetKernelTensorSize(max_output_tensor_);
-    auto max_value = GetValueFromTensorToInt64(max_output_tensor_);
+    auto max_output_mem = std::make_shared<kernel::MemBlock>(device_context, max_output_tensor_->size(), stream_ptr);
+    max_output_tensor_->set_device_ptr(max_output_mem->ptr_);
+    RunOpMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_.get());
+    auto max_value = GetValueFromTensorToInt64(max_output_tensor_.get());
 
     ouptut_shape = max_value < min_length_ ? min_length_ : (max_value + 1);
+    auto previous_output_size = outputs[kIndex0]->size();
     SetKernelTensorShapeAndType(outputs[kIndex0], {ouptut_shape}, origin_output_typeptr_);
     SetKernelTensorSize(outputs[kIndex0]);
+    outputs[kIndex0]->set_tensor_storage_info(nullptr);
+    SetOutputSizeList({outputs[kIndex0]->size()});
+    EnsureOutputDeviceMemory(outputs[kIndex0], device_context, stream_ptr, previous_output_size);
   }
   // Update workspace and run aclnnBincount
   auto res = GEN_EXECUTOR_CUST(op_type_Bincount_, inputs[kIndex0], inputs[kIndex1], ouptut_shape, outputs[kIndex0]);
@@ -139,6 +187,8 @@ bool BincountExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
 void BincountExtAscend::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
   outputs[kIndex0]->SetShapeVector(output_shape_[kIndex0]);
+  SetKernelTensorSize(outputs[kIndex0]);
+  outputs[kIndex0]->set_tensor_storage_info(nullptr);
 }
 
 MS_ACLNN_KERNEL_FACTORY_REG(BincountExt, BincountExtAscend);

@@ -109,7 +109,8 @@ ShapeArray MaxPoolWithIndicesFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                   const InferInfoPtrList &input_infos) const {
   const size_t kAttrH = 0;
   const size_t kAttrW = 1;
-  const int64_t kInputShapeSize = 4;
+  const int64_t kInputShapeSizeMin = 3;
+  const int64_t kInputShapeSizeMax = 4;
   const int64_t kAttrsSize = 2;
 
   const auto &x_info = input_infos[kIndex0];
@@ -119,10 +120,11 @@ ShapeArray MaxPoolWithIndicesFuncImpl::InferShape(const PrimitivePtr &primitive,
     return {shape, shape};
   }
 
-  (void)CheckAndConvertUtils::CheckInteger("input x rank", SizeToLong(x_shape.size()), kEqual, kInputShapeSize,
-                                           primitive->name());
-  auto batch = x_shape[kIndex0];
-  auto channel = x_shape[kIndex1];
+  (void)CheckAndConvertUtils::CheckInRange("input x rank", SizeToLong(x_shape.size()), kIncludeBoth,
+                                           {kInputShapeSizeMin, kInputShapeSizeMax}, primitive->name());
+  const bool has_batch_dim = x_shape.size() == LongToSize(kInputShapeSizeMax);
+  auto batch = has_batch_dim ? x_shape[kIndex0] : 1;
+  auto channel = has_batch_dim ? x_shape[kIndex1] : x_shape[kIndex0];
 
   auto kernel_size_array_opt = input_infos[kIndex1]->GetArrayValue<int64_t>();
 
@@ -157,13 +159,14 @@ ShapeArray MaxPoolWithIndicesFuncImpl::InferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("dilation rank", SizeToLong(dilation_array.size()), kEqual, kAttrsSize,
                                            primitive->name());
 
-  auto H_in = x_shape[kIndex2];
-  auto W_in = x_shape[kIndex3];
+  auto H_in = x_shape[has_batch_dim ? kIndex2 : kIndex1];
+  auto W_in = x_shape[has_batch_dim ? kIndex3 : kIndex2];
   auto H_out =
     IndicesComputeSize(H_in, kernel_size_array, strides_array, pads_array, dilation_array, kAttrH, ceil_mode_scalar);
   auto W_out =
     IndicesComputeSize(W_in, kernel_size_array, strides_array, pads_array, dilation_array, kAttrW, ceil_mode_scalar);
-  ShapeVector output_shape = {x_shape[kIndex0], x_shape[kIndex1], H_out, W_out};
+  ShapeVector output_shape =
+    has_batch_dim ? ShapeVector{batch, channel, H_out, W_out} : ShapeVector{channel, H_out, W_out};
   ShapeVector argmax_shape = output_shape;
 
   return {std::move(output_shape), std::move(argmax_shape)};

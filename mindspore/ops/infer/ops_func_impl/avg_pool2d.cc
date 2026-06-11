@@ -16,6 +16,7 @@
 
 #include "infer/ops_func_impl/avg_pool2d.h"
 
+#include <array>
 #include <tuple>
 #include <string>
 #include <functional>
@@ -52,14 +53,18 @@ void AvgPool2DCheckTupleIntParam(const PrimitivePtr &primitive, const ArrayValue
   }
 }
 
-static inline int64_t AvgPool2DCeilDiv(int64_t x, int64_t y) {
-  auto z = DoubleToLong(x * 1.0 / y);
-  return z;
+static inline int64_t AvgPool2DFloorDiv(int64_t x, int64_t y) {
+  auto quotient = x / y;
+  auto remainder = x % y;
+  if (remainder != 0 && ((remainder < 0) != (y < 0))) {
+    --quotient;
+  }
+  return quotient;
 }
 
 static inline int64_t AvgPool2DOutputShapePadLR(int64_t input_size, int64_t kernel_size, int64_t pad, int64_t stride,
                                                 bool ceil_mode) {
-  auto output_size = AvgPool2DCeilDiv(input_size + 2 * pad - kernel_size + (ceil_mode ? stride - 1 : 0), stride) + 1;
+  auto output_size = AvgPool2DFloorDiv(input_size + 2 * pad - kernel_size + (ceil_mode ? stride - 1 : 0), stride) + 1;
   if (ceil_mode) {
     // ensure that the last pooling starts inside the image needed to avoid problems in ceil mode
     if ((output_size - 1) * stride >= input_size + pad) {
@@ -91,6 +96,8 @@ void Avgpool2DInferOutputShape(const PrimitivePtr &primitive, const std::vector<
                                const ArrayValue<int64_t> &padding, std::vector<int64_t> *const output_shape,
                                bool ceil_mode) {
   const size_t input_rank = input_shape.size();
+  std::array<int64_t, kIndex2> spatial_output_shape = {abstract::TensorShape::kShapeDimAny,
+                                                       abstract::TensorShape::kShapeDimAny};
   for (size_t i = 0; i < kIndex2; ++i) {
     auto dim = input_rank - kIndex2 + i;
     auto cur_dim_value = input_shape[dim];
@@ -105,10 +112,16 @@ void Avgpool2DInferOutputShape(const PrimitivePtr &primitive, const std::vector<
 
     auto output_size = AvgPool2DOutputShapePadLR(cur_dim_value, kernel_size[idx_kernel_size], padding[idx_padding],
                                                  stride[idx_stride], ceil_mode);
-    MS_CHECK_VALUE(output_size > 0,
-                   CheckAndConvertUtils::FormatCheckIntegerMsg("output_size", output_size, kGreaterThan, 0, primitive));
-
+    spatial_output_shape[i] = output_size;
     (*output_shape)[dim] = output_size;
+  }
+  if (std::any_of(spatial_output_shape.begin(), spatial_output_shape.end(),
+                  [](int64_t value) { return value != abstract::TensorShape::kShapeDimAny && value <= 0; })) {
+    auto channel_size = input_rank == kDim3 ? input_shape[kIndex0] : input_shape[kIndex1];
+    MS_EXCEPTION(ValueError) << "Given input size: (" << channel_size << "x" << input_shape[input_rank - kIndex2] << "x"
+                             << input_shape[input_rank - kIndex1] << "). Calculated output size: (" << channel_size
+                             << "x" << spatial_output_shape[kIndex0] << "x" << spatial_output_shape[kIndex1]
+                             << "). Output size is too small";
   }
 }
 

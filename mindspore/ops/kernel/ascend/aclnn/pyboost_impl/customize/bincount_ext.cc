@@ -86,20 +86,18 @@ tensor::TensorPtr BincountExtAscendCustomize(const tensor::TensorPtr &input_tens
   const auto output_shape_ptr = std::make_shared<Int64Imm>(output_shape);
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, output_shape_ptr);
 
-  TensorToDevice(op, input_tensor, weight_tensor);
-  TensorMalloc(op, op->outputs());
-
-  // update output shape
+  // Update output metadata before malloc so the device buffer matches the real bincount size.
   auto output_real = ShapeVector({output_shape});
   op->UpdateOutputShape(op->output(kIndex0), output_real);
+  auto simple_infer_ptr = op->output_value_simple_info();
+  simple_infer_ptr->shape_vector_ = ShapeArray{output_real};
+
+  TensorToDevice(op, input_tensor, weight_tensor);
+  TensorMalloc(op, op->outputs());
 
   // Async
   const auto &output = op->output(kIndex0);
   DISPATCH_LAUNCH_ACLNN(aclnnBincount, input_tensor, weight_tensor, output_shape, output);
-
-  // update simple infer shape
-  auto simple_infer_ptr = op->output_value_simple_info();
-  simple_infer_ptr->shape_vector_ = ShapeArray{output_real};
 
   return op->output(kIndex0);
 }

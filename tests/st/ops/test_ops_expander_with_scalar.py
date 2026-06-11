@@ -20,7 +20,7 @@ from mindspore.common import Tensor, dtype
 import mindspore.ops.operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore import ops, nn
-from mindspore.ops.auto_generate.gen_ops_prim import AsinExt, MeanExt
+from mindspore.ops.auto_generate.gen_ops_prim import AsinExt, MeanExt, SoftplusExt
 from tests.mark_utils import arg_mark
 
 
@@ -775,6 +775,55 @@ def test_bcewithlogitsloss_grad():
     expect1 = np.array([[0.0016709, -0.0052458, -0.0886353],
                        [0.1791701, 0.0502187, -0.2553020]], dtype=np.float32)
     assert np.allclose(output[0].asnumpy(), expect1, 1e-6, 1e-6)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
+def test_softplusext_cpu():
+    """
+    Feature: SoftplusExt on CPU
+    Description: Verify SoftplusExt runs on CPU with scalar beta and threshold.
+    Expectation: the result match expectation
+    """
+    x = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
+    beta = 1.0
+    threshold = 0.5
+    net = OpsCell(SoftplusExt())
+    output = net(x, beta, threshold)
+    expect = np.where(x.asnumpy() * beta > threshold, x.asnumpy(), np.log1p(np.exp(x.asnumpy() * beta)) / beta)
+    assert np.allclose(output.asnumpy(), expect, 1e-6, 1e-6)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
+def test_softplusext_cpu_default_args():
+    """
+    Feature: SoftplusExt on CPU
+    Description: Verify SoftplusExt matches reference with default beta and threshold on CPU.
+    Expectation: the result match expectation
+    """
+    x_np = np.array([[-3.0, -0.8, 0.0], [1.2, 20.0, 25.0]], dtype=np.float32)
+    x = Tensor(x_np)
+    net = OpsCell(SoftplusExt())
+    output = net(x, 1.0, 20.0)
+    expect = np.where(x_np > 20.0, x_np, np.log1p(np.exp(x_np)))
+    assert np.allclose(output.asnumpy(), expect, 1e-6, 1e-6)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
+def test_softplusext_cpu_float64_precision():
+    """
+    Feature: SoftplusExt on CPU
+    Description: Verify SoftplusExt keeps float64 precision on CPU.
+    Expectation: the result match float64 reference
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE, device_target="CPU")
+    x_np = np.array([1e-12, -1e-12, 30.12345678912345, -30.12345678912345], dtype=np.float64)
+    x = Tensor(x_np, ms.float64)
+    beta = 1.0
+    threshold = 40.0
+    net = OpsCell(SoftplusExt())
+    output = net(x, beta, threshold)
+    expect = np.where(x_np * beta > threshold, x_np, np.log1p(np.exp(x_np * beta)) / beta)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-12, atol=1e-12)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)

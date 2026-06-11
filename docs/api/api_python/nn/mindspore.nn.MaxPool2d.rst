@@ -5,7 +5,9 @@ mindspore.nn.MaxPool2d
 
     在一个输入Tensor上应用2D最大池化运算，可被视为组成一个2D平面。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` ，MaxPool2d输出 :math:`(H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`(h_{ker}, w_{ker})` ， `stride` 为 :math:`(s_0, s_1)`，公式如下：
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 或 :math:`(C_{in}, H_{in}, W_{in})` ，
+    MaxPool2d输出 :math:`(H_{in}, W_{in})` 维度区域最大值。给定 `kernel_size` 为 :math:`(h_{ker}, w_{ker})` ，
+    `stride` 为 :math:`(s_0, s_1)`，公式如下：
 
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}

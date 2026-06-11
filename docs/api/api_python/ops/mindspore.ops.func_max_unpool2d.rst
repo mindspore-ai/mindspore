@@ -26,6 +26,7 @@ mindspore.ops.max_unpool2d
           tuple类型中的两个值分别代表池化核的长和宽。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，int类型表示长宽方向的移动步长相同。
           tuple中的两个值分别代表长宽方向移动的步长。默认 ``None`` ，表示移动步长为 `kernel_size` 。
+          若 `stride` 为 ``0`` 或 ``(0, 0)`` ，则 `stride` 取 `kernel_size` 。
         - **padding** (Union[int, tuple[int]]) - 填充值。默认 ``0`` 。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的两个值分别代表长宽方向填充的大小。
         - **output_size** (tuple[int]，可选) - 输出shape。默认 ``None`` 。
@@ -39,10 +40,12 @@ mindspore.ops.max_unpool2d
     异常：
         - **TypeError** - `x` 或 `indices` 的数据类型不支持。
         - **TypeError** - `kernel_size` 、 `stride` 或 `padding` 既不是整数也不是tuple。
-        - **ValueError** - `stride` 、 `padding` 或 `kernel_size` 的值不是非负的。
-        - **ValueError** - `x` 和 `indices` 的shape不一致。
         - **ValueError** - `kernel_size` 、 `stride` 或 `padding` 为tuple时长度不等于2。
+        - **ValueError** - `kernel_size` 的值不是正数。
+        - **ValueError** - `stride` 的值既不是正数，也不是 ``0`` 或 ``(0, 0)`` 。
+        - **ValueError** - `padding` 的值为负数。
+        - **ValueError** - `x` 和 `indices` 的shape不一致。
         - **ValueError** - `x` 的长度不为3或4。
         - **ValueError** - `output_size` 的类型不是tuple。
-        - **ValueError** - `output_size` 的长度不为0、3或4。
+        - **ValueError** - `output_size` 的长度不为0、2、3或4。
         - **ValueError** - `output_size` 的取值与根据 `kernel_size` 、 `stride` 、 `padding` 计算得到的结果差距太大。

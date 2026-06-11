@@ -441,8 +441,9 @@ class MaxPool2d(_PoolNd):
     r"""
     Applies a 2D max pooling over an input Tensor which can be regarded as a composition of 2D planes.
 
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool2d outputs
-    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` or
+    :math:`(C_{in}, H_{in}, W_{in})`, MaxPool2d outputs regional maximum in the
+    :math:`(H_{in}, W_{in})`-dimension. Given kernel size
     :math:`(h_{ker}, w_{ker})` and stride :math:`(s_0, s_1)`, the operation is as follows.
 
     .. math::
@@ -614,8 +615,9 @@ class MaxPool2dExt(Cell):
     r"""
     Applies a 2D max pooling over an input Tensor which can be regarded as a composition of 2D planes.
 
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool2d outputs
-    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` or
+    :math:`(C_{in}, H_{in}, W_{in})`, MaxPool2d outputs regional maximum in the
+    :math:`(H_{in}, W_{in})`-dimension. Given kernel size
     :math:`(h_{ker}, w_{ker})` and stride :math:`(s_0, s_1)`, the operation is as follows.
 
     .. math::
@@ -645,13 +647,14 @@ class MaxPool2dExt(Cell):
         ceil_mode (bool): If ``True`` , use ceil to compute the output shape instead of floor. Default: ``False`` .
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or
+          :math:`(C_{in}, H_{in}, W_{in})`.
 
     Outputs:
         If `return_indices` is ``False`` , return a Tensor `output`, else return a tuple (`output`, `argmax`).
 
-        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`. It has the
-          same data type as `input`.
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})` or
+          :math:`(C_{out}, H_{out}, W_{out})`. It has the same data type as `input`.
         - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int32.
 
         .. math::
@@ -664,7 +667,7 @@ class MaxPool2dExt(Cell):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        ValueError: If length of shape of `input` is not equal to 4.
+        ValueError: If length of shape of `input` is not equal to 3 or 4.
         TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is not int or tuple.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `dilation` is not all 1.
@@ -1608,22 +1611,20 @@ class AdaptiveAvgPool3d(Cell):
     That is, for any input size, the size of the specified output is :math:`(D, H, W)`.
     The number of output features is equal to the number of input planes.
 
-    Suppose the last 3 dimension size of input is :math:`(inD, inH, inW)`, then the last 3 dimension size of output is
-    :math:`(outD, outH, outW)`.
+    The input and output data formats can be "NCDHW" or "CDHW", where N is the batch size, C is the number of
+    channels, D is the feature depth, H is the feature height, and W is the feature width.
 
     .. math::
-        \begin{array}{ll} \\
-            \forall \quad od \in [0,outD-1], oh \in [0,outH-1], ow \in [0,outW-1]\\
-            output[od,oh,ow] = \\
-            \qquad mean(input[istartD:iendD+1,istartH:iendH+1,istartW:iendW+1])\\
-            where,\\
-            \qquad istartD= \left\lceil \frac{od * inD}{outD} \right\rceil \\
-            \qquad iendD=\left\lfloor \frac{(od+1)* inD}{outD} \right\rfloor \\
-            \qquad istartH=\left\lceil \frac{oh * inH}{outH} \right\rceil \\
-            \qquad iendH=\left\lfloor \frac{(oh+1) * inH}{outH} \right\rfloor \\
-            \qquad istartW=\left\lceil \frac{ow * inW}{outW} \right\rceil \\
-            \qquad iendW=\left\lfloor \frac{(ow+1) * inW}{outW} \right\rfloor
-        \end{array}
+        \begin{align}
+        d_{start} &= floor(i * D_{in} / D_{out})\\
+        d_{end} &= ceil((i + 1) * D_{in} / D_{out})\\
+        h_{start} &= floor(j * H_{in} / H_{out})\\
+        h_{end} &= ceil((j + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(k * W_{in} / W_{out})\\
+        w_{end} &= ceil((k + 1) * W_{in} / W_{out})\\
+        Output(i,j,k) &= \frac{\sum Input[d_{start}:d_{end}, h_{start}:h_{end}, w_{start}:w_{end}]}
+        {(d_{end}- d_{start}) * (h_{end}- h_{start}) * (w_{end}- w_{start})}
+        \end{align}
 
     Args:
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
@@ -2261,7 +2262,7 @@ class MaxUnpool2d(Cell):
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 2.
         ValueError: If the length of `x` is not 3 or 4.
         ValueError: If the type of `output_size` is not tuple.
-        ValueError: If the length of `output_size` is not 0, 3 or 4.
+        ValueError: If the length of `output_size` is not 0, 2, 3 or 4.
         ValueError: If `output_size` is not close to output size computed by `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
