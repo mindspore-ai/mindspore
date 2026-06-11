@@ -536,8 +536,9 @@ class AutoParallel(Cell):
         Set fusion configuration of parallel communication operators.
 
         Args:
-            config (dict): A dict contains the types and configurations for setting the communication fusion. Each
-                communication fusion config has two keys: "mode" and "config".
+            config (dict): A dict contains the types and configurations for setting the communication fusion.
+                The input format is ``{"communication_type": {"mode": str, "config": None, int, or list}}``.
+                Each communication fusion config has two keys: "mode" and "config".
                 It supports following communication fusion types and configurations:
 
                 - openstate: Whether turn on the communication fusion or not. If `openstate` is `True`, turn on

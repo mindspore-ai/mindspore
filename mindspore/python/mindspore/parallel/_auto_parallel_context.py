@@ -1510,7 +1510,8 @@ def _set_auto_parallel_context(**kwargs):
                                     search the desired strategies. Default: ``False``.
         enable_alltoall (bool): Set the value of enabling AllToAll. If False, AllGather and Split are used to
                                 circumvent AllToAll. Default: ``False``.
-        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. each
+        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. The input
+                    format is ``{"communication_type": {"mode": str, "config": None, int, or list}}``. Each
                     communication fusion config has two keys: "mode" and "config".
                     It supports following communication fusion types and configurations:
 

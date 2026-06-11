@@ -1111,7 +1111,8 @@ def set_auto_parallel_context(**kwargs):
                           allgather communication to release the memory used by the forward pass allgather.
                           It must be one of [``level1``, ``level2``, ``level3``]. Default: ``level1``.
 
-        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. Each
+        comm_fusion (dict): A dict contains the types and configurations for setting the communication fusion. The input
+                        format is ``{"communication_type": {"mode": str, "config": None, int, or list}}``. Each
                         communication fusion config has two keys: "mode" and "config".
                         It supports following communication fusion types and configurations:
 
