@@ -73,6 +73,9 @@ std::vector<int64_t> MaxPoolGradWithArgmaxV2CpuKernelMod::GetValidAttr(const std
   } else if (src_attr.size() == kShape4dDims) {
     return {src_attr[kDim2], src_attr[kDim3]};
   } else {
+    if (src_attr.size() < kDim2) {
+      MS_LOG(EXCEPTION) << "Invalid attr size: " << src_attr.size();
+    }
     return {src_attr[kDim0], src_attr[kDim1]};
   }
 }
