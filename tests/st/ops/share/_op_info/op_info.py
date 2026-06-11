@@ -491,7 +491,7 @@ def _generate_binary_op_broadcasting_and_discontiguous_tensor_inputs_func(
             ),
             op_kwargs={},
             sample_name=f"{op_info.name}_{dtype}_{len(_input_shape)}d_x"+
-                        f"_{len(_other_shape)}d_broadcasting_and_discontiguous_tensor_inputs",
+                        f"_{len(_other_shape)}d_broadcasting_and_discontiguous_{discontiguous}_tensor_inputs",
         )
 
 

@@ -1225,8 +1225,7 @@ class OpsFactory():
                     dtype=dtype,
                     device=self._device,
                     only_dynamic_shape=only_dynamic_shape,
-                    only_dynamic_rank=only_dynamic_rank,
-                    grad_cmp=grad_cmp):
+                    only_dynamic_rank=only_dynamic_rank):
                 if grad_cmp:
                     self.compare_with_torch_dynamic(op_dynamic_inputs=op_dynamic_input, grad_cmp=True)
                 else:

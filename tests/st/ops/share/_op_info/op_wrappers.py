@@ -722,37 +722,52 @@ def tensor_batch_norm_torch(op_input, running_mean, running_var, weight, bias, t
     output = torch.nn.functional.batch_norm(op_input, running_mean, running_var, weight, bias, training, momentum, eps)
     return (output, running_mean, running_var)
 
-def tensor_nn_functional_dropout_ms(op_input, p=0.5, training=False):
-    input_clone = op_input.clone()
-    if  0 < p < 1:
-        if training:
-            if op_input.dtype.is_floating_point and op_input.dtype != ms.float64:
-                sizes = 0
-                m1 = None
-                for _ in  range(100):
-                    m1 = mint.nn.functional.dropout(op_input, p=p, training=training)
-                    sizes = sizes + (m1 == 0).sum().item()
-                input_clone[m1 == 0] = 0
-                return (1 / (1-p) * input_clone -m1, ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
-            # torch backward must have relevance with input tensor, so return value is related to input
-            return op_input*0
-    return  mint.nn.functional.dropout(op_input, p=p, training=training)
+def tensor_nn_functional_dropout_ms_decorator(op):
+    def _dropout_func(op_input, p=0.5, training=False, inplace=False):
+        if 0 < p < 1:
+            if training:
+                if op_input.dtype.is_floating_point and op_input.dtype != ms.float64 and op_input.size != 0:
+                    sizes = 0
+                    m1 = None
+                    input_clone = None
+                    for _ in range(100):
+                        input_clone = op_input.clone()
+                        m1 = op(input_clone, p=p, training=training, inplace=inplace)
+                        sizes = sizes + (m1 == 0).sum().item()
+                    mask = (m1 == 0).astype(op_input.dtype)
+                    modified_input = op_input * (1 - mask)
+                    result = (1 / (1 - p) * modified_input - m1,
+                              ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
+                    if inplace:
+                        result = result + (m1 - input_clone,)
+                    return result
+                # torch backward must hava revalance with input tensor, so return value is related to input
+                return op_input * 0
+        return op(op_input, p=p, training=training, inplace=inplace)
+    return _dropout_func
 
-def tensor_nn_functional_dropout_torch(op_input, p=0.5, training=False):
-    if  0 < p < 1:
-        if training:
-            if op_input.dtype.is_floating_point and op_input.dtype != torch.float64:
-                sizes = 0
-                t1 = None
-                input_clone = op_input.clone()
-                for _ in range(100):
-                    t1 = torch.nn.functional.dropout(op_input, p=p, training=training)
-                    sizes = sizes + (t1 == 0).sum().item()
-                input_clone[t1 == 0] = 0
-                return (1 / (1 - p) * input_clone - t1, torch.tensor(sizes / (100 * op_input.numel()),
-                                                                     dtype=op_input.dtype))
-            return op_input*0
-    return torch.nn.functional.dropout(op_input, p=p, training=training)
+def tensor_nn_functional_dropout_torch_decorator(op):
+    def _dropout_func(op_input, p=0.5, training=False, inplace=False):
+        if 0 < p < 1:
+            if training:
+                if op_input.dtype.is_floating_point and op_input.dtype != torch.float64 and op_input.numel() != 0:
+                    sizes = 0
+                    t1 = None
+                    input_clone = None
+                    for _ in range(100):
+                        input_clone = op_input.clone()
+                        t1 = op(input_clone, p=p, training=training, inplace=inplace)
+                        sizes = sizes + (t1 == 0).sum().item()
+                    mask = (t1 == 0).to(op_input.dtype)
+                    modified_input = op_input * (1 - mask)
+                    result = (1 / (1 - p) * modified_input - t1,
+                              torch.tensor(sizes / (100 * op_input.numel()), dtype=op_input.dtype))
+                    if inplace:
+                        result = result + (t1 - input_clone,)
+                    return result
+                return op_input * 0
+        return op(op_input, p=p, training=training, inplace=inplace)
+    return _dropout_func
 
 def tensor_triangular_solve_ms(B, A, upper=True, transpose=False, unitriangular=False ):
     return mint.triangular_solve(B, A, upper=upper, transpose=transpose, unitriangular=unitriangular)[0]
@@ -923,7 +938,7 @@ def nn_conv1d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
 def mint_nn_conv2d_ms(op_input, in_channels, out_channels, kernel_size, stride=1, padding=0,
                       dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None,
                       weight_init=None, bias_init=None):
-    """Wrapper for mindspore.mint.nn.Conv1d."""
+    """Wrapper for mindspore.mint.nn.Conv2d."""
     conv2d_layer = mint.nn.Conv2d(
         in_channels=in_channels,
         out_channels=out_channels,
@@ -1229,3 +1244,190 @@ def mint_AvgPool2d_torch(input, kernel_size, stride=None, padding=0, ceil_mode=F
     net = torch.nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode,
                              count_include_pad=count_include_pad, divisor_override=divisor_override)
     return net(input)
+
+# wrapper function for mindspore.mint.nn.Linear
+def mint_nn_linear_ms(op_input, in_features, out_features, bias=True, weight_init=None, bias_init=None, dtype=None):
+    """Wrapper for mindspore.mint.nn.Linear."""
+    linear_layer = mint.nn.Linear(
+        in_features=in_features,
+        out_features=out_features,
+        bias=bias,
+        weight_init=weight_init,
+        bias_init=bias_init,
+        dtype=dtype
+    )
+    return linear_layer(op_input)
+
+def nn_linear_torch(op_input, in_features, out_features, bias=True, weight_init=None, bias_init=None, dtype=None):
+    """Wrapper for torch.nn.Linear.
+    Note: weight_init, bias_init, and dtype are kept for interface consistency but not used in PyTorch.
+    """
+    linear_layer = torch.nn.Linear(
+        in_features=in_features,
+        out_features=out_features,
+        bias=bias,
+        dtype=dtype
+    )
+    linear_layer.weight = torch.nn.Parameter(weight_init)
+    if bias:
+        linear_layer.bias = torch.nn.Parameter(bias_init)
+    return linear_layer(op_input)
+
+def mint_nn_conv3d_ms(op_input, in_channels, out_channels, kernel_size, stride=1, padding=0,
+                      dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None,
+                      weight_init=None, bias_init=None):
+    """Wrapper for mindspore.mint.nn.Conv3d."""
+    conv3d_layer = mint.nn.Conv3d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    if weight_init is not None:
+        conv3d_layer.weight = Parameter(weight_init, name='weight')
+    if bias:
+        conv3d_layer.bias = Parameter(bias_init, name='bias')
+    return conv3d_layer(op_input)
+
+def nn_conv3d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
+                         padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros',
+                         dtype=None, weight_init=None, bias_init=None):
+    """Wrapper for torch.nn.Conv3d."""
+    conv3d_layer = torch.nn.Conv3d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    if weight_init is not None:
+        conv3d_layer.weight = torch.nn.Parameter(weight_init)
+    if bias:
+        conv3d_layer.bias = torch.nn.Parameter(bias_init)
+    return conv3d_layer(op_input)
+
+def mint_nn_conv_transpose2d_ms(op_input, in_channels, out_channels, kernel_size, stride=1, padding=0,
+                      output_padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None,
+                      weight_init=None, bias_init=None, output_size=None):
+    """Wrapper for mindspore.mint.nn.ConvTranspose2d."""
+    conv2d_layer = mint.nn.ConvTranspose2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        output_padding=output_padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    if weight_init is not None:
+        conv2d_layer.weight = Parameter(weight_init, name='weight')
+    if bias:
+        conv2d_layer.bias = Parameter(bias_init, name='bias')
+    return conv2d_layer(op_input, output_size=output_size)
+
+def nn_conv_transpose2d_torch(op_input, in_channels, out_channels, kernel_size, stride=1,
+                         padding=0, output_padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros',
+                         dtype=None, weight_init=None, bias_init=None, output_size=None):
+    """Wrapper for torch.nn.ConvTranspose2d."""
+    conv2d_layer = torch.nn.ConvTranspose2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        output_padding=output_padding,
+        dilation=dilation,
+        groups=groups,
+        bias=bias,
+        padding_mode=padding_mode,
+        dtype=dtype
+    )
+    if weight_init is not None:
+        conv2d_layer.weight = torch.nn.Parameter(weight_init)
+    if bias:
+        conv2d_layer.bias = torch.nn.Parameter(bias_init)
+    return conv2d_layer(op_input, output_size=output_size)
+
+def mint_nn_fold(op_input, output_size, kernel_size, dilation, padding, stride):
+    net=mint.nn.Fold(output_size, kernel_size, dilation, padding, stride)
+    return net(op_input)
+
+def torch_nn_fold(op_input, output_size, kernel_size, dilation, padding, stride):
+    net=torch.nn.Fold(output_size, kernel_size, dilation, padding, stride)
+    return net(op_input)
+
+def mint_nn_unfold(op_input, kernel_size, dilation, padding, stride):
+    net=mint.nn.Unfold(kernel_size, dilation, padding, stride)
+    return net(op_input)
+
+def torch_nn_unfold(op_input, kernel_size, dilation, padding, stride):
+    net=torch.nn.Unfold(kernel_size, dilation, padding, stride)
+    return net(op_input)
+
+def ms_nn_dropout_decorator(op_class):
+    def _dropout_func(op_input, p=0.5, training=True, inplace=False):
+        net = op_class(p, inplace=inplace)
+        if training:
+            net.set_train()
+            if 0 < p < 1:
+                if op_input.dtype.is_floating_point and op_input.dtype != ms.float64 and op_input.size != 0:
+                    sizes = 0
+                    m1 = None
+                    op_clone = None
+                    for _ in range(100):
+                        op_clone = op_input.clone()
+                        m1 = net(op_clone)
+                        sizes = sizes + (m1 == 0).sum().item()
+                    mask = (m1 == 0).astype(op_input.dtype)
+                    modified_input = op_input * (1 - mask)
+                    result = (1 / (1 - p) * modified_input - m1,
+                              ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
+                    if inplace:
+                        result = result + (m1 - op_clone,)
+                    return result
+                # torch backward must hava prevalence with input tensor, so return value is related to input
+                return op_input * 0
+        return net(op_input)
+    return _dropout_func
+
+def torch_nn_dropout_decorator(op_class):
+    def _dropout_func(op_input, p=0.5, training=True, inplace=False):
+        net = op_class(p, inplace=inplace)
+        if training:
+            if 0 < p < 1:
+                if op_input.dtype.is_floating_point and op_input.dtype != torch.float64 and op_input.numel() != 0:
+                    sizes = 0
+                    t1 = None
+                    input_clone = None
+                    for _ in range(100):
+                        input_clone = op_input.clone()
+                        t1 = net(input_clone)
+                        sizes = sizes + (t1 == 0).sum().item()
+                    mask = (t1 == 0).to(op_input.dtype)
+                    modified_input = op_input * (1 - mask)
+                    result = (1 / (1 - p) * modified_input - t1,
+                              torch.tensor(sizes / (100 * op_input.numel()), dtype=op_input.dtype))
+                    if inplace:
+                        result = result + (t1 - input_clone,)
+                    return result
+                # torch backward must hava prevalence with input tensor, so return value is related to input
+                return op_input * 0
+        else:
+            net.eval()
+        return net(op_input)
+    return _dropout_func
