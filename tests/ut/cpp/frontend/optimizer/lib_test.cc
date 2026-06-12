@@ -26,6 +26,9 @@
 #include "ir/manager.h"
 #include "ir/tensor_new.h"
 #include "ir/value.h"
+#include "abstract/abstract_function.h"
+#include "abstract/abstract_value.h"
+#include "abstract/analysis_context.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
@@ -36,11 +39,63 @@
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/resource.h"
 #include "utils/convert_utils.h"
+#include "primitive/math_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
 using abstract::AnalysisResult;
+
+namespace {
+AnfNodePtr MakeFloat32ValueNode(float value) {
+  auto node = NewValueNode(MakeValue(value));
+  node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2}));
+  return node;
+}
+
+AnfNodePtr MakeDeadNodePlaceholder() {
+  const auto dead_value = std::make_shared<ValueProblem>(ValueProblemType::kDead);
+  auto dead_node = NewValueNode(dead_value);
+  dead_node->set_abstract(std::make_shared<abstract::AbstractProblem>(dead_value, dead_node));
+  return dead_node;
+}
+
+FuncGraphPtr BuildPartialDeadNodeCalledGraph(bool with_unused_func_param) {
+  auto called_fg = std::make_shared<FuncGraph>();
+  auto p0 = called_fg->add_parameter();
+  p0->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2}));
+  if (with_unused_func_param) {
+    auto p1 = called_fg->add_parameter();
+    p1->set_abstract(std::make_shared<abstract::FuncGraphAbstractClosure>(std::make_shared<FuncGraph>(),
+                                                                          abstract::AnalysisContext::DummyContext()));
+  }
+  auto p2 = called_fg->add_parameter();
+  p2->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2}));
+
+  AnfNodePtrList add_inputs{NewValueNode(prim::kPrimAdd), p0, p2};
+  auto add_cnode = called_fg->NewCNode(add_inputs);
+  add_cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2}));
+  AnfNodePtrList return_inputs{NewValueNode(prim::kPrimReturn), add_cnode};
+  called_fg->set_return(called_fg->NewCNode(return_inputs));
+  return called_fg;
+}
+
+FuncGraphPtr BuildPartialDeadNodeTopGraph(const FuncGraphPtr &called_fg, bool with_dead_func_param) {
+  MS_EXCEPTION_IF_NULL(called_fg);
+  auto top_fg = std::make_shared<FuncGraph>();
+  auto fg_node = NewValueNode(called_fg);
+  AnfNodePtrList partial_inputs{NewValueNode(prim::kPrimPartial), fg_node, MakeFloat32ValueNode(1.0f)};
+  if (with_dead_func_param) {
+    (void)partial_inputs.emplace_back(MakeDeadNodePlaceholder());
+  }
+  (void)partial_inputs.emplace_back(MakeFloat32ValueNode(2.0f));
+  auto partial_cnode = top_fg->NewCNode(partial_inputs);
+  AnfNodePtrList return_inputs{NewValueNode(prim::kPrimReturn), partial_cnode};
+  top_fg->set_return(top_fg->NewCNode(return_inputs));
+  return top_fg;
+}
+}  // namespace
 
 class TestOptLib : public UT::Common {
  public:
@@ -641,6 +696,33 @@ TEST_F(TestOptLib, test_partial_unused_args_eliminate) {
   auto opt = opt::irpass::PartialUnusedArgsEliminate();
   opt(before_fg);
   ASSERT_TRUE(Isomorphic(before_fg, after_fg, &equiv_graph, &equiv_node));
+}
+
+// Feature: Eliminate unused function parameters when Partial passes DeadNode placeholder.
+// Description: Construct Partial(fg, x, DeadNode, y) where fg has unused func parameter.
+// Expectation: The DeadNode arg and unused func parameter are eliminated.
+TEST_F(TestOptLib, test_partial_unused_args_eliminate_dead_node_placeholder) {
+  auto called_before = BuildPartialDeadNodeCalledGraph(true);
+  auto before_fg = BuildPartialDeadNodeTopGraph(called_before, true);
+  auto called_after = BuildPartialDeadNodeCalledGraph(false);
+  auto after_fg = BuildPartialDeadNodeTopGraph(called_after, false);
+
+  equiv_node.clear();
+  equiv_graph.clear();
+  auto manager = Manage(before_fg, true);
+  ASSERT_NE(manager, nullptr);
+  ASSERT_EQ(called_before->func_graph_cnodes_index().size(), 1);
+
+  auto opt = opt::irpass::PartialUnusedArgsEliminate();
+  ASSERT_TRUE(opt(before_fg));
+  ASSERT_TRUE(Isomorphic(before_fg, after_fg, &equiv_graph, &equiv_node));
+
+  auto output = before_fg->output();
+  ASSERT_TRUE(IsPrimitiveCNode(output, prim::kPrimPartial));
+  auto result_partial = output->cast<CNodePtr>();
+  ASSERT_NE(result_partial, nullptr);
+  ASSERT_EQ(result_partial->size(), 4);
+  ASSERT_FALSE(IsDeadNode(result_partial->input(2)));
 }
 }  // namespace opt
 }  // namespace mindspore
