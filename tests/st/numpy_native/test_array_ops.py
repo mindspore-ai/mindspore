@@ -19,7 +19,7 @@ import numpy as onp
 
 import mindspore.runtime as rt
 import mindspore.numpy as mnp
-from mindspore import context, Tensor, int32
+from mindspore import context, ops, Tensor, int32
 from mindspore.nn import Cell
 from mindspore.graph.api import _pynative_executor
 
@@ -381,7 +381,7 @@ def construct_arrays(n=1, ndim=1, axis=None, low=1, high=5):
     onp_array_lst = []
     mnp_array_lst = []
     shape = onp.random.randint(low=low, high=high, size=ndim)
-    new_shape = [sh for sh in shape]
+    new_shape = list(shape)
     while n > 0:
         n -= 1
         onp_array1 = onp.random.randint(
@@ -426,7 +426,6 @@ def test_column_stack():
     onp_seq_lst, mnp_seq_lst = prepare_array_sequences(
         n_lst=[1, 5], ndim_lst=[1, 2, 3, 4], axis=1)
     for i, onp_seq in enumerate(onp_seq_lst):
-        onp_seq = onp_seq_lst[i]
         mnp_seq = mnp_seq_lst[i]
         o_column_stack = onp_column_stack(onp_seq)
         m_column_stack = mnp_column_stack(mnp_seq)
@@ -1010,6 +1009,139 @@ def test_dsplit():
                 match_array(expect, actual.asnumpy())
 
 
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard')
+def test_function_split():
+    """
+    Feature: ops.split
+    Description: Verify the result of ops.split with int and tuple/list `split_size_or_sections`, and `axis`.
+    Expectation: same as numpy.
+    """
+    x = to_tensor(onp.arange(10).astype(onp.float32))
+
+    out = ops.split(x, 3)
+    expect = onp.split(onp.arange(10).astype(onp.float32), [3, 6, 9])
+    assert len(out) == len(expect)
+    for res, exp in zip(out, expect):
+        match_array(res.asnumpy(), exp)
+
+    out = ops.split(x, [3, 3, 4])
+    expect = onp.split(onp.arange(10).astype(onp.float32), [3, 6])
+    assert len(out) == len(expect)
+    for res, exp in zip(out, expect):
+        match_array(res.asnumpy(), exp)
+
+    x2 = to_tensor(rand_int(3, 4, 5))
+    out = ops.split(x2, 2, axis=1)
+    assert len(out) == 2
+    assert out[0].shape == (3, 2, 5)
+    assert out[1].shape == (3, 2, 5)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard')
+def test_function_split_invalid_dtype():
+    """
+    Feature: ops.split
+    Description: Verify that ops.split raises TypeError/ValueError for invalid argument types, especially
+        that bool values are rejected where int values are expected for `axis` and `split_size_or_sections`.
+    Expectation: raise TypeError or ValueError as expected.
+    """
+    x = to_tensor(onp.arange(10).astype(onp.float32))
+
+    with pytest.raises(TypeError):
+        ops.split([1, 2, 3], 3)
+
+    with pytest.raises(TypeError):
+        ops.split(x, 3, axis=1.0)
+    with pytest.raises(TypeError):
+        ops.split(x, 3, axis=True)
+
+    with pytest.raises(TypeError):
+        ops.split(x, 3.0)
+    with pytest.raises(TypeError):
+        ops.split(x, True)
+    with pytest.raises(TypeError):
+        ops.split(x, "3")
+
+    with pytest.raises(ValueError):
+        ops.split(x, 0)
+    with pytest.raises(ValueError):
+        ops.split(x, -1)
+
+    with pytest.raises(TypeError):
+        ops.split(x, [3, 3, 4.0])
+    with pytest.raises(TypeError):
+        ops.split(x, [True, False, 8])
+
+    with pytest.raises(ValueError):
+        ops.split(x, [3, 3, 5])
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard')
+def test_function_tensor_split():
+    """
+    Feature: ops.tensor_split
+    Description: Verify the result of ops.tensor_split with int and tuple/list `indices_or_sections`, and `axis`.
+    Expectation: same as numpy.
+    """
+    x = to_tensor(onp.arange(8).astype(onp.float32))
+
+    out = ops.tensor_split(x, 3)
+    expect = onp.array_split(onp.arange(8).astype(onp.float32), 3)
+    assert len(out) == len(expect)
+    for res, exp in zip(out, expect):
+        match_array(res.asnumpy(), exp)
+
+    out = ops.tensor_split(x, (1, 6))
+    expect = onp.array_split(onp.arange(8).astype(onp.float32), (1, 6))
+    assert len(out) == len(expect)
+    for res, exp in zip(out, expect):
+        match_array(res.asnumpy(), exp)
+
+    x2 = to_tensor(rand_int(2, 7))
+    out = ops.tensor_split(x2, 3, axis=1)
+    assert len(out) == 3
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard')
+def test_function_tensor_split_invalid_dtype():
+    """
+    Feature: ops.tensor_split
+    Description: Verify that ops.tensor_split raises TypeError/ValueError for invalid argument types, especially
+        that bool values are rejected where int values are expected for `axis` and `indices_or_sections`.
+    Expectation: raise TypeError or ValueError as expected.
+    """
+    x = to_tensor(onp.arange(8).astype(onp.float32))
+
+    with pytest.raises(TypeError):
+        ops.tensor_split([1, 2, 3], 3)
+
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, 3, axis=1.0)
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, 3, axis=True)
+
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, 3.0)
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, True)
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, "3")
+
+    with pytest.raises(ValueError):
+        ops.tensor_split(x, 0)
+    with pytest.raises(ValueError):
+        ops.tensor_split(x, -1)
+
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, [1, 4.0])
+    with pytest.raises(TypeError):
+        ops.tensor_split(x, [True, False])
+
+
 def mnp_take_along_axis(*arrs):
     x = arrs[0]
     a = mnp.take_along_axis(x, arrs[1], axis=None)
@@ -1140,9 +1272,6 @@ def test_choose():
 
 
 class ReshapeExpandSqueeze(Cell):
-    def __init__(self):
-        super(ReshapeExpandSqueeze, self).__init__()
-
     def construct(self, x):
         x = mnp.expand_dims(x, 2)
         x = mnp.reshape(x, (1, 2, 3, 4, 1, 1))
@@ -1151,9 +1280,6 @@ class ReshapeExpandSqueeze(Cell):
 
 
 class TransposeConcatRavel(Cell):
-    def __init__(self):
-        super(TransposeConcatRavel, self).__init__()
-
     def construct(self, x1, x2, x3):
         x1 = mnp.transpose(x1, [0, 2, 1])
         x2 = x2.transpose(0, 2, 1)
@@ -1163,9 +1289,6 @@ class TransposeConcatRavel(Cell):
 
 
 class RollSwap(Cell):
-    def __init__(self):
-        super(RollSwap, self).__init__()
-
     def construct(self, x):
         x = mnp.rollaxis(x, 2)
         x = mnp.swapaxes(x, 0, 1)
