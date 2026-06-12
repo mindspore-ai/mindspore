@@ -212,6 +212,35 @@ void LoadOpApiLib() {
     (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
   }
 
+  // Load libopapi_*.so files (versioned opapi libs) before libopapi.so, only scan directory once
+  static const auto opapi_so_files = [&ascend_path]() {
+    std::vector<std::string> files;
+    std::string lib64_path = ascend_path + "lib64";
+    DIR *dir = opendir(lib64_path.c_str());
+    if (dir == nullptr) {
+      MS_LOG(WARNING) << "Failed to open directory: " << lib64_path;
+      return files;
+    }
+    struct dirent *entry = nullptr;
+    while ((entry = readdir(dir)) != nullptr) {
+      std::string filename(entry->d_name);
+      if (filename.size() > strlen("libopapi_.so") && filename.compare(0, strlen("libopapi_"), "libopapi_") == 0 &&
+          filename.compare(filename.size() - strlen(".so"), strlen(".so"), ".so") == 0) {
+        files.push_back(lib64_path + "/" + filename);
+        MS_LOG(DEBUG) << "Found versioned opapi lib: " << filename;
+      }
+    }
+    closedir(dir);
+    return files;
+  }();
+  for (const auto &so_path : opapi_so_files) {
+    auto so_handle = GetOpApiLibHandler(so_path);
+    if (so_handle != nullptr) {
+      MS_LOG(DEBUG) << "Load versioned opapi lib " << so_path << " success";
+      (void)opapi_lib_handle.emplace_back(std::make_pair(so_handle, so_path));
+    }
+  }
+
   auto lib_path = ascend_path + GetOpApiLibName();
   auto handle = GetOpApiLibHandler(lib_path);
   if (handle != nullptr) {
