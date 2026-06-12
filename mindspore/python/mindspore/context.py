@@ -1347,6 +1347,7 @@ def _check_context_deprecated(key):
             log += f" Please use the {new_interface} instead."
         raise ValueError(log)
 
+
 @args_type_check(mode=int, device_target=str, device_id=int, save_graphs=(bool, int),
                  save_graphs_path=str, aoe_tune_mode=str, aoe_config=dict,
                  enable_reduce_precision=bool, variable_memory_max_size=str,
