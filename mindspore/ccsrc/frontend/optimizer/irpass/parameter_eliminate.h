@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include <algorithm>
 
 #include "abstract/abstract_value.h"
 #include "utils/trace_info.h"
@@ -27,8 +28,10 @@
 #include "frontend/optimizer/irpass.h"
 #include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
+#include "ir/anf.h"
 #include "ir/manager.h"
 #include "ir/func_graph.h"
+#include "ir/value.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_flag.h"
 #include "utils/convert_utils_base.h"
@@ -603,8 +606,13 @@ class PartialUnusedArgsEliminate {
       for (size_t i = 0; i < origin_parameters.size(); ++i) {
         auto origin_para = origin_parameters[i];
         auto iter = node_users.find(origin_para);
-        // Currently, we don't eliminate the function parameter node because it will produce DeadNode after renormalize.
-        if (!HasAbstractFunction(origin_para) && (iter == node_users.end() || iter->second.empty())) {
+        const bool no_user = (iter == node_users.end() || iter->second.empty());
+        // Eliminate unused non-function parameters directly. For unused function parameters, only eliminate when
+        // all Partial call sites already pass ValueProblem[DeadNode] as placeholder (safe after specialization).
+        if (no_user && !HasAbstractFunction(origin_para)) {
+          (void)unused_parameter_idx.emplace_back(i);
+        } else if (no_user && HasAbstractFunction(origin_para) &&
+                   IsDeadNodePlaceholderAtAllPartials(partial_nodes, i)) {
           (void)unused_parameter_idx.emplace_back(i);
         } else if (added_forward_u && HasAbstractUMonad(origin_para) && i < origin_parameters.size() - 1) {
           // The fv u monad from fprop should be replaced with the forward u added by pass 'add_forward_monad_depend.h'.
@@ -638,6 +646,24 @@ class PartialUnusedArgsEliminate {
  private:
   static bool HasAbstractFunction(const AnfNodePtr &node) {
     return node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractFunction>();
+  }
+
+  static bool IsDeadNodePartialArg(const CNodePtr &partial, size_t param_index) {
+    MS_EXCEPTION_IF_NULL(partial);
+    constexpr auto kPartialFirstArgIndex = 2;
+    const size_t input_index = kPartialFirstArgIndex + param_index;
+    if (partial->size() <= input_index) {
+      return false;
+    }
+    return IsDeadNode(partial->input(input_index));
+  }
+
+  static bool IsDeadNodePlaceholderAtAllPartials(const std::vector<CNodePtr> &partial_nodes, size_t param_index) {
+    if (partial_nodes.empty()) {
+      return false;
+    }
+    return std::all_of(partial_nodes.cbegin(), partial_nodes.cend(),
+                       [param_index](const CNodePtr &partial) { return IsDeadNodePartialArg(partial, param_index); });
   }
 
   static bool GetUserPartialNodes(const FuncGraphPtr &fg, std::vector<CNodePtr> *partial_nodes) {

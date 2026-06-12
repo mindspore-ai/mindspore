@@ -173,7 +173,7 @@ def test_real_custom_backend():
     y = net2(y)
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 def test_real_custom_backend_run():
