@@ -76,7 +76,7 @@ def run_dynamic_backward(device_target, is_dynamic_rank):
 
 
 @arg_mark(
-    plat_marks=['platform_ascend'],
+    plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
     mem_peak=4.01
@@ -105,7 +105,7 @@ def test_mint_cdist_dynamic_forward_cpu():
 
 
 @arg_mark(
-    plat_marks=['platform_ascend'],
+    plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
     mem_peak=4.01

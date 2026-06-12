@@ -1077,7 +1077,7 @@ class InplaceNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard', mem_peak=4.00)
 def test_pynative_backward_hook_single_inplace_net():

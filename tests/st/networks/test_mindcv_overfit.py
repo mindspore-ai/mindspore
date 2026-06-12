@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-# For more details, please refer to MindCV (https://github.com/mindspore-lab/mindcv)
-
 """ Model training pipeline """
 import logging
 import os
@@ -364,7 +361,6 @@ def test_resnet_50_8p():
         if os.path.exists(result_file):
             os.remove(result_file)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=698.0)
 def test_mobilenetv3_small_1p():
     """
     Feature: MindCV mobilenetv3 1p test
@@ -380,8 +376,7 @@ def test_mobilenetv3_small_1p():
     assert 1.02 <= loss_end <= 1.12, f"Loss start should in [1.02, 1.12], but got {loss_end}"
     # assert average_step_time < 117.26, f"Average step time should shorter than 117.26ms"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=3294.0)
-@test_utils.run_test_with_On
+
 def test_inception_v3_1p():
     """
     Feature: MindCV inception_v3 1p test

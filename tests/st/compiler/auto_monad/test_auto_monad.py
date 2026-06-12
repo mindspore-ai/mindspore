@@ -1437,7 +1437,8 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.01)
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     """
     Feature: Auto monad feature.

@@ -22,7 +22,7 @@ import socket
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_msrun():
     """
     Feature: 'msrun' launch utility.

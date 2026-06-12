@@ -50,7 +50,7 @@ def security_off_wrap(func):
 
 def read_validateir_file(path_folder):
     filename = find_newest_validateir_file(path_folder)
-    with open(os.path.join(filename), 'r') as f:
+    with open(os.path.join(filename), 'r', encoding='utf-8') as f:
         contend = f.read()
     return contend
 
@@ -89,7 +89,7 @@ class Net(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1324.65)
 def test_sit_auto_mix_precision_train_o3():
@@ -119,7 +119,7 @@ def test_sit_auto_mix_precision_train_o3():
     assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=1042.47)
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o0():
@@ -188,7 +188,7 @@ def test_sit_auto_mix_precision_model_o2():
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1437.49)
 @security_off_wrap
@@ -231,7 +231,7 @@ def test_sit_auto_mix_precision_model_o1():
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1437.48)
 @security_off_wrap
@@ -285,7 +285,7 @@ def test_custom_mix_precision():
 
 class TestOp(ms.nn.Cell):
     def __init__(self):
-        super(TestOp, self).__init__()
+        super().__init__()
         self.weight = ms.Parameter(ms.Tensor(np.ones([32, 32, 3, 3]), ms.float32))
 
     def construct(self, x):
@@ -301,7 +301,7 @@ class TestOp(ms.nn.Cell):
 
 class TestNet(ms.nn.Cell):
     def __init__(self):
-        super(TestNet, self).__init__()
+        super().__init__()
         self.op = TestOp()
 
     def construct(self, x):
@@ -333,7 +333,7 @@ def test_all_subgraph_mix_precision():
 
 class AddNet(ms.nn.Cell):
     def __init__(self):
-        super(AddNet, self).__init__()
+        super().__init__()
         self.add = ops.Add()
 
     def construct(self, x):
@@ -362,7 +362,7 @@ def test_to_float(mode, dst_type):
 
 class TestAmpNet(ms.nn.Cell):
     def __init__(self):
-        super(TestAmpNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 64, kernel_size=1, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
@@ -409,13 +409,13 @@ def test_custom_mixed_precision_bfloat16():
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
     context.set_context(jit_config={"jit_level": "O2"})
-    context.set_context(save_graphs=True, save_graphs_path=f'./test_custom_amp')
+    context.set_context(save_graphs=True, save_graphs_path='./test_custom_amp')
     x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
     net_graph = TestAmpNet()
     white_list = [nn.ReLU, nn.Conv2d]
     net_graph = amp.custom_mixed_precision(net_graph, white_list=white_list, dtype=ms.bfloat16)
     out_graph = net_graph(x)
-    content = read_validateir_file(f'./test_custom_amp/')
+    content = read_validateir_file('./test_custom_amp/')
     assert re.search(r"Conv2D(.*?)\n(.*) -> \(\<Tensor\[BFloat16\]", content), content
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)
