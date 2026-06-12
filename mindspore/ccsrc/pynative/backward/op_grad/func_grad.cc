@@ -881,6 +881,7 @@ void RebaseVariable(const OpGradInfoPtr &op_grad_info, const BackwardNodePtr &fu
   }
   // inplace op input tensor is also output tensor.
   auto auto_grad_meta = impl::GetAutogradMetaImpl(output_tensor);
+  MS_EXCEPTION_IF_NULL(auto_grad_meta);
   if (auto_grad_meta->retains_grad()) {
     auto old_node = auto_grad_meta->UnsafeGetGradNodeImpl();
     MS_EXCEPTION_IF_NULL(old_node);
