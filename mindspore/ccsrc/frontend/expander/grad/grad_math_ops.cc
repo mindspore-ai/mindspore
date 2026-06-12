@@ -4752,13 +4752,13 @@ REG_BPROP_BUILDER("LpNorm").SetBody(BODYFUNC(ib) {
   }
   if (p == 2) {
     auto input_scaled = input_x;
-    auto scale_v = ib->Div(dout, out);
+    auto scale_v = ib->RealDiv(dout, out);
     return {ib->Mul(input_scaled, scale_v)};
   } else {
     auto input_x_abs = ib->Abs(input_x);
     auto input_scaled =
       ib->Mul(ib->PowTensorScalar(input_x_abs, ib->ValueByType(p - 2, ib->GetDtype(input_x_abs))), input_x);
-    auto scale_v = ib->Div(dout, ib->PowTensorScalar(out, ib->ValueByType(p - 1, ib->GetDtype(out))));
+    auto scale_v = ib->RealDiv(dout, ib->PowTensorScalar(out, ib->ValueByType(p - 1, ib->GetDtype(out))));
     auto equal_zero = ib->Equal(input_scaled, ib->Tensor(0, ib->GetDtype(input_scaled)));
     return {ib->Select(equal_zero, ib->Fill(0.0, ib->Shape(input_scaled), ib->GetDtype(input_scaled)->type_id()),
                        ib->Mul(input_scaled, scale_v))};

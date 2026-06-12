@@ -7085,7 +7085,8 @@ def dynamic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None, 
                 ),
                 OpSampleInput(
                     op_input=make_func(shape=(8, 5, 9, 7)),
-                    op_args=(2,),
+                    # set_inputs fixes non-Tensor scalars to the compile-time value.
+                    op_args=(1,),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
                 ),
@@ -7103,7 +7104,8 @@ def dynamic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None, 
             op_running_inputs=(
                 OpSampleInput(
                     op_input=make_func(shape=(9, 4, 7, 7)),
-                    op_args=(3,),
+                    # Keep dim aligned with compile input while varying only rank/shape.
+                    op_args=(1,),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),
@@ -7118,7 +7120,8 @@ def dynamic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None, 
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=None, dtype=dtype),
-                op_args=(1,),
+                # A separate dynamic-rank group is needed for inputs whose valid dim is 0.
+                op_args=(0,),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_dynamic_rank_compile_input_groups2",
             ),

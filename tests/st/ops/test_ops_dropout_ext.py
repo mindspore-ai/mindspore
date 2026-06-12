@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST tests for dropout extension operators."""
+
 import numpy as np
 import pytest
 
@@ -19,6 +21,7 @@ import mindspore as ms
 from mindspore import mint, nn
 from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
+from tests.st.ops.share._internal.meta import ops_common_net
 from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 
@@ -53,22 +56,24 @@ class Dropout_nn(nn.Cell):
         return self.net(x)
 
 
-@test_utils.run_with_cell
 def dropout_forward_nn(x, p=0.4, inplace=False):
     net = Dropout_nn(p, inplace)
     return net(x)
 
 
-@test_utils.run_with_cell
-def dropout_forward_nn_grad(x, p=0.4, inplace=False):
-    net = Dropout_nn(p, inplace)
-    x = x * 1
-    return net(x)
+class DropoutForwardGradNN(nn.Cell):
+    def __init__(self, p=0.5, inplace=False):
+        super().__init__()
+        self.net = Dropout_nn(p, inplace)
+
+    def construct(self, x):
+        x = x * 1
+        return self.net(x)
 
 
-@test_utils.run_with_cell
 def dropout_backward_nn(x, p=0.4, inplace=False):
-    return ms.grad(dropout_forward_nn_grad, (0))(x, p, inplace)
+    grad_func = ms.grad(DropoutForwardGradNN(p, inplace), (0))
+    return grad_func(x)
 
 
 def compare_output(x, p, output):
@@ -311,6 +316,26 @@ def test_nn_dropout_ext_rng_state(mode, inplace):
     else:
         assert not (out1.asnumpy() == out2.asnumpy()).all()
         assert (out1.asnumpy() == out3.asnumpy()).all()
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
+def test_nn_dropout_ext_p_eq_one_bool_consistency():
+    """
+    Feature: mint.nn.Dropout
+    Description: Verify kbk and pynative return the same zero output when p is 1.
+    Expectation: Success.
+    """
+    x_kbk = ms.Tensor(np.array([[False, True, True]]), ms.bool_)
+    x_pynative = ms.Tensor(np.array([[False, True, True]]), ms.bool_)
+    net = mint.nn.Dropout(1.0, inplace=True)
+    net.set_train()
+    ms.set_context(mode=ms.GRAPH_MODE, jit_level='O0')
+    out_kbk = ops_common_net(net, x_kbk)
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    out_pynative = net(x_pynative)
+    expect = np.array([[False, False, False]])
+    np.testing.assert_array_equal(out_kbk.asnumpy(), expect)
+    np.testing.assert_array_equal(out_pynative.asnumpy(), expect)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
