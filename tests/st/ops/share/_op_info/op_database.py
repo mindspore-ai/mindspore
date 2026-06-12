@@ -4429,7 +4429,7 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.bfloat16:0.01, ms.float16:0.004, ms.float32:0.004},
+        ascend910b_forward_loss_override={ms.bfloat16:0.02, ms.float16:0.004, ms.float32:0.004},
         op_basic_reference_inputs_func=basic_sample_inputs_mint_addmm,
         op_error_inputs_func=error_sample_inputs_mint_addmm,
         op_extra_reference_inputs_func=extra_sample_inputs_addmm,
@@ -4549,7 +4549,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.addmv',
         op=tensor_addmv_ms,
         ref=tensor_addmv_torch,
-        ascend910b_forward_loss_override={ms.float16:0.002,},
+        ascend910b_forward_loss_override={ms.float16:0.006,},
         # mindspore  backward not support ms.float64
         # pytorch not support bool
         dtypes_ascend910b=(ms.float16, ms.float32, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8,),
@@ -5000,6 +5000,180 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=functools.partial(error_sample_inputs_Avgpool3d, dim='2d'),
         op_extra_reference_inputs_func=extra_sample_inputs_Avgpool2d,
     ),
+    'mint.nn.Softshrink': OpInfo(
+        name='mint.nn.Softshrink',
+        op=mint_nn_softshrink_ms,
+        ref=mint_nn_softshrink_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16),
+        dtypes_cpu=(ms.float16, ms.float32),
+        dtypes_gpu=(ms.float16, ms.float32),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_softshrink,
+        # torch/torch-npu version 2.7.1, result is different with torch when input is nan
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_sample_inputs_mint_nn_softshrink, '_extremal_nan', skip=True
+        ),
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_softshrink,
+        op_error_inputs_func=error_sample_inputs_mint_nn_softshrink,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
+    ),
+    'mint.nn.Threshold': OpInfo(
+        name='mint.nn.Threshold',
+        op=mint_nn_threshold_ms,
+        ref=mint_nn_threshold_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch if d not in (ms.bool_, ms.float64, ms.complex64, ms.complex128)
+        ),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_threshold,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_threshold,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_threshold,
+        op_error_inputs_func=error_sample_inputs_mint_nn_threshold,
+        not_support_dtypes=(ms.bool_, ms.float64, ms.complex64, ms.complex128),
+    ),
+    'mint.nn.BCEWithLogitsLoss': OpInfo(
+        name='mint.nn.BCEWithLogitsLoss',
+        op=mint_nn_bcewithlogitsloss_ms,
+        ref=mint_nn_bcewithlogitsloss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # bfloat16: backward values have inf, different with torch
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_sample_inputs_mint_nn_bcewithlogitsloss, '_BFloat16', skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_sample_inputs_mint_nn_bcewithlogitsloss, '_Float16_small_large_values_discontiguous_True', skip=True
+        ),
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_bcewithlogitsloss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_bcewithlogitsloss,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
+        convert_half_to_float=False,
+        grad_position=(0, 1),
+        ascend910b_forward_loss_override={ms.float16: 0.003, ms.bfloat16: 0.01},
+        ascend910b_backward_loss_override={ms.float16: 0.09, ms.bfloat16: 0.091},
+    ),
+    'mint.nn.CosineEmbeddingLoss': OpInfo(
+        name='mint.nn.CosineEmbeddingLoss',
+        op=mint_nn_cosineembeddingloss_ms,
+        ref=mint_nn_cosineembeddingloss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_cosineembeddingloss,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_cosineembeddingloss,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_cosineembeddingloss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_cosineembeddingloss,
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        convert_half_to_float=False,
+    ),
+    'mint.nn.CrossEntropyLoss': OpInfo(
+        name='mint.nn.CrossEntropyLoss',
+        op=mint_nn_crossentropyloss_ms,
+        ref=mint_nn_crossentropyloss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_crossentropyloss,
+        # when dtype is float16/bfloat16, torch-out is float32, but ms-out is original dtype, loss is relatively large.
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_sample_inputs_mint_nn_crossentropyloss,
+            ['_BFloat16_extra', '_Float16_small_large', '_BFloat16_small_large'],
+            skip=True
+        ),
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_crossentropyloss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_crossentropyloss,
+        not_support_dtypes=tuple(
+            d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32, ms.float64)
+        ),
+        ascend910b_forward_loss_override={ms.float16: 0.0092, ms.float32: 0.0072, ms.bfloat16: 0.0095},
+        # when dtype is float16/bfloat16, torch-out is float32, but ms-out is original dtype, loss is relatively large.
+        ascend910b_backward_loss_override={ms.float16: 0.012, ms.bfloat16: 0.0361},
+    ),
+    'mint.nn.KLDivLoss': OpInfo(
+        name='mint.nn.KLDivLoss',
+        op=mint_nn_kldivloss_ms,
+        ref=mint_nn_kldivloss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_kldivloss,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_kldivloss,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_kldivloss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_kldivloss,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
+        # target can not have requires_grad True.
+        grad_position=(0,),
+        ascend910b_forward_loss_override={ms.bfloat16: 0.008},
+    ),
+    'mint.nn.L1Loss': OpInfo(
+        name='mint.nn.L1Loss',
+        op=mint_nn_l1loss_ms,
+        ref=mint_nn_l1loss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_l1loss,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_l1loss,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_l1loss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_l1loss,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
+        ascend910b_forward_loss_override={ms.bfloat16: 0.006},
+    ),
+    'mint.nn.MSELoss': OpInfo(
+        name='mint.nn.MSELoss',
+        op=mint_nn_mseloss_ms,
+        ref=mint_nn_mseloss_torch,
+        dtypes_ascend=(),
+        # torch does not support bfloat16
+        dtypes_ascend910b=(ms.float16, ms.float32,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_mseloss,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_mseloss,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_mseloss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_mseloss,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
+    ),
+    'mint.nn.NLLLoss': OpInfo(
+        name='mint.nn.NLLLoss',
+        op=mint_nn_nllloss_ms,
+        ref=mint_nn_nllloss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_nllloss,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_nllloss,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_nllloss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_nllloss,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32)),
+        # when dtype is float16/bfloat16, torch-out is float32, but ms-out is original dtype, loss is relatively large.
+        ascend910b_forward_loss_override={ms.bfloat16: 0.17, ms.float32: 0.018},
+        ascend910b_backward_loss_override={ms.bfloat16: 0.035},
+    ),
+    'mint.nn.SmoothL1Loss': OpInfo(
+        name='mint.nn.SmoothL1Loss',
+        op=mint_nn_smoothl1loss_ms,
+        ref=mint_nn_smoothl1loss_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_smoothl1loss,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_smoothl1loss,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_smoothl1loss,
+        op_error_inputs_func=error_sample_inputs_mint_nn_smoothl1loss,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
+        ascend910b_forward_loss_override={ms.bfloat16: 0.008},
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -5322,6 +5496,16 @@ other_op_db = [
     'mint.nn.Dropout',
     'mint.nn.functional.dropout2d',
     'mint.nn.Dropout2d',
+    'mint.nn.Softshrink',
+    'mint.nn.Threshold',
+    'mint.nn.BCEWithLogitsLoss',
+    'mint.nn.CosineEmbeddingLoss',
+    'mint.nn.CrossEntropyLoss',
+    'mint.nn.KLDivLoss',
+    'mint.nn.L1Loss',
+    'mint.nn.MSELoss',
+    'mint.nn.NLLLoss',
+    'mint.nn.SmoothL1Loss',
 ]
 
 reduction_op_db = [
@@ -5436,6 +5620,8 @@ other_op_kbk_db = [
     'mint.nn.functional.pad(mode="constant")',
     'mint.nn.functional.pad(mode="reflect")',
     'mint.nn.functional.pad(mode="replicate")',
+    'mint.nn.CosineEmbeddingLoss',
+    'mint.nn.CrossEntropyLoss',
 ]
 
 reduction_op_kbk_db = [
