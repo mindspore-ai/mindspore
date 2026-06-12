@@ -10,7 +10,7 @@ mindspore.dataset.SubsetRandomSampler
         - **num_samples** (int, 可选) - 获取的样本数，可用于部分获取采样得到的样本。默认值： ``None`` ，获取采样到的所有样本。
 
     异常：
-        - **TypeError** - `indices` 的类型不是int。
+        - **TypeError** - `indices` 的类型不是number。
         - **TypeError** - `num_samples` 的类型不是int。
         - **ValueError** - `num_samples` 为负值。
 

@@ -1056,7 +1056,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
     IWSLT2017(International Workshop on Spoken Language Translation) dataset.
 
     The generated dataset has two columns: :py:obj:`[text, translation]` .
-    The tensor of column :py:obj:`text` and :py:obj:`translation` are of the string type.
+    The tensors of column :py:obj:`text` and :py:obj:`translation` are of the string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1402,7 +1402,7 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1481,7 +1481,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
     :py:obj:`[context, question, text, answer_start]` .
     The tensor of column :py:obj:`context` is of the string type.
     The tensor of column :py:obj:`question` is of the string type.
-    The tensor of column :py:obj:`text` is the answer in the context of the string type.
+    The tensor of column :py:obj:`text` contains the answer in the context of the string type.
     The tensor of column :py:obj:`answer_start` is the start index of answer in context,
     which is of the uint32 type.
 
@@ -1506,7 +1506,7 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1604,7 +1604,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
 
     The generated dataset's train.tsv and dev.tsv have two columns :py:obj:`[sentence, label]` .
     The generated dataset's test.tsv has one column :py:obj:`[sentence]` .
-    The tensor of column :py:obj:`sentence` and :py:obj:`label` are of the string type.
+    The tensors of column :py:obj:`sentence` and :py:obj:`label` are of the string type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -1627,7 +1627,7 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards`. This argument can only be specified when
@@ -1716,7 +1716,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in a lexicographical order.
         num_samples (int, optional): The number of samples to be included in the dataset.
-            Default: ``None`` , will include all images.
+            Default: ``None`` , will include all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -1731,7 +1731,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This 
@@ -1796,7 +1796,7 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1883,7 +1883,7 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1981,7 +1981,7 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -2086,7 +2086,7 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This

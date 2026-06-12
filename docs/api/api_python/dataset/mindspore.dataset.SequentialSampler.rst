@@ -7,7 +7,7 @@ mindspore.dataset.SequentialSampler
 
     参数：
         - **start_index** (int, 可选) - 采样的起始样本ID。默认值： ``None`` ，从数据集第一个样本开始采样。
-        - **num_samples** (int, 可选) - 获取的样本数，可用于获取部分采样得到的样本。默认值： ``None`` ，获取采样到的所有样本。
+        - **num_samples** (int, 可选) - 指定要采样的样本数量。默认值： ``None`` ，获取采样到的所有样本。
 
     异常：
         - **TypeError** - `start_index` 的类型不是int。

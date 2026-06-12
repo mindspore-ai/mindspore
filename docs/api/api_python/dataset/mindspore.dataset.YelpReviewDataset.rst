@@ -3,7 +3,7 @@ mindspore.dataset.YelpReviewDataset
 
 .. py:class:: mindspore.dataset.YelpReviewDataset(dataset_dir, usage=None, num_samples=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, num_parallel_workers=None, cache=None)
 
-    Yelp Review Full和Yelp Review Polarity数据集。
+    Yelp Review Polarity和Yelp Review Full数据集。
 
     生成的数据集有两列 `[label, text]`，两列的数据类型均为string。
 

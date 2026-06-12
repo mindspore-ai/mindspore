@@ -233,7 +233,7 @@ class WaitedDSCallback(Callback, DSCallback):
         >>> # define a parameter that needs to be synchronized between data pipeline and network training
         >>> events = []
         >>>
-        >>> # define callback classes of data pipeline and netwok training
+        >>> # define callback classes of data pipeline and network training
         >>> my_cb1 = MyWaitedCallback(events, 1)
         >>> my_cb2 = MyMSCallback(events)
         >>> arr = [1, 2, 3, 4]

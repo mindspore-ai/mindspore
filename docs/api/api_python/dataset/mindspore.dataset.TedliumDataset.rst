@@ -12,7 +12,7 @@ mindspore.dataset.TedliumDataset
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **release** (str) - 指定数据集的发布版本，可以取值为 ``'release1'`` 、 ``'release2'`` 或 ``'release3'`` 。
         - **usage** (str, 可选) - 指定数据集的子集。
-          对于 `release` 为 ``'release1'`` 或 ``'release2'``，`usage` 可以是 ``'train'`` 、 ``'test'`` 、 ``'dev'`` 或 ``'all'`` 。
+          对于 `release` 为 ``'release1'`` 或 ``'release2'``，`usage` 可以是 ``'train'`` 、 ``'test'`` 、 ``'dev'`` 或 ``'all'`` 。 ``'train'`` 将读取训练样本， ``'test'`` 将读取测试样本， ``'dev'`` 将读取开发样本， ``'all'`` 将读取所有样本。
           对于 `release` 为 ``'release3'`` ， `usage` 只能是 ``'all'`` 。默认值： ``None`` ，读取全部样本。
         - **extensions** (str, 可选) - 指定SPH文件的扩展名。默认值： ``None`` ，默认指定为 ``'.sph'`` 。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
@@ -24,7 +24,7 @@ mindspore.dataset.TedliumDataset
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
+        - **RuntimeError** - `dataset_dir` 路径下不包含stm文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。

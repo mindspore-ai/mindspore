@@ -5,11 +5,11 @@ mindspore.dataset.SQuADDataset
 
     SQuAD 1.1和SQuAD 2.0数据集。
 
-    不同版本和子集生成的数据集具有相同的列: `[context, question, text, answer_start]`。
-    `context` 列的数据类型为string。
-    `question` 列的数据类型为string。
-    `text` 列为上下文中的回答，数据类型为string。
-    `answer_start` 列为上下文中回答的起始索引，数据类型为uint32。
+    不同版本和子集生成的数据集具有相同的列: :py:obj:`[context, question, text, answer_start]`。
+    :py:obj:`context` 列的数据类型为string。
+    :py:obj:`question` 列的数据类型为string。
+    :py:obj:`text` 列为上下文中的回答，数据类型为string。
+    :py:obj:`answer_start` 列为上下文中回答的起始索引，数据类型为uint32。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。

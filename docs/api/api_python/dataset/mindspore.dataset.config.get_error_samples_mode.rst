@@ -3,7 +3,7 @@ mindspore.dataset.config.get_error_samples_mode
 
 .. py:function:: mindspore.dataset.config.get_error_samples_mode()
 
-    获取当前数据管道中处理错误样本的策略配置。
+    获取当前数据管道中处理错误样本的策略配置。如果之前未调用 `set_error_samples_mode`，默认设置为 ``ErrorSamplesMode.RETURN``。
 
     返回：
         :class:`mindspore.dataset.config.ErrorSamplesMode` ，当前数据管道处理错误样本的方法。
