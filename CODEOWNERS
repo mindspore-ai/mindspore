@@ -124,7 +124,7 @@
 /mindspore/python/mindspore/custom_compiler/ @limingqi107
 /mindspore/python/mindspore/dataset/ @jonyguo
 /mindspore/python/mindspore/device_context/ @limingqi107
-/mindspore/python/mindspore/graph/ @limingqi107
+/mindspore/python/mindspore/graph/ @ginfung
 /mindspore/python/mindspore/hal/ @limingqi107
 /mindspore/python/mindspore/mindrecord/ @jonyguo
 /mindspore/python/mindspore/mint/ @liangchenghui
