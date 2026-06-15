@@ -114,20 +114,20 @@ class Dense(nn.Cell):
         """Set dtype"""
         if isinstance(weight_init, Tensor):
             self.dtype = weight_init.dtype
-            if self.dtype in [mindspore.float16, mindspore.float32] and ( \
-                    weight_init.ndim != 3
-                    or weight_init.shape[0] != 2 \
-                    or weight_init.shape[1] != out_channels \
-                    or weight_init.shape[2] != in_channels):
+            real_shape_error = (weight_init.ndim != 3
+                                or weight_init.shape[0] != 2
+                                or weight_init.shape[1] != out_channels
+                                or weight_init.shape[2] != in_channels)
+            if self.dtype in [mindspore.float16, mindspore.float32] and real_shape_error:
                 raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' must "
                                  f"be equal to 3, and the first dim must be equal to 2, and the second dim must be "
                                  f"equal to 'out_channels', and the third dim must be equal to 'in_channels'. But got "
                                  f"'weight_init': {weight_init}, 'out_channels': {out_channels}, 'in_channels': "
                                  f"{in_channels}.")
-            if self.dtype == mindspore.complex64 and ( \
-                    weight_init.ndim != 2 \
-                    or weight_init.shape[0] != out_channels \
-                    or weight_init.shape[1] != in_channels):
+            complex_shape_error = (weight_init.ndim != 2
+                                   or weight_init.shape[0] != out_channels
+                                   or weight_init.shape[1] != in_channels)
+            if self.dtype == mindspore.complex64 and complex_shape_error:
                 raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' must "
                                  f"be equal to 2, and the first dim must be equal to 'out_channels', "
                                  f"and the second dim must be equal to 'in_channels'. But got "
@@ -143,10 +143,10 @@ class Dense(nn.Cell):
                 elif self.dtype != bias_init.dtype:
                     raise TypeError("Data type of weight init tensor and the bias init tensor must be equal, "
                                     f"but got weight_init.dtype={self.dtype} and bias_init.dtype={bias_init.dtype}")
-                if self.dtype in [mindspore.float16, mindspore.float32] and ( \
-                        bias_init.ndim != 2 \
-                        or bias_init.shape[0] != 2 \
-                        or bias_init.shape[1] != out_channels):
+                real_shape_error = (bias_init.ndim != 2
+                                    or bias_init.shape[0] != 2
+                                    or bias_init.shape[1] != out_channels)
+                if self.dtype in [mindspore.float16, mindspore.float32] and real_shape_error:
                     raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' must "
                                      f"be equal to 2, and the second dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
