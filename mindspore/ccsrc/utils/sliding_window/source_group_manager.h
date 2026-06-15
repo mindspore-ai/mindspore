@@ -62,12 +62,14 @@ class SourceGroupManager {
 
   SourceGroup *RegisterSource(const TensorPtr &tensor, uint64_t timestamp);
   SourceGroup *RegisterView(const TensorPtr &input, const TensorPtr &view_output, uint64_t timestamp);
+  void RegisterAlias(const TensorPtr &tensor, SourceGroup *group);
 
   TensorId ResolveSourceId(TensorId tensor_id) const;
   TensorId ResolveSourceId(const TensorPtr &tensor) const;
 
   SourceGroup *GetGroup(TensorId source_id);
   const SourceGroup *GetGroup(TensorId source_id) const;
+  void UpdateAddressMapping(SourceGroup *group, const device::DeviceAddressPtr &new_addr);
 
   std::unordered_set<TensorId> BuildProtectedSourceIdSet(const std::vector<TensorPtr> &tensors) const;
 
@@ -80,11 +82,16 @@ class SourceGroupManager {
 
  private:
   SourceGroup *GetOrCreateGroup(const TensorPtr &tensor, uint64_t timestamp);
+  SourceGroup *FindGroupForTensor(const TensorPtr &tensor);
+  const SourceGroup *FindGroupForTensor(const TensorPtr &tensor) const;
+  TensorId ResolveSourceIdByAddress(const device::DeviceAddressPtr &addr) const;
+  void AddViewToGroup(SourceGroup *group, const TensorPtr &view_output);
   void PruneExpiredViews(SourceGroup *group);
   bool IsGroupExpired(const SourceGroup &group) const;
   void RemoveMappingsForSource(TensorId source_id);
 
   std::unordered_map<TensorId, TensorId> tensor_to_source_;
+  std::unordered_map<device::DeviceAddress *, TensorId> addr_to_source_;
   std::unordered_map<TensorId, SourceGroup> source_groups_;
 };
 

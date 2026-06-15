@@ -281,7 +281,7 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
 
   for (const auto &input : input_tensors) {
     if (input != nullptr) {
-      TensorId source_id = source_group_mgr_->ResolveSourceId(input->id());
+      TensorId source_id = source_group_mgr_->ResolveSourceId(input);
       auto *group = source_group_mgr_->GetGroup(source_id);
       bool in_cache =
         (group != nullptr && group->source_registered && group->status == ResidencyStatus::kOnDevice);
@@ -323,7 +323,7 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
   uint64_t timestamp = GetCurrentTimestamp();
   for (const auto &tensor : input_tensors) {
     if (tensor) {
-      TensorId source_id = source_group_mgr_->ResolveSourceId(tensor->id());
+      TensorId source_id = source_group_mgr_->ResolveSourceId(tensor);
       source_group_mgr_->UpdateAccess(source_id, timestamp);
     }
   }

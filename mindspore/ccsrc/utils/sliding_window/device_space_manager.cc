@@ -201,7 +201,7 @@ size_t DeviceSpaceManager::TryOffloadGroup(SourceGroup *group) {
   }
 
   group->host_copy = host_tensor;
-  group->shared_addr = source->device_address();
+  source_group_mgr_->UpdateAddressMapping(group, source->device_address());
   group->status = ResidencyStatus::kOnHost;
   group->aligned_size = AlignToPoolSize(source->Size());
   RunOrPushTask([source]() { source->device_address()->ClearDeviceMemory(); });
@@ -274,7 +274,7 @@ bool DeviceSpaceManager::ReloadGroup(SourceGroup *group, const TensorPtr &addr_t
   if (!ReloadDeviceAddress(group->source_id, device_addr, group->host_copy)) {
     return false;
   }
-  group->shared_addr = device_addr;
+  source_group_mgr_->UpdateAddressMapping(group, device_addr);
   group->host_copy = nullptr;
   group->status = ResidencyStatus::kOnDevice;
   return true;
@@ -345,7 +345,7 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
     }
 
     TensorId tensor_id = tensor->id();
-    TensorId lookup_id = source_group_mgr_->ResolveSourceId(tensor_id);
+    TensorId lookup_id = source_group_mgr_->ResolveSourceId(tensor);
 
     // Skip if we already reloaded this source for a previous input
     if (reloaded_sources.count(lookup_id) > 0) {
@@ -354,6 +354,9 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
     }
 
     auto *group = source_group_mgr_->GetGroup(lookup_id);
+    if (group != nullptr) {
+      source_group_mgr_->RegisterAlias(tensor, group);
+    }
     if (group == nullptr || group->status == ResidencyStatus::kOnDevice) {
       auto addr = tensor->device_address();
       if (addr == nullptr || addr->GetDevicePtr() == nullptr) {
