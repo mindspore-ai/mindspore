@@ -777,10 +777,10 @@ def compare_results(torch_out, ms_out, sparse_count, return_value=False, skip_cp
 def test_ops_lightning_indexer_bsnd_pabsnd_normal(mode, dtype):
     """
     Feature: pyboost function.
-    Description: Test function lightning_indexer forward and backward computation.
+    Description: Test function lightning_indexer forward computation.
         Test scenario: BSND layout with PA_BSND key layout, B=1, S1=1, S2=8192, N1=64, N2=1, D=128,
         block_size=256, sparse_count=2048, sparse_mode=3 (rightDownCausal).
-    Expectation: Expect correct sparse_indices output and gradient results matching torch_npu reference.
+    Expectation: Expect correct sparse_indices output matching torch_npu reference.
     """
     set_context_mode(mode)
 
@@ -804,20 +804,16 @@ def test_ops_lightning_indexer_bsnd_pabsnd_normal(mode, dtype):
         get_torch_tensors(
             query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, block_table, dtype
         )
-    # torch lightning_indexer forward and backward
+    # PA_BSND only supports forward when return_value=False.
     torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights, pt_actual_seq_lengths_query,
                                                      pt_actual_seq_lengths_key, pt_block_table, layout_query,
                                                      layout_key, sparse_count, sparse_mode, return_value=return_value,
-                                                     grad=True)
+                                                     grad=False)
     # mindspore lightning_indexer forward
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                             ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
                                             sparse_count, sparse_mode, return_value=return_value)
-    # mindspore lightning_indexer backward
-    ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
-                                                  ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
-                                                  sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_compare=False)
+    compare_results(torch_out, ms_out, sparse_count, return_value, skip_cpu_compare=False)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -1012,10 +1008,10 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
 def test_ops_lightning_indexer_default_params(mode, dtype):
     """
     Feature: pyboost function.
-    Description: Test function lightning_indexer forward and backward with default keyword arguments.
+    Description: Test function lightning_indexer forward with default keyword arguments.
         Test scenario: BSND layout with BSND key layout (default), B=1, S1=1, S2=2048, N1=64, N2=1, D=128.
         All keyword arguments use default values: sparse_count=2048, sparse_mode=3, block_table=None.
-    Expectation: Expect correct sparse_indices and gradient output matching torch_npu reference.
+    Expectation: Expect correct sparse_indices output matching torch_npu reference.
     """
     set_context_mode(mode)
 
@@ -1031,13 +1027,11 @@ def test_ops_lightning_indexer_default_params(mode, dtype):
     pt_query, pt_key, pt_weights, _, _, _ = \
         get_torch_tensors(query_np, key_np, weights_np, None, None, None, dtype)
 
-    # torch lightning_indexer forward and backward with default keyword arguments
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights, grad=True)
+    # return_value=False produces an empty sparse_values tensor and does not provide a valid dy for backward.
+    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights)
     # mindspore lightning_indexer forward with default keyword arguments
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights)
-    # mindspore lightning_indexer backward with default keyword arguments
-    ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, skip_cpu_grad_compare=True)
+    compare_results(torch_out, ms_out, sparse_count)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
