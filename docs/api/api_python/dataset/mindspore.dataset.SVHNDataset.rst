@@ -10,7 +10,7 @@ mindspore.dataset.SVHNDataset
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'test'`` 、 ``'extra'`` 或 ``'all'`` 。默认值： ``None`` ，读取全部样本图片。
-        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值： ``None`` ，读取全部样本图片。
+        - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数。默认值： ``1`` 。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值： ``None`` 。下表中会展示不同参数配置的预期行为。
         - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值： ``None`` 。下表中会展示不同配置的预期行为。
@@ -18,7 +18,7 @@ mindspore.dataset.SVHNDataset
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
+        - **RuntimeError** - `dataset_dir` 路径无效、不存在或不包含数据文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数，或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
@@ -37,7 +37,7 @@ mindspore.dataset.SVHNDataset
 
     **关于SVHN数据集：**
 
-    SVHN数据集是从谷歌街景图像中的门牌号码中获得的，由10位数字组成。
+    SVHN数据集包含10个数字类别，数据来源于谷歌街景图像中的门牌号码。
 
     以下是原始SVHN数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 

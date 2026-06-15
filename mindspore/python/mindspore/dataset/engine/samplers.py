@@ -34,11 +34,12 @@ class Shuffle(str, Enum):
 
     - ``Shuffle.FALSE`` : Disable the shuffle.
     - ``Shuffle.ADAPTIVE`` : When the number of dataset samples is less than or equal to 100 million,
-      global shuffle is used. When the number of dataset samples is greater than 100 million, partial shuffle is used.
+      global shuffle is used. When the number of dataset samples is greater than 100 million,
+      partial shuffle is used. Shuffle data every 1 million samples.
     - ``Shuffle.GLOBAL`` : Shuffle both the files and samples.
     - ``Shuffle.PARTIAL`` : Shuffle data every 1 million samples.
-    - ``Shuffle.FILES`` : Shuffle files only.
-    - ``Shuffle.INFILE`` : Shuffle data within each file.
+    - ``Shuffle.FILES`` : Shuffle files only, not shuffle the data within the files.
+    - ``Shuffle.INFILE`` : Preserve the order in which the files are read, but shuffle the data within each file.
     """
     FALSE: str = "false"
     ADAPTIVE: str = "adaptive"
@@ -899,7 +900,9 @@ class SubsetSampler(BuiltinSampler):
 
     Args:
         indices (Iterable): A sequence of indices (Any iterable Python object but string).
-        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
+        num_samples (int, optional): Number of elements to sample.
+            Used to partially extract samples obtained through sampling.
+            Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If elements of `indices` are not of type number.
@@ -992,7 +995,9 @@ class SubsetRandomSampler(SubsetSampler):
 
     Args:
         indices (Iterable): A sequence of indices (Any iterable Python object but string).
-        num_samples (int, optional): Number of elements to sample. Default: ``None`` , which means sample all elements.
+        num_samples (int, optional): Number of elements to sample.
+            Used to partially extract samples obtained through sampling.
+            Default: ``None`` , which means sample all elements.
 
     Raises:
         TypeError: If elements of `indices` are not of type number.

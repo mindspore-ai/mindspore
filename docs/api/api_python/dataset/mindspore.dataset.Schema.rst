@@ -3,7 +3,7 @@ mindspore.dataset.Schema
 
 .. py:class:: mindspore.dataset.Schema(schema_file=None)
 
-    用于解析和存储数据列属性的类。
+    用于表示数据集schema的类。
 
     参数：
         - **schema_file** (str，可选) - schema文件的路径。默认值： ``None`` 。
@@ -43,7 +43,7 @@ mindspore.dataset.Schema
             - **columns** (Union[dict, list[dict], tuple[dict]]) - 数据集属性信息，从schema文件解码。
 
               - **list[dict]** ：`name` 和 `type` 必须为key值， `shape` 可选。
-              - **dict** ：columns.keys()作为名称，columns.values()是dict，其中包含可选的 `type`、 `shape` 。
+              - **dict** ：columns的键作为列名，columns的值为字典，其中包含type和可选的shape。
 
         异常：
             - **RuntimeError** - 解析列失败。

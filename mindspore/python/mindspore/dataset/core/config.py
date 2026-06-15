@@ -392,7 +392,7 @@ def _set_auto_workers_config(option):
 
 def get_auto_num_workers():
     """
-    Get the setting of automatic number of workers (turned on or off), it is disabled by default.
+    Get the setting of automatic number of workers (turned on or off). It is disabled by default.
 
     Returns:
         bool, whether auto number worker feature is turned on.
@@ -573,7 +573,7 @@ def set_enable_autotune(enable, filepath_prefix=None):
 
 def get_enable_autotune():
     """
-    Get whether AutoTune is currently enabled, it is disabled by default.
+    Get whether AutoTune is currently enabled. It is disabled by default.
 
     Returns:
         bool, whether AutoTune is currently enabled.
@@ -638,7 +638,7 @@ def get_enable_shared_mem():
         - The `get_enable_shared_mem` interface will be deprecated in a future version.
 
     Returns:
-        bool, the state of shared mem enabled variable.
+        bool, whether shared memory is enabled.
 
     Examples:
         >>> # Get the flag of shared memory feature.
@@ -789,10 +789,10 @@ def set_enable_watchdog(enable):
 def get_enable_watchdog():
     """
     Get the state of watchdog Python thread to indicate enabled or disabled state.
-    This is a Python watchdog thread used for all processes, it is enabled by default.
+    This is a Python watchdog thread used for all processes. It is enabled by default.
 
     Returns:
-        bool, the default state of watchdog Python thread enabled.
+        bool, whether the watchdog Python thread is enabled.
 
     Examples:
         >>> # Get the global configuration of watchdog Python thread.
@@ -907,7 +907,7 @@ def get_fast_recovery():
     It is set to True by default.
 
     Returns:
-        bool, whether the dataset recovers fast in failover reset.
+        bool, whether fast recovery mode is enabled for failover reset.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1030,9 +1030,9 @@ class ErrorSamplesMode(IntEnum):
 
     Possible enumeration values are: ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP.
 
-    - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
-    - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
-    - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+    - ErrorSamplesMode.RETURN: means an erroneous sample results in an error being raised and returned.
+    - ErrorSamplesMode.REPLACE: means an erroneous sample is replaced with an internally determined sample.
+    - ErrorSamplesMode.SKIP: means an erroneous sample is skipped.
     """
 
     RETURN = 0
@@ -1090,15 +1090,15 @@ def set_error_samples_mode(error_samples_mode):
 
 def get_error_samples_mode():
     """
-    Get the current configuration for strategy for processing erroneous samples in a dataset pipeline.
-    If `set_error_samples_mode` is never called before, the default setting is ErrorSamplesMode.RETURN.
+    Get the current strategy for processing erroneous samples in a dataset pipeline.
+    If `set_error_samples_mode` has never called before, the default setting is ErrorSamplesMode.RETURN.
 
     Returns:
-        ErrorSamplesMode, The method in which erroneous samples should be processed in a dataset pipeline.
+        ErrorSamplesMode. The method in which erroneous samples should be processed in a dataset pipeline.
 
-        - ErrorSamplesMode.RETURN: means erroneous sample results in error raised and returned.
-        - ErrorSamplesMode.REPLACE: means erroneous sample is replaced with an internally determined sample.
-        - ErrorSamplesMode.SKIP: means erroneous sample is skipped.
+        - ErrorSamplesMode.RETURN: means an erroneous sample results in an error being raised and returned.
+        - ErrorSamplesMode.REPLACE: means an erroneous sample is replaced with an internally determined sample.
+        - ErrorSamplesMode.SKIP: means an erroneous sample is skipped.
 
     Examples:
         >>> import mindspore.dataset as ds

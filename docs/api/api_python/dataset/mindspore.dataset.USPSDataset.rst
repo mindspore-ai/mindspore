@@ -25,7 +25,7 @@ mindspore.dataset.USPSDataset
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
+        - **RuntimeError** - `dataset_dir` 路径无效、不存在或不包含数据文件。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `usage` 参数无效。

@@ -21,7 +21,7 @@ mindspore.dataset.STL10Dataset
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
     异常：
-        - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
+        - **RuntimeError** - `dataset_dir` 路径无效、不存在或不包含数据文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。
         - **RuntimeError** - 同时指定了 `sampler` 和 `num_shards` 参数，或同时指定了 `sampler` 和 `shard_id` 参数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
@@ -65,7 +65,7 @@ mindspore.dataset.STL10Dataset
         @techreport{Coates10,
         author       = {Adam Coates},
         title        = {Learning multiple layers of features from tiny images},
-        year         = {20010},
+        year         = {2010},
         howpublished = {https://cs.stanford.edu/~acoates/stl10/},
         description  = {The STL-10 dataset consists of 96x96 RGB images in 10 classes,
                         with 500 training images and 800 testing images per class.

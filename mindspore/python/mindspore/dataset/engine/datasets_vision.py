@@ -4100,7 +4100,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
 
     The generated dataset has two columns: :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
-    The tensor of column :py:obj:`label` is of a scalar of int32 type.
+    The tensor of column :py:obj:`label` is of a scalar of uint32 type.
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
@@ -4111,6 +4111,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
             will read from 105,000 samples, ``'all'`` will read all the samples.
             Default: ``None`` , all samples.
         num_samples (int, optional): The number of images to be included in the dataset.
+            It can be less than the total number of datasets.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
@@ -4121,7 +4122,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -4190,7 +4191,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
         @techreport{Coates10,
         author       = {Adam Coates},
         title        = {Learning multiple layers of features from tiny images},
-        year         = {20010},
+        year         = {2010},
         howpublished = {https://cs.stanford.edu/~acoates/stl10/},
         description  = {The STL-10 dataset consists of 96x96 RGB images in 10 classes,
                         with 500 training images and 800 testing images per class.
@@ -4225,18 +4226,20 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         num_samples (int, optional): The number of images to be included in the dataset.
+            It can be less than the total number of datasets.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
-        decode (bool, optional): Whether or not to decode the images after reading. Default: ``False``.
+        decode (bool, optional): Whether or not to decode the images after reading.
+            Default: ``False``, meaning not decoding.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . This
@@ -4396,10 +4399,10 @@ class SVHNDataset(GeneratorDataset):
             fetch the dataset in parallel. Default: ``1``.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
-        sampler (Sampler, optional): Object used to choose samples from the dataset. Random accessible
-            input is required. Default: ``None`` , expected order behavior shown in the table below.
+        sampler (Sampler, optional): Object used to choose samples from the dataset.
+            Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
@@ -4501,7 +4504,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -4611,7 +4614,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -4627,8 +4630,8 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
         RuntimeError: If xml of Annotations is an invalid format.
-        RuntimeError: If xml of Annotations loss attribution of `object` .
-        RuntimeError: If xml of Annotations loss attribution of `bndbox` .
+        RuntimeError: If xml of Annotations lacks attribute of `object` .
+        RuntimeError: If xml of Annotations lacks attribute of `bndbox` .
         RuntimeError: If `sampler` and `shuffle` are specified at the same time.
         RuntimeError: If `sampler` and `num_shards`/`shard_id` are specified at the same time.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
@@ -4791,11 +4794,11 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
-        decode (bool, optional): Decode the images after reading. Default: ``False``.
+        decode (bool, optional): Decode the images after reading. Default: ``False``, not decoding.
         sampler (Sampler, optional): Object used to choose samples from the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
