@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 
 #include "primitive/structure_ops.h"
@@ -37,6 +38,7 @@
 #include "frontend/jit/ps/parse/resolve.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "abstract/abstract_function.h"
+#include "load_mindir/load_model.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
 #include "primitive/auto_generate/gen_ops_primitive_h.h"
@@ -77,10 +79,16 @@ void ValidateOperation(const AnfNodePtr &node) {
       << "Illegal DoSignaturePrimitive '" << prim->name() << "' in the graph."
       << "node:" << node->DebugString() << ", location:" << trace::GetDebugInfoStr(node->debug_info());
   }
-  if (abstract::IsInWhiteList(prim)) {
+  if (prim->HasAttr("is_load")) {
+    if (kUnsafeMindIROpTypes.find(prim->name()) != kUnsafeMindIROpTypes.end()) {
+      MS_LOG_WITH_NODE(EXCEPTION, node)
+        << "Illegal primitive from MindIR load: " << prim->name()
+        << ". Operators that involve dynamic code execution are not allowed to be loaded from MindIR files. node:"
+        << node->DebugString() << ", location:" << trace::GetDebugInfoStr(node->debug_info());
+    }
     return;
   }
-  if (prim->HasAttr("is_load")) {
+  if (abstract::IsInWhiteList(prim)) {
     return;
   }
   if (prim->name() == "PyExecute") {

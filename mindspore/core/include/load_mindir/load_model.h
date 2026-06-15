@@ -17,6 +17,7 @@
 #define MINDSPORE_CORE_LOAD_MODEL_H
 
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 #include <memory>
@@ -25,6 +26,7 @@
 #include "utils/crypto.h"
 
 namespace mindspore {
+inline const std::set<std::string> kUnsafeMindIROpTypes = {"PyExecute", "PyInterpret", "PyFunc"};
 class Layout {
  public:
   Layout() = default;

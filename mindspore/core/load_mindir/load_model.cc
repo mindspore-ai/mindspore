@@ -25,6 +25,7 @@
 #include <iostream>
 #include <stack>
 #include <list>
+#include <set>
 #include <utility>
 #include <nlohmann/json.hpp>
 
@@ -1927,6 +1928,13 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
   const size_t kOpTypeFlagSize = kOperatorTypeFlag.length();
   const std::string &node_type = node_proto.op_type();
   MS_LOG(DEBUG) << "Process Operator:" << node_type;
+
+  if (kUnsafeMindIROpTypes.find(node_type) != kUnsafeMindIROpTypes.end()) {
+    MS_LOG(ERROR) << "Reject unsafe operator type '" << node_type
+                  << "' from MindIR file. Operators that involve dynamic code execution are not allowed to be loaded "
+                     "from MindIR files.";
+    return nullptr;
+  }
   // Operator maybe CNode,FuncGraph or Parameter.
 
   if (node_type.size() > kOpTypeFlagSize && node_type.substr(0, kOpTypeFlagSize) == kOperatorTypeFlag) {
