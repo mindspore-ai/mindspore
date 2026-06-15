@@ -475,7 +475,7 @@ class MSANFModelParser {
   std::string mindir_dec_mode_;
   size_t mindir_dec_num_parallel_{0};
   bool little_endian_ = common::IsLittleByteOrder();
-  std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
+  std::map<std::string, std::pair<std::unique_ptr<Byte[]>, size_t>> tenor_data_;
   bool is_kernel_graph_{false};
   std::list<std::pair<const AnfNodePtr, const mind_ir::AttributeProto *>> node_abstract_protos_;
 };
@@ -1045,17 +1045,45 @@ bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &n
   return true;
 }
 
+bool ValidateExternalDataBounds(int64_t offset, int64_t length, size_t buffer_size) {
+  if (offset < 0) {
+    MS_LOG(ERROR) << "Invalid external data offset: " << offset << ", offset must be non-negative.";
+    return false;
+  }
+  if (length < 0) {
+    MS_LOG(ERROR) << "Invalid external data length: " << length << ", length must be non-negative.";
+    return false;
+  }
+  const size_t offset_size = LongToSize(offset);
+  const size_t length_size = LongToSize(length);
+  if (offset_size > buffer_size) {
+    MS_LOG(ERROR) << "External data offset " << offset << " exceeds buffer size " << buffer_size << ".";
+    return false;
+  }
+  if (length_size > buffer_size - offset_size) {
+    MS_LOG(ERROR) << "External data offset " << offset << " and length " << length << " exceed buffer size "
+                  << buffer_size << ".";
+    return false;
+  }
+  return true;
+}
+
 bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto,
                                                  const tensor::TensorPtr &tensor_info) {
   if (!tensor_proto.has_external_data()) {
     return false;
   }
   const unsigned char *data = nullptr;
-  auto it = tenor_data_.find(tensor_proto.external_data().location());
+  size_t buffer_size = 0;
+  const auto &external_data = tensor_proto.external_data();
+  const auto offset = external_data.offset();
+  const auto length = external_data.length();
+  auto it = tenor_data_.find(external_data.location());
   if (it != tenor_data_.end()) {
-    data = it->second.get();
+    data = it->second.first.get();
+    buffer_size = it->second.second;
   } else {
-    std::string file = mindir_path_ + "/" + tensor_proto.external_data().location();
+    std::string file = mindir_path_ + "/" + external_data.location();
     if (weight_buffer_.first == nullptr && mindir_dec_key_ != nullptr) {
       size_t plain_len;
       auto plain_data =
@@ -1070,8 +1098,9 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
         MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
         return false;
       }
+      buffer_size = plain_len;
       data = plain_data.get();
-      (void)tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
+      (void)tenor_data_.emplace(external_data.location(), std::make_pair(std::move(plain_data), buffer_size));
     } else if (weight_buffer_.first == nullptr) {
       // Read file
       std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
@@ -1096,35 +1125,37 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
         MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
         return false;
       }
+      buffer_size = file_size;
       data = reinterpret_cast<const unsigned char *>(plain_data.get());
-      (void)tenor_data_.emplace(tensor_proto.external_data().location(),
-                                std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())));
+      (void)tenor_data_.emplace(
+        external_data.location(),
+        std::make_pair(std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())), buffer_size));
     } else if (mindir_dec_key_ != nullptr) {
       MS_LOG(ERROR)
         << "Currently, the external weight data doesn't support encryption if weight is passed by buffer not file.";
       return false;
     } else {
       data = reinterpret_cast<const unsigned char *>(weight_buffer_.first);
-      if (LongToSize(tensor_proto.external_data().offset() + tensor_proto.external_data().length()) >
-          weight_buffer_.second) {
-        MS_LOG(ERROR)
-          << "Weight buffer doesn't match model, please check whether the weight buffer belongs to the model by user.";
-        return false;
-      }
+      buffer_size = weight_buffer_.second;
     }
   }
+
+  if (!ValidateExternalDataBounds(offset, length, buffer_size)) {
+    return false;
+  }
+
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   MS_EXCEPTION_IF_NULL(data);
 
-  if (tensor_info->DataNBytes() == 0 || tensor_proto.external_data().length() == 0) {
+  if (tensor_info->DataNBytes() == 0 || length == 0) {
     // no need to copy data
     return true;
   }
 
-  auto ret =
-    common::huge_memcpy(tensor_data_buf, tensor_info->DataNBytes(), data + tensor_proto.external_data().offset(),
-                        LongToSize(tensor_proto.external_data().length()));
+  const size_t offset_size = LongToSize(offset);
+  const size_t length_size = LongToSize(length);
+  auto ret = common::huge_memcpy(tensor_data_buf, tensor_info->DataNBytes(), data + offset_size, length_size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
     return false;
