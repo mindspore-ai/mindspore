@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <optional>
 #include <set>
@@ -67,6 +69,7 @@ constexpr std::string_view kEnableOffloadAttr = "enable_offload";
 constexpr auto kSwitchTrueBranchNumAttr = "TrueBranchNodeNum";
 constexpr auto kSwitchFalseBranchNumAttr = "FalseBranchNodeNum";
 
+constexpr size_t kViewDataInputIndex = 1;
 constexpr size_t kPrimaryDataInputIndex = 1;
 constexpr size_t kConditionSwitchFirstDataInputIndex = 2;
 constexpr size_t kCopyToHostInputSize = 3;
@@ -257,11 +260,51 @@ std::set<int64_t> ParseEnabledStages(const std::string &env_value) {
   }
   return stages;
 }
+
+bool IsSupportedActivationSource(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+  auto abs = node->abstract();
+  if (abs == nullptr) {
+    return false;
+  }
+  return abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractTuple>();
+}
+
+void CollectSourcesForInput(const AnfNodePtr &input_node, std::vector<KernelWithIndex> *sources) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(sources);
+  if (IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
+    auto make_tuple = input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    for (size_t i = 1; i < make_tuple->inputs().size(); ++i) {
+      CollectSourcesForInput(make_tuple->input(i), sources);
+    }
+    return;
+  }
+  if (IsViewNode(input_node)) {
+    auto view_node = input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_CHECK_FAIL(view_node->inputs().size() > kViewDataInputIndex, "View node input size is not correct");
+    CollectSourcesForInput(view_node->input(kViewDataInputIndex), sources);
+    return;
+  }
+  const auto &source = GetRealDataNodeWithIndex(input_node);
+  if (IsSupportedActivationSource(source.first)) {
+    sources->emplace_back(source);
+  }
+}
+
 }  // namespace
 
 HyperOffloadConfig &HyperOffloadConfig::GetInstance() {
   static HyperOffloadConfig instance;
   return instance;
+}
+
+uintptr_t GetNodeAddress(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return reinterpret_cast<uintptr_t>(node.get());
 }
 
 HyperOffloadConfig::HyperOffloadConfig() {
@@ -392,6 +435,9 @@ bool IsH2DNode(const AnfNodePtr &node) { return IsOneOfPrimitiveCNode(node, {pri
 
 bool IsViewOrInplaceNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  if (IsViewNode(node) || IsInplaceNode(node)) {
+    return true;
+  }
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -508,31 +554,44 @@ bool ProducerAbstractOkForCollectUsers(const KernelWithIndex &producer) {
 }
 }  // namespace
 
+std::map<KernelWithIndex, std::pair<size_t, size_t>> BuildUserIndexRangeMap(const CNodePtrList &exec_order) {
+  std::map<KernelWithIndex, std::pair<size_t, size_t>> user_index_ranges;
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    for (const auto &input : exec_order[i]->inputs()) {
+      std::vector<KernelWithIndex> sources;
+      CollectSourcesForInput(input, &sources);
+      for (const auto &source : sources) {
+        if (auto [it, inserted] = user_index_ranges.try_emplace(source, i, i); !inserted) {
+          it->second.second = i;
+        }
+      }
+    }
+  }
+  return user_index_ranges;
+}
+
 UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
   UserInfoList user_info_list;
+  std::map<KernelWithIndex, size_t> source_to_index;
   MS_LOG(INFO) << "Collecting node users from " << nodes.size() << " nodes";
   for (const CNodePtr &node : nodes) {
-    for (size_t i = 0; i < node->inputs().size(); ++i) {
+    for (size_t i = 1; i < node->inputs().size(); ++i) {
       if (IsConditionSwitchDataInput(node, i)) {
         continue;
       }
-      const auto &input = node->input(i);
-      const auto &cur_kernel_with_index = GetRealDataNodeWithIndex(input);
-      auto real_input = cur_kernel_with_index.first;
-      if (real_input == nullptr || !real_input->isa<CNode>()) {
-        continue;
-      }
-      if (!ProducerAbstractOkForCollectUsers(cur_kernel_with_index)) {
-        continue;
-      }
-      auto iter = std::find_if(user_info_list.begin(), user_info_list.end(),
-                               [&cur_kernel_with_index](const auto &e) { return cur_kernel_with_index == e.node; });
-      auto cur_user = KernelWithIndex{node, i};
-      if (iter == user_info_list.end()) {
-        auto new_user_info = UserInfo{cur_kernel_with_index, {cur_user}};
-        (void)user_info_list.emplace_back(new_user_info);
-      } else {
-        (void)(iter->users).emplace_back(cur_user);
+      std::vector<KernelWithIndex> sources;
+      CollectSourcesForInput(node->input(i), &sources);
+      for (const auto &source : sources) {
+        if (!ProducerAbstractOkForCollectUsers(source)) {
+          continue;
+        }
+        auto iter = source_to_index.find(source);
+        if (iter == source_to_index.end()) {
+          source_to_index[source] = user_info_list.size();
+          user_info_list.emplace_back(UserInfo{source, {KernelWithIndex{node, i}}});
+        } else {
+          user_info_list[iter->second].users.emplace_back(KernelWithIndex{node, i});
+        }
       }
     }
   }

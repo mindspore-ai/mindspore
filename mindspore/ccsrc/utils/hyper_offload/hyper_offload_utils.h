@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_UTILS_H_
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_UTILS_H_
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <memory>
@@ -34,6 +35,11 @@ namespace utils {
 namespace hyper_offload {
 using KernelWithIndex = common::KernelWithIndex;
 using HandleNewNodeCallback = std::function<void(const AnfNodePtr &new_node, const AnfNodePtr &context_node)>;
+
+constexpr auto kPeakFreeNodeAttr = "peak_free_data_after_node";
+
+// Get the stable in-process address value of a node.
+COMMON_EXPORT uintptr_t GetNodeAddress(const AnfNodePtr &node);
 
 // Indicate the type of data for FreeData or AssignData node.
 constexpr size_t kDeviceType = 0;
@@ -206,6 +212,8 @@ COMMON_EXPORT std::optional<ParameterPtr> GetRemoteParameter(const FuncGraphPtr 
 COMMON_EXPORT void UpdateNodeInput(const CNodePtr &node, const size_t input_index, const AnfNodePtr &new_input_node);
 COMMON_EXPORT HandleNewNodeCallback CreateContextCallback(HandleNewNodeCallback original_callback,
                                                           const AnfNodePtr &context_node);
+// Build a map of user index range (start, end) for each node output in the execution order.
+COMMON_EXPORT std::map<KernelWithIndex, std::pair<size_t, size_t>> BuildUserIndexRangeMap(const CNodePtrList &nodes);
 
 /**
  * @brief Create send/recv event node pairs and attach event metadata.
