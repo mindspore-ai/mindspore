@@ -289,6 +289,15 @@ bool TcpClient::EstablishSSL() {
   MS_ERROR_IF_NULL_W_RET_VAL(ssl, false);
   MS_ERROR_IF_NULL_W_RET_VAL(event_base_, false);
 
+  const auto &expected_hostname = SSLClient::GetInstance().GetExpectedHostname();
+  if (!expected_hostname.empty()) {
+    if (SSL_set1_host(ssl, expected_hostname.c_str()) != 1) {
+      MS_LOG(WARNING) << "SSL_set1_host failed for: " << expected_hostname;
+      SSL_free(ssl);
+      return false;
+    }
+  }
+
   buffer_event_ = bufferevent_openssl_socket_new(event_base_, -1, ssl, BUFFEREVENT_SSL_CONNECTING,
                                                  BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   return true;

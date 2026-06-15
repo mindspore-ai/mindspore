@@ -117,6 +117,7 @@ void SSLClient::InitSSL() {
   }
 
   CommUtil::verifyCertPipeline(caCert, cert);
+  expected_hostname_ = CommUtil::ParseConfig(*config_, kExpectedHostname);
   InitSSLCtx(*config_, cert, pkey, crl, ca_path);
   StartCheckCertTime(*config_, cert);
 
@@ -166,13 +167,10 @@ void SSLClient::InitSSLCtx(const Configuration &config, const X509 *cert, const 
   }
 
   if (crl != nullptr) {
-    // Load CRL into the `X509_STORE`
     X509_STORE *x509_store = SSL_CTX_get_cert_store(ssl_ctx_);
     if (X509_STORE_add_crl(x509_store, crl) != 1) {
       MS_LOG(EXCEPTION) << "ssl client X509_STORE add crl failed!";
     }
-
-    // Enable CRL checking
     X509_VERIFY_PARAM *param = SSL_CTX_get0_param(ssl_ctx_);
     if (param == nullptr) {
       MS_LOG(EXCEPTION) << "ssl client X509_VERIFY_PARAM is nullptr!";
@@ -237,6 +235,8 @@ void SSLClient::StopCheckCertTime() {
 }
 
 SSL_CTX *SSLClient::GetSSLCtx() const { return ssl_ctx_; }
+
+const std::string &SSLClient::GetExpectedHostname() const { return expected_hostname_; }
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

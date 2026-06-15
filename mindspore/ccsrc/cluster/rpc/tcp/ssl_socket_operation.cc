@@ -237,6 +237,13 @@ void SSLSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, vo
     }
     (void)SSL_set_fd(ssl_, fd);
     SSL_set_connect_state(ssl_);
+
+    const auto &expected_hostname = ps::core::SSLClient::GetInstance().GetExpectedHostname();
+    if (!expected_hostname.empty()) {
+      if (SSL_set1_host(ssl_, expected_hostname.c_str()) != 1) {
+        MS_LOG(WARNING) << "SSL_set1_host failed for: " << expected_hostname;
+      }
+    }
   }
   Handshake(fd, conn);
 }

@@ -172,6 +172,7 @@ constexpr char kClientCertPath[] = "client_cert_path";
 constexpr char kClientPassword[] = "client_password";
 constexpr char kCaCertPath[] = "ca_cert_path";
 constexpr char kCipherList[] = "cipher_list";
+constexpr char kExpectedHostname[] = "expected_hostname";
 constexpr char kCertCheckInterval[] = "cert_check_interval_in_hour";
 // 7 * 24
 constexpr int64_t kCertCheckIntervalInHour = 168;

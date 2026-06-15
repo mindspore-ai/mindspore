@@ -47,6 +47,7 @@ class SSLClient {
     return instance;
   }
   SSL_CTX *GetSSLCtx() const;
+  const std::string &GetExpectedHostname() const;
 
  private:
   SSLClient();
@@ -63,6 +64,7 @@ class SSLClient {
                   std::string ca_path);
 
   SSL_CTX *ssl_ctx_;
+  std::string expected_hostname_;
   std::unique_ptr<std::thread> check_time_thread_;
   std::atomic<bool> running_;
   std::atomic<bool> is_ready_;
