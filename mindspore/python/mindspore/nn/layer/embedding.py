@@ -497,7 +497,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         specified 'offset = 0' to lookup table.
         When 'target' is set to 'DEVICE', this module will use ops.Gather() which
         specified 'axis = 0' to lookup table.
-        The vectors with the same field_ids  will be combined by the `operator`, such as 'SUM', 'MAX' and
+        The vectors with the same field_ids will be combined by the `operator`, such as 'SUM', 'MAX' and
         'MEAN'. Ensure the input_values of the padded id is zero, so that they can be ignored. The final
         output will be zeros if the sum of absolute weight of the field is zero. This class only
         supports ['table_row_slice', 'batch_slice' and 'table_column_slice']. For the operation 'MAX' on
@@ -525,7 +525,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             the corresponding embedding vectors.
 
         feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
-            Default:  ``None`` .
+            Default: ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32.
             Default: ``None`` .
         sparse (bool): Using sparse mode. When 'target' is set to ``'CPU'`` , 'sparse' has to be true.
@@ -541,7 +541,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         - **input_values** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the weights of elements of the input_indices. The lookout vector will multiply with
           the input_values. Type is float32.
-        - **field_ids** (Tensor)  - The shape of tensor is :math:`(batch\_size, seq\_length)`.
+        - **field_ids** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the field id of elements of the input_indices. Type is Int32.
 
     Outputs:

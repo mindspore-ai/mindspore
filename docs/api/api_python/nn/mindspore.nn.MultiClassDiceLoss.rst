@@ -11,7 +11,7 @@ mindspore.nn.MultiClassDiceLoss
     参数：
         - **weights** (Union[Tensor, None]) - Shape为 :math:`(num\_classes, dim)` 的Tensor。权重shape[0]应等于标签shape[1]。默认值： ``None`` 。
         - **ignore_indiex** (Union[int, None]) - 指定需要忽略的类别序号，如果为None，计算所有类别的Dice Loss值。默认值： ``None`` 。
-        - **activation** (Union[str, Cell]) - 应用于全连接层输出的激活函数，如'ReLU'。取值范围：[ ``'softmax'`` , ``'logsoftmax'`` , ``'relu'`` , ``'relu6'`` , ``'tanh'`` , ``'Sigmoid'`` ]。默认值： ``'softmax'`` 。
+        - **activation** (Union[str, Cell]) - 应用于全连接层输出的激活函数，如'ReLU'。取值范围：[ ``'softmax'`` , ``'logsoftmax'`` , ``'relu'`` , ``'relu6'`` , ``'tanh'`` , ``'sigmoid'`` ]。默认值： ``'softmax'`` 。
 
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, C, *)` 的Tensor，其中 :math:`*` 表示任意数量的附加维度。logits维度应大于1。数据类型必须为float16或float32。
