@@ -71,25 +71,41 @@ cells_compile_cache = {}
 
 
 @lru_cache(maxsize=4096)
+def _get_func_args_info_cached(func: types.FunctionType, is_method: bool) -> tuple:
+    """
+    Cached implementation for pure Python functions.
+    By caching only the FunctionType, we avoid strong referencing any bound instance (e.g., Cell).
+    """
+    code = func.__code__
+    defaults = getattr(func, '__defaults__', None) or ()
+    flags = code.co_flags
+
+    has_var = bool(flags & (inspect.CO_VARARGS | inspect.CO_VARKEYWORDS))
+
+    posonly_count = getattr(code, 'co_posonlyargcount', 0)
+    pos_or_kw_count = code.co_argcount - posonly_count
+
+    if is_method:
+        pos_or_kw_count -= 1
+
+    default_args = len(defaults)
+    positional_args = pos_or_kw_count - default_args
+    return (has_var, positional_args, default_args)
+
+
 def _get_func_args_info(func):
-    """Get function argument info with lru_cache for performance."""
-    # Fast path: pure Python functions/methods
-    if isinstance(func, (types.FunctionType, types.MethodType)) and hasattr(func, '__code__'):
-        code = func.__code__
-        defaults = getattr(func, '__defaults__', None) or ()
-        flags = code.co_flags
+    """
+    Get function argument info. 
+    Uses lru_cache only for pure functions to avoid strong referencing bound instances (e.g., Cell).
+    """
+    # Fast path 1: pure Python functions
+    if isinstance(func, types.FunctionType) and hasattr(func, '__code__'):
+        return _get_func_args_info_cached(func, False)
 
-        has_var = bool(flags & (inspect.CO_VARARGS | inspect.CO_VARKEYWORDS))
-
-        posonly_count = getattr(code, 'co_posonlyargcount', 0)
-        pos_or_kw_count = code.co_argcount - posonly_count
-
-        if isinstance(func, types.MethodType):
-            pos_or_kw_count -= 1
-
-        default_args = len(defaults)
-        positional_args = pos_or_kw_count - default_args
-        return (has_var, positional_args, default_args)
+    # Fast path 2: bound methods
+    # Extract __func__ to use as cache key, avoiding strong reference to the bound instance (e.g., Cell)
+    if isinstance(func, types.MethodType) and hasattr(func, '__code__'):
+        return _get_func_args_info_cached(func.__func__, True)
 
     # Fallback for built-ins, functools.partial, callable objects, etc.
     has_var = False
