@@ -16,6 +16,7 @@
 
 #include "kernel/cpu/mkldnn/pooling_grad_cpu_kernel.h"
 #include <functional>
+#include <limits>
 #include <unordered_map>
 #include "primitive/conv_pool_op_name.h"
 #include "utils/profile.h"
@@ -133,6 +134,12 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (strides_include_nc_.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
                       << strides_include_nc_.size() << "D!";
+  }
+  for (size_t i = 0; i < strides_include_nc_.size(); ++i) {
+    if (std::abs(strides_include_nc_[i]) > std::numeric_limits<int>::max()) {
+      MS_LOG(EXCEPTION) << kernel_name_ << " requires all strides must be a valid int number, but got stride " << i
+                        << " = " << strides_include_nc_[i] << ", which overflows.";
+    }
   }
   const dnnl::memory::dims kernel(kernel_include_nc_.begin() + NC_LEN, kernel_include_nc_.end());
   const dnnl::memory::dims strides(strides_include_nc_.begin() + NC_LEN, strides_include_nc_.end());
