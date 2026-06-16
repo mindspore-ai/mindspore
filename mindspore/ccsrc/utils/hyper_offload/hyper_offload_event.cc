@@ -17,6 +17,7 @@
 #include "utils/hyper_offload/hyper_offload_event.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <map>
 #include <unordered_map>
@@ -132,7 +133,7 @@ std::optional<size_t> HyperOffloadEventInjector::FindNextH2DAttachSlot(const Anf
     return std::nullopt;
   }
   const auto &attach_slots = it->second;
-  auto next_it = std::upper_bound(attach_slots.begin(), attach_slots.end(), current_attach_slot);
+  auto next_it = std::lower_bound(attach_slots.begin(), attach_slots.end(), current_attach_slot);
   if (next_it == attach_slots.end()) {
     return std::nullopt;
   }
@@ -196,10 +197,11 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(
 
   // Peak strategy: use optimized free_data_after_node as base position if available
   size_t base_index = node_index;
-  if (use_peak_strategy && d2h_node->HasAttr("peak_free_data_after_node")) {
-    auto free_data_after_node_name = GetValue<std::string>(d2h_node->GetAttr("peak_free_data_after_node"));
+  if (use_peak_strategy && d2h_node->HasAttr(kPeakFreeNodeAttr)) {
+    auto peak_attr = d2h_node->GetAttr(kPeakFreeNodeAttr);
+    auto free_node_addr = GetValue<uintptr_t>(peak_attr);
     for (size_t i = 0; i < exec_order_.size(); ++i) {
-      if (exec_order_[i]->fullname_with_scope() == free_data_after_node_name) {
+      if (GetNodeAddress(exec_order_[i]) == free_node_addr) {
         base_index = i;
         break;
       }

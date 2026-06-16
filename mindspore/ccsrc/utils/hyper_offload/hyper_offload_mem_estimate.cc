@@ -463,6 +463,9 @@ size_t GetNodeSizeFromDeviceMetadata(const AnfNodePtr &node, size_t output_index
 }
 
 size_t EstimateNodeMemorySize(const AnfNodePtr &node, size_t output_index) {
+  if (IsViewOrInplaceNode(node)) {
+    return 0;
+  }
   if (IsDynamicShapeNode(node)) {
     return GetDynamicShapePlaceholderBytes();
   }
@@ -896,17 +899,16 @@ static size_t ComputeAliasConsumerHorizon(const AnfNodePtr &node, const HorizonS
   if (!IsViewOrInplaceNode(node)) {
     return result;
   }
-  return std::accumulate(context.user_info_list.begin(), context.user_info_list.end(), result,
-                         [&node, &context, &state](size_t current_result, const auto &info) {
-                           if (info.node.first != node) {
-                             return current_result;
-                           }
-                           return std::accumulate(info.users.begin(), info.users.end(), current_result,
-                                                  [&context, &state](size_t user_result, const auto &uk) {
-                                                    return std::max(user_result,
-                                                                    AliasUserHorizon(uk.first, context, state));
-                                                  });
-                         });
+  for (const auto &info : context.user_info_list) {
+    if (info.node.first != node) {
+      continue;
+    }
+    result =
+      std::accumulate(info.users.begin(), info.users.end(), result, [&context, &state](size_t horizon, const auto &uk) {
+        return std::max(horizon, AliasUserHorizon(uk.first, context, state));
+      });
+  }
+  return result;
 }
 
 static size_t HorizonFromAliasConsumer(const AnfNodePtr &node, const HorizonSearchContext &context,

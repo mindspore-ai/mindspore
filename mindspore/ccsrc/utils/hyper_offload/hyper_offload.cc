@@ -17,6 +17,7 @@
 #include "utils/hyper_offload/hyper_offload.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -315,8 +316,9 @@ CNodePtr AddActivationD2HOperation(const ActivationOperationContext &context, co
       std::find_if(offload_info.replace_info_list.begin(), offload_info.replace_info_list.end(),
                    [](const ReplaceInfo &replace_info) { return replace_info.free_data_after_node.first != nullptr; });
     if (it != offload_info.replace_info_list.end()) {
-      to_remote_node->AddAttr("peak_free_data_after_node",
-                              MakeValue(it->free_data_after_node.first->fullname_with_scope()));
+      const auto &free_node = it->free_data_after_node.first;
+      auto free_node_addr = GetNodeAddress(free_node);
+      to_remote_node->AddAttr(kPeakFreeNodeAttr, MakeValue(free_node_addr));
     }
   }
 
@@ -455,6 +457,20 @@ void RaiseMinAttachIndex(size_t candidate_attach_index, std::optional<size_t> *m
                           ? std::make_optional(std::max(min_after_exec_idx->value(), candidate_attach_index))
                           : std::make_optional(candidate_attach_index);
 }
+
+std::optional<size_t> FindPeakFreeDataAttachIndex(const CNodePtrList &exec_order, const CNodePtr &d2h_node) {
+  MS_EXCEPTION_IF_NULL(d2h_node);
+  if (!d2h_node->HasAttr(kPeakFreeNodeAttr)) {
+    return std::nullopt;
+  }
+  const auto free_node_addr = GetValue<uintptr_t>(d2h_node->GetAttr(kPeakFreeNodeAttr));
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    if (GetNodeAddress(exec_order[i]) == free_node_addr) {
+      return i;
+    }
+  }
+  return std::nullopt;
+}
 }  // namespace
 
 void HyperOffloadOptimizer::AddSingleActivationOperations(const OffloadInfo &offload_info,
@@ -588,23 +604,8 @@ void HyperOffloadOptimizer::GenerateActivationOperations() {
 
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(graph_->output());
   MS_LOG(INFO) << "Processing " << offload_info_list.size() << " activation offload candidates";
-  std::map<KernelWithIndex, size_t> last_peak_graph_output_offload_index;
-  if (use_peak_strategy) {
-    for (size_t i = 0; i < offload_info_list.size(); ++i) {
-      if (IsActivationGraphOutput(outputs, offload_info_list[i].data_node, nullptr, true)) {
-        last_peak_graph_output_offload_index[offload_info_list[i].data_node] = i;
-      }
-    }
-  }
-  for (size_t i = 0; i < offload_info_list.size(); ++i) {
-    const auto &offload_info = offload_info_list[i];
-    if (!use_peak_strategy) {
-      AddSingleActivationOperations(offload_info, outputs);
-      continue;
-    }
-    const auto output_it = last_peak_graph_output_offload_index.find(offload_info.data_node);
-    const bool remap_graph_output = output_it != last_peak_graph_output_offload_index.end() && output_it->second == i;
-    AddSingleActivationOperations(offload_info, remap_graph_output ? outputs : std::vector<KernelWithIndex>{});
+  for (const auto &offload_info : offload_info_list) {
+    AddSingleActivationOperations(offload_info, outputs);
   }
 }
 
@@ -704,6 +705,14 @@ void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
     std::optional<size_t> min_after_exec_idx = (use_peak_strategy && d2h_node != nullptr)
                                                  ? std::make_optional(operations_.GetNodeAttachIndex(d2h_node))
                                                  : std::nullopt;
+    if (use_peak_strategy && d2h_node != nullptr) {
+      const auto peak_free_data_attach_idx = FindPeakFreeDataAttachIndex(exec_order_, d2h_node);
+      if (peak_free_data_attach_idx.has_value()) {
+        const size_t min_h2d_after_free_slot =
+          std::min(peak_free_data_attach_idx.value() + 1, exec_order_.empty() ? 0 : exec_order_.size() - 1);
+        RaiseMinAttachIndex(min_h2d_after_free_slot, &min_after_exec_idx);
+      }
+    }
     const auto branch_start_attach_idx = GetInlineBranchStartAttachIndex(graph_, exec_order_, h2d_node);
     if (branch_start_attach_idx.has_value()) {
       RaiseMinAttachIndex(branch_start_attach_idx.value(), &min_after_exec_idx);

@@ -534,7 +534,8 @@ TEST_F(TestHyperOffloadCommon, TestH2DAndD2HShareTransferStreamAssignment) {
   auto d2h_stream = prim_stream_attr(d2h_node);
   auto h2d_stream = prim_stream_attr(h2d_node);
   EXPECT_EQ(d2h_stream, h2d_stream) << "D2H and H2D must share the same primitive stream_id binding";
-  EXPECT_EQ(d2h_stream, nullptr) << "Transfer nodes must not inherit compute stream_id; allocator uses same default stream";
+  EXPECT_EQ(d2h_stream, nullptr)
+    << "Transfer nodes must not inherit compute stream_id; allocator uses same default stream";
 }
 
 // Feature: HyperOffload.
@@ -962,6 +963,84 @@ TEST_F(TestHyperOffloadCommon, TestD2HEventInjectionWithLongLivedData) {
 }
 
 // Feature: HyperOffload.
+// Description: H2D must be placed after D2H-side device FreeData when both are attached to the same slot.
+// Expectation: Final order is D2H -> FreeData(device) -> H2D -> FreeData(host).
+TEST_F(TestHyperOffloadCommon, TestH2DAfterD2HDeviceFreeDataInSameSlot) {
+  auto graph = CreateSimpleGraph();
+  auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
+  auto param = CreateParameter(graph, "data", input_abs);
+  auto data_node = CreateCNode(graph, "Abs", {param});
+  data_node->set_abstract(input_abs);
+  data_node->AddAttr("release_distance", MakeValue(static_cast<size_t>(0)));
+
+  auto d2h_node = CreateCNode(graph, "CopyToHost", {data_node});
+  d2h_node->set_abstract(input_abs);
+  auto h2d_node = CreateCNode(graph, "CopyToDevice", {d2h_node});
+  h2d_node->set_abstract(input_abs);
+  auto h2d_user = CreateCNode(graph, "Add", {h2d_node, param});
+  h2d_user->set_abstract(input_abs);
+
+  CNodePtrList exec_order;
+  (void)exec_order.emplace_back(data_node);
+  (void)exec_order.emplace_back(h2d_user);
+  graph->set_output(h2d_user);
+
+  HyperOffloadOperations operations;
+  operations.Init(exec_order.size());
+  operations.AddOperationAfter(0, d2h_node);
+  operations.AddOperationAfter(0, h2d_node);
+
+  HyperOffloadEventInjector injector(graph, exec_order, &operations);
+  injector.Run();
+
+  CNodePtrList final_order;
+  const auto &pre_ops = operations.GetPreOperations().operations;
+  final_order.insert(final_order.end(), pre_ops.begin(), pre_ops.end());
+  const auto &op_slots = operations.GetOperations();
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    final_order.emplace_back(exec_order[i]);
+    const auto &slot_ops = op_slots[i].operations;
+    final_order.insert(final_order.end(), slot_ops.begin(), slot_ops.end());
+  }
+
+  const size_t not_found = final_order.size();
+  size_t d2h_idx = not_found;
+  size_t device_free_idx = not_found;
+  size_t h2d_idx = not_found;
+  size_t host_free_idx = not_found;
+
+  for (size_t i = 0; i < final_order.size(); ++i) {
+    const auto &node = final_order[i];
+    if (node == d2h_node) {
+      d2h_idx = i;
+      continue;
+    }
+    if (node == h2d_node) {
+      h2d_idx = i;
+      continue;
+    }
+    if (!IsPrimitiveCNode(node, kFreeDataPrimitive)) {
+      continue;
+    }
+    auto free_type = GetFreeOrAssignNodeType(node);
+    ASSERT_TRUE(free_type.has_value());
+    if (*free_type == kDeviceType) {
+      device_free_idx = i;
+    } else if (*free_type == kHostType) {
+      host_free_idx = i;
+    }
+  }
+
+  ASSERT_NE(d2h_idx, not_found) << "D2H should exist in the final execution order";
+  ASSERT_NE(device_free_idx, not_found) << "FreeData(device) should exist in the final execution order";
+  ASSERT_NE(h2d_idx, not_found) << "H2D should exist in the final execution order";
+  ASSERT_NE(host_free_idx, not_found) << "FreeData(host) should exist in the final execution order";
+  EXPECT_LT(d2h_idx, device_free_idx);
+  EXPECT_LT(device_free_idx, h2d_idx);
+  EXPECT_LT(h2d_idx, host_free_idx);
+}
+
+// Feature: HyperOffload.
 // Description: test function FindLastUserIndex for tuple scene.
 // Expectation: Correct result.
 TEST_F(TestHyperOffloadCommon, TestFindLastUserIndex_Tuple) {
@@ -980,7 +1059,8 @@ TEST_F(TestHyperOffloadCommon, TestFindLastUserIndex_Tuple) {
   getitem0->set_abstract(input_abs_element);
   auto getitem1 = CreateCNode(graph, "TupleGetItem", {tuple_source, NewValueNode(MakeValue(static_cast<int64_t>(1)))});
   getitem1->set_abstract(input_abs_element);
-  auto getitem0_dup = CreateCNode(graph, "TupleGetItem", {tuple_source, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
+  auto getitem0_dup =
+    CreateCNode(graph, "TupleGetItem", {tuple_source, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
   getitem0_dup->set_abstract(input_abs_element);
 
   // Users of getitem0 and getitem1
