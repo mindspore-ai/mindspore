@@ -235,6 +235,10 @@ bool BackendManager::LoadBackend(const BackendName &backend_name, const std::str
   } else {
     cur_backend_lib_name = GetCurrentDir() + "/" + kGEBackendLibName;
   }
+  if (cur_backend_lib_name.empty()) {
+    MS_LOG(ERROR) << "Backend path: " << cur_backend_lib_name << " is empty.";
+    return false;
+  }
   MS_LOG(INFO) << "Backendmanager dlopen current backend lib name: " << cur_backend_lib_name;
   handle = dlopen(cur_backend_lib_name.c_str(), RTLD_LAZY);
   err_msg = GetDlErrorMsg();
@@ -242,10 +246,6 @@ bool BackendManager::LoadBackend(const BackendName &backend_name, const std::str
   handle = LoadLibrary(cur_backend_lib_name.c_str());
   err_msg = std::to_string(GetLastError());
 #endif
-  if (cur_backend_lib_name.empty()) {
-    MS_LOG(ERROR) << "Backend path: " << cur_backend_lib_name << " is empty.";
-    return false;
-  }
   if (handle == nullptr) {
     MS_LOG(ERROR) << "Loading " + cur_backend_lib_name + " failed. Error: " + err_msg;
     return false;

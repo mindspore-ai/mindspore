@@ -53,6 +53,9 @@ def register_custom_backend(backend_name: str, backend_path: str) -> bool:
     """
     if backend_name is None or backend_path is None:
         raise ValueError("Both backend_name and backend_path must be provided.")
+    if not os.path.isabs(backend_path):
+        raise ValueError("The backend_path must be an absolute path, got: {}".format(backend_path))
+    backend_path = os.path.realpath(backend_path)
     if not os.path.isfile(backend_path) or not os.access(backend_path, os.R_OK):
         raise ValueError("The file {} does not exist or permission denied!".format(backend_path))
     if not backend_path.endswith(".so"):
