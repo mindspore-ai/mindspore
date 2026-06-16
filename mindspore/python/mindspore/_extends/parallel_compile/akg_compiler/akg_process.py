@@ -255,11 +255,6 @@ class AkgV2Process(AkgProcessBase):
         if self.argc == 0:
             raise ValueError("In AKG V2 kernel compiling, the number of kernel json that need to be compiled can "
                              "not be zero.")
-        akg_v2_path = os.getenv("AKG_V2_PATH", default="")
-        if akg_v2_path == "":
-            raise ValueError(
-                "The path to akg v2 compiler is not specified. Set the path to the compiler in AKG_V2_PATH")
-        sys.path.append(akg_v2_path)
         p = __import__("akg_v2", globals(), locals())
         driver = getattr(p, "AkgV2Driver")
         args = list((arg, attrs, driver) for arg in self.args)
