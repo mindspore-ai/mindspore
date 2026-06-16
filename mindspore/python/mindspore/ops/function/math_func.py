@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-# pylint: disable=redefined-builti
+# pylint: disable=redefined-builtin
 # pylint: disable=unused-import
 # pylint: disable=redefined-builtin
 # pylint: disable=invalid-name
@@ -10218,7 +10218,7 @@ def cumprod(input, dim, dtype=None):
     compute_input = input
     if dtype is not None:
         compute_input = cast_(compute_input, dtype)
-    elif input.dtype in mstype.int_type + mstype.uint_type + (mstype.bool_,):
+    elif isinstance(input, Tensor) and input.dtype in mstype.int_type + mstype.uint_type + (mstype.bool_,):
         compute_input = cast_(compute_input, mstype.int64)
     return cumprod_(compute_input, dim)
 

@@ -28,7 +28,6 @@
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/concat_outputs_for_all_gather.h"
 #include "backend/common/pass/split_inputs_for_reduce_scatter.h"
-#include "backend/common/pass/ir_fission/cdist_fission.h"
 #include "backend/common/pass/ir_fission/batch_norm_grad_infer_fission.h"
 #include "backend/common/pass/ir_fission/bn_split.h"
 #include "backend/common/pass/ir_fission/bn_grad_split.h"
@@ -113,7 +112,7 @@ PassManagerPtr GetBackendCommonUnifyMindIRPassManager() {
     // from the python frontend matching the pattern defined in
     // PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR.
     // TODO(hbhu_bin): In mindspore, SparseSoftmaxCrossEntropyWithLogits has different outputs based on the "is_grad"
-    // attribute, but it has two outputs in CANN. These pass cann be removed when convert "is_grad" attribute to input.
+    // attribute, but it has two outputs in CANN. These pass can be removed when convert "is_grad" attribute to input.
     pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
@@ -151,8 +150,6 @@ PassManagerPtr GetBackendFusionGroupPassManager() {
   auto pm = std::make_shared<PassManager>("backend_fusion");
   MS_EXCEPTION_IF_NULL(pm);
   pm->AddFusionPass(std::make_shared<opt::ClipByNormFission>());
-  pm->AddFusionPass(std::make_shared<CdistFission>());
-  pm->AddFusionPass(std::make_shared<CdistGradFission>());
   pm->AddFusionPass(std::make_shared<opt::BatchMatMulReduceScatterAllToAllFusion>());
   pm->AddFusionPass(std::make_shared<opt::AllToAllAllGatherBatchMatMulFusion>());
   pm->AddFusionPass(std::make_shared<opt::LambFissionGe>());

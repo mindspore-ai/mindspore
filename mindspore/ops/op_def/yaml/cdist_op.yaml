@@ -12,3 +12,6 @@ cdist:
   returns:
     output:
       dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: CdistAscend

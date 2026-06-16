@@ -722,6 +722,16 @@ def tensor_batch_norm_torch(op_input, running_mean, running_var, weight, bias, t
     output = torch.nn.functional.batch_norm(op_input, running_mean, running_var, weight, bias, training, momentum, eps)
     return (output, running_mean, running_var)
 
+def dropout_fallback_ms(op_input):
+    if op_input.dtype.is_floating_point:
+        return op_input * 0
+    return mint.zeros_like(op_input)
+
+def dropout_fallback_torch(op_input):
+    if op_input.is_floating_point():
+        return op_input * 0
+    return torch.zeros_like(op_input)
+
 def tensor_nn_functional_dropout_ms_decorator(op):
     def _dropout_func(op_input, p=0.5, training=False, inplace=False):
         if 0 < p < 1:
@@ -741,8 +751,7 @@ def tensor_nn_functional_dropout_ms_decorator(op):
                     if inplace:
                         result = result + (m1 - input_clone,)
                     return result
-                # torch backward must hava revalance with input tensor, so return value is related to input
-                return op_input * 0
+                return dropout_fallback_ms(op_input)
         return op(op_input, p=p, training=training, inplace=inplace)
     return _dropout_func
 
@@ -765,7 +774,7 @@ def tensor_nn_functional_dropout_torch_decorator(op):
                     if inplace:
                         result = result + (t1 - input_clone,)
                     return result
-                return op_input * 0
+                return dropout_fallback_torch(op_input)
         return op(op_input, p=p, training=training, inplace=inplace)
     return _dropout_func
 
@@ -1388,20 +1397,21 @@ def ms_nn_dropout_decorator(op_class):
                 if op_input.dtype.is_floating_point and op_input.dtype != ms.float64 and op_input.size != 0:
                     sizes = 0
                     m1 = None
-                    op_clone = None
+                    input_clone = None
                     for _ in range(100):
-                        op_clone = op_input.clone()
-                        m1 = net(op_clone)
+                        input_clone = op_input.clone()
+                        m1 = net(input_clone)
                         sizes = sizes + (m1 == 0).sum().item()
                     mask = (m1 == 0).astype(op_input.dtype)
                     modified_input = op_input * (1 - mask)
                     result = (1 / (1 - p) * modified_input - m1,
                               ms.Tensor(sizes / (100 * op_input.size), dtype=op_input.dtype))
                     if inplace:
-                        result = result + (m1 - op_clone,)
+                        result = result + (m1 - input_clone,)
                     return result
-                # torch backward must hava prevalence with input tensor, so return value is related to input
-                return op_input * 0
+                return dropout_fallback_ms(op_input)
+        else:
+            net.set_train(False)
         return net(op_input)
     return _dropout_func
 
@@ -1425,8 +1435,7 @@ def torch_nn_dropout_decorator(op_class):
                     if inplace:
                         result = result + (t1 - input_clone,)
                     return result
-                # torch backward must hava prevalence with input tensor, so return value is related to input
-                return op_input * 0
+                return dropout_fallback_torch(op_input)
         else:
             net.eval()
         return net(op_input)

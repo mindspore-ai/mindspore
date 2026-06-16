@@ -151,7 +151,7 @@ def test_adam_weightdecay():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.adam_weight_decay = ops.AdamWeightDecay()
             self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
             self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float16)), name="m")
@@ -175,70 +175,6 @@ def test_adam_weightdecay():
                 "Default/net-Net/TupleGetItem-op",
                 "Default/net-Net/Assign-op",
                 "Default/net-Net/MakeTuple-op"]
-    cap.check_output(patterns)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
-def test_cdistfission():
-    """
-    Feature: Validate opt pass keep node scope and id.
-    Description: Test opt pass CdistFission.
-    Expectation: No exception and node id after opt pass is as expected.
-    """
-    ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.op = ops.Cdist(p=2.0)
-            self.relu = ops.ReLU()
-
-        def construct(self, x, y):
-            return self.op(self.relu(x), self.relu(y))
-
-    cap = Capture('cdist_fission', 'Cdist')
-    with capture(cap):
-        net = WrapNet(Net())
-        input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
-        input_y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-        net(input_x, input_y)
-
-    patterns = ["Default/net-Net/ExpandDims-op",
-                "Default/net-Net/BroadcastTo-op",
-                "Default/net-Net/ExpandDims-op",
-                "Default/net-Net/BroadcastTo-op",
-                "Default/net-Net/Cdist-op"]
-    cap.check_output(patterns)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
-def test_cdistgrad_fission():
-    """
-    Feature: Validate opt pass keep node scope and id.
-    Description: Test opt pass CdistGradFission.
-    Expectation: No exception and node id after opt pass is as expected.
-    """
-    ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.op = ops.Cdist(p=2.0)
-            self.relu = ops.ReLU()
-            self.val = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
-
-        def construct(self, x):
-            return self.relu(self.op(x, self.val))
-
-    cap = Capture('cdist_grad_fission', 'CdistGrad')
-    with capture(cap):
-        net = GradNetWrtX(Net())
-        input_x = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-        net(input_x)
-
-    patterns = ["Gradients/Default/net-Net/Grad_ReLU/ExpandDims-op",
-                "Gradients/Default/net-Net/Grad_ReLU/BroadcastTo-op",
-                "Gradients/Default/net-Net/Grad_Cdist/CdistGrad-op"]
     cap.check_output(patterns)
 
 
