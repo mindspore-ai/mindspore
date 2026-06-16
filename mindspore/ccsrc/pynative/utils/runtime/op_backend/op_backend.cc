@@ -19,16 +19,19 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 #include <memory>
 
 #include "primitive/structure_op_name.h"
 #include "include/pynative/utils/runtime/op_executor.h"
 #include "include/pynative/utils/runtime/op_runner.h"
+#include "include/pynative/utils/runtime/meta_tensor_utils.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/backend/common/device_address_utils.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
+#include "mindspore/core/include/utils/shape_utils.h"
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
 #include "utils/current_state.h"
@@ -120,11 +123,22 @@ std::vector<KernelTensorPtr> CreateGraphOutputKernelTensor(const OpCompilerInfoP
   }
   return output_kernel_tensor_list;
 }
+
 }  // namespace
 
 void OpBackend::Run(const BackendOpRunInfoPtr &op_run_info, device::DeviceType device_type, uint32_t device_id,
                     VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(op_run_info);
+  if (device_type == device::DeviceType::kMeta) {
+    MS_LOG(DEBUG) << "RunOp on meta device, skip backend compile and launch for "
+                  << op_run_info->base_op_run_info.op_name;
+    MS_EXCEPTION_IF_NULL(outputs);
+    std::vector<tensor::TensorPtr> meta_outputs;
+    runtime::CreateMetaOutputTensors(op_run_info->base_op_run_info.abstract, &meta_outputs);
+    outputs->clear();
+    std::copy(meta_outputs.begin(), meta_outputs.end(), std::back_inserter(*outputs));
+    return;
+  }
   ViewBackend::ContiguousInputByRunInfo(op_run_info);
   auto device_name = device::GetDeviceNameByType(device_type);
   if (op_run_info->base_op_run_info.use_dynamic_shape_process) {

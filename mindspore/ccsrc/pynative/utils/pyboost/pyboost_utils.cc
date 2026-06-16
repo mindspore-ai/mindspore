@@ -27,6 +27,7 @@
 #include "ir/tensor_new.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "include/pynative/utils/pyboost/kernel_mod_cache.h"
+#include "include/pynative/utils/runtime/meta_tensor_utils.h"
 #include "mindapi/base/type_id.h"
 #include "include/backend/common/device_address_utils.h"
 #include "ops/ops_frontend_func_impl.h"
@@ -63,15 +64,6 @@ inline void CreateTensor(const TypeId &type_id, const ShapeVector &shape_vector,
   (void)outputs->emplace_back(std::move(output_tensor));
 }
 
-inline void CreateMetaTensor(const TypeId &type_id, const ShapeVector &shape_vector,
-                             std::vector<tensor::TensorPtr> *outputs) {
-  auto data_size = SizeOf(shape_vector) * abstract::TypeIdSize(type_id);
-  auto device_address = std::make_shared<DeviceAddress>(nullptr, data_size, device::DeviceType::kMeta, 0);
-  auto output_tensor = std::make_shared<Tensor>(type_id, shape_vector, device_address);
-  output_tensor->set_need_pipeline_sync(true);
-  MS_LOG(DEBUG) << "Create meta output tensor " << output_tensor->ToString();
-  (void)outputs->emplace_back(std::move(output_tensor));
-}
 }  // namespace
 
 void PyBoostUtils::CreateMetaOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
@@ -79,36 +71,12 @@ void PyBoostUtils::CreateMetaOutputTensor(const TypeId &type_id, const ShapeVect
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
                                      runtime::ProfilerRecorder::kNoName, false);
-  CreateMetaTensor(type_id, shape_vector, outputs);
+  MS_EXCEPTION_IF_NULL(outputs);
+  (void)outputs->emplace_back(runtime::CreateMetaOutputTensor(type_id, shape_vector));
 }
 
 void PyBoostUtils::CreateMetaOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
-  MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractSequence>()) {
-    const auto &seq = abstract->cast<abstract::AbstractSequencePtr>();
-    for (const auto &element : seq->elements()) {
-      CreateMetaOutputTensor(element, outputs);
-    }
-  } else if (abstract->isa<abstract::AbstractTensor>()) {
-    const auto &abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    const auto &shape = abstract_tensor->GetShapeTrack();
-    const auto &type = abstract_tensor->element()->GetTypeTrack();
-    if (!shape->isa<abstract::Shape>()) {
-      MS_LOG(EXCEPTION) << "AbstractTensor shape is not static: " << shape->ToString();
-    }
-    const auto &shape_ptr = shape->cast<abstract::ShapePtr>();
-    const auto &shape_vector = shape_ptr->shape();
-    if (IsDynamic(shape_vector)) {
-      MS_LOG(EXCEPTION) << "The operator does not support meta device because the output shape is dynamic: "
-                        << shape->ToString();
-    }
-    CreateMetaTensor(type->type_id(), shape_vector, outputs);
-  } else if (abstract->isa<abstract::AbstractScalar>()) {
-    const auto &scalar = abstract->cast<abstract::AbstractScalarPtr>();
-    CreateMetaTensor(scalar->GetTypeTrack()->type_id(), {}, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
-  }
+  runtime::CreateMetaOutputTensors(abstract, outputs);
 }
 
 void PyBoostUtils::CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,

@@ -586,6 +586,38 @@ def test_meta_tensor_contiguous(mode):
         assert v.data_ptr() == 0
 
 
+def test_meta_strided_slice_grad(mode):
+    """
+    Feature: Meta device
+    Description: Run grad for a sliced tensor on meta device.
+    Expectation: success, StridedSliceGrad output is a meta tensor.
+    """
+    ms.context.set_context(mode=mode)
+
+    def fn(x):
+        return mint.sum(x[1:3])
+
+    with ms.DeviceCtx('meta'):
+        x = Tensor(shape=(4,), dtype=ms.float32)
+        grad = ms.grad(fn)(x)
+        assert grad.device == 'meta'
+        assert grad.shape == (4,)
+        assert grad.dtype == ms.float32
+        assert grad.data_ptr() == 0
+
+
+def test_meta_tensor_repr(mode):
+    """
+    Feature: Meta device
+    Description: Get repr of a tensor initialized with input data on meta device.
+    Expectation: success, meta tensor repr does not trigger meta to CPU data copy.
+    """
+    ms.context.set_context(mode=mode)
+
+    x = Tensor([1], dtype=ms.int32, device='meta')
+    assert repr(x) == "Tensor(shape=[1], dtype=Int32, value= <meta>)"
+
+
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard', mem_peak=0.01)
@@ -616,3 +648,5 @@ def test_all(mode):
     test_meta_device_graph_mode_raises(mode)
     test_meta_parameter_init_data(mode)
     test_meta_tensor_contiguous(mode)
+    test_meta_strided_slice_grad(mode)
+    test_meta_tensor_repr(mode)
