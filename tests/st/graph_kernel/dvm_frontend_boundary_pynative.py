@@ -335,8 +335,10 @@ def test_runtime_event():
     stream1 = ms.runtime.Stream()
     stream2 = ms.runtime.Stream()
     event = ms.runtime.Event()
+    default_stream = ms.runtime.default_stream()
 
     def run_case(x0_, x1_, stream1_, stream2_, event_):
+        stream1_.wait_stream(default_stream)
         with ms.runtime.StreamCtx(stream1_):
             y0 = ops.neg(x0_)
             y1 = ops.mul(y0, x1_)
@@ -345,7 +347,9 @@ def test_runtime_event():
         with ms.runtime.StreamCtx(stream2_):
             event_.wait()
             y2 = ops.abs(y1)
-            return ops.neg(y2)
+            output = ops.neg(y2)
+        stream2_.synchronize()
+        return output
 
     _compare_case("test_runtime_event", run_case, x0, x1, stream1, stream2, event)
 
@@ -358,13 +362,16 @@ def test_set_stream_limit():
     """
     x0 = Tensor(np.full((4097,), 2.0, dtype=np.float32)).to("Ascend")
     x1 = Tensor(np.full((4097,), 3.0, dtype=np.float32)).to("Ascend")
+    default_stream = ms.runtime.default_stream()
 
     def run_case(x0_, x1_):
         stream_ = ms.runtime.Stream()
         ms.runtime.set_stream_limit(stream_, 4, 8)
+        stream_.wait_stream(default_stream)
         with ms.runtime.StreamCtx(stream_):
             y0 = ops.neg(x0_)
             y1 = ops.mul(y0, x1_)
-            return y1
+        stream_.synchronize()
+        return y1
 
     _compare_case("test_set_stream_limit", run_case, x0, x1)
