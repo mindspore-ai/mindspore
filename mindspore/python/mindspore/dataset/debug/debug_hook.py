@@ -29,7 +29,7 @@ class DebugHook(ABC):
     breakpoint in `compute` method, or print types and shapes of the data.
 
     Args:
-        prev_op_name (str, optional): name of the operation before current debugging point. Default: ``None``.
+        prev_op_name (str, optional): name of the operation before the current debugging point. Default: ``None``.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -82,10 +82,10 @@ class DebugHook(ABC):
     def compute(self, *args):
         """
         Defines the debug behaviour to be performed. This method must be overridden by all subclasses.
-        Refers to the example above to define a customized hook.
+        Refer to the example above to define a customized hook.
 
         Args:
-            *args (Any): The input/output of the operation, just print it.
+            *args (Any): The input/output data of the operation being debugged.
         """
         raise RuntimeError("compute() is not overridden in subclass of class DebugHook.")
 

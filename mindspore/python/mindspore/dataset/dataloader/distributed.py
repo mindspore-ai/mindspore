@@ -29,7 +29,7 @@ _T_co = TypeVar("_T_co", covariant=True)
 
 class DistributedSampler(Sampler[_T_co]):
     """
-    A sampler that partitioning datasets for distributed training.
+    A sampler that partitions datasets for distributed training.
 
     Args:
         dataset (Dataset): Dataset used for sampling.

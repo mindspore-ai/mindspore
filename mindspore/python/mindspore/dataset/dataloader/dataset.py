@@ -28,8 +28,8 @@ class Dataset(Generic[_T_co]):
     Map style datasets should inherit from it.
 
     Map style datasets represent a mapping from keys to data samples.
-    Subclasses must overwrite :meth:`__getitem__` method, defining how to retrieve the samples according to the key.
-    Subclasses could optionally overwrite :meth:`__len__` method, returning the total size of the samples.
+    Subclasses must overwrite the :meth:`__getitem__` method, defining how to retrieve the samples according to the key.
+    Subclasses could optionally overwrite the :meth:`__len__` method, returning the total size of the samples.
     If not implemented, some built-in samplers and :class:`~mindspore.dataset.dataloader.DataLoader` methods may not
     be available.
 

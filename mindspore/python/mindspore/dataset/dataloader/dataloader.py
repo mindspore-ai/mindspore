@@ -123,7 +123,7 @@ class DataLoader(Generic[_T_co]):
             :class:`~mindspore.dataset.dataloader.SequentialSampler` if `shuffle` is ``False`` , or use
             :class:`~mindspore.dataset.dataloader.RandomSampler` .
         batch_sampler (Union[Sampler[List], Iterable[List], None], optional): The batch sampler to use.
-            Default: ``None`` ,generate internal :class:`~mindspore.dataset.dataloader.BatchSampler` if `batch_size`
+            Default: ``None`` , generate internal :class:`~mindspore.dataset.dataloader.BatchSampler` if `batch_size`
             is not ``None`` .
         num_workers (int, optional): The number of workers for loading. Default: ``0`` , load in main process.
         collate_fn (Union[_CollateFnType, None], optional): The collate function to use. Default: ``None`` , use
