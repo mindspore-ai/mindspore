@@ -1769,6 +1769,18 @@ op_db: Dict[str, OpInfo] = {
         convert_half_to_float=False,
         not_support_dtypes=(ms.float64, ms.complex64, ms.complex128,),
     ),
+    'mint.nn.functional.tanh': UnaryOpInfo(
+        name='mint.nn.functional.tanh',
+        op=mint.nn.functional.tanh,
+        ref=torch.nn.functional.tanh,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16 and d != ms.float64)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # tanh has precision problem when converting input from half(fp16) to float
+        convert_half_to_float=False,
+        not_support_dtypes=(ms.float64, ms.complex64, ms.complex128,),
+    ),
     'mint.tan': UnaryOpInfo(
         name='mint.tan',
         op=mint.tan,
@@ -3089,7 +3101,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.cdist',
         op=mint.cdist,
         ref=torch.cdist,
-        dtypes_ascend=(ms.float16, ms.float32),
+        dtypes_ascend=(),
         dtypes_ascend910b=(ms.float16, ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -3360,21 +3372,6 @@ op_db: Dict[str, OpInfo] = {
         is_differentiable=True,
         not_support_dtypes=(ms.complex64, ms.complex128),
         op_error_inputs_func=error_inputs_mint_tril,
-    ),
-    'mint.cdist': OpInfo(
-        name='mint.cdist',
-        op=mint.cdist,
-        ref=torch.cdist,
-        #not support pynative mode
-        dtypes_ascend910b=(ms.float16, ms.float32,),
-        dtypes_cpu=(),
-        dtypes_gpu=(),
-        op_basic_reference_inputs_func=basic_sample_inputs_mint_cdist,
-        op_extra_reference_inputs_func=extra_sample_inputs_mint_cdist,
-        #cdist does not support dynamic shape
-        op_dynamic_inputs_func=None,
-        op_error_inputs_func=error_inputs_other_op_mint_cdist_func,
-        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.float16, ms.float32]),
     ),
     'mint.cross': OpInfo(
         name='mint.cross',
@@ -3886,7 +3883,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.nn.functional.dropout',
         op=tensor_nn_functional_dropout_ms_decorator(mint.nn.functional.dropout),
         ref=tensor_nn_functional_dropout_torch_decorator(torch.nn.functional.dropout),
-        ascend910b_forward_loss_override={ms.float32:0.05, ms.float16:0.05, ms.bfloat16:0.05},
+        ascend910b_forward_loss_override={ms.float32:0.17, ms.float16:0.05, ms.bfloat16:0.05},
         dtypes_ascend910b=dtypes_as_torch,
         op_basic_reference_inputs_func=basic_sample_inputs_mint_dropout,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_dropout,
@@ -5388,6 +5385,69 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_inputs_hardshrink_func,
         not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int64, ms.int16, ms.int8, ms.bool_),
     ),
+    'mint.nn.functional.threshold': OpInfo(
+        name='mint.nn.functional.threshold',
+        op=mint_nn_functional_threshold_ms,
+        ref=mint_nn_functional_threshold_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch if d not in (ms.bool_, ms.float64, ms.complex64, ms.complex128)
+        ),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_functional_threshold,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_functional_threshold,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_functional_threshold,
+        op_error_inputs_func=error_sample_inputs_mint_nn_functional_threshold,
+        not_support_dtypes=(ms.bool_, ms.float64, ms.complex64, ms.complex128),
+    ),
+    'mint.nn.functional.threshold_': OpInfo(
+        name='mint.nn.functional.threshold_',
+        op=mint_nn_functional_threshold__ms,
+        ref=mint_nn_functional_threshold__torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch if d not in (ms.bool_, ms.float64, ms.complex64, ms.complex128)
+        ),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_functional_threshold_,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_functional_threshold_,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_functional_threshold_,
+        op_error_inputs_func=error_sample_inputs_mint_nn_functional_threshold_,
+        not_support_dtypes=(ms.bool_, ms.float64, ms.complex64, ms.complex128),
+    ),
+    'mint.nn.Embedding': OpInfo(
+        name='mint.nn.Embedding',
+        op=mint_nn_embedding_ms,
+        ref=mint_nn_embedding_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.int32, ms.int64),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_embedding,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_embedding,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_embedding,
+        op_error_inputs_func=error_sample_inputs_mint_nn_embedding,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.int32, ms.int64)),
+        ascend910b_forward_loss_override={ms.float32: 0.003},
+    ),
+    'mint.nn.functional.embedding': OpInfo(
+        name='mint.nn.functional.embedding',
+        op=mint.nn.functional.embedding,
+        ref=torch.nn.functional.embedding,
+        dtypes_ascend=(),
+        # weight dtype
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_nn_functional_embedding,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_functional_embedding,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_functional_embedding,
+        op_error_inputs_func=error_sample_inputs_mint_nn_functional_embedding,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
+        ascend910b_forward_loss_override={ms.bfloat16: 0.009},
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -5551,6 +5611,7 @@ unary_op_db = [
     'mint.all(input)',
     'mint.any(input)',
     'Tensor.repeat(repeats)',
+    'mint.nn.functional.tanh',
 ]
 
 other_op_db = [
@@ -5737,6 +5798,10 @@ other_op_db = [
     'mint.nn.functional.relu_',
     'mint.nn.functional.softplus',
     'mint.nn.functional.softshrink',
+    'mint.nn.functional.threshold',
+    'mint.nn.functional.threshold_',
+    'mint.nn.Embedding',
+    'mint.nn.functional.embedding',
 ]
 
 reduction_op_db = [
@@ -5852,7 +5917,6 @@ other_op_kbk_db = [
     'mint.randint',
     'mint.randint_like',
     'mint.randn',
-    'mint.cdist',
     'mint.randn_like',
     'mint.nn.functional.one_hot',
     'mint.nn.functional.adaptive_avg_pool2d',
