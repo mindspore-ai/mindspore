@@ -110,7 +110,7 @@ class SGD(Optimizer):
               <https://www.mindspore.cn/docs/en/master/api_python/mindspore.nn.html#learningrateschedule-class>`_
               with step as the input to get the learning rate of current step.
 
-        momentum (float, optional): A floating point value the momentum. must be at least 0.0. Default: ``0.0`` .
+        momentum (float, optional): A floating point value the momentum. Must be at least 0.0. Default: ``0.0`` .
         dampening (float, optional): A floating point value of dampening for momentum. must be at least 0.0.
             Default: ``0.0`` .
         weight_decay (float, optional): Weight decay (L2 penalty). It must be equal to or greater than 0.
@@ -149,7 +149,7 @@ class SGD(Optimizer):
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params,'grad_centralization':True},
+        >>> group_params = [{'params': conv_params,'grad_centralization': True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)

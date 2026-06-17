@@ -31,11 +31,11 @@ class OptTFTWrapper(Optimizer):
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        This optimizer is depend on MindIO TFT feature. Currently only support ascend graph mode and
+        This optimizer depends on MindIO TFT feature. Currently only supports Ascend graph mode and
         sink_size must be less than 1.
 
     Args:
-        opt (Optimizer): Must be sub-class of Optimizer.
+        opt (Optimizer): Must be a sub-class of Optimizer.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of opt's `params`, the shape is the same as opt's `params`.
@@ -44,7 +44,7 @@ class OptTFTWrapper(Optimizer):
         Tensor, result of executing optimizer 'opt'.
 
     Raises:
-        TypeError: If the parameter opt is not an subclass of Optimizer.
+        TypeError: If the parameter opt is not a subclass of Optimizer.
         ValueError: If the platform is not Ascend graph mode, or customer doesn't switch on TFT feature.
 
     Supported Platforms:

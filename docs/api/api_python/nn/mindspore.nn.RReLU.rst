@@ -23,7 +23,7 @@ mindspore.nn.RReLU
        - **upper** (Union[int, float]) - x<0时激活函数的斜率的上界，默认值： ``1 / 3`` 。
 
    输入：
-       - **x** （Tensor） - 计算RReLU的任意维度的Tensor。
+       - **x** (Tensor) - 计算RReLU的任意维度的Tensor。
 
    输出：
        Tensor，数据类型和shape与 `x` 相同。

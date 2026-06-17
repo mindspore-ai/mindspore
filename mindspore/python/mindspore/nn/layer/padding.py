@@ -788,7 +788,7 @@ class ReplicationPad2d(_ReplicationPadNd):
         Starting after version 2.9.0, the forward input `x` will be renamed to `input`.
 
     Args:
-        padding (Union[int, tuple]): The padding size to pad the last two dimension of `x` .
+        padding (Union[int, tuple]): The padding size to pad the last two dimensions of `x` .
 
             - If `padding` is an integer, all directions will be padded with the same size.
             - If `padding` is a tuple, it uses

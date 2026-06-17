@@ -923,7 +923,7 @@ class PipelineCell(Cell):
             self.add_list.append(self.add)
         self._get_attr_from_cell(network)
 
-        # prase stage_config
+        # parse stage_config
         config_dict = {}
         if stage_config is not None:
             for cell_name, stage_num in stage_config.items():

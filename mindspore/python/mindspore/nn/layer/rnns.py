@@ -598,7 +598,7 @@ class RNN(_RNNBase):
 
     Args:
         input_size (int): Number of features of input.
-        hidden_size (int):  Number of features of hidden layer.
+        hidden_size (int): Number of features of hidden layer.
         num_layers (int): Number of layers of stacked RNN. Default: ``1`` .
         nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``.
         has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .

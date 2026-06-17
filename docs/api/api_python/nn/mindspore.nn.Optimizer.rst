@@ -96,7 +96,7 @@ mindspore.nn.Optimizer
 
     .. py:method:: scale_grad(gradients)
 
-        用于在混合精度场景还原梯度。
+        用于在混合精度场景下还原梯度。
 
         继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口还原梯度。
 
