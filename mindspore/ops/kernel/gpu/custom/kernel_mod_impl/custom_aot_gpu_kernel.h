@@ -283,9 +283,12 @@ class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
       if (!white_list.has_value()) {
         MS_LOG(EXCEPTION) << "Illegal white list path in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
       }
+      std::string wl = white_list.value();
+      if (!wl.empty() && wl.back() != '/') {
+        wl += '/';
+      }
       constexpr auto kKernelMeta = "akg_kernel_meta";
-      if (file_path_.find(white_list.value()) == std::string::npos &&
-          file_path_.find(kKernelMeta) == std::string::npos) {
+      if (file_path_.rfind(wl, 0) != 0 && file_path_.find(kKernelMeta) == std::string::npos) {
         MS_LOG(EXCEPTION)
           << "For '" << kernel_name_
           << "' on GPU, the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "

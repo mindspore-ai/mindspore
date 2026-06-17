@@ -595,7 +595,7 @@ class Custom(ops.PrimitiveWithInfer):
                 Custom.custom_aot_warning = False
         else:
             legal_path = os.path.realpath(os.environ.get('MS_CUSTOM_AOT_WHITE_LIST'))
-            if legal_path not in file_path:
+            if "akg_kernel_meta" not in file_path and os.path.commonpath([file_path, legal_path]) != legal_path:
                 raise TypeError(
                     "{}, the legal path for the file is {}, but the file is {}".format(
                         self.log_prefix, legal_path, file_path))

@@ -92,6 +92,24 @@ void GetInferFilePathAndFuncName(const PrimitivePtr &primitive, std::string *fil
     }
     *file_path = real_path.value();
     *func_name = exec_info.substr(pos + 1);
+    constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
+    const char *value = common::EnvHelper::GetInstance()->GetEnv(kWhiteList);
+    if (value != nullptr) {
+      auto white_list = FileUtils::GetRealPath(value);
+      if (!white_list.has_value()) {
+        MS_LOG(EXCEPTION) << "Illegal white list path set in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
+      }
+      std::string wl = white_list.value();
+      if (!wl.empty() && wl.back() != '/') {
+        wl += '/';
+      }
+      constexpr auto kKernelMeta = "akg_kernel_meta";
+      if ((*file_path).rfind(wl, 0) != 0 && (*file_path).find(kKernelMeta) == std::string::npos) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name
+                          << "', the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "
+                          << white_list.value() << ". The file path is: " << *file_path;
+      }
+    }
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', user defined function path '" << exec_info << "' is illegal.";
   }
