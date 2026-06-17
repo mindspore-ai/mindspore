@@ -50,7 +50,7 @@ using Task = std::function<Status()>;
 struct ThreadContext {
   std::mutex mutex;
   std::unique_ptr<std::condition_variable> cond_var{nullptr};
-  const Task *task{nullptr};
+  std::atomic<const Task *> task{nullptr};
 
   ThreadContext() {
     cond_var = std::make_unique<std::condition_variable>();

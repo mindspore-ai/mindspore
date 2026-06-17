@@ -51,13 +51,15 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
       return;
     }
 
-    if (!context->task) {
+    auto local_task = context->task.load(std::memory_order_acquire);
+    if (local_task == nullptr) {
       MS_EXCEPTION_IF_NULL(context->cond_var);
       ++yield_count;
       if (yield_count > kYieldThreshold) {
         yield_count = 0;
         std::unique_lock<std::mutex> lock(context->mutex);
-        context->cond_var->wait(lock, [&context, this] { return context->task != nullptr || exit_run_; });
+        context->cond_var->wait(
+          lock, [&context, this] { return context->task.load(std::memory_order_relaxed) || exit_run_; });
       } else {
         std::this_thread::yield();
         continue;
@@ -68,6 +70,10 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
       return;
     }
 
+    local_task = context->task.load(std::memory_order_acquire);
+    if (local_task == nullptr) {
+      continue;
+    }
     try {
       auto &task = *(context->task);
       task();
@@ -75,7 +81,7 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
       MsException::Instance().SetException();
     }
     yield_count = 0;
-    context->task = nullptr;
+    context->task.store(nullptr, std::memory_order_release);
   }
 }
 #ifdef _WIN32
@@ -197,12 +203,14 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks, const std::vector<int> 
     for (size_t i = 0; i < used_thread_num; ++i) {
       MS_EXCEPTION_IF_NULL(contexts_[i]);
       MS_EXCEPTION_IF_NULL(contexts_[i]->cond_var);
-      auto &task_run = contexts_[i]->task;
-      if (task_run) {
+      auto local_task = contexts_[i]->task.load(std::memory_order_acquire);
+      if (local_task != nullptr) {
         running = true;
       } else if (task_index < task_num) {
-        std::lock_guard<std::mutex> task_lock(contexts_[i]->mutex);
-        contexts_[i]->task = &(tasks[task_index]);
+        {
+          std::lock_guard<std::mutex> task_lock(contexts_[i]->mutex);
+          contexts_[i]->task.store(&(tasks[task_index]), std::memory_order_release);
+        }
         contexts_[i]->cond_var->notify_one();
         running = true;
         ++task_index;
