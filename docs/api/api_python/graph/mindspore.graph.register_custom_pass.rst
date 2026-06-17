@@ -6,7 +6,7 @@ mindspore.graph.register_custom_pass
     注册自定义pass，使用pass对图结构进行修改，仅对默认的 ``"ms_backend"`` 后端生效。
 
     .. note::
-        暂不支持Windows和MacOS系统。
+        暂不支持Windows和MacOS系统。用户需要保证自定义pass插件文件的有效性和合法性。
 
     .. warning::
         实验性接口，未来可能变更或移除。

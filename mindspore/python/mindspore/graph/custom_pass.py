@@ -51,6 +51,7 @@ def register_custom_pass(
 
     .. note::
         Windows and MacOS systems are not supported yet.
+        The user must guarantee the validity and legality of the custom pass plugin file.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

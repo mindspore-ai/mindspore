@@ -29,11 +29,18 @@
 #include <direct.h>
 #endif
 
+#include "utils/log_adapter.h"
+
 namespace mindspore {
 namespace opt {
 
 bool FileUtils::Exists(const std::string &path) {
 #if !defined(_WIN32) && !defined(_WIN64)
+  char real_path[PATH_MAX] = {0};
+  if (path.size() >= PATH_MAX || realpath(path.c_str(), real_path) == nullptr) {
+    MS_LOG(ERROR) << "Get realpath failed, path[" << path << "].";
+    return false;
+  }
   return access(path.c_str(), F_OK) == 0;
 #else
   return _access(path.c_str(), 0) == 0;
