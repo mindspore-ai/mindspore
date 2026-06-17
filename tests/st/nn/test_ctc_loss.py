@@ -79,6 +79,8 @@ def test_ctc_loss_mean_grad(mode):
     Description: Verify backward does not raise dtype mismatch in AddN.
     Expectation: expect correct backward result matching PyTorch.
     """
+    import os
+    os.environ.setdefault("TORCH_DEVICE_BACKEND_AUTOLOAD", "0")
     import torch
     ms.set_context(mode=mode)
     np.random.seed(0)
