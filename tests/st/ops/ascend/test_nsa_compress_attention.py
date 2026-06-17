@@ -337,6 +337,7 @@ def get_qkv(T1, T2, N1, N2, D1, D2, dtype=np.float16, seed=42):
         seed: Random seed (default: 42)
     """
     np.random.seed(seed)
+    torch.manual_seed(seed)
     if dtype == 'bf16':
         query_np = torch.randn(T1, N1, D1, dtype=torch.bfloat16).to(torch.float32).numpy()
         key_np = torch.randn(T2, N2, D1, dtype=torch.bfloat16).to(torch.float32).numpy()
