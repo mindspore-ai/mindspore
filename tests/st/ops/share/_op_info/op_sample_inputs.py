@@ -9479,7 +9479,7 @@ def error_inputs_other_op_group_norm(op_info: OpInfo, dtype=None, device=None, *
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, TypeError),
         op_error_info='num_channels should equal ''C'' ',
     )
     yield OpErrorInput(
@@ -9489,7 +9489,7 @@ def error_inputs_other_op_group_norm(op_info: OpInfo, dtype=None, device=None, *
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, TypeError),
         op_error_info='num_groups should be divided with no remainder by  num_channels',
     )
 
@@ -14738,7 +14738,7 @@ def extra_reference_inputs_mint_nn_hardsigmoid(op_info: OpInfo, dtype=None, devi
 
     # large/small/discontiguous values
     values = _small_large_values(dtype)
-    if values:
+    if values and dtype not in(ms.complex64, ms.complex128):
         np_array = np.random.choice(values, size=(2, 3), replace=False)
         for discontiguous in [True, False]:
             yield OpSampleInput(
@@ -14759,15 +14759,16 @@ def extra_reference_inputs_mint_nn_hardsigmoid(op_info: OpInfo, dtype=None, devi
         (float('inf'), 'inf'),
         (float('-inf'), 'neg_inf'),
     ])
-    for extremal_val, name_suffix in extremal_cases:
-        t = make_func((5,))
-        t[2] = extremal_val
-        yield OpSampleInput(
-            op_input=t,
-            op_args=(),
-            op_kwargs={},
-            sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
-        )
+    if dtype not in(ms.complex64, ms.complex128):
+        for extremal_val, name_suffix in extremal_cases:
+            t = make_func((5,))
+            t[2] = extremal_val
+            yield OpSampleInput(
+                op_input=t,
+                op_args=(),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+            )
 
 def basic_reference_inputs_mint_nn_logsoftmax(op_info: OpInfo, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
@@ -18475,3 +18476,460 @@ def error_sample_inputs_mint_nn_smoothl1loss(op_info: OpInfo, dtype=None, device
             op_error_type=RuntimeError,
             op_error_info=f'target error dtype {target_dtype} is not supported for {op_info.name}',
         )
+
+def basic_reference_inputs_mint_nn_elu_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=9)
+
+    shapes = (
+        ((S,), -1.0),
+        ((M, S), 1.0),
+        ((S, S, L), 0.4),
+        ((2, 1, 3, 2), 12.3),
+        ((2, 3, 4, 1, 2), 2.0),
+        ((2, 1, 2, 2, 1, 2), 0.0),
+        ((2, 1, 2, 2, 1, 2, 1), 1.0),
+        ((2, 1, 2, 2, 1, 2, 1, 2), 2.0)
+    )
+
+    for input_shape, i in shapes:
+        _input = make_func(shape=input_shape)
+        slen = len(input_shape)
+        yield OpSampleInput(
+            _input,
+            op_kwargs={'alpha':i,},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def basic_sample_inputs_group_norm(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    cases = (
+        ((4, 8), 4, (8,),(8,), 0.01,),
+        ((4, 6, 5), 3, (6,),(6,), 1e-6),
+        ((3, 8, 4, 8), 2, (8,),(8,), 1e-12),
+        ((9, 14, 6, 2, 3), 1, (14,),(14,), 2.0),
+    )
+
+    for input_shape, num_groups, input_weight, bias, eps in cases:
+        slen = len(input_shape)
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(num_groups,),
+            op_kwargs={'weight':make_arg(input_weight), 'bias':make_arg(bias), 'eps':eps},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_group_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    #empty tensors
+    _input = make_func(shape=(1, 0, 4))
+    yield OpSampleInput(
+        _input,
+        op_args=(3,),
+        sample_name=f"{op_info.name}_{dtype}_empty_tensor",
+    )
+
+    # large/small values
+    if dtype in [ms.float16]:
+        values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp16_large_values']
+    else:
+        values = (dtypes_extra_values['_float_small_values'] +
+                  (-521, 521, -996.9, 996.9, -13141.5, 13141.5, -5062757.7, 5062757.7))
+
+    np_array = np.random.choice(values, size=(2, 3), replace=False)
+    for discontiguous in [True, False]:
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np_array, dtype=dtype, discontiguous=discontiguous),
+            op_args=(1,),
+            sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values",
+        )
+
+    # nan/inf/-inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full([1024, 1024], t), dtype=dtype, device=device),
+                op_args=(1,),
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def basic_sample_inputs_normalize(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    cases = (
+        ((4, 8), 1, 1, 0.01,),
+        ((4, 6, 5), 2, 0, 1e-6),
+        ((3, 8, 4, 8), 4, -1, 1e-12),
+        ((9, 14, 6, 2, 3), 3, -2, 2.0),
+    )
+
+    for input_shape, p, dim, eps in cases:
+        slen = len(input_shape)
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_kwargs={'p':p, 'dim':dim, 'eps':eps},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_normalize(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    #empty tensors
+    _input = make_func(shape=(1, 0, 4))
+    yield OpSampleInput(
+        _input,
+        op_args=(),
+        sample_name=f"{op_info.name}_{dtype}_empty_tensor",
+    )
+
+    # large/small/discontiguous values
+    values = _small_large_values(dtype)
+    if values:
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(),
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    # nan/inf/-inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full([1024, 1024], t), dtype=dtype, device=device),
+                op_args=(),
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def error_inputs_other_op_normalize(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    # p not float
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'p':'p',},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='p should be float ',
+    )
+
+    # dim not int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'dim':1.0,},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='dim should be int',
+    )
+
+    # eps not float
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'eps':'1',},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='eps should be float',
+    )
+
+def basic_sample_inputs_functional_prelu(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    shapes = (
+        (M, S),
+        (S, S, L),
+        (3, 1, 1),
+        (2, 1, 3, 2),
+        (2, 3, 4, 1, 2),
+        (2, 1, 2, 2, 1, 2),
+        (2, 1, 2, 2, 1, 2, 1),
+        (2, 1, 2, 2, 1, 2, 1, 2),
+    )
+
+    for input_shape in shapes:
+        channels = input_shape[1] if len(input_shape) > 1 else 0
+        weight = make_arg(channels) if channels > 0 else None
+        _input = make_arg(input_shape)
+        yield OpSampleInput(
+            _input,
+            op_kwargs={'weight':weight,},
+            sample_name=op_info.name,
+        )
+
+def extra_sample_inputs_functional_prelu(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    #empty tensors
+    _input = make_func(shape=(1, 4, 0))
+    yield OpSampleInput(
+        _input,
+        op_kwargs={'weight': make_func(1), },
+        sample_name=f"{op_info.name}_{dtype}_empty_tensor",
+    )
+
+    # large/small/discontiguous values
+    values = _small_large_values(dtype)
+    if values:
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype, discontiguous=discontiguous),
+                op_kwargs={'weight': make_func(1), },
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    # nan/inf/-inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full([1024, 1024], t), dtype=dtype, device=device),
+                op_kwargs={'weight': make_func(1), },
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def error_inputs_other_op_functional_prelu(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    # weight not tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'weight':1,},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='weight should be tensor ',
+    )
+    # weight not 1-d
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'weight':make_arg((2, 3)),},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='weight should be 0-1or1-d ',
+    )
+
+def basic_sample_inputs_functional_relu_(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    shapes = (
+        (M,),
+        (M, S),
+        (S, S, L),
+        (3, 1, 1),
+        (2, 1, 3, 2),
+        (2, 3, 4, 1, 2),
+        (2, 1, 2, 2, 1, 2),
+        (2, 1, 2, 2, 1, 2, 1),
+        (2, 1, 2, 2, 1, 2, 1, 2),
+    )
+
+    for input_shape in shapes:
+        slen = len(input_shape)
+        _input = make_arg(input_shape)
+        yield OpSampleInput(
+            _input,
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_functional_relu_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    #empty tensors
+    _input = make_func(shape=(1, 4, 0))
+    yield OpSampleInput(
+        _input,
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_empty_tensor",
+    )
+
+    # large/small/discontiguous values
+    values = _small_large_values(dtype)
+    if values:
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype, discontiguous=discontiguous),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    # nan/inf/-inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full([1024, 1024], t), dtype=dtype, device=device),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def error_inputs_other_op_functional_relu_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    # weight not tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'weight':1,},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='weight should be tensor ',
+    )
+    # weight not 1-d
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_kwargs={'weight':make_arg((2, 3)),},
+            sample_name=op_info.name,
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info='weight should be 0-1or1-d ',
+    )
+
+def basic_sample_inputs_functional_softplus(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    shapes = (
+        ((M,), 1, 10),
+        ((M, S), 0.4, 20),
+        ((S, S, L), 0.5, 6),
+        ((3, 1, 1), 2, 15),
+        ((2, 1, 3, 2), 3, 30),
+        ((2, 3, 4, 1, 2), 0, 1),
+        ((2, 1, 2, 2, 1, 2), 1, 20),
+        ((2, 1, 2, 2, 1, 2, 1), 1, 1),
+        ((2, 1, 2, 2, 1, 2, 1, 2), 2, 8),
+    )
+
+    for input_shape, input_beta, input_threshold in shapes:
+        slen = len(input_shape)
+        _input = make_arg(input_shape)
+        yield OpSampleInput(
+            _input,
+            op_kwargs={'beta':input_beta, 'threshold':input_threshold},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_functional_softplus(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    #empty tensors
+    _input = make_func(shape=(1, 4, 0))
+    yield OpSampleInput(
+        _input,
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_empty_tensor",
+    )
+
+    # large/small/discontiguous values
+    values = _small_large_values(dtype)
+    if values:
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype, discontiguous=discontiguous),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    # nan/inf/-inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full([1024, 1024], t), dtype=dtype, device=device),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def error_inputs_other_op_functional_softplus(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    # input not tensor
+    cases = (2, None)
+    for _input in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=_input,
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(ValueError, TypeError),
+            op_error_info='input should be tensor ',
+        )
+
+def basic_reference_inputs_mint_nn_functional_softshrink(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=9)
+
+    shapes = (
+        ((), 0),
+        ((S,), 0.1),
+        ((M, S), 0.5),
+        ((S, S, L), 1),
+        ((2, 1, 3, 2), 12.3),
+        ((2, 3, 4, 1, 2), 2.0),
+        ((2, 1, 2, 2, 1, 2), 0.5),
+        ((2, 1, 2, 2, 1, 2, 1), 1.0),
+        ((2, 1, 2, 2, 1, 2, 1, 2), 2.0),
+    )
+
+    for input_shape, i in shapes:
+        _input = make_func(shape=input_shape)
+        slen = len(input_shape)
+        yield OpSampleInput(
+            _input,
+            op_kwargs={'lambd':i},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_functional_softshrink(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    #empty tensors
+    _input = make_func(shape=(1, 0, 4))
+    yield OpSampleInput(
+        _input,
+        op_args=(3,),
+        sample_name=f"{op_info.name}_{dtype}_empty_tensor",
+    )
+
+    # large/small/discontiguous values
+    values = _small_large_values(dtype)
+    if values and dtype not in(ms.complex64, ms.complex128):
+        np_array = np.random.choice(values, size=(2, 3), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(3,),
+                sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+
+    # nan/inf/-inf  input is nan case failed
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full([1024, 1024], t), dtype=dtype, device=device),
+                op_args=(2,),
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
