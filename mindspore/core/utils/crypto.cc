@@ -427,6 +427,10 @@ bool BlockEncrypt(Byte *encrypt_data, size_t *encrypt_data_len, const std::vecto
 
 bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data, size_t encrypt_len, const Byte *key,
                   int32_t key_len, const std::string &dec_mode, unsigned char *tag) {
+  if (encrypt_len > DECRYPT_BLOCK_BUF_SIZE) {
+    MS_LOG(ERROR) << "encrypt_len " << encrypt_len << " exceeds DECRYPT_BLOCK_BUF_SIZE " << DECRYPT_BLOCK_BUF_SIZE;
+    return false;
+  }
   std::string alg_mode;
   std::string work_mode;
   if (!ParseMode(dec_mode, &alg_mode, &work_mode)) {
@@ -642,8 +646,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
         }
         fid.read(int_bufs[i].data(), static_cast<int64_t>(sizeof(int32_t)));
         auto block_size = ByteToInt(reinterpret_cast<Byte *>(int_bufs[i].data()), int_bufs[i].size());
-        if (block_size < 0) {
-          MS_LOG(ERROR) << "The block_size read from the cipher file must be not negative, but got " << block_size;
+        if (block_size < 0 || IntToSize(block_size) > DECRYPT_BLOCK_BUF_SIZE) {
+          MS_LOG(ERROR) << "The block_size read from the cipher file must be in range [0, " << DECRYPT_BLOCK_BUF_SIZE
+                        << "], but got " << block_size;
           return nullptr;
         }
         fid.read(block_bufs[i].data(), static_cast<int64_t>(block_size));
@@ -720,8 +725,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
     }
     fid.read(int_buf.data(), static_cast<int64_t>(sizeof(int32_t)));
     auto block_size = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
-    if (block_size < 0) {
-      MS_LOG(ERROR) << "The block_size read from the cipher file must be not negative, but got " << block_size;
+    if (block_size < 0 || IntToSize(block_size) > DECRYPT_BLOCK_BUF_SIZE) {
+      MS_LOG(ERROR) << "The block_size read from the cipher file must be in range [0, " << DECRYPT_BLOCK_BUF_SIZE
+                    << "], but got " << block_size;
       return nullptr;
     }
     fid.read(block_buf.data(), static_cast<int64_t>(block_size));
@@ -796,8 +802,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, siz
     int_buf.assign(model_data + offset, model_data + offset + sizeof(int32_t));
     offset += int_buf.size();
     auto block_size = ByteToInt(reinterpret_cast<Byte *>(int_buf.data()), int_buf.size());
-    if (block_size <= 0) {
-      MS_LOG(ERROR) << "The block_size read from the cipher data must be not negative, but got " << block_size;
+    if (block_size <= 0 || IntToSize(block_size) > DECRYPT_BLOCK_BUF_SIZE) {
+      MS_LOG(ERROR) << "The block_size read from the cipher data must be in range (0, " << DECRYPT_BLOCK_BUF_SIZE
+                    << "], but got " << block_size;
       return nullptr;
     }
     if (offset + IntToSize(block_size) > data_size) {
