@@ -20,8 +20,7 @@
             请参考 :class:`mindspore.mindrecord.MindPage` 类的样例代码。
 
         返回：
-            list[str]，候选category 字段。
-
+            list[str]，候选category字段。
 
     .. py:method:: category_field
         :property:
