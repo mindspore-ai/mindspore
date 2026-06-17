@@ -182,6 +182,13 @@ class ModelTrainBase:
         return model
 
 
+def _get_ckpt_dir():
+    """Get checkpoint directory path with optional suffix from environment for parallel isolation."""
+    rank_id = contextbase.get_parallel_variable_from_env("RANK_ID")
+    suffix = os.environ.get("CKPT_PATH_SUFFIX", "")
+    return f"./rank_{rank_id}{'_' + suffix if suffix else ''}_ckpt"
+
+
 def clean_all_ckpt_files(folder_path):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -388,7 +395,7 @@ def test_precision_spike_step_recovery_01():
     callback = PrecisionSpike([6], 32)
     load_newest_ckpt_from_model_train(
         parallel_model1, epoch=32, dataset=parallel_dataset, callback=callback,
-        ckpt_path=f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt",
+        ckpt_path=_get_ckpt_dir(),
         ckpt_prefix="ckpt_parallel", integrated_save=True)
 
 
@@ -404,7 +411,7 @@ def test_precision_spike_step_recovery_02():
     callback = PrecisionSpike([6, 7, 8], 32)
     load_newest_ckpt_from_model_train(
         parallel_model1, epoch=32, dataset=parallel_dataset, callback=callback,
-        ckpt_path=f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt",
+        ckpt_path=_get_ckpt_dir(),
         ckpt_prefix="ckpt_parallel", integrated_save=True)
 
 
@@ -429,7 +436,7 @@ def test_precision_spike_step_recovery_03():
     callback = PrecisionSpike([3, 4, 5], 32)
     load_newest_ckpt_from_model_train(
         parallel_model1, epoch=32, dataset=parallel_dataset, callback=callback,
-        ckpt_path="./rank_{}_ckpt".format(contextbase.get_parallel_variable_from_env("RANK_ID")),
+        ckpt_path=_get_ckpt_dir(),
         ckpt_prefix="ckpt_parallel", integrated_save=False)
 
 
@@ -446,7 +453,7 @@ def test_precision_spike_step_recovery_04():
     with pytest.raises(TypeError):
         load_newest_ckpt_from_model_train(
             parallel_model1, epoch=32, dataset=parallel_dataset, callback=callback,
-            ckpt_path=f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt",
+            ckpt_path=_get_ckpt_dir(),
             ckpt_prefix="ckpt_parallel", integrated_save=True)
 
 
@@ -462,7 +469,7 @@ def test_precision_spike_step_recovery_05():
     callback = PrecisionSpike([10], 32)
     load_newest_ckpt_from_model_train(
         parallel_model1, epoch=32, dataset=parallel_dataset, callback=callback,
-        ckpt_path=f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt",
+        ckpt_path=_get_ckpt_dir(),
         ckpt_prefix="ckpt_parallel", integrated_save=True)
 
 
@@ -476,14 +483,14 @@ def test_precision_spike_step_recovery_06():
     callback = PrecisionSpike([16], 32)
     load_newest_ckpt_from_model_train(
         parallel_model1, epoch=3, dataset=parallel_dataset, callback=callback, save_checkpoint_steps=1,
-        ckpt_path=f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt",
+        ckpt_path=_get_ckpt_dir(),
         ckpt_prefix="ckpt_parallel", integrated_save=True)
 
     contextbase.set_parallel_context(parallel_mode="semi_auto_parallel", device_num=8,
                                     dataset_strategy="full_batch")
     parallel_net = Network1()
     parallel_dataset = create_dataset(batch_size=32, size=32)
-    ckpt_path = f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt"
+    ckpt_path = _get_ckpt_dir()
     newest_ckpt = find_newest_ckpt_file(ckpt_path)
     param_dict = load_checkpoint(newest_ckpt)
     load_param_into_net(parallel_net, param_dict)
@@ -508,6 +515,6 @@ def test_precision_spike_step_recovery_07():
     callback = PrecisionSpike(error_list, 128)
     load_newest_ckpt_from_model_train(
         parallel_model1, epoch=128, dataset=parallel_dataset, callback=callback,
-        ckpt_path=f"./rank_{contextbase.get_parallel_variable_from_env('RANK_ID')}_ckpt",
+        ckpt_path=_get_ckpt_dir(),
         ckpt_prefix="ckpt_parallel", integrated_save=True)
     

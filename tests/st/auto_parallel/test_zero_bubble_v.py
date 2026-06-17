@@ -65,7 +65,7 @@ def test_pipeline_zero_bubble_v():
     Description: Test zero bubble v.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10817 "
                     "--join=True --log_dir=./zero_bubble pytest -s -v "
                     "zero_bubble_v.py::test_pipeline_zero_bubble_v_001")
     assert ret == 0

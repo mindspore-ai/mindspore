@@ -27,7 +27,7 @@ def test_unified_safetensors_pp_shared_param():
     Description: Test safetensors pp_shared_param.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10818 "
                     "--join=True --log_dir=./test_checkpoint_unified pytest -s -v "
                     "checkpoint_unified_safetensors.py::test_unified_safetensors_pp_shared_param")
     assert ret == 0

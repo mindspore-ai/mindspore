@@ -27,7 +27,7 @@ def test_parallel_optimizer_dp4vpp2_zero3():
     Description: Test zero3.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10813 "
                     "--join=True --log_dir=./parallel_zero_optimizer_level pytest -s -v "
                     "parallel_zero_optimizer_level.py::test_parallel_optimizer_dp4vpp2_zero3")
     assert ret == 0

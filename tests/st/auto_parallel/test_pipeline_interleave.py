@@ -66,7 +66,7 @@ def test_pipeline_interleave_001():
     Description: Test pipeline interleave case 001.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10815 "
                     "--join=True --log_dir=./pipeline_interleave_001 pytest -s -v "
                     "pipeline_interleave.py::test_pipeline_interleave_001")
     assert ret == 0
@@ -78,7 +78,7 @@ def test_pipeline_interleave_004():
     Description: Test pipeline interleave case 001.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10816 "
                     "--join=True --log_dir=./pipeline_interleave_004 pytest -s -v "
                     "pipeline_interleave.py::test_pipeline_interleave_004")
     assert ret == 0

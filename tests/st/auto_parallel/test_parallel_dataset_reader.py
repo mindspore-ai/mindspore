@@ -58,7 +58,7 @@ def test_parallel_dataset_reader_dataset_strategy_pipeline_002():
     Description: Test parallel dataset reader.
     Expectation: Run success.
     '''
-    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10809 "
+    ret = os.system("msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10811 "
                     "--join=True --log_dir=./parallel_dataset_reader pytest -s -v "
                     "parallel_dataset_reader.py::test_parallel_dataset_reader_dataset_strategy_pipeline_002")
     assert ret == 0

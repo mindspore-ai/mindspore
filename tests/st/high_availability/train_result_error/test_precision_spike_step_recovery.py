@@ -40,9 +40,13 @@ def setup_environment(custom_env: dict[str, str]) -> None:
         os.environ[key] = value
 
 
-def run_msrun_command(test_case: str, log_dir: str) -> int:
+def run_msrun_command(test_case: str, log_dir: str, port_num=None) -> int:
+    os.environ["CKPT_PATH_SUFFIX"] = test_case
+    port_num_str = ""
+    if port_num:
+        port_num_str = f"--master_port={port_num}"
     command = (
-        f"msrun --worker_num={WORKER_NUM} --join=True --log_dir={log_dir} pytest --disable-warnings "
+        f"msrun --worker_num={WORKER_NUM} --join=True {port_num_str} --log_dir={log_dir} pytest --disable-warnings "
         f"{BASE_PATH}/precision_spike_step_recovery.py::{test_case} -s -v"
     )
     ret = os.system(command)
@@ -85,7 +89,7 @@ def test_precision_spike_step_recovery_01() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{TRE:2,TRE_SNAPSHOT_STEPS:5}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, port_num=8189)
     loss_lines = extract_loss_values(log_dir)
     lineA = loss_lines[5]
     lineB = loss_lines[6]
@@ -106,7 +110,7 @@ def test_precision_spike_step_recovery_02() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{TRE:2,TRE_SNAPSHOT_STEPS:5}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, 8190)
     loss_lines = extract_loss_values(log_dir)
     lineA1, lineA2 = loss_lines[5], loss_lines[6]
     lineB1, lineB2 = loss_lines[7], loss_lines[9]
@@ -130,7 +134,7 @@ def test_precision_spike_step_recovery_pp() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{TRE:2,TRE_SNAPSHOT_STEPS:1}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, 8191)
     loss_lines = extract_loss_values(log_dir)
     lineA1, lineA2 = loss_lines[2], loss_lines[3]
     lineB1, lineB2 = loss_lines[4], loss_lines[5]
@@ -154,7 +158,7 @@ def test_precision_spike_step_recovery_04() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{TRE:2,TRE_SNAPSHOT_STEPS:5}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, 8192)
     verify_workers_passed(log_dir)
     print(SUCCESS_MESSAGE)
 
@@ -171,7 +175,7 @@ def test_precision_spike_step_recovery_05() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{HCCE:1,TRE:2,TRE_SNAPSHOT_STEPS:5}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, 8193)
     loss_lines = extract_loss_values(log_dir)
     lineA1, lineA2 = loss_lines[9], loss_lines[14]
     assert lineA1 == lineA2, f"Loss inconsistency: step10={lineA1}, step15={lineA2}"
@@ -191,7 +195,7 @@ def test_precision_spike_step_recovery_06() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{TRE:2,TRE_SNAPSHOT_STEPS:5}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, 8194)
     loss_lines = extract_loss_values(log_dir)
     lineA1, lineA2 = loss_lines[18], loss_lines[19]
     assert lineA1 == lineA2, f"Loss inconsistency: step19={lineA1}, step20={lineA2}"
@@ -211,7 +215,7 @@ def test_precision_spike_step_recovery_07() -> None:
     log_dir = f"{BASE_PATH}/{test_case}_log"
     setup_log_directory(log_dir)
     setup_environment({"MS_ENABLE_TFT": "{TRE:2,TRE_SNAPSHOT_STEPS:1}"})
-    run_msrun_command(test_case, log_dir)
+    run_msrun_command(test_case, log_dir, 8195)
     loss_lines = extract_loss_values(log_dir)
     lineA1, lineA2 = loss_lines[253], loss_lines[254]
     assert lineA1 == lineA2, f"Loss inconsistency: step254={lineA1}, step255={lineA2}"
