@@ -886,6 +886,50 @@ def _auto_generate_bind_core_strategy(device_count, available_cpus):
         return {}
 
 
+def _assign_numa_by_affinity(temp_device_to_numa_map, numa_to_device_map, available_numas):
+    """
+    Assign NUMA nodes to devices based on affinity information.
+
+    If a device's affinity NUMA is unavailable or duplicated, reassign it from
+    the non-affinity pool built from the remaining usable NUMA nodes.
+
+    Args:
+        temp_device_to_numa_map (dict): Mapping of device to its affinity NUMA node.
+        numa_to_device_map (dict): Mapping of NUMA node to devices. Will be updated
+            with the non-affinity pool under key -1.
+        available_numas (list): A list of usable NUMA nodes in the environment (sorted).
+
+    Returns:
+        dict: Mapping of device to its assigned NUMA node (as a single-element list).
+    """
+    available_numa_set = set(available_numas)
+    invalid_affinity_map = {
+        device: numa for device, numa in temp_device_to_numa_map.items()
+        if numa not in available_numa_set
+    }
+    if invalid_affinity_map:
+        logger.warning(f"Device affinity NUMA nodes {invalid_affinity_map} are unavailable or memoryless. "
+                       f"Only usable NUMA nodes {available_numas} will be used for numactl binding.")
+
+    # Build non-affinity pool (-1) from usable NUMA nodes that have no direct affinity.
+    affinity_numas = {
+        numa for numa in temp_device_to_numa_map.values()
+        if numa in available_numa_set
+    }
+    numa_to_device_map[-1] = [numa for numa in available_numas if numa not in affinity_numas]
+
+    # If affinity NUMA is unavailable or duplicated, reassign from the non-affinity pool.
+    unaffinity_numa_pool = iter(numa_to_device_map.get(-1, []))
+    used_numas = set()
+    device_to_numa_map = {}
+    for device, numa in temp_device_to_numa_map.items():
+        if numa not in available_numa_set or numa in used_numas:
+            numa = next(unaffinity_numa_pool)
+        used_numas.add(numa)
+        device_to_numa_map[device] = [numa]
+    return device_to_numa_map
+
+
 def _auto_generate_bind_numa_strategy(device_count, available_numas):
     """
     Automatically generate bind-core strategy based on CPU affinity.
@@ -926,33 +970,8 @@ def _auto_generate_bind_numa_strategy(device_count, available_numas):
             }
             return device_to_numa_map
 
-        available_numa_set = set(available_numas)
-        invalid_affinity_map = {
-            device: numa for device, numa in temp_device_to_numa_map.items()
-            if numa not in available_numa_set
-        }
-        if invalid_affinity_map:
-            logger.warning(f"Device affinity NUMA nodes {invalid_affinity_map} are unavailable or memoryless. "
-                           f"Only usable NUMA nodes {available_numas} will be used for numactl binding.")
-
-        # Build non-affinity pool (-1) from usable NUMA nodes that have no direct affinity.
-        affinity_numas = {
-            numa for numa in temp_device_to_numa_map.values()
-            if numa in available_numa_set
-        }
-        numa_to_device_map[-1] = [numa for numa in available_numas if numa not in affinity_numas]
-
-        # If affinity NUMA is unavailable or duplicated, reassign from the non-affinity pool.
-        unaffinity_numa_pool = iter(numa_to_device_map.get(-1, []))
-        used_numas = set()
-
-        for device, numa in temp_device_to_numa_map.items():
-            if numa not in available_numa_set:
-                numa = next(unaffinity_numa_pool)
-            elif numa in used_numas:
-                numa = next(unaffinity_numa_pool)
-            used_numas.add(numa)
-            device_to_numa_map[device] = [numa]
+        device_to_numa_map = _assign_numa_by_affinity(temp_device_to_numa_map, numa_to_device_map,
+                                                      available_numas)
     except RuntimeError as e:
         logger.warning(f"Failed to acquire device to numa affinity info, from {e} "
                        "Will not bind numa based on affinity.")

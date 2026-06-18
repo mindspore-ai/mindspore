@@ -44,12 +44,14 @@ Status ResizeBilinearV2Info::GetAttrs() {
     auto size_opt = GetArrayValueFromInputs<int64_t>(input_value_, name_, SIZE);
     if (!size_opt.has_value()) {
       MS_LOG(ERROR) << "For " << name_ << ", failed to get value for " << SIZE << ".";
+      return FAILED;
     }
     size_ = size_opt.value();
 
     auto align_corners_opt = GetScalarValueFromInputs<bool>(input_value_, name_, ALIGN_CORNERS);
     if (!align_corners_opt.has_value()) {
       MS_LOG(ERROR) << "For " << name_ << ", failed to get value for " << ALIGN_CORNERS << ".";
+      return FAILED;
     }
     align_corners_ = align_corners_opt.value();
   }
