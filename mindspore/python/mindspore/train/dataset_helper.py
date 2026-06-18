@@ -215,12 +215,12 @@ def _get_dataset_aux(dataset):
 @_mstx_range_decorator("connect_network_with_dataset", domain="model_preparation")
 def connect_network_with_dataset(network, dataset_helper):
     """
-    Connect the `network` with dataset in `dataset_helper`. Only supported in sink mode,
+    Connect the `network` with the dataset in `dataset_helper`. Only supported in sink mode
     (dataset_sink_mode=True).
 
     Args:
         network (Cell): The training network for dataset.
-        dataset_helper (DatasetHelper): A class to process the MindData dataset, it provides the type, shape and queue
+        dataset_helper (DatasetHelper): A class to process the MindData dataset. It provides the type, shape and queue
             name of the dataset.
 
     Returns:

@@ -165,7 +165,7 @@ class Landscape:
 
 class SummaryLandscape:
     """
-    SummaryLandscape can help you to collect loss landscape information.
+    SummaryLandscape can help collect loss landscape information.
     It can create landscape in PCA direction or random direction by calculating loss.
 
     Note:
@@ -261,11 +261,11 @@ class SummaryLandscape:
     def gen_landscapes_with_multi_process(self, callback_fn, collect_landscape=None,
                                           device_ids=None, output=None):
         """
-        Use the multi process to generate landscape.
+        Use the multiple processes to generate landscape.
 
         Args:
-            callback_fn (python function): A python function object. User needs to write a function,
-                it has no input, and the return requirements are as follows.
+            callback_fn (python function): A python function object. User needs to write a function.
+                It has no input, and the return requirements are as follows.
 
                 - mindspore.train.Model: User's model object.
                 - mindspore.nn.Cell: User's network object.

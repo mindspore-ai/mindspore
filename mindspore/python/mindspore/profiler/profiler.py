@@ -160,7 +160,7 @@ class Profiler:
             For details, see :func:`mindspore.profiler.tensorboard_trace_handler` .
         profile_memory (bool, optional): (Ascend only) Whether to collect tensor memory data, collect when ``True`` .
             When using this parameter, `activities` must set to ``[ProfilerActivity.CPU, ProfilerActivity.NPU]``.
-            Default: ``False`` . The operator name currently collected by this parameter is incomplete.
+            Default: ``False`` . The operator names collected by this parameter are currently incomplete.
             This issue will be resolved in later versions. It is recommended to use the environment variable
             ``MS_ALLOC_CONF`` instead.
         aic_metrics (AicoreMetrics, optional): (Ascend only) Types of AICORE performance data collected,
@@ -182,7 +182,7 @@ class Profiler:
             - AicoreMetrics.ResourceConflictRatio: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio
               etc.
             - AicoreMetrics.MemoryUB: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector,
-              ub\_/write_bw_scalar etc.
+              ub\_read/write_bw_scalar etc.
             - AicoreMetrics.L2Cache: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit,
               r1_read_cache_hit etc.
             - AicoreMetrics.MemoryAccess: Statistics on storage access bandwidth and storage capacity of main
@@ -707,7 +707,7 @@ class Profile:
     Users can visualize the results using the `MindStudio Insight
     <https://www.hiascend.com/developer/download/community/result?module=pt+sto+cann>`_ tool.
     Now, profile supports AICORE operator, AICPU operator, HostCPU operator, memory,
-    correspondence, cluster, etc data analysis.
+    communication, cluster, etc data analysis.
 
     Args:
         activities (Iterable, optional): The activities to collect.

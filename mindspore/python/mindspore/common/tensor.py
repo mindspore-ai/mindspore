@@ -315,7 +315,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             a tensor of dynamic shape is created, `input_data` doesn't need to be set; if only integers exist in
             `shape`, a tensor of static shape is created, `input_data` or `init` must be set. Default: ``None`` .
         init (Initializer): The information of init data.
-            `init` is used for delayed initialization in parallel mode, when using init, `dtype` and `shape` must be
+            `init` is used for delayed initialization in parallel mode. When using init, `dtype` and `shape` must be
             set. Default: ``None`` .
         const_arg (bool): Whether the tensor is a constant when it is used for the argument of a network.
             Default: ``False`` .
@@ -328,7 +328,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
     Note:
         The default value ``None`` of `input_data` works as a placeholder,
         it does not mean that we can create a NoneType Tensor.
-        Tensor with `shape` contains 0 is not fully tested and supported.
+        Tensor with `shape` containing 0 is not fully tested and supported.
 
     Examples:
         >>> import numpy as np

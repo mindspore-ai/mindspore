@@ -10,7 +10,7 @@ mindspore.SparseTensor
     .. note::
         此接口从 1.7 版本开始弃用，并计划在将来移除。请使用 :class:`mindspore.COOTensor`。
 
-    对于稠密张量，其 `SparseTensor(indices, values, shape)` 具有 `dense[indices[i]] = values[i]` 。
+    对于稠密张量，其 `SparseTensor(indices, values, dense_shape)` 具有 `dense[indices[i]] = values[i]` 。
 
     参数：
         - **indices** (Tensor) - shape为 :math:`(N, ndims)` 的二维整数张量，其中 :math:`N` 和 :math:`ndims` 分别表示稀疏张量中 `values` 的数量和SparseTensor维度的数量。

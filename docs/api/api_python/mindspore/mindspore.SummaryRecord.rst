@@ -7,7 +7,7 @@ mindspore.SummaryRecord
 
     该方法将在一个指定的目录中创建summary文件和lineage文件，并将数据写入文件。
 
-    它通过执行 `record` 方法将数据写入文件。
+    它通过执行 `record` 方法将数据写入文件。除了通过定义汇总运算符来记录从网络中汇总而来的数据外，SummaryRecord 还支持记录额外数据，这些数据可通过调用 `add_value` 方法添加。
 
     .. note::
         1. 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。

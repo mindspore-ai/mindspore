@@ -88,9 +88,9 @@ class IterableDataset(Dataset[_T_co], Iterable[_T_co]):
 
 class TensorDataset(Dataset[tuple[Tensor, ...]]):
     """
-    Dataset that defined by a collection of :class:`mindspore.Tensor` .
+    Dataset defined by a collection of :class:`mindspore.Tensor` .
 
-    Each :class:`~mindspore.Tensor` represent a feature column of the dataset, and must have the same size in the
+    Each :class:`~mindspore.Tensor` represents a feature column of the dataset, and must have the same size in the
     first dimension, which means the total number of samples.
     Samples will be retrieved by indexing :class:`~mindspore.Tensor` along their first dimension.
 

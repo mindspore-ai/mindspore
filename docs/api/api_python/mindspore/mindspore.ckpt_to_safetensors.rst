@@ -8,7 +8,7 @@ mindspore.ckpt_to_safetensors
 
     .. note::
         多进程设置数量与主机规模有关，不推荐设置太大，否则容易导致卡死。
-        safetensors格式不支持enc校验功能，若ckpt为开启enc校验保存，执行转换时会报错。
+        safetensors格式不支持enc校验功能，若ckpt开启enc校验保存，执行转换时会报错。
         safetensors格式暂不支持crc校验功能，若ckpt包含crc校验信息，转换为safetensors后crc校验信息会丢失。
 
     参数：

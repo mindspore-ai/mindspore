@@ -867,7 +867,7 @@ def _check_contains_variable(item_dtype, item_value):
 
 
 def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=True):
-    """Used to calculate constant in graph compiling process and improve compile performance in GRAPH_MODE.
+    """Used to calculate constants in graph compiling process and improve compile performance in GRAPH_MODE.
 
     Args:
         fn (function, optional): A `fn` used as the infer_value of the output operator. Default: ``None`` .
@@ -879,7 +879,7 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                              and reuse the result next time,
                              otherwise the operator will always be executed. Default: ``True`` .
         check (bool, optional): If ``True`` , the parameters will be checked
-            and the warning message will be raised if the parameter is not const value. Default: ``True`` .
+            and the warning message will be raised if the parameter is not constant value. Default: ``True`` .
 
     Examples:
 

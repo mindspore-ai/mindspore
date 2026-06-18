@@ -164,7 +164,7 @@ class Parameter(Tensor_):
 
         - Give each `Parameter` a unique name to facilitate subsequent operations and updates.
           If there are two or more `Parameter` objects with the same name in a network,
-          will be prompted to set a unique name when defining.
+          you will be prompted to set a unique name when defining.
 
         - When directly printing a `Parameter`, you cannot view the actual values contained inside it.
           You need to use the `Parameter.asnumpy()` method to access the actual values.
@@ -184,7 +184,8 @@ class Parameter(Tensor_):
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_b = Parameter(Tensor([2], ms.float32))
 
-            2) If parameter in list or tuple is not given a name, will give it a unique name. For example, the names of
+            2) If parameter in list or tuple is not given a name, a unique name will be assigned.
+            For example, the names of
             parameters below are **Parameter$1** and **Parameter$2**.
 
             .. code-block::
@@ -225,7 +226,8 @@ class Parameter(Tensor_):
             on NPU while computing. When the device is specified as ``"CPU"``, the parameter will be loaded into the
             device when it needs to be used, and unloaded to the CPU after use. It will not take effect when
             :func:`mindspore.runtime.set_memory()` set ``'optimize_level'`` to ``'O1'``. Less device memory is needed
-            when device is specified as ``"CPU"``. The parameter with ``"Remote"`` device type will be stored in remote
+            when device is specified as ``"CPU"``. The parameter with ``"Remote"``
+            device type will be stored in remote storage
             and loaded to device when needed. The ``"Remote"`` device type is an experimental option.
 
     Examples:
@@ -633,7 +635,7 @@ class Parameter(Tensor_):
         Get the layerwise parallel status(bool) of the parameter.
 
         When `layerwise_parallel` is ``True`` in `DATA_PARALLEL` and `HYBRID_PARALLEL` parallel mode,
-        broadcast and gradients communication would not be applied to parameters.
+        broadcast and gradient communication would not be applied to parameters.
 
         Examples:
             >>> from mindspore import Tensor, Parameter
@@ -1047,7 +1049,7 @@ class _Buffer(Tensor, metaclass=_BufferMeta):
 
 class ParameterTuple(tuple):
     """
-    Inherited from tuple, ParameterTuple  is used to save multiple parameter.
+    Inherited from tuple, ParameterTuple is used to save multiple parameters.
 
     Note:
         It is used to store the parameters of the network into the parameter tuple collection.
@@ -1085,7 +1087,7 @@ class ParameterTuple(tuple):
 
         Args:
             prefix (str): Namespace of parameter, the prefix string will be added to the names of parameters
-                in parametertuple.
+                in ParameterTuple.
 
             init (Union[Tensor, str, numbers.Number]): Clone the shape and dtype of Parameters in ParameterTuple and
                 set  data according to `init`. Default: ``'same'``.

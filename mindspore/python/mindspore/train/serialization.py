@@ -2004,8 +2004,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         net (Union[Cell, function]): MindSpore network.
         inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
              of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
-             it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
-             In second situation, you should adjust batch size of dataset script manually which will impact on
+             it represents the preprocess behavior of the `net`. Data preprocess operations will be serialized.
+             In the second situation, you should adjust batch size of dataset script manually which will impact
              the batch size of 'net' input. Only supports parse "image" column from dataset currently.
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
@@ -2032,7 +2032,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
             - incremental (bool): export MindIR incrementally.
 
             - custom_func (function): Functions for custom defined export policies. This function will be used to
-              customize the model during network export. Currently only support for files with mindir format. The
+              customize the model during network export. It currently only supports for files with mindir format. The
               function only accepts one input representing the proto object of the mindir file. When modifying a model,
               it is necessary to ensure the correctness of the `custom_func` , otherwise it may lead to model loading
               failure or functional errors. Default: ``None`` .
@@ -2048,8 +2048,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
         >>>
-        >>> # Export model in MindIR format and modified the model info using custom_func
-        >>> # The custom_func only support one input representing the Proto object of the model
+        >>> # Export model in MindIR format and modify the model info using custom_func
+        >>> # The custom_func only supports one input representing the Proto object of the model
         >>> # And custom_func does not support return value
         >>> def _custom_func(mindir_model):
         ...     mindir_model.producer_name = "test11111"
@@ -2503,16 +2503,16 @@ def _save_dataset_to_mindir(model, dataset):
 
 def async_ckpt_thread_status():
     """
-    Get the status of asynchronous save checkpoint thread.
+    Get the status of asynchronous checkpoint saving thread.
 
     Note:
         The interface is deprecated from version 2.5 and will be removed in a future version.
 
-    When performing asynchronous save checkpoint, you can determine whether the asynchronous thread is completed.
+    When performing asynchronous checkpoint saving, you can determine whether the asynchronous thread is completed.
 
     Returns:
-        bool. ``True`` if asynchronous save checkpoint thread is running,
-        ``False`` if asynchronous save checkpoint thread is not executing.
+        bool. ``True`` if asynchronous checkpoint saving thread is running,
+        ``False`` if asynchronous checkpoint saving thread is not executing.
 
     Examples:
         >>> import mindspore as ms
@@ -2668,13 +2668,13 @@ def ckpt_to_safetensors(file_path, save_path=None, name_map=None, file_name_rege
     """
     Converts MindSpore checkpoint files into safetensors format and saves them to `save_path`.
     Safetensors is a reliable and portable machine learning model storage format introduced by Huggingface,
-    used for securely storing Tensors with fast speed (zero copy).
+    used for securely storing Tensors with fast storage speed (zero copy).
 
     Note:
         The number of multiprocess settings should be set according to the host size, and it is not recommended to set
         it too large, otherwise it may cause freezing.
         The safetensors format does not support the encryption verification function. If the checkpoint file has
-        encryption verification enabled, an error will be generated when performing the conversion.
+        encryption verification enabled, an error will be raised when performing the conversion.
         The safetensors format currently does not support the crc verification function. If the checkpoint file
         contains crc verification information, the crc verification information will be lost after conversion to
         safetensors.
