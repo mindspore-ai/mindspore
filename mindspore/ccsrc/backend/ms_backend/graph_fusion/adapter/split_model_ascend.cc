@@ -222,13 +222,20 @@ class FuseMatMul : public FusePattern {
   }
 
   bool IsSmallMatMulNKMK(const AreaPtr &dom, const DShape &output_shape) const {
-    if (dom->dom()->op() != kMatMulOpName && dom->dom()->op() != kBatchMatMulOpName) {
+    if (dom == nullptr) {
+      return false;
+    }
+    const auto &dom_node = dom->dom();
+    if (dom_node == nullptr || dom_node->inputs().empty()) {
+      return false;
+    }
+    if (dom_node->op() != kMatMulOpName && dom_node->op() != kBatchMatMulOpName) {
       return false;
     }
     const auto m_size = output_shape[output_shape.size() - kMinRankTwo];
     const auto n_size = output_shape.back();
-    const auto &a_shape = dom->dom()->inputs()[0]->shape;
-    const auto transpose_a = GetValue<bool>(dom->dom()->attrs().at(kTransposeA));
+    const auto &a_shape = dom_node->inputs()[0]->shape;
+    const auto transpose_a = GetValue<bool>(dom_node->attrs().at(kTransposeA));
     const auto k_size = transpose_a ? a_shape[a_shape.size() - kMinRankTwo] : a_shape.back();
     return (m_size < kMinMatMulOutputDim && k_size < kMinMatMulOutputDim) ||
            (n_size < kMinMatMulOutputDim && k_size < kMinMatMulOutputDim);

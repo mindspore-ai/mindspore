@@ -1003,7 +1003,7 @@ class MatMulToReshapeMulPatternTree : public PatternTree {
     if (GetValue<bool>(origin_root->attrs().find(kTransposeB)->second)) {
       std::swap(rhs_shape_[rhs_shape_.size() - kMatMulRank], rhs_shape_[rhs_shape_.size() - 1]);
     }
-    return lhs_shape_[lhs_shape_.size() - 1] == 1 && rhs_shape_[rhs_shape_.size() - 2] == 1;
+    return lhs_shape_[lhs_shape_.size() - 1] == 1 && rhs_shape_[rhs_shape_.size() - kDim2] == 1;
   }
 
   mutable ShapeVector lhs_shape_;

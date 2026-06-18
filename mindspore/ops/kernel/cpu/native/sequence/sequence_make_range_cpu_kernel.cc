@@ -59,7 +59,7 @@ bool MakeRangeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   constexpr size_t kSizeTwo = 2;
   auto delta = inputs.size() <= kSizeTwo ? T(1) : GetDeviceAddress<T>(inputs, kDim2)[0];
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
+  MS_EXCEPTION_IF_NULL(output_addr);
   size_t output_size = outputs[0]->size() / sizeof(T);
   if (Sign(delta) * Sign(limit - start) >= 0) {
     for (int index = 0; index < SizeToInt(output_size); index++) {

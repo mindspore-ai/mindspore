@@ -89,6 +89,9 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   const auto stop_addr = GetDeviceAddress<D1>(inputs, kIndex2);
   const auto step_addr = GetDeviceAddress<D2>(inputs, kIndex3);
   auto output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(start_addr);
+  MS_EXCEPTION_IF_NULL(stop_addr);
+  MS_EXCEPTION_IF_NULL(step_addr);
   int64_t data_len = static_cast<int64_t>(inputs[0]->size() / sizeof(T));
   auto len = SizeToLong(inputs[0]->GetShape()->cast<abstract::SequenceShapePtr>()->size());
 
@@ -111,6 +114,8 @@ bool SequenceSliceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   }
   MS_EXCEPTION_IF_CHECK_FAIL(len != 0, "For SequenceSlice, input length must not be 0!");
   int64_t tensor_length = static_cast<int64_t>(data_len / len);
+  MS_EXCEPTION_IF_NULL(seq_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
   if (step > 0) {
     int64_t idx = 0;
     for (int64_t i = start; i < stop; i += step) {

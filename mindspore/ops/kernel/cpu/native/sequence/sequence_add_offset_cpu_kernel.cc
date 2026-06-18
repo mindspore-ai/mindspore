@@ -51,6 +51,7 @@ bool SequenceAddOffsetCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &,
                                                  const std::vector<KernelTensor *> &outputs) {
   int64_t *output_addr = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   auto input_0_size = inputs[0]->size() / sizeof(T);
   output_addr[0] = 0;
   output_addr[1] = SizeToLong(input_0_size);

@@ -46,6 +46,8 @@ bool SequenceMaxCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
                                            const std::vector<KernelTensor *> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(input_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
   auto input_size = inputs[0]->size();
   output_addr[0] = *std::max_element(input_addr, input_addr + input_size / sizeof(T));
   return true;

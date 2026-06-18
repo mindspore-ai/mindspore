@@ -543,7 +543,7 @@ tensor::TensorPtr AddmmDvmCall(const std::string &op_name, OpRunner *op, const T
   }
 
   FlushLazyFusion();  // forward fusion not allowed
-  auto build_kernel = [&](LazyFusionKernelAscend *k) {
+  auto build_kernel = [&info, &input_tensor, beta_scalar, alpha_scalar](LazyFusionKernelAscend *k) {
     auto out_obj = BuildAddmmDvmOutput(k, info, input_tensor, beta_scalar, alpha_scalar);
     return k->Output(out_obj, input_tensor->data_type(), k->GetShape(out_obj));
   };
