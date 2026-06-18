@@ -36,7 +36,7 @@ TensorPtr from_spec(TypeId data_type, const ShapeVector &shape, device::DeviceTy
 
 TensorPtr from_spec_fast(TypeId data_type, const ShapeVector &shape, device::DeviceType device_type) {
   if (device_type == device::DeviceType::kCPU) {
-    auto nbytes = abstract::TypeIdSize(data_type) * SizeOf(shape);
+    auto nbytes = NBytesOf(data_type, shape);
     // Allocate memory without initializing.
     auto buffer = std::malloc(nbytes);
     auto device_address = DeviceAddressMaker(buffer, data_type, shape)

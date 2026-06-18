@@ -25,7 +25,7 @@ DeviceAddressMakerFunc g_device_address_maker[kMaxDeviceNum];
 
 DeviceAddressPtr MakeCPUDeviceAddress(TypeId data_type, const ShapeVector &shape, void *data_ptr,
                                       DeviceAddressDeleter &&deleter) {
-  auto data_size = SizeOf(shape) * abstract::TypeIdSize(data_type);
+  auto data_size = NBytesOf(data_type, shape);
   auto device_address = std::make_shared<DeviceAddress>(data_ptr, data_size, device::DeviceType::kCPU, 0);
   if (deleter != nullptr) {
     device_address->SetDevicePointerDeleter(std::move(deleter));
