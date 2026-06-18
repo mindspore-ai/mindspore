@@ -40,7 +40,7 @@ std::vector<GeneralInferParam> prepare_params() {
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{2, 3}, kNumberTypeFloat32},
                     InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<int64_t>(2)}})
-    .FeedExpectedOutput({{}, {2, 3}}, {kNumberTypeFloat32, kNumberTypeFloat32});
+    .FeedExpectedOutput({{0}, {2, 3}}, {kNumberTypeFloat32, kNumberTypeFloat32});
 
   // Multidimensional input.
   generator

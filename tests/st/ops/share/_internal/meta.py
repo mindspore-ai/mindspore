@@ -162,6 +162,15 @@ class OpsFactory():
         self._convert_extra_uint = bool(set(self.supported_dtypes) & set(dtypes_extra_uint))
         self._convert_half_to_float = getattr(self.op_info, 'convert_half_to_float', False)
 
+    @staticmethod
+    def _assert_sequence_length_equal(actual, expect, *, kind):
+        """Guard against silently truncating tuple/list comparisons with zip."""
+        if len(actual) != len(expect):
+            raise AssertionError(
+                f"Mismatched number of {kind}: MindSpore returned {len(actual)} item(s), "
+                f"but reference returned {len(expect)} item(s)."
+            )
+
     @final
     def should_skip_backend_dtype_coverage(self, test_name: str):
         """Check whether the current backend has dtype coverage for this op.
@@ -718,7 +727,7 @@ class OpsFactory():
             if isinstance(op_input, torch.Tensor) and _torch_dtype_supports_grad(op_input):
                 if grad_position is None or 0 in grad_position:
                     op_input.requires_grad = True
-                tensor_inputs.append(('input', op_input))
+                    tensor_inputs.append(('input', op_input))
             elif isinstance(op_input, (tuple, list)):
                 if not self.flatten_inputs_for_backward:
                     warnings.warn(
@@ -731,20 +740,28 @@ class OpsFactory():
                 for t in _flatten_tensors(op_input):
                     if grad_position is None or 0 in grad_position:
                         t.requires_grad = True
-                    tensor_inputs.append(('input', t))
+                        tensor_inputs.append(('input', t))
             # handle op_args
             arg_tensors = []
             for i, arg in enumerate(op_args):
                 if isinstance(arg, torch.Tensor) and _torch_dtype_supports_grad(arg):
                     if grad_position is None or i + 1 in grad_position:
                         arg.requires_grad = True
-                    arg_tensors.append(arg)
+                        arg_tensors.append(arg)
                 elif isinstance(arg, (tuple, list)):
                     for t in _flatten_tensors(arg):
                         if grad_position is None or i + 1 in grad_position:
                             t.requires_grad = True
-                        arg_tensors.append(t)
+                            arg_tensors.append(t)
             tensor_inputs.extend(('arg', t) for t in arg_tensors)
+            kwarg_tensors = []
+            kwarg_start_index = len(op_args) + 1
+            for i, kwarg in enumerate(op_kwargs.values()):
+                if isinstance(kwarg, torch.Tensor) and _torch_dtype_supports_grad(kwarg):
+                    if grad_position is None or kwarg_start_index + i in grad_position:
+                        kwarg.requires_grad = True
+                        kwarg_tensors.append(kwarg)
+            tensor_inputs.extend(('kwarg', t) for t in kwarg_tensors)
 
             outi = torch_fn(op_input, *op_args, **op_kwargs)
             # If no grad-capable inputs, skip backward to avoid autograd errors
@@ -765,8 +782,11 @@ class OpsFactory():
             grad_tuple = []
             for _, tin in tensor_inputs:
                 grad = tin.grad
-                if grad is not None:
-                    grad_tuple.append(grad.detach())
+                if grad is None:
+                    raise AssertionError(
+                        f"PyTorch reference missing gradient for selected input in sample '{sample_input.sample_name}'."
+                    )
+                grad_tuple.append(grad.detach())
             grads.append(tuple(grad_tuple))
 
         return grads
@@ -949,25 +969,33 @@ class OpsFactory():
             if isinstance(op_input, torch.Tensor) and _torch_dtype_supports_grad(op_input):
                 if grad_position is None or 0 in grad_position:
                     op_input.requires_grad = True
-                tensor_inputs.append(('input', op_input))
+                    tensor_inputs.append(('input', op_input))
             elif isinstance(op_input, (tuple, list)):
                 # Some ops (e.g. cat) take a sequence of tensors as the first argument.
                 for t in _flatten_tensors(op_input):
                     if grad_position is None or 0 in grad_position:
                         t.requires_grad = True
-                    tensor_inputs.append(('input', t))
+                        tensor_inputs.append(('input', t))
             arg_tensors = []
             for i, arg in enumerate(op_args):
                 if isinstance(arg, torch.Tensor) and _torch_dtype_supports_grad(arg):
                     if grad_position is None or i + 1 in grad_position:
                         arg.requires_grad = True
-                    arg_tensors.append(arg)
+                        arg_tensors.append(arg)
                 elif isinstance(arg, (tuple, list)):
                     for t in _flatten_tensors(arg):
                         if grad_position is None or i + 1 in grad_position:
                             t.requires_grad = True
-                        arg_tensors.append(t)
+                            arg_tensors.append(t)
             tensor_inputs.extend(('arg', t) for t in arg_tensors)
+            kwarg_tensors = []
+            kwarg_start_index = len(op_args) + 1
+            for i, kwarg in enumerate(op_kwargs.values()):
+                if isinstance(kwarg, torch.Tensor) and _torch_dtype_supports_grad(kwarg):
+                    if grad_position is None or kwarg_start_index + i in grad_position:
+                        kwarg.requires_grad = True
+                        kwarg_tensors.append(kwarg)
+            tensor_inputs.extend(('kwarg', t) for t in kwarg_tensors)
 
             outi = torch_fn(op_input, *op_args, **op_kwargs)
             if not tensor_inputs:
@@ -983,7 +1011,12 @@ class OpsFactory():
 
             grad_tuple = []
             for _, tin in tensor_inputs:
-                grad_tuple.append(tin.grad.detach())
+                grad = tin.grad
+                if grad is None:
+                    raise AssertionError(
+                        "PyTorch reference missing gradient for a selected dynamic-shape input."
+                    )
+                grad_tuple.append(grad.detach())
             grads.append(tuple(grad_tuple))
 
         return grads
@@ -1023,6 +1056,8 @@ class OpsFactory():
             sample_loss = getattr(sample_input, "loss", None)
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
+                kind = "gradients" if grad_cmp else "outputs"
+                self._assert_sequence_length_equal(ms_outi, pt_outi, kind=kind)
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
                     self.assert_equal(
                         ms_outi_tensor,
@@ -1080,6 +1115,8 @@ class OpsFactory():
             sample_loss = getattr(sample_input, "loss", None)
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
+                kind = "gradients" if grad_cmp else "outputs"
+                self._assert_sequence_length_equal(ms_outi, pt_outi, kind=kind)
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
                     self.assert_equal(
                         ms_outi_tensor,
@@ -1136,6 +1173,8 @@ class OpsFactory():
             sample_loss = getattr(running_input, "loss", None)
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
+                kind = "gradients" if grad_cmp else "outputs"
+                self._assert_sequence_length_equal(ms_outi, pt_outi, kind=kind)
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
                     self.assert_equal(
                         ms_outi_tensor,
@@ -1224,6 +1263,7 @@ class OpsFactory():
                     self.op_info,
                     dtype=dtype,
                     device=self._device,
+                    grad_cmp=grad_cmp,
                     only_dynamic_shape=only_dynamic_shape,
                     only_dynamic_rank=only_dynamic_rank):
                 if grad_cmp:
@@ -1319,6 +1359,7 @@ class OpsFactory():
         for ms_outi, pt_outi in zip(ms_out, pt_out):
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
+                self._assert_sequence_length_equal(ms_outi, pt_outi, kind="outputs")
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
                     self.assert_equal(ms_outi_tensor, pt_outi_tensor, rtol, atol)
             else:
@@ -1350,6 +1391,7 @@ class OpsFactory():
         for ms_gradi, pt_gradi in zip(ms_grads, pt_grads):
             if isinstance(ms_gradi, (tuple, list)) and isinstance(pt_gradi, (tuple, list)):
                 # The gradient of the op maybe a tuple or list for some multi-tensor input ops.
+                self._assert_sequence_length_equal(ms_gradi, pt_gradi, kind="gradients")
                 for ms_gradi_tensor, pt_gradi_tensor in zip(ms_gradi, pt_gradi):
                     self.assert_equal(ms_gradi_tensor, pt_gradi_tensor, rtol, atol, grad_cmp=True)
             else:
@@ -1386,6 +1428,7 @@ class OpsFactory():
         for ms_outi, pt_outi in zip(ms_outs, pt_outs):
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op with dynamic shape maybe a tuple or list for some multi-output ops.
+                self._assert_sequence_length_equal(ms_outi, pt_outi, kind="outputs")
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
                     self.assert_equal(ms_outi_tensor, pt_outi_tensor, rtol, atol)
             else:
@@ -1417,6 +1460,7 @@ class OpsFactory():
         for ms_gradi, pt_gradi in zip(ms_grads, pt_grads):
             if isinstance(ms_gradi, (tuple, list)) and isinstance(pt_gradi, (tuple, list)):
                 # The gradient of the op maybe a tuple or list for some multi-tensor input ops.
+                self._assert_sequence_length_equal(ms_gradi, pt_gradi, kind="gradients")
                 for ms_gradi_tensor, pt_gradi_tensor in zip(ms_gradi, pt_gradi):
                     self.assert_equal(ms_gradi_tensor, pt_gradi_tensor, rtol, atol, grad_cmp=True)
             else:

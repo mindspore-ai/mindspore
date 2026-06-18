@@ -2,7 +2,7 @@ max_unpool2d_ext:
     description: |
         Computes the inverse of `max_pool2d`.
 
-        `max_unpool2d` keeps the maximal value and set all position of non-maximal values to zero. Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
+        `max_unpool2d` keeps the maximal value and sets all positions of non-maximal values to zero. Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`, and the output is of shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`. The operation is as follows.
 
         .. math::
             \begin{array}{ll} \\
@@ -15,7 +15,7 @@ max_unpool2d_ext:
 
         Args:
             input (Tensor): The input Tensor to invert. Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
-            indices (Tensor): Max values' index represented by the indices. Tensor of shape must be same as input `input`. Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`. Data type must be in int32 or int64.
+            indices (Tensor): Max values' index represented by the indices. Tensor of shape must be same as input `input`. Values of indices must belong to :math:`[0, H_{in} \times W_{in} - 1]`. Data type must be int32 or int64.
             kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value, an int number that represents height and width of the kernel, or a tuple of two int numbers that represent height and width respectively.
             stride (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents the height and width of movement are both stride, or a tuple of two int numbers that represent height and width of movement respectively. Default: ``None`` , which indicates the moving step is `kernel_size` .
             padding (Union[int, tuple[int]], optional): The padding value to be filled. Default: ``0`` . If `padding` is an integer, the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
@@ -27,10 +27,13 @@ max_unpool2d_ext:
         Raises:
             TypeError: If data type of `input` or `indices` is not supported.
             TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-            ValueError: If numbers in `stride`, `padding` or `kernel_size` are not positive.
+            ValueError: If the length of `kernel_size`, `stride` or `padding` is not 1 or 2.
+            ValueError: If numbers in `kernel_size` or `stride` are not positive.
+            ValueError: If numbers in `padding` are negative.
             ValueError: If the shapes of `input` and `indices` are different.
             ValueError: If the length of `input` is not 3 or 4.
             ValueError: If the type of `output_size` is not tuple.
+            ValueError: If the length of `output_size` is not 0, 2, 3 or 4.
             ValueError: If `output_size` is not close to output size computed by attr `kernel_size`, `stride`, `padding`.
 
         Supported Platforms:

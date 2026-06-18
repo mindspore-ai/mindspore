@@ -42,8 +42,8 @@ class BincountExtAscend : public AclnnKernelMod {
   DEFINE_GET_WORKSPACE_FOR_OPS(aclnnMax, Max)
   DEFINE_GET_WORKSPACE_FOR_OPS(aclnnBincount, Bincount)
 
-  KernelTensor *min_output_tensor_ = nullptr;
-  KernelTensor *max_output_tensor_ = nullptr;
+  std::shared_ptr<KernelTensor> min_output_tensor_;
+  std::shared_ptr<KernelTensor> max_output_tensor_;
   std::vector<ShapeVector> output_shape_{{0}};
   int64_t input_dim_ = 0;
   int64_t input_numel_ = 0;

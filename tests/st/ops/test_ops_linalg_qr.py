@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test for linalg.qr operator"""
+"""Tests for linalg qr operators."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -169,6 +169,30 @@ def test_ops_qr_dtype(context_mode):
 
         np.testing.assert_allclose(out_q.asnumpy(), expect_q, atol=1e-3, rtol=1e-3)
         np.testing.assert_allclose(out_r.asnumpy(), expect_r, atol=1e-3, rtol=1e-3)
+
+
+@arg_mark(plat_marks=["platform_ascend"],
+    level_mark="level0",
+    card_mark="onecard", mem_peak=1.00
+)
+@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+@test_utils.run_test_with_On
+def test_ops_qr_mode_r(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test function mint.linalg.qr mode='r'.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    if context_mode == ms.GRAPH_MODE:
+        ms.set_context(jit_level='O0')
+
+    x_np = np.arange(6, dtype=np.float32).reshape(2, 3)
+    out_q, out_r = forward_func(Tensor(x_np), "r")
+    expect_r = np.linalg.qr(x_np, "r")
+
+    assert out_q.shape == (0,)
+    np.testing.assert_allclose(out_r.asnumpy(), expect_r, atol=1e-3, rtol=1e-3)
 
 
 @arg_mark(plat_marks=["platform_ascend"],

@@ -1299,6 +1299,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
             the height and width of movement are both stride, or a tuple of two int numbers that
             represent height and width of movement respectively.
             Default: ``None`` , which indicates the moving step is `kernel_size` .
+            If `stride` is ``0`` or ``(0, 0)``, it is treated as `kernel_size` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` . If `padding` is an integer,
             the paddings of height and width are the same, equal to padding. If `padding` is a tuple of two
             integers, the padding of height and width equal to padding[0] and padding[1] correspondingly.
@@ -1316,12 +1317,14 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-        ValueError: If numbers in `stride`, `padding` (also support 0 and (0, 0)) or `kernel_size` are not positive.
-        ValueError: If the shape of `x` and `indices` are not equal.
         ValueError: If `kernel_size`, `stride` or `padding` is a tuple whose length is not equal to 2.
+        ValueError: If numbers in `kernel_size` are not positive.
+        ValueError: If numbers in `stride` are neither positive nor ``0`` or ``(0, 0)``.
+        ValueError: If numbers in `padding` are negative.
+        ValueError: If the shape of `x` and `indices` are not equal.
         ValueError: If the length of `x` is not 3 or 4.
         ValueError: If the type of `output_size` is not tuple.
-        ValueError: If the length of `output_size` is not 0, 3 or 4.
+        ValueError: If the length of `output_size` is not 0, 2, 3 or 4.
         ValueError: If `output_size` is not close to output size computed by `kernel_size`, `stride`, `padding`.
 
     Supported Platforms:
@@ -1342,21 +1345,7 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
     x_shape = shape_(x)
     x_dim = len(x_shape)
-
-    if output_size is None:
-        output_size = ()
-    else:
-        if not isinstance(output_size, tuple):
-            raise ValueError(f"For max_unpool2d, output_size must be tuple, but type {type(output_size)}.")
-        if len(output_size) not in [0, 2, 3, 4]:
-            raise ValueError(f"For max_unpool2d, length of output_size with tuple must be 0, 2, 3, 4, "
-                             f"but got type {len(output_size)}.")
-        if not output_size:
-            output_size = ()
-        elif x_dim == 3:
-            output_size = (1,) + x_shape[:1] + output_size[-2:]
-        else:
-            output_size = x_shape[:2] + output_size[-2:]
+    output_size = _normalize_max_unpool2d_output_size(x_shape, output_size)
 
     max_unpool_2d = MaxUnpool2D(ksize=kernel_size, strides=stride, pads=padding, output_shape=output_size,
                                 data_format="NCHW")
@@ -2271,8 +2260,8 @@ def kl_div_ext(input, target, reduction='mean', log_target=False):
 
     Args:
         input (Tensor): The input Tensor. The data type must be float16, float32 or bfloat16.
-        target (Tensor): The target Tensor which has the same type as `input`. The shapes of `target` and `input`
-            should be broadcastable.
+        target (Tensor): The target Tensor. The data type must be float16, float32 or bfloat16. The shapes of
+            `target` and `input` should be broadcastable.
         reduction (str, optional): Specifies the reduction to be applied to the output. Default: ``'mean'``.
         log_target (bool, optional): Specifies whether `target` is passed in the log space. Default: ``False``.
 
@@ -2283,7 +2272,6 @@ def kl_div_ext(input, target, reduction='mean', log_target=False):
     Raises:
         TypeError: If neither `input` nor `target` is a Tensor.
         TypeError: If dtype of `input` or `target` is not float16, float32 or bfloat16.
-        TypeError: If dtype of `target` is not the same as `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``, ``'batchmean'``.
         ValueError: If shapes of `target` and `input` can not be broadcastable.
 
@@ -3236,6 +3224,11 @@ def softmax(input, axis=-1, *, dtype=None):
     return softmax_impl(input, axis)
 
 
+def _get_softmax_implicit_dim(ndim):
+    """Match torch's implicit dim selection for Softmax(dim=None)."""
+    return 0 if ndim in (0, 1, 3) else 1
+
+
 def softmax_ext(input, dim=None, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
@@ -3272,12 +3265,17 @@ def softmax_ext(input, dim=None, dtype=None):
         >>> print(output)
         [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
-    dim = -1 if dim is None else dim
+    input_rank = len(shape_(input))
+    dim = _get_softmax_implicit_dim(input_rank) if dim is None else dim
     if not isinstance(dim, int):
         type_dim = type(dim).__name__
         raise TypeError(f" the type of 'dim' must be 'int', but got '{dim}' with type '{type_dim}'.")
     if dtype is not None:
         input = ops.cast(input, dtype)
+    if input_rank == 0:
+        if dim in (0, -1):
+            return ops.ones_like(input)
+        raise IndexError(f"Dimension out of range (expected to be in range of [-1, 0], but got {dim})")
     return softmax_impl(input, dim)
 
 
@@ -3817,6 +3815,23 @@ def pdist(input, p=2.0):
     """
     pdist_ = _get_cache_prim(NN_OPS.Pdist)(p=p)
     return pdist_(input)
+
+
+def _normalize_max_unpool2d_output_size(x_shape, output_size):
+    """Normalize MaxUnpool2d output_size to the 4D primitive format."""
+    if output_size is None:
+        return ()
+    if not isinstance(output_size, tuple):
+        raise ValueError(f"For max_unpool2d, output_size must be tuple, but got {type(output_size)}.")
+    if len(output_size) not in (0, 2, 3, 4):
+        raise ValueError(f"For max_unpool2d, length of output_size with tuple must be 0, 2, 3, 4, "
+                         f"but got {len(output_size)}.")
+    if not output_size:
+        return ()
+
+    if len(x_shape) == 3:
+        return (1,) + x_shape[:1] + output_size[-2:]
+    return x_shape[:2] + output_size[-2:]
 
 
 def _circular_pad(input_x, padding):
@@ -4757,20 +4772,19 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
         This is an experimental API that is subject to change or deletion.
 
     Note:
-        Dynamic shape, dynamic rank and variable constant inputs are not supported in `strict graph mode
-        (jit_syntax_level=mindspore.STRICT)
-        <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
+        Dynamic shape, dynamic rank and variable constant inputs are not supported in
+        `strict graph mode (jit_syntax_level=mindspore.STRICT) <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
 
     Args:
         input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
-            `input` is expected to be log-probabilities, data type must be float16 or float32 or bfloat16.
+            `input` is expected to be unnormalized logits, supported data types include float16, float32 or bfloat16.
         target (Tensor): For class indices, tensor of shape :math:`()`, :math:`(N)` or
             :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32 or int64. For probabilities, tensor of shape
-            :math:`(N,)` , :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32
-            or bfloat16.
+            :math:`(N,)` , :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , supported data types include
+            float16, float32 or bfloat16.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, the shape is :math:`(C,)`, data type must be float16 or float32 or bfloat16.
+            If not None, the shape is :math:`(C,)`, supported data types include float16, float32 or bfloat16.
             Default: ``None`` .
         ignore_index (int, optional): Specifies a target value that is ignored and does not contribute to the input
             gradient. Only valid in class indices, please set it to a negative number in probabilities.
@@ -4786,7 +4800,10 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default: ``0.0`` .
 
     Returns:
-        Tensor, the data type is the same as `input` .
+        Tensor.
+
+        - For class indices, the output data type is the same as `input`.
+        - For probabilities, the output data type is float32.
 
     Supported Platforms:
         ``Ascend``
@@ -8762,8 +8779,9 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
     r"""
     Performs a 2D max pooling on the input Tensor.
 
-    Typically, the input is a Tensor with shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs
-    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given `kernel_size`
+    Typically, the input is a Tensor with shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` or
+    :math:`(C_{in}, H_{in}, W_{in})`, outputs regional maximum in the :math:`(H_{in}, W_{in})`-dimension.
+    Given `kernel_size`
     :math:`ks = (h_{ker}, w_{ker})` and `stride` :math:`s = (s_0, s_1)`, the operation is as follows:
 
     .. math::
@@ -8772,8 +8790,8 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float32
-            in Ascend.
+        input (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` or
+            :math:`(C_{in}, H_{in}, W_{in})` with data type of float32 in Ascend.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
             value, is an int number that represents height and width of the kernel, or a tuple of
             two int numbers that represent height and width respectively.
@@ -8792,7 +8810,7 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
         If `return_indices` is ``False`` , returns a Tensor `output`. Otherwise returns a tuple (`output`, `argmax`).
 
         - **output** (Tensor) - Maxpooling result,
-          with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})`.
+          with shape :math:`(N_{out}, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`.
           It has the same data type as `input`.
 
         .. math::
@@ -8808,7 +8826,7 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        ValueError: If length of shape of `input` is not equal to 4.
+        ValueError: If length of shape of `input` is not equal to 3 or 4.
         TypeError: If `kernel_size` , `stride` , `padding` or `dilation` is not int or tuple.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `dilation` is not all 1.

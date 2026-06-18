@@ -31,7 +31,7 @@ mindspore.mint.nn.KLDivLoss
 
     输入：
         - **input** (Tensor) - 输入Tensor。数据类型必须为float16、float32或bfloat16。
-        - **target** (Tensor) - 目标Tensor，其数据类型与 `input` 相同。 `target` 的shape和 `input` 的shape能广播。
+        - **target** (Tensor) - 目标Tensor。数据类型必须为float16、float32或bfloat16。`target` 的shape和 `input` 的shape能广播。
 
     输出：
         Tensor，数据类型与 `input` 相同。如果 `reduction` 为 ``'none'`` ，则shape与 `input` 和 `target` 广播之后的结果相同。
@@ -40,6 +40,5 @@ mindspore.mint.nn.KLDivLoss
     异常：
         - **TypeError** - `input` 或 `target` 不是Tensor。
         - **TypeError** - `input` 或 `target` 的数据类型不是float16、float32或bfloat16。
-        - **TypeError** - `target` 的数据类型与 `input` 不同。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``、 ``'sum'`` 或 ``'batchmean'`` 之一。
         - **ValueError** - `target` 的shape和 `input` 的shape不能广播。

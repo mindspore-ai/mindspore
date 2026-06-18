@@ -30,8 +30,11 @@ mindspore.mint.nn.functional.max_unpool2d
     异常：
         - **TypeError** - `input` 或 `indices` 的数据类型不支持。
         - **TypeError** - `kernel_size` 、 `stride` 或 `padding` 既不是整数也不是tuple。
-        - **ValueError** - `stride` 、 `padding` 或 `kernel_size` 的值不是非负的。
+        - **ValueError** - `kernel_size` 、 `stride` 或 `padding` 为tuple时长度不为1或2。
+        - **ValueError** - `kernel_size` 或 `stride` 的值不是正数。
+        - **ValueError** - `padding` 的值为负数。
         - **ValueError** - `input` 和 `indices` 的shape不一致。
         - **ValueError** - `input` 的长度不为3或4。
         - **ValueError** - `output_size` 的类型不是tuple。
+        - **ValueError** - `output_size` 的长度不为0、2、3或4。
         - **ValueError** - `output_size` 的取值与根据 `kernel_size` 、 `stride` 、 `padding` 计算得到的结果差距太大。

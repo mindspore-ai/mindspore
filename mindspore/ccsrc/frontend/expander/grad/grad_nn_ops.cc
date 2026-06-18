@@ -2983,8 +2983,6 @@ REG_BPROP_BUILDER("BCEWithLogitsLoss").FreeUselessValues_O({}).SetBody(BODYFUNC(
   const auto &weight = ib->GetInput(i2);
   const auto &posweight = ib->GetInput(i3);
   const auto &reduction = ib->GetInput(i4);
-  bool posweight_type_none = ib->GetDtype(posweight)->isa<TypeNone>();
-  bool weight_type_none = ib->GetDtype(weight)->isa<TypeNone>();
 
   NodePtr grad_input = nullptr;
   if (input->need_compute_grad_out()) {
@@ -3000,25 +2998,25 @@ REG_BPROP_BUILDER("BCEWithLogitsLoss").FreeUselessValues_O({}).SetBody(BODYFUNC(
 
   NodePtr grad_target = nullptr;
   if (target->need_compute_grad_out()) {
-    if (!posweight_type_none) {
-      auto sigmoid_input = ib->Sigmoid(input);
-      grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
-                                    ib->Mul(posweight, ib->Log(sigmoid_input))),
-                            dout);
+    bool weight_type_none = ib->GetDtype(weight)->isa<TypeNone>();
+    bool posweight_type_none = ib->GetDtype(posweight)->isa<TypeNone>();
+    if (posweight_type_none) {
+      grad_target = ib->Mul(ib->Neg(input), dout);
     } else {
-      grad_target = ib->Mul(input, ib->Neg(dout));
+      auto beta = ib->Value(1.0);
+      auto threshold = ib->Value(20.0);
+      auto log_sigmoid_neg_input = ib->Neg(ib->SoftplusExt(input, beta, threshold));
+      auto log_sigmoid_input = ib->Neg(ib->SoftplusExt(ib->Neg(input), beta, threshold));
+      grad_target = ib->Mul(ib->Sub(log_sigmoid_neg_input, ib->Mul(log_sigmoid_input, posweight)), dout);
     }
-
     if (!weight_type_none) {
       grad_target = ib->Mul(grad_target, weight);
     }
-
-    auto reduction_value = reduction->BuildValue();
-    auto reduction_int_value = GetScalarValue<int64_t>(reduction_value);
-    if (reduction_int_value == Reduction::MEAN) {
-      if (IsDynamic(ib->GetShape(grad_input))) {
-        auto res2 = ib->DynSize(target, ib->GetDtype(grad_target));
-        grad_target = ib->Div(grad_target, res2);
+    auto reduction_value = GetValue<int64_t>(reduction->BuildValue());
+    if (reduction_value == Reduction::MEAN) {
+      if (IsDynamic(ib->GetShape(target))) {
+        auto target_size = ib->DynSize(target, ib->GetDtype(grad_target));
+        grad_target = ib->Div(grad_target, target_size);
       } else {
         grad_target = ib->Divs(grad_target, ib->ValueByType(ib->GetSize(target), ib->GetDtype(grad_target)));
       }

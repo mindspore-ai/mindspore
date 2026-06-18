@@ -52,12 +52,13 @@ mindspore.mint.nn.CrossEntropyLoss
         这是一个实验性API，后续可能修改或删除。
 
     .. note::
-        动态shape、动态rank和可变常量输入不支持在 `严格图模式(jit_syntax_level=mindspore.STRICT)
-        <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.JitConfig.html>`_ 下执行。
+        动态shape、动态rank和可变常量输入不支持在
+        `严格图模式(jit_syntax_level=mindspore.STRICT) <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.JitConfig.html>`_
+        下执行。
 
     参数：
         - **weight** (Tensor, 可选) - 指定各类别的权重。若值不为 ``None`` ，则shape为 :math:`(C,)`。
-          数据类型仅支持float16、float32或bfloat16。默认值： ``None`` 。
+          数据类型支持float16、float32或bfloat16。默认值： ``None`` 。
         - **ignore_index** (int, 可选) - 指定target中需要忽略的值（一般为填充值），使其不对梯度产生影响。仅在目标值为类别索引时生效，在类别概率下请设置为负数。默认值： ``-100`` 。
         - **reduction** (str, 可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
@@ -69,9 +70,12 @@ mindspore.mint.nn.CrossEntropyLoss
 
     输入：
         - **input** (Tensor) - 输入预测值。shape为 :math:`(N)` 、 :math:`(N, C)` 或 :math:`(N, C, H, W)`
-          （针对二维数据），或 :math:`(N, C, d_1, d_2, ..., d_K)` （针对高维数据）。`input` 需为对数概率。数据类型仅支持float16、float32或bfloat16。
+          （针对二维数据），或 :math:`(N, C, d_1, d_2, ..., d_K)` （针对高维数据）。`input` 为未归一化的logits。数据类型支持float16、float32或bfloat16。
         - **target** (Tensor) - 输入目标值。若目标值为类别索引，则shape为 :math:`()` 、 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` ，数据类型仅支持int32或int64。
-          若目标值为类别概率，则shape为 :math:`(N,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` ，数据类型仅支持float16、float32或bfloat16。
+          若目标值为类别概率，则shape为 :math:`(N,)` 、 :math:`(N, C)` 或 :math:`(N, C, d_1, d_2, ..., d_K)` ，数据类型支持float16、float32或bfloat16。
 
     输出：
-        Tensor，数据类型与 `input` 相同。
+        Tensor。
+
+        - 若目标值为类别索引，输出数据类型与 `input` 相同。
+        - 若目标值为类别概率，输出数据类型为float32。
