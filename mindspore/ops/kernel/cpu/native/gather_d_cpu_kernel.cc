@@ -124,8 +124,16 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   auto output = GetDeviceAddress<T>(outputs, 0);
 
   int32_t input_rank = SizeToInt(input_shape_.size());
-  int32_t copy_dim = LongToInt(*dim);
-  copy_dim = copy_dim < 0 ? copy_dim + input_rank : copy_dim;
+  const int64_t raw_dim = *dim;
+  int64_t normalized_dim = raw_dim;
+  if (normalized_dim < 0) {
+    normalized_dim += input_rank;
+  }
+  if (normalized_dim < 0 || normalized_dim >= input_rank) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' must be in [" << -input_rank << ", "
+                      << input_rank << "), but got: " << raw_dim << ".";
+  }
+  int32_t copy_dim = LongToInt(normalized_dim);
 
   // check index
   int max_index = SizeToInt(input_shape_[IntToSize(copy_dim)]);
@@ -156,15 +164,13 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   return true;
 }
 
-#define GATHERD_REG_INDEX(DT1, DT2, T1, T2)              \
-  {                                                      \
-    KernelAttr()                                         \
-      .AddInputAttr(DT1)                                 \
-      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
-      .AddInputAttr(DT2)                                 \
-      .AddOutputAttr(DT1),                               \
-      &GatherDCpuKernelMod::LaunchKernel<T1, T2>         \
-  }
+#define GATHERD_REG_INDEX(DT1, DT2, T1, T2)             \
+  {KernelAttr()                                         \
+     .AddInputAttr(DT1)                                 \
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+     .AddInputAttr(DT2)                                 \
+     .AddOutputAttr(DT1),                               \
+   &GatherDCpuKernelMod::LaunchKernel<T1, T2>}
 
 #define GATHER_D_CPU_REGISTER(DT, T) \
   GATHERD_REG_INDEX(DT, kNumberTypeInt64, T, int64_t), GATHERD_REG_INDEX(DT, kNumberTypeInt32, T, int32_t)

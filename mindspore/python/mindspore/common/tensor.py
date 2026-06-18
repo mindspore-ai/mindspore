@@ -2566,7 +2566,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             This interface is deprecated and will be removed after version 2.9.0.
 
         """
-        if side not in ('left', 'right'):
+        if side == 'right':
+            right = True
+        elif side == 'left':
+            right = False
+        else:
             raise ValueError(f"For 'Tensor.searchsorted', the argument 'side' should be one of in "
                              f"['left', 'right'], but got {side}.")
         if not isinstance(v, Tensor):
@@ -2581,7 +2585,6 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 raise ValueError('The size of sorter must be the same as the Tensor')
 
         dtype = mstype.int32
-        right = side == 'right'
         search_sorted_ = tensor_operator_registry.get('searchsorted')(dtype, right)
         return search_sorted_(self, v, sorter)
 

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/searchsorted_aclnn_kernel.h"
-#include <algorithm>
 #include <vector>
 #include <map>
 #include <memory>
 #include <functional>
-#include "ir/tensor.h"
+#include "kernel/ascend/aclnn/common/searchsorted_validate_utils.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -27,9 +26,28 @@
 namespace mindspore {
 namespace kernel {
 namespace searchsorted {
+namespace {
+constexpr auto kSearchSortedOpName = "SearchSorted";
+
+void CheckSearchSortedAclnnInputs(const std::vector<KernelTensor *> &inputs) {
+  auto sorted_sequence_shape = inputs[kIndex0]->GetShapeVector();
+  auto values_shape = inputs[kIndex1]->GetShapeVector();
+  CheckSearchsortedInputShapes(sorted_sequence_shape, values_shape, kSearchSortedOpName);
+
+  auto sorter = inputs[kIndex2];
+  MS_EXCEPTION_IF_NULL(sorter);
+  if (sorter->type_id() == kMetaTypeNone) {
+    return;
+  }
+
+  CheckSearchsortedSorterType(sorter->dtype_id(), kSearchSortedOpName);
+  CheckSearchsortedSorterShape(sorted_sequence_shape, sorter->GetShapeVector(), kSearchSortedOpName);
+}
+}  // namespace
 
 void SearchsortedAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
+  CheckSearchSortedAclnnInputs(inputs);
   auto dtype = static_cast<TypeId>(device::ascend::ConvertKernelTensor<int64_t>(inputs[kIndex3]));
   auto out_int32 = false;
   if (dtype == kNumberTypeInt32) {
