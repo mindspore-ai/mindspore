@@ -177,13 +177,10 @@ void SSLWrapper::InitSSLCtx(const Configuration &config, const X509 *cert, const
   }
 
   if (crl != nullptr) {
-    // Load CRL into the `X509_STORE`
     X509_STORE *x509_store = SSL_CTX_get_cert_store(ssl_ctx_);
     if (X509_STORE_add_crl(x509_store, crl) != 1) {
       MS_LOG(EXCEPTION) << "ssl server X509_STORE add crl failed!";
     }
-
-    // Enable CRL checking
     X509_VERIFY_PARAM *param = SSL_CTX_get0_param(ssl_ctx_);
     if (param == nullptr) {
       MS_LOG(EXCEPTION) << "ssl server X509_VERIFY_PARAM is nullptr!";
