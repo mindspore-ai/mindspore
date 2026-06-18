@@ -44,6 +44,10 @@ void CustomOpPluginCpuKernelMod::SetKernelPath() {
   }
 
   auto real_path = FileUtils::GetRealPath(op_plugin_path);
+  if (!real_path.has_value()) {
+    MS_LOG(EXCEPTION) << "Try to select kernel: " << primitive_->name()
+                      << ", but failed to resolve MS_OP_PLUGIN_PATH: " << op_plugin_path;
+  }
   file_path_ = real_path.value();
   func_name_ = primitive_->name();
 }

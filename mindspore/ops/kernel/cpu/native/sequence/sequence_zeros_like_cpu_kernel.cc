@@ -44,6 +44,7 @@ bool SequenceZerosLikeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &,
                                                  const std::vector<KernelTensor *> &outputs) {
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(output_addr);
   size_t output_size = outputs[0]->size() / sizeof(T);
   for (size_t i = 0; i < output_size; i++) {
     output_addr[i] = T(0);
@@ -51,8 +52,8 @@ bool SequenceZerosLikeCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   return true;
 }
 
-const std::vector<std::pair<KernelAttr, SequenceZerosLikeCpuKernelMod::KernelRunFunc>>
-  &SequenceZerosLikeCpuKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, SequenceZerosLikeCpuKernelMod::KernelRunFunc>> &
+SequenceZerosLikeCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, SequenceZerosLikeCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kObjectTypeTuple, kNumberTypeFloat32)
