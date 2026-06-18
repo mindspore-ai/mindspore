@@ -277,8 +277,8 @@ class OBSRuntime:
             os.makedirs(des_path)
         obs_path = os.path.join(remote_path, object_name)
 
-        self._check_file_exists_in_obs(obs_path)
-        self._file_download_from_obs(obs_path, local_path)
+        _ = self._check_file_exists_in_obs(obs_path)
+        _ = self._file_download_from_obs(obs_path, local_path)
 
 
 def _get_lock_file_path(lock_name):

@@ -16,6 +16,8 @@
 This module is to read data from MindRecord.
 """
 
+__all__ = ["FileReader"]
+
 import os
 import platform
 
@@ -26,8 +28,6 @@ from .config import _get_dec_mode, _get_enc_key, cleanup_decrypt_files, decrypt
 from .core.shardheader import ShardHeader
 from .core.shardreader import ShardReader
 from .core.shardutils import check_parameter, populate_data
-
-__all__ = ["FileReader"]
 
 
 class FileReader:
