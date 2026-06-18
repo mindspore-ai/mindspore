@@ -402,12 +402,12 @@ class MindRecordFromOBS:
             self._obs_runtime,
         )
 
-        m = _get_manager()
-        self._queue = m.PriorityQueue()
-        self._cache = m.dict()
+        self._manager = _get_manager()
+        self._queue = self._manager.PriorityQueue()
+        self._cache = self._manager.dict()
 
         self._index = 0
-        self._current_idx = m.Value("i", self._index)
+        self._current_idx = self._manager.Value("i", self._index)
 
         self._cache, self._queue = _init_cache_and_working_queue(
             self._cache, self._queue, self._shard_files, self._local_path
@@ -558,9 +558,17 @@ class MindRecordFromOBS:
         return self._obs_runtime
 
     def close(self):
+        """Release dataset-owned background and shared resources."""
         if hasattr(self, "_pool") and self._pool:
             self._pool.terminate()
             self._pool = None
+        if hasattr(self, "_manager") and self._manager:
+            manager = self._manager
+            self._queue = None
+            self._cache = None
+            self._current_idx = None
+            self._manager = None
+            manager.shutdown()
         if hasattr(self, "_obs_runtime") and self._obs_runtime:
             self._obs_runtime.close()
             self._obs_runtime = None

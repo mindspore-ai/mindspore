@@ -831,11 +831,11 @@ def test_wait_remove_dataset_uses_runtime_config(monkeypatch):
     assert sleep_calls == [0.25]
 
 
-def test_mindrecord_from_obs_close_closes_runtime_after_pool():
+def test_mindrecord_from_obs_close_releases_owned_resources_in_order():
     """
     Feature: OBSMindDataset cleanup
-    Description: Close dataset-owned OBS runtime after stopping the download pool
-    Expectation: close() terminates the pool first, then closes the runtime once
+    Description: Close dataset-owned resources after stopping the download pool
+    Expectation: close() terminates the pool, shuts down the manager, then closes the runtime once
     """
     close_order = []
 
@@ -843,19 +843,31 @@ def test_mindrecord_from_obs_close_closes_runtime_after_pool():
         def terminate(self):
             close_order.append("pool")
 
+    class FakeManager:
+        def shutdown(self):
+            close_order.append("manager")
+
     class FakeRuntime:
         def close(self):
             close_order.append("runtime")
 
     source = obs_mindrecord_dataset.MindRecordFromOBS.__new__(obs_mindrecord_dataset.MindRecordFromOBS)
     source._pool = FakePool()  # pylint: disable=protected-access
+    source._manager = FakeManager()  # pylint: disable=protected-access
+    source._queue = object()  # pylint: disable=protected-access
+    source._cache = object()  # pylint: disable=protected-access
+    source._current_idx = object()  # pylint: disable=protected-access
     source._obs_runtime = FakeRuntime()  # pylint: disable=protected-access
 
     source.close()
     source.close()
 
-    assert close_order == ["pool", "runtime"]
+    assert close_order == ["pool", "manager", "runtime"]
     assert source._pool is None  # pylint: disable=protected-access
+    assert source._manager is None  # pylint: disable=protected-access
+    assert source._queue is None  # pylint: disable=protected-access
+    assert source._cache is None  # pylint: disable=protected-access
+    assert source._current_idx is None  # pylint: disable=protected-access
     assert source._obs_runtime is None  # pylint: disable=protected-access
 
 

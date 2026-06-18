@@ -16,14 +16,14 @@
 This module is to support reading page from MindRecord.
 """
 
+__all__ = ["MindPage"]
+
 import os
 
 from .common.exceptions import MRMDefineCategoryError, ParamTypeError, ParamValueError
 from .config import _get_dec_mode, _get_enc_key, cleanup_decrypt_files, decrypt
 from .core.shardsegment import ShardSegment
 from .core.shardutils import check_parameter
-
-__all__ = ["MindPage"]
 
 
 class MindPage:
