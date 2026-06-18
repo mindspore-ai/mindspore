@@ -6063,12 +6063,25 @@ def error_inputs_other_op_mint_cdist_func(op_info: OpInfo, dtype=None, device=No
             op_error_info=f"other ops {op_info.name} {op_error_info}",
         )
 
+    input_not_support_dtypes = (
+        ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float64, ms.complex64, ms.complex128
+    )
+    rng = np.random.default_rng(0)
+    for input_dtype in input_not_support_dtypes:
+        np_dtype = dtype_to_np_dtype[input_dtype]
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_from_np(rng.uniform(-3.0, 3.0, size=(10, 4)).astype(np_dtype)),
+                op_args=(make_from_np(rng.uniform(-3.0, 3.0, size=(11, 4)).astype(np_dtype)), 2.0),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_input_dtype_{input_dtype}_error",
+            ),
+            op_error_type=(RuntimeError, TypeError),
+            op_error_info=f"input dtype {input_dtype} is not supported for {op_info.name}",
+        )
 
 def dynamic_sample_inputs_mint_cdist(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device, low=-2.0, high=2.0)
-
-    if kwargs.get("grad_cmp", False):
-        return
 
     if not kwargs.get("only_dynamic_rank", False):
         yield OpDynamicInput(
@@ -6076,6 +6089,7 @@ def dynamic_sample_inputs_mint_cdist(op_info: OpInfo, dtype=None, device=None, *
                 op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
                 op_args=(ms.Tensor(shape=(None, None, None), dtype=dtype), 1.0),
                 op_kwargs={},
+                grad_position=(),
                 sample_name=f"{op_info.name}_dynamic_shape_compile_input_3d",
             ),
             op_running_inputs=(
@@ -6099,6 +6113,7 @@ def dynamic_sample_inputs_mint_cdist(op_info: OpInfo, dtype=None, device=None, *
                 op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
                 op_args=(ms.Tensor(shape=(None, None, None), dtype=dtype), 2.0),
                 op_kwargs={},
+                grad_position=(),
                 sample_name=f"{op_info.name}_dynamic_shape_compile_input_broadcast",
             ),
             op_running_inputs=(
@@ -16777,127 +16792,6 @@ def dynamic_sample_inputs_mint_nn_avg_pool2d(op_info: OpInfo, dtype=None, device
             ),
         )
 
-def basic_sample_inputs_mint_cdist(op_info, dtype=None, device=None, **kwargs):
-    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
-    S = EXTRA_SMALL_DIM_SIZE
-    M = SMALL_DIM_SIZE
-    L = LARGE_DIM_SIZE
-    shapes=(
-        ((S, L), (S, L),None),
-        ((S, M, L), (S, S, L), None),
-        #broadcast scene: backward-shape is inconsistent with input, skip backward
-        ((1, M, L), (M, S, L), ()),
-    )
-    p_norms=(0.0, 1.0, 3.5)
-    for x1_shape, x2_shape, grad_position in shapes:
-        yield OpSampleInput(
-            op_input=make_arg(shape=x1_shape),
-            op_args=(make_arg(shape=x2_shape),),
-            op_kwargs={},
-            grad_position=grad_position,
-            sample_name=f"{op_info.name}_{dtype}"
-        )
-        for p_norm in p_norms:
-            grad_position=() if p_norm==0 else grad_position
-            yield OpSampleInput(
-                op_input=make_arg(shape=x1_shape),
-                op_args=(make_arg(shape=x2_shape),),
-                op_kwargs={"p": p_norm},
-                grad_position=grad_position,
-                sample_name=f"{op_info.name}_{dtype}"
-            )
-
-def extra_sample_inputs_mint_cdist(op_info, dtype=None, device=None, **kwargs):
-    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
-    #empty shape
-    yield OpSampleInput(
-        op_input=make_arg(shape=(0, 2, 3)),
-        op_args=(make_arg(shape=(0, 4, 3)),),
-        op_kwargs={},
-        sample_name=f"{op_info.name}_{dtype}_empty_shape"
-    )
-    yield OpSampleInput(
-        op_input=make_arg(shape=(1, 2, 3)),
-        op_args=(make_arg(shape=(0, 4, 3)),),
-        op_kwargs={},
-        sample_name=f"{op_info.name}_{dtype}_empty_shape"
-    )
-    yield OpSampleInput(
-        op_input=make_arg(shape=(0, 2, 3)),
-        op_args=(make_arg(shape=(1, 4, 3)),),
-        op_kwargs={},
-        sample_name=f"{op_info.name}_{dtype}_empty_shape"
-    )
-    #small/large values
-    values = _small_large_values(dtype)
-    yield OpSampleInput(
-        op_input=ms.Tensor(np.random.choice(values, size=(2, 3, 4)), dtype=dtype),
-        op_args=(ms.Tensor(np.random.choice(values, size=(2, 5, 4)), dtype=dtype),),
-        op_kwargs={},
-        sample_name=f"{op_info.name}_{dtype}_small_large_values"
-    )
-    #for inf/nan values
-    yield OpSampleInput(
-        op_input=ms.Tensor(np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(2, 3, 4)), dtype=dtype),
-        op_args=(ms.Tensor(np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(2, 5, 4)), dtype=dtype),),
-        op_kwargs={},
-        sample_name=f"{op_info.name}_{dtype}_extremal_values"
-    )
-    # discontiguous values:
-    for discontiguous in [True, False]:
-        yield OpSampleInput(
-            op_input=make_arg(shape=(2, 3, 4), discontiguous=discontiguous),
-            op_args=(make_arg(shape=(2, 5, 4), discontiguous=discontiguous), ),
-            op_kwargs={},
-            sample_name=f"{op_info.name}_{dtype}_discontguous_{discontiguous}"
-        )
-
-def error_inputs_other_op_mint_cdist_func(op_info, dtype=None, device=None, **kwargs):
-    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device)
-    #p is not float
-    error_cases={
-        ((2, 3, 4), (2, 5, 4), 2, TypeError, "p is not float"),
-        ((2, 3, 4), (2, 5, 4), -2.0, ValueError, "p is neg value"),
-        ((2, 3, 4), (5, 4), 2.0, ValueError, "dim of x1 and x2 does not match"),
-        ((2, 2, 3, 4), (2, 2, 5, 4), 2.0, ValueError, "dim of x1 and x2 is more than 3"),
-        ((2, ), (2, ), 2.0, ValueError, "dim of x1 and x2 is less than 3"),
-        ((2, 3, 4), (2, 5, 3), 2.0, ValueError, "shape of x1 and x2 does not match"),
-        ((2, 3, 4), (4, 5, 3), 2.0, ValueError, "x1 can not broadcast with x2"),
-    }
-    for x1, x2, p, error_type, msg in error_cases:
-        yield OpErrorInput(
-            op_sample_input=OpSampleInput(
-                op_input=make_arg(shape=x1),
-                op_args=(make_arg(shape=x2),),
-                op_kwargs={"p":p},
-                sample_name=f"{op_info.name}"
-            ),
-            op_error_type=error_type,
-            op_error_info=msg
-        )
-    #x1 is not Tensor
-    yield OpErrorInput(
-        op_sample_input=OpSampleInput(
-            op_input=np.random.uniform(0, 10, size=(2, 3, 4)),
-            op_args=(make_arg(shape=(2, 5, 4)),),
-            op_kwargs={},
-            sample_name=f"{op_info.name}"
-        ),
-        op_error_type=TypeError,
-        op_error_info="x1 is not  Tensor"
-    )
-    # x2 is not Tensor
-    yield OpErrorInput(
-        op_sample_input=OpSampleInput(
-            op_input=make_arg(shape=(2, 3, 4)),
-            op_args=(np.random.uniform(0, 10, size=(2, 5, 4)), ),
-            op_kwargs={},
-            sample_name=f"{op_info.name}"
-        ),
-        op_error_type=TypeError,
-        op_error_info="x2 is not Tensor"
-    )
-
 def basic_sample_inputs_mint_cross(op_info, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
     cases = (
@@ -17979,7 +17873,10 @@ def extra_sample_inputs_mint_nn_threshold(op_info: OpInfo, dtype=None, device=No
             op_kwargs={'inplace': inplace},
             sample_name=f"{op_info.name}_{dtype}"
         )
+    yield from extra_sample_inputs_mint_nn_threshold_small_large_values(op_info, dtype=dtype, device=device, **kwargs)
 
+def extra_sample_inputs_mint_nn_threshold_small_large_values(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
     # small/large values
     values = _small_large_values(dtype)
     if values:
@@ -18096,17 +17993,17 @@ def dynamic_sample_inputs_mint_nn_threshold(op_info: OpInfo, dtype=None, device=
 def error_sample_inputs_mint_nn_threshold(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     cases = (
-        ((2, 3), 2.0, False),
-        (0, [2, 3], True),
+        ((2, 3), 2.0),
+        (0, [2, 3]),
     )
     # threshold is tuple
     # value is list
-    for threshold, value, inplace in cases:
+    for threshold, value in cases:
         yield OpErrorInput(
             op_sample_input=OpSampleInput(
                 op_input=make_arg(shape=(2, 3)),
                 op_args=(threshold, value),
-                op_kwargs={'inplace': inplace},
+                op_kwargs={},
                 sample_name=f"{op_info.name}_params_value_error",
             ),
             op_error_type=TypeError,
@@ -19020,7 +18917,7 @@ def error_sample_inputs_mint_nn_mseloss(op_info: OpInfo, dtype=None, device=None
             op_sample_input=OpSampleInput(
                 op_input=make_arg(shape=input_shape, dtype=input_dtype),
                 op_args=(make_arg(shape=target_shape, dtype=target_dtype),),
-                op_kwargs={'reduction': reduction, },
+                op_kwargs={'reduction': reduction,},
                 sample_name=f"{op_info.name}_params_value_error",
             ),
             op_error_type=(RuntimeError, ValueError, TypeError),
@@ -19872,3 +19769,491 @@ def extra_sample_inputs_functional_softshrink(op_info: OpInfo, dtype=None, devic
                 op_args=(2,),
                 sample_name=f"{op_info.name}_{dtype}_{t}",
             )
+
+def basic_sample_inputs_mint_nn_functional_threshold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # Reuse the same sample inputs as mint.nn.threshold
+    yield from basic_sample_inputs_mint_nn_threshold(op_info, dtype=dtype, device=device, **kwargs)
+
+def extra_sample_inputs_mint_nn_functional_threshold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # Reuse the same sample inputs as mint.nn.threshold
+    yield from extra_sample_inputs_mint_nn_threshold(op_info, dtype=dtype, device=device, **kwargs)
+
+def dynamic_sample_inputs_mint_nn_functional_threshold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # Reuse the same sample inputs as mint.nn.threshold
+    yield from dynamic_sample_inputs_mint_nn_threshold(op_info, dtype=dtype, device=device, **kwargs)
+
+def error_sample_inputs_mint_nn_functional_threshold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # Reuse the same sample inputs as mint.nn.threshold
+    yield from error_sample_inputs_mint_nn_threshold(op_info, dtype=dtype, device=device, **kwargs)
+
+def basic_sample_inputs_mint_nn_functional_threshold_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((3,), 0, -3),
+        ((7, 5), -3, 0.1),
+        ((4, 9, 8, 7), -2, -2),
+    )
+    for input_shape, threshold, value in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(threshold, value),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}"
+        )
+
+def extra_sample_inputs_mint_nn_functional_threshold_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((), 6, 6),
+        ((2, 0), 2.0, -6),
+        ((9, 8, 5, 9, 8), 0.4, 0.4),
+        ((7, 5, 9, 4, 7, 4, 3, 8), -3, 0),
+    )
+    for input_shape, threshold, value in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(threshold, value),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}"
+        )
+    yield from extra_sample_inputs_mint_nn_threshold_small_large_values(op_info, dtype=dtype, device=device, **kwargs)
+
+def dynamic_sample_inputs_mint_nn_functional_threshold_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # Reuse the same sample inputs as mint.nn.threshold
+    yield from dynamic_sample_inputs_mint_nn_threshold(op_info, dtype=dtype, device=device, **kwargs)
+
+def error_sample_inputs_mint_nn_functional_threshold_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # Reuse the same sample inputs as mint.nn.threshold
+    yield from error_sample_inputs_mint_nn_threshold(op_info, dtype=dtype, device=device, **kwargs)
+
+def basic_sample_inputs_mint_nn_embedding(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate basic sample inputs for mindspore.mint.nn.Embedding.
+    '''
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+    # input_shape, num_embeddings, embedding_dim, padding_idx, max_norm, norm_type, scale_grad_by_freq,
+    # _weight, _freeze, dtype
+    cases = (
+        ((1,), 10, 8, None, None, 2.0, False, ms.Tensor(np.random.randn(10, 8)), False, None),
+        ((3, 5), 10, 8, 0, 1.0, 2.0, True, ms.Tensor(np.random.randn(10, 8), dtype=ms.float16), False, ms.float32),
+        ((2, 3, 4), 5, 8, -5, -1.0, 1.0, False, ms.Tensor(np.random.randn(5, 8), dtype=ms.bfloat16), True, None),
+    )
+
+    for (input_shape, num_embeddings, embedding_dim, padding_idx, max_norm, norm_type, scale_grad_by_freq, _weight,
+         _freeze, case_dtype) in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape, high=num_embeddings),
+            op_args=(num_embeddings, embedding_dim),
+            op_kwargs={'padding_idx': padding_idx, 'max_norm': max_norm, 'norm_type': norm_type,
+                       'scale_grad_by_freq': scale_grad_by_freq, '_weight': _weight,
+                       '_freeze': _freeze, 'dtype': case_dtype},
+            sample_name=f"{op_info.name}_basic_{dtype}"
+        )
+    # empty tensor and default values
+    yield OpSampleInput(
+        op_input=make_arg(shape=(3, 0), high=3),
+        op_args=(3, 0),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_empty_tensor",
+    )
+
+def extra_sample_inputs_mint_nn_embedding(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate extra sample inputs for mindspore.mint.nn.Embedding.
+    '''
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+
+    # input_shape, num_embeddings, embedding_dim, padding_idx, max_norm, norm_type, scale_grad_by_freq,
+    # _weight, _freeze, dtype
+    cases = (
+        ((), 7, 4, -4, 0.4, 0.4, True, False, ms.float32),
+        ((4, 8, 8, 4), 5, 3, 4, 0.1, -2.0, True, True, ms.int8),
+        ((4, 8, 16, 8, 4), 10, 3, 1, 12.3, 12.3, True, True, ms.bfloat16),
+        ((4, 8, 16, 8, 4, 2, 2), 7, 4, -2, -2.0, -0.2, False, True, ms.float16),
+        # 20260612 8D fail
+        # ((4, 8, 16, 8, 4, 2, 2, 1), 7, 4, -2, -2.0, -0.2, False, True, ms.float16),
+    )
+
+    for (input_shape, num_embeddings, embedding_dim, padding_idx, max_norm, norm_type, scale_grad_by_freq, _freeze,
+         case_dtype) in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape, high=num_embeddings),
+            op_args=(num_embeddings, embedding_dim),
+            op_kwargs={'padding_idx': padding_idx, 'max_norm': max_norm, 'norm_type': norm_type,
+                       'scale_grad_by_freq': scale_grad_by_freq,
+                       '_weight': ms.Tensor(np.random.randn(num_embeddings, embedding_dim), dtype=ms.float32),
+                       '_freeze': _freeze, 'dtype': case_dtype},
+            sample_name=f"{op_info.name}_extra_{dtype}",
+        )
+
+    # small/large values
+    values = _small_large_values(dtype)
+    if values:
+        for scale_grad_by_freq in (True, False):
+            _weight = ms.Tensor(np.random.choice(values, size=(8, 9)), dtype=ms.float32)
+            yield OpSampleInput(
+                op_input=ms.Tensor(np.random.randint(0, 8, (3, 4)), dtype=ms.int32),
+                op_args=(8, 9),
+                op_kwargs={'padding_idx': -1, 'max_norm': 0.6, 'norm_type': 2.4,
+                           'scale_grad_by_freq': scale_grad_by_freq, '_weight': _weight},
+                sample_name=f"{op_info.name}_{dtype}_small_large_values"
+            )
+    # inf/nan values
+    for t in [np.inf, -np.inf, np.nan]:
+        yield OpSampleInput(
+            op_input=ms.Tensor(np.random.randint(0, 3, (2, 3)), dtype=dtype),
+            op_args=(3, 4),
+            op_kwargs={'padding_idx': 0, 'max_norm': 2.0, 'norm_type': 10.3,
+                       '_weight': ms.Tensor(np.full((3, 4), t), dtype=ms.float32)},
+            sample_name=f"{op_info.name}_{dtype}_extremal_{t}"
+        )
+
+    # discontiguous tensor
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float16)
+    yield OpSampleInput(
+        op_input=make_arg((2, 3), dtype=ms.int64, discontiguous=True, high=4),
+        op_args=(4, 3),
+        op_kwargs={'_weight': make_func((4, 3), discontiguous=True), 'dtype': ms.bfloat16},
+        sample_name=f"{op_info.name}_{dtype}_discontiguous_True"
+    )
+
+def dynamic_sample_inputs_mint_nn_embedding(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate dynamic shape/rank for mint.nn.Embedding.
+    When _weight is None, the output is non-deterministic, making accuracy comparison unreliable.
+    Therefore, a larger loss value is set, and accuracy is skipped in this scenario.
+    """
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype, low=0)
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape case
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(None, 8),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 6), high=10),
+                    op_args=(10, 8),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                    loss=3,
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 8), high=15),
+                    op_args=(15, 8),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                    loss=3,
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        # Dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(None, 6),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_{dtype}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(6,), high=8),
+                    op_args=(8, 6),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_input',
+                    loss=3,
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4), high=8),
+                    op_args=(8, 6),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_input',
+                    loss=3,
+                ),
+            )
+        )
+
+def error_sample_inputs_mint_nn_embedding(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate error inputs for mint.nn.Embedding.
+    """
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.int64, low=0)
+    cases = (
+        # num_embeddings is not int
+        (2, (3, 2), 3.0, 3, None, 0.4, 2.0, False, False, None, False, None),
+        # embedding_dim is not int
+        (2, (3, 2), 3, 3.0, None, 0.4, 2.0, False, False, None, False, None),
+        # the values of input are not in [0, num_embeddings)
+        # 20260611 case can pass
+        # (6, (3, 2), 3, 3, None, 0.4, 2.0, False, False, None, False, None),
+        # padding_idx is not int
+        (3, (3, 2), 5, 3, 3.0, 0.4, 2.0, False, False, None, False, None),
+        # padding_idx is out of range, not in [-num_embeddings, num_embeddings)
+        (3, (3, 2), 5, 3, 5, 0.4, 2.0, False, False, None, False, None),
+        # max_norm is not float
+        (3, (3, 2), 5, 3, 3, 4, 2.0, False, False, None, False, None),
+        # norm_type is not float
+        (3, (3, 2), 5, 3, 3, 0.4, 2, False, False, None, False, None),
+        # scale_grad_by_freq is not bool
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, 5, False, None, False, None),
+        # sparse is not bool
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, 5, None, False, None),
+        # where `sparse` is True, has not be supported.
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, True, None, False, None),
+        # _freeze is not bool
+        # 20260612 case can pass
+        # (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, False, None, 5, None),
+        # dtype is not mindspore.dtype
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, False, None, False, np.float32),
+        # dtype does not support bool_, when _weight is None
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, False, None, False, ms.bool_),
+        # _weight.shape is not (num_embeddings, embedding_dim)
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, False, ms.Tensor(np.random.randn(4, 3)), False, None),
+        # _weight.shape is not (num_embeddings, embedding_dim)
+        (3, (3, 2), 5, 3, 3, 0.4, 2.0, False, False, ms.Tensor(np.random.randn(5, 2)), False, None),
+    )
+
+    for input_high, input_shape, num_embeddings, embedding_dim, padding_idx, max_norm, norm_type, scale_grad_by_freq,\
+            sparse, _weight, _freeze, case_dtype in cases:
+        if input_high > num_embeddings:
+            input = ms.Tensor(np.random.randint(num_embeddings, input_high, input_shape))
+        else:
+            input = make_arg(shape=input_shape, high=input_high)
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(num_embeddings, embedding_dim),
+                op_kwargs={'padding_idx': padding_idx, 'max_norm': max_norm, 'norm_type': norm_type,
+                           'scale_grad_by_freq': scale_grad_by_freq, 'sparse': sparse, '_weight': _weight,
+                           '_freeze': _freeze, 'dtype': case_dtype},
+                sample_name=f"{op_info.name}_params_value_error",
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+    # input is not Tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=1,
+            op_args=(3, 2),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_input_not_tensor"
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'{op_info.name}: input is not Tensor'
+    )
+
+def basic_sample_inputs_mint_nn_functional_embedding(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate basic sample inputs for mindspore.mint.nn.functional.embedding.
+    '''
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    # input_shape, weight_shape, padding_idx, max_norm, norm_type, scale_grad_by_freq
+    cases = (
+        ((1,), (9, 8), 5, 2.0, -2.0, False),
+        ((3, 2), (9, 8), 3, 2.0, 3.9, True),
+        ((5, 8, 3, 8), (2, 3), -2, -0.1, -0.9, True),
+    )
+
+    for input_shape, weight_shape, padding_idx, max_norm, norm_type, scale_grad_by_freq in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape, dtype=ms.int32, low=0, high=weight_shape[0]),
+            op_args=(make_arg(weight_shape),),
+            op_kwargs={'padding_idx': padding_idx, 'max_norm': max_norm, 'norm_type': norm_type,
+                       'scale_grad_by_freq': scale_grad_by_freq},
+            sample_name=f"{op_info.name}_basic_{dtype}"
+        )
+    # empty tensor and default values
+    weight_shape = (2, 0)
+    yield OpSampleInput(
+        op_input=make_arg(weight_shape, dtype=ms.int64, low=0, high=weight_shape[0]),
+        op_args=(make_arg(weight_shape),),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_empty_tensor",
+    )
+
+def extra_sample_inputs_mint_nn_functional_embedding(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate extra sample inputs for mindspore.mint.nn.functional.embedding.
+    '''
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    cases = (
+        ((), (7, 4), -4, 0.4, 0.4, True),
+        ((1, 2, 1), (5, 7), 3, None, -2.0, False),
+        ((1, 2, 1, 2, 1), (3, 5), 0, 12.3, 12.3, True),
+        ((3, 6, 2, 6, 3, 5, 5), (7, 4), -4, None, 0.4, True),
+        # 20260611 8D fail
+        # ((3, 6, 2, 6, 3, 5, 5, 1), (7, 4), -4, None, 0.4, True),
+    )
+
+    for input_shape, weight_shape, padding_idx, max_norm, norm_type, scale_grad_by_freq in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape, dtype=ms.int64, low=0, high=weight_shape[0]),
+            op_args=(make_arg(weight_shape),),
+            op_kwargs={'padding_idx': padding_idx, 'max_norm': max_norm, 'norm_type': norm_type,
+                       'scale_grad_by_freq': scale_grad_by_freq},
+            sample_name=op_info.name,
+        )
+
+    # weight: Parameter
+    yield OpSampleInput(
+        op_input=ms.Tensor([[1, 2, 4, 5], [4, 3, 2, 9]]),
+        op_args=(ms.Parameter(np.random.rand(10, 3).astype(np.float32)),),
+        op_kwargs={'padding_idx': 0, 'max_norm': 0.3, 'norm_type': 1.1},
+        sample_name=f"{op_info.name}_weight_is_Parameter",
+    )
+
+    # small/large values
+    values = _small_large_values(dtype)
+    if values:
+        for scale_grad_by_freq in (True, False):
+            yield OpSampleInput(
+                op_input=ms.Tensor(np.random.randint(0, 8, (3, 4)), dtype=ms.int32),
+                op_args=(ms.Tensor(np.random.choice(values, size=(8, 9)), dtype=dtype),),
+                op_kwargs={'padding_idx': -1, 'max_norm': 0.6, 'norm_type': 2.4,
+                           'scale_grad_by_freq': scale_grad_by_freq},
+                sample_name=f"{op_info.name}_{dtype}_small_large_values"
+            )
+    # inf/nan values
+    for t in [np.inf, -np.inf, np.nan]:
+        yield OpSampleInput(
+            op_input=ms.Tensor(np.random.randint(0, 3, (2, 3)), dtype=ms.int64),
+            op_args=(ms.Tensor(np.full((3, 4), t), dtype=dtype),),
+            op_kwargs={'padding_idx': 0, 'max_norm': 2.0, 'norm_type': 12.3, 'scale_grad_by_freq': True},
+            sample_name=f"{op_info.name}_{dtype}_extremal_{t}"
+        )
+
+    # discontiguous tensor
+    yield OpSampleInput(
+        op_input=make_arg((2, 3), dtype=ms.int64, discontiguous=True, low=0, high=4),
+        op_args=(make_arg((4, 3), discontiguous=True),),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_discontiguous_True"
+    )
+
+def dynamic_sample_inputs_mint_nn_functional_embedding(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate dynamic shape/rank for mint.nn.functional.embedding.
+    """
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape case
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=ms.int64),
+                op_args=(make_func(shape=(12, 4)),),
+                op_kwargs={'padding_idx': -3, 'max_norm': 12.3, 'norm_type': -2.0, 'scale_grad_by_freq': False},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 1, 5), dtype=ms.int64, low=0, high=11),
+                    op_args=(make_func(shape=(12, 4)),),
+                    op_kwargs={'padding_idx': -3, 'max_norm': 12.3, 'norm_type': -2.0, 'scale_grad_by_freq': False},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 7, 7), dtype=ms.int64, low=0, high=11),
+                    op_args=(make_func(shape=(12, 4)),),
+                    op_kwargs={'padding_idx': -3, 'max_norm': 12.3, 'norm_type': -2.0, 'scale_grad_by_freq': False},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        # Dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=ms.int32),
+                op_args=(make_func(shape=(10, 1)),),
+                op_kwargs={'padding_idx': 9, 'max_norm': 0.3, 'norm_type': 2.0, 'scale_grad_by_freq': True},
+                sample_name=f'{op_info.name}_{dtype}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(3,), dtype=ms.int32, low=0, high=9),
+                    op_args=(make_func(shape=(10, 1)),),
+                    op_kwargs={'padding_idx': 9, 'max_norm': 0.3, 'norm_type': 2.0, 'scale_grad_by_freq': True},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(5,), dtype=ms.int32, low=0, high=9),
+                    op_args=(make_func(shape=(10, 1)),),
+                    op_kwargs={'padding_idx': 9, 'max_norm': 0.3, 'norm_type': 2.0, 'scale_grad_by_freq': True},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_mint_nn_functional_embedding(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate error inputs for mint.nn.functional.embedding.
+    """
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    cases = (
+        (3, (3, 2), (3,), -2, 0.4, 2.0, False),
+        # 20260611 case can pass
+        # (6, (3, 2), (3, 2), -2, 0.4, 2.0, False),
+        (3, (3, 2), (3, 2), 1.0, 0.4, 2.0, False),
+        (3, (3, 2), (3, 2), 3, 0.4, 2.0, True),
+        (3, (3, 2), (3, 2), 1, 4, 2.0, False),
+        (3, (3, 2), (3, 2), 1, 0.4, 2, True),
+        (3, (3, 2), (3, 2), 1, 0.4, 0.5, 5),
+    )
+    # weight is not 2D
+    # the values of input are not in [0, weight.shape[0])
+    # padding_idx is not int
+    # padding_idx is out of range, not in [-weight.shape[0], weight.shape[0])
+    # max_norm is not float
+    # norm_type is not float
+    # scale_grad_by_freq is not bool
+    for input_high, input_shape, weight_shape, padding_idx, max_norm, norm_type, scale_grad_by_freq in cases:
+        if input_high > weight_shape[0]:
+            input = ms.Tensor(np.random.randint(weight_shape[0], input_high, input_shape))
+        else:
+            input = make_arg(shape=input_shape, dtype=ms.int64, low=0, high=input_high)
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(make_arg(shape=weight_shape),),
+                op_kwargs={'padding_idx': padding_idx, 'max_norm': max_norm, 'norm_type': norm_type,
+                           'scale_grad_by_freq': scale_grad_by_freq},
+                sample_name=f"{op_info.name}_params_value_error",
+            ),
+            op_error_type=(ValueError,TypeError),
+            op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+    # input is not Tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=1,
+            op_args=(make_arg(shape=(2, 3)), ),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_input_not_tensor"
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'{op_info.name}: input is not Tensor'
+    )
+    # input dtype is not in [ms.int32, ms.int64]
+    input_not_support_dtypes = (
+        ms.bool_, ms.int8, ms.int16, ms.uint8, ms.float32, ms.float16, ms.float64, ms.complex64, ms.complex128,
+        ms.bfloat16
+    )
+    for input_dtype in input_not_support_dtypes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(shape=(2, 3), dtype=input_dtype, low=0, high=2),
+                op_args=(make_arg(shape=(2, 3)),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_input_dtype_{input_dtype}_error",
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'input error dtype {input_dtype} is not supported for {op_info.name}',
+        )

@@ -1697,3 +1697,29 @@ def mint_BCEWithLogitsLoss_ms_grad(input, target, *args):
 
 def mint_binary_cross_entropy_with_logits_ms(input, target, weight=None, reduction='mean', pos_weight=None):
     return mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)
+
+def mint_nn_embedding_ms(op_input, num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0,
+                         scale_grad_by_freq=True, sparse=False, _weight=None, _freeze=False, dtype=None):
+    embedding = mint.nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embedding_dim, padding_idx=padding_idx,
+                                  max_norm=max_norm, norm_type=norm_type, scale_grad_by_freq=scale_grad_by_freq,
+                                  sparse=sparse, _weight=_weight, _freeze=_freeze, dtype=dtype)
+    return embedding(op_input)
+
+def mint_nn_embedding_torch(op_input, num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0,
+                         scale_grad_by_freq=True, sparse=False, _weight=None, _freeze=False, dtype=None):
+    embedding = torch.nn.Embedding(num_embeddings=num_embeddings, embedding_dim=embedding_dim, padding_idx=padding_idx,
+                                  max_norm=max_norm, norm_type=norm_type, scale_grad_by_freq=scale_grad_by_freq,
+                                  sparse=sparse, _weight=_weight, _freeze=_freeze, dtype=dtype)
+    return embedding(op_input)
+
+def mint_nn_functional_threshold_ms(op_input, threshold, value, inplace=False):
+    return mint.nn.functional.threshold(op_input.clone(), threshold=threshold, value=value, inplace=inplace)
+
+def mint_nn_functional_threshold_torch(op_input, threshold, value, inplace=False):
+    return torch.nn.functional.threshold(op_input.clone(), threshold=threshold, value=value, inplace=inplace)
+
+def mint_nn_functional_threshold__ms(op_input, threshold, value):
+    return mint.nn.functional.threshold_(op_input.clone(), threshold=threshold, value=value)
+
+def mint_nn_functional_threshold__torch(op_input, threshold, value):
+    return torch.nn.functional.threshold_(op_input.clone(), threshold=threshold, value=value)
