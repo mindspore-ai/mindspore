@@ -29,8 +29,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-SpeedFusionAttentionGradAscendCustomize(
+SpeedFusionAttentionGradResult SpeedFusionAttentionGradAscendCustomize(
   const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const tensor::TensorPtr &dy, const Int64ImmPtr &head_num, const Int64ImmPtr &input_layout,
   const std::optional<tensor::TensorPtr> &pse, const std::optional<tensor::TensorPtr> &padding_mask,

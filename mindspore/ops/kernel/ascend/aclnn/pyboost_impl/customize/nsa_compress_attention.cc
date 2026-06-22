@@ -24,20 +24,23 @@
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_n.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-NsaCompressAttentionAscendCustomize(const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-                                    const FP32ImmPtr &scale_value, const Int64ImmPtr &head_num,
-                                    const Int64ImmPtr &compress_block_size, const Int64ImmPtr &compress_stride,
-                                    const Int64ImmPtr &select_block_size, const Int64ImmPtr &select_block_count,
-                                    const std::optional<TensorPtr> &topk_mask,
-                                    const std::optional<TensorPtr> &atten_mask,
-                                    const std::optional<ValueTuplePtr> &actual_seq_qlen,
-                                    const std::optional<ValueTuplePtr> &actual_cmp_seq_kvlen,
-                                    const std::optional<ValueTuplePtr> &actual_sel_seq_kvlen) {
+NsaCompressAttentionResult NsaCompressAttentionAscendCustomize(
+  const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const FP32ImmPtr &scale_value,
+  const Int64ImmPtr &head_num, const Int64ImmPtr &compress_block_size, const Int64ImmPtr &compress_stride,
+  const Int64ImmPtr &select_block_size, const Int64ImmPtr &select_block_count,
+  const std::optional<TensorPtr> &topk_mask, const std::optional<TensorPtr> &atten_mask,
+  const std::optional<ValueTuplePtr> &actual_seq_qlen, const std::optional<ValueTuplePtr> &actual_cmp_seq_kvlen,
+  const std::optional<ValueTuplePtr> &actual_sel_seq_kvlen) {
+  constexpr size_t kOutputAttentionOut = 0;
+  constexpr size_t kOutputTopkIndicesOut = 1;
+  constexpr size_t kOutputSoftmaxMaxOut = 2;
+  constexpr size_t kOutputSoftmaxSumOut = 3;
+  constexpr int64_t kNsaCompressSparseMode = 1;
   auto outputs = InferOutput<4>(prim::kPrimNsaCompressAttention, query, key, value, scale_value, head_num,
                                 compress_block_size, compress_stride, select_block_size, select_block_count, topk_mask,
                                 atten_mask, actual_seq_qlen, actual_cmp_seq_kvlen, actual_sel_seq_kvlen);
@@ -69,15 +72,16 @@ NsaCompressAttentionAscendCustomize(const TensorPtr &query, const TensorPtr &key
   const auto actual_sel_seq_kvlen_pair = std::make_pair(actual_sel_seq_kvlen_vec, true);
 
   const std::string input_layout = "TND";
-  const int64_t sparse_mode = 1;
+  const int64_t sparse_mode = kNsaCompressSparseMode;
 
   TensorToDevice(query, key, value, atten_mask, topk_mask);
   TensorMalloc(outputs);
   DISPATCH_ACLNN(aclnnNsaCompressAttention, query, key, value, atten_mask, topk_mask, actual_seq_qlen_pair,
                  actual_cmp_seq_kvlen_pair, actual_sel_seq_kvlen_pair, scale_value_val, head_num_val, input_layout,
                  sparse_mode, compress_block_size_val, compress_stride_val, select_block_size_val,
-                 select_block_count_val, std::get<2>(outputs), std::get<3>(outputs), std::get<0>(outputs),
-                 std::get<1>(outputs));
+                 select_block_count_val, std::get<kOutputSoftmaxMaxOut>(outputs),
+                 std::get<kOutputSoftmaxSumOut>(outputs), std::get<kOutputAttentionOut>(outputs),
+                 std::get<kOutputTopkIndicesOut>(outputs));
   return outputs;
 }
 }  // namespace pyboost

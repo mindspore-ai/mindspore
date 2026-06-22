@@ -22,10 +22,16 @@
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
+constexpr size_t kDepthIdx = 0;
+constexpr size_t kHeightIdx = 1;
+constexpr size_t kWidthIdx = 2;
+}  // namespace
 
 tensor::TensorPtr UpsampleTrilinear3DGradAscendCustomize(const tensor::TensorPtr &gradout_tensor,
                                                          const ValueTuplePtr &input_size,
@@ -50,9 +56,9 @@ tensor::TensorPtr UpsampleTrilinear3DGradAscendCustomize(const tensor::TensorPtr
     for (size_t i = 0; i < scales.size(); ++i) {
       output_size_vector.push_back(static_cast<int64_t>(input_size_vector[i + kDim2]) * scales[i]);
     }
-    scales_d = scales[0];
-    scales_h = scales[1];
-    scales_w = scales[2];
+    scales_d = scales[kDepthIdx];
+    scales_h = scales[kHeightIdx];
+    scales_w = scales[kWidthIdx];
   }
 
   auto align_corners_val = GetValue<bool>(align_corners);

@@ -22,6 +22,7 @@
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
 #include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,6 +30,9 @@ namespace pyboost {
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormAscendCustomize(
   const TensorPtr &input_tensor, const Int64ImmPtr &num_groups, const std::optional<TensorPtr> &gamma_opt_tensor,
   const std::optional<TensorPtr> &beta_opt_tensor, const FP32ImmPtr &eps) {
+  constexpr size_t kOutputOut = 0;
+  constexpr size_t kOutputMeanOut = 1;
+  constexpr size_t kOutputRstdOut = 2;
   MS_LOG(DEBUG) << "Call start";
   // Convert ValuePtr to c++ scalar
   auto outputs = InferOutput<3>(prim::kPrimGroupNorm, input_tensor, num_groups, gamma_opt_tensor, beta_opt_tensor, eps);
@@ -45,7 +49,7 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormAsc
   TensorMalloc(outputs);
 
   DISPATCH_ACLNN(aclnnGroupNorm, input_tensor, gamma_opt_tensor, beta_opt_tensor, N, C, HxW, num_groups_imm, eps_imm,
-                 std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+                 std::get<kOutputOut>(outputs), std::get<kOutputMeanOut>(outputs), std::get<kOutputRstdOut>(outputs));
   return outputs;
 }
 }  // namespace pyboost

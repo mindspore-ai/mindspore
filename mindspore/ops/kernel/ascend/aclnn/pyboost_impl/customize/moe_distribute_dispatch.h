@@ -25,9 +25,10 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
-           tensor::TensorPtr, tensor::TensorPtr>
-MoeDistributeDispatchAscendCustomize(
+using MoeDistributeDispatchResult =
+  std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
+             tensor::TensorPtr, tensor::TensorPtr>;
+MoeDistributeDispatchResult MoeDistributeDispatchAscendCustomize(
   const tensor::TensorPtr &x, const tensor::TensorPtr &expert_ids, const Int64ImmPtr &ep_world_size,
   const Int64ImmPtr &ep_rank_id, const Int64ImmPtr &moe_expert_num,
   const std::optional<tensor::TensorPtr> &expert_scales, const std::optional<tensor::TensorPtr> &scales,

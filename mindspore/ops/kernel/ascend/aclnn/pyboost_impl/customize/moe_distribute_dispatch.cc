@@ -80,9 +80,7 @@ MoeDispatchParams ParseMoeDispatchParams(const Int64ImmPtr &ep_world_size, const
   return params;
 }
 
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
-           tensor::TensorPtr, tensor::TensorPtr>
-MoeDistributeDispatchAscendCustomize(
+MoeDistributeDispatchResult MoeDistributeDispatchAscendCustomize(
   const TensorPtr &x, const TensorPtr &expert_ids, const Int64ImmPtr &ep_world_size, const Int64ImmPtr &ep_rank_id,
   const Int64ImmPtr &moe_expert_num, const std::optional<TensorPtr> &expert_scales,
   const std::optional<TensorPtr> &scales, const std::optional<TensorPtr> &x_activate_mask,

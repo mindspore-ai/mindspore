@@ -44,8 +44,7 @@ bool CheckSeqList(const std::vector<int64_t> &seq_list, const ShapeVector &t_sha
 }
 }  // namespace
 
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-FlashAttentionScoreAscendCustomize(
+FlashAttentionScoreResult FlashAttentionScoreAscendCustomize(
   const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const std::optional<tensor::TensorPtr> &real_shift, const std::optional<tensor::TensorPtr> &drop_mask,
   const std::optional<tensor::TensorPtr> &padding_mask, const std::optional<tensor::TensorPtr> &attn_mask,

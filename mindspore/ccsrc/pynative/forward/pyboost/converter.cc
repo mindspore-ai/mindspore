@@ -97,27 +97,42 @@ BoolImmPtr ConvertBool(PyObject *obj) {
 
 Int64ImmPtr ConvertInt(PyObject *obj) {
   if (py_parse::ParseUtilsCheckInt(obj)) {
-    return std::make_shared<Int64Imm>(*py_parse::ParseUtilsConvertInt(obj));
+    auto val = py_parse::ParseUtilsConvertInt(obj);
+    if (val.has_value()) {
+      return std::make_shared<Int64Imm>(*val);
+    }
   }
   return nullptr;
 }
 
 FP32ImmPtr ConvertFloat(PyObject *obj) {
   if (py_parse::ParseUtilsCheckFloat(obj)) {
-    return MakeFP32Imm(*py_parse::ParseUtilsConvertFloat(obj));
+    auto val = py_parse::ParseUtilsConvertFloat(obj);
+    if (val.has_value()) {
+      return MakeFP32Imm(*val);
+    }
   }
   return nullptr;
 }
 
 ScalarPtr ConvertNumber(PyObject *obj) {
   if (py_parse::ParseUtilsCheckFloat(obj)) {
-    return MakeFP32Imm(*py_parse::ParseUtilsConvertFloat(obj));
+    auto val = py_parse::ParseUtilsConvertFloat(obj);
+    if (val.has_value()) {
+      return MakeFP32Imm(*val);
+    }
   }
   if (py_parse::ParseUtilsCheckBool(obj)) {
-    return std::make_shared<BoolImm>(*py_parse::ParseUtilsConvertBool(obj));
+    auto val = py_parse::ParseUtilsConvertBool(obj);
+    if (val.has_value()) {
+      return std::make_shared<BoolImm>(*val);
+    }
   }
   if (py_parse::ParseUtilsCheckInt(obj)) {
-    return std::make_shared<Int64Imm>(*py_parse::ParseUtilsConvertInt(obj));
+    auto val = py_parse::ParseUtilsConvertInt(obj);
+    if (val.has_value()) {
+      return std::make_shared<Int64Imm>(*val);
+    }
   }
   return nullptr;
 }
@@ -184,8 +199,11 @@ ValueTuplePtr ConvertFloatSequence(PyObject *obj) {
     // borrow reference
     PyObject *item = T::GetItem(obj, i);
     if (py_parse::ParseUtilsCheckFloat(item, false)) {
-      convert[i] = MakeFP32Imm(*py_parse::ParseUtilsConvertFloat(item));
-      continue;
+      auto val = py_parse::ParseUtilsConvertFloat(item);
+      if (val.has_value()) {
+        convert[i] = MakeFP32Imm(*val);
+        continue;
+      }
     }
     return nullptr;
   }
@@ -204,7 +222,10 @@ void EnablePipelineForTupleTensor(const ValueTuplePtr &tuple) {
 
 std::optional<std::vector<int64_t>> ConvertIntToIntVector(PyObject *obj) {
   if (py_parse::ParseUtilsCheckInt(obj)) {
-    return std::vector<int64_t>({*py_parse::ParseUtilsConvertInt(obj)});
+    auto val = py_parse::ParseUtilsConvertInt(obj);
+    if (val.has_value()) {
+      return std::vector<int64_t>({*val});
+    }
   }
   return std::nullopt;
 }

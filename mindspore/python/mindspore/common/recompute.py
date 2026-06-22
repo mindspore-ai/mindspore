@@ -267,10 +267,10 @@ class _RecomputeHandle:
                     _pynative_executor.end_empty_graph()
             except _StopRecomputationError:
                 _pynative_executor.end_empty_graph()
-            self.is_recomputed[recompute_key] = True
         finally:
             _pynative_executor.set_grad_flag(prev_grad_flag)
             _pynative_executor.set_enable_grad(prev_enable_grad)
+        self.is_recomputed[recompute_key] = True
 
     def clear_session(self, session_id):
         """Clear retained recompute data associated with a session."""

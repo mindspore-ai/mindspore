@@ -22,6 +22,7 @@
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
 #include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,6 +31,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormGra
   const TensorPtr &dout_tensor, const TensorPtr &input_tensor, const TensorPtr &mean_tensor,
   const TensorPtr &rstd_tensor, const TensorPtr &weight_opt_tensor, const Int64ImmPtr &num_groups,
   const BoolImmPtr &dx_is_require, const BoolImmPtr &dgamma_is_require, const BoolImmPtr &dbeta_is_require) {
+  constexpr size_t kOutputPdX = 0;
+  constexpr size_t kOutputPdGamma = 1;
+  constexpr size_t kOutputPdBeta = 2;
   MS_LOG(DEBUG) << "Call start";
   // Convert ValuePtr to c++ scalar
   auto outputs = InferOutput<3>(prim::kPrimGroupNormGrad, dout_tensor, input_tensor, mean_tensor, rstd_tensor,
@@ -54,7 +58,8 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> GroupNormGra
   TensorMalloc(outputs);
 
   DISPATCH_ACLNN(aclnnGroupNormBackward, dout_tensor, input_tensor, mean_tensor, rstd_tensor, weight_opt_tensor, N, C,
-                 HxW, num_groups_imm, output_mask, std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+                 HxW, num_groups_imm, output_mask, std::get<kOutputPdX>(outputs), std::get<kOutputPdGamma>(outputs),
+                 std::get<kOutputPdBeta>(outputs));
   return outputs;
 }
 }  // namespace pyboost

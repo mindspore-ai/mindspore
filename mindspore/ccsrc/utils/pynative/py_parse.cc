@@ -317,7 +317,11 @@ ValuePtr ConvertIntegerWithType(const py::object &obj) {
     bool obj_bool = obj_int64 != 0;
     return std::make_shared<BoolImm>(obj_bool);
   }
-  return std::make_shared<Int64Imm>(*ParseUtilsConvertInt(obj.ptr()));
+  auto val = ParseUtilsConvertInt(obj.ptr());
+  if (val.has_value()) {
+    return std::make_shared<Int64Imm>(*val);
+  }
+  return nullptr;
 }
 
 inline static ValuePtr MakeFP32Imm(double obj_double) {
@@ -366,7 +370,10 @@ ValuePtr ConvertFloat(const py::object &obj) {
 
 ValuePtr ConvertNumber(const py::object &obj) {
   if (ParseUtilsCheckBool(obj.ptr())) {
-    return std::make_shared<BoolImm>(*ParseUtilsConvertBool(obj.ptr()));
+    auto val = ParseUtilsConvertBool(obj.ptr());
+    if (val.has_value()) {
+      return std::make_shared<BoolImm>(*val);
+    }
   }
   if (ParseUtilsCheckInt(obj.ptr())) {
     return ConvertIntegerWithType(obj);

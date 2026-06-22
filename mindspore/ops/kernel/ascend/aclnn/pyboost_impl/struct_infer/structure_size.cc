@@ -22,6 +22,7 @@
 
 namespace mindspore::kernel::pyboost::op_infer {
 namespace {
+constexpr int kDimMaskBits = 64;
 int64_t make_wrap_dim(int64_t dim, int64_t dim_post_expr) {
   // This maps a negative dim into [0, dim_post_expr).
   if (dim_post_expr <= 0) {
@@ -35,8 +36,8 @@ int64_t make_wrap_dim(int64_t dim, int64_t dim_post_expr) {
   return dim;
 }
 
-std::bitset<64> make_dim_mask(const std::vector<int64_t> &dims, int64_t ndim) {
-  std::bitset<64> mask;
+std::bitset<kDimMaskBits> make_dim_mask(const std::vector<int64_t> &dims, int64_t ndim) {
+  std::bitset<kDimMaskBits> mask;
   if (ndim <= 0) {
     ndim = 1;
   }
@@ -89,7 +90,7 @@ ShapeVector broadcast_ops_npu_output_size(const tensor::TensorPtr &lhs, const te
 ShapeVector reduce_ops_npu_output_size(const tensor::TensorPtr &self, const std::vector<int64_t> &dims, bool keepdim) {
   MS_EXCEPTION_IF_NULL(self);
   int64_t ndim = self->DataDim();
-  std::bitset<64> mask = make_dim_mask(dims, ndim);
+  std::bitset<kDimMaskBits> mask = make_dim_mask(dims, ndim);
   auto shape = self->shape();
   for (auto dim = static_cast<int64_t>(shape.size()) - 1; dim >= 0; --dim) {
     if (mask[dim]) {
