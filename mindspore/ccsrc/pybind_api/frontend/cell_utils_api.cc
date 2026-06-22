@@ -19,10 +19,19 @@
 #include "include/pynative/forward/pyboost/converter.h"
 
 namespace mindspore {
-constexpr int kToDeviceOverload = 0;
-constexpr int kToDtypeOverload = 1;
-constexpr int kToOtherOverload = 2;
-constexpr size_t kToDeviceNonBlockingIdx = 2;
+namespace {
+enum CellToOverloadIndex {
+  kToDeviceOverload,
+  kToDtypeOverload,
+  kToOtherOverload,
+};
+
+enum CellToArgIndex {
+  kFirstArgIndex,
+  kSecondArgIndex,
+  kThirdArgIndex,
+};
+}  // namespace
 
 static py::object CellParseToArgs(const py::args &args, const py::kwargs &kwargs) {
   static mindspore::pynative::PythonArgParser parser(
@@ -38,19 +47,19 @@ static py::object CellParseToArgs(const py::args &args, const py::kwargs &kwargs
 
   switch (parse_args.GetOvertLoadIndex()) {
     case kToDeviceOverload:
-      device = py::reinterpret_borrow<py::object>(parse_args.arg_list_[0]);
-      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[1]);
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kToDeviceNonBlockingIdx]);
+      device = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kFirstArgIndex]);
+      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kSecondArgIndex]);
+      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kThirdArgIndex]);
       break;
     case kToDtypeOverload:
-      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[0]);
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[1]);
+      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kFirstArgIndex]);
+      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kSecondArgIndex]);
       break;
     case kToOtherOverload: {
-      py::object other = py::reinterpret_borrow<py::object>(parse_args.arg_list_[0]);
+      py::object other = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kFirstArgIndex]);
       device = other.attr("device");
       dtype = other.attr("dtype");
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[1]);
+      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kSecondArgIndex]);
       break;
     }
     default:

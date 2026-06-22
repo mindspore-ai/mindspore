@@ -45,6 +45,8 @@ import mindspore.common.dtype as mstype
 from mindspore import runtime
 from mindspore._c_expression import set_is_arf, check_is_arf
 
+_ATO_SECTION_PREFIX = "__SECTION__:"
+
 
 def _get_ckpt_dir(step, ckpt_save_path, is_tmp_file):
     """ Common func to generate ckpt dir name."""
@@ -226,7 +228,7 @@ class AdaptTrainOptimizer():
         """Bind the ModelCheckpoint instance for ATO checkpoint logic."""
         if not isinstance(ckpt_obj, ModelCheckpoint):
             raise ValueError("ATO checkpoint optimization expects a ModelCheckpoint instance.")
-        self.ckpt_obj = ckpt_obj
+        self.ckpt_obj = ckpt_obj  # pylint: disable=W0201
 
     def _load_failure_rate_from_json(self, path):
         """Load failure statistics from a JSON file."""
@@ -264,23 +266,25 @@ class AdaptTrainOptimizer():
         """
         if isinstance(exc, RuntimeError):
             self._failure_count += 1
-        save_checkpoint_steps = self.ckpt_obj._config.save_checkpoint_steps #pylint: disable=W0212
+        save_checkpoint_steps = self.ckpt_obj._config.save_checkpoint_steps  # pylint: disable=W0212
         self._total_steps += cur_step
         self._save_fault_info_json(self._failure_count, self._total_steps)
         self._collect_checkpoint_times()
 
-        self._avg_checkpoint_time = self._get_avg_checkpoint_time()
-        self._avg_step_time = self._get_avg_step_time()
+        self._avg_checkpoint_time = self._get_avg_checkpoint_time()  # pylint: disable=W0201
+        self._avg_step_time = self._get_avg_step_time()  # pylint: disable=W0201
         if self._avg_checkpoint_time is None or self._avg_step_time is None:
             logger.warning(f"Insufficient timing data: only {cur_step} steps recorded; "
                            f"checkpoint interval is {save_checkpoint_steps}.")
         else:
             if self._failure_count < self._ato_threshold:
                 logger.warning("Insufficient statistics for ATO checkpoint calculation. "
-                    f"Current failure_count: {self._failure_count}, ato_threshold: "
-                    f"{self._ato_threshold}")
+                               f"Current failure_count: {self._failure_count}, ato_threshold: "
+                               f"{self._ato_threshold}")
             else:
-                self._failure_rate = self._failure_count / self._total_steps if self._total_steps else 0.0
+                self._failure_rate = (  # pylint: disable=W0201
+                    self._failure_count / self._total_steps if self._total_steps else 0.0
+                )
                 if self._failure_rate == 0:
                     logger.warning("Failure rate is zero, cannot compute failure-rate-based checkpoint interval.")
                 else:
@@ -295,6 +299,14 @@ class AdaptTrainOptimizer():
         optimal_interval = math.sqrt(2 * self._avg_checkpoint_time / (self._failure_rate * self._avg_step_time))
         new_interval = self._comm_interval_step(optimal_interval)
         return new_interval
+
+    def _format_duration(self, duration):  # pylint: disable=H3607
+        """Format duration values for terminal output."""
+        return f"{duration:.3f} s"
+
+    def _format_ratio(self, ratio):  # pylint: disable=H3607
+        """Format ratio values as percentages for terminal output."""
+        return f"{ratio:.2%}"
 
     def _calculate_effective_training_ratio(self, interval):
         """Calculate effective training ratio for a checkpoint interval."""
@@ -338,59 +350,82 @@ class AdaptTrainOptimizer():
         new_interval = self._interval_comm(Tensor(int(round(interval_step)), dtype=mstype.int32))
         return max(1, int(new_interval.asnumpy().item() / self._group_size))
 
-    def _format_duration(self, duration):
-        """Format duration values for terminal output."""
-        return f"{duration:.3f} s"
+    @staticmethod
+    def _make_table_border(total_width):
+        """Build a table border line."""
+        return "+" + "-" * total_width + "+"
 
-    def _format_ratio(self, ratio):
-        """Format ratio values as percentages for terminal output."""
-        return f"{ratio:.2%}"
+    @staticmethod
+    def _max_table_line_length(text):
+        """Get max line length in table text."""
+        return max(len(line) for line in str(text).splitlines() or [""])
 
-    def _build_ckpt_suggestion_table(self, info_items, title="ATO CKPT Recommendations"):
-        """Build a formatted table string."""
-        section_prefix = "__SECTION__:"
-
-        def max_line_length(text):
-            return max(len(line) for line in str(text).splitlines() or [""])
-
-        normal_items = [item for item in info_items if not item[0].startswith(section_prefix)]
-        section_titles = [item[0][len(section_prefix):] for item in info_items if item[0].startswith(section_prefix)]
-        col1_width = max(len("Item"), max(max_line_length(k) for k, _, _ in normal_items)) + 2
-        col2_width = max(len("Value"), max(max_line_length(v) for _, v, _ in normal_items)) + 2
-        col3_width = min(78, max(len("Description"), max(max_line_length(d) for _, _, d in normal_items))) + 2
-        total_width = col1_width + col2_width + col3_width + 8
+    @classmethod
+    def _get_ckpt_suggestion_table_layout(cls, info_items, title):
+        """Calculate table column widths and total width."""
+        normal_items = [item for item in info_items if not item[0].startswith(_ATO_SECTION_PREFIX)]
+        section_titles = [item[0][len(_ATO_SECTION_PREFIX):] for item in info_items
+                          if item[0].startswith(_ATO_SECTION_PREFIX)]
+        col_widths = (
+            max(len("Item"), max(cls._max_table_line_length(k) for k, _, _ in normal_items)) + 2,
+            max(len("Value"), max(cls._max_table_line_length(v) for _, v, _ in normal_items)) + 2,
+            min(78, max(len("Description"), max(cls._max_table_line_length(d) for _, _, d in normal_items))) + 2,
+        )
+        total_width = sum(col_widths) + 8
         total_width = max(total_width, len(title) + 2)
         if section_titles:
             total_width = max(total_width, max(len(section_title) for section_title in section_titles) + 2)
+        return col_widths, total_width
 
-        lines = []
-        lines.append("+" + "-" * total_width + "+")
+    @staticmethod
+    def _format_table_header(col_widths):
+        """Format table header row."""
+        col1_width, col2_width, col3_width = col_widths
+        return f"| {'Item':<{col1_width}} | {'Value':<{col2_width}} | {'Description':<{col3_width}} |"
+
+    @classmethod
+    def _append_table_section(cls, lines, key, total_width, header_line):
+        """Append a table section header."""
+        section_title = key[len(_ATO_SECTION_PREFIX):]
+        lines.append(f"|{section_title:^{total_width}}|")
+        lines.append(cls._make_table_border(total_width))
+        lines.append(header_line)
+        lines.append(cls._make_table_border(total_width))
+
+    def _append_table_row(self, lines, item, col_widths, total_width):
+        """Append a wrapped table row."""
+        key, value, desc = item
+        key_lines = self._wrap_table_cell(key, col_widths[0])
+        value_lines = self._wrap_table_cell(value, col_widths[1])
+        desc_lines = self._wrap_table_cell(desc, col_widths[2])
+        for idx in range(max(len(key_lines), len(value_lines), len(desc_lines))):
+            row_values = (
+                key_lines[idx] if idx < len(key_lines) else "",
+                value_lines[idx] if idx < len(value_lines) else "",
+                desc_lines[idx] if idx < len(desc_lines) else "",
+            )
+            lines.append(
+                f"| {row_values[0]:<{col_widths[0]}} | {row_values[1]:<{col_widths[1]}} | "
+                f"{row_values[2]:<{col_widths[2]}} |")
+        lines.append(self._make_table_border(total_width))
+
+    def _build_ckpt_suggestion_table(self, info_items, title="ATO CKPT Recommendations"):
+        """Build a formatted table string."""
+        col_widths, total_width = self._get_ckpt_suggestion_table_layout(info_items, title)
+        header_line = self._format_table_header(col_widths)
+
+        lines = [self._make_table_border(total_width)]
         lines.append(f"|{title:^{total_width}}|")
-        lines.append("+" + "-" * total_width + "+")
-        header_line = f"| {'Item':<{col1_width}} | {'Value':<{col2_width}} | {'Description':<{col3_width}} |"
+        lines.append(self._make_table_border(total_width))
 
-        for key, value, desc in info_items:
-            if key.startswith(section_prefix):
-                section_title = key[len(section_prefix):]
-                lines.append(f"|{section_title:^{total_width}}|")
-                lines.append("+" + "-" * total_width + "+")
-                lines.append(header_line)
-                lines.append("+" + "-" * total_width + "+")
+        for item in info_items:
+            if item[0].startswith(_ATO_SECTION_PREFIX):
+                self._append_table_section(lines, item[0], total_width, header_line)
                 continue
-            key_lines = self._wrap_table_cell(key, col1_width)
-            value_lines = self._wrap_table_cell(value, col2_width)
-            desc_lines = self._wrap_table_cell(desc, col3_width)
-            row_height = max(len(key_lines), len(value_lines), len(desc_lines))
-            for idx in range(row_height):
-                key_line = key_lines[idx] if idx < len(key_lines) else ""
-                value_line = value_lines[idx] if idx < len(value_lines) else ""
-                desc_line = desc_lines[idx] if idx < len(desc_lines) else ""
-                lines.append(
-                    f"| {key_line:<{col1_width}} | {value_line:<{col2_width}} | {desc_line:<{col3_width}} |")
-            lines.append("+" + "-" * total_width + "+")
+            self._append_table_row(lines, item, col_widths, total_width)
         return "\n".join(lines)
 
-    def _wrap_table_cell(self, text, width):
+    def _wrap_table_cell(self, text, width):  # pylint: disable=H3607
         """Wrap table cell content while preserving manual newlines."""
         wrapped_lines = []
         content_width = max(1, width - 2)
@@ -476,7 +511,8 @@ class AdaptTrainOptimizer():
         table_items.extend(self._build_effective_training_tuning_items(
             old_interval, new_interval, old_interval_ratio, new_interval_ratio))
         log_text = f"{self._build_ckpt_suggestion_table(table_items)}\n"
-        print(log_text, flush=True)
+        # Keep stdout output for compatibility with callers/tests that read the generated report directly.
+        print(log_text, flush=True)  # pylint: disable=print-used
         return log_text
 
 
@@ -856,7 +892,7 @@ class TrainFaultTolerance(Callback):
                                       :class:`mindspore.train.RunContext` for details.
         """
         if self._only_enable_ato():
-            self.ato.step_start_time = time.time()
+            self.ato.step_start_time = time.time()  # pylint: disable=W0201
             return
         if self._enable_snapshot():
             _clear_snapshot_saving_flag()

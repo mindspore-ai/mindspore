@@ -302,7 +302,9 @@ def _handle_tft(func):
                 try:
                     return func(self, *args, **kwargs)
                 except BaseException as e:
-                    current_step_num = (self._current_epoch_num-1) * self.batch_num + self._current_step_num #pylint: disable=W0212
+                    current_epoch_num = self._current_epoch_num  # pylint: disable=W0212
+                    current_step_in_epoch = self._current_step_num  # pylint: disable=W0212
+                    current_step_num = (current_epoch_num - 1) * self.batch_num + current_step_in_epoch
                     obj.ato.handle_fault(e, current_step_num)
                     raise e
             uce_env = "UCE:1" in tft_env or "ARF:1" in tft_env or "HCCE:1" in tft_env
