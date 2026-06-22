@@ -80,7 +80,7 @@ class MultiheadAttention(Cell):
     Inputs:
         - **query** (Tensor) - The query embeddings. If `query` is unbatched, the shape is :math:`(L, E_q)`,
           otherwise the shape is :math:`(L, N, E_q)` when `batch_first=False` or :math:`(N, L, E_q)` when
-          `batch_first=True` , where :math:`L`is the target sequence length, :math:`N` is the batch size,
+          `batch_first=True` , where :math:`L` is the target sequence length, :math:`N` is the batch size,
           and :math:`E_q` is the query embedding dimension `embed_dim`. Supported types: float16, float32,
           float64. Queries are compared against key-value pairs to produce the output.
         - **key** (Tensor) - The key embeddings. If `key` is unbatched, the shape is :math:`(S, E_k)`, otherwise

@@ -6432,7 +6432,7 @@ class Conv3D(Primitive):
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
     Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{\text{out}_j}, k)`represents the slice of the :math:`j`-th convolutional
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
