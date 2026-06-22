@@ -672,8 +672,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                    that does not match the custom condition will not
                                    be saved.
 
-        crc_check (bool): Whether to perform crc32 calculation when saving checkpoint and save the calculation
-            result to the file. Default: ``False`` .
+        crc_check (bool): Whether to calculate CRC32 when saving checkpoint and save the result to the file.
+            CRC32 is only used to detect accidental file corruption and is not a cryptographically secure
+            integrity check. Do not use it to authenticate checkpoint files from untrusted sources.
+            Default: ``False`` .
         format (str): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
         kwargs (dict): Configuration options dictionary.
 
@@ -1323,6 +1325,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         - When `net` is not None, it will verify whether the `remove_redundancy` parameter matches the
           deduplication flag in the loaded safetensors file. If they are different, load the file according to
           the deduplication flag in the file.
+        - The ckpt format stores checkpoint protobuf content as a single message that is read into memory before
+          parsing. If the protobuf content is larger than current available memory, loading fails early to avoid
+          deterministic out-of-memory failure. For large model weights, consider using safetensors or segmented
+          checkpoints.
 
     Args:
         ckpt_file_name (Union[str, io.BytesIO]): Checkpoint file name or
@@ -1345,7 +1351,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             and the return value is a bool. If returns ``True`` , the Parameter
             that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
             matches the custom condition will be removed. Default: ``None`` .
-        crc_check (bool, optional): Whether to perform crc32 validation when loading checkpoint. Default: ``False`` .
+        crc_check (bool, optional): Whether to perform CRC32 corruption check when loading checkpoint. CRC32 is not
+            a cryptographically secure integrity check and must not be used to authenticate checkpoint files from
+            untrusted sources. For tamper resistance, use an authenticated protection mechanism such as AES-GCM.
+            Default: ``False`` .
         remove_redundancy (bool, optional): Whether to enable loading of checkpoint saved with redundancy removal.
             Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
             redundant-free loading is not enabled.
@@ -1563,8 +1572,54 @@ def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
         parameter_dict[element.tag] = map_array
 
 
+class _CheckpointProtobufSizeError(ValueError):
+    """Error raised when checkpoint protobuf content exceeds available memory."""
+
+
+def _get_available_memory():
+    """Get current available physical memory in bytes."""
+    try:
+        available_pages = os.sysconf("SC_AVPHYS_PAGES")
+        page_size = os.sysconf("SC_PAGE_SIZE")
+    except (AttributeError, OSError, TypeError, ValueError):
+        return None
+    if available_pages <= 0 or page_size <= 0:
+        return None
+    return available_pages * page_size
+
+
+def _checkpoint_protobuf_memory_error(ckpt_file_name, actual_size=None, available_memory=None):
+    """Build memory guidance for checkpoint protobuf loading failures."""
+    if actual_size is not None and available_memory is not None:
+        return (f"For 'load_checkpoint', the checkpoint protobuf content size {actual_size} bytes exceeds current "
+                f"available memory {available_memory} bytes: {ckpt_file_name}. The ckpt format stores protobuf "
+                "content as a single message that must be read into memory before parsing. Please retry on a "
+                "machine with more memory, or use safetensors/segmented checkpoints for large model weights.")
+    return (f"For 'load_checkpoint', not enough memory to load checkpoint protobuf content: {ckpt_file_name}. "
+            "The ckpt format stores protobuf content as a single message that must be read into memory before "
+            "parsing. Please retry on a machine with more memory, or use safetensors/segmented checkpoints for "
+            "large model weights.")
+
+
+def _check_checkpoint_protobuf_size(ckpt_file_name, actual_size, available_memory=None):
+    """Check whether checkpoint protobuf content exceeds current available memory."""
+    if available_memory is None:
+        available_memory = _get_available_memory()
+    if available_memory is None:
+        return
+    if actual_size > available_memory:
+        raise _CheckpointProtobufSizeError(
+            _checkpoint_protobuf_memory_error(ckpt_file_name, actual_size, available_memory)
+        )
+
+
+def _check_checkpoint_file_size(ckpt_file_name):
+    """Check checkpoint file size before reading protobuf content."""
+    _check_checkpoint_protobuf_size(ckpt_file_name, os.path.getsize(ckpt_file_name))
+
+
 def _check_file(file, file_format):
-    """Check function load_checkpoint's ckpt_file_name."""
+    """Check function load_checkpoint's ckpt_file_name and file size."""
     if file_format not in ('ckpt', 'safetensors'):
         raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt' or '.safetensors', please "
                          "input the correct 'format'.")
@@ -1586,6 +1641,8 @@ def _check_file(file, file_format):
     if not os.path.exists(file):
         raise ValueError("For 'load_checkpoint', the checkpoint file: {} does not exist, please check "
                          "whether the 'ckpt_file_name' is correct.".format(file))
+    if file_format == 'ckpt':
+        _check_checkpoint_file_size(file)
 
     return file
 
@@ -1621,6 +1678,7 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check):
             with _ckpt_fs.open(ckpt_file_name, *_ckpt_fs.open_args) as f:
                 ckpt_load_time_start = time.time()
                 pb_content = f.read()
+                _check_checkpoint_protobuf_size(ckpt_file_name, len(pb_content))
                 ckpt_load_time_end = time.time()
                 cost_time = ckpt_load_time_end - ckpt_load_time_start
                 vlog_print("1", "ME", __file__, sys._getframe().f_lineno, f"Load ckpt io cost time:{cost_time}.")
@@ -1629,6 +1687,7 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check):
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
             if pb_content is None:
                 raise ValueError("For 'load_checkpoint', failed to decrypt the checkpoint file.")
+            _check_checkpoint_protobuf_size(ckpt_file_name, len(pb_content))
         if crc_check and pb_content[-17:-10] != b"crc_num":
             logger.warning("For 'load_checkpoint', the ckpt file do not contain the crc code, please check the file.")
         if pb_content[-17:-10] == b"crc_num":
@@ -1641,6 +1700,12 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check):
                     raise ValueError("For 'load_checkpoint', the crc check is failed, "
                                      "please check whether the ckpt file is damaged.")
         checkpoint_list.ParseFromString(pb_content)
+    except _CheckpointProtobufSizeError:
+        raise
+    except MemoryError as e:
+        err_info = _checkpoint_protobuf_memory_error(ckpt_file_name)
+        logger.error(err_info)
+        raise ValueError(err_info) from e
     except google.protobuf.message.DecodeError as e:
         raise ValueError(f"Failed to read the checkpoint file {ckpt_file_name}. "
                          f"The file may be corrupted, and the content cannot be parsed.") from e

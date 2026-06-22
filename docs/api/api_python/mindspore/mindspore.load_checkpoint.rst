@@ -10,6 +10,7 @@ mindspore.load_checkpoint
         - 如果没有参数被成功加载，将会报ValueError。
         - 当加载去冗余的checkpoint时，网络应该是编译过的。
         - 当 `net` 不为 ``None`` 时，校验入参 `remove_redundancy` 与所加载的safetensors文件中的去冗余标志位是否相同。如果不同，按照文件的去冗余标志位进行加载。
+        - ckpt格式会将checkpoint protobuf内容作为单体消息读入内存后解析。当protobuf内容大于当前可用内存时，加载会提前失败以避免确定性的OOM。大模型权重建议使用safetensors或分片checkpoint。
 
     参数：
         - **ckpt_file_name** (Union[str, io.BytesIO]) - checkpoint的文件名称或BytesIO类型的对象（仅支持safetensors格式）。
@@ -20,7 +21,7 @@ mindspore.load_checkpoint
         - **dec_mode** (str, 可选) - 该参数仅当 `dec_key` 不为 ``None`` 时有效。指定解密模式，目前支持 ``"AES-GCM"`` 、 ``"AES-CBC"`` 和 ``"SM4-CBC"`` 。默认值： ``"AES-GCM"`` 。
         - **specify_prefix** (Union[str, list[str], tuple[str]], 可选) - 废弃（请参考参数 `choice_func`）。以 `specify_prefix` 开头的参数将会被加载。默认值： ``None`` 。
         - **choice_func** (Union[None, function], 可选) - 函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被加载。如果返回 ``False`` ，则匹配自定义条件的Parameter将被删除。默认值： ``None`` 。
-        - **crc_check** (bool, 可选) - 是否在加载checkpoint时进行crc32校验。默认值： ``False`` 。
+        - **crc_check** (bool, 可选) - 是否在加载checkpoint时进行CRC32损坏检测。CRC32不是密码学安全的完整性校验，不能用于认证来自不可信来源的checkpoint文件。如需防篡改，应使用认证保护机制，例如AES-GCM。默认值： ``False`` 。
         - **remove_redundancy** (bool, 可选) - 是否开启加载去冗余保存的checkpoint。去冗余是指去除数据并行模式下的冗余数据。默认值： ``False``，不开启去冗余加载。
         - **format** (str, 可选) - 输入文件的格式，可以是 ``"ckpt"`` 或 ``"safetensors"``。默认值：``"ckpt"``。
 

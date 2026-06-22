@@ -24,6 +24,7 @@ import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+import mindspore.train.serialization as serialization
 from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
@@ -35,6 +36,14 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint, load
     export, _save_graph, load
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
+
+_CHECK_FILE = serialization._check_file  # pylint: disable=protected-access
+_PARSE_CKPT_PROTO = serialization._parse_ckpt_proto  # pylint: disable=protected-access
+
+
+def _get_available_memory_for_test():
+    assert hasattr(serialization, "_get_available_memory")
+    return serialization._get_available_memory()  # pylint: disable=protected-access
 
 
 class Net(nn.Cell):
@@ -51,7 +60,7 @@ class Net(nn.Cell):
     """
 
     def __init__(self, num_classes=10):
-        super(Net, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
@@ -94,7 +103,7 @@ def test_save_graph():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.add = P.Add()
 
         def construct(self, x, y):
@@ -202,7 +211,7 @@ def test_checkpoint_manager():
     ckp_mgr = _CheckpointManager()
 
     ckpt_file_name = os.path.join(_cur_dir, './test-1_1.ckpt')
-    with open(ckpt_file_name, 'w'):
+    with open(ckpt_file_name, 'w', encoding='utf-8'):
         os.chmod(ckpt_file_name, stat.S_IWUSR | stat.S_IRUSR)
 
     ckp_mgr.update_ckpoint_filelist(_cur_dir, "test")
@@ -215,7 +224,7 @@ def test_checkpoint_manager():
 
     another_file_name = os.path.join(_cur_dir, './test-2_1.ckpt')
     another_file_name = os.path.realpath(another_file_name)
-    with open(another_file_name, 'w'):
+    with open(another_file_name, 'w', encoding='utf-8'):
         os.chmod(another_file_name, stat.S_IWUSR | stat.S_IRUSR)
 
     ckp_mgr.update_ckpoint_filelist(_cur_dir, "test")
@@ -229,11 +238,11 @@ def test_checkpoint_manager():
     file1 = os.path.realpath(os.path.join(_cur_dir, './time_file-1_1.ckpt'))
     file2 = os.path.realpath(os.path.join(_cur_dir, './time_file-2_1.ckpt'))
     file3 = os.path.realpath(os.path.join(_cur_dir, './time_file-3_1.ckpt'))
-    with open(file1, 'w'):
+    with open(file1, 'w', encoding='utf-8'):
         os.chmod(file1, stat.S_IWUSR | stat.S_IRUSR)
-    with open(file2, 'w'):
+    with open(file2, 'w', encoding='utf-8'):
         os.chmod(file2, stat.S_IWUSR | stat.S_IRUSR)
-    with open(file3, 'w'):
+    with open(file3, 'w', encoding='utf-8'):
         os.chmod(file3, stat.S_IWUSR | stat.S_IRUSR)
     time1 = time.time()
     ckp_mgr.update_ckpoint_filelist(_cur_dir, "time_file")
@@ -405,6 +414,95 @@ def test_load_checkpoint_empty_file():
         load_checkpoint("empty.ckpt")
 
 
+def test_checkpoint_available_memory_from_sysconf(monkeypatch):
+    """
+    Feature: Load checkpoint.
+    Description: Check checkpoint protobuf available memory detection.
+    Expectation: Available memory is calculated from available pages and page size.
+    """
+    def fake_sysconf(name):
+        values = {"SC_AVPHYS_PAGES": 4, "SC_PAGE_SIZE": 2048}
+        return values[name]
+
+    monkeypatch.setattr(serialization.os, "sysconf", fake_sysconf)
+    assert _get_available_memory_for_test() == 8192
+
+
+def test_checkpoint_available_memory_unsupported_sysconf(monkeypatch):
+    """
+    Feature: Load checkpoint.
+    Description: Check checkpoint protobuf available memory detection fallback.
+    Expectation: Unsupported sysconf or invalid values return None without failing.
+    """
+    monkeypatch.setattr(serialization.os, "sysconf", lambda _: (_ for _ in ()).throw(ValueError()))
+    assert _get_available_memory_for_test() is None
+
+    monkeypatch.setattr(serialization.os, "sysconf", lambda _: 0)
+    assert _get_available_memory_for_test() is None
+
+
+def test_check_file_rejects_oversized_checkpoint(tmp_path, monkeypatch):
+    """
+    Feature: Load checkpoint.
+    Description: Check checkpoint file size against current available memory before protobuf parsing.
+    Expectation: Checkpoint file larger than available memory raises ValueError with memory details.
+    """
+    monkeypatch.setattr(serialization, "_get_available_memory", lambda: 16, raising=False)
+    ckpt_file = tmp_path / "oversized.ckpt"
+    ckpt_file.write_bytes(b"x" * 17)
+
+    with pytest.raises(ValueError, match="available memory"):
+        _CHECK_FILE(str(ckpt_file), "ckpt")
+
+
+def test_parse_ckpt_proto_rejects_oversized_plain_content(tmp_path, monkeypatch):
+    """
+    Feature: Load checkpoint.
+    Description: Check checkpoint protobuf content size on the plain load path against current available memory.
+    Expectation: Content larger than available memory raises ValueError before protobuf parsing.
+    """
+    monkeypatch.setattr(serialization, "_get_available_memory", lambda: 16, raising=False)
+    ckpt_file = tmp_path / "oversized_plain.ckpt"
+    ckpt_file.write_bytes(b"x" * 17)
+
+    with pytest.raises(ValueError, match="available memory"):
+        _PARSE_CKPT_PROTO(str(ckpt_file), None, "AES-GCM", False)
+
+
+def test_parse_ckpt_proto_rejects_oversized_decrypted_content(tmp_path, monkeypatch):
+    """
+    Feature: Load checkpoint.
+    Description: Check decrypted checkpoint protobuf content size against current available memory.
+    Expectation: Decrypted content larger than available memory raises ValueError before protobuf parsing.
+    """
+    monkeypatch.setattr(serialization, "_get_available_memory", lambda: 16, raising=False)
+    ckpt_file = tmp_path / "encrypted.ckpt"
+    ckpt_file.write_bytes(b"ciphertext")
+    monkeypatch.setattr(serialization, "_decrypt", lambda *args: b"x" * 17)
+
+    with pytest.raises(ValueError, match="available memory"):
+        _PARSE_CKPT_PROTO(str(ckpt_file), b"0123456789abcdef", "AES-GCM", False)
+
+
+def test_parse_ckpt_proto_reports_memory_error(tmp_path, monkeypatch):
+    """
+    Feature: Load checkpoint.
+    Description: Check MemoryError reporting during checkpoint protobuf parsing.
+    Expectation: MemoryError is converted to ValueError with memory guidance.
+    """
+    class FakeCheckpoint:
+        def ParseFromString(self, _):
+            raise MemoryError()
+
+    monkeypatch.setattr(serialization, "_get_available_memory", lambda: None, raising=False)
+    monkeypatch.setattr(serialization, "Checkpoint", FakeCheckpoint)
+    ckpt_file = tmp_path / "memory_error.ckpt"
+    ckpt_file.write_bytes(b"x")
+
+    with pytest.raises(ValueError, match="not enough memory"):
+        _PARSE_CKPT_PROTO(str(ckpt_file), None, "AES-GCM", False)
+
+
 def test_load_checkpoint_error_param():
     """
     Feature: Load checkpoint.
@@ -527,7 +625,7 @@ class MYNET(nn.Cell):
     """ NET definition """
 
     def __init__(self):
-        super(MYNET, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal', pad_mode='valid')
         self.bn = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
@@ -572,7 +670,7 @@ def test_mindir_export_and_load_with_encryption():
 
 class PrintNet(nn.Cell):
     def __init__(self):
-        super(PrintNet, self).__init__()
+        super().__init__()
         self.print = P.Print()
 
     def construct(self, int8, uint8, int16, uint16, int32, uint32, int64, uint64, flt16, flt32, flt64, bool_,
