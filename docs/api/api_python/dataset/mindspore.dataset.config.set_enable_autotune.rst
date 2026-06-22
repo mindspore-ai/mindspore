@@ -11,7 +11,7 @@ mindspore.dataset.config.set_enable_autotune
 
     参数：
         - **enable** (bool) - 是否开启自动调优。
-        - **filepath_prefix** (str，可选) - 优化后的参数配置的保存路径。仅当 `enable` 为 `True` 时生效。
+        - **filepath_prefix** (str，可选) - 优化后的参数配置的保存路径。仅当 `enable` 为 ``True`` 时生效。
           各个Device上的参数配置文件将分别保存，最终保存的文件名将为 `filepath_prefix + RANK_ID + ".json"` ，
           其中 RANK_ID 为该文件对应的Device编号。默认值： ``None`` ，表示不保存配置文件。
 

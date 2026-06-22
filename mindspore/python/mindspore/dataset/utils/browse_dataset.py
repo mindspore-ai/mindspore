@@ -31,24 +31,24 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
         image (numpy.ndarray): The image to be displayed, shaped :math:`<C, H, W>` or :math:`<H, W, C>`,
             formatted RGB.
         bboxes (numpy.ndarray): Bounding boxes (with scores), shaped :math:`<N, 4>` or :math:`<N, 5>`,
-            data should be ordered with :math:`<N,X,Y,W,H>`.
+            data should be ordered as :math:`<N,X,Y,W,H>`.
         labels (numpy.ndarray): Labels of bboxes, shaped :math:`<N, 1>`.
         segm (numpy.ndarray, optional): The segmentation masks of image in M classes, shaped
             :math:`<M, H, W>`. Default: ``None``.
-        class_names (list[str], tuple[str], dict, optional): Names of each class to map label to
-            class name. Default: ``None``, only display label.
+        class_names (list[str], tuple[str], dict, optional):
+            Mapping from label indices to class names. Default: ``None``, only display label.
         score_threshold (float, optional): Minimum score of bboxes to be shown. Default: ``0``.
-        bbox_color (tuple(int), optional): Color of bbox lines. The tuple of color should be in
+        bbox_color (tuple(int), optional): Color of bbox lines. The tuple of colors should be in
             BGR order. Default: ``(0, 255, 0)``, means 'green'.
-        text_color (tuple(int), optional): Color of texts. The tuple of color should be in BGR
+        text_color (tuple(int), optional): Color of texts. The tuple of colors should be in BGR
             order. Default: ``(203, 192, 255)``, means 'pink'.
-        mask_color (tuple(int), optional): Color of mask. The tuple of color should be in BGR
+        mask_color (tuple(int), optional): Color of mask. The tuple of colors should be in BGR
             order. Default: ``(128, 0, 128)``, means 'purple'.
         thickness (int, optional): Thickness of lines. Default: ``2``.
         font_size (int, float, optional): Font size of texts. Default: ``0.8``.
         show (bool, optional): Whether to show the image. Default: ``True``.
         win_name (str, optional): The window name. Default: ``"win"``.
-        wait_time (int, optional): Waiting time delay for a key event in milliseconds. During
+        wait_time (int, optional): Waiting time for a key event in milliseconds. During
             image display, if there is no key pressed, wait for this time then jump to next image.
             If ESC is pressed, quit display immediately. If any other key is pressed, stop
             waiting then jump to next image directly. Default: ``2000``, wait 2000ms then jump to

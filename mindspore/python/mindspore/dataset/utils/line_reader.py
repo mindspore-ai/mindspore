@@ -24,7 +24,7 @@ class LineReader:
     """
     Line-based file reader.
 
-    Cache the line-based meta data of the file in advance to achieve random-access reading of each file line.
+    Cache the line-based metadata of the file in advance to achieve random-access reading of each file line.
 
     Args:
         filename (str): Filename to be read.

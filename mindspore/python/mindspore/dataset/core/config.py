@@ -151,7 +151,7 @@ def get_seed():
 
     Examples:
         >>> # Get the global configuration of seed.
-        >>> # If set_seed() is never called before, the default value(std::mt19937::default_seed) will be returned.
+        >>> # If set_seed() has never been called before, the default value(std::mt19937::default_seed) will be returned.
         >>> import mindspore.dataset as ds
         >>> seed = ds.config.get_seed()
     """
@@ -199,14 +199,14 @@ def set_prefetch_size(size):
 def get_prefetch_size():
     """
     Get the prefetch size as the number of rows.
-    If `set_prefetch_size` is never called before, the default value ``16`` will be returned.
+    If `set_prefetch_size` has never been called before, the default value ``16`` will be returned.
 
     Returns:
         int, total number of rows to be prefetched.
 
     Examples:
         >>> # Get the global configuration of prefetch size.
-        >>> # If set_prefetch_size() is never called before, the default value(16) will be returned.
+        >>> # If set_prefetch_size() has never been called before, the default value (16) will be returned.
         >>> import mindspore.dataset as ds
         >>> prefetch_size = ds.config.get_prefetch_size()
     """
@@ -243,14 +243,14 @@ def get_num_parallel_workers():
     """
     Get the global configuration of the number of parallel workers.
     This is the default num_parallel_workers value used for each operation.
-    If `set_num_parallel_workers` is never called before, the default value(8) will be returned.
+    If `set_num_parallel_workers` has never been called before, the default value (8) will be returned.
 
     Returns:
         int, number of parallel workers to be used as a default for each operation.
 
     Examples:
         >>> # Get the global configuration of parallel workers.
-        >>> # If set_num_parallel_workers() is never called before, the default value(8) will be returned.
+        >>> # If set_num_parallel_workers() has never been called before, the default value (8) will be returned.
         >>> import mindspore.dataset as ds
         >>> num_parallel_workers = ds.config.get_num_parallel_workers()
     """
@@ -282,7 +282,7 @@ def set_numa_enable(numa_enable):
 def get_numa_enable():
     """
     Get the state of numa to indicate enabled/disabled.
-    This is the numa config used for all processes, it is disabled by default.
+    This is the numa config used for all processes. It is disabled by default.
 
     Returns:
         bool, the default state of numa enabled.
@@ -322,14 +322,14 @@ def set_monitor_sampling_interval(interval):
 def get_monitor_sampling_interval():
     """
     Get the global configuration of the sampling interval of the performance monitor.
-    If `set_monitor_sampling_interval` is never called before, the default value(1000) will be returned.
+    If `set_monitor_sampling_interval` has never been called before, the default value (1000) will be returned.
 
     Returns:
         int, interval (in milliseconds) for performance monitor sampling.
 
     Examples:
         >>> # Get the global configuration of monitor sampling interval.
-        >>> # If set_monitor_sampling_interval() is never called before, the default value(1000) will be returned.
+        >>> # If set_monitor_sampling_interval() has never been called before, the default value (1000) will be returned.
         >>> import mindspore.dataset as ds
         >>> sampling_interval = ds.config.get_monitor_sampling_interval()
     """
@@ -344,9 +344,9 @@ def set_auto_num_workers(enable):
     num_parallel_workers passed in by user or the default value (if user doesn't pass anything) set by
     :func:`mindspore.dataset.config.set_num_parallel_workers`.
 
-    For now, this function is only optimized for YoloV3 dataset with per_batch_map (running map in batch).
+    For now, this function is only optimized for the YoloV3 dataset with per_batch_map (running map in batch).
     This feature aims to provide a baseline for optimized num_workers assignment for each operation.
-    Operation whose num_parallel_workers is adjusted to a new value will be logged.
+    Operations whose num_parallel_workers is adjusted to a new value will be logged.
 
     Args:
         enable (bool): Whether to enable auto num_workers feature or not.
@@ -355,7 +355,7 @@ def set_auto_num_workers(enable):
         TypeError: If `enable` is not of type bool.
 
     Examples:
-        >>> # Enable auto_num_worker feature, this might override the num_parallel_workers passed in by user
+        >>> # Enable auto_num_worker feature. This might override the num_parallel_workers passed in by user
         >>> import mindspore.dataset as ds
         >>> ds.config.set_auto_num_workers(True)
     """
@@ -515,10 +515,11 @@ def set_enable_autotune(enable, filepath_prefix=None):
           return a data processing pipeline object of optimal parameters.
         - The parameter tuning process can be viewed by turning on INFO level logging.
 
-    An example of the generated configuration file is as follows, the "remark" field describes whether or not data
-    processing parameter tuning has been performed, the "summary" field briefly shows each operation in the data
-    processing pipeline and its corresponding optimal configuration, and the "tree" field provides complete
-    information about the structure of the data processing pipeline.
+    An example of the generated configuration file is as follows.
+    The "remark" field describes whether or not data processing parameter tuning has been performed.
+    The "summary" field briefly shows each operation
+    in the data processing pipeline and its corresponding optimal configuration.
+    The "tree" field provides complete information about the structure of the data processing pipeline.
 
     .. code-block::
 
@@ -598,7 +599,7 @@ def set_autotune_interval(interval):
 
     Raises:
         TypeError: If `interval` is not of type int.
-        ValueError: If `interval` is not non-negative.
+        ValueError: If `interval` is negative.
 
     Examples:
         >>> # set a new interval for AutoTune
@@ -728,7 +729,7 @@ def set_sending_batches(batch_num):
 
 def set_auto_offload(offload):
     """
-    Set the automatic offload flag of the dataset. If set_auto_offload is True,
+    Set the automatic offload flag of the dataset. If `offload` is True,
     automatically offload as many dataset operations from the CPU to the Device (GPU or Ascend).
 
     Args:
@@ -804,12 +805,13 @@ def get_enable_watchdog():
 
 def set_multiprocessing_timeout_interval(interval):
     """
-    Set the default interval (in seconds) for multiprocessing/multithreading timeout when main process/thread gets
-    data from subprocesses/child threads.
+    In a multi-process/multi-threaded environment, the default interval (in seconds) at which an alert log is printed
+    when the main process/main thread times out while retrieving data.
 
     Args:
-        interval (int): Interval (in seconds) to be used for multiprocessing/multithreading timeout when main
-            process/thread gets data from subprocess/child threads.
+        interval (int): Specifies the interval (in seconds) at which an alert log is printed
+            when the main process or main thread times out while retrieving data
+            in a multi-process or multi-threaded environment.
 
     Raises:
         TypeError: If `interval` is not of type int.
@@ -835,13 +837,13 @@ def get_multiprocessing_timeout_interval():
 
     Returns:
         int, interval (in seconds) for multiprocessing/multithreading timeout when main process/thread gets data from
-        subprocesses/child threads. If `set_multiprocessing_timeout_interval` is never called before,
-        the default value(300) will be returned.
+        subprocesses/child threads. If `set_multiprocessing_timeout_interval` has never been called before,
+        the default value (300) will be returned.
 
     Examples:
         >>> # Get the global configuration of multiprocessing/multithreading timeout when main process/thread gets data
-        >>> # from subprocesses/child threads. If set_multiprocessing_timeout_interval() is never called before, the
-        >>> # default value(300) will be returned.
+        >>> # from subprocesses/child threads. If set_multiprocessing_timeout_interval() has never been called before, the
+        >>> # default value (300) will be returned.
         >>> import mindspore.dataset as ds
         >>> multiprocessing_timeout_interval = ds.config.get_multiprocessing_timeout_interval()
     """
@@ -884,7 +886,7 @@ def get_dynamic_shape():
 def set_fast_recovery(fast_recovery):
     """
     Set whether dataset pipeline should recover in fast mode during failover
-    (In fast mode, random augmentations may not get same results as before the failure occurred).
+    (In fast mode, random augmentations may not get the same results as before the failure occurred).
 
     Args:
         fast_recovery (bool): Whether the dataset pipeline recovers in fast mode.
@@ -924,8 +926,8 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
     Note:
         When debug_mode is enabled,
 
-        - If random seed has not been set, will internally set the seed to 1.
-          So that debug mode execution of the dataset pipeline can produce deterministic results.
+        - If random seed has not been set, the system will internally set the seed to 1
+          so that debug mode execution of the dataset pipeline can produce deterministic results.
 
         - The following configuration settings are ignored:
 
@@ -1062,8 +1064,8 @@ def set_error_samples_mode(error_samples_mode):
     Note:
         - This error samples feature is only applicable to the Map operation in a dataset pipeline.
         - For ``ErrorSamplesMode.REPLACE`` mode, a cache of other samples will be used.
-        - If ``ErrorSamplesMode.SKIP`` mode is used in a distributed setting, beware to manually ensure the
-          number of valid samples are the same for each shard (otherwise one may encounter hangs).
+        - If ``ErrorSamplesMode.SKIP`` mode is used in a distributed setting, make sure to manually ensure the
+          number of valid samples is the same for each shard (otherwise one may encounter hangs).
           One technique is to manually concat a dataset of all valid samples plus a
           take operation for the number of skipped erroneous samples.
 
@@ -1071,11 +1073,11 @@ def set_error_samples_mode(error_samples_mode):
         error_samples_mode (ErrorSamplesMode): The method in which erroneous samples should be processed in a dataset
             pipeline. It can be any of [ErrorSamplesMode.RETURN, ErrorSamplesMode.REPLACE, ErrorSamplesMode.SKIP].
 
-            - ``ErrorSamplesMode.RETURN``: means erroneous sample results in error raised and returned.
+            - ``ErrorSamplesMode.RETURN``: means an erroneous sample results in an error being raised and returned.
 
-            - ``ErrorSamplesMode.REPLACE``: means erroneous sample is replaced with a correct sample.
+            - ``ErrorSamplesMode.REPLACE``: means an erroneous sample is replaced with a correct sample.
 
-            - ``ErrorSamplesMode.SKIP``: means erroneous sample is skipped.
+            - ``ErrorSamplesMode.SKIP``: means an erroneous sample is skipped.
 
     Raises:
         TypeError: If `error_samples_mode` is not of type ErrorSamplesMode.
@@ -1171,7 +1173,7 @@ def set_multiprocessing_start_method(start_method='fork'):
 def get_multiprocessing_start_method():
     """
     Get the global configuration of multiprocessing start method.
-    If `set_multiprocessing_start_method` is never called before, the default start method is ``'fork'`` .
+    If `set_multiprocessing_start_method` has never been called before, the default start method is ``'fork'`` .
 
     Returns:
         str, multiprocessing start method.

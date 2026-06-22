@@ -7,7 +7,7 @@ mindspore.dataset.utils.imshow_det_bbox
 
     参数：
         - **image** (numpy.ndarray) - 待绘制的图像，shape为 :math:`<C, H, W>` 或 :math:`<H, W, C>` ，通道顺序为RGB。
-        - **bboxes** (numpy.ndarray) - 边界框（包含类别置信度），shape为 :math:`<N, 4>` 或 :math:`<N, 5>` ，格式为 :math:`<N,X,Y,W,H>`。
+        - **bboxes** (numpy.ndarray) - 边界框（包含类别置信度），shape为 :math:`<N, 4>` 或 :math:`<N, 5>` ，数据顺序为 :math:`<N,X,Y,W,H>`。
         - **labels** (numpy.ndarray) - 边界框的类别，shape为 :math:`<N, 1>`。
         - **segm** (numpy.ndarray, 可选) - 图像分割掩码，shape为 :math:`<M, H, W>` ，M表示类别总数。默认值： ``None`` ，不绘制掩码。
         - **class_names** (list[str], tuple[str], dict, 可选) - 类别索引到类别名的映射表。默认值： ``None`` ，仅显示类别索引。
