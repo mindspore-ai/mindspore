@@ -36,7 +36,7 @@ class JitConfig:
             The specific implementation method is as follows:
 
             - ``"auto"``: The framework automatically selects the execution method.
-            - ``"sink"``: Support the network to load and load the entire device at once, and then execute it by
+            - ``"sink"``: Support the network to load into the entire device at once, and then execute it by
               input driver, without the need to iterate through each operator to achieve better execution performance.
               This mode is only supported on the Ascend backend.
             - ``"no_sink"``: The network model is executed asynchronously one by one using a single operator.

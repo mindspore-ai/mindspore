@@ -6,4 +6,4 @@ mindspore.dataset.dataloader.SequentialSampler
     按照顺序对数据集进行采样。
 
     参数：
-        - **data_source** (Dataset) - 待采样的数据集
+        - **data_source** (Dataset) - 待采样的数据集。

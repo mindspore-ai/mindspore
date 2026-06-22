@@ -6,7 +6,7 @@ mindspore.data_sink
     对输入的函数封装生成一个新的函数。
 
     .. note::
-        使用数据下沉时，数据集将被自动循环发送至设备。设备侧最多缓存100个batch的数据，且所占内存不大于2G。此时仅需考虑每次下沉的步数 `sink_size`。 `sink_size` 默认为 ``1``，代表每个epoch仅从缓存中取一个batch的数据进行训练并输出loss。若 `sink_size` 大于1，则每个epoch从缓存中取出 `sink_size` 个batch的数据进行训练，然后输出loss。
+        使用数据下沉时，数据集将被自动循环发送至设备。设备侧最多缓存100个batch的数据，且所占内存不大于2GB。此时仅需考虑每次下沉的步数 `sink_size`。 `sink_size` 默认为 ``1``，代表每个epoch仅从缓存中取一个batch的数据进行训练并输出loss。若 `sink_size` 大于1，则每个epoch从缓存中取出 `sink_size` 个batch的数据进行训练，然后输出loss。
 
     参数：
         - **fn** (Function) - 将与数据集一起运行的函数。

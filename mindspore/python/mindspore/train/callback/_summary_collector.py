@@ -75,7 +75,7 @@ class LineageMetadata:
 
 class SummaryCollector(Callback):
     """
-    SummaryCollector can help you to collect some common information,
+    SummaryCollector can help collect some common information,
     such as loss, learning rate, computational graph and so on.
 
     SummaryCollector also enables the summary operator to collect data to summary files.
@@ -130,7 +130,7 @@ class SummaryCollector(Callback):
                 For example, if it is set to ``128`` , the resolution of the landscape is 128 * 128.
                 The calculation time increases with the increase of resolution.
                 Default: ``40`` . Optional values: between 3 and 256.
-              - unit (str): Specify the interval strength of the training process. Default: ``"step"`` .
+              - unit (str): Specify the interval unit of the training process. Default: ``"step"`` .
                 Optional: epoch/step.
               - create_landscape (dict): Select how to create loss landscape.
                 Training process loss landscape(train) and training result loss landscape(result).
@@ -164,7 +164,7 @@ class SummaryCollector(Callback):
             affect the number of steps TensorSummary will be collected.
             Default: ``None`` , which means to follow the behavior as described above.
         max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
-            For example, to write not larger than 4GB, specify `max_file_size=4*1024*3`.
+            For example, to write not larger than 4GB, specify `max_file_size=4*1024*1024*1024`.
             Default: ``None`` , which means no limit.
         export_options (Union[None, dict]): Perform custom operations on the export data.
             Note that the size of export files is not limited by the max_file_size.

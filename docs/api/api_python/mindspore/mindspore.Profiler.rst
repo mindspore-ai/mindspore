@@ -33,7 +33,7 @@ mindspore.Profiler
           - AicoreMetrics.Memory：包含ub\_read/write_bw、l1_read/write_bw、l2_read/write_bw、main_mem_read/write_bw等。
           - AicoreMetrics.MemoryL0：包含l0a_read/write_bw、l0b_read/write_bw、l0c_read/write_bw等。
           - AicoreMetrics.ResourceConflictRatio：包含vec_bankgroup/bank/resc_cflt_ratio等。
-          - AicoreMetrics.MemoryUB：包含ub\_read/write_bw_mte、 ub\_read/write_bw_vector、 ub\_/write_bw_scalar等。
+          - AicoreMetrics.MemoryUB：包含ub\_read/write_bw_mte、ub\_read/write_bw_vector、ub\_read/write_bw_scalar等。
           - AicoreMetrics.L2Cache：包含write_cache_hit、 write_cache_miss_allocate、 r0_read_cache_hit、 r1_read_cache_hit等。
           - AicoreMetrics.MemoryAccess：主存以及L2 Cache的存访带宽和存量统计。
 

@@ -132,7 +132,7 @@ class RowTensor(RowTensorInner):
 
 class SparseTensor(COOTensor_):
     """
-    A sparse representation of a set of nonzero elements from a tensor at given indices.
+    A sparse representation of a set of non-zero elements from a tensor at given indices.
 
     SparseTensor can only be used in the `Cell`'s construct method.
 
@@ -655,13 +655,13 @@ class CSRTensor(CSRTensor_):
     The length of `indptr` should equal to `shape[0]+1`, where the elements should be equal or monotonically
     increasing and the maximum value should be equal to the number of non-zero values in the tensor. The length
     of `indices` and `values` should be equal to the number of non-zero values in the tensor. To be concrete, get
-    the query indices of none-zero elements in every line according to `indptr`. Then get the column positions of
-    none-zero elements in every line by looking up query indices in `indices`. Finally, get the actual values of
-    none-zero elements in every line by looking up query indices in `values`.
+    the query indices of non-zero elements in every line according to `indptr`. Then get the column positions of
+    non-zero elements in every line by looking up query indices in `indices`. Finally, get the actual values of
+    non-zero elements in every line by looking up query indices in `values`.
 
     In the former example, 'indptr' of
-    [0, 2, 5, 6] represents that the indices of 0th row of the tensor origins from [0, 2), the indices of
-    the 1st row of the tensor origins from [2, 5) and the 2nd row of the tensor origins from [5, 6). For example:
+    [0, 2, 5, 6] represents that the indices of 0th row of the tensor originate from [0, 2), the indices of
+    the 1st row of the tensor originate from [2, 5) and the 2nd row of the tensor originate from [5, 6). For example:
 
     - The column positions of the non-zero elements of the 0th row in the tensor are provided by the [0, 2) elements in
       `indices` (i.e. [0, 3]) and the corresponding values are provided by the [0, 2) elements in `values`

@@ -133,7 +133,7 @@ class SummaryRecord:
 
     The API will create a summary file and lineage files lazily in a given directory and writes data to them.
     It writes the data to files by executing the `record` method. In addition to recording the data bubbled up from
-    the network by defining the summary operators, SummaryRecord also supports to record extra data which
+    the network by defining the summary operators, SummaryRecord also supports recording extra data which
     can be added by calling add_value.
 
     Note:
@@ -141,7 +141,7 @@ class SummaryRecord:
            Please see the Example section below to learn how to close properly in two ways.
         2. Only one SummaryRecord instance is allowed at a time, otherwise it will cause data writing problems.
         3. SummaryRecord only supports Linux systems.
-        4. The Summary is not supported when compile source with `-s on` option.
+        4. The Summary is not supported when compiling source with `-s on` option.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
@@ -169,7 +169,7 @@ class SummaryRecord:
 
     Raises:
         TypeError: `max_file_size` is not int or `file_prefix` and `file_suffix` is not string.
-        ValueError: The Summary is not supported, please without `-s on` and recompile source.
+        ValueError: The Summary is not supported, please recompile without `-s on`.
 
     Examples:
         >>> import mindspore as ms
@@ -245,7 +245,7 @@ class SummaryRecord:
                   summary_record will not record the data of summary operators.
 
         Raises:
-            ValueError: `mode` is not in the optional value.
+            ValueError: `mode` is not in the optional values.
 
         Examples:
             >>> import mindspore as ms
@@ -397,7 +397,7 @@ class SummaryRecord:
 
         Args:
             step (int): Represents training step number.
-            train_network (Cell): The spare network for saving graph.
+            train_network (Cell): The training network for saving graph.
                 Default: ``None``, it means it will not save the graph summary when the original network graph is None.
             plugin_filter (Callable[[str], bool], optional): The filter function, \
                 which is used to filter out which plugin should be written. Default: ``None``.

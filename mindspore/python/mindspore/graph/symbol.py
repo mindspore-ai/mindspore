@@ -19,10 +19,10 @@ __all__ = ['Symbol']
 
 class Symbol:
     r"""
-    Symbol is a data structure to indicate the symbolic info of shape.
+    Symbol is a data structure to indicate the symbolic information of shape.
 
     For dynamic shape networks, compared with only setting the unknown dimensions ( ``None`` ) in `Tensor` , providing
-    more symbolic shape info can help the framework better optimize the computation graph, to improve the performance of
+    more symbolic shape info can help the framework better optimize the computation graph to improve the performance of
     network execution.
 
     Args:
@@ -33,7 +33,7 @@ class Symbol:
         remainder (int): The remainder( :math:`r` ) when symbol is represented by :math:`d * N + r, N \ge 1` .
             Default: ``0`` .
         unique (bool): When the symbol object is used multiple times, if `unique` is ``True`` , the shape items of this
-            symbol are considered to be same length, otherwise only symbol info is shared by multiple dimensions.
+            symbol are considered to be same length, otherwise only symbol information is shared by multiple dimensions.
             Default: ``False`` .
 
     Outputs:
