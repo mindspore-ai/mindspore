@@ -69,7 +69,7 @@ def test_mindir_export_split():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.addn = ops.AddN()
             self.y = Parameter(Tensor(np.array([2, 3, 3, 4]).astype(np.float32)), name="w")
             self.z = Parameter(Tensor(np.array([2, 3, 3, 4])).astype(np.float32), name="z")
@@ -106,7 +106,7 @@ def test_mindir_export_larger_error():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = ops.Add()
             self.y = Parameter(Tensor(np.array([2, 3, 3, 4]).astype(np.float32)), name="w")
 
@@ -136,7 +136,7 @@ def test_mindir_export_larger_parameter_exceed_1t_mock():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.addn = ops.AddN()
             self.y = Parameter(Tensor(np.array([2, 3, 3, 4]).astype(np.float32)), name="w")
             self.z = Parameter(Tensor(np.array([2, 3, 3, 4])).astype(np.float32), name="z")
@@ -220,7 +220,7 @@ def test_mindir_export_remove_parameter():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.addn = ops.AddN()
             self.y = Parameter(Tensor(np.array([2, 3, 3, 4]).astype(np.float32)), name="w")
             self.z = Parameter(Tensor(np.array([2, 3, 3, 4])).astype(np.float32), name="z")
@@ -232,6 +232,6 @@ def test_mindir_export_remove_parameter():
     add_net = Net()
     export(add_net, x, file_name="mindir_export_split", file_format="MINDIR")
     shutil.rmtree("./mindir_export_split_variables/")
-    with pytest.raises(RuntimeError, match=" please check the correct of the file."):
+    with pytest.raises(RuntimeError, match="Load MindIR failed."):
         load("mindir_export_split_graph.mindir")
     ms.train.serialization.TOTAL_SAVE = 1024 * 1024

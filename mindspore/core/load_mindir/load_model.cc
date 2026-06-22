@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <stack>
@@ -29,9 +30,14 @@
 #include <utility>
 #include <nlohmann/json.hpp>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "ir/core_ops_primitive.h"
 #include "utils/crypto.h"
 #include "utils/os.h"
+#include "utils/file_utils.h"
 #include "ir/functor.h"
 #include "ir/map_tensor.h"
 #include "ir/param_info.h"
@@ -372,6 +378,49 @@ bool CheckModelConfigureInfo(const mind_ir::ModelProto &model_proto) {
 }  // namespace
 
 namespace {
+constexpr size_t kVarDirMaxDepth = 10;
+
+bool IsPathSeparator(char c) { return c == '/' || c == '\\'; }
+
+bool IsSymlink(const std::string &path) {
+#ifdef _WIN32
+  DWORD attrs = GetFileAttributesA(path.c_str());
+  if (attrs == INVALID_FILE_ATTRIBUTES) {
+    return false;
+  }
+  return (attrs & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+#else
+  struct stat st;
+  if (lstat(path.c_str(), &st) != 0) {
+    return false;
+  }
+  return S_ISLNK(st.st_mode) != 0;
+#endif
+}
+
+// Check whether canonical path `child` is located inside canonical directory `parent`.
+// On Windows the comparison is case-insensitive and both '/' and '\\' are treated as separators.
+bool IsPathContained(const std::string &parent, const std::string &child) {
+  if (parent.empty() || child.empty() || child.size() < parent.size()) {
+    return false;
+  }
+#ifdef _WIN32
+  for (size_t i = 0; i < parent.size(); ++i) {
+    if (std::tolower(static_cast<unsigned char>(parent[i])) != std::tolower(static_cast<unsigned char>(child[i]))) {
+      return false;
+    }
+  }
+#else
+  if (child.compare(0, parent.size(), parent) != 0) {
+    return false;
+  }
+#endif
+  if (child.size() == parent.size()) {
+    return true;
+  }
+  return IsPathSeparator(parent.back()) || IsPathSeparator(child[parent.size()]);
+}
+
 class MSANFModelParser {
  public:
   MSANFModelParser() = default;
@@ -1046,6 +1095,34 @@ bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &n
   return true;
 }
 
+// Resolve and validate the external data file path declared in a TensorProto.
+// Returns the canonical file path on success, or empty string on failure.
+// This prevents directory traversal via a malicious external_data.location.
+std::string ResolveExternalDataPath(const std::string &mindir_path, const std::string &location) {
+  if (location.empty()) {
+    MS_LOG(ERROR) << "External data location is empty.";
+    return "";
+  }
+  auto resolved_dir_opt = FileUtils::GetRealPath(mindir_path.c_str());
+  if (!resolved_dir_opt.has_value()) {
+    MS_LOG(ERROR) << "Failed to resolve mindir path: " << mindir_path;
+    return "";
+  }
+  const std::string &resolved_dir = resolved_dir_opt.value();
+  std::string raw_file = resolved_dir + "/" + location;
+  auto resolved_file_opt = FileUtils::GetRealPath(raw_file.c_str());
+  if (!resolved_file_opt.has_value()) {
+    MS_LOG(ERROR) << "Failed to resolve external data path, file may not exist: " << raw_file;
+    return "";
+  }
+  std::string file = resolved_file_opt.value();
+  if (!IsPathContained(resolved_dir, file)) {
+    MS_LOG(ERROR) << "External data path escapes model directory: " << location << " resolves to " << file;
+    return "";
+  }
+  return file;
+}
+
 bool ValidateExternalDataBounds(int64_t offset, int64_t length, size_t buffer_size) {
   if (offset < 0) {
     MS_LOG(ERROR) << "Invalid external data offset: " << offset << ", offset must be non-negative.";
@@ -1083,9 +1160,20 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
   if (it != tenor_data_.end()) {
     data = it->second.first.get();
     buffer_size = it->second.second;
+  } else if (weight_buffer_.first != nullptr) {
+    if (mindir_dec_key_ != nullptr) {
+      MS_LOG(ERROR)
+        << "Currently, the external weight data doesn't support encryption if weight is passed by buffer not file.";
+      return false;
+    }
+    data = reinterpret_cast<const unsigned char *>(weight_buffer_.first);
+    buffer_size = weight_buffer_.second;
   } else {
-    std::string file = mindir_path_ + "/" + external_data.location();
-    if (weight_buffer_.first == nullptr && mindir_dec_key_ != nullptr) {
+    std::string file = ResolveExternalDataPath(mindir_path_, external_data.location());
+    if (file.empty()) {
+      return false;
+    }
+    if (mindir_dec_key_ != nullptr) {
       size_t plain_len;
       auto plain_data =
         Decrypt(&plain_len, file, mindir_dec_key_, mindir_key_size_, mindir_dec_mode_, mindir_dec_num_parallel_);
@@ -1102,7 +1190,7 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       buffer_size = plain_len;
       data = plain_data.get();
       (void)tenor_data_.emplace(external_data.location(), std::make_pair(std::move(plain_data), buffer_size));
-    } else if (weight_buffer_.first == nullptr) {
+    } else {
       // Read file
       std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
       if (!fid) {
@@ -1131,13 +1219,6 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       (void)tenor_data_.emplace(
         external_data.location(),
         std::make_pair(std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())), buffer_size));
-    } else if (mindir_dec_key_ != nullptr) {
-      MS_LOG(ERROR)
-        << "Currently, the external weight data doesn't support encryption if weight is passed by buffer not file.";
-      return false;
-    } else {
-      data = reinterpret_cast<const unsigned char *>(weight_buffer_.first);
-      buffer_size = weight_buffer_.second;
     }
   }
 
@@ -2867,8 +2948,12 @@ bool MSANFModelParser::BuildAttrForCNode(const CNodePtr &cnode, const mind_ir::N
   return true;
 }
 
-bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
+bool get_all_files(const std::string &dir_in, std::vector<std::string> *files, size_t depth = 0) {
   if (dir_in.empty()) {
+    return false;
+  }
+  if (depth >= kVarDirMaxDepth) {
+    MS_LOG(ERROR) << "Directory scan depth exceeds limit: " << kVarDirMaxDepth << ", dir: " << dir_in;
     return false;
   }
   struct stat s;
@@ -2886,24 +2971,29 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
   }
   dirent *p = nullptr;
   while ((p = readdir(open_dir)) != nullptr) {
+    if (p->d_name[0] == '.') {
+      continue;
+    }
+    std::string name = dir_in + std::string("/") + std::string(p->d_name);
+    if (IsSymlink(name)) {
+      MS_LOG(WARNING) << "Skip symbolic link in variables directory: " << name;
+      continue;
+    }
     struct stat st;
-    if (p->d_name[0] != '.') {
-      std::string name = dir_in + std::string("/") + std::string(p->d_name);
-      ret = stat(name.c_str(), &st);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "stat error, ret is : " << ret;
+    ret = stat(name.c_str(), &st);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "stat error, ret is : " << ret;
+      closedir(open_dir);
+      return false;
+    }
+    if (S_ISDIR(st.st_mode)) {
+      if (!get_all_files(name, files, depth + 1)) {
+        MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
         closedir(open_dir);
         return false;
       }
-      if (S_ISDIR(st.st_mode)) {
-        if (!get_all_files(name, files)) {
-          MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
-          closedir(open_dir);
-          return false;
-        }
-      } else if (S_ISREG(st.st_mode)) {
-        files->push_back(name);
-      }
+    } else if (S_ISREG(st.st_mode)) {
+      files->push_back(name);
     }
   }
   closedir(open_dir);
@@ -3092,6 +3182,10 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
     size_t path_len = strlen(abs_path_buff) - strlen("graph.mindir");
     string var_path = std::string(abs_path_buff).substr(0, path_len);
     var_path += "variables";
+    if (IsSymlink(var_path)) {
+      MS_LOG(ERROR) << "Refusing to use symbolic link as variables directory: " << var_path;
+      return nullptr;
+    }
     std::ifstream ifs(var_path);
     if (ifs.good()) {
       MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
@@ -3125,7 +3219,8 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
   MSANFModelParser model_parser;
 
   auto mindir_path = std::string(abs_path_buff);
-  model_parser.SetMindIRPath(mindir_path.substr(0, mindir_path.rfind("/")));
+  auto mindir_sep_pos = mindir_path.find_last_of("/\\");
+  model_parser.SetMindIRPath(mindir_sep_pos == std::string::npos ? mindir_path : mindir_path.substr(0, mindir_sep_pos));
   InitModelParser(&model_parser, this);
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_, name_to_node);
   if (has_parallel_info_) {
