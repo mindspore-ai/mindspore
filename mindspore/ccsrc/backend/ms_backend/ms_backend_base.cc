@@ -336,7 +336,8 @@ bool MSBackendBase::DumpBackendInfo() {
   auto backinfo_json_path = cache_path + kControlNodeJsonSuffix;
   auto backinfo_json_real_path = Common::CreatePrefixPath(backinfo_json_path, true);
   if (!backinfo_json_real_path.has_value()) {
-    MS_LOG(ERROR) << "Invalid backinfo json path:" << backinfo_json_real_path.value();
+    MS_LOG(ERROR) << "Invalid backinfo json path:" << backinfo_json_path;
+    return false;
   }
   MS_LOG(DEBUG) << "Backinfo Json path:" << backinfo_json_real_path.value();
   std::ifstream backinfo_json_stream(backinfo_json_real_path.value());

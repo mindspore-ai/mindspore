@@ -18,6 +18,7 @@ import re
 import sys
 import time
 import signal
+import shutil
 import subprocess
 import socket
 import psutil
@@ -590,7 +591,8 @@ class _ProcessManager:
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
         if os.path.exists(scheduler_log_path):
-            subprocess.run(["grep", "-E", "-C", "5", "--", "ERROR|CRITICAL|Traceback|Error",
+            grep_path = shutil.which("grep") or "/usr/bin/grep"
+            subprocess.run([grep_path, "-E", "-C", "5", "--", "ERROR|CRITICAL|Traceback|Error",
                             scheduler_log_path], check=False)
 
     def format_worker_log_name(self):
