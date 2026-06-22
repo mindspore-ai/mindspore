@@ -96,6 +96,7 @@ def test_with_stream_event():
                 event = self.depend(event, z)
                 event.record()
                 event.wait()
+            z = self.depend(z, event)
             return y + z
 
     x = Tensor(np.ones([3, 3]), ms.float32)
@@ -111,7 +112,7 @@ def test_with_stream_event():
     except FileNotFoundError:
         pass
     assert (out.asnumpy() == (x * 5).asnumpy()).all()
-    assert len(stream_id_num) == 5
+    assert len(stream_id_num) == 6
     assert len(event_id_num) == 3
 
 
@@ -136,6 +137,7 @@ def test_with_stream_event_grad():
                 event = self.depend(event, z)
                 event.record()
                 event.wait()
+            z = self.depend(z, event)
             return y + z
 
     ms.set_context(mode=ms.GRAPH_MODE)
@@ -170,6 +172,7 @@ def test_event_multi_with_streams():
                 z1 = a + b + x
                 event = self.depend(event, z1)
                 event.wait()
+                z = self.depend(z, event)
                 z = z + z1
             y = self.depend(y, z)
             return y + z
@@ -192,7 +195,7 @@ def test_event_multi_with_streams():
     except FileNotFoundError:
         pass
     assert (out.asnumpy() == (x * 8).asnumpy()).all()
-    assert len(stream_id_num) == 10
+    assert len(stream_id_num) == 11
     assert len(event_id_num) == 4
     assert len(add_num) == 4
 
@@ -218,6 +221,7 @@ def test_with_stream_multi_events():
             with MyMsJitStreamCtx(s1):
                 event1.record()
                 event1.wait()
+                y = self.depend(y, event1)
                 output = y + x
                 event2 = self.depend(event2, output)
                 event2.record()
@@ -270,6 +274,7 @@ def test_with_stream_event_with_morph():
                 event = ops.Depend()(event, y)
                 event.record()
                 event.wait()
+            y = ops.Depend()(y, event)
             return y - 1
 
         return inner
@@ -338,6 +343,7 @@ def test_with_stream_event_list():
             for event_index in event_list:
                 event_end_recv = event_index.wait()
                 y = self.depend(y, event_end_recv)
+                z = self.depend(z, event_end_recv)
             return y + z
 
     save_path = "./test_with_stream_event_list"
@@ -356,7 +362,7 @@ def test_with_stream_event_list():
     except FileNotFoundError:
         pass
     assert (out.asnumpy() == (x * 5).asnumpy()).all()
-    assert len(stream_id_num) == 9
+    assert len(stream_id_num) == 10
     assert len(event_id_num) == 8
 
 
