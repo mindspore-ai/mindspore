@@ -88,7 +88,7 @@ class LPPool1d(Cell):
     r"""
     Applying 1D LPPooling operation on an input Tensor can be regarded as forming a 1D input plane.
 
-    Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})``, the output is of
+    Typically the input is of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`, the output is of
     shape :math:`(N_{out}, C_{out}, L_{out})` or :math:`(C_{out}, L_{out})`, with the same shape as input,
     the operation is as follows.
 
