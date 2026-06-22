@@ -95,6 +95,9 @@ class RUNTIME_HARDWARE_EXPORT KernelPack {
 
  private:
   bool ReadFromJsonFileHelper(std::ifstream &kernel_bin);
+  bool LoadJsonBuffer(const std::string &json_f);
+  bool LoadCudaKernel(const std::string &json_f, const nlohmann::json &js);
+  bool LoadAscendKernel(const std::string &json_f, const nlohmann::json &js);
   void ParseKernelJson(const nlohmann::json &js);
   static void ParseKernelName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
   static void ParseBinFileName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);

@@ -357,6 +357,9 @@ bool DependValueElim::IsUsedByOther(const AnfNodePtr &node, const AnfNodePtr &us
 // {prim:getattr, {prim::resolve, SymbolStr, zeros_like}, Xy} ->Tensor(0, shape(Xy))
 // {{prim::resolve, CommonOPS, getitem}, (tensor0, tensor1,...), 0} -> tensor0
 bool PynativeEliminater::CheckNameSpaceVNode(const AnfNodePtr &node, const std::string &str_value) const {
+  if (node == nullptr) {
+    return false;
+  }
   ValueNodePtr value_node = node->cast<ValueNodePtr>();
   if (value_node == nullptr) {
     return false;
@@ -368,6 +371,9 @@ bool PynativeEliminater::CheckNameSpaceVNode(const AnfNodePtr &node, const std::
 }
 
 bool PynativeEliminater::CheckSymbolVNode(const AnfNodePtr &node, const std::string &str_value) const {
+  if (node == nullptr) {
+    return false;
+  }
   ValueNodePtr value_node = node->cast<ValueNodePtr>();
   if (value_node == nullptr) {
     return false;
@@ -377,6 +383,9 @@ bool PynativeEliminater::CheckSymbolVNode(const AnfNodePtr &node, const std::str
   return symbol->symbol() == str_value;
 }
 bool PynativeEliminater::CheckStrVNode(const AnfNodePtr &node, const std::string &str_value) const {
+  if (node == nullptr) {
+    return false;
+  }
   ValueNodePtr value_node = node->cast<ValueNodePtr>();
   if (value_node == nullptr) {
     return false;
