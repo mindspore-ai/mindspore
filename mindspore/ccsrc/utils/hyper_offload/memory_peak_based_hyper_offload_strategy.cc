@@ -455,6 +455,14 @@ struct CandidateScoreNormalizers {
   double denom_end;
 };
 
+struct CandidateSelectionCommonInputs {
+  const std::vector<PeakEstimateCandidate> &all_candidates;
+  size_t profile_size;
+  const CandidateGapRangeMap &candidate_gap_ranges;
+  const std::vector<size_t> &sorted_indices_by_creation;
+  const std::map<AnfNodePtr, size_t> &node_to_index;
+};
+
 struct CandidateScoreNormalizerRawValues {
   size_t max_candidate_size{0};
   size_t max_cover_start_raw{0};
@@ -480,20 +488,18 @@ CandidateScoreNormalizers BuildCandidateScoreNormalizers(const CandidateScoreNor
                                    static_cast<double>(std::max(kMinScoreDenominator, raw_values.max_cover_end_raw))};
 }
 
-CandidateScoreNormalizers ComputeScoreNormalizers(const std::vector<PeakEstimateCandidate> &all_candidates,
+CandidateScoreNormalizers ComputeScoreNormalizers(const CandidateSelectionCommonInputs &common_inputs,
                                                   const std::set<KernelWithIndex> &excluded_from_selection,
-                                                  size_t peak_index, size_t profile_size,
-                                                  const CandidateGapRangeMap &candidate_gap_ranges,
-                                                  const std::vector<size_t> &sorted_indices_by_creation,
-                                                  const std::map<AnfNodePtr, size_t> &node_to_index) {
+                                                  size_t peak_index) {
   CandidateScoreNormalizerRawValues raw_values;
 
-  for (size_t idx : sorted_indices_by_creation) {
-    const auto &candidate = all_candidates[idx];
-    if (!IsCandidateEligible(candidate, idx, peak_index, excluded_from_selection, candidate_gap_ranges)) {
+  for (size_t idx : common_inputs.sorted_indices_by_creation) {
+    const auto &candidate = common_inputs.all_candidates[idx];
+    if (!IsCandidateEligible(candidate, idx, peak_index, excluded_from_selection, common_inputs.candidate_gap_ranges)) {
       continue;
     }
-    UpdateCandidateScoreNormalizerRawValues(candidate, peak_index, profile_size, node_to_index, &raw_values);
+    UpdateCandidateScoreNormalizerRawValues(candidate, peak_index, common_inputs.profile_size,
+                                            common_inputs.node_to_index, &raw_values);
   }
 
   return BuildCandidateScoreNormalizers(raw_values);
@@ -537,32 +543,29 @@ double ComputeCandidateScore(const PeakEstimateCandidate &candidate, const Candi
          context.weights.cover_end * norm_cover_end - context.weights.neighbor_impact * norm_neighbor;
 }
 
-std::optional<size_t> SelectBestCandidateIdx(const std::vector<PeakEstimateCandidate> &all_candidates,
+std::optional<size_t> SelectBestCandidateIdx(const CandidateSelectionCommonInputs &common_inputs,
                                              const std::set<KernelWithIndex> &excluded_from_selection,
-                                             const std::set<KernelWithIndex> &successfully_offloaded, size_t peak_index,
-                                             size_t profile_size, const CandidateGapRangeMap &candidate_gap_ranges,
-                                             const std::vector<size_t> &sorted_indices_by_creation,
-                                             const std::map<AnfNodePtr, size_t> &node_to_index) {
+                                             const std::set<KernelWithIndex> &successfully_offloaded,
+                                             size_t peak_index) {
   const auto weights = GetCandidateScoreWeights();
-  const auto offloaded_lifecycles = BuildOffloadedLifecycles(all_candidates, successfully_offloaded);
-  const auto normalizers = ComputeScoreNormalizers(all_candidates, excluded_from_selection, peak_index, profile_size,
-                                                   candidate_gap_ranges, sorted_indices_by_creation, node_to_index);
-  const CandidateScoreContext score_context{peak_index,           profile_size, normalizers,
-                                            offloaded_lifecycles, weights,      node_to_index};
+  const auto offloaded_lifecycles = BuildOffloadedLifecycles(common_inputs.all_candidates, successfully_offloaded);
+  const auto normalizers = ComputeScoreNormalizers(common_inputs, excluded_from_selection, peak_index);
+  const CandidateScoreContext score_context{peak_index, common_inputs.profile_size, normalizers, offloaded_lifecycles,
+                                            weights,    common_inputs.node_to_index};
 
   double best_score = std::numeric_limits<double>::lowest();
   std::optional<size_t> best_candidate_idx;
 
-  for (size_t idx : sorted_indices_by_creation) {
-    const auto &candidate = all_candidates[idx];
+  for (size_t idx : common_inputs.sorted_indices_by_creation) {
+    const auto &candidate = common_inputs.all_candidates[idx];
     if (candidate.creation_index >= peak_index) {
       break;
     }
     if (excluded_from_selection.count(candidate.user_info.node)) {
       continue;
     }
-    auto gap_it = candidate_gap_ranges.find(idx);
-    if (gap_it == candidate_gap_ranges.end()) {
+    auto gap_it = common_inputs.candidate_gap_ranges.find(idx);
+    if (gap_it == common_inputs.candidate_gap_ranges.end()) {
       continue;
     }
     const auto covering_gap = FindPeakCoveringGap(gap_it->second, peak_index);
@@ -587,20 +590,27 @@ void ReduceWorkingProfileForGaps(const GapRangeList &gap_ranges, size_t reduce_s
   }
 }
 
-void RecordSelectedOffload(const PeakEstimateCandidate &candidate, UserInfoList *selected_user_infos,
-                           std::vector<std::optional<size_t>> *selected_producer_anchors,
-                           std::vector<GapRangeList> *selected_gap_ranges, const GapRangeList &gap_ranges,
-                           std::vector<size_t> *selected_peak_indices, size_t peak_index) {
-  MS_EXCEPTION_IF_NULL(selected_user_infos);
-  selected_user_infos->push_back(candidate.user_info);
-  if (selected_producer_anchors != nullptr) {
-    selected_producer_anchors->push_back(candidate.creation_index);
+struct SelectedOffloadRecordInputs {
+  const PeakEstimateCandidate &candidate;
+  const GapRangeList &gap_ranges;
+  size_t peak_index;
+  UserInfoList *selected_user_infos;
+  std::vector<std::optional<size_t>> *selected_producer_anchors;
+  std::vector<GapRangeList> *selected_gap_ranges;
+  std::vector<size_t> *selected_peak_indices;
+};
+
+void RecordSelectedOffload(const SelectedOffloadRecordInputs &inputs) {
+  MS_EXCEPTION_IF_NULL(inputs.selected_user_infos);
+  inputs.selected_user_infos->push_back(inputs.candidate.user_info);
+  if (inputs.selected_producer_anchors != nullptr) {
+    inputs.selected_producer_anchors->push_back(inputs.candidate.creation_index);
   }
-  if (selected_gap_ranges != nullptr) {
-    selected_gap_ranges->push_back(gap_ranges);
+  if (inputs.selected_gap_ranges != nullptr) {
+    inputs.selected_gap_ranges->push_back(inputs.gap_ranges);
   }
-  if (selected_peak_indices != nullptr) {
-    selected_peak_indices->push_back(peak_index);
+  if (inputs.selected_peak_indices != nullptr) {
+    inputs.selected_peak_indices->push_back(inputs.peak_index);
   }
 }
 
@@ -612,9 +622,16 @@ bool ApplySingleOffload(const PeakEstimateCandidate &best_cand, const PeakSelect
   if (!gap_ranges.has_value()) {
     return false;
   }
-  ReduceWorkingProfileForGaps(gap_ranges.value(), best_cand.size, outputs.working_profile);
-  RecordSelectedOffload(best_cand, outputs.selected_user_infos, outputs.selected_producer_anchors,
-                        outputs.selected_gap_ranges, gap_ranges.value(), outputs.selected_peak_indices, peak_index);
+  const auto &selected_gap_ranges = gap_ranges.value();
+  ReduceWorkingProfileForGaps(selected_gap_ranges, best_cand.size, outputs.working_profile);
+  const SelectedOffloadRecordInputs record_inputs{best_cand,
+                                                  selected_gap_ranges,
+                                                  peak_index,
+                                                  outputs.selected_user_infos,
+                                                  outputs.selected_producer_anchors,
+                                                  outputs.selected_gap_ranges,
+                                                  outputs.selected_peak_indices};
+  RecordSelectedOffload(record_inputs);
   return true;
 }
 
@@ -649,9 +666,11 @@ std::optional<size_t> FindPeakIndexForSelection(const PeakSelectionInputs &input
 
 std::optional<size_t> SelectBestCandidateForPeak(const PeakSelectionInputs &inputs, const PeakSelectionOutputs &outputs,
                                                  size_t peak_index) {
-  return SelectBestCandidateIdx(inputs.all_candidates, *outputs.excluded_from_selection,
-                                *outputs.successfully_offloaded, peak_index, inputs.profile_size,
-                                inputs.candidate_gap_ranges, inputs.sorted_indices_by_creation, inputs.node_to_index);
+  const CandidateSelectionCommonInputs common_inputs{inputs.all_candidates, inputs.profile_size,
+                                                     inputs.candidate_gap_ranges, inputs.sorted_indices_by_creation,
+                                                     inputs.node_to_index};
+  return SelectBestCandidateIdx(common_inputs, *outputs.excluded_from_selection, *outputs.successfully_offloaded,
+                                peak_index);
 }
 
 void ApplySelectedPeakCandidate(size_t best_candidate_idx, const PeakSelectionInputs &inputs,
