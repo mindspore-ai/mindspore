@@ -280,6 +280,8 @@ std::fstream *FileUtils::OpenFile(const std::string &file_path, std::ios_base::o
 
 bool FileUtils::ParserPathAndModelName(const std::string &output_path, std::string *save_path,
                                        std::string *model_name) {
+  MS_EXCEPTION_IF_NULL(save_path);
+  MS_EXCEPTION_IF_NULL(model_name);
   auto pos = output_path.find_last_of('/');
   if (pos == std::string::npos) {
     pos = output_path.find_last_of('\\');
@@ -296,7 +298,12 @@ bool FileUtils::ParserPathAndModelName(const std::string &output_path, std::stri
     *save_path = output_path.substr(0, pos + 1);
     tmp_model_name = output_path.substr(pos + 1);
   }
-  *save_path = FileUtils::GetRealPath(save_path->c_str()).value();
+  auto real_path = FileUtils::GetRealPath(save_path->c_str());
+  if (!real_path.has_value()) {
+    MS_LOG(DEBUG) << "File path not regular: " << *save_path;
+    return false;
+  }
+  *save_path = real_path.value();
   if (save_path->empty()) {
     MS_LOG(DEBUG) << "File path not regular: " << save_path;
     return false;

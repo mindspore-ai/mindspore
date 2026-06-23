@@ -2030,7 +2030,11 @@ bool MindIRExporter::CreateParameterDir() {
 }
 
 std::string MindIRExporter::CreateExternalPath(const std::string &external_file) {
-  dir_path_ = FileUtils::GetRealPath(dir_name_.c_str()).value();
+  auto real_path = FileUtils::GetRealPath(dir_name_.c_str());
+  if (!real_path.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path failed for directory: " << dir_name_;
+  }
+  dir_path_ = real_path.value();
   std::string external_local_path{};
 #ifdef _WIN32
   external_local_path = dir_path_ + "\\" + external_file;

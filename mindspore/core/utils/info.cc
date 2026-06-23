@@ -36,6 +36,20 @@ thread_local DebugInfoPtr parser_debug_info_ = nullptr;
 
 /// \brief A flag to decide whether record a debug info or not.
 thread_local bool parser_debug_info_flag_ = false;
+
+bool NormalizeLineBuffer(char *line, size_t line_size, const std::string &file_name, int line_num) {
+  MS_EXCEPTION_IF_NULL(line);
+  const auto len = strnlen(line, line_size);
+  if (len == 0) {
+    return true;
+  }
+  if (len == line_size - 1 && line[len - 1] != '\n') {
+    MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name.c_str() << " exceed the buffuer size.";
+    return false;
+  }
+  line[strcspn(line, "\n")] = '\0';
+  return true;
+}
 }  // namespace
 
 void ClearThreadLocal() {
@@ -103,23 +117,19 @@ bool Location::ReadSectionDebugInfoFromFile(SourceLineTip tip, int start_line,
   // Read the lines one by one.
   constexpr auto line_str_size = 4096;
   char *line = new char[line_str_size];
+  line[0] = '\0';
   int line_num = 0;
   char *file_out = fgets(line, line_str_size, file);
-  if (strlen(line) != line_str_size - 1 || line[strlen(line) - 1] == '\n') {
-    line[strcspn(line, "\n")] = '\0';
-  } else {
-    MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name_.c_str() << " exceed the buffuer size.";
+  if (file_out != nullptr) {
+    (void)NormalizeLineBuffer(line, line_str_size, file_name_, line_num);
   }
   while (line_num != line_ - 1 && file_out != NULL) {
     if (tip == kSourceSectionTipNextLineHere && line_num >= start_line - 1) {
       section_debug_info_ss << line << "\n";
     }
     file_out = fgets(line, line_str_size, file);
-    if (strlen(line) != line_str_size - 1 || line[strlen(line) - 1] == '\n') {
-      line[strcspn(line, "\n")] = '\0';
+    if (file_out != nullptr && NormalizeLineBuffer(line, line_str_size, file_name_, line_num)) {
       ++line_num;
-    } else {
-      MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name_.c_str() << " exceed the buffuer size.";
     }
   }
   fclose(file);
@@ -202,22 +212,17 @@ std::string Location::GetStartLineSourceCode(SourceLineTip tip) {
   // Read the lines one by one.
   int line_num = 0;
   file_out = fgets(line, kLineStrSize, file);
-  if (strlen(line) != kLineStrSize - 1 || line[strlen(line) - 1] == '\n') {
-    line[strcspn(line, "\n")] = '\0';
-  } else {
-    MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name_.c_str() << " exceed the buffuer size.";
+  if (file_out != nullptr) {
+    (void)NormalizeLineBuffer(line, kLineStrSize, file_name_, line_num);
   }
   while (line_num != line_ - 1 && file_out != NULL) {
     file_out = fgets(line, kLineStrSize, file);
-    if (strlen(line) != kLineStrSize - 1 || line[strlen(line) - 1] == '\n') {
+    if (file_out != nullptr && NormalizeLineBuffer(line, kLineStrSize, file_name_, line_num)) {
       ++line_num;
-    } else {
-      MS_LOG(ERROR) << "Line " << line_num << " of file " << file_name_.c_str() << " exceed the buffuer size.";
     }
   }
   fclose(file);
 
-  line[strcspn(line, "\n")] = '\0';
   debug_info_ss << HighlightLine(line, column_, column_end_, line_end_ == line_, tip);
   return debug_info_ss.str();
 }
