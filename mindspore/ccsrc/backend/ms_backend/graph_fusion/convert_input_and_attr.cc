@@ -169,6 +169,7 @@ ValuePtr ScalarTensorToScalar(const ValuePtr &value) {
 
 ValuePtr NormalizeIntSequence(const ValuePtr &value) {
   static auto ConvertTensorToInt = [](const tensor::TensorPtr &tensor) -> ValuePtr {
+    MS_EXCEPTION_IF_NULL(tensor);
     if (tensor->data_type() == kNumberTypeInt64) {
       return std::make_shared<Int64Imm>(GetTensorData<int64_t>(tensor));
     } else if (tensor->data_type() == kNumberTypeInt32) {

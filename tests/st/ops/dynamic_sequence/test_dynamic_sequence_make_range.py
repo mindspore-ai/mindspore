@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test sequence make range operation."""
 from tests.mark_utils import arg_mark
-import pytest
 from mindspore import context
 from mindspore.nn import Cell
 from mindspore.common import mutable
@@ -69,6 +69,44 @@ def test_seqence_make_range():
 
     net_ms = NetRange1()
     fact = TupleFactory(net_ms, func1, (input_x,))
+    fact.forward_cmp()
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+def test_seqence_make_range_empty():
+    """
+    Feature: test sequence makerange op with empty range
+    Description: range(0), range(5, 0, 1), range(1, 1) produce empty outputs
+    Expectation: the behavior is matched to python style, no exception raised
+    """
+
+    def func3(x, y, z):
+        return tuple(range(x, y, z))
+
+    def func2(x, y):
+        return tuple(range(x, y))
+
+    def func1(x):
+        return tuple(range(x))
+
+    # range(0) -> ()
+    net_ms = NetRange1()
+    fact = TupleFactory(net_ms, func1, (0,))
+    fact.forward_cmp()
+
+    # range(5, 0, 1) -> () (decreasing range with positive step)
+    net_ms = NetRange3()
+    fact = TupleFactory(net_ms, func3, (5, 0, 1))
+    fact.forward_cmp()
+
+    # range(1, 1) -> () (start == limit)
+    net_ms = NetRange2()
+    fact = TupleFactory(net_ms, func2, (1, 1))
+    fact.forward_cmp()
+
+    # range(0, 5, -1) -> () (increasing range with negative step)
+    net_ms = NetRange3()
+    fact = TupleFactory(net_ms, func3, (0, 5, -1))
     fact.forward_cmp()
 
 
