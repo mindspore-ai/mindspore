@@ -122,6 +122,9 @@ void CheckConv3DShape(const PrimitivePtr &primitive, const ShapeVector &input_sh
                                << weight_shape[kIndex1];
     }
   }
+  if (!padding_opt.has_value() || !stride_opt.has_value() || !dilation_opt.has_value()) {
+    return;
+  }
   mindspore::PadMode padding_enum = static_cast<mindspore::PadMode>(padding_opt.value());
   const auto &stride = stride_opt.value();
   const auto &dilation = dilation_opt.value();

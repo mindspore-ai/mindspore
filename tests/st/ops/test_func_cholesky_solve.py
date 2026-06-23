@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test cholesky_solve functional api."""
 from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
@@ -52,3 +53,32 @@ def test_ops_cholesky_solve(mode):
                      [4.38670032e-02, -7.10174954e-03],
                      [-5.40790975e-01, -2.93331075e+00]]
     assert np.allclose(output.asnumpy(), expect_output)
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_ops_cholesky_solve_empty_matrix(mode):
+    """
+    Feature: Test cholesky_solve ops api with empty matrices.
+    Description: Test cholesky_solve with 0x0 and batch x 0 x 0 inputs.
+    Expectation: no exception raised, output shape matches input shape.
+    """
+    context.set_context(mode=mode)
+    # 0 x 0 square LHS and 0-column RHS
+    u = Tensor(np.zeros((0, 0), dtype=np.float32), mstype.float32)
+    b = Tensor(np.zeros((0, 0), dtype=np.float32), mstype.float32)
+    net = CholeskySolveOpsNet()
+    output = net(b, u, upper=False)
+    assert output.shape == (0, 0)
+    assert output.asnumpy().size == 0
+
+    # batch x 0 x 0
+    u_batch = Tensor(np.zeros((3, 0, 0), dtype=np.float32), mstype.float32)
+    b_batch = Tensor(np.zeros((3, 0, 0), dtype=np.float32), mstype.float32)
+    output_batch = net(b_batch, u_batch, upper=False)
+    assert output_batch.shape == (3, 0, 0)
+    assert output_batch.asnumpy().size == 0
+
+    # upper=True path
+    output_upper = net(b, u, upper=True)
+    assert output_upper.shape == (0, 0)

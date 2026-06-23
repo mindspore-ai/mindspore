@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test sequence slice operation."""
 from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
@@ -51,6 +52,45 @@ def test_seq_slice():
     step = 1
     net_ms = Net()
     fact = TupleFactory(net_ms, func, (seq, start, stop, step))
+    fact.forward_cmp()
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+def test_seq_slice_empty_result():
+    """
+    Feature: test sequence_slice op with empty slice result
+    Description: seq[1:1], seq[5:1:1], seq[0:0] produce empty outputs
+    Expectation: the behavior is matched to python style, no exception raised
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.seq_slice = S.SequenceSlice()
+
+        def construct(self, seq, start, stop, step):
+            return self.seq_slice(seq, start, stop, step)
+
+    def func(seq, start, stop, step):
+        return seq[start:stop:step]
+
+    seq = (1, 2, 3, 4, 5, 6)
+    net_ms = Net()
+
+    # seq[1:1] -> ()
+    fact = TupleFactory(net_ms, func, (seq, 1, 1, 1))
+    fact.forward_cmp()
+
+    # seq[5:1:1] -> () (start > stop with positive step)
+    fact = TupleFactory(net_ms, func, (seq, 5, 1, 1))
+    fact.forward_cmp()
+
+    # seq[0:0] -> ()
+    fact = TupleFactory(net_ms, func, (seq, 0, 0, 1))
+    fact.forward_cmp()
+
+    # seq[1:5:-1] -> () (start < stop with negative step)
+    fact = TupleFactory(net_ms, func, (seq, 1, 5, -1))
     fact.forward_cmp()
 
 

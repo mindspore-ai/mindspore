@@ -170,7 +170,9 @@ void ParameterizedTruncatedNormalCpuKernelMod::Generate(const int64_t size, cons
 template <typename T>
 void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase1(const int64_t size, const T norm_min, const T norm_max,
                                                              const T stddev, const T mean, T **output_ptr) {
+  MS_EXCEPTION_IF_NULL(output_ptr);
   auto output = *output_ptr;
+  MS_EXCEPTION_IF_NULL(output);
   std::normal_distribution<double> normal_dist(0, 1);
   int sample_num = 0;
   while (sample_num < size) {
@@ -201,7 +203,9 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase1(const int64_t size,
 template <typename T>
 void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase2(const int64_t size, const T norm_min, const T norm_max,
                                                              const T stddev, const T mean, T **output_ptr) {
+  MS_EXCEPTION_IF_NULL(output_ptr);
   auto output = *output_ptr;
+  MS_EXCEPTION_IF_NULL(output);
   std::uniform_real_distribution<double> unifrom_dist(0, 1);
   int sample_num = 0;
   const T diff = norm_max - norm_min;
@@ -238,7 +242,9 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase2(const int64_t size,
 template <typename T>
 void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase3(const int64_t size, const T norm_min, const T norm_max,
                                                              const T stddev, const T mean, T **output_ptr) {
+  MS_EXCEPTION_IF_NULL(output_ptr);
   auto output = *output_ptr;
+  MS_EXCEPTION_IF_NULL(output);
   std::uniform_real_distribution<double> unifrom_dist(0, 1);
   int sample_num = 0;
   const T alpha = (norm_min + sqrt((norm_min * norm_min) + T(4))) / T(2);

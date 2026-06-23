@@ -354,16 +354,19 @@ void NuclearNormCpuKernelMod::svd(int *M, int *N, const T *A, const int *LDA, T 
   const size_t dim[2] = {std::max(static_cast<size_t>(*N), static_cast<size_t>(*M)),
                          std::min(static_cast<size_t>(*N), static_cast<size_t>(*M))};
   T *U_ = GetDeviceAddress<T>(workspace, kIndex5);
+  MS_EXCEPTION_IF_NULL(U_);
   auto ret0 = memset_s(U_, dim[0] * dim[0] * sizeof(T), 0, dim[0] * dim[0] * sizeof(T));
   if (ret0 != EOK) {
     MS_LOG(EXCEPTION) << "For 'NuclearNorm', it does memset_s failed. Error no: " << ret0;
   }
   T *V_ = GetDeviceAddress<T>(workspace, kIndex6);
+  MS_EXCEPTION_IF_NULL(V_);
   auto ret1 = memset_s(V_, dim[1] * dim[1] * sizeof(T), 0, dim[1] * dim[1] * sizeof(T));
   if (ret1 != EOK) {
     MS_LOG(EXCEPTION) << "For 'NuclearNorm', it does memset_s failed. Error no: " << ret1;
   }
   T *S_ = GetDeviceAddress<T>(workspace, kIndex7);
+  MS_EXCEPTION_IF_NULL(S_);
 
   const size_t lda = static_cast<size_t>(*LDA);
 
@@ -394,6 +397,15 @@ void NuclearNormCpuKernelMod::svd(int *M, int *N, const T *A, const int *LDA, T 
 template <typename T>
 void NuclearNormCpuKernelMod::svd_tail(const int *M, const int *N, T *S, const T *S_, T *U, T *VT, const T *U_,
                                        const T *V_, const size_t dim[], const int *LDU, const int LDVT) {
+  MS_EXCEPTION_IF_NULL(S);
+  MS_EXCEPTION_IF_NULL(S_);
+  MS_EXCEPTION_IF_NULL(U);
+  MS_EXCEPTION_IF_NULL(VT);
+  MS_EXCEPTION_IF_NULL(U_);
+  MS_EXCEPTION_IF_NULL(V_);
+  MS_EXCEPTION_IF_NULL(M);
+  MS_EXCEPTION_IF_NULL(N);
+  MS_EXCEPTION_IF_NULL(LDU);
   const size_t ldu = static_cast<size_t>(*LDU);
   const size_t ldv = static_cast<size_t>(LDVT);
   for (size_t i = 0; i < dim[1]; i++) {

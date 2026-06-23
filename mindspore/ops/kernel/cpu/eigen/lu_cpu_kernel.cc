@@ -116,6 +116,9 @@ T LUCpuKernelMod::GetPermutatedValue(const T *lu_value, const std::vector<int> &
 template <typename T>
 bool LUCpuKernelMod::UpdateMajorPermutation(T *lu_value, std::vector<int> *per_value, int *pivots, size_t k,
                                             size_t rows) const {
+  MS_EXCEPTION_IF_NULL(lu_value);
+  MS_EXCEPTION_IF_NULL(per_value);
+  MS_EXCEPTION_IF_NULL(pivots);
   T max_major_value = static_cast<T>(kZeroThreshold);
   size_t max_major_index = 0;
   for (size_t i = k; i < rows; ++i) {
