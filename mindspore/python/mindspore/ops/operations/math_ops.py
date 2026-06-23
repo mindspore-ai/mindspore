@@ -3933,7 +3933,7 @@ class Digamma(Primitive):
 
 class Polygamma(Primitive):
     r"""
-    Computes the :math:`a`th derivative of the polygamma function on `x`.
+    Computes the :math:`a`-th derivative of the polygamma function on `x`.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
