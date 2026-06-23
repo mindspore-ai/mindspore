@@ -22,6 +22,7 @@
 #include <vector>
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
+#include "ir/dtype/type_id.h"
 
 namespace mindspore {
 inline std::string ShapeVectorToString(const ShapeVector &shape) {
@@ -47,6 +48,16 @@ inline size_t SizeOf(const ShapeVector &shape) {
     data_size *= static_cast<size_t>(dim);
   }
   return data_size;
+}
+
+inline size_t NBytesOf(TypeId data_type, const ShapeVector &shape) {
+  auto item_size = abstract::TypeIdSize(data_type);
+  auto data_size = SizeOf(shape);
+  if (item_size != 0 && data_size > SIZE_MAX / item_size) {
+    MS_EXCEPTION(ValueError) << "The total byte size of tensor (shape: " << ShapeVectorToString(shape)
+                             << ", type size: " << item_size << ") exceeds the maximum value of size_t: " << SIZE_MAX;
+  }
+  return item_size * data_size;
 }
 
 inline bool IsOneElementShape(const ShapeVector &shape) {
