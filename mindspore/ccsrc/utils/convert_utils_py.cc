@@ -106,7 +106,6 @@ void check_bprop_input_grads(const py::tuple &py_args, const py::tuple &grads, c
 }  // namespace
 
 py::object BuiltinsToPyData(const Any &value);
-py::object BuiltinsToPyData(const BaseRef &value);
 py::object VectorToPyData(const Any &value);
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &abs = nullptr);
 py::object MakeCSRTensor(const VectorRef &value_list);
@@ -613,15 +612,25 @@ py::object AnyToPyData(const Any &value) {
 py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &abs) {
   py::object ret;
   MS_LOG(DEBUG) << "BaseRefToPyData " << value.ToString();
-  if (utils::isa<int>(value) || utils::isa<float>(value) || utils::isa<double>(value) || utils::isa<bool>(value)) {
-    ret = BuiltinsToPyData(value);
+  if (utils::isa<int>(value)) {
+    MS_LOG(DEBUG) << "int";
+    ret = py::int_(utils::cast<int>(value));
+  } else if (utils::isa<float>(value)) {
+    MS_LOG(DEBUG) << "float";
+    ret = py::float_(utils::cast<float>(value));
+  } else if (utils::isa<double>(value)) {
+    MS_LOG(DEBUG) << "double";
+    ret = py::float_(utils::cast<double>(value));
+  } else if (utils::isa<bool>(value)) {
+    MS_LOG(DEBUG) << "bool";
+    ret = py::bool_(utils::cast<bool>(value));
   } else if (utils::isa<ValuePtr>(value)) {
     MS_LOG(DEBUG) << "ValuePtr";
     ValuePtr v = utils::cast<ValuePtr>(value);
     ret = ValueToPyData(v, abs);
   } else if (utils::isa<PyObjectRef>(value)) {
     MS_LOG(DEBUG) << "py obj";
-    PyObjectRef py_ref = utils::cast<PyObjectRef>(value);
+    const auto &py_ref = utils::cast<PyObjectRef>(value);
     ret = py_ref.object_;
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
@@ -652,26 +661,6 @@ py::object BuiltinsToPyData(const Any &value) {
   } else {
     MS_LOG(DEBUG) << "bool";
     py::bool_ ret = value.cast<bool>();
-    return ret;
-  }
-}
-
-py::object BuiltinsToPyData(const BaseRef &value) {
-  if (utils::isa<int>(value)) {
-    MS_LOG(DEBUG) << "int";
-    py::int_ ret = utils::cast<int>(value);
-    return ret;
-  } else if (utils::isa<float>(value)) {
-    MS_LOG(DEBUG) << "float";
-    py::float_ ret = utils::cast<float>(value);
-    return ret;
-  } else if (utils::isa<double>(value)) {
-    MS_LOG(DEBUG) << "double";
-    py::float_ ret = utils::cast<double>(value);
-    return ret;
-  } else {
-    MS_LOG(DEBUG) << "bool";
-    py::bool_ ret = utils::cast<bool>(value);
     return ret;
   }
 }

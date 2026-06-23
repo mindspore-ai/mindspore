@@ -158,6 +158,7 @@ void SetAttrValueToProto(const ValuePtr &value, onnx::AttributeProto_AttributeTy
 template <size_t beg_idx = 0>
 void SetAttrTupleValueToProto(const ValuePtr &value, onnx::AttributeProto_AttributeType attr_type,
                               onnx::AttributeProto *const attr_proto, const PrimitivePtr &) {
+  MS_EXCEPTION_IF_NULL(value);
   auto tuple_ptr = dyn_cast<ValueTuple>(value);
   if (tuple_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Cast value from type " << value->type_name() << " to ValueTuple failed.";

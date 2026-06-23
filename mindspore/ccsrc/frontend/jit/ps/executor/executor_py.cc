@@ -224,6 +224,7 @@ void ExecutorPy::CheckArgumentsConsistency(const py::tuple &compile_args, const 
 }
 
 namespace {
+constexpr size_t kDynamicShapePairSize = 2;
 
 bool IsDimUnknown(const ShapeVector &shape) {
   if (shape.size() == 1 && shape[0] == abstract::Shape::kShapeRankAny) {
@@ -449,7 +450,6 @@ py::list ExecutorPy::GenerateDynamicTensorArgs(const py::tuple &args_list, const
   for (size_t index = 0; index < py::len(args_list); ++index) {
     py::object arg = args_list[index];
     py::object index_key = py::int_(index);
-
     // Check if index exists in dynamic_shapes dict
     if (!dynamic_dict.contains(index_key)) {
       continue;
@@ -464,7 +464,7 @@ py::list ExecutorPy::GenerateDynamicTensorArgs(const py::tuple &args_list, const
     }
 
     auto pair = py::cast<py::tuple>(name_dyn_arg_pair);
-    if (py::len(pair) != 2) {
+    if (py::len(pair) != kDynamicShapePairSize) {
       MS_EXCEPTION(ValueError) << "Invalid dynamic shape pair for index " << index;
     }
 

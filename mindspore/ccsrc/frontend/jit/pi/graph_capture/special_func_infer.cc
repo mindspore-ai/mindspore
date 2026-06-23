@@ -164,7 +164,9 @@ static bool GuardBuiltinFunc(CallNode *call_node) {
   }
   Graph *graph = call_node->GetGraph();
   MS_EXCEPTION_IF_NULL(graph);
-  bool guard_inputs = call_node->GetVobj()->GetType() == AObject::kTypeAnyValue;
+  auto call_node_vobj = call_node->GetVobj();
+  MS_EXCEPTION_IF_NULL(call_node_vobj);
+  bool guard_inputs = call_node_vobj->GetType() == AObject::kTypeAnyValue;
   const auto &call_node_inputs = call_node->inputs();
   for (size_t i = 1; i < call_node_inputs.size(); ++i) {
     auto cur_input = call_node_inputs[i];
@@ -172,7 +174,9 @@ static bool GuardBuiltinFunc(CallNode *call_node) {
     if (cur_input->GetOpcode() == LOAD_CONST) {
       continue;
     }
-    if (cur_input->GetVobj()->GetType() == AObject::kTypeTensor) {
+    auto cur_input_vobj = cur_input->GetVobj();
+    MS_EXCEPTION_IF_NULL(cur_input_vobj);
+    if (cur_input_vobj->GetType() == AObject::kTypeTensor) {
       auto cur_input_wrapper = cur_input->abstract_wrapper();
       if (cur_input_wrapper == nullptr) {
         MS_LOG(WARNING) << "Failed to guard built-in function since wrapper is nullptr for " << cur_input->ToString();
