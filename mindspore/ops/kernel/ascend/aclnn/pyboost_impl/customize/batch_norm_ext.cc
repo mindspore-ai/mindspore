@@ -21,6 +21,7 @@
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,6 +31,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> BatchNormExt
   const std::optional<TensorPtr> &bias_tensor, const std::optional<TensorPtr> &mean_tensor,
   const std::optional<TensorPtr> &variance_tensor, const BoolImmPtr &training, const FP32ImmPtr &momentum,
   const FP32ImmPtr &epsilon) {
+  constexpr size_t kOutputY = 0;
+  constexpr size_t kOutputSavedMean = 1;
+  constexpr size_t kOutputSavedVariance = 2;
   MS_LOG(DEBUG) << "Call aclnnBatchNorm start";
   // Convert ValuePtr to c++ scalar
   auto outputs = InferOutput<3>(prim::kPrimBatchNormExt, input_tensor, weight_tensor, bias_tensor, mean_tensor,
@@ -41,7 +45,8 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> BatchNormExt
   TensorToDevice(input_tensor, weight_tensor, bias_tensor, mean_tensor, variance_tensor);
   TensorMalloc(outputs);
   DISPATCH_ACLNN(aclnnBatchNorm, input_tensor, weight_tensor, bias_tensor, mean_tensor, variance_tensor, training_imm,
-                 momentum_imm, eps_imm, std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+                 momentum_imm, eps_imm, std::get<kOutputY>(outputs), std::get<kOutputSavedMean>(outputs),
+                 std::get<kOutputSavedVariance>(outputs));
   MS_LOG(DEBUG) << "Launch aclnnBatchNorm end";
   return outputs;
 }

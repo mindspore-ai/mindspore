@@ -25,8 +25,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-FlashAttentionScoreAscendCustomize(
+using FlashAttentionScoreResult =
+  std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>;
+FlashAttentionScoreResult FlashAttentionScoreAscendCustomize(
   const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const std::optional<tensor::TensorPtr> &real_shift, const std::optional<tensor::TensorPtr> &drop_mask,
   const std::optional<tensor::TensorPtr> &padding_mask, const std::optional<tensor::TensorPtr> &attn_mask,

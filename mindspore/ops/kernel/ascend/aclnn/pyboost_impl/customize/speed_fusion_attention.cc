@@ -89,9 +89,7 @@ tensor::TensorPtr RecordRandomStateBeforeGenMask(const TensorPtr &tensor, double
 }
 }  // namespace
 
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr,
-           tensor::TensorPtr, tensor::TensorPtr>
-SpeedFusionAttentionAscendCustomize(
+SpeedFusionAttentionResult SpeedFusionAttentionAscendCustomize(
   const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const Int64ImmPtr &head_num, const Int64ImmPtr &input_layout, const tensor::TensorPtr &seed,
   const tensor::TensorPtr &offset, const std::optional<tensor::TensorPtr> &pse,

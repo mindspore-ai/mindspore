@@ -44,6 +44,10 @@ namespace mindspore {
 namespace pynative {
 namespace autograd {
 namespace {
+constexpr int kCtxTupleIndex = 0;
+constexpr int kInputsTupleIndex = 1;
+constexpr int kOutputTupleIndex = 2;
+
 const char CUSTOM_FORWARD_NAME[] = "forward";
 const char CUSTOM_BACKWARD_NAME[] = "backward";
 const char HAS_SETUP_CONTEXT_ATTR_NAME[] = "_has_setup_context";
@@ -154,9 +158,9 @@ PyObject *MakeCtxInputOutputTuple(PyObject *ctx, PyObject *inputs, PyObject *out
   Py_INCREF(ctx);
   Py_INCREF(inputs);
   Py_INCREF(output);
-  PyTuple_SetItem(result, 0, ctx);
-  PyTuple_SetItem(result, 1, inputs);
-  PyTuple_SetItem(result, 2, output);
+  PyTuple_SetItem(result, kCtxTupleIndex, ctx);
+  PyTuple_SetItem(result, kInputsTupleIndex, inputs);
+  PyTuple_SetItem(result, kOutputTupleIndex, output);
   return result;
 }
 

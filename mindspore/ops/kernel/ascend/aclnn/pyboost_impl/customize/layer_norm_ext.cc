@@ -21,6 +21,7 @@
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,6 +30,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormExt
   const TensorPtr &input_tensor, const ValueTuplePtr &normalized_shape,
   const std::optional<TensorPtr> &weight_opt_tensor, const std::optional<TensorPtr> &bias_opt_tensor,
   const FP32ImmPtr &eps) {
+  constexpr size_t kOutputY = 0;
+  constexpr size_t kOutputMean = 1;
+  constexpr size_t kOutputRstd = 2;
   MS_LOG(DEBUG) << "Call start";
 
   // Convert ValuePtr to c++ scalr
@@ -42,7 +46,7 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormExt
   TensorMalloc(outputs);
 
   DISPATCH_ACLNN(aclnnLayerNorm, input_tensor, normalized_shape_vector, weight_opt_tensor, bias_opt_tensor, eps_imm,
-                 std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+                 std::get<kOutputY>(outputs), std::get<kOutputMean>(outputs), std::get<kOutputRstd>(outputs));
   return outputs;
 }
 }  // namespace pyboost

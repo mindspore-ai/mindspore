@@ -27,8 +27,7 @@ namespace mindspore {
 using mindspore::device::ascend::FASInputLayoutMode;
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-FlashAttentionScoreGradAscendCustomize(
+FlashAttentionScoreGradResult FlashAttentionScoreGradAscendCustomize(
   const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const tensor::TensorPtr &dy, const std::optional<tensor::TensorPtr> &pse_shift,
   const std::optional<tensor::TensorPtr> &drop_mask, const std::optional<tensor::TensorPtr> &padding_mask,

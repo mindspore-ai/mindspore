@@ -26,8 +26,9 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-SparseFlashAttentionGradAscendCustomize(
+using SparseFlashAttentionGradResult =
+  std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>;
+SparseFlashAttentionGradResult SparseFlashAttentionGradAscendCustomize(
   const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const TensorPtr &sparse_indices,
   const TensorPtr &d_out, const TensorPtr &out, const TensorPtr &softmax_max, const TensorPtr &softmax_sum,
   const FP32ImmPtr &scale_value, const Int64ImmPtr &sparse_block_size, const std::optional<TensorPtr> &query_rope,

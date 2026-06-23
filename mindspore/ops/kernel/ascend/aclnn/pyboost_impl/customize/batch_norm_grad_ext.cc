@@ -22,6 +22,7 @@
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,6 +32,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> BatchNormGra
   const std::optional<TensorPtr> &running_mean_tensor, const std::optional<TensorPtr> &runnning_var_tensor,
   const std::optional<TensorPtr> &saved_mean_tensor, const std::optional<TensorPtr> &saved_rstd_tensor,
   const BoolImmPtr &training, const FP32ImmPtr &eps, const ValueTuplePtr &output_mask) {
+  constexpr size_t kOutputDx = 0;
+  constexpr size_t kOutputDweight = 1;
+  constexpr size_t kOutputDbias = 2;
   MS_LOG(DEBUG) << "Call aclnnBatchNormBackward start";
   // Convert ValuePtr to c++ scalar
   auto outputs =
@@ -50,7 +54,7 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> BatchNormGra
   // Async
   DISPATCH_ACLNN(aclnnBatchNormBackward, dout_tensor, input_tensor, weight_tensor, running_mean_tensor,
                  runnning_var_tensor, saved_mean_tensor, saved_rstd_tensor, training_imm, eps_imm, output_mask_u8_vec,
-                 std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+                 std::get<kOutputDx>(outputs), std::get<kOutputDweight>(outputs), std::get<kOutputDbias>(outputs));
   return outputs;
 }
 }  // namespace pyboost

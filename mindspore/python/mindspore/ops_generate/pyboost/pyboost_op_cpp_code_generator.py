@@ -20,6 +20,7 @@ for different devices (Ascend, CPU, GPU) and manages residual files associated w
 
 import os
 import re
+from typing import NamedTuple
 
 from common import template
 from common import gen_constants as K
@@ -31,6 +32,24 @@ from common.base_generator import BaseGenerator
 from .pyboost_utils import is_cube, AclnnUtils, get_return_type, merge_strings_by_chunk_size, is_op_multi_output, \
     chunk_list
 from .op_template_parser import OpTemplateParser
+
+
+class MergeOpLists(NamedTuple):
+    """Grouped merge lists for regular and HCCL operations."""
+    header: list
+    function: list
+    inc: list
+    hccl_header: list
+    hccl_function: list
+    hccl_inc: list
+
+
+class StructureOutputs(NamedTuple):
+    """Grouped outputs info for structure ACLNN helper generation."""
+    bindings: str
+    tensor_allocate: str
+    return_values: str
+    size: int
 
 
 def check_no_basic_int_type(op_args):
@@ -365,8 +384,9 @@ must be provided for comm op {operator_name}")
             self._append_customize_op_code(
                 is_ascend_comm_op, operator_name, op_name_str,
                 call_args_with_type, cpp_func_return, call_impl, op_register,
-                customize_include, merge_op_header, merge_op_function, merge_op_inc,
-                merge_op_hccl_header, merge_op_hccl_function, merge_op_hccl_inc)
+                customize_include,
+                MergeOpLists(merge_op_header, merge_op_function, merge_op_inc,
+                             merge_op_hccl_header, merge_op_hccl_function, merge_op_hccl_inc))
 
     @staticmethod
     def _generate_inplace_check_func(op_proto):
@@ -399,25 +419,24 @@ must be provided for comm op {operator_name}")
 
     def _append_customize_op_code(self, is_ascend_comm_op, operator_name, op_name_str,
                                   call_args_with_type, cpp_func_return, call_impl, op_register,
-                                  customize_include, merge_op_header, merge_op_function, merge_op_inc,
-                                  merge_op_hccl_header, merge_op_hccl_function, merge_op_hccl_inc):
+                                  customize_include, merge_lists: MergeOpLists):
         """Append generated code to appropriate merge lists based on operation type."""
         source_code = self.PYBOOST_SINGLE_OP_SOURCE_TEMPLATE.replace(
             op_name=op_name_str, call_args_with_type=call_args_with_type,
             return_type=cpp_func_return, call_impl=call_impl,
             op_register=op_register, device=self.device_reg_str)
         if is_ascend_comm_op:
-            merge_op_hccl_header.append(
+            merge_lists.hccl_header.append(
                 self.PYBOOST_SINGLE_HCLL_OP_HEADER_TEMPLATE.replace(operator_name=operator_name,
                                                                     customize_include=customize_include))
-            merge_op_hccl_function.append(source_code)
-            merge_op_hccl_inc.append(op_name_str)
+            merge_lists.hccl_function.append(source_code)
+            merge_lists.hccl_inc.append(op_name_str)
         else:
-            merge_op_header.append(
+            merge_lists.header.append(
                 self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=operator_name,
                                                                customize_include=customize_include))
-            merge_op_function.append(source_code)
-            merge_op_inc.append(op_name_str)
+            merge_lists.function.append(source_code)
+            merge_lists.inc.append(op_name_str)
 
     @staticmethod
     def _generate_standalone_call(op_proto, customize_func, call_args):
@@ -544,10 +563,10 @@ class AclnnOpCppCodeGenerator:
         self.PYBOOST_REG_OP_TEMPLATE = Template('MS_REG_PYBOOST_OP(${device}, ${op_name});' \
                                                 '${register_custom_kernel}')
         self.PYBOOST_CALL_TEMPLATE = PYBOOST_CALL_TEMPLATE
-        self.PYBOOST_STRUCTURE_CALL_TEMPLATE = template.PYBOOST_ASCEND_STRUCTURE_CALL_TEMPLATE \
-            if device == 'ascend' else None
-        self.PYBOOST_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE \
-            if device == 'ascend' else None
+        self.pyboost_structure_call_template = (
+            template.PYBOOST_ASCEND_STRUCTURE_CALL_TEMPLATE if device == 'ascend' else None)
+        self.pyboost_single_structure_op_source_template = (
+            template.PYBOOST_ASCEND_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE if device == 'ascend' else None)
         if device == "ascend":
             self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE = template.Template(
                 '#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/${operator_name}.h"\n'
@@ -676,19 +695,18 @@ class AclnnOpCppCodeGenerator:
         arg_name_map = self._generate_structure_arg_name_map(op_proto)
         infer_output = self._generate_structure_infer_output(op_proto, arg_name_map)
         new_params, dispatch_args = self._generate_structure_new_params_and_exec_args(op_proto, arg_name_map)
-        output_bindings, output_tensor_allocate, return_values, output_size = self._generate_structure_outputs(op_proto)
+        struct_outputs = StructureOutputs(*self._generate_structure_outputs(op_proto))
         helper_name = f"{op_proto.op_class.name}StructureCall"
         helper_impl = self._generate_structure_helper_impl(
             helper_name, cpp_func_return, structure_call_args_with_type, infer_output,
-            output_bindings, new_params, create_input_address, output_tensor_allocate,
-            aclnn_name, dispatch_args, return_values)
-        call_impl = self.PYBOOST_STRUCTURE_CALL_TEMPLATE.replace(
+            new_params, create_input_address, aclnn_name, dispatch_args, struct_outputs)
+        call_impl = self.pyboost_structure_call_template.replace(
             call_args=call_args,
             value_tuple_convert=value_tuple_convert,
             const_number_convert=const_number_convert,
             helper_name=helper_name,
             real_call_args=call_args_after_convert,
-            output_size=output_size)
+            output_size=struct_outputs.size)
 
         merge_op_header.append(self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=op_proto.op_name,
                                                                               device=self.device))
@@ -696,7 +714,7 @@ class AclnnOpCppCodeGenerator:
                                                            device=self.device_reg_str,
                                                            register_custom_kernel="")
         merge_op_function.append(
-            self.PYBOOST_SINGLE_STRUCTURE_OP_SOURCE_TEMPLATE.replace(helper_impl=helper_impl,
+            self.pyboost_single_structure_op_source_template.replace(helper_impl=helper_impl,
                                                                      op_name=op_proto.op_class.name,
                                                                      call_args_with_type=call_args_with_type,
                                                                      return_type=cpp_func_return,
@@ -765,20 +783,20 @@ class AclnnOpCppCodeGenerator:
         return '', ', '.join(dispatch_args)
 
     @staticmethod
-    def _generate_structure_helper_impl(helper_name, cpp_func_return, structure_call_args_with_type, infer_output,
-                                        output_bindings, new_params, create_input_address, output_tensor_allocate,
-                                        aclnn_name, dispatch_args, return_values):
+    def _generate_structure_helper_impl(helper_name, cpp_func_return, structure_call_args_with_type,
+                                        infer_output, new_params, create_input_address,
+                                        aclnn_name, dispatch_args, struct_outputs: StructureOutputs):
         """
         Generates the helper function body for a structure ACLNN call.
         """
         return (f"inline {cpp_func_return} {helper_name}({', '.join(structure_call_args_with_type)}) {{\n"
                 f"{new_params}"
                 f"  // infer\n{infer_output}\n"
-                f"{output_bindings}"
+                f"{struct_outputs.bindings}"
                 f"{create_input_address}"
-                f"{output_tensor_allocate}\n\n"
+                f"{struct_outputs.tensor_allocate}\n\n"
                 f"  DISPATCH_ACLNN({aclnn_name}, {dispatch_args});\n\n"
-                f"  return {return_values};\n"
+                f"  return {struct_outputs.return_values};\n"
                 f"}}")
 
     @staticmethod

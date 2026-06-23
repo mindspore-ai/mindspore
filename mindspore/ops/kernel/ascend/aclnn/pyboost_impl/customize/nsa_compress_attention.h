@@ -25,8 +25,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-NsaCompressAttentionAscendCustomize(
+using NsaCompressAttentionResult =
+  std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>;
+NsaCompressAttentionResult NsaCompressAttentionAscendCustomize(
   const tensor::TensorPtr &query, const tensor::TensorPtr &key, const tensor::TensorPtr &value,
   const FP32ImmPtr &scale_value, const Int64ImmPtr &head_num, const Int64ImmPtr &compress_block_size,
   const Int64ImmPtr &compress_stride, const Int64ImmPtr &select_block_size, const Int64ImmPtr &select_block_count,

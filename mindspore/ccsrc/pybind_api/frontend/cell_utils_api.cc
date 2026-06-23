@@ -19,6 +19,10 @@
 #include "include/pynative/forward/pyboost/converter.h"
 
 namespace mindspore {
+constexpr int kToDeviceOverload = 0;
+constexpr int kToDtypeOverload = 1;
+constexpr int kToOtherOverload = 2;
+constexpr size_t kToDeviceNonBlockingIdx = 2;
 
 static py::object CellParseToArgs(const py::args &args, const py::kwargs &kwargs) {
   static mindspore::pynative::PythonArgParser parser(
@@ -33,16 +37,16 @@ static py::object CellParseToArgs(const py::args &args, const py::kwargs &kwargs
   py::object non_blocking = py::bool_(false);
 
   switch (parse_args.GetOvertLoadIndex()) {
-    case 0:
+    case kToDeviceOverload:
       device = py::reinterpret_borrow<py::object>(parse_args.arg_list_[0]);
       dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[1]);
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[2]);
+      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kToDeviceNonBlockingIdx]);
       break;
-    case 1:
+    case kToDtypeOverload:
       dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[0]);
       non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[1]);
       break;
-    case 2: {
+    case kToOtherOverload: {
       py::object other = py::reinterpret_borrow<py::object>(parse_args.arg_list_[0]);
       device = other.attr("device");
       dtype = other.attr("dtype");

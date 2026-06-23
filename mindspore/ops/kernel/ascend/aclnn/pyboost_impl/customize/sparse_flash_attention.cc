@@ -22,11 +22,11 @@
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SparseFlashAttentionAscendCustomize(
   const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const TensorPtr &sparse_indices,
   const FP32ImmPtr &scale_value, const std::optional<TensorPtr> &block_table,
@@ -35,6 +35,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SparseFlashA
   const Int64ImmPtr &sparse_block_size, const Int64ImmPtr &layout_query, const Int64ImmPtr &layout_kv,
   const Int64ImmPtr &sparse_mode, const Int64ImmPtr &pre_tokens, const Int64ImmPtr &next_tokens,
   const Int64ImmPtr &attention_mode, const BoolImmPtr &return_softmax_lse) {
+  constexpr size_t kOutputAttentionOut = 0;
+  constexpr size_t kOutputSoftmaxMax = 1;
+  constexpr size_t kOutputSoftmaxSum = 2;
   MS_LOG(DEBUG) << "Call aclnnSparseFlashAttention start";
   auto outputs =
     InferOutput<3>(prim::kPrimSparseFlashAttention, query, key, value, sparse_indices, scale_value, block_table,
@@ -63,7 +66,8 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SparseFlashA
                  std::optional<TensorPtr>(actual_seq_lengths_kv), std::optional<TensorPtr>(query_rope),
                  std::optional<TensorPtr>(key_rope), sparse_block_size_val, layout_query_val.c_str(),
                  layout_kv_val.c_str(), sparse_mode_val, pre_tokens_val, next_tokens_val, attention_mode_val,
-                 return_softmax_lse_val, std::get<0>(outputs), std::get<1>(outputs), std::get<2>(outputs));
+                 return_softmax_lse_val, std::get<kOutputAttentionOut>(outputs), std::get<kOutputSoftmaxMax>(outputs),
+                 std::get<kOutputSoftmaxSum>(outputs));
 
   MS_LOG(DEBUG) << "Launch aclnnSparseFlashAttention end";
   return outputs;

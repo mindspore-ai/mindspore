@@ -514,6 +514,7 @@ def get_op_function(op_name, op_data) -> OpFunction:
 
 
 def is_in_op_args(exp, op_args):
+    """Return True if exp matches any arg_name in op_args."""
     for a in op_args:
         if exp == a.arg_name:
             return True

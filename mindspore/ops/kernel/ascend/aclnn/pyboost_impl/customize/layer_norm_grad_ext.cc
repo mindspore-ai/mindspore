@@ -22,6 +22,7 @@
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "ops_utils/op_constants.h"
 
 namespace mindspore {
 namespace kernel {
@@ -30,6 +31,9 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormGra
   const TensorPtr &dy_tensor, const TensorPtr &x_tensor, const ValueTuplePtr &normalized_shape,
   const TensorPtr &mean_tensor, const TensorPtr &variance_tensor, const TensorPtr &gamma_tensor,
   const TensorPtr &beta_tensor, const ValueTuplePtr &output_mask) {
+  constexpr size_t kOutputPdX = 0;
+  constexpr size_t kOutputPdGamma = 1;
+  constexpr size_t kOutputPdBeta = 2;
   MS_LOG(DEBUG) << "Call start";
   // Convert ValuePtr to c++ scalr
   auto outputs = InferOutput<3>(prim::kPrimLayerNormGradExt, dy_tensor, x_tensor, normalized_shape, mean_tensor,
@@ -45,8 +49,8 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> LayerNormGra
   TensorMalloc(outputs);
 
   DISPATCH_ACLNN(aclnnLayerNormBackward, dy_tensor, x_tensor, normalized_shape_vector, mean_tensor, variance_tensor,
-                 gamma_tensor, beta_tensor, output_mask_u8_vec, std::get<0>(outputs), std::get<1>(outputs),
-                 std::get<2>(outputs));
+                 gamma_tensor, beta_tensor, output_mask_u8_vec, std::get<kOutputPdX>(outputs),
+                 std::get<kOutputPdGamma>(outputs), std::get<kOutputPdBeta>(outputs));
   return outputs;
 }
 }  // namespace pyboost

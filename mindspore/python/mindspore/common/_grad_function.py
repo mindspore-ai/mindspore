@@ -48,6 +48,7 @@ class _Function(FunctionBase_):
 
     @staticmethod
     def setup_context(ctx: Any, inputs: tuple[Any, ...], output: Any) -> Any:
+        """Save context information needed for the backward pass."""
         raise NotImplementedError("setup_context is not implemented.")
 
     @classmethod
