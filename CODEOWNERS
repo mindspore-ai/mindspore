@@ -113,7 +113,7 @@
 /mindspore/ops/infer/ops_func_impl/communication/  @zhangyinxia
 
 # The maintainers of mindspore/python.
-/mindspore/python/ @zwiori
+/mindspore/python/ @zhao_ting_v
 /mindspore/python/mindspore/_extends/ @ginfung
 /mindspore/python/mindspore/_extends/graph_kernel/ @gaoxiong1
 /mindspore/python/mindspore/_extends/parallel_compile/ @gaoxiong1
@@ -136,8 +136,8 @@
 /mindspore/python/mindspore/nn/layer/ @liangchenghui
 /mindspore/python/mindspore/nn/layer/container.py @chujinjin
 /mindspore/python/mindspore/nn/layer/transformer.py @tanghuikang
-/mindspore/python/mindspore/nn/loss/ @zwiori
-/mindspore/python/mindspore/nn/optim/ @zwiori
+/mindspore/python/mindspore/nn/loss/ @zhao_ting_v
+/mindspore/python/mindspore/nn/optim/ @zhao_ting_v
 /mindspore/python/mindspore/nn/optim/tft_wrapper.py @fary86
 /mindspore/python/mindspore/nn/probability/ @yi-zhang95
 /mindspore/python/mindspore/nn/sparse/ @yi-zhang95
@@ -278,8 +278,8 @@
 /tests/ut/python/nn/ @hz893
 /tests/ut/python/nn/grad/ @ginfung
 /tests/ut/python/nn/layer/ @liangchenghui
-/tests/ut/python/nn/loss/ @zwiori
-/tests/ut/python/nn/optim/ @zwiori
+/tests/ut/python/nn/loss/ @zhao_ting_v
+/tests/ut/python/nn/optim/ @zhao_ting_v
 /tests/ut/python/nn/probability/ @yi-zhang95
 /tests/ut/python/nn/sparse/ @yi-zhang95
 /tests/ut/python/numpy/ @yi-zhang95

@@ -178,6 +178,7 @@ bool NoUsersAfterCurNode(const AnfNodePtr &input, const AnfNodePtr &cur_node, co
 mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> FindInputOutputPairs(
   const FuncGraphPtr &sub_graph) {
   auto isElemwise = [](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
     if (auto cnode = node->cast<CNodePtr>()) {
       auto node_prim = inner::OpRegistry::Instance().NewOp(GetValueNode<PrimitivePtr>(cnode->input(0))->name());
       if (node_prim != nullptr && node_prim->compute_type() == inner::PrimOp::ComputeType::ELEMWISE) {
