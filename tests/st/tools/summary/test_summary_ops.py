@@ -102,7 +102,8 @@ def test_graph_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard", mem_peak=2048.00)
+@arg_mark(plat_marks=["platform_ascend910b", "platform_gpu"], level_mark="level1",
+          card_mark="onecard", mem_peak=2048.00)
 def test_pynative_summary_ops():
     """
     Feature: Test pynative summary ops
@@ -132,7 +133,7 @@ def test_pynative_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", mem_peak=1.00)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", mem_peak=1.00)
 def test_kernel_by_kernel_summary_ops():
     """
     Feature: Test kernel by kernel summary ops

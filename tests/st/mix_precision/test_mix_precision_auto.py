@@ -126,7 +126,7 @@ def test_auto_mix_precision_infer_auto(mode):
     assert np.allclose(out.asnumpy(), out2.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_train_auto(mode):
     """
@@ -417,7 +417,8 @@ class NetWithRecompute(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_recompute(mode):
     """

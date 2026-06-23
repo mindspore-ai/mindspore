@@ -46,7 +46,7 @@ class TestInferParallel:
         if not ascend_home_path:
             os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
 
-    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
+    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
     def test_base_cases(self):
         """
         Feature: Infer interface

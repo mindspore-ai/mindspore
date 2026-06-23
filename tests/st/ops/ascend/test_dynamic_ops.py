@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test dynamic ops."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -59,8 +60,7 @@ def fixed_shape_process(network, dataset, is_train=True):
 
 
 def dataset_generator(data_list):
-    for data in data_list:
-        yield data
+    yield from data_list
 
 
 def compare(output, expect):
@@ -77,7 +77,7 @@ def compare(output, expect):
 
 class GradNetWrtX(nn.Cell):
     def __init__(self, net):
-        super(GradNetWrtX, self).__init__()
+        super().__init__()
         self.net = net
         self.grad_op = ops.GradOperation(get_all=True, get_by_list=True)
         self.params = ParameterTuple(net.trainable_params())
@@ -127,7 +127,7 @@ def common_func(dynamic_range, input_shape, data_type, op_net):
 
 class LayerNormNet(nn.Cell):
     def __init__(self, last_dim):
-        super(LayerNormNet, self).__init__()
+        super().__init__()
         self.layernorm = nn.LayerNorm([last_dim])
 
     def construct(self, x):
@@ -136,7 +136,7 @@ class LayerNormNet(nn.Cell):
 
 class Conv2dNet(nn.Cell):
     def __init__(self):
-        super(Conv2dNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 10, 4, pad_mode="valid", has_bias=False, weight_init='normal')
 
     def construct(self, x):
@@ -145,7 +145,7 @@ class Conv2dNet(nn.Cell):
 
 class DropoutNet(nn.Cell):
     def __init__(self):
-        super(DropoutNet, self).__init__()
+        super().__init__()
         self.drop = nn.Dropout(p=0.5)
         self.relu = ops.ReLU()
 
@@ -156,7 +156,7 @@ class DropoutNet(nn.Cell):
 
 class ReduceSumNet(nn.Cell):
     def __init__(self, axis=()):
-        super(ReduceSumNet, self).__init__()
+        super().__init__()
         self.reduce = ops.ReduceSum()
         self.axis = axis
 
@@ -171,7 +171,7 @@ class AddNet(nn.Cell):
 
 class ShapeTensorNet(nn.Cell):
     def __init__(self):
-        super(ShapeTensorNet, self).__init__()
+        super().__init__()
         self.reshape = ops.Reshape()
         self.shape = ops.Shape()
         self.strided_slice = ops.StridedSlice()
@@ -199,7 +199,7 @@ class SoftmaxNet(nn.Cell):
 
 class BatchNormNet(nn.Cell):
     def __init__(self, channels):
-        super(BatchNormNet, self).__init__()
+        super().__init__()
         self.bn = nn.BatchNorm2d(channels)
 
     def construct(self, x):
@@ -208,7 +208,7 @@ class BatchNormNet(nn.Cell):
 
 class SquareSumAllNet(nn.Cell):
     def __init__(self):
-        super(SquareSumAllNet, self).__init__()
+        super().__init__()
         self.square_sum_all = ops.SquareSumAll()
 
     def construct(self, x, y):
@@ -217,7 +217,7 @@ class SquareSumAllNet(nn.Cell):
 
 class HSwishNet(nn.Cell):
     def __init__(self):
-        super(HSwishNet, self).__init__()
+        super().__init__()
         self.hswish = ops.HSwish()
 
     def construct(self, x):
@@ -240,7 +240,7 @@ def test_dynamic_layernorm():
     common_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=2048.01)
 def test_dynamic_conv2d():
     """

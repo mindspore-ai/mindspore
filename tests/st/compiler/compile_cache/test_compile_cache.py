@@ -450,7 +450,7 @@ def test_compile_cache_grad_jit_with_custom_bprop():
                                 "compile_cache_custom_bprop_first.txt", "compile_cache_custom_bprop.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=0.01)
 def test_compile_cache_lenet_with_jit():
     """

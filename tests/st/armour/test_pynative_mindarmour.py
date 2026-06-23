@@ -59,7 +59,7 @@ class LeNet(nn.Cell):
     """
 
     def __init__(self, num_class=10):
-        super(LeNet, self).__init__()
+        super().__init__()
         self.conv1 = conv(1, 6, 5)
         self.conv2 = conv(6, 16, 5)
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
@@ -87,7 +87,7 @@ class LeNet(nn.Cell):
 
 class GradWithSens(Cell):
     def __init__(self, network):
-        super(GradWithSens, self).__init__()
+        super().__init__()
         self.grad = GradOperation(get_all=False,
                                   sens_param=True)
         self.network = network
@@ -99,7 +99,7 @@ class GradWithSens(Cell):
 
 class GradWrapWithLoss(Cell):
     def __init__(self, network):
-        super(GradWrapWithLoss, self).__init__()
+        super().__init__()
         self._grad_all = GradOperation(get_all=True,
                                        sens_param=False)
         self._network = network
@@ -109,7 +109,7 @@ class GradWrapWithLoss(Cell):
         return gout[0]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_grad_values_and_infer_shape():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     inputs_np = np.random.rand(32, 1, 32, 32).astype(np.float32)
@@ -125,7 +125,7 @@ def test_grad_values_and_infer_shape():
     assert out_shape == (64, 10), 'output shape should be (64, 10)'
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_multi_grads():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     sparse = False

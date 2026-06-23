@@ -81,7 +81,7 @@ def train(net, data, label):
     assert np.all(diff < 1.e-6)
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", mem_peak=2048.01)
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", mem_peak=2048.01)
 def test_lenet():
     data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))

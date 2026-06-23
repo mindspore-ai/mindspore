@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test LeNet network on Ascend backend."""
 import os
 import time
 import numpy as np
@@ -65,7 +66,7 @@ class LeNet(nn.Cell):
     """
 
     def __init__(self, num_class=10):
-        super(LeNet, self).__init__()
+        super().__init__()
         self.num_class = num_class
         self.batch_size = 32
         self.conv1 = conv(1, 6, 5)
@@ -99,7 +100,7 @@ class CrossEntropyLoss(nn.Cell):
     """
 
     def __init__(self):
-        super(CrossEntropyLoss, self).__init__()
+        super().__init__()
         self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.one_hot = P.OneHot()
@@ -120,7 +121,7 @@ class GradWrap(nn.Cell):
     """
 
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
         self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
 
@@ -164,7 +165,7 @@ def test_ascend_lenet():
     return loss_output
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
         card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet1():
     """
@@ -179,7 +180,7 @@ def test_ascend_lenet1():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
         card_mark="onecard", mem_peak=2048.01)
 def test_ascend_lenet2():
     """
@@ -194,7 +195,7 @@ def test_ascend_lenet2():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
         card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet3():
     """
@@ -210,7 +211,7 @@ def test_ascend_lenet3():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
         card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet4():
     """
@@ -226,7 +227,7 @@ def test_ascend_lenet4():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
         card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet5():
     """
@@ -249,7 +250,7 @@ class GradWrapTuple(nn.Cell):
     """
 
     def __init__(self, network):
-        super(GradWrapTuple, self).__init__()
+        super().__init__()
         self.network = network
         self.weights = tuple(filter(lambda x: x.requires_grad, network.get_parameters()))
 
@@ -293,7 +294,7 @@ def test_ascend_lenet_grad_by_list_tuple():
     return loss_output
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
         card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet_grad_by_list_tuple1():
     """
@@ -308,7 +309,7 @@ def test_ascend_lenet_grad_by_list_tuple1():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
         card_mark="onecard", mem_peak=0.01)
 def test_ascend_lenet_grad_by_list_tuple2():
     """

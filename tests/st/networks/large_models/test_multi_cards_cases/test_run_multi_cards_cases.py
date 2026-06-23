@@ -567,7 +567,7 @@ def collect_task_cases(level_mark: str):
     return scheduler
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='allcards')
 def test_multi_cards_level0_cases():
     """
     Feature: Multi-card Level 0 Test Execution
