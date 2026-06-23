@@ -30,6 +30,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kWorkspaceSize = 32;
 constexpr size_t kJsonSuffixLength = 5;
+constexpr size_t kMaxKernelBinarySize = 1024UL * 1024UL * 1024UL;  // 1GB
 constexpr char kMagic[] = "magic";
 constexpr char kBlockDim[] = "blockDim";
 constexpr char kKernelName[] = "kernelName";
@@ -124,6 +125,11 @@ bool KernelPack::ReadFromJsonFileHelper(std::ifstream &kernel_bin) {
     delete[] kernel_;
     kernel_ = nullptr;
   }
+  if (bin_size == 0 || bin_size > kMaxKernelBinarySize) {
+    MS_LOG(ERROR) << "Invalid kernel binary size: " << bin_size;
+    kernel_bin.close();
+    return false;
+  }
 
   void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + bin_size]);
   if (ptr != nullptr) {
@@ -147,19 +153,14 @@ bool KernelPack::ReadFromJsonFileHelper(std::ifstream &kernel_bin) {
   return true;
 }
 
-bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &processor) {
-  if (json_f.length() <= strlen(kJsonSuffix)) {
-    MS_LOG(ERROR) << "Please check json path, file name: " << json_f;
-    return false;
-  }
-
-  nlohmann::json js;
-  if (!LoadJsonFromFile(json_f, &js)) {
-    return false;
-  }
-
+bool KernelPack::LoadJsonBuffer(const std::string &json_f) {
   std::ifstream kernel_json(json_f);
   size_t bin_size = LongToSize(kernel_json.seekg(0, std::ios::end).tellg());
+  if (bin_size == 0 || bin_size > kMaxKernelBinarySize) {
+    MS_LOG(ERROR) << "Invalid kernel json size: " << bin_size;
+    kernel_json.close();
+    return false;
+  }
   void *ptr = static_cast<void *>(new (std::nothrow) uint8_t[sizeof(KernelPack) + bin_size]);
   if (ptr != nullptr) {
     json_ = static_cast<FlexArray *>(ptr);
@@ -172,47 +173,41 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   json_->len = bin_size;
   (void)kernel_json.seekg(0, std::ios::beg);
   (void)kernel_json.read(json_->contents, SizeToLong(json_->len));
+  kernel_json.close();
+  return true;
+}
 
-  if (processor == kProcessorCpu) {
-    std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + ".so";
-    if (!CheckHash(json_f, bin_f, js)) {
-      return false;
-    }
-    return true;
+bool KernelPack::LoadCudaKernel(const std::string &json_f, const nlohmann::json &js) {
+  std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + ".ptx";
+  std::ifstream kernelbin(bin_f);
+  if (!kernelbin.is_open()) {
+    MS_LOG(ERROR) << "read kernel ptx file error, please check kernelmeta.";
+    kernelbin.close();
+    return false;
   }
-
-  if (processor == kProcessorCuda) {
-    std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + ".ptx";
-    std::ifstream kernelbin(bin_f);
-    if (!kernelbin.is_open()) {
-      MS_LOG(ERROR) << "read kernel ptx file error, please check kernelmeta.";
-      kernel_json.close();
-      return false;
-    }
-
-    if (!ReadFromJsonFileHelper(kernelbin)) {
-      delete[] json_;
-      json_ = nullptr;
-      kernel_json.close();
-      return false;
-    }
-    kernel_json.close();
-    if (!CheckHash(json_f, bin_f, js)) {
-      return false;
-    }
-
-    // cuda json file may have workspace information
-    if (js.find(kWorkspace) != js.end()) {
-      auto workspace = js.at(kWorkspace);
-      std::vector<size_t> sizes = workspace.at(kSize);
-      for (auto size : sizes) {
-        kernel_json_info_.workspaces.push_back(size);
-      }
-    }
-
-    return true;
+  if (!ReadFromJsonFileHelper(kernelbin)) {
+    delete[] json_;
+    json_ = nullptr;
+    kernelbin.close();
+    return false;
   }
+  if (!CheckHash(json_f, bin_f, js)) {
+    kernelbin.close();
+    return false;
+  }
+  // cuda json file may have workspace information
+  if (js.find(kWorkspace) != js.end()) {
+    auto workspace = js.at(kWorkspace);
+    std::vector<size_t> sizes = workspace.at(kSize);
+    for (auto size : sizes) {
+      kernel_json_info_.workspaces.push_back(size);
+    }
+  }
+  kernelbin.close();
+  return true;
+}
 
+bool KernelPack::LoadAscendKernel(const std::string &json_f, const nlohmann::json &js) {
   std::string binfile_suffix = js[kBinFileSuffix];
   std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + binfile_suffix;
   if (binfile_suffix == ".so") {
@@ -220,7 +215,6 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
     auto sp = bin_f.rfind('/');
     if (sp == std::string::npos) {
       MS_LOG(ERROR) << "illegal bin file path " << bin_f;
-      kernel_json.close();
       return false;
     }
     bin_f = bin_f.substr(0, sp + 1) + "lib" + bin_f.substr(sp + 1, bin_f.length() - sp - 1);
@@ -229,9 +223,9 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   std::ifstream kernelbin(bin_f, std::ios::binary);
   if (!kernelbin.is_open()) {
     MS_LOG(ERROR) << "read kernel binary file error, please check kernelmeta.";
-    kernel_json.close();
     delete[] json_;
     json_ = nullptr;
+    kernelbin.close();
     return false;
   }
 
@@ -239,16 +233,34 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   if (!ReadFromJsonFileHelper(kernelbin)) {
     delete[] json_;
     json_ = nullptr;
-    kernel_json.close();
+    kernelbin.close();
     return false;
   }
-  kernel_json.close();
+  bool hash_ok = CheckHash(json_f, bin_f, js);
+  kernelbin.close();
+  return hash_ok;
+}
 
-  if (!CheckHash(json_f, bin_f, js)) {
+bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &processor) {
+  if (json_f.length() <= strlen(kJsonSuffix)) {
+    MS_LOG(ERROR) << "Please check json path, file name: " << json_f;
     return false;
   }
-
-  return true;
+  nlohmann::json js;
+  if (!LoadJsonFromFile(json_f, &js)) {
+    return false;
+  }
+  if (!LoadJsonBuffer(json_f)) {
+    return false;
+  }
+  if (processor == kProcessorCpu) {
+    std::string bin_f = json_f.substr(0, json_f.length() - kJsonSuffixLength) + ".so";
+    return CheckHash(json_f, bin_f, js);
+  }
+  if (processor == kProcessorCuda) {
+    return LoadCudaKernel(json_f, js);
+  }
+  return LoadAscendKernel(json_f, js);
 }
 
 void KernelPack::ParseKernelName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info) {
