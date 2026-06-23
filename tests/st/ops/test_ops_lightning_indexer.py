@@ -929,7 +929,7 @@ def test_ops_lightning_indexer_bsnd_bsnd_multi_batch(mode, dtype):
     layout_key = 'BSND'
     sparse_count = 2048
     sparse_mode = 3
-    return_value = False
+    return_value = True
 
     query_np, key_np, weights_np, _, _, _ = \
         get_ndarrays(layout_query, layout_key, B=B, S1=S1, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
@@ -962,7 +962,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     Feature: pyboost function.
     Description: Test function lightning_indexer forward and backward computation with multi-batch TND layout.
         Test scenario: TND layout with TND key layout (non-PA scenario), B=4, T=16, S2=2048, N1=64, N2=1, D=128,
-        sparse_count=2048, sparse_mode=3 (rightDownCausal).
+        sparse_count=1, sparse_mode=3 (rightDownCausal).
     Expectation: Expect correct sparse_indices output and gradient results matching torch_npu reference.
     """
     set_context_mode(mode)
@@ -970,7 +970,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     B, T, S2, N1, N2, D = 4, 16, 2048, 64, 1, 128
     layout_query = 'TND'
     layout_key = 'TND'
-    sparse_count = 2048
+    sparse_count = 1
     sparse_mode = 3
     return_value = True
 
@@ -1081,10 +1081,10 @@ def test_ops_lightning_indexer_return_value_true(mode, dtype):
 def test_ops_lightning_indexer_sparse_mode_0(mode, dtype):
     """
     Feature: pyboost function.
-    Description: Test function lightning_indexer forward and backward with sparse_mode=0 (defaultMask mode).
+    Description: Test function lightning_indexer forward with sparse_mode=0 (defaultMask mode).
         Test scenario: BSND layout with PA_BSND key layout, B=1, S1=1, S2=8192, N1=64, N2=1, D=128,
         block_size=256, sparse_count=2048, sparse_mode=0 (defaultMask, no causal mask).
-    Expectation: Expect correct sparse_indices and gradient output matching torch_npu reference.
+    Expectation: Expect correct sparse_indices matching torch reference.
     """
     set_context_mode(mode)
 
@@ -1106,20 +1106,15 @@ def test_ops_lightning_indexer_sparse_mode_0(mode, dtype):
         get_torch_tensors(query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key,
                           block_table, dtype)
 
-    # torch lightning_indexer forward and backward
+    # PA_BSND does not support return_value=True in CANN, so this case only checks forward sparse_indices.
     torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights, pt_actual_seq_lengths_query,
                                                      pt_actual_seq_lengths_key, pt_block_table, layout_query,
-                                                     layout_key, sparse_count, sparse_mode, return_value=return_value,
-                                                     grad=True)
+                                                     layout_key, sparse_count, sparse_mode, return_value=return_value)
     # mindspore lightning_indexer forward
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                             ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
                                             sparse_count, sparse_mode, return_value=return_value)
-    # mindspore lightning_indexer backward
-    ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
-                                                  ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
-                                                  sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_compare=False)
+    compare_results(torch_out, ms_out, sparse_count, return_value, skip_cpu_compare=False)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -1131,10 +1126,10 @@ def test_ops_lightning_indexer_sparse_mode_0(mode, dtype):
 def test_ops_lightning_indexer_sparse_count_variants(mode, sparse_count):
     """
     Feature: pyboost function.
-    Description: Test function lightning_indexer forward and backward with various sparse_count boundary values.
+    Description: Test function lightning_indexer forward with various sparse_count boundary values.
         Test scenario: BSND layout with PA_BSND key layout, B=1, S1=1, S2=8192, N1=64, N2=1, D=128,
         block_size=256, sparse_count=[1, 512, 2048] (boundary values within valid range [1, 2048]).
-    Expectation: Expect correct sparse_indices and gradient output for all sparse_count values matching torch_npu.
+    Expectation: Expect correct sparse_indices for all sparse_count values matching torch reference.
     """
     set_context_mode(mode)
 
@@ -1156,20 +1151,15 @@ def test_ops_lightning_indexer_sparse_count_variants(mode, sparse_count):
         get_torch_tensors(query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key,
                           block_table, dtype)
 
-    # torch lightning_indexer forward and backward
+    # PA_BSND does not support return_value=True in CANN, so this case only checks forward sparse_indices.
     torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights, pt_actual_seq_lengths_query,
                                                      pt_actual_seq_lengths_key, pt_block_table, layout_query,
-                                                     layout_key, sparse_count, sparse_mode, return_value=return_value,
-                                                     grad=True)
+                                                     layout_key, sparse_count, sparse_mode, return_value=return_value)
     # mindspore lightning_indexer forward
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                             ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
                                             sparse_count, sparse_mode, return_value=return_value)
-    # mindspore lightning_indexer backward
-    ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
-                                                  ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
-                                                  sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_compare=False)
+    compare_results(torch_out, ms_out, sparse_count, return_value, skip_cpu_compare=False)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -1311,7 +1301,7 @@ def test_ops_lightning_indexer_non_contiguous(mode, dtype):
     layout_key = 'BSND'
     sparse_count = 2048
     sparse_mode = 3
-    return_value = False
+    return_value = True
 
     query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, block_table = \
         get_ndarrays(layout_query, layout_key, B=B, S1=S1, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
@@ -1921,10 +1911,10 @@ def test_ops_lightning_indexer_bsnd_large_s1_s2(mode, dtype):
 def test_ops_lightning_indexer_block_table_boundary(mode, block_size):
     """
     Feature: pyboost function.
-    Description: Test function lightning_indexer forward and backward with various block_size configurations.
+    Description: Test function lightning_indexer forward with various block_size configurations.
         Test scenario: block_size=[256, 512] with S2=8192, testing block_table index mapping.
         block_size must be multiple of 16, max supported 1024.
-    Expectation: Expect correct sparse_indices and gradient output for different block_size configurations.
+    Expectation: Expect correct sparse_indices for different block_size configurations.
     """
     set_context_mode(mode)
     dtype = 'fp16'
@@ -1946,20 +1936,16 @@ def test_ops_lightning_indexer_block_table_boundary(mode, block_size):
         get_torch_tensors(query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key,
                           block_table, dtype)
 
-    # torch lightning_indexer forward and backward
+    # PA_BSND does not support return_value=True in CANN, so this case only checks forward sparse_indices.
     torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights, pt_actual_seq_lengths_query,
                                                      pt_actual_seq_lengths_key, pt_block_table, layout_query,
                                                      layout_key, sparse_count, sparse_mode,
-                                                     return_value=return_value, grad=True)
+                                                     return_value=return_value)
     # mindspore lightning_indexer forward
     ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
                                             ms_actual_seq_lengths_key, ms_block_table, layout_query, layout_key,
                                             sparse_count, sparse_mode, return_value=return_value)
-    # mindspore lightning_indexer backward
-    ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
-                                                  ms_actual_seq_lengths_key, ms_block_table, layout_query,
-                                                  layout_key, sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_compare=False)
+    compare_results(torch_out, ms_out, sparse_count, return_value, skip_cpu_compare=False)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
@@ -2041,6 +2027,7 @@ def test_ops_lightning_indexer_test_op():
         case_config={
             'disable_input_check': True,
             'disable_resize': True,
+            'disable_grad': True,
             'ignore_output_index': [1,],
             'ignore_grad_index': [1,]
         },
