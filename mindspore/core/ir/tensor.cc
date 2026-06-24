@@ -520,7 +520,14 @@ std::string Tensor::DataToString(bool use_comma) const {
     const auto &data = target_device_sync->data();
     return data->ToString(data_type_, shape_, use_comma);
   }
-  return GetTensorDataString(data_type_, shape_, target_device_sync->GetMutablePtr(), DataSize(), DataDim(), use_comma);
+  const auto data_size = DataSize();
+  const auto item_size = DataItemSize();
+  MS_EXCEPTION_IF_CHECK_FAIL(item_size > 0, "The tensor data item size should be greater than 0.");
+  const auto address_data_size = target_device_sync->GetSize() / static_cast<size_t>(item_size);
+  MS_EXCEPTION_IF_CHECK_FAIL(data_size <= address_data_size, "The input shape size " + std::to_string(data_size) +
+                                                               " exceeds device address data size " +
+                                                               std::to_string(address_data_size) + ".");
+  return GetTensorDataString(data_type_, shape_, target_device_sync->GetMutablePtr(), data_size, DataDim(), use_comma);
 }
 
 const void *Tensor::unsafe_data() const {

@@ -628,7 +628,11 @@ class TensorDataImpl : public TensorData {
     // the cached ndim_ belongs to the parent and disagrees with the view's
     // shape, which previously caused out-of-bound access at shape[depth] in
     // SummaryStringRecursive.
-    TensorStringifier<T> stringifier{data_.get(), SizeOf(shape), shape.size()};
+    const auto shape_data_size = SizeOf(shape);
+    MS_EXCEPTION_IF_CHECK_FAIL(shape_data_size <= data_size_,
+                               "The input shape size " + std::to_string(shape_data_size) + " exceeds TensorData size " +
+                                 std::to_string(data_size_) + ".");
+    TensorStringifier<T> stringifier{data_.get(), shape_data_size, shape.size()};
     return stringifier.ToString(type, shape, use_comma);
   }
 

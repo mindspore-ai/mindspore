@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <iostream>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <string>
@@ -24,6 +25,7 @@
 #include "include/securec.h"
 #include "ir/tensor.h"
 #include "ir/tensor_new.h"
+#include "ir/tensor_data.h"
 #include "mindspore/ccsrc/include/utils/tensor_py.h"
 
 namespace mindspore {
@@ -344,7 +346,8 @@ TEST_F(TestTensor, TensorDataTest) {
   float ge_tensor_data[] = {1.1, 2.2, 3.3, 4.4, 5.5, 6.6};
 
   // Create a Tensor with wanted data type and shape
-  TensorPtr tensor = tensor::from_spec(TypeId::kNumberTypeFloat32, std::vector<int64_t>({2, 3}), device::DeviceType::kCPU);
+  TensorPtr tensor =
+    tensor::from_spec(TypeId::kNumberTypeFloat32, std::vector<int64_t>({2, 3}), device::DeviceType::kCPU);
 
   // Get the writable data pointer from the tensor
   float *me_tensor_data = reinterpret_cast<float *>(tensor->data_c());
@@ -363,6 +366,29 @@ TEST_F(TestTensor, TensorDataTest) {
       ASSERT_EQ(array(i, j), ge_tensor_data[3 * i + j]);
     }
   }
+}
+
+/// Feature: TensorData
+/// Description: Check TensorData ToString handles mismatched shape size.
+/// Expectation: Throw exception when input shape exceeds TensorData size.
+TEST_F(TestTensor, TensorDataToStringCheckShapeSize) {
+  int32_t tensor_data[] = {1, 2};
+  auto data = MakeTensorData(kNumberTypeInt32, ShapeVector{2}, static_cast<void *>(tensor_data), sizeof(tensor_data));
+  ASSERT_NE(data, nullptr);
+  EXPECT_THROW({ (void)data->ToString(kNumberTypeInt32, ShapeVector{3}, false); }, std::exception);
+}
+
+/// Feature: TensorData
+/// Description: Check tensor DataToString handles mismatched device address size.
+/// Expectation: Throw exception when tensor shape exceeds the underlying TensorData size.
+TEST_F(TestTensor, TensorDataToStringCheckDeviceAddressSize) {
+  auto tensor = tensor::from_spec_fast(kNumberTypeInt32, ShapeVector{2}, device::DeviceType::kCPU);
+  auto data = static_cast<int32_t *>(tensor->data_c());
+  ASSERT_NE(data, nullptr);
+  data[0] = 1;
+  data[1] = 2;
+  tensor->set_shape(ShapeVector{3});
+  EXPECT_THROW({ (void)tensor->DataToString(false); }, std::exception);
 }
 
 TEST_F(TestTensor, TensorPyCast) {
@@ -411,7 +437,8 @@ TEST_F(TestTensor, TensorWithUserData) {
 TEST_F(TestTensor, TensorSetShapeDataTest) {
   // Create a Tensor with wanted data type and shape
   std::vector<int64_t> old_shape({2, 3});
-  TensorPtr tensor = tensor::from_spec(TypeId::kNumberTypeInt64, std::vector<int64_t>(old_shape), device::DeviceType::kCPU);
+  TensorPtr tensor =
+    tensor::from_spec(TypeId::kNumberTypeInt64, std::vector<int64_t>(old_shape), device::DeviceType::kCPU);
   tensor->set_shape(old_shape);
   ASSERT_EQ(6, tensor->DataSize());
   ASSERT_NE(nullptr, tensor->unsafe_data());
