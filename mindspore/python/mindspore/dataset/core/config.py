@@ -151,7 +151,8 @@ def get_seed():
 
     Examples:
         >>> # Get the global configuration of seed.
-        >>> # If set_seed() has never been called before, the default value(std::mt19937::default_seed) will be returned.
+        >>> # If set_seed() has never been called before, the default value(std::mt19937::default_seed) will be
+        >>> # returned.
         >>> import mindspore.dataset as ds
         >>> seed = ds.config.get_seed()
     """
@@ -329,7 +330,8 @@ def get_monitor_sampling_interval():
 
     Examples:
         >>> # Get the global configuration of monitor sampling interval.
-        >>> # If set_monitor_sampling_interval() has never been called before, the default value (1000) will be returned.
+        >>> # If set_monitor_sampling_interval() has never been called before, the default value (1000) will be
+        >>> # returned.
         >>> import mindspore.dataset as ds
         >>> sampling_interval = ds.config.get_monitor_sampling_interval()
     """
@@ -842,8 +844,8 @@ def get_multiprocessing_timeout_interval():
 
     Examples:
         >>> # Get the global configuration of multiprocessing/multithreading timeout when main process/thread gets data
-        >>> # from subprocesses/child threads. If set_multiprocessing_timeout_interval() has never been called before, the
-        >>> # default value (300) will be returned.
+        >>> # from subprocesses/child threads. If set_multiprocessing_timeout_interval() has never been called before,
+        >>> # the default value (300) will be returned.
         >>> import mindspore.dataset as ds
         >>> multiprocessing_timeout_interval = ds.config.get_multiprocessing_timeout_interval()
     """
