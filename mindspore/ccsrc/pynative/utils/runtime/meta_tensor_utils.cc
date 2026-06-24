@@ -30,6 +30,7 @@ void AppendMetaOutputTensors(const AbstractBasePtr &abstract, std::vector<tensor
   MS_EXCEPTION_IF_NULL(outputs);
   if (abstract->isa<abstract::AbstractSequence>()) {
     const auto &seq = abstract->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq);
     for (const auto &element : seq->elements()) {
       AppendMetaOutputTensors(element, outputs);
     }
@@ -40,12 +41,14 @@ void AppendMetaOutputTensors(const AbstractBasePtr &abstract, std::vector<tensor
   ShapeVector shape_vector;
   if (abstract->isa<abstract::AbstractTensor>()) {
     const auto &abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(abstract_tensor);
     const auto &shape = abstract_tensor->GetShapeTrack();
     const auto &type = abstract_tensor->element()->GetTypeTrack();
     if (!shape->isa<abstract::Shape>()) {
       MS_LOG(EXCEPTION) << "AbstractTensor shape is not static: " << shape->ToString();
     }
     const auto &shape_ptr = shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
     shape_vector = shape_ptr->shape();
     if (IsDynamic(shape_vector)) {
       MS_LOG(EXCEPTION) << "The operator does not support meta device because the output shape is dynamic: "
@@ -54,6 +57,7 @@ void AppendMetaOutputTensors(const AbstractBasePtr &abstract, std::vector<tensor
     type_id = type->type_id();
   } else if (abstract->isa<abstract::AbstractScalar>()) {
     const auto &scalar = abstract->cast<abstract::AbstractScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar);
     type_id = scalar->GetTypeTrack()->type_id();
   } else {
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
