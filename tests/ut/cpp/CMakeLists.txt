@@ -155,6 +155,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ops/kernel/cpu/adam_delta_cpu_kernel.cc"
         "../../../mindspore/ops/kernel/cpu/akg/*.cc"
         "../../../mindspore/ops/kernel/cpu/fused_ada_factor_cpu_kernel.cc"
+        "../../../mindspore/ops/kernel/cpu/native/adam_cpu_kernel.cc"
         "../../../mindspore/ops/kernel/cpu/nnacl/fp32/adam_fp32.c"
         "../../../mindspore/ops/kernel/cpu/sparse_apply_adam_cpu_kernel.cc"
         "../../../mindspore/ops/kernel/cpu/sparse_apply_ftrl_cpu_kernel.cc"
