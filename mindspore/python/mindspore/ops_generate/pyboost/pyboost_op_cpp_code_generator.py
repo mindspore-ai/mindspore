@@ -685,43 +685,47 @@ class AclnnOpCppCodeGenerator:
         Generates PyBoost C++ code for a structure ACLNN operator.
         """
         op_parser = OpTemplateParser(op_proto)
-        call_args = OpTemplateParser.parse_original_call_args(op_proto.op_args)
-        call_args_after_convert, value_tuple_convert, const_number_convert = op_parser.op_args_converter()
         call_args_with_type = op_parser.parse_call_args_with_types()
-        structure_call_args_with_type = self._generate_structure_call_args_with_types(op_proto)
         cpp_func_return = _generate_cpp_func_return(op_proto)
-        create_input_address = self._generate_structure_create_input_address(op_proto)
-        aclnn_name = op_proto.struct_info.cmd_args[0]
+        helper_impl, call_impl = self._build_structure_helper_and_call_impl(op_proto, op_parser, cpp_func_return)
+
+        merge_op_header.append(self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=op_proto.op_name,
+                                                                              device=self.device))
+        merge_op_function.append(
+            self.pyboost_single_structure_op_source_template.replace(
+                helper_impl=helper_impl,
+                op_name=op_proto.op_class.name,
+                call_args_with_type=call_args_with_type,
+                return_type=cpp_func_return,
+                call_impl=call_impl,
+                op_register=self.PYBOOST_REG_OP_TEMPLATE.replace(op_name=op_proto.op_class.name,
+                                                                  device=self.device_reg_str,
+                                                                  register_custom_kernel=""),
+                device=self.device_reg_str))
+        ascend_merge_op_inc.append(op_proto.op_class.name)
+
+    def _build_structure_helper_and_call_impl(self, op_proto, op_parser, cpp_func_return):
+        """
+        Builds helper_impl and call_impl strings for a structure ACLNN operator.
+        """
         arg_name_map = self._generate_structure_arg_name_map(op_proto)
         infer_output = self._generate_structure_infer_output(op_proto, arg_name_map)
         new_params, dispatch_args = self._generate_structure_new_params_and_exec_args(op_proto, arg_name_map)
         struct_outputs = StructureOutputs(*self._generate_structure_outputs(op_proto))
         helper_name = f"{op_proto.op_class.name}StructureCall"
         helper_impl = self._generate_structure_helper_impl(
-            helper_name, cpp_func_return, structure_call_args_with_type, infer_output,
-            new_params, create_input_address, aclnn_name, dispatch_args, struct_outputs)
+            helper_name, cpp_func_return, self._generate_structure_call_args_with_types(op_proto),
+            infer_output, new_params, self._generate_structure_create_input_address(op_proto),
+            op_proto.struct_info.cmd_args[0], dispatch_args, struct_outputs)
+        call_args_after_convert, value_tuple_convert, const_number_convert = op_parser.op_args_converter()
         call_impl = self.pyboost_structure_call_template.replace(
-            call_args=call_args,
+            call_args=OpTemplateParser.parse_original_call_args(op_proto.op_args),
             value_tuple_convert=value_tuple_convert,
             const_number_convert=const_number_convert,
             helper_name=helper_name,
             real_call_args=call_args_after_convert,
             output_size=struct_outputs.size)
-
-        merge_op_header.append(self.PYBOOST_SINGLE_OP_HEADER_TEMPLATE.replace(operator_name=op_proto.op_name,
-                                                                              device=self.device))
-        op_register = self.PYBOOST_REG_OP_TEMPLATE.replace(op_name=op_proto.op_class.name,
-                                                           device=self.device_reg_str,
-                                                           register_custom_kernel="")
-        merge_op_function.append(
-            self.pyboost_single_structure_op_source_template.replace(helper_impl=helper_impl,
-                                                                     op_name=op_proto.op_class.name,
-                                                                     call_args_with_type=call_args_with_type,
-                                                                     return_type=cpp_func_return,
-                                                                     call_impl=call_impl,
-                                                                     op_register=op_register,
-                                                                     device=self.device_reg_str))
-        ascend_merge_op_inc.append(op_proto.op_class.name)
+        return helper_impl, call_impl
 
     @staticmethod
     def _replace_structure_expr(expr, arg_name_map):
