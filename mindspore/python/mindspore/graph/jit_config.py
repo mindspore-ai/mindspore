@@ -14,12 +14,32 @@
 # ============================================================================
 """JitConfig for compile."""
 
+from mindspore import log as logger
+
+
+_INFER_BOOST_DEPRECATED_VERSION = "2.10.0"
+
+
+def _warn_infer_boost_interface_deprecated(scene):
+    """Warn that the ``infer_boost`` parameter is deprecated."""
+    logger.warning(f"For '{scene}', the parameter 'infer_boost' is deprecated from version "
+                   f"{_INFER_BOOST_DEPRECATED_VERSION} and will be removed in a future version.")
+
+
+def _warn_if_infer_boost_on_deprecated(infer_boost):
+    """Warn when the deprecated value ``infer_boost='on'`` is used in ``JitConfig``."""
+    if infer_boost == "on":
+        logger.warning("The value 'on' of 'infer_boost' is deprecated from version "
+                       f"{_INFER_BOOST_DEPRECATED_VERSION} and will be removed in a future version.")
+
+
 class JitConfig:
     """
     Jit config for compile.
 
     .. warning::
         The value ``"O2"`` of `jit_level` is deprecated from version 2.9.0 and will be removed in a future version.
+        The parameter `infer_boost` is deprecated from version 2.10.0 and will be removed in a future version.
 
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
@@ -62,9 +82,10 @@ class JitConfig:
             - ``"DEBUG"``: Used for debugging when errors occur, more information will be recorded in compiling process.
 
         infer_boost (str, optional): Enable infer boost mode.
-            The value must be ``"on"`` or ``"off"``. Default: ``"off"``, which means that infer boost is disabled.
-            When infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime to make
-            inference speed the best.
+            This parameter is deprecated and kept only for compatibility. The value must be ``"on"`` or ``"off"``.
+            Default: ``"off"``, which means that infer boost is disabled. When infer boost mode is enabled,
+            MindSpore will use high perf kernel lib and a faster runtime path to improve inference performance.
+            In the current implementation, a deprecation warning is emitted when `infer_boost` is set to ``"on"``.
             Note: current infer boost only supports `jit_level` == ``"O0"``.
 
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
@@ -82,6 +103,7 @@ class JitConfig:
     """
     def __init__(self, jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE",
                  infer_boost="off", **kwargs):
+        suppress_infer_boost_warning = kwargs.pop("suppress_infer_boost_warning", False)
         if jit_level not in ["", "O0", "O1", "O2"]:
             raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
         if exc_mode not in ["auto", "sink", "no_sink"]:
@@ -92,6 +114,8 @@ class JitConfig:
             raise ValueError("For 'debug_level' must be one of '['RELEASE', 'DEBUG']'.")
         if infer_boost != "" and infer_boost not in ["on", "off"]:
             raise ValueError("For 'infer_boost' must be one of '['on', 'off']'.")
+        if not suppress_infer_boost_warning:
+            _warn_if_infer_boost_on_deprecated(infer_boost)
         self.jit_config_dict = kwargs
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
