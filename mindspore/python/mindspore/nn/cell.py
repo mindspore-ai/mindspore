@@ -2447,7 +2447,7 @@ class Cell(Cell_):
         if recurse:
             for cell in self.cells():
                 if cell is not None and cell is not self:
-                    cell._apply(fn)
+                    cell._apply(fn)  # pylint: disable=W0212
 
         for key, param in self._params.items():
             if param is None:
