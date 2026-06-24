@@ -53,7 +53,10 @@ ShapeArray CdistGradFuncImpl::InferShape(const PrimitivePtr &primitive, const In
                              << "], rank of input_x and input_y must be equal, but got rank of input_x: " << x_size
                              << ", rank of input_y: " << y_size << ".";
   }
-  if (batch_rank == 0) {
+  // Backend fission may expand the original 3D contract into a 4D temporary
+  // shape before lowering to the Ascend kernel. Keep the public 2D/3D check
+  // for the normal path, but do not block the internal expanded form here.
+  if (batch_rank == 0 && x_size <= 3) {
     CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "Cdist");
   }
   if (x_size < kCdistGradInputDimsMin) {

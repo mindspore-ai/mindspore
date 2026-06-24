@@ -29,6 +29,7 @@
 #include "backend/common/pass/concat_outputs_for_all_gather.h"
 #include "backend/common/pass/split_inputs_for_reduce_scatter.h"
 #include "backend/common/pass/ir_fission/batch_norm_grad_infer_fission.h"
+#include "backend/common/pass/ir_fission/cdist_grad_fission.h"
 #include "backend/common/pass/ir_fission/bn_split.h"
 #include "backend/common/pass/ir_fission/bn_grad_split.h"
 #include "backend/common/pass/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
@@ -150,6 +151,7 @@ PassManagerPtr GetBackendFusionGroupPassManager() {
   auto pm = std::make_shared<PassManager>("backend_fusion");
   MS_EXCEPTION_IF_NULL(pm);
   pm->AddFusionPass(std::make_shared<opt::ClipByNormFission>());
+  pm->AddFusionPass(std::make_shared<opt::CdistGradFission>());
   pm->AddFusionPass(std::make_shared<opt::BatchMatMulReduceScatterAllToAllFusion>());
   pm->AddFusionPass(std::make_shared<opt::AllToAllAllGatherBatchMatMulFusion>());
   pm->AddFusionPass(std::make_shared<opt::LambFissionGe>());
