@@ -21,7 +21,7 @@ mindspore.nn.Unfold
           - ``"valid"`` - 表示所取的区域块必须被原始图像所覆盖。
 
     输入：
-        - **x** (Tensor) - 输入四维Tensor，其shape为 :math:`[in\_batch, in\_depth, in\_row, in\_col]`，其数据类型为int。
+        - **x** (Tensor) - 输入四维Tensor，其shape为 :math:`[in\_batch, in\_depth, in\_row, in\_col]`，其数据类型为number。
 
     输出：
         Tensor，输出为四维Tensor，数据类型与 `x` 相同，其shape为 :math:`(out\_batch, out\_depth, out\_row, out\_col)`，且 `out_batch` 与 `in_batch` 相同。

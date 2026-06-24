@@ -15,7 +15,7 @@ mindspore.nn.piecewise_constant_lr
         该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
-        - **milestone** (Union[list[int], tuple[int]]) - milestone列表。当达到指定的step时，使用对应的 `learning_rates`。 此列表是一个单调递增的列表。列表中的元素必须大于0。
+        - **milestone** (Union[list[int], tuple[int]]) - milestone列表。当达到指定的step时，使用对应的 `learning_rates`。此列表是一个单调递增的列表。列表中的元素必须大于0。
         - **learning_rates** (Union[list[float], tuple[float]]) - 学习率列表。
 
     返回：
