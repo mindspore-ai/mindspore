@@ -285,6 +285,7 @@ void CollectSourcesForInput(const AnfNodePtr &input_node, std::vector<KernelWith
   }
   if (IsViewNode(input_node)) {
     auto view_node = input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(view_node);
     MS_EXCEPTION_IF_CHECK_FAIL(view_node->inputs().size() > kViewDataInputIndex, "View node input size is not correct");
     CollectSourcesForInput(view_node->input(kViewDataInputIndex), sources);
     return;
