@@ -152,8 +152,10 @@ class CheckpointConfig:
                         mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: ``'AES-GCM'`` .
         exception_save (bool, optional): Whether to save the current checkpoint when an exception occurs.
                         Default: ``False`` .
-        crc_check (bool, optional): Whether to perform crc32 calculation when saving checkpoint and save the calculation
-                          result to the end of ckpt. Default: ``False`` .
+        crc_check (bool, optional): Whether to calculate CRC32 when saving checkpoint and save the result to
+                          the end of ckpt. CRC32 is only used to detect accidental file corruption and is not a
+                          cryptographically secure integrity check. Do not use it to authenticate checkpoint
+                          files from untrusted sources. Default: ``False`` .
         remove_redundancy (bool, optional): Whether to enable saving the checkpoint with redundancy removal.
             Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
             redundant-free saving is not enabled.

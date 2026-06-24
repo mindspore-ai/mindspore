@@ -21,7 +21,7 @@ mindspore.train.CheckpointConfig
         - **enc_key** (Union[None, bytes]，可选) - 用于加密的字节类型key。如果值为None，则不需要加密。默认值： ``None`` 。
         - **enc_mode** (str，可选) - 仅当 `enc_key` 不设为None时，该参数有效。指定加密模式，目前支持 ``'AES-GCM'``、 ``'AES-CBC'`` 和 ``'SM4-CBC'``。默认值： ``'AES-GCM'`` 。
         - **exception_save** (bool，可选) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
-        - **crc_check** (bool，可选) - 是否在保存checkpoint时进行crc32计算，并将计算结果保存到ckpt尾部。默认值： ``False`` 。
+        - **crc_check** (bool，可选) - 是否在保存checkpoint时计算CRC32，并将计算结果保存到ckpt尾部。CRC32仅用于检测非恶意的文件损坏，不是密码学安全的完整性校验，不能用于认证来自不可信来源的checkpoint文件。默认值： ``False`` 。
         - **remove_redundancy** (bool，可选) - 是否开启去冗余保存checkpoint。去冗余是指去除数据并行模式下的冗余数据。默认值： ``False``，不开启去冗余保存。
         - **format** (str，可选) - 输出文件的格式，可以是 ``"ckpt"`` 或 ``"safetensors"``。默认值： ``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
