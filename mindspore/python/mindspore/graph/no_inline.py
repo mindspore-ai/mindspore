@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 def no_inline(fn=None):
     """
-    Make the function to be reusable. The corresponding sub graph will not be inline.
+    Make the function to be reusable. The corresponding subgraph will not be inlined.
 
     Args:
         fn (function): It is the python function. If it is a method of a cell, please

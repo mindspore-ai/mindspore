@@ -990,7 +990,7 @@ def set_auto_parallel_context(**kwargs):
         device_num (int): Available device number, the value must be in [1, 4096]. Default: ``1`` .
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: ``0`` .
         gradients_mean (bool): Whether to perform mean operator after allreduce of gradients.
-                     "stand_alone" do not support gradients_mean. Default: ``False`` .
+                     "stand_alone" does not support gradients_mean. Default: ``False`` .
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
                      and "hybrid_parallel" do not support gradient_fp32_sync. Default: ``True`` .
         loss_repeated_mean (bool): Indicates whether the mean operator is executed backwards when the
@@ -1025,8 +1025,8 @@ def set_auto_parallel_context(**kwargs):
                      for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
                      the same network initialization parameter values for all devices, broadcast the parameters
-                     on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
-                     ``data_parallel`` mode, all parameters are broadcast except for the parameter whose attribute
+                     on device 0 to other devices. Parameter broadcasting in different parallel modes is different.
+                     In ``data_parallel`` mode, all parameters are broadcast except for the parameter whose attribute
                      layerwise_parallel is ``True`` . ``Hybrid_parallel`` , ``semi_auto_parallel`` and
                      ``auto_parallel`` mode , the segmented parameters do not participate in broadcasting.
                      Default: ``False`` .
@@ -1057,7 +1057,7 @@ def set_auto_parallel_context(**kwargs):
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only supports ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
-                        distributed alone in the pipeline. The total devices will be divided into 'pipeline_stages'
+                        distributed across the pipeline. The total devices will be divided into 'pipeline_stages'
                         stages.
                         Default: ``1`` .
         pipeline_result_broadcast (bool): A switch that broadcasts the last stage result to all other stages in pipeline
@@ -1075,9 +1075,9 @@ def set_auto_parallel_context(**kwargs):
                         mindspore.set_auto_parallel_context(enable_parallel_optimizer=True).
                         It supports the following keys.
 
-                        - gradient_accumulation_shard(bool): Please using optimizer_level: ``level2`` to replace
+                        - gradient_accumulation_shard(bool): Please use optimizer_level: ``level2`` to replace
                           this config.
-                          If ``true`` , the accumulation gradient parameters will be
+                          If ``True`` , the accumulation gradient parameters will be
                           sharded across the data parallel devices. This will
                           introduce additional communication(ReduceScatter) at
                           each step when accumulate the gradients, but saves a
@@ -1361,7 +1361,7 @@ def _check_context_deprecated(key):
                  jit_enable_inplace_ops=bool, gpu_config=dict, jit_config=dict, enable_compile_cache=bool)
 def set_context(**kwargs):
     r"""
-    Set context for running environment, this interface will be deprecated in future versions, and its
+    Set context for running environment. This interface will be deprecated in future versions, and its
     parameter-related functionalities will be provided through new APIs.
 
     Args:
@@ -1610,7 +1610,7 @@ def get_context(attr_key):
         attr_key (str): The key of the attribute.
 
     Returns:
-        Object, The value of given attribute key.
+        Object, the value of given attribute key.
 
     Raises:
         ValueError: If input key is not an attribute in context.

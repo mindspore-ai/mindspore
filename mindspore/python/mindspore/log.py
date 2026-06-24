@@ -279,7 +279,7 @@ def get_level():
     Get the logger level.
 
     Returns:
-        str, the Log level includes 4(CRITICAL), 3(ERROR), 2(WARNING), 1(INFO), 0(DEBUG).
+        str, the log level includes 4(CRITICAL), 3(ERROR), 2(WARNING), 1(INFO), and 0(DEBUG).
 
     Examples:
         >>> import os

@@ -18,7 +18,7 @@ mindspore.graph.register_op_wrapper
         - **op_name** (str) - 要注册包装函数的算子名称。必须为非空字符串。
 
     返回：
-        callable，被装饰器的，被注册为自定义包装函数的函数。
+        callable，被装饰器装饰的，被注册为自定义包装函数的函数。
 
     异常：
         - **ValueError** - 当 `op_name` 不是非空字符串时抛出。

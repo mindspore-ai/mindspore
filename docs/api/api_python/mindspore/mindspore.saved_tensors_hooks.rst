@@ -19,7 +19,7 @@ mindspore.saved_tensors_hooks
       接收上述返回值，并恢复出对应的张量。
 
     .. note::
-        当前该上下文管理器在Graph模式与Jit模式下不支持。
+        当前该上下文管理器不支持在Graph模式与Jit模式下使用。
 
     .. warning::
         - 为防止未定义行为，对传入 `pack_hook` 的原始张量进行原地修改会抛出异常。

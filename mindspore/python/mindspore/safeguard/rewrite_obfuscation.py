@@ -127,7 +127,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, obf_config=None, sa
         network (nn.Cell): The original network that need to be obfuscated.
         ckpt_files (str): The directory path of original ckpt files.
         target_modules (list[str], optional): The target ops that need to be obfuscated in the network. The first string
-            represents the network path of the target ops in the original network, which should be in form of
+            represents the network path of the target ops in the original network, which should be in the form of
             ``"A/B/C"``. The second string represents the names of multiple target ops in the same path, which
             should be in form of ``"D|E|F"``. For example, the target_modules of GPT2 can be ``['backbone/blocks
             /attention', 'dense1|dense2|dense3']``. If target_modules has the third value, it should be in the
@@ -147,8 +147,8 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, obf_config=None, sa
         TypeError: If `network` is not nn.Cell.
         TypeError: If `ckpt_files` is not string or `saved_path` is not string.
         TypeError: If `target_modules` is not list.
-        TypeError: If target_modules's elements are not string.
-        TypeError: If obf_config is not dict.
+        TypeError: If the elements of `target_modules` are not string.
+        TypeError: If `obf_config` is not dict.
         ValueError: If `ckpt_files` does not exist or `saved_path` does not exist.
         ValueError: If the number of elements of `target_modules` is less than ``2``.
         ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
@@ -377,7 +377,8 @@ def load_obf_params_into_net(network, target_modules=None, obf_ratios=None, obf_
             in the format of 'obfuscate_layers:all' or 'obfuscate_layers:int', which represents the number of
             layers that need to be obfuscated of duplicate layers (such as transformer layers or resnet
             blocks). Default: ``None``.
-        obf_ratios (Tensor, optional): The obf ratios generated when executing :func:`mindspore.obfuscate_ckpt`.
+        obf_ratios (Tensor, optional): The obfuscation ratios generated when executing
+            :func:`mindspore.obfuscate_ckpt`.
             Default: ``None``.
         obf_config (dict, optional): The configuration of model obfuscation policies. Default: ``None``.
         data_parallel_num (int, optional): The data parallel number of parallel training. Default: ``1``.
@@ -396,7 +397,7 @@ def load_obf_params_into_net(network, target_modules=None, obf_ratios=None, obf_
         TypeError: If `obf_config` is not dict.
         TypeError: If target_modules's elements are not string.
         ValueError: If the number of elements of `target_modules` is less than ``2``.
-        ValueError: If `obf_ratios` is empty Tensor.
+        ValueError: If `obf_ratios` is an empty Tensor.
         ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
             letters, numbers, ``'_'`` and ``'/'``.
         ValueError: If the second string of `target_modules` is empty or contains characters other than uppercase and

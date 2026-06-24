@@ -527,7 +527,7 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, early_st
     storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
 
     Note:
-        Recompute function only supports a block which inherites from Cell object.
+        Recompute function only supports a block which inherits from Cell object.
 
     Args:
         block (Cell): Block to be recomputed.
@@ -537,11 +537,11 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, early_st
         use_reentrant (bool, optional): This keyword is only valid in PyNative mode.
             If use_reentrant=True is set, we will implement recomputation through
             a custom bprop function, which does not support differentiation of complex types
-            such as List/Tuple, If use_reentrant=False is set, we will use the saved_tensors_hook functionality
+            such as List/Tuple. If use_reentrant=False is set, we will use the saved_tensors_hooks functionality
             to implement recomputation, which supports differentiation of tensors inside complex types.
             Default: ``True``.
         output_recompute (bool, optional): If output_recompute=True is set, we will implement recomputation by
-            saved_tensors_hook functionality by default. The output of this cell or function will not be stored by
+            saved_tensors_hooks functionality by default. The output of this cell or function will not be stored by
             subsequent operations for backward. When there are two adjacent cells both requiring recomputation (where
             the output of one cell serves as the input to the other), the recomputation of these two cells will be
             merged. In this case, the output activation values of the first cell will not be stored. If

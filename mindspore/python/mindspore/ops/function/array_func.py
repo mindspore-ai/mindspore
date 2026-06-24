@@ -4239,7 +4239,7 @@ def is_tensor(obj):
     Examples:
         >>> import mindspore
         >>> a = mindspore.tensor([1.9, 2.2, 3.1])
-        >>> mindspore.ops.is_tensor(a)
+        >>> mindspore.is_tensor(a)
         True
     """
     return isinstance(obj, Tensor)

@@ -31,7 +31,7 @@ mindspore.profiler.mstx
 
         参数：
             - **message** (str) - 区间的描述信息。
-            - **stream** (:class:`~.runtime.Stream`, 可选) - 用于异步执行的NPU流。默认值： ``None`` ，表示仅在host侧开始区间打点，不在device侧的stream上开始区间打点。
+            - **stream** (:class:`~.runtime.Stream`, 可选) - 用于异步执行的NPU流。默认值： ``None`` ，表示仅在host侧开始区间标记，不在device侧的stream上开始区间标记。
             - **domain** (str, 可选) - 设置性能分析区间的domain名称。默认值： ``"default"``。
 
         返回：

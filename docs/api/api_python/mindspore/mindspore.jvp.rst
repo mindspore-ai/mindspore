@@ -14,7 +14,7 @@ mindspore.jvp
     返回：
         - **net_output** (Union[Tensor, tuple[Tensor]]) - 输入网络的正向计算结果。
         - **jvp** (Union[Tensor, tuple[Tensor]]) - 雅可比向量积的结果。
-        - **aux_value** (Union[Tensor, tuple[Tensor]], 可选) - 只有 `has_aux` 值为 ``True`` ，才返回 `aux_value` 。`aux_value` 是 `fn(inputs)` 的第一个除外的其他输出，且不参与 `fn` 的求导。
+        - **aux_value** (Union[Tensor, tuple[Tensor]], 可选) - 只有 `has_aux` 值为 ``True`` ，才返回 `aux_value` 。`aux_value` 是 `fn(inputs)` 除第一个输出外的其他输出，且不参与 `fn` 的求导。
 
     异常：
         - **TypeError** - `inputs` 或 `v` 类型不符合要求。

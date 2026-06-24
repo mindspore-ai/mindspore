@@ -67,7 +67,7 @@ def load_mindir(file_name):
 
 def save_mindir(model, file_name):
     """
-    save protobuf file.
+    Save protobuf file.
 
     Note:
         The interface is deprecated from version 2.5 and will be removed in a future version.

@@ -233,7 +233,7 @@ def set_algo_parameters(**kwargs):
         The attribute name is required. This interface works ONLY in AUTO_PARALLEL mode.
 
     Args:
-        fully_use_devices (bool): Whether ONLY searching strategies that fully use all available devices.
+        fully_use_devices (bool): Whether to search only for strategies that fully use all available devices.
             Default: ``False`` . For example with 8 devices available, if set ``True`` , strategy (4, 1) will not be
             included in ReLU's candidate strategies, because strategy (4, 1) only utilizes 4 devices.
         elementwise_op_strategy_follow (bool): Whether the elementwise operator has the consistent strategies as its
@@ -249,7 +249,7 @@ def set_algo_parameters(**kwargs):
             value describes the extent of approximation. For example, the number of candidate strategies of an operator
             is S, if 'enable_algo_approxi' is ``True`` , then the remaining strategies are of size: min{S, 1/epsilon}.
         tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: ``False`` .
-            Due to properties of some hardware, MatMul kernel only with large shapes can show advantages. If this flag
+            Due to properties of some hardware, MatMul kernels with large shapes can show advantages. If this flag
             is ``True`` , then the slice shape of MatMul is checked to prevent irregular shapes.
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
             Default: ``16`` . If 'tensor_slice_align_enable' is set ``True`` , then the slice size of last dimension of

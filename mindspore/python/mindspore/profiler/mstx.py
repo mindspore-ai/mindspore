@@ -47,7 +47,7 @@ class Mstx:
             stream (:class:`~.runtime.Stream`, optional): NPU stream for async execution, expected type:
                 mindspore.runtime.Stream. Default: ``None``, which means only marking on host side without
                 marking on device stream.
-            domain (str, optional): Domain name. Default: ``default``.
+            domain (str, optional): Domain name. Default: ``"default"``.
 
         Examples:
             >>> import numpy as np

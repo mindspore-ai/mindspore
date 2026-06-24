@@ -21,7 +21,7 @@ from mindspore.profiler.common.constant import ProfilerLevel, AicoreMetrics
 
 class _ExperimentalConfig:
     r"""
-    The purpose of this class is to configure scalable parameters when using profiles for model
+    The purpose of this class is to configure scalable parameters when using profiling for model
     performance data acquisition.
 
     Args:
@@ -38,8 +38,8 @@ class _ExperimentalConfig:
         aic_metrics (AicoreMetrics, optional): (Ascend only) Types of AICORE performance data collected,
             when using this parameter, `activities` must include ``ProfilerActivity.NPU`` , and the value
             must be a member of AicoreMetrics. When profiler_level is Level0, the default value is
-            ``AicoreMetrics.AiCoreNone``; profiler_level is a Level1 or Level2, the default value is:
-            ``AicoreMetrics.PipeUtilization``.The data items contained in each metric are as follows:
+            ``AicoreMetrics.AiCoreNone``; profiler_level is Level1 or Level2, the default value is:
+            ``AicoreMetrics.PipeUtilization``. The data items contained in each metric are as follows:
 
             - AicoreMetrics.AiCoreNone: Does not collect AICORE data.
             - AicoreMetrics.ArithmeticUtilization: ArithmeticUtilization contains mac_fp16/int8_ratio,
@@ -56,8 +56,8 @@ class _ExperimentalConfig:
             - AicoreMetrics.L2Cache: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit,
               r1_read_cache_hit etc.
             - AicoreMetrics.MemoryAccess: Statistics on storage access bandwidth and storage capacity of main
-              storage and l2 cache etc.
-        l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True.
+              storage and L2 cache etc.
+        l2_cache (bool, optional): (Ascend only) Whether to collect L2 cache data, collect when True.
             Default: ``False`` . The l2_cache.csv file is generated in the ASCEND_PROFILER_OUTPUT folder.
         mstx (bool, optional): (Ascend only) Whether to collect light weight profiling data, collect when True.
             Default: ``False`` .
@@ -73,7 +73,7 @@ class _ExperimentalConfig:
         mstx_domain_include (list, optional): (Ascend only) Set the set of enabled domain names when the mstx switch
                   is turned on. The name must be of str type. Default value: ``[]``, indicating that this parameter
                   is not used to control the domain. This parameter is mutually exclusive with the mstx_domain_exclude
-                  parameter and cannot be set. simultaneously. If both are set, only the mstx_domain_include parameter
+                  parameter and cannot be set simultaneously. If both are set, only the mstx_domain_include parameter
                   takes effect.
         mstx_domain_exclude (list, optional): (Ascend only) Set the set of domain names that are not enabled when the
                   mstx switch is turned on. The name must be of str type. Default value: ``[]``, indicating that this

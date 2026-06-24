@@ -48,11 +48,12 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
         input_names (list, optional): Names to assign to the input nodes of the graph, in order. Default: ``None`` .
         output_names (list, optional): Names to assign to the output nodes of the graph, in order. Default: ``None`` .
         export_params (bool, optional): If false, parameters (weights) will not be exported,
-            parameters will add input nodes as input of the graph. Default: ``True`` .
-        keep_initializers_as_inputs (bool, optional): If True, all the initializers (model parameters/weights) will
-            add as inputs to the graph. This allows modifying any or all weights when running the exported ONNX model.
+            parameters will be added as input nodes to the graph. Default: ``True`` .
+        keep_initializers_as_inputs (bool, optional): If True, all the initializers
+            (model parameters/weights) will be added
+            as inputs to the graph. This allows modifying any or all weights when running the exported ONNX model.
             Default: ``False`` .
-        dynamic_axes (dict[str, dict[int, str]], optional): To specify axes of input tensors as dynamic (at runtime).
+        dynamic_axes (dict[str, dict[int, str]], optional): Specifies axes of input tensors as dynamic (at runtime).
             Default: ``None`` .
 
             - Set a dict with scheme: {input_node_name: {axis_index:axis_name}},
@@ -63,7 +64,7 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
     Raises:
         ValueError: If the parameter `net` is not :class:`mindspore.nn.Cell`.
         ValueError: If the parameter `input_names` is not list type.
-        ValueError: If the parameter `output_names` is not list type
+        ValueError: If the parameter `output_names` is not list type.
         ValueError: If the parameter `dynamic_axes` is not dict type.
 
     Examples:
