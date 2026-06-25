@@ -49,7 +49,18 @@ CommHandle::~CommHandle() {
     }
     MS_LOG(DEBUG) << "DestroyEvent: event=" << event_ << ", op_name=" << op_name_ << ", wait_called=" << wait_called
                   << ", CommHandle=" << this;
-    device_ctx_->device_res_manager_->DestroyEvent(event_);
+    try {
+      event_->SyncEvent();
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "SyncEvent failed in CommHandle destructor: " << e.what() << ", event=" << event_
+                      << ", op_name=" << op_name_;
+    }
+    try {
+      device_ctx_->device_res_manager_->DestroyEvent(event_);
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "DestroyEvent failed in CommHandle destructor: " << e.what() << ", event=" << event_
+                      << ", op_name=" << op_name_;
+    }
     MS_LOG(DEBUG) << "DestoryEvent done, event: " << event_;
   }
 }
