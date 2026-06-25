@@ -429,7 +429,8 @@ class CrossEntropyLoss(Cell):
 
     Note:
         Dynamic shape, dynamic rank and variable constant input are not supported in
-        `strict graph mode (jit_syntax_level=mindspore.STRICT) <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_.
+        `strict graph mode (jit_syntax_level=mindspore.STRICT)
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_.
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.

@@ -4773,7 +4773,8 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
 
     Note:
         Dynamic shape, dynamic rank and variable constant inputs are not supported in
-        `strict graph mode (jit_syntax_level=mindspore.STRICT) <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
+        `strict graph mode (jit_syntax_level=mindspore.STRICT)
+        <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
 
     Args:
         input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`

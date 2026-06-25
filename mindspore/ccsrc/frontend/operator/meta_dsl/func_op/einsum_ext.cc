@@ -37,6 +37,16 @@ constexpr int64_t kIdleIdx = -1;
 constexpr int64_t kLableNum = 'z' - 'a' + 1;
 constexpr int64_t kTotalLabelNum = kLableNum * 2;
 constexpr int64_t kEllipsisLabel = kTotalLabelNum;
+
+// Output layout fields populated by EinsumExtFuncOpInferOutput. Mirrors
+// EinsumOutputLayout in the pyboost customize path; kept local so the meta_dsl
+// translation unit stays self-contained.
+struct EinsumOutputLayout {
+  int64_t output_rank{0};
+  int64_t align_rank{0};
+  int64_t ellipsis_idx{0};
+};
+
 void EinsumExtFuncOpParseEquation(const std::string &equation_str, bool *arrow_exist,
                                   std::vector<std::vector<int64_t>> *l_ops_labels,
                                   std::vector<std::vector<int64_t>> *r_ops_labels) {
@@ -144,57 +154,83 @@ void EinsumExtFuncOpCountLabels(const ShapeArray &operands_shape, const std::vec
   }
 }
 
+// Assign perm indices for labels that appear in the explicit output equation
+// (right-hand-side of the arrow). Returns whether the ellipsis token was seen
+// on the output side.
+bool AssignFuncOpOutputLabelPerm(const std::vector<int64_t> &output_labels, const std::vector<int64_t> &labels_count,
+                                 int64_t ellipsis_max_dimnum, std::vector<int64_t> *labels_perm_idx, int64_t *perm_idx,
+                                 int64_t *ellipsis_idx) {
+  auto label_to_letter = [](int64_t label) -> char {
+    return label >= kLableNum ? label - kLableNum + 'a' : label + 'A';
+  };
+
+  bool find_ellipsis = false;
+  for (const auto &label : output_labels) {
+    if (label == kEllipsisLabel) {
+      *ellipsis_idx = *perm_idx;
+      *perm_idx += ellipsis_max_dimnum;
+      find_ellipsis = true;
+      continue;
+    }
+    if (MS_UNLIKELY((*labels_perm_idx)[label] != kIdleIdx)) {
+      MS_EXCEPTION(ValueError) << "For EinsumExt, " << label_to_letter(label)
+                               << " has appeared more than once in output equation.";
+    }
+    if (MS_UNLIKELY(labels_count[label] == 0)) {
+      MS_EXCEPTION(ValueError) << "For EinsumExt, " << label_to_letter(label)
+                               << " does not appear in any input equations.";
+    }
+    (*labels_perm_idx)[label] = (*perm_idx)++;
+  }
+  return find_ellipsis;
+}
+
+// Assign perm indices for labels in the implicit output mode (no arrow): every
+// label that occurs exactly once across inputs is emitted, with ellipsis dims
+// laid out first.
+void AssignFuncOpImplicitOutputLabelPerm(const std::vector<int64_t> &labels_count, int64_t ellipsis_max_dimnum,
+                                         std::vector<int64_t> *labels_perm_idx, int64_t *perm_idx) {
+  *perm_idx = ellipsis_max_dimnum;
+  for (size_t label = 0; label < kTotalLabelNum; label++) {
+    if (labels_count[label] != 1) {
+      continue;
+    }
+    (*labels_perm_idx)[label] = (*perm_idx)++;
+  }
+}
+
+// Assign perm indices for input-only labels (those used during contraction but
+// not present in the output), appending them after the output region.
+void AssignFuncOpReductionLabelPerm(const std::vector<int64_t> &labels_count, std::vector<int64_t> *labels_perm_idx,
+                                    int64_t *perm_idx) {
+  for (size_t label = 0; label < kTotalLabelNum; label++) {
+    if (labels_count[label] > 0 && (*labels_perm_idx)[label] == kIdleIdx) {
+      (*labels_perm_idx)[label] = (*perm_idx)++;
+    }
+  }
+}
+
 void EinsumExtFuncOpInferOutput(const std::vector<std::vector<int64_t>> &ops_labels,
                                 const std::vector<int64_t> &labels_count, bool arrow_exist, int64_t ellipsis_max_dimnum,
-                                std::vector<int64_t> *labels_perm_idx, int64_t *output_rank, int64_t *align_rank,
-                                int64_t *ellipsis_idx) {
+                                std::vector<int64_t> *labels_perm_idx, EinsumOutputLayout *layout) {
   int64_t perm_idx = 0;
   bool find_ellipsis = false;
   if (arrow_exist) {
-    auto label_to_letter = [](int64_t label) -> char {
-      return label >= kLableNum ? label - kLableNum + 'a' : label + 'A';
-    };
-
-    for (const auto &label : ops_labels[0]) {
-      if (label == kEllipsisLabel) {
-        *ellipsis_idx = perm_idx;
-        perm_idx += ellipsis_max_dimnum;
-        find_ellipsis = true;
-      } else {
-        if (MS_UNLIKELY((*labels_perm_idx)[label] != kIdleIdx)) {
-          MS_EXCEPTION(ValueError) << "For EinsumExt, " << label_to_letter(label)
-                                   << " has appeared more than once in output equation.";
-        }
-        if (MS_UNLIKELY(labels_count[label] == 0)) {
-          MS_EXCEPTION(ValueError) << "For EinsumExt, " << label_to_letter(label)
-                                   << " does not appear in any input equations.";
-        }
-        (*labels_perm_idx)[label] = perm_idx++;
-      }
-    }
+    find_ellipsis = AssignFuncOpOutputLabelPerm(ops_labels[0], labels_count, ellipsis_max_dimnum, labels_perm_idx,
+                                                &perm_idx, &layout->ellipsis_idx);
   } else {
-    perm_idx = ellipsis_max_dimnum;
+    AssignFuncOpImplicitOutputLabelPerm(labels_count, ellipsis_max_dimnum, labels_perm_idx, &perm_idx);
     find_ellipsis = true;
-    for (size_t label = 0; label < kTotalLabelNum; label++) {
-      if (labels_count[label] != 1) {
-        continue;
-      }
-      (*labels_perm_idx)[label] = perm_idx++;
-    }
   }
 
-  *output_rank = perm_idx;
+  layout->output_rank = perm_idx;
   if (!find_ellipsis) {
-    *ellipsis_idx = perm_idx;
+    layout->ellipsis_idx = perm_idx;
     perm_idx += ellipsis_max_dimnum;
   }
 
-  for (size_t label = 0; label < kTotalLabelNum; label++) {
-    if (labels_count[label] > 0 && (*labels_perm_idx)[label] == kIdleIdx) {
-      (*labels_perm_idx)[label] = perm_idx++;
-    }
-  }
-  *align_rank = perm_idx;
+  AssignFuncOpReductionLabelPerm(labels_count, labels_perm_idx, &perm_idx);
+  layout->align_rank = perm_idx;
 }
 
 void GetTransposeOutShape(ShapeVector *shape, const std::vector<int64_t> &perm) {
@@ -525,8 +561,11 @@ BeginFunction(EinsumExt, equation, operands) {
   int64_t output_rank = 0;
   int64_t ellipsis_idx = 0;
   std::vector<int64_t> labels_perm_idx(kTotalLabelNum, kIdleIdx);
-  EinsumExtFuncOpInferOutput(r_ops_labels, labels_count, arrow_exist, ellipsis_max_dimnum, &labels_perm_idx,
-                             &output_rank, &align_rank, &ellipsis_idx);
+  EinsumOutputLayout layout;
+  EinsumExtFuncOpInferOutput(r_ops_labels, labels_count, arrow_exist, ellipsis_max_dimnum, &labels_perm_idx, &layout);
+  output_rank = layout.output_rank;
+  align_rank = layout.align_rank;
+  ellipsis_idx = layout.ellipsis_idx;
 
   std::vector<NodePtr> operands_list;
   operands_list.reserve(operands_shape.size());
