@@ -841,7 +841,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     Raises:
         TypeError: If `sparse` is not a bool.
         TypeError: If `sparse` is ``True`` and dtype of `labels` is neither int32 nor int64.
-        TypeError: If `sparse` is ``False`` and dtype of `labels` is neither float16 not float32.
+        TypeError: If `sparse` is ``False`` and dtype of `labels` is neither float16 nor float32.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
@@ -2433,7 +2433,7 @@ class NLLLoss(LossBase):
         - **logits** (Tensor) - Tensor of shape :math:`(N, C)`
           or :math:`(N, C, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data, where `C = number of classes`.
           Data type must be float16 or float32. `inputs` needs to be logarithmic probability.
-        - **labels** (Tensor) -:math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data.
+        - **labels** (Tensor) - :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data.
           Data type must be int32.
 
     Returns:

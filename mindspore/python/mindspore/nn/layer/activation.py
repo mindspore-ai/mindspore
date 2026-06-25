@@ -198,7 +198,7 @@ class Softmax2d(Cell):
           The input of Softmax with data type of float16 or float32.
 
     Outputs:
-        Tensor, which has the same type and shape as `x` with values in the range[0,1].
+        Tensor, which has the same type and shape as `x` with values in the range[0, 1].
 
     Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.

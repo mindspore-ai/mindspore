@@ -71,7 +71,7 @@ class Optimizer(Cell):
     """
     Base class for updating parameters. Never use this class directly, but instantiate one of its subclasses instead.
 
-    Grouping parameters is supported. If parameters are grouped, different strategy of `learning_rate`, `weight_decay`
+    Grouping parameters is supported. If parameters are grouped, different strategies of `learning_rate`, `weight_decay`
     and `grad_centralization` can be applied to each group.
 
     Note:
@@ -328,7 +328,7 @@ class Optimizer(Cell):
         """
         Whether to make the gradients unique in optimizer. Generally, it is used in sparse networks. Set to True if the
         gradients of the optimizer are sparse, while set to False if the forward network has made the parameters unique,
-        that is, the gradients of the optimizer is no longer sparse.
+        that is, the gradients of the optimizer are no longer sparse.
         The default value is True when it is not set.
         """
         return self._unique
@@ -402,7 +402,7 @@ class Optimizer(Cell):
         on :class:`mindspore.nn.Optimizer` can also call this interface to apply weight decay.
 
         Args:
-            gradients (tuple[Tensor]):The gradients of network parameters, and have the same shape as the parameters.
+            gradients (tuple[Tensor]): The gradients of network parameters, and have the same shape as the parameters.
 
         Returns:
             tuple[Tensor], The gradients after weight decay.
@@ -726,8 +726,8 @@ class Optimizer(Cell):
 
     def get_lr_parameter(self, param):
         """
-        When parameters is grouped and learning rate is different for each group, get the learning rate of the specified
-        `param`.
+        When parameters are grouped and learning rate is different for each group, get the learning rate of the 
+        specified `param`.
 
         Args:
             param (Union[Parameter, list[Parameter]]): The `Parameter` or list of `Parameter`.
@@ -786,7 +786,7 @@ class Optimizer(Cell):
         Determine whether the learning rate or weight decay is dynamic.
 
         Returns:
-             bool, represents the learning rate or weight decay is dynamic or not.
+            bool, represents the learning rate or weight decay is dynamic or not.
         """
         return self.dynamic_lr or self.dynamic_weight_decay
 
@@ -811,8 +811,8 @@ class Optimizer(Cell):
         Apply Broadcast operations in the sequential order of parameter groups.
 
         Args:
-            optim_result(bool): The results of updating parameters. This input is used to ensure that the parameters are
-              updated before they are broadcast.
+            optim_result (bool): The results of updating parameters. This input is used to ensure that the parameters 
+              are updated before they are broadcast.
         Returns:
              The broadcast parameters.
         """

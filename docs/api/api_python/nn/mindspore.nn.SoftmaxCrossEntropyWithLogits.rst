@@ -9,7 +9,7 @@ mindspore.nn.SoftmaxCrossEntropyWithLogits
 
     函数的输入是未标准化的值，表示为 :math:`x` ，格式为 :math:`(N, C)` ，以及相应的目标。
 
-    通常情况下，该函数的输入为各类别的分数值以及对应的目标值，输入格式是  :math:`(N, C)` 。
+    通常情况下，该函数的输入为各类别的分数值以及对应的目标值，输入格式是 :math:`(N, C)` 。
 
     对于每个实例 :math:`x_i` ， :math:`i` 的范围为0到N-1，则可得损失为：
 
