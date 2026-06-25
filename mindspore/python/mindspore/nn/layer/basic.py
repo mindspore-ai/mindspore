@@ -121,12 +121,12 @@ class Dropout(Cell):
 
     This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
-    over-fitting and prevents neurons from co-adaptation. See more details in `Improving neural networks by
+    overfitting and prevents neurons from co-adaptation. See more details in `Improving neural networks by
     preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_.
 
     .. warning::
-        After versions 2.9.0, `keep_prob` will be removed, `p` will become the primary argument,
+        After version 2.9.0, `keep_prob` will be removed, `p` will become the primary argument,
         and the constructor will include a new `inplace` argument.
 
     Note:
@@ -153,7 +153,7 @@ class Dropout(Cell):
     Raises:
         TypeError: If `keep_prob` is not a float.
         TypeError: If the dtype of `p` is not float or int.
-        TypeError: If dtype of `x` is not neither float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `keep_prob` is not in range (0, 1].
         ValueError: If `p` is not in range [0, 1).
         ValueError: If length of shape of `x` is less than 1.
@@ -685,7 +685,7 @@ class Dense(Cell):
     .. math::
         \text{outputs} = \text{activation}(\text{X} * \text{kernel} + \text{bias}),
 
-    where :math:`X` is the input tensors, :math:`\text{activation}` is the activation function passed as the activation
+    where :math:`X` is the input tensor, :math:`\text{activation}` is the activation function passed as the activation
     argument (if passed in), :math:`\text{kernel}` is a weight matrix with the same
     data type as the :math:`X` created by the layer, and :math:`\text{bias}` is a bias vector
     with the same data type as the :math:`X` created by the layer (only if `has_bias` is ``True``).

@@ -26,7 +26,7 @@ mindspore.nn.CosineDecayLR
         标量Tensor。当前step的学习率值，shape为 :math:`()`。
 
     异常：
-        - **TypeError** - `min_lr` 或  `max_lr` 不是float。
+        - **TypeError** - `min_lr` 或 `max_lr` 不是float。
         - **TypeError** - `decay_steps` 不是整数。
         - **ValueError** - `min_lr` 小于0或 `decay_steps` 小于1。
         - **ValueError** - `max_lr` 小于或等于0。

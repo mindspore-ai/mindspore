@@ -10,7 +10,7 @@ mindspore.nn.Dense
     .. math::
         \text{outputs} = \text{activation}(\text{X} * \text{kernel} + \text{bias}),
 
-    其中  :math:`X` 是输入Tensor， :math:`\text{activation}` 是激活函数， :math:`\text{kernel}` 是一个权重矩阵，其数据类型与 :math:`X` 相同， :math:`\text{bias}` 是一个偏置向量，其数据类型与 :math:`X` 相同（仅当 `has_bias` 为 ``True`` 时）。
+    其中 :math:`X` 是输入Tensor， :math:`\text{activation}` 是激活函数， :math:`\text{kernel}` 是一个权重矩阵，其数据类型与 :math:`X` 相同， :math:`\text{bias}` 是一个偏置向量，其数据类型与 :math:`X` 相同（仅当 `has_bias` 为 ``True`` 时）。
 
     .. warning::
         - 在Ascend硬件平台下，设置PYNATIVE或KBK模式时，如果 `bias` 为 ``False``， `x` 不可以大于6D。
@@ -19,8 +19,8 @@ mindspore.nn.Dense
     参数：
         - **in_channels** (int) - Dense层输入Tensor的空间维度。
         - **out_channels** (int) - Dense层输出Tensor的空间维度。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 权重参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 :func:`mindspore.common.initializer.initializer`。默认值： ``None`` ，权重使用HeUniform初始化。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 偏置参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 :func:`mindspore.common.initializer.initializer`。默认值： ``None`` ，偏差使用Uniform初始化。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 权重参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 :func:`mindspore.common.initializer.initializer` 。默认值： ``None`` ，权重使用HeUniform初始化。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 偏置参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 :func:`mindspore.common.initializer.initializer` 。默认值： ``None`` ，偏差使用Uniform初始化。
         - **has_bias** (bool，可选) - 是否使用偏置向量 :math:`\text{bias}` 。默认值： ``True`` 。
         - **activation** (Union[str, Cell, Primitive, None]，可选) - 应用于全连接层输出的激活函数。可指定激活函数名，如'relu'，或具体激活函数，如 :class:`mindspore.nn.ReLU` 。默认值： ``None`` 。
         - **dtype** (:class:`mindspore.dtype`，可选) - Parameter的数据类型。默认值： ``mstype.float32`` 。

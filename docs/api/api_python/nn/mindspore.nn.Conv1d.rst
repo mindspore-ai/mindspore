@@ -34,7 +34,7 @@ mindspore.nn.Conv1d
         2.9.0（不含）之后版本中，构造签名将调整为 ``Conv1d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', dtype=None)`` 。其中 `pad_mode` 替换为 `padding_mode`，`has_bias` 替换为 `bias` 且默认值改为 ``True`` 。
 
     .. note::
-        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 的场景下，必须要满足 `in\_channels` = `out\_channels` = `group` 的约束条件。
+        在Ascend平台上，目前只支持深度卷积场景下的分组卷积运算。也就是说，当 `group>1` 时，必须要满足 `in\_channels` = `out\_channels` = `group` 的约束条件。
 
     参数：
         - **in_channels** (int) - Conv1d层输入Tensor的空间维度。
@@ -52,8 +52,8 @@ mindspore.nn.Conv1d
           假设 :math:`dilation=(d0,)`, 则卷积核在宽度方向间隔 :math:`d0-1` 个元素进行采样。取值范围为[1, L]。默认值： ``1`` 。
         - **group** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。默认值：``1`` 。
         - **has_bias** (bool，可选) - Conv1d层是否添加偏置参数。默认值： ``False`` 。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_, 的值。默认值： ``None`` ，权重使用 ``"HeUniform"`` 初始化。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 偏置参数的初始化方法。可以使用的初始化方法与 `weight_init` 相同。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_, 的值。默认值： ``None`` ，偏置使用 ``"Uniform"`` 初始化。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 权重参数的初始化方法。它可以是Tensor，str，Initializer或numbers.Number。当使用str时，可选 ``"TruncatedNormal"`` ， ``"Normal"`` ， ``"Uniform"`` ， ``"HeUniform"`` 和 ``"XavierUniform"`` 分布以及常量 ``"One"`` 和 ``"Zero"`` 分布的值，可接受别名 ``"xavier_uniform"`` ， ``"he_uniform"`` ， ``"ones"`` 和 ``"zeros"`` 。上述字符串大小写均可。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ 的值。默认值： ``None`` ，权重使用 ``"HeUniform"`` 初始化。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]，可选) - 偏置参数的初始化方法。可以使用的初始化方法与 `weight_init` 相同。更多细节请参考 `Initializer <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.common.initializer.html>`_ 的值。默认值： ``None`` ，偏置使用 ``"Uniform"`` 初始化。
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
