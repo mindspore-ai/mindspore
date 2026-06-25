@@ -674,7 +674,7 @@ class ComputeDeltas(AudioTensorOperation):
     .. math::
         d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
 
-    where :math:`d_{t}` is the deltas at time :math:`t` , :math:`c_{t}` is the spectrogram coefficients
+    where :math:`d_{t}` is the delta at time :math:`t` , :math:`c_{t}` is the spectrogram coefficient
     at time :math:`t` , :math:`N` is :math:`(\text{win_length} - 1) // 2` .
 
     Args:
@@ -799,7 +799,7 @@ class DBToAmplitude(AudioTensorOperation):
 
     Args:
         ref (float): Reference which the output will be scaled by.
-        power (float): If power equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
+        power (float): If `power` equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
 
     Raises:
         TypeError: If `ref` is not of type float.
@@ -905,11 +905,11 @@ class DeemphBiquad(AudioTensorOperation):
     Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
-        sample_rate (int): Sampling rate of the waveform, must be 44100 or 48000 (Hz).
+        sample_rate (int): Sampling rate of the waveform, must be ``44100`` or ``48000`` (Hz).
 
     Raises:
         TypeError: If `sample_rate` is not of type int.
-        ValueError: If `sample_rate` is not 44100 or 48000.
+        ValueError: If `sample_rate` is not ``44100`` or ``48000`` .
         RuntimeError: If input tensor is not in shape of <..., time>.
 
     Supported Platforms:
@@ -954,7 +954,7 @@ class DetectPitchFrequency(AudioTensorOperation):
     """
     Detect pitch frequency.
 
-    It is implemented using normalized cross-correlation function and median smoothing.
+    It is implemented using a normalized cross-correlation function and median smoothing.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. ``44100`` (Hz), the value can't be zero.
@@ -1154,7 +1154,7 @@ DE_C_FADE_SHAPE = {FadeShape.QUARTER_SINE: cde.FadeShape.DE_FADE_SHAPE_QUARTER_S
 
 class Fade(AudioTensorOperation):
     """
-    Add a fade in and/or fade out to an waveform.
+    Add a fade in and/or fade out to a waveform.
 
     Args:
         fade_in_len (int, optional): Length of fade-in (time frames), which must be non-negative. Default: ``0``.
@@ -1162,15 +1162,15 @@ class Fade(AudioTensorOperation):
         fade_shape (FadeShape, optional): Shape of fade, five different types can be chosen as defined in FadeShape.
             Default: ``FadeShape.LINEAR``.
 
-            - ``FadeShape.QUARTER_SINE``, means it tend to 0 in an quarter sin function.
+            - ``FadeShape.QUARTER_SINE``, means it tends to 0 in a quarter sin function.
 
-            - ``FadeShape.HALF_SINE``, means it tend to 0 in an half sin function.
+            - ``FadeShape.HALF_SINE``, means it tends to 0 in an half sin function.
 
-            - ``FadeShape.LINEAR``, means it linear to 0.
+            - ``FadeShape.LINEAR``, means it goes linear to 0.
 
-            - ``FadeShape.LOGARITHMIC``, means it tend to 0 in an logrithmic function.
+            - ``FadeShape.LOGARITHMIC``, means it tends to 0 in an logrithmic function.
 
-            - ``FadeShape.EXPONENTIAL``, means it tend to 0 in an exponential function.
+            - ``FadeShape.EXPONENTIAL``, means it tends to 0 in an exponential function.
 
     Raises:
         RuntimeError: If fade_in_len exceeds waveform length.
@@ -1222,10 +1222,10 @@ class Filtfilt(AudioTensorOperation):
 
     Args:
         a_coeffs (Sequence[float]): Denominator coefficients of difference equation of dimension.
-            Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
+            Lower delay coefficients are first, e.g. [a0, a1, a2, ...].
             Must be same size as b_coeffs (pad with 0's as necessary).
         b_coeffs (Sequence[float]): Numerator coefficients of difference equation of dimension.
-            Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
+            Lower delay coefficients are first, e.g. [b0, b1, b2, ...].
             Must be same size as a_coeffs (pad with 0's as necessary).
         clamp (bool, optional): If ``True``, clamp the output signal to be in the range [-1, 1].
             Default: ``True``.
@@ -1377,11 +1377,11 @@ class FrequencyMasking(AudioTensorOperation):
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example/channel. Default: ``False``.
-        freq_mask_param (int, optional): When `iid_masks` is ``True``, length of the mask will be uniformly sampled
-            from [0, freq_mask_param]; When `iid_masks` is ``False``, directly use it as length of the mask.
+        freq_mask_param (int, optional): When `iid_masks` is ``True``, the length of the mask will be uniformly sampled
+            from [0, freq_mask_param]; When `iid_masks` is ``False``, directly use it as the length of the mask.
             The value should be in range of [0, freq_length], where `freq_length` is the length of audio waveform
             in frequency domain. Default: ``0``.
-        mask_start (int, optional): Starting point to apply mask, only works when `iid_masks` is ``True``.
+        mask_start (int, optional): Starting point to apply the mask, only works when `iid_masks` is ``True``.
             The value should be in range of [0, freq_length - freq_mask_param], where `freq_length` is
             the length of audio waveform in frequency domain. Default: ``0``.
         mask_value (float, optional): Value to assign to the masked columns. Default: ``0.0``.
@@ -1490,22 +1490,22 @@ class GriffinLim(AudioTensorOperation):
     r"""
     Compute waveform from a linear scale magnitude spectrogram using the Griffin-Lim transformation.
 
-    About Griffin-Lim please refer to `A fast Griffin-Lim algorithm <https://doi.org/10.1109/WASPAA.2013.6701851>`_
+    About Griffin-Lim, please refer to `A fast Griffin-Lim algorithm <https://doi.org/10.1109/WASPAA.2013.6701851>`_
     and `Signal estimation from modified short-time Fourier transform <https://doi.org/10.1109/ICASSP.1983.1172092>`_ .
 
     Args:
         n_fft (int, optional): Size of FFT. Default: ``400``.
-        n_iter (int, optional): Number of iteration for phase recovery. Default: ``32``.
+        n_iter (int, optional): Number of iterations for phase recovery. Default: ``32``.
         win_length (int, optional): Window size for Griffin-Lim. Default: ``None``, will be set to `n_fft` .
         hop_length (int, optional): Length of hop between STFT windows.
             Default: ``None``, will be set to `win_length // 2` .
         window_type (WindowType, optional): Window type for Griffin-Lim, which can be ``WindowType.BARTLETT``,
             ``WindowType.BLACKMAN``, ``WindowType.HAMMING``, ``WindowType.HANN`` or ``WindowType.KAISER``.
-            Default: ``WindowType.HANN``. Currently kaiser window is not supported on macOS.
+            Default: ``WindowType.HANN``. Currently Kaiser window is not supported on macOS.
         power (float, optional): Exponent for the magnitude spectrogram. Default: ``2.0``.
         momentum (float, optional): The momentum for fast Griffin-Lim. Default: ``0.99``.
         length (int, optional): Length of the expected output waveform. Default: ``None``,
-            will be set to the value of last dimension of the stft matrix.
+            will be set to the value of last dimension of the STFT matrix.
         rand_init (bool, optional): Flag for random phase initialization or all-zero phase initialization.
             Default: ``True``.
 
@@ -1675,8 +1675,8 @@ class InverseMelScale(AudioTensorOperation):
         TypeError: If `tolerance_change` is not of type float.
         ValueError: If `tolerance_change` is a negative number.
         TypeError: If `sgdargs` is not of type dict.
-        TypeError: If `norm` is not of type  :class:`mindspore.dataset.audio.NormType` .
-        TypeError: If `mel_type` is not of type  :class:`mindspore.dataset.audio.MelType` .
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormType` .
+        TypeError: If `mel_type` is not of type :class:`mindspore.dataset.audio.MelType` .
 
     Supported Platforms:
         ``CPU``
@@ -1837,14 +1837,14 @@ class LFCC(AudioTensorOperation):
 
     Args:
         sample_rate (int, optional): Sample rate of audio signal. Default: ``16000``.
-        n_filter (int, optional) : Number of linear filters to apply. Default: ``128``.
-        n_lfcc (int, optional) : Number of lfc coefficients to retain. Default: ``40``.
+        n_filter (int, optional): Number of linear filters to apply. Default: ``128``.
+        n_lfcc (int, optional): Number of lfc coefficients to retain. Default: ``40``.
         f_min (float, optional): Minimum frequency. Default: ``0.0``.
         f_max (float, optional): Maximum frequency. Default: ``None``, will be set to `sample_rate // 2` .
-        dct_type (int, optional) : Type of DCT to use. The value can only be ``2``. Default: ``2``.
-        norm (NormMode, optional) : Norm to use. Default: ``NormMode.ORTHO``.
-        log_lf (bool, optional) : Whether to use log-lf spectrograms instead of db-scaled. Default: ``False``.
-        speckwargs (dict, optional) : Arguments for :class:`mindspore.dataset.audio.Spectrogram`.
+        dct_type (int, optional): Type of DCT to use. The value can only be ``2``. Default: ``2``.
+        norm (NormMode, optional): Norm to use. Default: ``NormMode.ORTHO``.
+        log_lf (bool, optional): Whether to use log-lf spectrograms instead of db-scaled. Default: ``False``.
+        speckwargs (dict, optional): Arguments for :class:`mindspore.dataset.audio.Spectrogram`.
             Default: ``None``, the default setting is a dict including
 
             - 'n_fft': 400
@@ -1936,7 +1936,7 @@ class LFCC(AudioTensorOperation):
 
 class LFilter(AudioTensorOperation):
     """
-    Perform an IIR filter by evaluating different equation.
+    Perform an IIR filter by evaluating a different equation.
 
     Args:
         a_coeffs (Sequence[float]): Denominator coefficients of difference equation of dimension.

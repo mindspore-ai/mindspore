@@ -10,7 +10,7 @@ mindspore.dataset.audio.InverseMelScale
         - **n_mels** (int, 可选) - 梅尔滤波器的数量。默认值： ``128`` 。
         - **sample_rate** (int, 可选) - 音频信号采样频率。默认值： ``16000`` 。
         - **f_min** (float, 可选) - 最小频率。默认值： ``0.0`` 。
-        - **f_max** (float, 可选) - 最大频率。默认值： ``None`` ，将设置为 ``sample_rate//2`` 。
+        - **f_max** (float, 可选) - 最大频率。默认值： ``None`` ，将设置为 ``sample_rate // 2`` 。
         - **max_iter** (int, 可选) - 最大优化迭代次数。默认值： ``100000`` 。
         - **tolerance_loss** (float, 可选) - 当达到损失值时停止优化。默认值： ``1e-5`` 。
         - **tolerance_change** (float, 可选) - 指定损失差异，当达到损失差异时停止优化。默认值： ``1e-8`` 。

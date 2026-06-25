@@ -7,7 +7,7 @@ mindspore.dataset.audio.InverseSpectrogram
 
     参数：
         - **length** (int, 可选) - 波形的输出长度，必须是非负数。默认值： ``None`` ，表示输出整个波形。
-        - **n_fft** (int, 可选) - FFT的大小，创建 `n_fft//2+1` 个频段，应该大于0。默认值： ``400`` 。
+        - **n_fft** (int, 可选) - FFT的大小，创建 `n_fft // 2+1` 个频段，应该大于0。默认值： ``400`` 。
         - **win_length** (int, 可选) - 窗口大小，应该大于0。默认值： ``None`` ，将被设为 `n_fft` 。
         - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度，应该大于0。默认值： ``None`` ，将被设为 `win_length // 2` 。
         - **pad** (int, 可选) - 信号两端的填充长度，不能小于0。默认值： ``0`` 。
