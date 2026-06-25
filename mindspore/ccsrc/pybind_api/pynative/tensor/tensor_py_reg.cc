@@ -279,6 +279,27 @@ struct PyObjDeleter {
 using PyObjectPtr = std::unique_ptr<PyObject, PyObjDeleter>;
 PyObjectPtr SafePtr1(PyObject *object) { return PyObjectPtr(object); }
 
+namespace {
+void UpdateBackwardNodeMetaData(const TensorPtr &tensor) {
+  if (!tensor->is_leaf()) {
+    return;
+  }
+  const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
+  if (auto_grad_meta_data == nullptr) {
+    return;
+  }
+  const auto grad_node = auto_grad_meta_data->UnsafeGetGradNodeImpl();
+  if (grad_node == nullptr) {
+    return;
+  }
+  const auto output_index = auto_grad_meta_data->output_index();
+  auto &metadata = grad_node->mutable_metadata();
+  MS_EXCEPTION_IF_CHECK_FAIL(output_index < metadata.size(), "Output index out of range of metadata!");
+  metadata[output_index] =
+    pynative::autograd::TensorMeta(tensor->shape(), tensor->Dtype(), tensor->stride(), tensor->storage_offset());
+}
+}  // namespace
+
 // add for tensorpy
 extern PyObject *TensorPython_get_shape(PyObject *self, void *) {
   HANDLE_MS_EXCEPTION
@@ -664,6 +685,7 @@ extern int TensorPython_set_data(PyObject *self, PyObject *other, void *) {
   PyType<TensorPy> *other_obj = reinterpret_cast<PyType<TensorPy> *>(other);
   auto other_tensor = other_obj->value.GetTensor();
   self_tensor->shallow_copy_from(*other_tensor);
+  UpdateBackwardNodeMetaData(self_tensor);
   // Invalidate cached storage so untyped_storage() reflects the new data.
   self_obj->value.SetStorage(py::none());
   return 0;
