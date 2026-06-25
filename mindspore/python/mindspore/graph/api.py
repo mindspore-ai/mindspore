@@ -36,7 +36,7 @@ import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
-from mindspore.graph.jit_config import JitConfig, _DEFAULT_JIT_CONFIG
+from mindspore.graph.jit_config import JitConfig, _DEFAULT_JIT_CONFIG, _warn_infer_boost_interface_deprecated
 from mindspore.common.tensor import Tensor as PythonTensor
 from mindspore.common.sparse_tensor import CSRTensor as PythonCSRTensor
 from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
@@ -604,8 +604,8 @@ class _JitExecutor:
 
     def _predict(self, *args, **kwargs):
         """Dedicated routine for predict."""
-        # check infer_boost instead check model phase to run infer mode
-        # the phaes check condition will delete in the next version
+        # Keep the deprecated infer_boost path for compatibility before it is removed.
+        # After infer_boost is removed, predict mode should rely on the model phase only.
         is_infer = self.jit_config_dict["infer_boost"] == "on"
 
         if not is_infer and not getattr(self.obj, "phase", None):
@@ -1062,7 +1062,9 @@ def _check_auto_offload_value(option, value):
 
 
 def _check_option_value(option, value):
-    """check jit options wiwh value"""
+    """check jit options with value"""
+    if option == 'infer_boost':
+        _warn_infer_boost_interface_deprecated("jit")
     option_valuecheck_funcs = {
         'disable_format_transform': _check_disable_format_transform_value,
         'exec_order': _check_exec_order_value,
@@ -1182,6 +1184,8 @@ def jit(
 
     .. warning::
         The value ``"GE"`` of `backend` is deprecated from version 2.9.0 and will be removed in a future version.
+        The parameter `infer_boost` in `options` is deprecated from version 2.10.0 and will be removed in a future
+        version.
 
     Args:
         function (Callable, optional): The Python function or Cell that will be run as a graph. Default: ``None``.
@@ -1250,8 +1254,9 @@ def jit(
                 of bfs execution order, but it occupies less memory. It is recommended to try dfs in scenarios where
                 other execution orders run out of memory (OOM).
 
-            - infer_boost (str, optional): Used to control the inference mode. Default: ``"off"``, which means
-              the inference mode is disabled. The range is as follows:
+            - infer_boost (str, optional): Used to control the inference mode. This parameter is deprecated and kept
+              only for compatibility. Default: ``"off"``, which means the inference mode is disabled. Passing this
+              parameter emits a deprecation warning. The range is as follows:
 
               - on: Enable inference mode, get better infer performance.
               - off: Disable inference mode, use forward for inference. The performance is poor.
@@ -1359,8 +1364,10 @@ def jit(
     options_str = json.dumps(options)
     infer_boost = options['infer_boost'] if 'infer_boost' in options else "off"
     exc_mode = options['exc_mode'] if 'exc_mode' in options else "auto"
+    suppress_infer_boost_warning = 'infer_boost' in options
     jit_config = JitConfig(jit_level=jit_level, exc_mode=exc_mode, jit_syntax_level=jit_syntax_level,
-                           infer_boost=infer_boost, backend=backend, options=options_str)
+                           infer_boost=infer_boost, backend=backend, options=options_str,
+                           suppress_infer_boost_warning=suppress_infer_boost_warning)
 
     if capture_mode == "ast":
         wrap_func = _jit_ast(hash_obj, dynamic, jit_config, '')

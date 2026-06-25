@@ -443,6 +443,8 @@ class _Context:
             jit_config (dict):
 
                 - jit_level (str): "O0" or "O1" to control the compilation optimization level.
+                - infer_boost (str): The `infer_boost` sub-parameter of `set_context` is deprecated from version
+                  2.10.0 and will be removed in a future version.
         """
         jit_cfgs = {'jit_level': ["O0", "O1", "O2"], 'infer_boost': ["on", "off"]}
         key_args_map = {'jit_level': ms_ctx_param.jit_level, 'infer_boost': ms_ctx_param.infer_boost}
@@ -454,6 +456,8 @@ class _Context:
             if jit_config[jit_key] not in supported_value:
                 raise ValueError(f"For 'jit_config', the value of argument {jit_key} must be one of "
                                  f"{supported_value}, but got {jit_config[jit_key]}.")
+            if jit_key == "infer_boost":
+                api._warn_infer_boost_interface_deprecated("context.set_context")
             self.set_param(key_args_map[jit_key], jit_config[jit_key])
         self.jit_config = jit_config
 
