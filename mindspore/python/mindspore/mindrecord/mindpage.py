@@ -226,7 +226,7 @@ class MindPage:
             raise ParamValueError("num_row should be int and greater than 0.")
         return self._segment.read_at_page_by_name(category_name, page, num_row)
 
-    def close(self):
+    def _close(self):
         """Release decrypted temporary files for MindPage."""
         if self._closed:
             return
@@ -236,6 +236,6 @@ class MindPage:
 
     def __del__(self):
         try:
-            self.close()
+            self._close()
         except Exception:  # pylint: disable=broad-except
             pass
