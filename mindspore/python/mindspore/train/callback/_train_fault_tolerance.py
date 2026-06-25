@@ -217,6 +217,13 @@ class AdaptTrainOptimizer():
     def __init__(self, ato_path, ato_threshold):
         self._ato_path = ato_path
         self._ato_threshold = ato_threshold
+        self._failure_count = 0
+        self._total_steps = 0
+        self._failure_rate = 0
+        self._avg_checkpoint_time = None
+        self._avg_step_time = None
+        self.ckpt_obj = None
+        self.step_start_time = None
         self._load_failure_rate_from_json(self._ato_path)
 
         self._interval_comm = SingleCommunicator(GlobalComm.WORLD_COMM_GROUP)
@@ -228,7 +235,7 @@ class AdaptTrainOptimizer():
         """Bind the ModelCheckpoint instance for ATO checkpoint logic."""
         if not isinstance(ckpt_obj, ModelCheckpoint):
             raise ValueError("ATO checkpoint optimization expects a ModelCheckpoint instance.")
-        self.ckpt_obj = ckpt_obj  # pylint: disable=W0201
+        self.ckpt_obj = ckpt_obj
 
     def _load_failure_rate_from_json(self, path):
         """Load failure statistics from a JSON file."""
@@ -271,8 +278,8 @@ class AdaptTrainOptimizer():
         self._save_fault_info_json(self._failure_count, self._total_steps)
         self._collect_checkpoint_times()
 
-        self._avg_checkpoint_time = self._get_avg_checkpoint_time()  # pylint: disable=W0201
-        self._avg_step_time = self._get_avg_step_time()  # pylint: disable=W0201
+        self._avg_checkpoint_time = self._get_avg_checkpoint_time()
+        self._avg_step_time = self._get_avg_step_time()
         if self._avg_checkpoint_time is None or self._avg_step_time is None:
             logger.warning(f"Insufficient timing data: only {cur_step} steps recorded; "
                            f"checkpoint interval is {save_checkpoint_steps}.")
@@ -282,7 +289,7 @@ class AdaptTrainOptimizer():
                                f"Current failure_count: {self._failure_count}, ato_threshold: "
                                f"{self._ato_threshold}")
             else:
-                self._failure_rate = (  # pylint: disable=W0201
+                self._failure_rate = (
                     self._failure_count / self._total_steps if self._total_steps else 0.0
                 )
                 if self._failure_rate == 0:
@@ -892,7 +899,7 @@ class TrainFaultTolerance(Callback):
                                       :class:`mindspore.train.RunContext` for details.
         """
         if self._only_enable_ato():
-            self.ato.step_start_time = time.time()  # pylint: disable=W0201
+            self.ato.step_start_time = time.time()
             return
         if self._enable_snapshot():
             _clear_snapshot_saving_flag()
