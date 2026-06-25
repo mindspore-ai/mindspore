@@ -17516,7 +17516,7 @@ def extra_sample_inputs_mint_nn_conv_transpose2d(op_info: OpInfo, dtype=None, de
     yield OpSampleInput(
         op_input=make_arg((1024, 120, 10, 10)),
         op_args=(120, 120, 4),
-        op_kwargs={"weight_init": make_arg((120, 120, 4, 4)), "bias_init": make_arg((120,))},
+        op_kwargs={"weight_init": make_arg((120, 120, 4, 4)), 'bias':True, "bias_init": make_arg((120,))},
         sample_name=f"{op_info.name}_{dtype}_input_with_big_input",
     )
     # case with small/large values
@@ -18019,6 +18019,265 @@ def error_inputs_other_op_with_dropout2d(op_info: OpInfo, dtype=None, device=Non
         op_error_type=ValueError,
         op_error_info=''' input must be 2D/3D/4D  ''',
     )
+
+def basic_sample_inputs_pixel_shuffle(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        ((16, 6, 4), 4), ((2, 3, 4, 4), 1), ((4, 4, 8, 9, 5, 5), 3))
+    for shape, factor in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=shape),
+            op_args=(factor,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_{len(shape)}d"
+        )
+
+
+def extra_sample_inputs_pixel_shuffle(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    #empty shape
+    yield OpSampleInput(
+        op_input=make_func(shape=(0, 2, 2)),
+        op_args=(3,),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_empty_shape"
+    )
+    # ---- small/large value combining with discontiguous ----
+    values=_small_large_values(dtype)
+    if values:
+        input_array=np.random.choice(values, size=(9, 3, 4))
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(3,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_discontiguous_{discontiguous}"
+            )
+    #for extremal values
+    input_array = np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(9, 1, 4))
+    yield OpSampleInput(
+        op_input=make_tensor_with_np_array(input_array, dtype=dtype),
+        op_args=(3,),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_extremal_values"
+    )
+
+def error_sample_inputs_pixel_shuffle(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    #upscale_factor is not int
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((9, 4, 4)),
+            op_args=(3.0,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=TypeError,
+        op_error_info="upscale_factor is not type of int",
+    )
+    #channel dimension is not divisible by square of upscale_factor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((9, 4, 4)),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info="channel dimension is not divisible by square of upscale_factor",
+    )
+    # input shape has less than 3 dimensions
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((9, 4)),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info="input shape has less than 3 dimensions",
+    )
+
+def basic_sample_inputs_up_sample(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    for mode in ['nearest', 'linear', 'bilinear', 'trilinear', 'bicubic']:
+        func = functools.partial(basic_sample_inputs_mint_interpolate, mode=mode)
+        for sample_input in func(op_info, dtype=dtype, device=device, **kwargs):
+            if dtype==ms.float64:
+                if mode != "trilinear" and mode != "nearest":
+                    continue
+                if mode == "nearest" and len(sample_input.op_input.shape)==4:
+                    continue
+            yield sample_input
+
+def extra_sample_inputs_up_sample(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    N, C = 1, 1
+    D = 2
+
+    def shape_with_nc(side: int, rank: int):
+        return tuple([N, C] + [side] * rank)
+
+    for mode in ['nearest', 'linear', 'bilinear', 'trilinear', 'bicubic']:
+        if dtype == ms.float64 and mode != "trilinear" and mode != "nearest":
+            continue
+
+        internal_mode, ranks = _normalize_mode_and_ranks(mode)
+
+        if internal_mode in ("linear", "bilinear", "bicubic", "trilinear"):
+            align_corners_options = (True, False, None)
+        else:
+            align_corners_options = (None,)
+
+        for align_corners in align_corners_options:
+            for rank in ranks:
+                if rank==2 and dtype==ms.float64:
+                    continue
+                # for large shape
+                yield OpSampleInput(
+                    op_input=make_func(shape_with_nc(128, rank)),
+                    op_args=(),
+                    op_kwargs={
+                        "scale_factor": 3.0,
+                        "mode": mode,
+                        "align_corners": align_corners,
+                        "recompute_scale_factor": None,
+                    },
+                    sample_name=f"{op_info.name}_{dtype}_large_shape",
+                )
+                #for extremal values:
+                #results differ from torch when input has value np.inf and -np.inf
+                yield OpSampleInput(
+                    op_input=ms.Tensor(np.full(shape_with_nc(D, rank), np.nan), dtype=dtype),
+                    op_args=(),
+                    op_kwargs={
+                        "scale_factor": tuple(np.random.uniform(0.5, 3, (rank,))),
+                        "mode": mode,
+                        "align_corners": align_corners,
+                        "recompute_scale_factor": True,
+                    },
+                    sample_name=f"{op_info.name}_{dtype}_extremal_values",
+                )
+                #for discontiguous value
+                yield OpSampleInput(
+                    op_input=make_func(shape_with_nc(3, rank), discontiguous=True),
+                    op_args=(),
+                    op_kwargs={
+                        "scale_factor": tuple(np.random.uniform(0.5, 3, (rank,))),
+                        "mode": mode,
+                        "align_corners": align_corners,
+                        "recompute_scale_factor": True,
+                    },
+                    sample_name=f"{op_info.name}_{dtype}_discontiguous",
+                )
+
+def error_sample_inputs_up_sample(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    for mode in ['nearest', 'linear', 'bilinear', 'trilinear', 'bicubic']:
+        func = functools.partial(error_inputs_other_op_interpolate, mode=mode)
+        yield from func(op_info, dtype=dtype, device=device, **kwargs)
+
+def basic_sample_inputs_mint_nn_functional_conv_transpose2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    order=['bias', 'stride', 'padding', 'output_padding', 'groups', 'dilation']
+    for sample_input in basic_sample_inputs_mint_nn_conv_transpose2d(op_info, dtype, device):
+        if "output_size" in sample_input.op_kwargs:
+            continue
+        weight=sample_input.op_kwargs.pop("weight_init")
+        sample_input.op_kwargs.pop("padding_mode", None)
+        sample_input.op_kwargs.pop("dtype", None)
+        bias=sample_input.op_kwargs.pop("bias")
+        if bias:
+            bias=sample_input.op_kwargs.pop("bias_init")
+        else:
+            bias=None
+        sample_input.op_kwargs.update({'bias':bias})
+        yield OpSampleInput(
+            op_input=sample_input.op_input,
+            op_args=(weight,),
+            op_kwargs={key:sample_input.op_kwargs[key] for key in order},
+            sample_name=sample_input.sample_name,
+        )
+
+def extra_sample_inputs_mint_nn_functional_conv_transpose2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    for sample_input in extra_sample_inputs_mint_nn_conv_transpose2d(op_info, dtype, device):
+        if "output_size" in sample_input.op_kwargs:
+            continue
+        weight=sample_input.op_kwargs.pop("weight_init")
+        sample_input.op_kwargs.pop("padding_mode", None)
+        sample_input.op_kwargs.pop("dtype", None)
+        bias=sample_input.op_kwargs.pop("bias")
+        if bias:
+            bias=sample_input.op_kwargs.pop("bias_init")
+        else:
+            bias=None
+        sample_input.op_kwargs.update({'bias':bias})
+        yield OpSampleInput(
+            op_input=sample_input.op_input,
+            op_args=(weight,),
+            op_kwargs=sample_input.op_kwargs,
+            sample_name=sample_input.sample_name,
+        )
+
+def dynamic_sample_inputs_mint_nn_functional_conv_transpose2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # add/sub_ext dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None, None, None), dtype=dtype),),
+                op_kwargs={"bias": ms.Tensor(shape=(None,), dtype=dtype), "stride": ms.mutable((2, 1)),
+                           "padding": ms.mutable(0),"output_padding": ms.mutable(0),
+                           "groups": ms.mutable(1), "dilation": ms.mutable((2, 1), dynamic_len=False)},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(10, 9, 8, 7)),
+                    op_args=(make_func(shape=(9, 9, 2, 2)),),
+                    op_kwargs={"bias": make_func(shape=(9,)), "stride": ms.mutable((1, 2)),
+                           "padding": ms.mutable(0),"output_padding": ms.mutable(0),
+                           "groups": ms.mutable(1), "dilation": ms.mutable((2, 1), dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(1, 12, 12, 12)),
+                    op_args=(make_func(shape=(12, 4, 1, 1)), ),
+                    op_kwargs={"bias": make_func(shape=(12,)), "stride": ms.mutable((2, 1)),
+                           "padding": ms.mutable(0),"output_padding": ms.mutable(0),
+                           "groups": ms.mutable(3), "dilation": ms.mutable((1, 2))},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # add/sub_ext dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=dtype),),
+                op_kwargs={"bias": ms.Tensor(shape=None, dtype=dtype), "stride": ms.mutable((1, 2)),
+                           "padding": ms.mutable(0),"output_padding": ms.mutable(0),
+                           "groups": ms.mutable(1), "dilation": ms.mutable((2, 1), dynamic_len=False)},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(9, 7, 8)),
+                    op_args=(make_func(shape=(9, 3, 1, 1)),),
+                    op_kwargs={"bias": make_func(shape=(9,)), "stride": ms.mutable((1, 2)),
+                           "padding": ms.mutable(0),"output_padding": ms.mutable(0),
+                           "groups": ms.mutable(3), "dilation": ms.mutable((2, 1), dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(10, 9, 7, 8)),
+                    op_args=(make_func(shape=(9, 9, 2, 3)),),
+                    op_kwargs={"bias": make_func(shape=(9,)),  "stride": ms.mutable((1, 2)),
+                           "padding": ms.mutable(0),"output_padding": ms.mutable(0),
+                           "groups": ms.mutable(1), "dilation": ms.mutable((2, 1), dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                )
+            )
+        )
 
 def basic_sample_inputs_mint_nn_softshrink(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
@@ -20321,6 +20580,274 @@ def dynamic_sample_inputs_mint_nn_embedding(op_info: OpInfo, dtype=None, device=
             )
         )
 
+def error_sample_inputs_mint_nn_functional_conv_transpose2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    #stride/padding/outpadding/groups/dilation not int
+    cases=(
+        (1.0, 0, 0, 1, 1, "stride"),(1, 0.0, 0, 1, 1, "padding"),
+        (1, 0, 0.0, 1, 1, "output_padding"),(1, 0, 0, 1.0, 1, "groups"),(1, 0, 0, 1, 1.0, "dilation")
+    )
+    for stride, padding, output_padding, groups, dilation, name in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=(10, 9, 7 ,8)),
+                op_args=(make_func(shape=(9, 9, 2, 2)),),
+                op_kwargs={
+                    "stride":stride, "padding":padding, "output_padding":output_padding,
+                    "groups":groups, "dilation":dilation
+                },
+                sample_name=op_info.name
+            ),
+            op_error_type=TypeError,
+            op_error_info=f"{name} is not int"
+        )
+    #stride/dilation/padding/outputpadding is illegal
+    cases=(
+        (0, 0, 0, 1, 1, "stride"), (1, -1, 0, 1, 1, "padding"),
+        (1, 0, -1, 1, 1, "output_padding"), (1, 0, 0, -1, 1, "groups"), (1, 0, 0, 1, 0, "dilation")
+    )
+    for stride, padding, output_padding, groups, dilation, name in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=(10, 9, 7 ,8)),
+                op_args=(make_func(shape=(9, 9, 2, 2)),),
+                op_kwargs={
+                    "stride":stride, "padding":padding, "output_padding":output_padding,
+                    "groups":groups, "dilation":dilation
+                },
+                sample_name=op_info.name
+            ),
+            op_error_type=ValueError,
+            op_error_info=f"{name} is illegal"
+        )
+    #shape of bias not equal (output_channel,)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(10, 9, 7, 8)),
+            op_args=(make_func(shape=(9, 9, 2, 2)),),
+            op_kwargs={
+                "stride": 1, "padding": 0, "output_padding": 0,
+                "groups": 1, "dilation": 1, "bias":make_func(shape=(10, )),
+            },
+            sample_name=op_info.name
+        ),
+        op_error_type=RuntimeError,
+        op_error_info="shape of bias not equal (output_channel,)"
+    )
+    # output_padding is bigger than dilation and stride
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(10, 9, 7, 8)),
+            op_args=(make_func(shape=(9, 9, 2, 2)),),
+            op_kwargs={
+                "stride": 1, "padding": 0, "output_padding": 2,
+                "groups": 1, "dilation": 2
+            },
+            sample_name=op_info.name
+        ),
+        op_error_type=RuntimeError,
+        op_error_info="output_padding is bigger than stride"
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(10, 9, 7, 8)),
+            op_args=(make_func(shape=(9, 9, 2, 2)),),
+            op_kwargs={
+                "stride": 2, "padding": 0, "output_padding": 2,
+                "groups": 1, "dilation": 1
+            },
+            sample_name=op_info.name
+        ),
+        op_error_type=RuntimeError,
+        op_error_info="output_padding is bigger than dilation"
+    )
+
+def basic_sample_inputs_mint_nn_functional_grid_sample(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases=(
+        ((10, 10, 4, 5), (10, 4, 5, 2),),
+        ((10, 10, 4, 5, 6), (10, 5, 6, 7, 3),)
+    )
+    for input_shape, grid_shape in cases:
+        for mode, padding_mode, align_corners in itertools.product(
+                ['nearest', 'bilinear'], ['zeros', 'border', 'reflection'], [True, False]):
+            yield OpSampleInput(
+                op_input=make_func(shape=input_shape),
+                op_args=(make_func(shape=grid_shape, low=-1, high=1),),
+                op_kwargs={'mode':mode, 'padding_mode':padding_mode, 'align_corners':align_corners},
+                sample_name=f"{op_info.name}_{dtype}_{len(input_shape)}d"
+            )
+            if mode != 'nearest':
+                yield OpSampleInput(
+                    op_input=make_func(shape=input_shape),
+                    op_args=(make_func(shape=grid_shape, low=-2, high=2),),
+                    op_kwargs={'mode': mode, 'padding_mode': padding_mode, 'align_corners': align_corners},
+                    sample_name=f"{op_info.name}_{dtype}_{len(input_shape)}d"
+                )
+
+def extra_sample_inputs_mint_nn_functional_grid_sample(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    #for large shape
+    yield OpSampleInput(
+        op_input=make_func(shape=(1, 1, 1024, 812)),
+        op_args=(make_func(shape=(1, 256, 256, 2), low=-1, high=1),),
+        op_kwargs={"mode":'nearest'},
+        sample_name=f"{op_info.name}_{dtype}_large_shape"
+    )
+    #for large/small values
+    values=_small_large_values(dtype)
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice(values, size=(4, 5, 6, 7)), dtype=dtype),
+        op_args=(make_func(shape=(4, 7, 8, 2), low=-2, high=2),),
+        op_kwargs={"mode":'bilinear', 'padding_mode':'border', 'align_corners':False},
+        sample_name=f"{op_info.name}_{dtype}_large_small_value"
+    )
+    # for extremal values
+    values=[np.inf, -np.inf, np.nan, 1024]
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice(values, size=(1, 4, 5, 6, 7)), dtype=dtype),
+        op_args=(make_func(shape=(1, 4, 7, 8, 3), low=-1, high=1),),
+        op_kwargs={"mode": 'bilinear', 'padding_mode': 'reflection', 'align_corners':True},
+        sample_name=f"{op_info.name}_{dtype}_extremal_value"
+    )
+    #for discontiguous value
+    yield OpSampleInput(
+        op_input=make_func(shape=(4, 5, 6, 7), discontiguous=True),
+        op_args=(make_func(shape=(4, 7, 8, 2), low=-2, high=2, discontiguous=True),),
+        op_kwargs={"mode": 'bilinear', 'padding_mode':'reflection', 'align_corners':True},
+        sample_name=f"{op_info.name}_{dtype}_discontiguous_True"
+    )
+
+def error_sample_inputs_mint_nn_functional_grid_sample(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device)
+    #dtype of input and grid are different
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(4, 5, 6, 7), dtype=ms.float32),
+            op_args=(make_func(shape=(4, 7, 8, 2), low=-2, high=2, dtype=ms.bfloat16),),
+            op_kwargs={"mode": 'bilinear', 'padding_mode': 'reflection', 'align_corners': True},
+            sample_name=op_info.name
+        ),
+        op_error_type=TypeError,
+        op_error_info="dtype of input and grid are not same"
+    )
+    cases=(
+        ((4, 5, 6), (4, 7, 8, 2), {}, ValueError, "shape of input is not 4D nor 5D"),
+        ((1, 4, 5, 6), (1, 7, 8, 9, 10, 2), {}, ValueError, "shape of grid is not 4D or 5D"),
+        ((1, 4, 5, 6), (1, 4, 6, 7, 3), {}, ValueError, "shape of input and grid does not match"),
+        ((1, 4, 5, 6), (2, 6, 7, 2), {}, ValueError,
+         "value of 1st dimension of input-shape and grid-shape does not match"),
+        ((1, 4, 5, 6, 7), (1, 6, 7, 8, 2), {}, ValueError, "input and grid are 5D, but last value of dimension is 2"),
+        ((1, 4, 5, 6), (1, 6, 7, 3), {}, ValueError, "input and grid are 4D, but last value of dimension is 3"),
+        ((1, 4, 5, 6), (1, 6, 7, 2), {'mode': 'unknown'}, RuntimeError,
+         "padding_mode is not follows: nearest, bilinear"),
+        ((1, 4, 5, 6, 7), (1, 6, 7, 8, 3), {'mode':'bilinear', 'align_corners':1}, TypeError,
+         "type of align_corners is not bool"),
+        ((1, 4, 5, 6, 7), (1, 6, 7, 8, 3), {"padding_mode":"unknown"}, RuntimeError,
+         "padding_mode is not follows: zeros, border, reflection")
+    )
+    for input_shape, grid_shape, params, err_type, err_info in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=input_shape, dtype=ms.float32),
+                op_args=(make_func(shape=grid_shape, low=-2, high=2, dtype=ms.float32),),
+                op_kwargs=params,
+                sample_name=op_info.name
+            ),
+            op_error_type=err_type,
+            op_error_info=err_info
+        )
+
+def basic_sample_inputs_mint_nn_bce_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # input/targe values must follows in [0, 1] for torch
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    case_shapes=((), (10, ),(3, 5, 20), (3, 4, 5, 6, 7, 8, 8, 8))
+    reductions=('none', 'mean', 'sum')
+    for shape, reduction in itertools.product(case_shapes, reductions):
+        yield OpSampleInput(
+            op_input=make_func(shape=shape, low=0, high=1),
+            op_args=(make_func(shape=shape, low=0, high=1), None,),
+            op_kwargs={'reduction': reduction},
+            sample_name=f"{op_info.name}_{dtype}_{len(shape)}d"
+        )
+        yield OpSampleInput(
+            op_input=make_func(shape=shape, low=0, high=1),
+            op_args=(make_func(shape=shape, low=0, high=1), make_func(shape=shape),),
+            op_kwargs={'reduction': reduction},
+            sample_name=f"{op_info.name}_{dtype}_{len(shape)}d"
+        )
+
+def extra_sample_inputs_mint_nn_bce_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # input/targe values must follows in [0, 1] for torch
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    #empty shape
+    yield OpSampleInput(
+        op_input=make_func(shape=(2, 0, 3), low=0, high=1),
+        op_args=(make_func(shape=(2, 0, 3), low=0, high=1), make_func(shape=(2, 0, 3)),),
+        op_kwargs={'reduction': 'mean'},
+        sample_name=f"{op_info.name}_{dtype}_shape_empty"
+    )
+    #large shape
+    yield OpSampleInput(
+        op_input=make_func(shape=(1024, 812), low=0, high=1),
+        op_args=(make_func(shape=(1024, 812), low=0, high=1), None,),
+        op_kwargs={'reduction': 'none'},
+        sample_name=f"{op_info.name}_{dtype}_large_shape"
+    )
+    #small/large values
+    values=_small_large_values(dtype)
+    values=tuple(i for i in values if i >= 0 and i <= 1)
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice(values, size=(3, 4)), dtype=dtype),
+        op_args=(ms.Tensor(np.random.choice(values, size=(3, 4)), dtype=dtype),
+                 ms.Tensor(np.random.choice(values, size=(3, 4)), dtype=dtype),),
+        op_kwargs={'reduction': 'sum'},
+        sample_name=f"{op_info.name}_{dtype}_small_large_values"
+    )
+    #discontiguous values
+    yield OpSampleInput(
+        op_input=make_func(shape=(3, 4, 5), low=0, high=1, discontiguous=True),
+        op_args=(make_func(shape=(3, 4, 5), low=0, high=1, discontiguous=True),
+                 make_func(shape=(3, 4, 5), discontiguous=True),),
+        op_kwargs={'reduction': 'none'},
+        sample_name=f"{op_info.name}_{dtype}_discontiguous_True"
+    )
+
+def error_sample_inputs_mint_nn_bce_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    #input, weight, target does not have same shape
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(3, 4, 5)),
+            op_args=(make_func(shape=(4, 5)), make_func(shape=(4, 5)),),
+            op_kwargs={'reduction': 'none'},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="target has different shape with input/weight"
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(4, 5)),
+            op_args=(make_func(shape=(3, 4, 5)), make_func(shape=(4, 5)),),
+            op_kwargs={'reduction': 'none'},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="input has different shape with target/weight"
+    )
+    #reductio has illegal value
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(3, 4, 5)),
+            op_args=(make_func(shape=(3, 4, 5)), make_func(shape=(3, 4, 5)),),
+            op_kwargs={'reduction': 'unknown'},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="reduction has illegal value"
+    )
+
 def error_sample_inputs_mint_nn_embedding(op_info:OpInfo, dtype=None, device=None, **kwargs):
     """
     Generate error inputs for mint.nn.Embedding.
@@ -20600,3 +21127,137 @@ def error_sample_inputs_mint_nn_functional_embedding(op_info:OpInfo, dtype=None,
             op_error_type=RuntimeError,
             op_error_info=f'input error dtype {input_dtype} is not supported for {op_info.name}',
         )
+
+def basic_sample_inputs_mint_optim_sgd(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    train_batchs = 10
+    in_features = 3
+    out_features = 4
+    test_batchs = 20
+    params={
+        'lr':[True, False, 0.01], "momentum":[True, False, 0.07], "weight_decay":[0, 0.01],
+         "dampening": [True, 0]
+    }
+    for lr, momentum, weight_decay, dampening in itertools.product(
+        params["lr"], params["momentum"], params["weight_decay"], params["dampening"]
+    ):
+        yield OpSampleInput(
+            op_input=make_arg(shape=(test_batchs, in_features)),
+            op_args=(make_arg(shape=(out_features, in_features)),
+                     make_arg(shape=(out_features,)),
+                     make_arg(shape=(train_batchs, in_features)),
+                     make_arg(shape=(train_batchs, out_features))),
+            op_kwargs={"lr": lr, "momentum":momentum, "weight_decay":weight_decay, "dampening":dampening,
+                       "nesterov":False, "maximize":True},
+            sample_name=f"{op_info.name}_{dtype}"
+        )
+    yield OpSampleInput(
+        op_input=make_arg(shape=(test_batchs, in_features)),
+        op_args=(make_arg(shape=(out_features, in_features)),
+                 make_arg(shape=(out_features,)),
+                 make_arg(shape=(train_batchs, in_features)),
+                 make_arg(shape=(train_batchs, out_features))),
+        op_kwargs={"lr": 0.01, "momentum": 0.07, "weight_decay": 1.0, "dampening": 0,
+                   "nesterov": True, "maximize": False},
+        sample_name=f"{op_info.name}_{dtype}"
+    )
+
+def extra_sample_inputs_mint_optim_sgd(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    #empty shape
+    yield OpSampleInput(
+        op_input=make_arg(shape=(0, 3)),
+        op_args=(make_arg(shape=(4, 3)),
+                 make_arg(shape=(4,)), make_arg(shape=(0, 3)), make_arg(shape=(0, 4))),
+        op_kwargs={"lr": 0.01},
+        sample_name=f"{op_info.name}_{dtype}_empty_shape"
+    )
+    #large shape
+    yield OpSampleInput(
+        op_input=make_arg(shape=(1024, 128)),
+        op_args=(make_arg(shape=(256, 128)),
+                 make_arg(shape=(256,)), make_arg(shape=(1024, 128)), make_arg(shape=(1024,256))),
+        op_kwargs={"lr": 0.01},
+        sample_name=f"{op_info.name}_{dtype}_large_shape"
+    )
+    #small/large values
+    values = _small_large_values(dtype)
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice(values,size=(10, 3)), dtype=dtype),
+        op_args=(make_arg(shape=(4, 3)),
+                 make_arg(shape=(4,)),
+                 make_arg(shape=(10, 3)), make_arg(shape=(10, 4))),
+        op_kwargs={"lr": 0.01},
+        sample_name=f"{op_info.name}_{dtype}_small_large_values"
+    )
+    #extremal values
+    values=[np.inf, -np.inf, np.nan, 1024]
+    if dtype in [ms.float32, ms.float64]:
+        yield OpSampleInput(
+            op_input=ms.Tensor(np.random.choice(values, size=(10, 3)), dtype=dtype),
+            op_args=(make_arg(shape=(4, 3)),
+                     make_arg(shape=(4,)),
+                     make_arg(shape=(10, 3)), make_arg(shape=(10, 4))),
+            op_kwargs={"lr": 0.01},
+            sample_name=f"{op_info.name}_{dtype}_extremal_values"
+        )
+    #discontiguous_values
+    yield OpSampleInput(
+        op_input=make_arg(shape=(10, 3), discontiguous=True),
+        op_args=(make_arg(shape=(4, 3), discontiguous=True),
+                 make_arg(shape=(4,), discontiguous=True),
+                 make_arg(shape=(10, 3), discontiguous=True), make_arg(shape=(10, 4), discontiguous=True)),
+        op_kwargs={"lr": 0.01},
+        sample_name=f"{op_info.name}_{dtype}_discontiguous_True"
+    )
+
+def error_sample_inputs_mint_optim_sgd(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(10, 3)),
+            op_args=(make_arg(shape=(4, 3)),
+                     make_arg(shape=(4,)),
+                     make_arg(shape=(10, 3)), make_arg(shape=(10, 4))),
+            op_kwargs={"lr": -0.05},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="lr is less than 0",
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(10, 3)),
+            op_args=(make_arg(shape=(4, 3)),
+                     make_arg(shape=(4,)),
+                     make_arg(shape=(10, 3)), make_arg(shape=(10, 4))),
+            op_kwargs={"lr": 0.05, "momentum": -0.05, "nesterov":True},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="momentum is less than 0 while nesterov is True",
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(10, 3)),
+            op_args=(make_arg(shape=(4, 3)),
+                     make_arg(shape=(4,)),
+                     make_arg(shape=(10, 3)), make_arg(shape=(10, 4))),
+            op_kwargs={"lr": 0.05, "momentum": 0.05, "nesterov": True, "dampening": 0.01},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="dampening is not 0 while nesterov is True",
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(10, 3)),
+            op_args=(make_arg(shape=(4, 3)),
+                     make_arg(shape=(4,)), 
+                     make_arg(shape=(10, 3)), make_arg(shape=(10, 4))),
+            op_kwargs={"lr": 0.05, "weight_decay":-0.05},
+            sample_name=op_info.name
+        ),
+        op_error_type=ValueError,
+        op_error_info="weight_decay is less than 0",
+    )

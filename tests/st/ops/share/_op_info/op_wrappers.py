@@ -1470,6 +1470,43 @@ def torch_nn_dropout_decorator(op_class):
             net.eval()
         return net(op_input)
     return _dropout_func
+
+def ms_nn_pixel_shuffle(input, upscale_factor):
+    net = mint.nn.PixelShuffle(upscale_factor)
+    return net(input)
+
+def torch_nn_pixel_shuffle(input, upscale_factor):
+    net = torch.nn.PixelShuffle(upscale_factor)
+    return net(input)
+
+def ms_nn_up_sample(input, size=None, scale_factor=None, mode="nearest",
+                    align_corners=None, recompute_scale_factor=None):
+    net = mint.nn.Upsample(size=size, scale_factor=scale_factor, mode=mode,
+                           align_corners=align_corners, recompute_scale_factor=recompute_scale_factor)
+    return net(input)
+
+def torch_nn_up_sample(input, size=None, scale_factor=None, mode="nearest",
+                    align_corners=None, recompute_scale_factor=None):
+    net = torch.nn.Upsample(size=size, scale_factor=scale_factor, mode=mode,
+                           align_corners=align_corners, recompute_scale_factor=recompute_scale_factor)
+    return net(input)
+
+def ms_nn_bce_loss(input, target, weight=None, reduction=None):
+    if weight is not None:
+        loss = mint.nn.BCELoss(weight=weight, reduction=reduction)
+    else:
+        loss = mint.nn.BCELoss(reduction=reduction)
+    output = loss(input, target)
+    return output
+
+def torch_nn_bce_loss(input, target, weight=None, reduction=None):
+    if weight is not None:
+        loss = torch.nn.BCELoss(weight=weight, reduction=reduction)
+    else:
+        loss = torch.nn.BCELoss(reduction=reduction)
+    output = loss(input, target)
+    return output
+
 def mint_nn_softshrink_ms(op_input, lambd=0.5):
     softshrink = mint.nn.Softshrink(lambd=lambd)
     return softshrink(op_input)
@@ -1747,3 +1784,39 @@ def mint_nn_functional_threshold__ms(op_input, threshold, value):
 
 def mint_nn_functional_threshold__torch(op_input, threshold, value):
     return torch.nn.functional.threshold_(op_input.clone(), threshold=threshold, value=value)
+
+def ms_optim_sgd(test_input, weight, bias, train_input , target,
+                 lr, momentum=0, weight_decay=0, dampening=0, nesterov=False, maximize=False):
+    out_features, in_features = weight.shape
+    net = mint.nn.Linear(in_features, out_features)
+    net.weight = Parameter(weight)
+    net.bias = Parameter(bias)
+    loss_fn = mint.nn.MSELoss()
+    optimizer = mint.optim.SGD(net.trainable_params(), lr=lr, momentum=momentum,
+                            weight_decay=weight_decay, dampening=dampening, nesterov=nesterov, maximize=maximize)
+    def _forward_fn(data, label):
+        logits = net(data)
+        loss = loss_fn(logits, label)
+        return loss, logits
+    grad_fn = ms.value_and_grad(_forward_fn, None, optimizer.parameters, has_aux=True)
+    for epoch in range(100):
+        (loss, _), grads = grad_fn(train_input, target)
+        optimizer(grads)
+    return net(test_input)
+
+def torch_optim_sgd(test_input, weight, bias, train_input, target,
+                 lr, momentum=0, weight_decay=0, dampening=0, nesterov=False, maximize=False):
+    out_features, in_features = weight.shape
+    net = torch.nn.Linear(in_features, out_features)
+    net.weight = torch.nn.Parameter(weight)
+    net.bias = torch.nn.Parameter(bias)
+    loss_fn = torch.nn.MSELoss()
+    optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=momentum,
+                            weight_decay=weight_decay, dampening=dampening,nesterov=nesterov, maximize=maximize)
+    for i in range(100):
+        optimizer.zero_grad()
+        output = net(train_input)
+        loss = loss_fn(output, target)
+        loss.backward()
+        optimizer.step()
+    return net(test_input)
