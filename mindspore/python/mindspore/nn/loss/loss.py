@@ -179,8 +179,9 @@ class L1Loss(LossBase):
     .. warning::
         After version 2.9.0, the forward inputs `logits` and `labels` will be renamed to `input` and `target`.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, then calculate the loss of :math:`x` and
-    :math:`y` without dimensionality reduction (the reduction parameter is set to "none"). The formula is as follows:
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensors, length :math:`N`, then calculate the loss of :math:`x` 
+    and :math:`y` without dimensionality reduction (the reduction parameter is set to "none"). 
+    The formula is as follows:
 
     .. math::
         \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
@@ -365,7 +366,7 @@ class MSELoss(LossBase):
     Raises:
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted.
-        TypeError: if `logits` and `labels` have different data types.
+        TypeError: If `logits` and `labels` have different data types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -510,7 +511,7 @@ class MAELoss(LossBase):
           and they should be broadcasted to each other.
 
     Outputs:
-        Tensor, weighted loss float tensor, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` .,
+        Tensor, weighted loss float tensor, the shape is zero if `reduction` is ``'mean'`` or ``'sum'`` ,
         while the shape of output is the broadcasted shape if `reduction` is 'none'.
 
     Raises:
@@ -579,7 +580,7 @@ class MarginRankingLoss(LossBase):
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_2, x_3, ..., x_R)`.
 
     Outputs:
-        Tensor or Scalar. if `reduction` is ``'none'``, its shape is the same as `input1`.
+        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `input1`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -587,8 +588,8 @@ class MarginRankingLoss(LossBase):
         TypeError: If `input1`, `input2` or `target` is not a Tensor.
         TypeError: If the types of `input1` and `input2` are inconsistent.
         TypeError: If the types of `input1` and `target` are inconsistent.
-        ValueError: If the shape of `input1` and `input2` are inconsistent.
-        ValueError: If the shape of `input1` and `target` are inconsistent.
+        ValueError: If the shapes of `input1` and `input2` are inconsistent.
+        ValueError: If the shapes of `input1` and `target` are inconsistent.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` , ``'sum'``.
 
     Supported Platforms:

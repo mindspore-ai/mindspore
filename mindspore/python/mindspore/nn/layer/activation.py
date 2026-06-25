@@ -332,7 +332,7 @@ class LogSoftmax(Cell):
         After version 2.9.0, the constructor signature will change to ``LogSoftmax(dim=None)``, the parameter `axis`
         will be renamed to `dim`, and the default value will change from ``-1`` to ``None``.
 
-    The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
+    The input is transformed by the Softmax function and then by the log function to lie in range[-inf, 0).
 
     Logsoftmax is defined as:
 
@@ -347,7 +347,7 @@ class LogSoftmax(Cell):
         - **x** (Tensor) - The input of LogSoftmax, with float16 or float32 data type.
 
     Outputs:
-        Tensor, which has the same type and shape as `x` with output values in the range[-inf,0).
+        Tensor, which has the same type and shape as `x` with output values in the range[-inf, 0).
 
     Raises:
         TypeError: If `axis` is not an int.

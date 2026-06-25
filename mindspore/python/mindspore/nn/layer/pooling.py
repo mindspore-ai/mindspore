@@ -2127,7 +2127,7 @@ class MaxUnpool1d(Cell):
     r"""
     Computes the inverse of :class:`mindspore.nn.MaxPool1d`.
 
-    MaxUnpool1d keeps the maximal value and set all positions of non-maximal values to zero. Typically the input
+    MaxUnpool1d keeps the maximal value and sets all positions of non-maximal values to zero. Typically the input
     is of shape :math:`(N, C, H_{in})` or :math:`(C, H_{in})`, and the output is of shape
     :math:`(N, C, H_{out})` or :math:`(C, H_{out})`. The operation is as follows.
 
@@ -2142,7 +2142,7 @@ class MaxUnpool1d(Cell):
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value.
         stride (Union[int, tuple[int]]): The distance of kernel moving,
-            If stride is None, then stride equal to kernel_size. Default: ``None`` .
+            If stride is None, then stride equals kernel_size. Default: ``None`` .
         padding (Union[int, tuple[int]]): The pad value to be filled. Default: ``0`` .
 
     Inputs:
@@ -2165,7 +2165,7 @@ class MaxUnpool1d(Cell):
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int nor a tuple.
-        ValueError: If numbers in `stride`, `padding` (also support 0 and (0)) or `kernel_size` is not positive.
+        ValueError: If numbers in `stride`, `padding` (also support 0 and (0)) or `kernel_size` are not positive.
         ValueError: If the shapes of `x` and `indices` are not equal.
         ValueError: If `x` whose length is not 2 or 3.
         ValueError: If type of `output_size` is not tuple.

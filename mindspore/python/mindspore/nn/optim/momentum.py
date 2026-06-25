@@ -44,12 +44,12 @@ class Momentum(Optimizer):
     .. math::
         v_{t+1} = v_{t} \ast u + grad
 
-    If use_nesterov is True:
+    If `use_nesterov` is True:
 
     .. math::
         p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
 
-    If use_nesterov is False:
+    If `use_nesterov` is False:
 
     .. math::
         p_{t+1} = p_{t} - lr \ast v_{t+1}
@@ -160,14 +160,14 @@ class Momentum(Optimizer):
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization': True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
         >>> # The conv_params's parameters will use a learning rate of default value 0.1 and a weight decay of 0.01 and
         >>> # grad centralization of True.
         >>> # The no_conv_params's parameters will use a learning rate of 0.01 and a weight decay of default value 0.0
-        >>> # and grad centralization of False..
+        >>> # and grad centralization of False.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()

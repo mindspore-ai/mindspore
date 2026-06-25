@@ -51,9 +51,9 @@ class MultiheadAttention(Cell):
         MultiHeadAttention(query, key, value) = Concat(head_1, \dots, head_h)W^O
 
     where :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`, and :math:`W^O` , :math:`W_i^Q` , :math:`W_i^K` ,
-    :math:`W_i^V` are weight matrices. The default input / output projection layers is with a bias.
+    :math:`W_i^V` are weight matrices. The default input / output projection layers are with a bias.
 
-    if query, key and value tensor is same, then it will be self attention.
+    If query, key and value tensor is same, then it will be self attention.
 
     .. warning::
         Starting after version 2.9.0, the constructor signature will change to
@@ -109,7 +109,7 @@ class MultiheadAttention(Cell):
         - **average_attn_weights** (bool, optional) - If true, indicates that
           the returned `attn_weights` should be averaged
           across heads. Otherwise, `attn_weights` are provided separately per head. Note that this flag only
-          has an effect when `need_weights=True`. Default: ``True`` (i.e. average weights across heads)
+          has an effect when `need_weights=True`. Default: ``True`` (i.e. average weights across heads).
 
     Outputs:
         Tuple, a tuple contains(`attn_output`, `attn_output_weights`)
