@@ -26,5 +26,5 @@ mindspore.nn.warmup_lr
 
     异常：
         - **TypeError** - `learning_rate` 不是float。
-        - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
+        - **TypeError** - `total_step` 或 `step_per_epoch` 或 `warmup_epoch` 不是int。
         - **ValueError** - `learning_rate` 小于0。

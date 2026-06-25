@@ -2348,8 +2348,8 @@ class TripletMarginLoss(LossBase):
         Tensor. If `reduction` is ``"none"``, its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If `x` or `positive` or 'negative' is not a Tensor.
-        TypeError: If dtype of `x`, `positive` and `negative` is not the same.
+        TypeError: If `x` or `positive` or `negative` is not a Tensor.
+        TypeError: If dtypes of `x`, `positive` and `negative` are not the same.
         TypeError: If `p` is not an int.
         TypeError: If `eps` is not a float.
         TypeError: If `swap` is not a bool.

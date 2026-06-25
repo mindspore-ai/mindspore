@@ -261,7 +261,7 @@ class BandBiquad(AudioTensorOperation):
         central_freq (float): Central frequency (in Hz).
         Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
             in range of (0, 1]. Default: ``0.707``.
-        noise (bool, optional) : If ``True``, uses the alternate mode for un-pitched audio (e.g. percussion).
+        noise (bool, optional): If ``True``, uses the alternate mode for un-pitched audio (e.g. percussion).
             If ``False``, uses mode oriented to pitched audio, i.e. voice, singing, or instrumental music.
             Default: ``False``.
 
@@ -340,7 +340,7 @@ class BandpassBiquad(AudioTensorOperation):
         central_freq (float): Central frequency (in Hz).
         Q (float, optional): `Quality factor <https://en.wikipedia.org/wiki/Q_factor>`_ ,
             in range of (0, 1]. Default: ``0.707``.
-        const_skirt_gain (bool, optional) : If ``True``, uses a constant skirt gain (peak gain = Q);
+        const_skirt_gain (bool, optional): If ``True``, uses a constant skirt gain (peak gain = Q);
             If ``False``, uses a constant 0dB peak gain. Default: ``False``.
 
     Raises:
@@ -469,8 +469,8 @@ class BassBiquad(AudioTensorOperation):
     r"""
     Design a bass tone-control effect, also known as two-pole low-shelf filter for audio waveform.
 
-    A low-shelf filter passes all frequencies, but increase or reduces frequencies below the shelf
-    frequency by specified amount. The system function is:
+    A low-shelf filter passes all frequencies, but increases or reduces frequencies below the shelf
+    frequency by a specified amount. The system function is:
 
     .. math::
         H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}
@@ -544,8 +544,8 @@ class Biquad(TensorOperation):
 
     Args:
         b0 (float): Numerator coefficient of current input, x[n].
-        b1 (float): Numerator coefficient of input one time step ago x[n-1].
-        b2 (float): Numerator coefficient of input two time steps ago x[n-2].
+        b1 (float): Numerator coefficient of input one time step ago, x[n-1].
+        b2 (float): Numerator coefficient of input two time steps ago, x[n-2].
         a0 (float): Denominator coefficient of current output y[n], the value can't be 0, typically 1.
         a1 (float): Denominator coefficient of current output y[n-1].
         a2 (float): Denominator coefficient of current output y[n-2].
