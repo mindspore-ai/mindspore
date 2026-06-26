@@ -19,8 +19,10 @@ This module provides wrapper functions that adapt MindSpore and PyTorch
 tensor/nn methods to a uniform call signature used by the OpInfo framework.
 """
 import mindspore as ms
-from mindspore import mint
+from mindspore import nn, mint
+import numpy as np
 from mindspore.common.parameter import Parameter
+from mindspore.experimental import optim
 import torch
 from torch.nn import functional as torch_F
 
@@ -1820,3 +1822,81 @@ def torch_optim_sgd(test_input, weight, bias, train_input, target,
         loss.backward()
         optimizer.step()
     return net(test_input)
+
+class Net(nn.Cell):
+    def __init__(self, in_channel, ):
+        super().__init__()
+        self.conv = mint.nn.Conv2d(in_channel, 10, (2, 2),  bias=False)
+        self.optimizer = None
+    def construct(self, x):
+        return ms.value_and_grad(self.conv, None, self.conv.weight)(x)[1]
+
+def mint_optim_Adam_ms(input, net, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, amsgrad=False,
+                       maximize=False,):
+
+    net.optimizer(net.construct(input)) if net.optimizer is not None else mint.optim.Adam(net.trainable_params(),lr=lr,
+            betas=betas, eps=eps,weight_decay=weight_decay,amsgrad=amsgrad, maximize=maximize)(net.construct(input))
+
+    return  net.conv.weight.data
+
+
+def mint_optim_Adam_torch(input, net, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, amsgrad=False,
+                          maximize=False,):
+
+    net_torch = torch.nn.Conv2d(input.shape[-3], 10, (2, 2), bias=False)
+
+    #torch.nn.Conv2d not support float16,so convert to float32
+    net_torch.weight.data = torch.from_numpy(net.conv.weight.data.to(ms.float32).asnumpy()).to(torch.bfloat16) if (net
+                .conv.weight.dtype== ms.bfloat16) else torch.from_numpy(net.conv.weight.data.to(ms.float32).asnumpy())
+
+    optimizer = torch.optim.Adam(net_torch.parameters(), lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
+                                 amsgrad=amsgrad, maximize=maximize)
+    loss=net_torch(input)
+
+    loss.backward(torch.ones_like(loss))
+
+    optimizer.step()
+
+    return net_torch.weight.data
+
+def mint_optim_AdamW_ms(input,  weight, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, amsgrad=False,
+                        maximize=False,):
+
+    net = mint.nn.Conv2d(input.shape[-3], 10, (2, 2),  bias=False)
+
+    net.weight = ms.Parameter(weight)
+
+    optimizer = mint.optim.AdamW(net.trainable_params(), lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
+                                 amsgrad=amsgrad, maximize=maximize)
+
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+
+    for i in range(6):  #epoch=6
+        optimizer((ms.value_and_grad(net, None, net.trainable_params())(input)[1]))
+        scheduler.step()
+
+    return net.weight.value()
+
+def mint_optim_AdamW_torch(input, weight, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, amsgrad=False,
+                           maximize=False,):
+
+    net = torch.nn.Conv2d(input.shape[-3], 10, (2, 2), bias=False)
+
+
+    net.weight = torch.nn.Parameter(weight)
+
+    optimizer = torch.optim.AdamW(net.parameters(), lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
+                                 amsgrad=amsgrad, maximize=maximize)
+
+
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+
+    for i in range(6):
+        optimizer.zero_grad()
+        loss = net(input)
+        loss.backward(torch.ones_like(loss))
+        optimizer.step()
+        scheduler.step()
+
+    return net.weight.data
+
