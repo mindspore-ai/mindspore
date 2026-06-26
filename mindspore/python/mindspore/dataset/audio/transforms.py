@@ -1164,11 +1164,11 @@ class Fade(AudioTensorOperation):
 
             - ``FadeShape.QUARTER_SINE``, means it tends to 0 in a quarter sin function.
 
-            - ``FadeShape.HALF_SINE``, means it tends to 0 in an half sin function.
+            - ``FadeShape.HALF_SINE``, means it tends to 0 in a half sin function.
 
             - ``FadeShape.LINEAR``, means it goes linear to 0.
 
-            - ``FadeShape.LOGARITHMIC``, means it tends to 0 in an logrithmic function.
+            - ``FadeShape.LOGARITHMIC``, means it tends to 0 in a logarithmic function.
 
             - ``FadeShape.EXPONENTIAL``, means it tends to 0 in an exponential function.
 
