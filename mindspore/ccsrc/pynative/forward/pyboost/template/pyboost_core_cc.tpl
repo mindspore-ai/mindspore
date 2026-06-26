@@ -24,6 +24,7 @@
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/utils/predict_out_type_map.h"
 #include "include/pynative/forward/pyboost/forward_task.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "include/frontend/jit/trace/trace_recorder_interface.h"
 #include "primitive/auto_generate/gen_ops_def.h"
 #include "pynative/forward/pyboost/comm_handle_py.h"
@@ -45,4 +46,3 @@ AsyncStatus GetAsyncStatus() {
 
 ${function_body}
 }// namespace mindspore::pynative
-
