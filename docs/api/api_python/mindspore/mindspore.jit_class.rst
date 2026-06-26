@@ -15,4 +15,4 @@ mindspore.jit_class
 
     异常：
         - **TypeError** - 如果 `jit_class` 用于非 class 类型或者 nn.Cell。
-        - **AttributeError** - 如果调用了 `jit_class` 装饰的类定义了私有属性或魔术方法。
+        - **AttributeError** - 如果访问了由 `jit_class` 装饰的类的私有属性或魔术方法。

@@ -24,19 +24,19 @@ def lazy_inline(fn=None, attrs=None, policy=None):
     """
     Make the cell to be reusable. The corresponding sub graph will not be inline at first
     and will be inline with the policy.
-    Registering the decorator of the built-in function `__init__` of a cell, the decorator
-    will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
+    When this decorator is registered on the `__init__` method of a cell,
+    it adds the specified parameters as attributes of the cell according to attrs.
 
     For a detailed description of the function, see `Using the lazy_inline decorator
     <https://www.mindspore.cn/tutorials/en/master/compile/
     static_graph_expert_programming.html#using-lazy-inline-decorator>`_ .
 
     .. warning::
-        - This feature is only supported on Ascend and is not supported on other hardwares.
-        - The construct parameters must be positional or key word arguments and have not default values.
+        - This feature is only supported on Ascend and is not supported on other hardware.
+        - The construct parameters must be positional or keyword arguments and have no default values.
         - The cell has not switch sub graph.
         - In the gradient accumulation scenario, it is recommended to use the @lazy_inline decorator to
-          reduce compilation time, and this decorator is only allowed to configure on the outermost cell.
+          reduce compilation time, and this decorator is only allowed to be configured on the outermost cell.
 
     Args:
         fn (function, optional): `__init__` function of a cell. Default: ``None``.

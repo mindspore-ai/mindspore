@@ -26,8 +26,8 @@ def register_op_infer(op_name, infer_name):
     This decorator allows users to register custom inference functions for operators in MindSpore.
     The registered inference function will be called during graph compilation to compute custom
     attributes for the operator's output. The result of the inference function will be stored
-    in the output of the operator, making it accessible to subsequent operations in its 
-    function registered in `register_op_wrapper` or `register_op_infer`.
+    in the output of the operator, making it accessible to subsequent operations
+    in the computation graph, including those registered via `register_op_wrapper` or `register_op_infer`.
 
     Note:
         - Multiple inference functions can be registered for the same operator using
@@ -42,11 +42,11 @@ def register_op_infer(op_name, infer_name):
     Args:
         op_name (str): The name of the operator to register the inference function for.
             Must be a non-empty string.
-        infer_name (str): The name of the custom attr. This name will be used as
-            the attr name of the output of the operator. Must be a non-empty string.
+        infer_name (str): The name of the custom attribute. This name will be used as
+            the attribute name of the output of the operator. Must be a non-empty string.
     
     Returns:
-        callable. A decorated function that is registered as custom inference function
+        callable. A decorated function that is registered as a custom inference function.
     
     Raises:
         ValueError: If `op_name` or `infer_name` is not a non-empty string.
@@ -99,10 +99,10 @@ def clear_op_infer():  # pylint: disable=missing-docstring
 
 def register_op_wrapper(op_name):
     """
-    Register a custom wrapper function to replace the node of an operator in computation graph.
+    Register a custom wrapper function to replace the node of an operator in the computation graph.
     
     This decorator allows users to register custom wrapper functions that replace the computation 
-    logic of operators in computation graph. When the JIT compiler compiles the specified operator,
+    logic of operators in the computation graph. When the JIT compiler compiles the specified operator,
     it will compile the registered wrapper function instead of the original operator.
 
     The wrapper function receives the same arguments as the original operator and must return
@@ -120,7 +120,7 @@ def register_op_wrapper(op_name):
             Must be a non-empty string.
     
     Returns:
-        callable. A decorated function that is registered as op wrapper function
+        callable. A decorated function that is registered as an op wrapper function.
     
     Raises:
         ValueError: If `op_name` is not a non-empty string.

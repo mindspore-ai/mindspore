@@ -670,7 +670,7 @@ if sys.version_info >= (3, 8):
                   version can pass in either type int or str, and it will be updated to only pass in str type
                   in the future. Among them, ``-1`` and ``"LevelNone"`` represent ProfilerLevel.LevelNone, ``0``
                   and ``"Level0"`` represent ProfilerLevel.Level0, and ``1`` and ``"Level1"`` represent
-                  ProfilerLevel.Level1. ``2`` and ``"Level2"`` stand for ProfileLevel.Level2.
+                  ProfilerLevel.Level1. ``2`` and ``"Level2"`` stand for ProfilerLevel.Level2.
                   The default value ``"Level0"`` indicates the collection level of ProfilerLevel.Level0.
                 - activities (int/list, optional) - Set the device for collecting performance data.
                   The current version can pass in either type int or list. Later, it will be updated to only

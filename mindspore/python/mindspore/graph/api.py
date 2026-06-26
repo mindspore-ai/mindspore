@@ -1201,7 +1201,8 @@ def jit(
             - trace: Trace the execution of Python code to build graph. This is an experimental prototype
               that is subject to change and/or deletion.
 
-        jit_level (str, optional): Used to control the compilation optimization level. Currently is only effective
+        jit_level (str, optional): Used to control the compilation optimization level.
+            Currently, this parameter is only effective
             with ms_backend. The value of jit_level should be ``"O0"`` or ``"O1"`` . Default: ``"O0"`` .
 
             - O0: Except for optimizations that may affect functionality, all other optimizations are turned off.
@@ -1242,7 +1243,7 @@ def jit(
             +---------------------------+---------------------------+-------------------------+
 
             - disable_format_transform (bool, optional): Whether to disable the automatic format transform function
-              from NCHW to NHWC. When the network training performance of fp16 is worse than fp32,
+              from NCHW to NHWC. When the network training performance with fp16 is worse than with fp32,
               `disable_format_transform` can be set to ``True`` to try to improve training performance.
               Default: ``False`` .
             - exec_order (str, optional): Set the sorting method for operator execution, currently only two sorting

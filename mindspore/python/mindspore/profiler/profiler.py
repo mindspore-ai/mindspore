@@ -40,12 +40,12 @@ from mindspore.profiler.common.util import no_exception_func
 def tensorboard_trace_handler(dir_name: str = None, worker_name: str = None,
                               analyse_flag: bool = True, async_mode: bool = False):
     """
-    For each step in dynamic graph mode, call this method for online analyse.
+    For each step in dynamic graph mode, call this method for online analysis.
 
     Args:
         dir_name (str, optional): Specifies the directory path to save the analysis results. The default is ``None``.
             The default save path is ``"./data"``.
-        worker_name (str, optional): Specifies the system version name. The default is ``None``. The default project
+        worker_name (str, optional): Specifies the project thread name. The default is ``None``. The default project
             thread name is ``"Name of the current operating system + process ID"``.
         analyse_flag (bool, optional): Whether to enable online analysis. The default value is ``True``.
             Indicates online analysis.
@@ -721,7 +721,7 @@ class Profile:
             data is presented in the form of a flame graph in the timeline. When using this parameter, `activities` must
             include ``ProfilerActivity.CPU``. Default value: ``False`` .
         profile_memory (bool, optional): (Ascend only) Whether to collect tensor memory data, collect when ``True`` .
-            When using this parameter, `activities` must set to ``[ProfilerActivity.CPU, ProfilerActivity.NPU]``.
+            When using this parameter, `activities` must be set to ``[ProfilerActivity.CPU, ProfilerActivity.NPU]``.
             Default: ``False`` . The operator name currently collected by this parameter is incomplete.
             This issue will be resolved in later versions. It is recommended to use the environment variable
             ``MS_ALLOC_CONF`` instead.
