@@ -20230,29 +20230,6 @@ def extra_sample_inputs_functional_relu_(op_info: OpInfo, dtype=None, device=Non
                 sample_name=f"{op_info.name}_{dtype}_{t}",
             )
 
-def error_inputs_other_op_functional_relu_(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
-    # weight not tensor
-    yield OpErrorInput(
-        op_sample_input=OpSampleInput(
-            op_input=make_arg((2, 3, 4)),
-            op_kwargs={'weight':1,},
-            sample_name=op_info.name,
-        ),
-        op_error_type=(ValueError, TypeError),
-        op_error_info='weight should be tensor ',
-    )
-    # weight not 1-d
-    yield OpErrorInput(
-        op_sample_input=OpSampleInput(
-            op_input=make_arg((2, 3, 4)),
-            op_kwargs={'weight':make_arg((2, 3)),},
-            sample_name=op_info.name,
-        ),
-        op_error_type=(ValueError, TypeError),
-        op_error_info='weight should be 0-1or1-d ',
-    )
-
 def basic_sample_inputs_functional_softplus(op_info: OpInfo, dtype, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
