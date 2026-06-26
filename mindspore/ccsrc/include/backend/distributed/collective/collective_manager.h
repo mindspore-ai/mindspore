@@ -59,7 +59,7 @@ using InitCommTaskQueue = std::queue<std::pair<std::string, int32_t>>;
 // Group list to be initialized in order. The element will not be deleted.
 using InitCommTaskList = std::vector<std::string>;
 // Initialization task results for each group.
-// Key is group name. Value is a pair of result(true/flase) and error info(if false).
+// Key is group name. Value is a pair of result(true/false) and error info(if false).
 using GroupToResultMap = std::unordered_map<std::string, std::pair<bool, std::string>>;
 
 // Interval of initializing each communicator in queue is 300 milliseconds.
@@ -75,7 +75,7 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   static std::shared_ptr<CollectiveManager> instance();
 
   // Initialize the collective communication for distributed training. The backend type is read from MindSpore context.
-  bool Initialize();
+  bool Initialize(std::string group_name);
 
   // Finalize the collective communication.
   bool Finalize();
@@ -131,11 +131,6 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
 
   bool need_init() const { return need_init_.load(); }
 
-  // Set whether need reinitialize collective communication.
-  void set_need_reinit(bool need_reinit) { need_reinit_ = need_reinit; }
-  // Get whether need reinitialize collective communication.
-  bool need_reinit() const { return need_reinit_.load(); }
-
   // Return collective manager is initialized.
   bool initialized() const { return inited_.load(); }
   std::unordered_map<std::string, std::vector<uint32_t>> get_group_map() { return group_map_; }
@@ -179,10 +174,10 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   CollectiveManager();
 
   // Initialize communication library on host side.
-  bool InitHostCommlib();
+  bool InitHostCommlib(const std::string &group_name = "");
 
   // Initialize communication library on device side.
-  bool InitDeviceCommLib();
+  bool InitDeviceCommLib(const std::string &group_name = "");
 
   // Assign the local rank id for this process.
   bool AssignLocalRank();
@@ -204,16 +199,16 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   // bypassing CollectiveManager module.
   void SetDistributedMeta();
 
+  // Saves and Restores the default group information.
+  void SaveDefaultGroupInfo();
+  void RestoreDefaultGroupInfo();
+
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
 
   // Whether collective communication library should be initialized. This is represents this process is launched as
   // distributed job.
   std::atomic_bool need_init_;
-
-  // Whether need reinitialize collective communication, this value should be set to true once a training process
-  // exits unexpectedly is detected.
-  std::atomic_bool need_reinit_;
 
   // The device context on both host and device side. They are used to access the communication library on different
   // devices.
@@ -247,12 +242,20 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   // The num of processes on this local node.
   uint32_t local_rank_size_;
 
+  // Rank information of the default collective communication group for this process (for backup and restoration).
+  bool need_restore_default_{false};
+  uint32_t default_global_rank_id_;
+  uint32_t default_global_rank_size_;
+  uint32_t default_local_rank_id_;
+  uint32_t default_local_rank_size_;
+  std::vector<uint32_t> default_global_group_ranks_;
+  std::vector<size_t> default_all_host_hashs_;
+
+  // Initialized communication with pass in group_name.
+  std::unordered_map<std::string, uint32_t> init_groups_;
+
   // Global group ranks.
   std::vector<uint32_t> global_group_ranks_;
-
-  // The global group name on the host side. This is used for Creating global group on host side for AllGather
-  // operation of host name while assigning local rank.
-  std::string host_global_group_name_;
 
   // This member represents whether the collective communication library is supported on the device side. If not, the
   // device side library will be replace by library on the host side.

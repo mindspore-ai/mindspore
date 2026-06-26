@@ -164,9 +164,11 @@ class RUNTIME_HARDWARE_EXPORT CollectiveCommunicationLib {
     return true;
   }
 
-  // Returns the global group name of this collective communication library. For NCCL, it's 'nccl_world_group'. For
-  // HCCL, it's 'hccl_world_group'.
-  const std::string &global_group_name() const;
+  // HCCL, it's 'hccl_world_group' by default.
+  const std::string &global_group_name() const { return global_group_name_; }
+
+  // Customize and set the global group name of this collective communication library.
+  void set_global_group_name(const std::string &group_name) { global_group_name_ = group_name; }
 
   // Returns global rank id of this process.
   uint32_t global_rank_id() const;
@@ -186,6 +188,12 @@ class RUNTIME_HARDWARE_EXPORT CollectiveCommunicationLib {
 
   virtual bool ResumeHcclComm() { return false; }
 
+  // Saves the current collective group information as the default group information.
+  virtual void SaveDefaultGroupInfo() {}
+
+  // Restores the collective group information to the pre-saved default group values.
+  virtual void RestoreDefaultGroupInfo() {}
+
  protected:
   // Whether this collective communication library is initialized.
   bool initialized_;
@@ -204,6 +212,12 @@ class RUNTIME_HARDWARE_EXPORT CollectiveCommunicationLib {
 
   // The global rank size. Normally this is equal to `total process number`.
   uint32_t global_rank_size_;
+
+  // Rank information of the default collective communication group for this process (for backup and restoration).
+  std::string default_group_name_;
+  uint32_t default_global_rank_;
+  uint32_t default_global_rank_size_;
+  uint32_t default_local_rank_id_;
 
   // This map stores the groups which will be accessed and used by the caller.
   std::map<std::string, std::shared_ptr<CommunicationGroup>> groups_;

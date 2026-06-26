@@ -85,6 +85,8 @@ class EXPORT_WRAPPER MultiAscendCollectiveCommLib : public CollectiveCommunicati
 
   bool CommSwitchNic(const std::vector<uint32_t> &global_ranks, const std::vector<bool> &use_backup) override;
 
+  void RestoreDefaultGroupInfo() override;
+
   bool AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
                  const std::string &group_name, void *stream = nullptr) override;
 

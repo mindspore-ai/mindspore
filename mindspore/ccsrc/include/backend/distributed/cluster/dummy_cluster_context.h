@@ -43,8 +43,8 @@ class BACKEND_COMMON_EXPORT ClusterContext {
   static std::shared_ptr<ClusterContext> instance();
 
   bool Initialize() const;
-  bool Initialize(std::optional<std::string> url, int64_t timeout, uint32_t world_size, uint32_t node_id,
-                  TCPStoreClientPtr store) const;
+  bool Initialize(int64_t timeout, uint32_t world_size, uint32_t node_id, TCPStoreClientPtr store,
+                  std::string group_name) const;
   bool Finalize(uint32_t timeout = kDefaultFinishTimeout) const;
   void StopThreadsOnException();
   std::string node_role() const;

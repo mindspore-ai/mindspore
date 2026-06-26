@@ -30,6 +30,7 @@
 #include <future>
 #include <memory>
 #include <cstdint>
+#include <unordered_set>
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/device_manager_conf.h"
@@ -56,7 +57,6 @@ CollectiveManager::CollectiveManager()
     : inited_(false),
       finalized_(true),
       need_init_(false),
-      need_reinit_(false),
       host_ctx_(nullptr),
       device_ctx_(nullptr),
       host_comm_lib_instance_(nullptr),
@@ -141,11 +141,16 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
 }
 }  // namespace
 
-bool CollectiveManager::Initialize() {
+bool CollectiveManager::Initialize(std::string group_name) {
   need_init_ = true;
   stop_init_comm_ = false;
-  if (inited_ && !need_reinit_) {
-    return true;
+  if (inited_) {
+    if (init_groups_.find(group_name) != init_groups_.end()) {
+      MS_LOG(WARNING) << "Collective Manager for group " << group_name << " has already been initialized.";
+      return true;
+    }
+
+    MS_LOG(WARNING) << "Re-init Collective Manager with group name: " << group_name;
   }
 
   need_host_collective_ = common::UseHostCollective();
@@ -174,7 +179,7 @@ bool CollectiveManager::Initialize() {
   } else {
     // Step 1: Initialize host side collective communication.
     PROF_START(InitHostCommlib);
-    RETURN_IF_FALSE_WITH_LOG(InitHostCommlib(), "Failed to initialize host communication library.");
+    RETURN_IF_FALSE_WITH_LOG(InitHostCommlib(group_name), "Failed to initialize host communication library.");
     PROF_END(InitHostCommlib);
     comm_lib_instance_ = host_comm_lib_instance_;
 
@@ -187,7 +192,7 @@ bool CollectiveManager::Initialize() {
 
     // Step 3: Initialize device side collective communication.
     PROF_START(InitDeviceBackend);
-    RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(), "Failed to initialize device communication library.");
+    RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(group_name), "Failed to initialize device communication library.");
     PROF_END(InitDeviceBackend);
 
     // Step 4: Create global communication group asynchronizely
@@ -195,19 +200,57 @@ bool CollectiveManager::Initialize() {
     bool async = IsAsyncInitGlobalComm();
     GroupOptions config = {};
     config.async = async;
-    auto group_name = device_comm_lib_instance_->global_group_name();
+    std::string device_global_group_name = device_comm_lib_instance_->global_group_name();
     PROF_START(CreateGlobalCommunicationGroup);
-    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(group_name, global_group_ranks_, config),
-                             "Failed to create group " + group_name);
+    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(device_global_group_name, global_group_ranks_, config),
+                             "Failed to create group " + device_global_group_name);
     PROF_END(CreateGlobalCommunicationGroup);
+  }
+
+  init_groups_.insert({group_name, global_rank_id_});
+
+  // When initializing the default communication group, record the information of the default communication group for
+  // restoring the default communication group information after the subsequent creation of non-default communication
+  // groups.
+  if (group_name.empty()) {
+    SaveDefaultGroupInfo();
+  } else {
+    RestoreDefaultGroupInfo();
   }
 
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
   inited_ = true;
   finalized_ = false;
-  need_reinit_ = false;
   SetDistributedMeta();
   return true;
+}
+
+void CollectiveManager::SaveDefaultGroupInfo() {
+  default_global_rank_id_ = global_rank_id_;
+  default_global_rank_size_ = global_rank_size_;
+  default_local_rank_id_ = local_rank_id_;
+  default_local_rank_size_ = local_rank_size_;
+  default_global_group_ranks_ = global_group_ranks_;
+  default_all_host_hashs_ = all_host_hashs_;
+  need_restore_default_ = true;
+}
+
+void CollectiveManager::RestoreDefaultGroupInfo() {
+  MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
+  host_comm_lib_instance_->RestoreDefaultGroupInfo();
+  MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
+  device_comm_lib_instance_->RestoreDefaultGroupInfo();
+
+  if (!need_restore_default_) {
+    MS_LOG(INFO) << "No previous default group initialized, skipping default group info restoration.";
+    return;
+  }
+  global_rank_id_ = default_global_rank_id_;
+  global_rank_size_ = default_global_rank_size_;
+  local_rank_id_ = default_local_rank_id_;
+  local_rank_size_ = default_local_rank_size_;
+  global_group_ranks_ = default_global_group_ranks_;
+  all_host_hashs_ = default_all_host_hashs_;
 }
 
 bool CollectiveManager::InitializeDummyCommLib() {
@@ -248,14 +291,13 @@ bool CollectiveManager::InitializeDummyCommLib() {
 
     MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
     // Create dummy device global communication group.
-    auto group_name = device_comm_lib_instance_->global_group_name();
-    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(group_name, global_group_ranks_),
-                             "Failed to create group " + group_name);
+    std::string dummy_global_group_name = device_comm_lib_instance_->global_group_name();
+    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(dummy_global_group_name, global_group_ranks_),
+                             "Failed to create group " + dummy_global_group_name);
   }
 
   inited_ = true;
   finalized_ = false;
-  need_reinit_ = false;
   SetDistributedMeta();
   return true;
 }
@@ -282,9 +324,9 @@ bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &gr
   MS_EXCEPTION_IF_NULL(local_group_rank);
   MS_EXCEPTION_IF_NULL(local_group_size);
   auto it =
-    std::find_if(group_ranks.begin(), group_ranks.end(), [&](uint32_t rank) { return rank > global_rank_size_; });
+    std::find_if(group_ranks.begin(), group_ranks.end(), [&](uint32_t rank) { return rank >= global_rank_size_; });
   if (it != group_ranks.end()) {
-    MS_LOG(ERROR) << "The rank " << *it << "is out of global rank size.";
+    MS_LOG(ERROR) << "The rank " << *it << " is out of global rank size.";
     return false;
   }
   if (all_host_hashs_.size() != static_cast<size_t>(global_rank_size_)) {
@@ -441,6 +483,13 @@ uint32_t CollectiveManager::GetRankId(const std::string &group_name) {
     MS_LOG(DEBUG) << "Distributed module is not initialized, return 0 as rank id.";
     return kIndex0;
   }
+
+  // To obtain the rank_id of a non-default-init group, the global_rank_id for non-default-init group
+  // must be passed in.
+  if (init_groups_.find(group_name) != init_groups_.end()) {
+    return comm_lib_instance_->GetGroupRankFromWorldRank(init_groups_[group_name], group_name);
+  }
+
   return comm_lib_instance_->GetRankId(group_name);
 }
 
@@ -539,6 +588,7 @@ bool CollectiveManager::Finalize() {
     inited_ = false;
     finalized_ = true;
     need_init_ = false;
+    need_restore_default_ = false;
     host_ctx_ = nullptr;
     device_ctx_ = nullptr;
     host_comm_lib_instance_ = nullptr;
@@ -548,6 +598,7 @@ bool CollectiveManager::Finalize() {
     local_rank_size_ = 1;
     group_infos_.clear();
     group_map_.clear();
+    init_groups_.clear();
     while (!init_comm_task_queue_.empty()) {
       init_comm_task_queue_.pop();
     }
@@ -578,7 +629,7 @@ uint32_t CollectiveManager::local_rank_id() const { return local_rank_id_; }
 
 uint32_t CollectiveManager::local_rank_size() const { return local_rank_size_; }
 
-bool CollectiveManager::InitHostCommlib() {
+bool CollectiveManager::InitHostCommlib(const std::string &group_name) {
   device::DeviceContextKey host_key = {device::DeviceType::kCPU, 0};
   host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(host_ctx_);
@@ -593,6 +644,11 @@ bool CollectiveManager::InitHostCommlib() {
   // MindSpore communication. For other communication libraries, global rank id and size is generated by itself, e.g.,
   // OpenMPI, and parameters 'global_rank_id_', 'global_rank_size_' will not be used.
   MS_LOG(INFO) << "Start initializing communication library on host side...";
+  if (!group_name.empty()) {
+    std::string mccl_group_name = "mccl_" + group_name;
+    host_comm_lib_instance_->set_global_group_name(mccl_group_name);
+  }
+
   RETURN_IF_FALSE_WITH_LOG(host_comm_lib_instance_->Initialize(global_rank_id_, global_rank_size_),
                            "Failed to initialize communication library on host side.");
 
@@ -608,16 +664,16 @@ bool CollectiveManager::InitHostCommlib() {
   }
 
   // Create world group on host side for AllGather operation of host name while assigning local rank.
-  host_global_group_name_ = host_comm_lib_instance_->global_group_name();
+  std::string host_global_group_name = host_comm_lib_instance_->global_group_name();
   RETURN_IF_FALSE_WITH_LOG(
-    host_comm_lib_instance_->CreateCommunicationGroup(host_global_group_name_, global_group_ranks_, 0, 0),
-    "Failed to create host communication group " + host_global_group_name_);
+    host_comm_lib_instance_->CreateCommunicationGroup(host_global_group_name, global_group_ranks_, 0, 0),
+    "Failed to create host communication group " + host_global_group_name);
   MS_LOG(INFO) << "Communication library on host side is successfully initialized. Global rank id: " << global_rank_id_
                << ", global rank size: " << global_rank_size_;
   return true;
 }
 
-bool CollectiveManager::InitDeviceCommLib() {
+bool CollectiveManager::InitDeviceCommLib(const std::string &group_name) {
   std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   uint32_t device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   // If library on device side is not supported, replace it with host library.
@@ -639,6 +695,9 @@ bool CollectiveManager::InitDeviceCommLib() {
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
 
   MS_LOG(INFO) << "Start initializing communication library on device side...";
+  if (!group_name.empty()) {
+    device_comm_lib_instance_->set_global_group_name(group_name);
+  }
   RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->Initialize(global_rank_id_, global_rank_size_, device_id),
                            "Failed to initialize communication library on device side.");
   if (DistributedMeta::GetInstance()->enable_cross_cluster()) {
