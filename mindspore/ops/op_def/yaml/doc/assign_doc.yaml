@@ -9,7 +9,7 @@ assign:
 
         Args:
             variable (Union[Parameter, Tensor]): The input parameter or tensor.
-            value (Tensor): The value to be assigned.
+            value (Tensor): The value to be assigned. The shape must be the same as that of `variable` .
 
         Returns:
             Tensor

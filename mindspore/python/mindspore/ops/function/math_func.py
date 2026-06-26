@@ -662,7 +662,7 @@ def argmin(input, axis=None, keepdims=False):
         input (Tensor): The input tensor.
         axis (Union[int, None], optional): Specify the dimension for computation. If ``None`` , compute all elements in
             the `input` . Default ``None`` .
-        keepdims (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
+        keepdims (bool, optional): Whether to retain the reduced dimensions in the output tensor. Default ``False`` .
 
     Returns:
         Tensor
@@ -4787,8 +4787,8 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
 
     Args:
         input (Tensor): The input tensor.
-        batch1 (Tensor): The first batch of tensor to be multiplied.
-        batch2 (Tensor): The second batch of tensor to be multiplied.
+        batch1 (Tensor): The first batch of tensors to be multiplied.
+        batch2 (Tensor): The second batch of tensors to be multiplied.
 
     Keyword Args:
         beta (Union[int, float], optional): Scale factor for `input`. Default ``1`` .
@@ -9354,7 +9354,7 @@ def any(input, axis=None, keep_dims=False):
         input (Tensor): The input tensor.
         axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
                 all dimensions are reduced. Default ``None`` .
-        keep_dims (bool, optional): Whether the output tensor has dim retained or not. Default ``False`` .
+        keep_dims (bool, optional): Whether to retain the reduced dimensions in the output tensor. Default ``False`` .
 
     Returns:
         Tensor

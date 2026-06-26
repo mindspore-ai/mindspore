@@ -251,7 +251,7 @@ def _init(input_data=None, dtype=None, shape=None, init=None, const_arg=False, d
 
 def tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False, device=None):
     """
-    Create a new Tensor in Cell.construct() or function decorated by @jit.
+    Create a new Tensor in Cell.construct() or a function decorated by @jit.
 
     In graph mode, MindSpore would create a new Tensor object at runtime dynamically,
     based on the `dtype` argument.
@@ -259,12 +259,12 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, const_arg=False, 
     Please refer to `Creating and Using Tensor
     <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html#mindspore-user-defined-data-types>`_ .
 
-    The difference between it and the Tensor class is that it adds
+    The difference from the Tensor class is that it adds an
     `Annotation
     <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html#annotation-type>`_
-    which can prevent the generation of AnyType compared to the Tensor class.
+    to indicate the type of the created Tensor, which prevents the generation of AnyType.
 
-    The arguments and return values are the same as the Tensor class. Also see: :class:`mindspore.Tensor`.
+    The arguments and return values are the same as those of the Tensor class. Also see: :class:`mindspore.Tensor`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

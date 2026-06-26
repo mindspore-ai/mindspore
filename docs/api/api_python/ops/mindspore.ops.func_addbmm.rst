@@ -20,8 +20,8 @@
         - **batch2** (Tensor) - 第二个将被乘batch矩阵。
 
     关键字参数：
-        - **beta** (Union[int, float]，可选) - `input` 的尺度因子。默认 ``1`` 。
-        - **alpha** (Union[int, float]，可选) - （ `batch1` @ `batch2` ）的尺度因子。默认 ``1`` 。
+        - **beta** (Union[int, float]，可选) - `input` 的缩放因子。默认 ``1`` 。
+        - **alpha** (Union[int, float]，可选) - （ `batch1` @ `batch2` ）的缩放因子。默认 ``1`` 。
 
     返回：
         Tensor

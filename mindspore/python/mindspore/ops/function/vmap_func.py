@@ -37,7 +37,7 @@ def vmap(fn, in_axes=0, out_axes=0):
     Note:
         - The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a
           generalized rule for user custom operators, we can not guarantee that it works well for all operators,
-          unknown exceptions may occur, please be aware the risk of use.
+          unknown exceptions may occur, please be aware of the risk of use.
         - When calling the random number generation methods within the scope of vmap, the same random number is
           generated among vector functions each time. If you expect each vector branch to use different random numbers,
           you need to generate batch random numbers externally in advance and then transfer them to vmap.
@@ -45,14 +45,14 @@ def vmap(fn, in_axes=0, out_axes=0):
     Args:
         fn (Union[Cell, Function, CellList]): Function to be mapped along the parameter axes, which takes at least one
             argument and returns one or more Tensors or the type of data supported by the MindSpore Tensor. When it is
-            a CellList, the model ensembling scenario, please make sure that the structure of each cell is the same
+            a CellList, in the model ensembling scenario, please make sure that the structure of each cell is the same
             and the number of cells is consistent with the sizes of the mapped axes (`axis_size`).
         in_axes (Union[int, list, tuple], optional): Specifies which dimensions (axes)
             of the inputs should be mapped over. Default: ``0`` .
 
             - If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis index.
             - If `in_axes` is a tuple or list, which is only composed of integers or Nones
-              and the length should equal to the number of
+              and the length should be equal to the number of
               positional arguments to `fn`, indicates which axis to map for each corresponding positional argument.
               Note that, axis integers must be in range :math:`[-ndim, ndim)` for each argument, where `ndim` is the
               number of dimensions of the corresponding argument.

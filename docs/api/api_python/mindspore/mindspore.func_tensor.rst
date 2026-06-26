@@ -9,7 +9,7 @@ mindspore.tensor
 
     详情请参考教程 `创建和使用Tensor <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html#mindspore自定义数据类型>`_ 。
 
-    此接口与Tensor类的区别为内部增加了 `Annotation <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html#annotation-type>`_ 指示当前创建的Tensor的类型，与Tensor类相比能够防止AnyType的产生。
+    此接口与Tensor类的区别为内部增加了 `Annotation <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html#annotation-type>`_ 来指示创建的Tensor类型，从而防止AnyType的产生。
 
     参数和返回值与Tensor类完全一致。另参考：:class:`mindspore.Tensor`。
 

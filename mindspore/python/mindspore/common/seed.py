@@ -51,7 +51,7 @@ def set_seed(seed):
           numpy.random, so it is recommended to set all seeds using this API.
 
         - In semi_auto_parallel/auto_parallel mode, when using set_seed, weights with same shape and same sharding
-          strategy in the same device would be initialized to the same result, otherwise, they would be initialized to
+          strategy on the same device would be initialized to the same result, otherwise, they would be initialized to
           the different results.
 
     Args:
@@ -59,7 +59,7 @@ def set_seed(seed):
 
     Raises:
         ValueError: If seed is invalid (< 0).
-        TypeError: If seed isn't an int.
+        TypeError: If seed isn't an integer.
 
     Examples:
         >>> import numpy as np
@@ -77,7 +77,7 @@ def set_seed(seed):
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
-        >>> # Rerun the program will get different results:
+        >>> # Rerunning the program will get different results:
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A3
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A4
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W3
