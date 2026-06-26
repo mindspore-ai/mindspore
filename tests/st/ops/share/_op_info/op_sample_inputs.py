@@ -5913,6 +5913,15 @@ def basic_sample_inputs_mint_cdist(op_info: OpInfo, dtype=None, device=None, **k
         loss=default_loss,
     )
 
+    rng = np.random.default_rng(5)
+    yield OpSampleInput(
+        op_input=make_from_np(rng.uniform(0.1, 10.0, size=(4, 8, 16)).astype(np.float32)),
+        op_args=(make_from_np(rng.uniform(0.1, 10.0, size=(4, 8, 16)).astype(np.float32)), 2.0),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_square_output_shape_3d",
+        loss=default_loss,
+    )
+
     yield OpSampleInput(
         op_input=make_from_np(np.array([[[-4.258, 4.8]]], dtype=np.float32)),
         op_args=(make_from_np(np.array([[[0.0672, 1.397]]], dtype=np.float32)), 0.0),

@@ -95,6 +95,7 @@
 #include "backend/common/pass/mindir/all_to_all_unify_mindir.h"
 #include "backend/common/pass/mindir/neighbor_exchange_v2_unify_mindir.h"
 #include "backend/common/pass/mindir/all_to_all_v_unify_mindir.h"
+#include "backend/common/pass/ir_fission/cdist_grad_fission.h"
 #include "backend/common/pass/ir_fission/bn_split.h"
 #include "backend/common/pass/mindir/bn_grad_unify_mindir.h"
 #include "backend/common/pass/ir_fission/bn_grad_split.h"
@@ -229,6 +230,7 @@ mindspore::opt::PassManagerPtr GetBackendCommonUnifyMindIRPassManager() {
 mindspore::opt::PassManagerPtr GetBackendFusionGroupPassManager() {
   auto pm = std::make_shared<mindspore::opt::PassManager>("backend_fusion");
   pm->AddFusionPass(std::make_shared<mindspore::opt::ClipByNormFission>());
+  pm->AddFusionPass(std::make_shared<mindspore::opt::CdistGradFission>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::BatchMatMulReduceScatterAllToAllFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::AllToAllAllGatherBatchMatMulFusion>());
   pm->AddFusionPass(std::make_shared<mindspore::opt::LambFissionGe>());
