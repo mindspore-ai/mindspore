@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
+#include <cstddef>
+
 #include "pybind_api/frontend/frontend_api.h"
 
 #include "include/pynative/forward/pyboost/converter.h"
 
 namespace mindspore {
 namespace {
-enum CellToOverloadIndex {
+enum class CellToOverloadIndex {
   kToDeviceOverload,
   kToDtypeOverload,
   kToOtherOverload,
 };
 
-enum CellToArgIndex {
+enum class CellToArgIndex {
   kFirstArgIndex,
   kSecondArgIndex,
   kThirdArgIndex,
 };
+
+constexpr size_t ToArgIndex(CellToArgIndex index) { return static_cast<size_t>(index); }
 }  // namespace
 
 static py::object CellParseToArgs(const py::args &args, const py::kwargs &kwargs) {
@@ -45,21 +49,25 @@ static py::object CellParseToArgs(const py::args &args, const py::kwargs &kwargs
   py::object dtype = py::none();
   py::object non_blocking = py::bool_(false);
 
-  switch (parse_args.GetOvertLoadIndex()) {
-    case kToDeviceOverload:
-      device = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kFirstArgIndex]);
-      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kSecondArgIndex]);
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kThirdArgIndex]);
+  switch (static_cast<CellToOverloadIndex>(parse_args.GetOvertLoadIndex())) {
+    case CellToOverloadIndex::kToDeviceOverload:
+      device = py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kFirstArgIndex)]);
+      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kSecondArgIndex)]);
+      non_blocking =
+        py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kThirdArgIndex)]);
       break;
-    case kToDtypeOverload:
-      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kFirstArgIndex]);
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kSecondArgIndex]);
+    case CellToOverloadIndex::kToDtypeOverload:
+      dtype = py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kFirstArgIndex)]);
+      non_blocking =
+        py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kSecondArgIndex)]);
       break;
-    case kToOtherOverload: {
-      py::object other = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kFirstArgIndex]);
+    case CellToOverloadIndex::kToOtherOverload: {
+      py::object other =
+        py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kFirstArgIndex)]);
       device = other.attr("device");
       dtype = other.attr("dtype");
-      non_blocking = py::reinterpret_borrow<py::object>(parse_args.arg_list_[kSecondArgIndex]);
+      non_blocking =
+        py::reinterpret_borrow<py::object>(parse_args.arg_list_[ToArgIndex(CellToArgIndex::kSecondArgIndex)]);
       break;
     }
     default:
