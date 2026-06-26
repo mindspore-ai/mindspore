@@ -30,12 +30,19 @@ LowlatencyCollectiveCommLib::LowlatencyCollectiveCommLib() { global_group_name_ 
 
 bool LowlatencyCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
-    return false;
+    if (init_groups_.find(global_group_name_) != init_groups_.end()) {
+      MS_LOG(WARNING) << "Lowlatency collective communication lib for group " << global_group_name_
+                      << " has already been initialized.";
+      return true;
+    }
+
+    MS_LOG(WARNING) << "Re-init Lowlatency collective communication lib with group name: " << global_group_name_;
   }
 
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   local_rank_id_ = local_rank_id;
+  init_groups_.insert(global_group_name_);
   initialized_ = true;
   finalized_ = false;
   return true;

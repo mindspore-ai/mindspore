@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_set>
 #include "utils/hash_map.h"
 #include "runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "plugin/ascend/res_manager/collective/ascend_communication_group.h"
@@ -75,6 +76,9 @@ class EXPORT_WRAPPER AscendCollectiveCommLib : public CollectiveCommunicationLib
 
   std::string CommName(const std::string &group_name) override;
 
+  void SaveDefaultGroupInfo() override;
+  void RestoreDefaultGroupInfo() override;
+
   HcclComm GetHcomByGroup(const std::string &group_name);
 
   bool DestroyHcclComm();
@@ -105,6 +109,10 @@ class EXPORT_WRAPPER AscendCollectiveCommLib : public CollectiveCommunicationLib
   AscendCollectiveCommLib();
   ~AscendCollectiveCommLib() override = default;
   mindspore::HashMap<std::string, HcclComm> group_hccl_comm_map_;
+  std::unordered_set<std::string> init_groups_;
+  uint32_t default_global_rank_;
+  uint32_t default_global_rank_size_;
+  uint32_t default_local_rank_id_;
 };
 }  // namespace ascend
 }  // namespace device

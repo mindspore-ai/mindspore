@@ -17,6 +17,8 @@ from __future__ import absolute_import
 import hashlib
 import builtins
 import io
+import os
+import sys
 import pickle
 from datetime import timedelta
 import numpy as np
@@ -77,13 +79,14 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
     dist_comm_batch_isend_irecv_op,
 )
 from mindspore._c_expression import TCPStoreClient, GroupOptions, _finalize_collective
+from ._utils import _parse_tcp_url_for_ipv4
 
 _pickler = pickle.Pickler
 _unpickler = pickle.Unpickler
 BACKEND_HCCL = "hccl"
 BACKEND_MCCL = "mccl"
-_GROPU_SIZE_CACHE = {}
-_GROPU_RANK_CACHE = {}
+_GROUP_SIZE_CACHE = {}
+_GROUP_RANK_CACHE = {}
 
 safe_builtins = {
     'range',
@@ -96,19 +99,19 @@ safe_builtins = {
 
 def get_cache_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache group size."""
-    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
-    if group not in _GROPU_SIZE_CACHE:
-        _GROPU_SIZE_CACHE[group] = _get_size_helper(group)
-    group_size = _GROPU_SIZE_CACHE[group]
+    global _GROUP_SIZE_CACHE # pylint: disable=global-variable-not-assigned
+    if group not in _GROUP_SIZE_CACHE:
+        _GROUP_SIZE_CACHE[group] = _get_size_helper(group)
+    group_size = _GROUP_SIZE_CACHE[group]
     return group_size
 
 
 def get_cache_group_rank(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache rank id."""
-    global _GROPU_RANK_CACHE # pylint: disable=global-variable-not-assigned
-    if group not in _GROPU_RANK_CACHE:
-        _GROPU_RANK_CACHE[group] = _get_rank_helper(group)
-    group_rank = _GROPU_RANK_CACHE[group]
+    global _GROUP_RANK_CACHE # pylint: disable=global-variable-not-assigned
+    if group not in _GROUP_RANK_CACHE:
+        _GROUP_RANK_CACHE[group] = _get_rank_helper(group)
+    group_rank = _GROUP_RANK_CACHE[group]
     return group_rank
 
 
@@ -191,6 +194,9 @@ class TCPStore:
 
     def __init__(self, host_name, port, world_size=None, is_master=False, timeout=timedelta(seconds=300),
                  wait_for_workers=True, multi_tenant=False, master_listen_fd=None, use_libuv=True):
+        if os.getenv("MS_ROLE") == "MS_SCHED":
+            logger.warning("TCPStore is not supported for scheduler process.")
+            return
         if not isinstance(host_name, str):
             raise TypeError(
                 "For 'TCPStore', the argument 'host_name' must be type of string, "
@@ -443,14 +449,17 @@ def is_initialized():
 
 
 @args_type_check(init_method=str, timeout=timedelta, world_size=int, rank=int, store=TCPStore)
-def init_process_group(backend="hccl",
-                       init_method=None,
-                       timeout=None,
-                       world_size=-1,
-                       rank=-1,
-                       store=None,
-                       pg_options=None,
-                       device_id=None):
+def init_process_group(
+    backend="hccl",
+    init_method=None,
+    timeout=None,
+    world_size=-1,
+    rank=-1,
+    store=None,
+    group_name="",
+    pg_options=None,
+    device_id=None,
+):
     """
     Init collective communication lib. And create a default collective communication group.
 
@@ -510,35 +519,63 @@ def init_process_group(backend="hccl",
         logger.warning("pg_options is ignored, setting is invalid")
     if device_id is not None:
         logger.warning("device_id is ignored, setting is invalid")
+
     if backend != "hccl":
         raise ValueError(
             "Only support hccl now, please setting backend to hccl or using default value"
         )
 
     if init_method is not None and store is not None:
-        raise ValueError(
-            "Only one of init_method and store is supported."
-        )
+        raise ValueError("Only one of init_method and store is supported.")
+
     if init_method is not None or store is not None:
+        if os.getenv("MS_ROLE") == "MS_SCHED":
+            logger.warning(
+                "mindspore.mint.init_process_group (use init_method/store) does not distinguish between the roles " \
+                "of the current process. Now the process exits directly when the role is set to MS_SCHED."
+            )
+            sys.exit(0)
+
         if world_size <= 0:
-            raise ValueError(
-                "Specified world_size must be a positive integer."
-            )
+            raise ValueError("Specified world_size must be a positive integer.")
         if rank < 0:
-            raise ValueError(
-                "Specified rank must be a non-negative integer."
-            )
+            raise ValueError("Specified rank must be a non-negative integer.")
+
         if timeout is None:
             timeout = timedelta(seconds=300)
-        timeout_ms = int(timeout.total_seconds() * 1000)
-        _init_without_sched(backend, init_method, timeout_ms, world_size, rank, store)
+
+        if init_method is not None:
+            is_master = rank == 0
+            try:
+                ip, port = _parse_tcp_url_for_ipv4(init_method)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to parse TCP URL from 'init_method': {init_method}"
+                ) from e
+            store = TCPStore(
+                host_name=ip,
+                port=port,
+                world_size=world_size,
+                is_master=is_master,
+                timeout=timeout,
+            )
+
+        _init_without_sched(
+            backend=backend,
+            timeout=timeout,
+            world_size=world_size,
+            rank=rank,
+            store=store,
+            group_name=group_name,
+        )
     else:
         init(backend)
 
-    if world_size != -1 and world_size != get_group_size():
+    group_size = get_group_size(group_name) if group_name else get_group_size()
+    if world_size != -1 and world_size != group_size:
         raise ValueError(
             "world_size is wrong, please using default value or setting: ",
-            get_group_size(),
+            group_size,
         )
 
 
@@ -2175,7 +2212,6 @@ def send(tensor, dst=0, group=None, tag=0):
     _dst = _get_group_rank_from_world_rank_from_cache_helper(dst, group)
     output = dist_comm_isend_op(tensor, _dst, group, tag)
     _deal_comm_outputs(output, False)
-
 
 
 def recv(tensor, src=0, group=None, tag=0):

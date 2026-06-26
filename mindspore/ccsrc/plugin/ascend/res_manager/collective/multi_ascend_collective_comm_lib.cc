@@ -64,7 +64,7 @@ bool MultiAscendCollectiveCommLib::isGroupWithinLocalMachine(const std::vector<u
 
 bool MultiAscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
-    return true;
+    MS_LOG(WARNING) << "MultiAscendCollectiveCommLib has already been init.";
   }
 #ifdef ENABLE_INTERNAL_KERNELS
   if (device::ascend::AscendHalManager::GetInstance().EnableLccl()) {
@@ -83,6 +83,7 @@ bool MultiAscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t glo
     MS_EXCEPTION_IF_NULL(lowlatency_collective_comm_lib_);
     MS_LOG(WARNING) << "Loading LCCL because env MS_ENABLE_LCCL is set to on. Pay attention that LCCL only supports "
                        "communication group within single node in KernelByKernel for now.";
+    lowlatency_collective_comm_lib_->set_global_group_name(global_group_name_);
     RETURN_IF_FALSE_WITH_LOG(lowlatency_collective_comm_lib_->Initialize(global_rank, global_rank_size, local_rank_id),
                              "Failed to initialize LCCL.");
     MS_LOG(INFO) << "Successfully initialize LCCL.";
@@ -95,6 +96,7 @@ bool MultiAscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t glo
   }
   ascend_collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_collective_comm_lib_);
+  ascend_collective_comm_lib_->set_global_group_name(global_group_name_);
   RETURN_IF_FALSE_WITH_LOG(ascend_collective_comm_lib_->Initialize(global_rank, global_rank_size, local_rank_id),
                            "Failed to initialize HCCL.");
   MS_LOG(INFO) << "Successfully initialize HCCL.";
@@ -185,7 +187,7 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
                                                             uint32_t local_group_rank, uint32_t local_group_size,
                                                             const GroupOptions &config) {
   if (groups_.count(group_name) != 0) {
-    MS_LOG(WARNING) << "the group:" << group_name << "already existed";
+    MS_LOG(WARNING) << "the group:" << group_name << " has already existed";
     return true;
   }
   MultiAscendCommunicationGroupPtr group = std::make_shared<MultiAscendCommunicationGroup>(
@@ -195,7 +197,7 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
   if (device::ascend::AscendHalManager::GetInstance().EnableLccl() && isGroupWithinLocalMachine(group_ranks)) {
     RETURN_IF_FALSE_WITH_LOG(lowlatency_collective_comm_lib_->CreateCommunicationGroup(
                                group_name, group_ranks, local_group_rank, local_group_size),
-                             "Failed to create LCCL communication group" + group_name);
+                             "Failed to create LCCL communication group " + group_name);
     CommunicationGroupPtr lccl_group = lowlatency_collective_comm_lib_->GetGroup(group_name);
     MS_EXCEPTION_IF_NULL(lccl_group);
     group->SetLcclGroup(lccl_group);
@@ -206,7 +208,7 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
   if (graphkernel::EnableDvmComm()) {
     RETURN_IF_FALSE_WITH_LOG(
       dvm_collective_comm_lib_->CreateCommunicationGroup(group_name, group_ranks, local_group_rank, local_group_size),
-      "Failed to create DVM communication group" + group_name);
+      "Failed to create DVM communication group " + group_name);
     CommunicationGroupPtr dvm_group = dvm_collective_comm_lib_->GetGroup(group_name);
     MS_EXCEPTION_IF_NULL(dvm_group);
     group->SetDvmCommGroup(dvm_group);
@@ -214,7 +216,7 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
   }
   RETURN_IF_FALSE_WITH_LOG(ascend_collective_comm_lib_->CreateCommunicationGroup(
                              group_name, group_ranks, local_group_rank, local_group_size, config),
-                           "Failed to create HCCL communication group" + group_name);
+                           "Failed to create HCCL communication group " + group_name);
   CommunicationGroupPtr hccl_group = ascend_collective_comm_lib_->GetGroup(group_name);
   MS_EXCEPTION_IF_NULL(hccl_group);
   group->SetHcclGroup(hccl_group);
@@ -223,6 +225,11 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
   groups_[group_name] = group;
 
   return true;
+}
+
+void MultiAscendCollectiveCommLib::RestoreDefaultGroupInfo() {
+  MS_EXCEPTION_IF_NULL(ascend_collective_comm_lib_);
+  return ascend_collective_comm_lib_->RestoreDefaultGroupInfo();
 }
 
 std::string MultiAscendCollectiveCommLib::CommName(const std::string &group_name) {

@@ -50,8 +50,13 @@ MsCollectiveCommLib::MsCollectiveCommLib() {
 
 bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
-    MS_LOG(WARNING) << "MsCollectiveCommLib has already been initialized.";
-    return true;
+    if (init_groups_.find(global_group_name_) != init_groups_.end()) {
+      MS_LOG(WARNING) << "Mindspore collective communication lib for group " << global_group_name_
+                      << " has already been initialized.";
+      return true;
+    }
+
+    MS_LOG(WARNING) << "Re-init Mindspore collective communication lib with group name: " << global_group_name_;
   }
 
   // Only use AllReduceLauncher when this is CPU backend.
@@ -95,9 +100,37 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   local_rank_id_ = local_rank_id;
+  init_groups_.insert(global_group_name_);
   initialized_ = true;
   finalized_ = false;
+
+  // Record the information of mccl_world_group for restoring the default communication group information after the
+  // subsequent creation of non-default communication groups.
+  if (global_group_name_ == kMCCLGlobalGroupName) {
+    SaveDefaultGroupInfo();
+  }
+
   return true;
+}
+
+void MsCollectiveCommLib::SaveDefaultGroupInfo() {
+  default_group_name_ = global_group_name_;
+  default_tcp_client_node_ = client_node_;
+  default_global_rank_ = global_rank_id_;
+  default_global_rank_size_ = global_rank_size_;
+  default_local_rank_id_ = local_rank_id_;
+}
+
+void MsCollectiveCommLib::RestoreDefaultGroupInfo() {
+  if (default_group_name_ != kMCCLGlobalGroupName) {
+    MS_LOG(INFO) << "mccl_world_group has not been initialized, skipping default group info restoration.";
+    return;
+  }
+  client_node_ = default_tcp_client_node_;
+  global_rank_id_ = default_global_rank_;
+  global_rank_size_ = default_global_rank_size_;
+  local_rank_id_ = default_local_rank_id_;
+  global_group_name_ = default_group_name_;
 }
 
 bool MsCollectiveCommLib::Finalize() {
@@ -119,6 +152,7 @@ bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name
                                                                          local_group_rank, local_group_size);
   CHECK_IF_NULL(group);
   groups_[group_name] = group;
+
   return true;
 }
 
@@ -234,8 +268,8 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
 
   std::string node_role_prefix = client_node_->role() + "_";
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
-  bool success = false;
 
+  bool success = false;
   // Retry every random time interval.
   std::random_device rd;
   std::mt19937 gen(rd());

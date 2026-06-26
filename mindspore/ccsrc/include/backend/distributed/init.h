@@ -39,18 +39,18 @@ using TCPStoreClientPtr = std::shared_ptr<TCPStoreClient>;
 
 // Initialize and finalize distributed execution.
 BACKEND_COMMON_EXPORT bool Initialize();
-BACKEND_COMMON_EXPORT bool Initialize(std::optional<std::string> url, int64_t timeout, uint32_t world_size,
-                                      uint32_t node_id, cluster::TCPStoreClientPtr store);
+BACKEND_COMMON_EXPORT bool Initialize(int64_t timeout, uint32_t world_size, uint32_t node_id,
+                                      cluster::TCPStoreClientPtr store, const std::string &group_name);
 BACKEND_COMMON_EXPORT bool Finalize();
 
 // Initialize and finalize the cluster based on MindSpore communication framework.
 BACKEND_COMMON_EXPORT bool InitializeCluster();
-BACKEND_COMMON_EXPORT bool InitializeCluster(std::optional<std::string> url, int64_t timeout, uint32_t world_size,
-                                             uint32_t node_id, cluster::TCPStoreClientPtr store);
+BACKEND_COMMON_EXPORT bool InitializeCluster(int64_t timeout, uint32_t world_size, uint32_t node_id,
+                                             cluster::TCPStoreClientPtr store, std::string group_name);
 BACKEND_COMMON_EXPORT bool FinalizeCluster();
 
 // Initialize and finalize collective communication for distributed execution.
-BACKEND_COMMON_EXPORT bool InitializeCollective();
+BACKEND_COMMON_EXPORT bool InitializeCollective(std::string group_name = "");
 BACKEND_COMMON_EXPORT bool FinalizeCollective();
 
 // Set and get whether this process in cluster exits with exception.
