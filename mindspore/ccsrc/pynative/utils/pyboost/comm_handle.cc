@@ -39,30 +39,32 @@ CommHandle::~CommHandle() {
   if (event_ == nullptr) {
     return;
   }
-  if (device_ctx_ != nullptr && device_ctx_->device_res_manager_ != nullptr) {
-    bool wait_called = wait_called_.load();
-    if (!wait_called && !op_name_.empty()) {
-      MS_LOG(WARNING)
-        << "CommHandle destroyed without calling wait(): event=" << event_ << ", op_name=" << op_name_
-        << ", CommHandle=" << this
-        << ". Please ensure to call wait() on the CommHandle returned from async communication operations.";
-    }
-    MS_LOG(DEBUG) << "DestroyEvent: event=" << event_ << ", op_name=" << op_name_ << ", wait_called=" << wait_called
-                  << ", CommHandle=" << this;
-    try {
-      event_->SyncEvent();
-    } catch (const std::exception &e) {
-      MS_LOG(WARNING) << "SyncEvent failed in CommHandle destructor: " << e.what() << ", event=" << event_
-                      << ", op_name=" << op_name_;
-    }
-    try {
-      device_ctx_->device_res_manager_->DestroyEvent(event_);
-    } catch (const std::exception &e) {
-      MS_LOG(WARNING) << "DestroyEvent failed in CommHandle destructor: " << e.what() << ", event=" << event_
-                      << ", op_name=" << op_name_;
-    }
-    MS_LOG(DEBUG) << "DestoryEvent done, event: " << event_;
+  bool wait_called = wait_called_.load();
+  if (!wait_called && !op_name_.empty()) {
+    MS_LOG(WARNING) << "CommHandle destroyed without calling wait(): event=" << event_ << ", op_name=" << op_name_
+                    << ", CommHandle=" << this
+                    << ". Please ensure to call wait() on the CommHandle returned from async communication operations.";
   }
+  MS_LOG(DEBUG) << "DestroyEvent: event=" << event_ << ", op_name=" << op_name_ << ", wait_called=" << wait_called
+                << ", CommHandle=" << this;
+  try {
+    event_->SyncEvent();
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "SyncEvent failed in CommHandle destructor: " << e.what() << ", event=" << event_
+                    << ", op_name=" << op_name_;
+  }
+  // Don't access device_ctx_ here - it may be a dangling pointer during process exit after ClearResAtexit()
+  // has destroyed the DeviceContext. Call DestroyEvent directly on the event object instead.
+  try {
+    if (!event_->DestroyEvent()) {
+      MS_LOG(WARNING) << "DestroyEvent failed in CommHandle destructor, event=" << event_ << ", op_name=" << op_name_;
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "DestroyEvent exception in CommHandle destructor: " << e.what() << ", event=" << event_
+                    << ", op_name=" << op_name_;
+  }
+  MS_LOG(DEBUG) << "DestroyEvent done, event: " << event_;
+  event_ = nullptr;
 }
 
 DeviceEventPtr CommHandle::CreateEvent() {

@@ -240,6 +240,10 @@ void AscendEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {
 bool AscendEvent::NeedWait() { return need_wait_; }
 
 bool AscendEvent::DestroyEvent() {
+  if (event_destroyed_) {
+    MS_LOG(DEBUG) << "AscendEvent::DestroyEvent: event already destroyed, skip. event=" << this;
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(event_);
   MS_LOG(DEBUG) << "AscendEvent::DestroyEvent: event=" << this << ", event_=" << event_;
   auto ret = CALL_ASCEND_API(aclrtDestroyEvent, event_);
