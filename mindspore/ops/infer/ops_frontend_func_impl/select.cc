@@ -112,6 +112,13 @@ class SelectFrontendFuncImpl : public OpFrontendFuncImpl {
     if (IsDynamic(cond_shape) || IsDynamic(x_shape) || IsDynamic(y_shape)) {
       return nullptr;
     }
+    // Skip constant folding when broadcasting is required: this InferValue path uses
+    // a non-broadcasting elementwise loop and a result tensor sized from x_shape,
+    // which produces wrong shape/values for broadcastable inputs. Defer to the
+    // runtime Select kernel (and SelectFuncImpl::InferShape) which handle broadcasting.
+    if (cond_shape != x_shape || x_shape != y_shape) {
+      return nullptr;
+    }
     auto conds = cond_tensor->data_c();
     MS_EXCEPTION_IF_NULL(conds);
     auto type_id = x_tensor->data_type();
