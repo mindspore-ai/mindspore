@@ -37,7 +37,6 @@
 #include "frontend/jit/ps/action.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/parse/data_converter.h"
-#include "frontend/jit/ps/resource.h"
 #include "utils/convert_utils.h"
 #include "primitive/math_ops.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
@@ -718,6 +717,42 @@ TEST_F(TestOptLib, test_partial_unused_args_eliminate_dead_node_placeholder) {
   ASSERT_TRUE(Isomorphic(before_fg, after_fg, &equiv_graph, &equiv_node));
 
   auto output = before_fg->output();
+  ASSERT_TRUE(IsPrimitiveCNode(output, prim::kPrimPartial));
+  auto result_partial = output->cast<CNodePtr>();
+  ASSERT_NE(result_partial, nullptr);
+  ASSERT_EQ(result_partial->size(), 4);
+  ASSERT_FALSE(IsDeadNode(result_partial->input(2)));
+}
+
+// Feature: After-recompute pass only eliminates DeadNode placeholders in Partial.
+// Description: no_user parameters with live Partial arguments must be kept.
+// Expectation: dead_node_only mode skips regular unused-arg elimination but still removes DeadNode placeholders.
+TEST_F(TestOptLib, test_partial_unused_args_eliminate_after_recompute_dead_node_only) {
+  FuncGraphPtr before_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "before");
+  equiv_node.clear();
+  equiv_graph.clear();
+  ASSERT_NE(before_fg, nullptr);
+  auto manager = Manage(before_fg, true);
+  ASSERT_NE(manager, nullptr);
+
+  auto opt = opt::irpass::PartialUnusedArgsEliminate(true);
+  ASSERT_FALSE(opt(before_fg));
+
+  auto called_before = BuildPartialDeadNodeCalledGraph(true);
+  auto dead_node_before_fg = BuildPartialDeadNodeTopGraph(called_before, true);
+  auto called_after = BuildPartialDeadNodeCalledGraph(false);
+  auto dead_node_after_fg = BuildPartialDeadNodeTopGraph(called_after, false);
+
+  equiv_node.clear();
+  equiv_graph.clear();
+  manager = Manage(dead_node_before_fg, true);
+  ASSERT_NE(manager, nullptr);
+  ASSERT_EQ(called_before->func_graph_cnodes_index().size(), 1);
+
+  ASSERT_TRUE(opt(dead_node_before_fg));
+  ASSERT_TRUE(Isomorphic(dead_node_before_fg, dead_node_after_fg, &equiv_graph, &equiv_node));
+
+  auto output = dead_node_before_fg->output();
   ASSERT_TRUE(IsPrimitiveCNode(output, prim::kPrimPartial));
   auto result_partial = output->cast<CNodePtr>();
   ASSERT_NE(result_partial, nullptr);
