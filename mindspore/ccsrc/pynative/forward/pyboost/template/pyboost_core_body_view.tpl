@@ -19,6 +19,7 @@ PyObject* ${func_name}OpDispatch(const PrimitivePtr &prim, const std::vector<ops
 
 PyObject* ${func_name}Op(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
   if (IsDispatchEnable()) {
+    runtime::Pipeline::Get().WaitFrontend();
     return ${func_name}OpDispatch(prim, source_type, ${op_args});
   }
   MS_LOG(DEBUG) << "Run ${func_name} start";
@@ -45,4 +46,3 @@ PyObject* ${func_name}Op(const PrimitivePtr &prim, const std::vector<ops::OP_DTY
   MS_LOG(DEBUG) << "Run ${func_name} end";
   return tensor::TransformOutput(py_output);
 }
-

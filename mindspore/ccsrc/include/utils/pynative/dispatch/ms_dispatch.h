@@ -24,6 +24,7 @@
 #include <tuple>
 #include <utility>
 #include "pybind11/pybind11.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "include/utils/visible.h"
 #include "include/utils/pynative/dispatch/dispatch_stack.h"
 #include "include/utils/pynative/dispatch/py_convert.h"
@@ -226,6 +227,7 @@ auto HandleGuardChainDispatch(Callback &&callback, const py::args &packed_args,
 
   // Create a wrapper that can be called from Python
   auto cpp_callback_wrapper = [&callback](const py::args &args) -> py::object {
+    runtime::Pipeline::Get().WaitFrontend();
     auto result = callback(args);
     return PackValue(result);
   };
@@ -251,6 +253,7 @@ auto HandleTensorFallback(Callback &&callback, const py::args &packed_args, cons
                           const std::string &op_name) -> decltype(callback(packed_args)) {
   // Create a wrapper that can be called from Python
   auto cpp_callback_wrapper = [&callback](const py::args &args) -> py::object {
+    runtime::Pipeline::Get().WaitFrontend();
     auto result = callback(args);
     return PackValue(result);
   };
