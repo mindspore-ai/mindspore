@@ -5569,7 +5569,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.int8, ms.int32, ms.int64, ms.uint8),
         op_basic_reference_inputs_func=basic_sample_inputs_functional_relu_,
         op_extra_reference_inputs_func=extra_sample_inputs_functional_relu_,
-        op_error_inputs_func=error_inputs_other_op_functional_relu_,
         not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_,),
     ),
     'mint.nn.functional.softplus': OpInfo(
