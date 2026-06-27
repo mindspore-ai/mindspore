@@ -27,6 +27,12 @@ namespace mindspore {
 namespace kernel {
 namespace softplus_ext_cpu {
 namespace {
+// Fast-path activates only when beta/threshold match the Softplus default
+// values, so the NNACL kernel can be used without recomputing the generic
+// formula.
+constexpr float kDefaultSoftplusBeta = 1.0f;
+constexpr float kDefaultSoftplusThreshold = 20.0f;
+
 #define SOFTPLUS_EXT_CPU_REGISTER(TENSOR_DTYPE, BETA_DTYPE, THRESHOLD_DTYPE, T, TBeta, TThreshold) \
   KernelAttr()                                                                                     \
     .AddInputAttr(TENSOR_DTYPE)                                                                    \
@@ -71,7 +77,8 @@ bool SoftplusExtCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   }
 
   if constexpr (std::is_same_v<T, float>) {
-    if (beta == static_cast<ComputeT>(1) && threshold == static_cast<ComputeT>(20)) {
+    if (beta == static_cast<ComputeT>(kDefaultSoftplusBeta) &&
+        threshold == static_cast<ComputeT>(kDefaultSoftplusThreshold)) {
       auto task = [input, output, this](size_t start, size_t end) {
         auto ret = ::Softplus(input + start, SizeToInt(end - start), output + start);
         if (ret != NNACL_OK) {
