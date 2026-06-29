@@ -1,17 +1,15 @@
 if(ENABLE_GITEE OR ENABLE_GITEE_EULER) # Channel GITEE_EULER is NOT supported now, use GITEE instead.
-  set(REQ_URL "https://gitee.com/mirrors/openssl/repository/archive/openssl-3.5.4.tar.gz")
-  set(SHA256 "758b69feed5787dc12d34b0eb29b60d3c9d73d5a64760c62d93a6d26b344d65d")
+  set(REQ_URL "https://gitee.com/mirrors/openssl/repository/archive/openssl-3.5.7.tar.gz")
+  set(SHA256 "d71a811bfbd9153d7b30cbe476263302ee4b04a9a47ffea6e6a782326805c93f")
 else()
-  set(REQ_URL "https://github.com/openssl/openssl/archive/refs/tags/openssl-3.5.4.tar.gz")
-  set(SHA256 "758b69feed5787dc12d34b0eb29b60d3c9d73d5a64760c62d93a6d26b344d65d")
+  set(REQ_URL "https://github.com/openssl/openssl/archive/refs/tags/openssl-3.5.7.tar.gz")
+  set(SHA256 "d71a811bfbd9153d7b30cbe476263302ee4b04a9a47ffea6e6a782326805c93f")
 endif()
-
-set(OPENSSL_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/openssl)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
     set(openssl_CFLAGS -fvisibility=hidden)
     mindspore_add_pkg(openssl
-            VER 3.5.4
+            VER 3.5.7
             LIBS ssl crypto
             URL ${REQ_URL}
             SHA256 ${SHA256}
