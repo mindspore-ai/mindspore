@@ -1285,6 +1285,20 @@ bool PartialUnusedArgsEliminatePass(const ResourcePtr &resource) {
   return true;
 }
 
+bool PartialUnusedArgsEliminateAfterRecomputePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto opt = opt::irpass::PartialUnusedArgsEliminate(true);
+  auto changed = opt(func_graph);
+  if (changed) {
+    OptPassGroupMap map({{"renormalize", opt::OptPassConfig({opt::OptPassConfig::Renormalize()})}});
+    auto renormalize = opt::Optimizer::MakeOptimizer("renormalize", resource, map);
+    (void)renormalize->step(func_graph, false);
+  }
+  return true;
+}
+
 bool PartialCallerInputsEliminatePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();

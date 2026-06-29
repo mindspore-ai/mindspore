@@ -70,6 +70,7 @@ bool LoopUnrollPass(const ResourcePtr &resource);
 bool JitOptPassAfterCconvGroup(const ResourcePtr &resource);
 bool RemoveValueNodeDuplicationsPassForJit(const ResourcePtr &resource);
 bool PartialUnusedArgsEliminatePass(const ResourcePtr &resource);
+bool PartialUnusedArgsEliminateAfterRecomputePass(const ResourcePtr &resource);
 bool MutableEliminatePass(const ResourcePtr &resource);
 bool EnvironConversionPass(const ResourcePtr &resource);
 bool PyInterpretToExecutePass(const ResourcePtr &resource);

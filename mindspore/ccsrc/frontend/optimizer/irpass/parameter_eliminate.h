@@ -583,7 +583,7 @@ class NoneParameterEliminator {
 
 class PartialUnusedArgsEliminate {
  public:
-  PartialUnusedArgsEliminate() = default;
+  explicit PartialUnusedArgsEliminate(bool dead_node_only = false) : dead_node_only_(dead_node_only) {}
   virtual ~PartialUnusedArgsEliminate() = default;
   bool operator()(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -592,58 +592,100 @@ class PartialUnusedArgsEliminate {
     bool changed = false;
     auto fgs = func_graph->func_graphs_used_total();
     for (const auto &fg : fgs) {
-      MS_EXCEPTION_IF_NULL(fg);
-      std::vector<CNodePtr> partial_nodes;
-      if (!GetUserPartialNodes(fg, &partial_nodes)) {
-        continue;
+      if (EliminatePartialUnusedArgsInFuncGraph(fg, manager)) {
+        changed = true;
       }
-      std::vector<size_t> unused_parameter_idx;
-      std::vector<AnfNodePtr> new_parameters;
-      const auto &node_users = manager->node_users();
-      const auto &origin_parameters = fg->parameters();
-      bool added_forward_u = fg->has_flag(kFuncGraphFlagAddedForwardU);
-      AnfNodePtr unused_arg_u = nullptr;
-      for (size_t i = 0; i < origin_parameters.size(); ++i) {
-        auto origin_para = origin_parameters[i];
-        auto iter = node_users.find(origin_para);
-        const bool no_user = (iter == node_users.end() || iter->second.empty());
-        // Eliminate unused non-function parameters directly. For unused function parameters, only eliminate when
-        // all Partial call sites already pass ValueProblem[DeadNode] as placeholder (safe after specialization).
-        if (no_user && !HasAbstractFunction(origin_para)) {
-          (void)unused_parameter_idx.emplace_back(i);
-        } else if (no_user && HasAbstractFunction(origin_para) &&
-                   IsDeadNodePlaceholderAtAllPartials(partial_nodes, i)) {
-          (void)unused_parameter_idx.emplace_back(i);
-        } else if (added_forward_u && HasAbstractUMonad(origin_para) && i < origin_parameters.size() - 1) {
-          // The fv u monad from fprop should be replaced with the forward u added by pass 'add_forward_monad_depend.h'.
-          (void)unused_parameter_idx.emplace_back(i);
-          unused_arg_u = origin_para;
-        } else {
-          (void)new_parameters.emplace_back(origin_para);
-        }
-      }
-      if (unused_parameter_idx.empty()) {
-        continue;
-      }
-      mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
-      if (!GetPartialRepl(partial_nodes, unused_parameter_idx, &repl)) {
-        continue;
-      }
-      if (unused_arg_u != nullptr) {
-        (void)manager->Replace(unused_arg_u, origin_parameters[origin_parameters.size() - 1]);
-      }
-      fg->set_parameters(new_parameters);
-      auto tr = manager->Transact();
-      for (auto &item : repl) {
-        (void)tr.Replace(item.first, item.second);
-      }
-      tr.Commit();
-      changed = true;
     }
     return changed;
   }
 
  private:
+  bool dead_node_only_{false};
+
+  static bool ShouldEliminateUnusedPartialParam(bool dead_node_only, bool no_user, bool dead_node_at_all_partials,
+                                                const AnfNodePtr &origin_para) {
+    if (!no_user) {
+      return false;
+    }
+    // After recompute: only eliminate unused parameters whose Partial call sites pass DeadNode placeholders.
+    if (dead_node_only) {
+      return dead_node_at_all_partials;
+    }
+    // Eliminate unused non-function parameters directly. For unused function parameters, only eliminate when
+    // all Partial call sites already pass ValueProblem[DeadNode] as placeholder (safe after specialization).
+    if (!HasAbstractFunction(origin_para)) {
+      return true;
+    }
+    return dead_node_at_all_partials;
+  }
+
+  static bool ShouldReplaceForwardUMonad(bool added_forward_u, const AnfNodePtr &origin_para, size_t param_index,
+                                         size_t param_count) {
+    return added_forward_u && HasAbstractUMonad(origin_para) && param_index < param_count - 1;
+  }
+
+  static void CollectPartialUnusedParamUpdate(bool dead_node_only, bool no_user, bool dead_node_at_all_partials,
+                                              bool added_forward_u, const AnfNodePtr &origin_para, size_t param_index,
+                                              size_t param_count, std::vector<size_t> *unused_parameter_idx,
+                                              std::vector<AnfNodePtr> *new_parameters, AnfNodePtr *unused_arg_u) {
+    MS_EXCEPTION_IF_NULL(unused_parameter_idx);
+    MS_EXCEPTION_IF_NULL(new_parameters);
+    MS_EXCEPTION_IF_NULL(unused_arg_u);
+    if (ShouldEliminateUnusedPartialParam(dead_node_only, no_user, dead_node_at_all_partials, origin_para)) {
+      (void)unused_parameter_idx->emplace_back(param_index);
+      return;
+    }
+    if (ShouldReplaceForwardUMonad(added_forward_u, origin_para, param_index, param_count)) {
+      // The fv u monad from fprop should be replaced with the forward u added by pass
+      // 'add_forward_monad_depend.h'.
+      (void)unused_parameter_idx->emplace_back(param_index);
+      *unused_arg_u = origin_para;
+      return;
+    }
+    (void)new_parameters->emplace_back(origin_para);
+  }
+
+  bool EliminatePartialUnusedArgsInFuncGraph(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
+    MS_EXCEPTION_IF_NULL(fg);
+    MS_EXCEPTION_IF_NULL(manager);
+    std::vector<CNodePtr> partial_nodes;
+    if (!GetUserPartialNodes(fg, &partial_nodes)) {
+      return false;
+    }
+    std::vector<size_t> unused_parameter_idx;
+    std::vector<AnfNodePtr> new_parameters;
+    const auto &node_users = manager->node_users();
+    const auto &origin_parameters = fg->parameters();
+    const bool added_forward_u = fg->has_flag(kFuncGraphFlagAddedForwardU);
+    AnfNodePtr unused_arg_u = nullptr;
+    for (size_t i = 0; i < origin_parameters.size(); ++i) {
+      auto origin_para = origin_parameters[i];
+      auto iter = node_users.find(origin_para);
+      const bool no_user = (iter == node_users.end() || iter->second.empty());
+      const bool dead_node_at_all_partials = IsDeadNodePlaceholderAtAllPartials(partial_nodes, i);
+      CollectPartialUnusedParamUpdate(dead_node_only_, no_user, dead_node_at_all_partials, added_forward_u, origin_para,
+                                      i, origin_parameters.size(), &unused_parameter_idx, &new_parameters,
+                                      &unused_arg_u);
+    }
+    if (unused_parameter_idx.empty()) {
+      return false;
+    }
+    mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
+    if (!GetPartialRepl(partial_nodes, unused_parameter_idx, &repl)) {
+      return false;
+    }
+    if (unused_arg_u != nullptr) {
+      (void)manager->Replace(unused_arg_u, origin_parameters[origin_parameters.size() - 1]);
+    }
+    fg->set_parameters(new_parameters);
+    auto tr = manager->Transact();
+    for (auto &item : repl) {
+      (void)tr.Replace(item.first, item.second);
+    }
+    tr.Commit();
+    return true;
+  }
+
   static bool HasAbstractFunction(const AnfNodePtr &node) {
     return node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractFunction>();
   }
