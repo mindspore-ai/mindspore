@@ -42,8 +42,8 @@ tensor::TensorPtr rand_like_ext(const tensor::TensorPtr &tensor_tensor, const te
                                 const std::optional<Int64ImmPtr> &device) {
   auto output_type = GetDataType(tensor_tensor, dtype);
   if (!IsRandLikeExtFloatType(output_type)) {
-    MS_EXCEPTION(ValueError) << "For 'rand_like_ext', the 'dtype' must be a float type, but got "
-                             << TypeIdToString(output_type) << ".";
+    MS_EXCEPTION(TypeError) << "For 'rand_like_ext', the 'dtype' must be a float type, but got "
+                            << TypeIdToString(output_type) << ".";
   }
   tensor::TensorPtr output_empty = empty_like(tensor_tensor, dtype, device, std::make_shared<BoolImm>(false));
   if (output_empty->device_address() != nullptr &&
