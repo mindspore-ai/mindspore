@@ -2,6 +2,52 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.10.0 Release Notes
+
+### Major Features and Improvements
+
+#### HyperParallel
+
+- [STABLE] **DTensor**: Provides a unified stateless programming model based on distributed tensor abstraction, with automatic layout inference and cross-device redistribution, enabling transparent local/remote tensor operations.
+- [STABLE] **FSDP**: Fully Sharded Data Parallel, sharding parameters, gradients, and optimizer states across devices with reshard_after_forward, communication fusion, and overlap modes, significantly reducing per-device memory usage.
+- [STABLE] **Context Parallel (CP)**: Sequence-dimension partitioning for long-context training (128K+), offering synchronous CP, asynchronous CP, and DSA (Dense Sparse Attention) variants with asynchronous compute-communication overlap.
+- [STABLE] **Pipeline Parallel (PP)**: Supports GPipe, 1F1B, and VPP scheduling strategies, PP+FSDP integration, P2P prefetch overlap, Mpipe multimodal transpose, and forward-backward overlap for EP all-to-all communication masking.
+- [STABLE] **Activation Checkpoint**: Selective recomputation via checkpoint_wrapper, trading compute for memory with policy-based layer selection, working in coordination with the swap mechanism.
+- [STABLE] **Swap (Activation Offload)**: Asynchronously offloads activations to CPU via swap_wrapper and prefetches them back to NPU during backward pass, with SwapManager for layer-level offload/prefetch coordination.
+- [STABLE] **Distributed Checkpoint (DCP)**: Per-rank sharded model state saving with cross-strategy reshard loading, async staging, and offline format conversion, eliminating single-device memory bottlenecks.
+- [STABLE] **Distributed Optimizer**: Provides AdamW and Muon optimizers with ChainedOptimizer for mixed parameter group training, gradient scaling, and FSDP-integrated sharded optimizer states.
+- [STABLE] **DFunction**: Custom distributed autograd function interface with automatic DTensor dispatch, layout inference, and output wrapping, enabling users to extend custom distributed operators.
+- [STABLE] **Deferred Weight Initialization**: Supports deferred model weight initialization by constructing the model structure on a meta device first and materializing parameters on demand, reducing peak memory usage during large model initialization.
+- [DEMO] **Tensor Parallel (TP)**: Declarative tensor parallelism with ColwiseParallel, RowwiseParallel, SequenceParallel strategies, Loss Parallel support, and PyTorch distributed tensor API compatibility.
+- [DEMO] **Expert Parallel (EP)**: Expert parallelism for MoE models with EP+TP 2D parallelism, building blocks such as GroupedExperts and TokenChoiceTopKRouter, and support for load balancing and auxiliary loss.
+- [DEMO] **Auto Parallel Search (SAPP)**: SAPP-ND provides multi-dimensional parallelism strategy search (DP/TP/PP/EP) with memory estimation; SAPP-PPB performs pipeline stage load balancing with joint recomputation tuning.
+- [DEMO] **Mpipe Multimodal Parallel**: Add multimodal transpose scheduling for Mpipe VLM.
+- [DEMO] **In-Chip Multicore Parallelism**: Two-level on-chip MPMD parallelism with O0 (Host CPU scheduling) and O1 (AICore scheduling), combining multicore dispatch with one-sided communication to improve communication masking and MAC utilization in MoE scenarios.
+
+#### AKG
+
+- [STABLE] **MFusion**: A layer operator fusion tool evolved from the open-source MLIR project, reduces the calculation layer to identify operator subgraphs that can be fused, cluster the subgraphs into a fusion unit, and send the subgraphs to the operator compilation tool to generate code, reducing the memory transfer overhead between operators.
+- [STABLE] **Scheduler**: A deep learning compiler evolved from the open-source MLIR project, providing a complete operator compilation pipeline for CPU/GPU/Ascend. It currently includes the MindSpore Dialect for graph compilation and extends dialects such as Linalg, Affine, and GPU, enhancing loop fusion scheduling capabilities. Additionally, AKG-MLIR integrates with AscendNPU IR, supporting fused operator generation for the Ascend backend.
+
+### API Change
+
+- [STABLE] **Cell.to/to_empty**: Adds APIs for moving and allocating Cell parameters and buffers. Cell.to supports in-place conversion by device, dtype, or reference Tensor, while Cell.to_empty allocates uninitialized storage on a target device for meta-initialized models, making model migration across devices and data types easier.
+
+### Dependency Changes
+
+- NumPy `2.x` is supported, and the dependency changed to `NumPy >= 1.25.0`
+- The Protobuf C++ dependency upgraded to `7.34.1`, and the Python dependency changed to `protobuf >= 7.34.0,<8.0.0`
+- gRPC upgraded to `1.73.0`
+- abseil-cpp upgraded to `20250127.1`
+- re2 upgraded to `2022-04-01`
+- Flatbuffers upgraded to `25.12.19`
+- Open MPI upgraded to `5.0.10`
+- The minimum supported version of GCC has been changed to `9.5`
+
+### Contributors
+
+bellatan,BigSkySea,bleub,cheng_xiaoli,chenshan2623,chujinjin,DavidFFFan,dingjinshan,fangwenyi1,fary86,gaoyong10,ginfung,Hanshize,hbhu_bin,hhz0,huangbingjian1,huan-xiaoling,hujiahui8,hwcaifubi,hwjiaorui,hz893,jeasuiiya,jonyguo,kisnwang,Liangcan-Li,liangchenghui,lijiajie1234,limingqi107,LiNuohang,liuchengji3,liuf9,lllrt,looop5,luochao60,m0_51742343,machangwei,maoyuanpeng1,Margaret_wangrui,mengyuanli,nepdada,nicholas_yhr,panzhihui1,probiotics_53,propathee,qll1998,shawnylee233,shen_haochen,shenwei41,shuqian0,silkage_jiajia,skytier,SorryNaCN,sunshineko,tiancixiao,wangnan39,wangpingan2,wangyin888,wang-ziqi-code,wujueying,wusuqin4,xiong-pan,xuzhenyoumi,yangjiane,yide12,yt_289,yuanjunkang,yuanqi1104,yyuse,zh_qh,zhangyifan999,zhangyinxia,zhaochenjie-huawei,changzherui1,chenmolin37,david-he91,xuxinglei,Meng107,fengyixing,lichen666,zou-jieyu,yangzhenzhang,liuchongming74,lijiajia823,celiaccui,ch-l,lishanni513_admin1,rongyue,zhangbuxue,yao_yf,zhanghanb,suteng,bj-wang1,hwfuchao,wcrzlh,jiangna1111,sargerasking,lzy0920232,huilan_li,zezezechen,yuzhenhua666,wang_hua_2025,guangpengz,lei_xxx,Liang_Ziyi,chuting,memory_deluge,weixin_42266176,zhangyuguo,alpha-junh,jinxiaoxian,liu-yanwei6,qhzhuang11111111,qiang7680219,rainyhorse,SHUYUAN6,donglinzhuo,gemini524,haloradar,HulkTang1,tiandeyu-cs,xmoqian,yanxr123,corleoneliu,huawuyi,ombre_mer1,super_yuziyu,salazar111,lihui488
+
 ## MindSpore 2.9.0 Release Notes
 
 ### Major Features and Improvements
@@ -31,7 +77,7 @@
 - [STABLE] [mindspore.mint.optim.FusedAdamW](https://www.mindspore.cn/docs/en/master/api_python/mint/mindspore.mint.optim.FusedAdamW.html#mindspore.mint.optim.FusedAdamW), a fused optimizer, is added in mindspore.mint.optim. It is an implementation of the Fused Adaptive Moment Estimation Weight Decay (​**FusedAdamW**​) algorithm.
 - [STABLE] [mindspore.load_checkpoint](https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.load_checkpoint.html#mindspore.load_checkpoint) added support for BytesIO objects in safetensors format to the checkpoint loading interface.
 
-### Dependencies Change
+### Dependency Change
 
 - oneDNN dependency pinned to 3.10.1
 - PyYAML dependency changed to `>=6.0`
@@ -40,8 +86,6 @@
 - JSON for Modern C++ dependency pinned to 3.12.0
 - CUB removed
 - jemalloc removed
-- NumPy floor raised to `>=1.25` (from `>=1.20`). NumPy 2.x is now supported as a build target: when built against NumPy 2.x headers, `NPY_TARGET_VERSION=0x00000011` produces a backward-compatible ABI that runs on NumPy 1.25+ and NumPy 2.x.
-- pybind11 unified to 2.13.1 across all supported Python versions (previously branched as 2.4.3 / 2.6.1 / 2.13.1 per Python minor). This version satisfies the `PyArray_Descr` field-layout requirement introduced by NumPy 2.0.
 
 ### Contributors
 
