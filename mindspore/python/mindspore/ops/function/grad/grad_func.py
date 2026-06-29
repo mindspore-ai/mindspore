@@ -292,7 +292,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
         return_ids (bool, optional): Whether the returned derivation function contains
             `grad_position` or `weights` information. If ``True``,
             all gradient values in the returned derivation function will be replaced
-            with: [gradient, grad_position] or [gradient, weights].
+            with [gradient, grad_position] or [gradient, weights].
             Default: ``False`` .
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If `sens_param` is ``False`` , a `ones_like(outputs)` sensitivity will be attached automatically.
@@ -373,7 +373,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
         (16, 10) (16, 10)
         >>>
         >>> # Case 2: gradient with respect to weights.
-        >>> # For has_aux is set to True, only loss contributes to the gradient.
+        >>> # When has_aux is set to True, only loss contributes to the gradient.
         >>> grad_fn = value_and_grad(forward, grad_position=None, weights=weights, has_aux=True)
         >>> (loss, logits), params_gradient = grad_fn(inputs, labels)
         >>> print(logits.shape)
@@ -943,7 +943,7 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
             Default: ``None`` .
         has_aux (bool, optional): If True, only the first output of `fn` contributes the gradient of `fn`,
             while the other outputs
-            will be returned straightly. It means the `fn` must return more than one output in this case.
+            will be returned directly. It means the `fn` must return more than one output in this case.
             Default: ``False``.
 
     Returns:
@@ -956,7 +956,7 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
           type should be the same as `net_output` .
         - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is ``True``,
           `aux_value` will be returned.
-          It means the second to last outputs of `fn(inputs)`.
+          It represents all outputs of `fn(inputs)` except the first one.
           Specifically, `aux_value` does not contribute to gradient.
 
     Raises:

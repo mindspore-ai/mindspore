@@ -17,7 +17,7 @@ mindspore.vmap
         - 当在vmap作用域内调用随机数生成方法时，每次在向量函数之间生成相同的随机数。如果希望每个向量分支使用不同的随机数，需要提前从外部生成一批随机数，然后将其传入vmap。
 
     参数：
-        - **fn** (Union[Cell, Function, CellList]) - 待沿参数轴映射的函数，该函数至少拥有一个输入参数并且返回值为一个或多个Tensor或Tensor支持的数据类型。当 `fn` 的类型是CellList时，为模型集成场景，需要确保每个单元的结构相同，并且单元数量与映射轴索引对应的size（ `axis_size` ）一致。
+        - **fn** (Union[Cell, Function, CellList]) - 待沿参数轴映射的函数，该函数至少拥有一个输入参数并且返回值为一个或多个Tensor或Tensor支持的数据类型。当 `fn` 的类型是CellList时，在模型集成场景下，需要确保每个单元的结构相同，并且单元数量与映射轴索引对应的size（ `axis_size` ）一致。
         - **in_axes** (Union[int, list, tuple], 可选) - 指定输入参数映射的轴索引。默认值： ``0`` 。
 
           - 如果 `in_axes` 是一个整数，则 `fn` 的所有输入参数都将根据此轴索引进行映射。

@@ -249,7 +249,7 @@ def arange(start=0, end=None, step=1, *, dtype=None):
         start (Union[float, int, Tensor], optional): The start value of the interval.
             Default ``0`` .
         end (Union[float, int, Tensor], optional): The end value of the interval.
-            Default ``None`` represents to the value of `start` , and ``0`` is used as the start value.
+            Default ``None`` represents the value of `start` , and ``0`` is used as the start value.
         step (Union[float, int, Tensor], optional): The interval between each value. Default ``1`` .
 
     Keyword Args:
@@ -3874,12 +3874,12 @@ def affine_grid(theta, size, align_corners=False):
             The value of target output with format :math:`(N, C, H, W)` for 2D grid or :math:`(N, C, D, H, W)` for 3D
             grid.
         align_corners (bool, optional): Geometrically, each pixel of input is viewed as a square instead of dot.
-            If ``True`` , consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
+            If ``True`` , the extremum values -1 and 1 refer to the centers of the pixels rather than the pixel corners.
             The default value is ``False`` , extremum -1 and 1 refer to the corners of the pixels, so that sampling is
             irrelevant to resolution of the image. Default: ``False`` .
 
     Returns:
-        Tensor, a tensor whose data type is the same as 'theta', and the shape is :math:`(N, H, W, 2)` for 2D grid
+        Tensor, a tensor whose data type is the same as `theta`, and the shape is :math:`(N, H, W, 2)` for 2D grid
         or :math:`(N, D, H, W, 3)` for 3D grid.
 
     Raises:

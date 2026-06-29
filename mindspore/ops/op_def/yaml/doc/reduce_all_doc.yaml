@@ -1,6 +1,6 @@
 reduce_all:
     description: |
-        Tests if all elements in `input` evaluates to `True` along the given axes.
+        Tests if all elements in `input` evaluate to `True` along the given axes.
 
         .. warning::
             Starting after version 2.9.0, this API will undergo an incompatible change:
@@ -14,7 +14,8 @@ reduce_all:
             input (Tensor): The input Tensor.
             axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
                 all dimensions are reduced. Default ``None`` . Will be renamed to `dim` after version 2.9.0.
-            keep_dims (bool, optional): Whether the output tensor has dim retained or not. Default ``False`` .
+            keep_dims (bool, optional): Whether to retain the reduced dimensions in the output tensor.
+                Default ``False`` .
                 Will be renamed to `keepdim` after version 2.9.0.
 
         Returns:
@@ -27,7 +28,7 @@ reduce_all:
             >>> import mindspore
             >>> input = mindspore.tensor([[True, False], [True, True]])
             >>>
-            >>> # case 1:  By default, mindspore.ops.all tests along all the axes.
+            >>> # case 1: By default, mindspore.ops.all tests along all the axes.
             >>> mindspore.ops.all(input)
             Tensor(shape=[], dtype=Bool, value= False)
             >>> 

@@ -374,7 +374,7 @@ def adaptive_avg_pool3d(input, output_size):
         \end{array}
 
     Args:
-        input (Tensor): The input of adaptive_avg_pool3d, which is a 5D or 4D Tensor.
+        input (Tensor): The input of adaptive_avg_pool3d, which is a 4D or 5D Tensor.
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(D, H, W)`,
             or an int D for :math:`(D, D, D)`. :math:`D`, :math:`H` and :math:`W` can be int or None
             which means the output size is the same as that of the input.
@@ -1044,7 +1044,7 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or ``None``.
             If it is ``None``, it means the output size is the same as the input size.
 
-        return_indices (bool, optional): If `return_indices` is ``True`` , the indices of max value would be output.
+        return_indices (bool, optional): If `return_indices` is ``True`` , the indices of the max value would be output.
             Default: ``False`` .
 
     Returns:
@@ -6728,7 +6728,7 @@ def adaptive_avg_pool1d(input, output_size):
     Applies a 1D adaptive average pooling over an input Tensor which can be regarded as a composition of 1D input
     planes.
 
-    Typically, the input is of shape :math:`(N, C, L_{in})`, adaptive_avg_pool1d outputs regional average
+    Typically, the input is of shape :math:`(N, C, L_{in})`, adaptive_avg_pool1d outputs the regional average
     in the :math:`L_{in}`-dimension. The output is of shape :math:`(N, C, L_{out})`, where :math:`L_{out}`
     is defined by `output_size`.
 
