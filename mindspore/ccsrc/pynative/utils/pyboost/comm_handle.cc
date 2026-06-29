@@ -47,12 +47,6 @@ CommHandle::~CommHandle() {
   }
   MS_LOG(DEBUG) << "DestroyEvent: event=" << event_ << ", op_name=" << op_name_ << ", wait_called=" << wait_called
                 << ", CommHandle=" << this;
-  try {
-    event_->SyncEvent();
-  } catch (const std::exception &e) {
-    MS_LOG(WARNING) << "SyncEvent failed in CommHandle destructor: " << e.what() << ", event=" << event_
-                    << ", op_name=" << op_name_;
-  }
   // Don't access device_ctx_ here - it may be a dangling pointer during process exit after ClearResAtexit()
   // has destroyed the DeviceContext. Call DestroyEvent directly on the event object instead.
   try {
