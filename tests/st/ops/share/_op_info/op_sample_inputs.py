@@ -7298,7 +7298,12 @@ def extra_sample_inputs_mint_scatter(op_info: OpInfo, dtype=None, device=None, *
 def error_sample_inputs_mint_scatter(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     def _gather_variable(shape, max_indices):
-        return mint.randint(0, max_indices, shape)
+        # mint.randint requires low < high (aligned with torch.randint). When
+        # max_indices is 0 the requested shape always contains a zero dim, so
+        # the result is an empty index tensor and the value range is irrelevant;
+        # clamp high to 1 to satisfy randint instead of raising from<to error.
+        high = max(max_indices, 1)
+        return mint.randint(0, high, shape)
     input = make_arg((3, 4, 5))
     src=ms.Tensor(np.random.uniform(0,10,size=(1,1,1)), dtype=ms.float32)
     #index is either not int32 nor int64
@@ -21781,7 +21786,7 @@ def basic_sample_inputs_functional_MaxUnpool2d(op_info: OpInfo, dtype=None, devi
         W_out = (shape_after_pooling[-1] - 1) * stride[1] - 2 * padding[1] + kernel_size[1]
 
         # (H_out - (stride[0] - 1), W_out - (stride[1] - 1)) or (H_out, W_out) may be error  because
-        # torch  will detech indices's max index  <= output_size.H * output_size.w
+        # torch  will detect indices's max index  <= output_size.H * output_size.w
         output_size_list = [shape_before_pooling, (H_out + (stride[0] - 1), W_out + (stride[1] - 1)),]
 
         for _index, value  in enumerate(kernel_size):
