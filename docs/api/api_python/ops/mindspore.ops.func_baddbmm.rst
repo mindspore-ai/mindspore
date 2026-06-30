@@ -21,8 +21,8 @@ mindspore.ops.baddbmm
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **batch1** (Tensor) - 第一个batch矩阵。
-        - **batch2** (Tensor) - 第二个batch矩阵。
+        - **batch1** (Tensor) - 第一个要相乘的矩阵batch。
+        - **batch2** (Tensor) - 第二个要相乘的矩阵batch。
         - **beta** (Union[float, int], 可选) - `input` 的尺度因子。默认 ``1`` 。
         - **alpha** (Union[float, int]，可选) - （ `batch1` @ `batch2` ）的尺度因子，默认 ``1`` 。
 
