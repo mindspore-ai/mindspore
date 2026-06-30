@@ -961,7 +961,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     """
     Feature: pyboost function.
     Description: Test function lightning_indexer forward and backward computation with multi-batch TND layout.
-        Test scenario: TND layout with TND key layout (non-PA scenario), B=4, T=16, S2=2048, N1=64, N2=1, D=128,
+        Test scenario: TND layout with TND key layout (non-PA scenario), B=4, T=16, N1=64, N2=1, D=128,
         sparse_count=1, sparse_mode=3 (rightDownCausal).
     Expectation: Expect correct sparse_indices output and gradient results matching torch_npu reference.
     """
@@ -970,6 +970,7 @@ def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
     B, T, S2, N1, N2, D = 4, 16, 2048, 64, 1, 128
     layout_query = 'TND'
     layout_key = 'TND'
+    # TND key uses total T as seqlenK here. Keep topK within the per-batch valid key length for grad.
     sparse_count = 1
     sparse_mode = 3
     return_value = True
