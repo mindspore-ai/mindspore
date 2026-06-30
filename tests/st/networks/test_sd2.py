@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-# For more details, please refer to MindCV (https://github.com/mindspore-lab/mindcv)
-
 """ Model training pipeline """
 import sys
 import importlib
@@ -31,7 +29,6 @@ import mindspore as ms
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
 
 from tests.device_utils import set_device
-from tests.mark_utils import arg_mark
 
 workspace = os.path.dirname(os.path.realpath(__file__))
 if os.path.exists(os.path.join(workspace, "mindone/examples/stable_diffusion_v2/tests")):
@@ -114,7 +111,7 @@ def build_model_from_config(config, args=None):
         if config == "__is_unconditional__":
             return None
         raise KeyError("Expected key `target` to instantiate.")
-    config_params = config.get("params", dict())
+    config_params = config.get("params", {})
     return get_obj_from_str(config["target"])(**config_params)
 
 
@@ -236,7 +233,7 @@ def parse_args(args=None):
     default_args = parser.parse_args(args)
     if default_args.train_config:
         default_args.train_config = os.path.join(abs_path, default_args.train_config)
-        with open(default_args.train_config, "r") as f:
+        with open(default_args.train_config, "r", encoding="utf-8") as f:
             cfg = yaml.safe_load(f)
             parser.set_defaults(**cfg)
     args = parser.parse_args(args)
@@ -450,7 +447,6 @@ def main(args):
     os.environ.pop("MS_ENABLE_ACLNN")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=7422.0)
 def test_sd2_1p():
     """
     Feature: Stable diffusion 2.0 1p test

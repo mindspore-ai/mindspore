@@ -139,7 +139,7 @@ def test_func_dropout_ext_normal(mode, inplace):
     compare_grad(x1_np, p1, grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 @pytest.mark.parametrize('inplace', [True, False])
 def test_nn_dropout_ext_normal(mode, inplace):

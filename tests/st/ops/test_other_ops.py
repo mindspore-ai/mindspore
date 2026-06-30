@@ -105,7 +105,7 @@ def test_other_op_reference_backward_kbk(mode, op_info):
     fact.test_op_reference(grad_cmp=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_dynamic_forward'][0])

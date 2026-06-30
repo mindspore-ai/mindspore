@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class Add(nn.Cell):
     def __init__(self):
-        super(Add, self).__init__()
+        super().__init__()
         self.add = P.Add()
 
     def construct(self, x, y):
@@ -263,12 +263,12 @@ def test_tuple_add_tuple():
     Description: test add operator.
     Expectation: No exception
     """
-    input_x = (Tensor(np.ones(shape=[3])).astype(np.float32))
-    input_y = (Tensor(np.ones(shape=[3])).astype(np.float32) * 2)
+    input_x = Tensor(np.ones(shape=[3])).astype(np.float32)
+    input_y = Tensor(np.ones(shape=[3])).astype(np.float32) * 2
     result1 = input_x + input_y
     add_net = Add()
     result2 = add_net(input_x, input_y)
-    expect = (np.ones(shape=[3]) * 3)
+    expect = np.ones(shape=[3]) * 3
     assert np.all(result1.asnumpy() == expect.astype(np.float32))
     assert np.all(result2.asnumpy() == expect.astype(np.float32))
 
@@ -282,13 +282,13 @@ def test_tuple_add_tuple_shape():
     Expectation: No exception
     """
     with pytest.raises(ValueError):
-        input_x = (Tensor(np.ones(shape=[3])).astype(np.float32))
-        input_y = (Tensor(np.ones(shape=[4])).astype(np.float32) * 2)
+        input_x = Tensor(np.ones(shape=[3])).astype(np.float32)
+        input_y = Tensor(np.ones(shape=[4])).astype(np.float32) * 2
 
         result1 = input_x + input_y
         add_net = Add()
         result2 = add_net(input_x, input_y)
-        expect = (np.ones(shape=[3]) * 3)
+        expect = np.ones(shape=[3]) * 3
         assert np.all(result1.asnumpy() == expect.astype(np.float32))
         assert np.all(result2.asnumpy() == expect.astype(np.float32))
 
@@ -323,7 +323,7 @@ def test_list_add_list():
 
 class Sub(nn.Cell):
     def __init__(self):
-        super(Sub, self).__init__()
+        super().__init__()
         self.sub = P.Sub()
 
     def construct(self, x, y):
@@ -404,7 +404,7 @@ def test_number_sub_tensor():
 
 class Mul(nn.Cell):
     def __init__(self):
-        super(Mul, self).__init__()
+        super().__init__()
         self.mul = P.Mul()
 
     def construct(self, x, y):
@@ -480,7 +480,7 @@ def test_number_mul_tensor():
 
 class Div(nn.Cell):
     def __init__(self):
-        super(Div, self).__init__()
+        super().__init__()
         self.div = P.Div()
 
     def construct(self, x, y):
@@ -539,7 +539,8 @@ def test_tensor_div_number():
     assert np.allclose(result2.asnumpy(), expect.asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.25)
 def test_number_div_tensor():
     """
     Feature: simple expression
@@ -558,7 +559,7 @@ def test_number_div_tensor():
 
 class Mod(nn.Cell):
     def __init__(self):
-        super(Mod, self).__init__()
+        super().__init__()
         self.mod = P.Mod()
 
     def construct(self, x, y):
@@ -637,7 +638,7 @@ def test_number_mod_tensor():
 
 class Pow(nn.Cell):
     def __init__(self):
-        super(Pow, self).__init__()
+        super().__init__()
         self.pow = P.Pow()
 
     def construct(self, x, y):
@@ -698,7 +699,7 @@ def test_number_pow_tensor():
 
 class FloorDiv(nn.Cell):
     def __init__(self):
-        super(FloorDiv, self).__init__()
+        super().__init__()
         self.floordiv = P.FloorDiv()
 
     def construct(self, x, y):
@@ -775,7 +776,7 @@ def test_number_floordiv_tensor():
 
 class FloorMod(nn.Cell):
     def __init__(self):
-        super(FloorMod, self).__init__()
+        super().__init__()
         self.floormod = P.FloorMod()
 
     def construct(self, x, y):
