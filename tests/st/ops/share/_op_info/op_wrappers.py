@@ -26,6 +26,7 @@ from mindspore.experimental import optim
 import torch
 from torch.nn import functional as torch_F
 
+
 # =====================================wrap tensor/nn method====================================
 
 # wrap tensor method for astype
@@ -360,6 +361,12 @@ def mint_special_log_softmax_ms(op_input, dim=0, dtype=None):
 
 def mint_special_log_softmax_torch(op_input, dim=0, dtype=None):
     return torch.special.log_softmax(op_input, dim=dim, dtype=dtype)
+
+def mint_narrow_ms(op_input, dim=0, start=0, length=0):
+    return mint.narrow(op_input, dim=dim, start=start, length=length)
+
+def mint_narrow_torch(op_input, dim=0, start=0, length=0):
+    return torch.narrow(op_input, dim=dim, start=start, length=length)
 
 # wrap nn method for batchnorm1d
 def nn_batchnorm1d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
@@ -715,12 +722,42 @@ def tensor_torch_logsumexp(op_input, dim=0, keepdim=False):
     return torch.logsumexp(op_input, dim, keepdim)
 
 #  nansum has keyword parameters dtype,so for matching cases make this fouctions
-def tensor_mint_nansum(input, dim=None, keepdim=False, dtype=None):
-    return mint.nansum(input, dim, keepdim, dtype=dtype)
+def tensor_mint_nansum(op_input, dim=None, keepdim=False, dtype=None):
+    return mint.nansum(op_input, dim, keepdim, dtype=dtype)
 
 #  nansum has keyword parameters dtype,so for matching cases make this fouctions
-def tensor_torch_nansum(input, dim=None, keepdim=False, dtype=None):
-    return torch.nansum(input, dim, keepdim, dtype=dtype)
+def tensor_torch_nansum(op_input, dim=None, keepdim=False, dtype=None):
+    return torch.nansum(op_input, dim, keepdim, dtype=dtype)
+
+def tensor_mint_where(condition, op_input, other):
+    return mint.where(condition=condition, input=op_input, other=other)
+
+def tensor_torch_where(condition, op_input, other):
+    return torch.where(condition=condition, input=op_input, other=other)
+
+def tensor_mint_index_add(op_input, dim, index, source, alpha=1):
+    return mint.index_add(op_input, dim, index, source, alpha=alpha)
+
+def tensor_torch_index_add(op_input, dim, index, source, alpha=1):
+    return torch.index_add(op_input, dim, index, source, alpha=alpha)
+
+def tensor_mint_reshape(op_input, shape):
+    return mint.reshape(op_input, shape)
+
+def tensor_torch_reshape(op_input, shape):
+    return torch.reshape(op_input, shape)
+
+def tensor_mint_squeeze(op_input, dim):
+    return mint.squeeze(op_input, dim)
+
+def tensor_torch_squeeze(op_input, dim):
+    return torch.squeeze(op_input, dim)
+
+def tensor_mint_diag(op_input, diagonal=0):
+    return mint.diag(op_input, diagonal=diagonal)
+
+def tensor_torch_diag(op_input, diagonal=0):
+    return torch.diag(op_input, diagonal=diagonal)
 
 def tensor_batch_norm_ms(op_input, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
     output = mint.nn.functional.batch_norm(op_input, running_mean, running_var, weight, bias, training, momentum, eps)
