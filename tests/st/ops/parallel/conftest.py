@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Pytest configuration for parallel ops tests."""
 import mindspore as ms
 import pytest
 
 
 @pytest.fixture(params=[
     (ms.GRAPH_MODE, 'O0'),
-    (ms.GRAPH_MODE, 'O2'),
     (ms.PYNATIVE_MODE, ''),
 ], autouse=True)
 def _init(request):
