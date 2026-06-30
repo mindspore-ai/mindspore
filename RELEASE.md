@@ -36,7 +36,7 @@
 ### Dependency Changes
 
 - NumPy `2.x` is supported, and the dependency changed to `NumPy >= 1.25.0`
-- The Protobuf C++ dependency upgraded to `7.34.1`, and the Python dependency changed to `protobuf >= 7.34.0,<8.0.0`
+- The Protobuf C++ dependency upgraded to `7.34.1`, and the Python dependency changed to `protobuf >= 7.34.1`
 - gRPC upgraded to `1.73.0`
 - abseil-cpp upgraded to `20250127.1`
 - re2 upgraded to `2022-04-01`

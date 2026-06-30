@@ -36,7 +36,7 @@
 ### 依赖变更
 
 - NumPy 支持 `2.x`，依赖限制改为 `numpy >= 1.25.0`
-- Protobuf C++ 依赖升级到 `7.34.1`，Python 依赖限制为 `protobuf >= 7.34.0,<8.0.0`
+- Protobuf C++ 依赖升级到 `7.34.1`，Python 依赖限制为 `protobuf >= 7.34.1`
 - gRPC 升级到 `1.73.0`
 - abseil-cpp 升级到 `20250127.1`
 - re2 升级到 `2022-04-01`
