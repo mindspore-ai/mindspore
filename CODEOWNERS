@@ -311,8 +311,8 @@
 /.gitignore @limingqi107
 /.gitattributes @limingqi107
 /.clangformat @limingqi107
-/README*.MD @fangwenyi1
-/RELEASE*.MD @fangwenyi1
+/README*.md @fangwenyi1
+/RELEASE*.md @fangwenyi1
 /requirements.txt  @tronzhang @r1chardf1d0
 /setup.py  @tronzhang @r1chardf1d0
 /Third_Party_Open_Source_Software_Notice  @tronzhang @r1chardf1d0
