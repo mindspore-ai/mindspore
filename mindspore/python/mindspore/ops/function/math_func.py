@@ -591,7 +591,8 @@ def bucketize(input, boundaries, *, right=False):
 
     Args:
         input (Tensor): The input tensor.
-        boundaries (list): A sorted ascending list of bucket boundary values.
+        boundaries (list): A list of bucket boundary values. Must contain a strictly increasing
+            sequence, or the return value is undefined.
 
     Keyword Args:
         right (bool, optional): If ``False``, gets the lower bound index for each value in input from boundaries;
@@ -613,11 +614,23 @@ def bucketize(input, boundaries, *, right=False):
         [[2, 3, 5],
          [2, 3, 5]])
     """
-
-    bucketize_op = _get_cache_prim(P.Bucketize)
-    epsilon_ = 0. if right else 1.e-6
-    boundaries = [boundary + epsilon_ for boundary in boundaries]
-    return bucketize_op(boundaries)(input)
+    # Bucketize locates each element of `input` in `boundaries`, which is equivalent to searchsorted.
+    # Delegate to SearchSorted so the `right` semantics is resolved natively by the kernel. Output is
+    # int32. Supported input dtypes: int32/int64/float32/float64/int16/float16 on all backends.
+    # SearchSorted requires `sorted_sequence` and `values` to share dtype. To align with torch cpu,
+    # float64 inputs keep their own dtype while int/float16/float32 inputs are promoted to float32 to
+    # compare against the float boundaries. `boundaries` is used as-is; the caller must pass a
+    # strictly increasing sequence, otherwise the return value is undefined. Non-Tensor and
+    # unsupported dtypes are rejected here.
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'bucketize', 'input' must be a Tensor, but got {type(input).__name__}.")
+    valid_dtype = (mstype.int32, mstype.int64, mstype.float32, mstype.float64, mstype.int16, mstype.float16)
+    input_dtype = input.dtype
+    if input_dtype not in valid_dtype:
+        raise TypeError(f"For 'bucketize', input data type must be in {valid_dtype}, but got {input_dtype}.")
+    seq_dtype = mstype.float64 if input_dtype == mstype.float64 else mstype.float32
+    values = input if seq_dtype == input_dtype else input.astype(seq_dtype)
+    return F.searchsorted(Tensor(boundaries, seq_dtype), values, out_int32=True, right=right)
 
 
 def exp2(input):

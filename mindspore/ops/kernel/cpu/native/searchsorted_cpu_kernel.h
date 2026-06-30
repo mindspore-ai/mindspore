@@ -55,7 +55,6 @@ class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, SearchSortedFunc>> func_list_;
   SearchSortedFunc kernel_func_;
 
-  bool right_{false};
   size_t search_len_{0};
   std::vector<int64_t> sequence_shape_;
   std::vector<int64_t> values_shape_;

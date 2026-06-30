@@ -19,7 +19,7 @@ mindspore.ops.bucketize
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **boundaries** (list) - 存储桶边界值的有序递增列表。
+        - **boundaries** (list) - 存储桶边界值的列表。必须为严格递增序列，否则返回值未定义。
 
     关键字参数：
         - **right** (bool, 可选) - 如果为 ``False``，则从边界获取输入中每个值的下限索引；如果为 ``True``，则改为获取上限索引。默认 ``False`` 。
