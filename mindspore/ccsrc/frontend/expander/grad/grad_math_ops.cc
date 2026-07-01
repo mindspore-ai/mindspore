@@ -5436,14 +5436,12 @@ REG_BPROP_BUILDER("DiagExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   }
   auto x_dim = ib->GetRank(x);
   auto x_dtype = ib->GetDtype(x);
-  auto true_case = [&x, &out, &dout, &x_shape, &x_dtype, &diagonal, x_dim](Emitter *ib) -> NodePtrList {
+  auto true_case = [&x, &out, &dout, &x_dtype, &diagonal, x_dim](Emitter *ib) -> NodePtrList {
     auto dx_trans_shape = ib->ShapeCalc(std::make_shared<DiagonalShapeCalc>(0, 1), {x, out})[0];
-    auto grad_diagonal = GradDiagonalScalarToTensor(ib, dout, dx_trans_shape, diagonal, {0, 1, x_dim}, x_dtype);
-    return {grad_diagonal, ib->ZerosLike(diagonal)};
+    auto dx = GradDiagonalScalarToTensor(ib, dout, dx_trans_shape, diagonal, {0, 1, x_dim}, x_dtype);
+    return {dx};
   };
-  auto false_case = [&x, &x_dtype, &diagonal](Emitter *ib) -> NodePtrList {
-    return {ib->ZerosLike(x), ib->ZerosLike(diagonal)};
-  };
+  auto false_case = [&x](Emitter *ib) -> NodePtrList { return {ib->ZerosLike(x)}; };
   if (IsDynamic(ib->GetShape(x))) {
     auto x_size = ib->Emit("Size", {x});
     auto cond = ib->Emit("scalar_eq", {x_size, ib->Value<int64_t>(0)});
@@ -5451,10 +5449,9 @@ REG_BPROP_BUILDER("DiagExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
     return {dx, ib->OutZeros(diagonal)};
   }
   if (ib->GetSize(x) > 0) {
-    return true_case(ib);
-  } else {
-    return false_case(ib);
+    return {true_case(ib)[0], ib->OutZeros(diagonal)};
   }
+  return {false_case(ib)[0], ib->OutZeros(diagonal)};
 });
 
 REG_BPROP_BUILDER("Polar").FreeUselessValues_I({}).SetBody(BODYFUNC(ib) {
