@@ -34,7 +34,6 @@ bool SearchSortedCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSearchSortedInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSearchSortedOutputsNum, kernel_name_);
-  right_ = inputs[kIndex4]->GetValueWithCheck<bool>();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -82,11 +81,15 @@ bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTens
   const size_t scalar_size = 1;
   size_t search_repeat = values_shape_.empty() ? scalar_size : static_cast<size_t>(values_shape_.back());
 
-  auto task = [this, &sequence, &values, &output, seq_dim, search_repeat](size_t start, size_t end) {
+  // Read `right` per Launch instead of caching it in Init, otherwise the kernel is reused across
+  // calls with different `right` values and the first value sticks (mismatches Ascend which reads
+  // it at Launch time).
+  bool right = inputs[kIndex4]->GetValueWithCheck<bool>();
+  auto task = [this, &sequence, &values, &output, seq_dim, search_repeat, right](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       auto seq_start = (seq_dim == 1) ? sequence : sequence + (i / search_repeat) * search_len_;
-      auto result = right_ ? std::upper_bound(seq_start, seq_start + search_len_, values[i]) - seq_start
-                           : CustomizedLowerBound<S>(seq_start, seq_start + search_len_, values[i]) - seq_start;
+      auto result = right ? std::upper_bound(seq_start, seq_start + search_len_, values[i]) - seq_start
+                          : CustomizedLowerBound<S>(seq_start, seq_start + search_len_, values[i]) - seq_start;
       output[i] = static_cast<T>(result);
     }
   };
