@@ -28,7 +28,7 @@ Tag 遵循以下格式：
 
 | 字段          | 示例值          | 说明                             |
 |-------------|---------------|--------------------------------|
-| MindSpore 版本号 | 2.9.0         | 对应 MindSpore 官方发布 Tag 中的版本标识        |
+| MindSpore 版本号 | 2.10.0         | 对应 MindSpore 官方发布 Tag 中的版本标识        |
 | 硬件信息（芯片）  | 参考下文 | 昇腾芯片型号标识                      |
 | 操作系统      | ubuntu22.04 / openeuler24.03 | 基础镜像所使用的操作系统发行版及版本号      |
 | Python 版本   | py3.11        | 镜像内置 Python 大版本号                |
@@ -46,8 +46,21 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore
 **完整镜像示例：**
 
 ```text
-swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.11
+swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.10.0-910b-ubuntu22.04-py3.11
 ```
+
+### 构建参数选择参考地址
+
+### Tag
+
+- `2.10.0-910b-ubuntu22.04-py3.11`
+- `2.10.0-910b-openeuler24.03-py3.11`
+- `2.10.0-a3-ubuntu22.04-py3.11`
+- `2.10.0-a3-openeuler24.03-py3.11`
+
+### Dockerfile构建参数
+
+dockerfile详见：[dockerfile](https://atomgit.com/mindspore/mindspore/blob/master/docker/Dockerfile)
 
 ### 构建参数
 
@@ -57,12 +70,14 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.
 | CHIP_ARCH        | 昇腾芯片架构标识                         | 是  | Tag 规范             | 参考下文                                   |
 | OS_SYSTEM        | 基础镜像操作系统及版本                      | 是  | Tag 规范             | ubuntu22.04 / openeuler24.03                      |
 | PY_VERSION       | 基础镜像内置 Python 版本                 | 是  | Tag 规范             | py3.11                           |
-| MINDSPORE_VERSION | MindSpore 版本号                       | 是  | [MindSpore 仓库发行版](https://atomgit.com/mindspore/mindspore/releases)         | 2.9.0                                              |
+| MINDSPORE_VERSION | MindSpore 版本号                       | 是  | [MindSpore 仓库发行版](https://atomgit.com/mindspore/mindspore/releases)         | 2.10.0                                              |
 | PIP_INDEX_URL    | pip 安装源地址（默认华为云源）                 | 否  | PyPI 镜像源          | https://mirrors.huaweicloud.com/repository/pypi/simple |
 
 ## 快速开始
 
 ### 构建 MindSpore 镜像
+
+以构建2.10.0-910b-ubuntu22.04-py3.11镜像为例
 
 ```bash
 docker build \
@@ -70,9 +85,9 @@ docker build \
     --build-arg CHIP_ARCH=910b \
     --build-arg OS_SYSTEM=ubuntu22.04 \
     --build-arg PY_VERSION=py3.11 \
-    --build-arg MINDSPORE_VERSION=2.9.0 \
+    --build-arg MINDSPORE_VERSION=2.10.0 \
     --build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
-    -t mindspore:2.9.0-910b-ubuntu22.04-py3.11 \
+    -t mindspore:2.10.0-910b-ubuntu22.04-py3.11 \
     -f Dockerfile .
 ```
 
@@ -96,13 +111,13 @@ docker run \
 
 其中：
 
-- `{tag}` 对应上述构建MindSpore镜像操作中指定的标签，例如 `mindspore:2.9.0-910b-ubuntu22.04-py3.11`。
+- `{tag}` 对应上述构建MindSpore镜像操作中指定的标签，例如 `mindspore:2.10.0-910b-ubuntu22.04-py3.11`。
 
 ### 如何二次开发
 
 ```bash
 # 以 MindSpore 镜像为基础镜像，叠加用户软件
-FROM swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.11
+FROM swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.10.0-910b-ubuntu22.04-py3.11
 
 RUN apt update -y && \
     apt install -y gcc g++
