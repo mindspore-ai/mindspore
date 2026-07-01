@@ -99,7 +99,7 @@ std::function<void(const HcclComm &, void *)> CallAllToAll(const std::shared_ptr
 void InnerCommAllToAllVAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                        const StringImmPtr &group, const ValueTuplePtr &send_numel_list,
                                        const ValueTuplePtr &recv_numel_list, const Int64ImmPtr &rank_size,
-                                       const BoolImmPtr &split_sizes_empty) {
+                                       const BoolImmPtr &split_sizes_empty, const BoolImmPtr &async_op) {
   OpRunner::InferOpOutput(op, input_tensor, group, send_numel_list, recv_numel_list);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, input_tensor);
@@ -119,6 +119,11 @@ void InnerCommAllToAllVAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
     CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr);
   };
   CommonCommRunTask(run_func);
+
+  const bool is_async_op = GetValue<bool>(async_op);
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

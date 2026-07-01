@@ -1499,8 +1499,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         result = dist_comm_all_reduce_op(tensor, op, group, async_op)
         _, handle = _deal_dist_comm_outputs(result, async_op)
         return handle
-    out = inner_comm_all_reduce_op(tensor, op, group)
-    return _deal_comm_outputs(out, async_op)
+    out = inner_comm_all_reduce_op(tensor, op, group, async_op)
+    return _deal_dist_comm_outputs(out, async_op)
 
 
 def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=False):
@@ -1591,8 +1591,8 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
         )
         _, handle = _deal_dist_comm_outputs(result, async_op)
         return handle
-    output = inner_comm_all_gather_op(input_tensor, group_size, group)
-    return _deal_comm_outputs(output, async_op)
+    output = inner_comm_all_gather_op(input_tensor, group_size, group, async_op)
+    return _deal_dist_comm_outputs(output, async_op)
 
 
 def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=None, async_op=False):
@@ -1777,8 +1777,8 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         result = dist_comm_reduce_scatter_tensor_op(output, input, rank_size, op, group, async_op)
         _, handle = _deal_dist_comm_outputs(result, async_op)
         return handle
-    out = inner_comm_reduce_scatter_op(input, rank_size, op, group)
-    return _deal_comm_outputs(out, async_op)
+    out = inner_comm_reduce_scatter_op(input, rank_size, op, group, async_op)
+    return _deal_dist_comm_outputs(out, async_op)
 
 
 def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=ReduceOp.SUM, group=None, async_op=False):
@@ -2561,9 +2561,10 @@ def send(tensor, dst=0, group=None, tag=0):
     _dst = _get_group_rank_from_world_rank_from_cache_helper(dst, group)
     if is_inplace_func("send") is False:
         output = inner_comm_isend_op(tensor, _dst, group, tag)
+        _deal_comm_outputs(output, False)
     else:
         output = dist_comm_isend_op(tensor, _dst, group, tag)
-    _deal_comm_outputs(output, False)
+        _deal_dist_comm_outputs(output, False)
 
 
 def recv(tensor, src=0, group=None, tag=0):
@@ -2731,9 +2732,10 @@ def isend(tensor, dst=0, group=None, tag=0):
     _dst = _get_group_rank_from_world_rank_from_cache_helper(dst, group)
     if is_inplace_func("isend") is False:
         output = inner_comm_isend_op(tensor, _dst, group, tag)
+        _, handle = _deal_comm_outputs(output, True)
     else:
         output = dist_comm_isend_op(tensor, _dst, group, tag)
-    _, handle = _deal_comm_outputs(output, True)
+        _, handle = _deal_dist_comm_outputs(output, True)
     return handle
 
 
@@ -2934,8 +2936,8 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
                 recv_numel_list.append(_get_size(_shape))
                 recv_shape_list.append(_shape)
         output = inner_comm_all_to_all_v_op(send_flatten_tensor, group, send_numel_list, recv_numel_list,
-                                            rank_size, False)
-        output, handle = _deal_comm_outputs(output, async_op)
+                                            rank_size, False, async_op)
+        output, handle = _deal_dist_comm_outputs(output, async_op)
         result = []
         offset = 0
         for numel, shape in zip(recv_numel_list, recv_shape_list):
@@ -3102,8 +3104,9 @@ def all_to_all_single(output,
         send_numel_list, recv_numel_list, recv_shape_without_first_dim =\
             _get_all_to_all_single_numel_list(*cache_key)
         result = \
-            inner_comm_all_to_all_v_op(_input, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty)
-        result, handle = _deal_comm_outputs(result, async_op)
+            inner_comm_all_to_all_v_op(_input, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty,
+                                       async_op)
+        result, handle = _deal_dist_comm_outputs(result, async_op)
         if any(recv_numel_list):
             result = result.reshape((-1,) + recv_shape_without_first_dim)
         return result, handle

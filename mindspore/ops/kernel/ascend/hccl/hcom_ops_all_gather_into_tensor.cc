@@ -29,7 +29,7 @@ bool InnerCommAllGatherIntoTensorKernel::Init(const std::vector<KernelTensor *> 
 int InnerCommAllGatherIntoTensorKernel::Resize(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
   // Inner path has input/rank_size/group; dist path also has output tensor and async_op.
-  const auto expected_input_num = inplace_num_ == 0 ? kInputNum3 : kInputNum5;
+  const auto expected_input_num = inplace_num_ + kInputNum4;
   if (inputs.size() != expected_input_num) {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid hccl InnerCommAllGatherIntoTensorKernel input size " << inputs.size();
   }

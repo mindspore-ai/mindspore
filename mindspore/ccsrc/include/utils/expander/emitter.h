@@ -2102,17 +2102,19 @@ class COMMON_EXPORT Emitter {
     return Emit("GmmV2", {x, weight, bias, group_list, group_type, group_list_type});
   }
 
-  virtual NodePtr InnerCommAllReduce(const NodePtr &grad, const NodePtr &op, const NodePtr &group) {
-    return Emit("InnerCommAllReduce", {grad, op, group});
+  virtual NodePtr InnerCommAllReduce(const NodePtr &grad, const NodePtr &op, const NodePtr &group,
+                                     const NodePtr &async_op) {
+    return Emit("InnerCommAllReduce", {grad, op, group, async_op});
   }
 
-  virtual NodePtr InnerCommAllGather(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group) {
-    return Emit("InnerCommAllGather", {grad, rank_size, group});
+  virtual NodePtr InnerCommAllGather(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group,
+                                     const NodePtr &async_op) {
+    return Emit("InnerCommAllGather", {grad, rank_size, group, async_op});
   }
 
   virtual NodePtr InnerCommReduceScatter(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &type,
-                                         const NodePtr &group) {
-    return Emit("InnerCommReduceScatter", {grad, rank_size, type, group});
+                                         const NodePtr &group, const NodePtr &async_op) {
+    return Emit("InnerCommReduceScatter", {grad, rank_size, type, group, async_op});
   }
 
   virtual NodePtr InnerCommIsend(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group,
@@ -2127,8 +2129,9 @@ class COMMON_EXPORT Emitter {
 
   virtual NodePtr InnerCommAllToAllV(const NodePtr &grad, const NodePtr &group, const NodePtr &send_numel_list,
                                      const NodePtr &recv_numel_list, const NodePtr &rank_size,
-                                     const NodePtr &split_sizes_empty) {
-    return Emit("InnerCommAllToAllV", {grad, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty});
+                                     const NodePtr &split_sizes_empty, const NodePtr &async_op) {
+    return Emit("InnerCommAllToAllV",
+                {grad, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty, async_op});
   }
 
   template <typename Target, typename T>
