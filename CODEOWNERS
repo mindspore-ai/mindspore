@@ -15,7 +15,7 @@
 /mindspore/ccsrc/backend/ms_backend/graph_fusion/ @gaoxiong1
 /mindspore/ccsrc/backend/ms_backend/runtime/ @zyli2020
 /mindspore/ccsrc/cluster/ @zhangyinxia
-/mindspore/ccsrc/cmake/ @nicholas_yhr
+/mindspore/ccsrc/cmake/ @liuchongming74
 /mindspore/ccsrc/frontend/ @ginfung
 /mindspore/ccsrc/frontend/expander/grad/ @liangchenghui
 /mindspore/ccsrc/frontend/operator/meta_dsl/func_op/ @liangchenghui
@@ -212,7 +212,7 @@
 /tests/st/rewrite/ @changzherui1
 /tests/st/runtime/ @limingqi107
 /tests/st/scipy_st/ @yi-zhang95
-/tests/st/scripts/ @nicholas_yhr
+/tests/st/scripts/ @liuchongming74
 /tests/st/sparse/ @yi-zhang95
 /tests/st/tensor/ @chujinjin
 /tests/st/tools/ @DavidFFFan
@@ -298,14 +298,14 @@
 /.claude/ @chujinjin
 /CLAUDE.md @chujinjin
 /.gitee/ @limingqi107
-/.jenkins/ @nicholas_yhr
-/cmake/ @nicholas_yhr
+/.jenkins/ @liuchongming74
+/cmake/ @liuchongming74
 /cmake/external_libs/ @tronzhang @r1chardf1d0
 /cmake/dvm.cmake @gaoxiong1
 /docs/ @gemini524
 /include/ @jjfeing
-/metadef/ @nicholas_yhr
-/scripts/ @nicholas_yhr
+/metadef/ @liuchongming74
+/scripts/ @liuchongming74
 /third_party/  @tronzhang @r1chardf1d0
 /.gitmodules  @tronzhang @r1chardf1d0
 /.gitignore @limingqi107
