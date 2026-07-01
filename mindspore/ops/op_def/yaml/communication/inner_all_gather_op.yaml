@@ -7,6 +7,9 @@ inner_comm_all_gather:
             dtype: int
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor
