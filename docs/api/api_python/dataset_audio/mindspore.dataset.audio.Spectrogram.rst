@@ -8,7 +8,7 @@ mindspore.dataset.audio.Spectrogram
     参数：
         - **n_fft** (int, 可选) - FFT的大小，将创建 `n_fft // 2 + 1` 个频段。默认值： ``400`` 。
         - **win_length** (int, 可选) - 窗口大小。默认值： ``None`` ，将使用 `n_fft` 。
-        - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值： ``None`` ，将使用 `win_length//2` 。
+        - **hop_length** (int, 可选) - STFT窗口之间的跳跃长度。默认值： ``None`` ，将使用 `win_length // 2` 。
         - **pad** (int, 可选) - 信号两端的填充长度。默认值： ``0`` 。
         - **window** (:class:`~.audio.WindowType`, 可选) - 作用于每一帧的窗口函数，可为 ``WindowType.BARTLETT`` 、 ``WindowType.BLACKMAN`` 、
           ``WindowType.HAMMING`` 、 ``WindowType.HANN`` 或 ``WindowType.KAISER`` 。当前在macOS上暂不支持Kaiser窗。默认值： ``WindowType.HANN`` 。

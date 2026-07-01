@@ -11,7 +11,7 @@ mindspore.dataset.audio.create_dct
         - **norm** (:class:`~.audio.NormMode`, 可选) - 标准化模式，可以是 ``NormMode.NONE`` 或 ``NormMode.ORTHO`` 。默认值： ``NormMode.NONE`` 。
 
     返回：
-        numpy.ndarray，shape为 ( `n_mels` , `n_mfcc` ) 的DCT转换矩阵。
+        numpy.ndarray，shape为 ( `n_mels` , `n_mfcc` ) 的DCT转换矩阵，用于右乘行数据。
 
     异常：
         - **TypeError** - 如果 `n_mfcc` 的类型不为int。

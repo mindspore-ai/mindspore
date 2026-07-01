@@ -2198,7 +2198,7 @@ class MaskAlongAxisIID(AudioTensorOperation):
         >>> import mindspore.dataset.audio as audio
         >>>
         >>> # Use the transform in dataset pipeline mode
-        >>> waveform= np.random.random([5, 20, 20])  # 5 samples
+        >>> waveform = np.random.random([5, 20, 20])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MaskAlongAxisIID(5, 0.5, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
@@ -2263,8 +2263,8 @@ class MelScale(AudioTensorOperation):
         ValueError: If `f_max` is a negative number.
         TypeError: If `n_stft` is not of type int.
         ValueError: If `n_stft` is not positive.
-        TypeError: If `norm` is not of type  :class:`mindspore.dataset.audio.NormType` .
-        TypeError: If `mel_type` is not of type  :class:`mindspore.dataset.audio.MelType` .
+        TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormType` .
+        TypeError: If `mel_type` is not of type :class:`mindspore.dataset.audio.MelType` .
 
     Supported Platforms:
         ``CPU``
@@ -2925,8 +2925,8 @@ class Resample(AudioTensorOperation):
         resample_method (ResampleMethod, optional): The resample method to use, can be
             ``ResampleMethod.SINC_INTERPOLATION`` or ``ResampleMethod.KAISER_WINDOW``.
             Default: ``ResampleMethod.SINC_INTERPOLATION``.
-        lowpass_filter_width (int, optional): Controls the sharpness of the filter, more means sharper but less
-            efficient, must be positive. Default: ``6``.
+        lowpass_filter_width (int, optional): Controls the bandwidth of the filter, must be positive. Higher values
+            mean wider bandwidth but less efficient. Default: ``6``.
         rolloff (float, optional): The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
             reduce anti-aliasing, but also reduce some of the highest frequencies, in range of (0, 1].
             Default: ``0.99``.
@@ -3124,7 +3124,7 @@ class SpectralCentroid(TensorOperation):
         n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins. Default: ``400``.
         win_length (int, optional): Window size. Default: ``None``, will use `n_fft` .
         hop_length (int, optional): Length of hop between STFT windows. Default: ``None``, will use `win_length // 2` .
-        pad (int, optional): Two sided padding of signal. Default: ``0``.
+        pad (int, optional): Two-sided padding of signal. Default: ``0``.
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
             can be ``WindowType.BARTLETT``, ``WindowType.BLACKMAN``, ``WindowType.HAMMING``, ``WindowType.HANN``
             or ``WindowType.KAISER``. Default: ``WindowType.HANN``.
@@ -3196,7 +3196,7 @@ class Spectrogram(TensorOperation):
         n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins. Default: ``400``.
         win_length (int, optional): Window size. Default: ``None``, will use `n_fft` .
         hop_length (int, optional): Length of hop between STFT windows. Default: ``None``, will use `win_length // 2` .
-        pad (int, optional): Two sided padding of signal. Default: ``0``.
+        pad (int, optional): Two-sided padding of signal. Default: ``0``.
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
             can be ``WindowType.BARTLETT``, ``WindowType.BLACKMAN``, ``WindowType.HAMMING``, ``WindowType.HANN``
             or ``WindowType.KAISER``. Currently, Kaiser window is not supported on macOS. Default: ``WindowType.HANN``.
