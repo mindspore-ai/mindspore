@@ -567,7 +567,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): square matrix of :math:`(M, M)` to decompose. Note that if the input tensor is not a float,
-            then it will be cast to mstype.float32.
+            then it will be cast to mstype.float64.
         overwrite_a (bool, optional): Whether to overwrite data in :math:`a` (may increase performance).
             Default: ``False`` .
         check_finite (bool, optional): Whether to check that the input matrix contains only finite numbers.
@@ -634,7 +634,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
 
     Args:
         a (Tensor): a :math:`(M, N)` matrix to decompose. Note that if the input tensor is not a float,
-            then it will be cast to mstype.float32.
+            then it will be cast to mstype.float64.
         permute_l (bool, optional): Perform the multiplication :math:`P L` (Default: do not permute).
             Default: ``False`` .
         overwrite_a (bool, optional): Whether to overwrite data in :math:`a` (may improve performance).

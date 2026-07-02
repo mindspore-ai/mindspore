@@ -18,8 +18,8 @@ mindspore.scipy.linalg.lu
         - 如果Tensor是int32、int64类型，它将被强制转换为：mstype.float64类型。
 
     参数：
-        - **a** (Tensor) - 要分解的 :math:`(M, N)` 方阵。
-          如果输入Tensor不是float类型，那么它将被强制转换为：mstype.float32。
+        - **a** (Tensor) - 要分解的 :math:`(M, N)` 矩阵。
+          如果输入Tensor不是float类型，那么它将被强制转换为：mstype.float64类型。
         - **permute_l** (bool, 可选) - 执行乘法运算 :math:`P L` （默认：不进行置换）。
           默认值：``False``。
         - **overwrite_a** (bool, 可选) - 是否覆盖 :math:`a` 中的数据（可能会提高性能）。
