@@ -137,12 +137,14 @@ def _tft_repair_callback(step, need_rebuild, error_ranks, repair_info, args, cb_
             for i in range(len(repair_info["src"])):
                 src_rank = repair_info["src"][i]
                 dst_rank = repair_info["dst"][i]
-                if send_recv(cb_params.train_network.trainable_params(), src_rank, dst_rank) != 0:
+                # NOTE: When do process recovery, the non-trainable parameters also need to be sent,
+                # so here send all parameters
+                if send_recv(list(cb_params.train_network.get_parameters()), src_rank, dst_rank) != 0:
                     raise ValueError("Call send_recv failed.")
         else:
             src_rank = repair_info["src"][0]
             dst_rank = repair_info["dst"][0]
-            if send_recv(cb_params.train_network.trainable_params(), src_rank, dst_rank) != 0:
+            if send_recv(list(cb_params.train_network.get_parameters()), src_rank, dst_rank) != 0:
                 raise ValueError("Call send_recv failed.")
     logger.warning("Finish _tft_repair_callback")
 

@@ -38,8 +38,18 @@ class DataExchangeInfo {
     }
     // NOTE: data_[0] is free device memory size
     for (size_t i = 1; i < data_.size(); ++i) {
+      if (i >= kDataExchangeInfoHeadSize) {
+        need_copy_flags_[i - kDataExchangeInfoHeadSize] = false;
+      }
+
+      if (data_[i] == kInvalidParamSize || other.data_[i] == kInvalidParamSize) {
+        continue;
+      }
       if (data_[i] != other.data_[i]) {
         return false;
+      }
+      if (i >= kDataExchangeInfoHeadSize) {
+        need_copy_flags_[i - kDataExchangeInfoHeadSize] = true;
       }
     }
     return true;
@@ -52,6 +62,7 @@ class DataExchangeInfo {
   uint64_t GetSize() const { return data_.size(); }
   uint64_t GetSizeSum() const { return size_sum_; }
   uint64_t GetSizeMax() const { return size_max_; }
+  const std::vector<bool> &GetParamNeedCopyFlags() { return need_copy_flags_; }
 
   static constexpr uint64_t kInvalidParamSize = std::numeric_limits<uint64_t>::max();
 
@@ -64,6 +75,9 @@ class DataExchangeInfo {
   uint64_t size_sum_ = 0;
   // max of aligned parameter size
   uint64_t size_max_ = 0;
+  // flags used for mark whether the parameter should be copy between two processes. If  need_copy_flags_[i] is true,
+  //   indicating the i-th parameter should be copied when doing recovery, otherwise not.
+  std::vector<bool> need_copy_flags_;
 };
 
 class ASCEND_RES_MANAGER_EXPORT ParamReplication {
@@ -78,8 +92,9 @@ class ASCEND_RES_MANAGER_EXPORT ParamReplication {
  private:
   int DoParamInfoExchange(DataExchangeInfo *local_info, DataExchangeInfo *remote_info, int src_rank, int dst_rank);
   int CopyParamsInBatches(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank, void *xchg_buf_addr,
-                          size_t xchg_buf_size);
-  int CopyParamsOneByOne(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank);
+                          size_t xchg_buf_size, const std::vector<bool> &flags);
+  int CopyParamsOneByOne(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank,
+                         const std::vector<bool> &flags);
 
  private:
   const AscendResManager *res_mgr_;
