@@ -37,7 +37,7 @@ def bounding_box_decode(anchor_box, deltas, max_shape, means=(0.0, 0.0, 0.0, 0.0
 
     Args:
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
-        deltas (Tensor): Delta of boxes, which has the same shape as `anchor_box`.
+        deltas (Tensor): Deltas of boxes, which has the same shape as `anchor_box`.
         max_shape (tuple): The max size limit for decoding box calculation.
         means (tuple, optional): The means of `deltas` calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
         stds (tuple, optional): The standard deviations of `deltas` calculation. Default: ``(1.0, 1.0, 1.0, 1.0)`` .
@@ -83,7 +83,7 @@ def bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0),
         anchor_box (Tensor): Anchor boxes. The shape of `anchor_box` must be :math:`(n, 4)`.
         groundtruth_box (Tensor): Ground truth boxes, which have the same shape as `anchor_box`.
         means (tuple, optional): Means for encoding bounding boxes calculation. Default: ``(0.0, 0.0, 0.0, 0.0)`` .
-        stds (tuple, optional): The standard deviations of deltas calculation. Default: (``1.0, 1.0, 1.0, 1.0)`` .
+        stds (tuple, optional): The standard deviations of deltas calculation. Default: ``(1.0, 1.0, 1.0, 1.0)`` .
 
     Returns:
         Tensor, encoded bounding boxes. It has the same data type and shape as input `anchor_box`.

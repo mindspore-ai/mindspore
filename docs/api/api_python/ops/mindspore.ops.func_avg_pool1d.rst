@@ -32,5 +32,5 @@ mindspore.ops.avg_pool1d
         - **TypeError** - `ceil_mode` 或 `count_include_pad` 不是bool。
         - **ValueError** - `input_x` 的shape长度不等于3。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
-        - **ValueError** - `padding` 不是int也不是长度为 2 的 tuple。
+        - **ValueError** - `padding` 不是int也不是长度为 1 的 tuple。
         - **ValueError** - `padding` 的值小于0。

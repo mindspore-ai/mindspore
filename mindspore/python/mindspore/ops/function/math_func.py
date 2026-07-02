@@ -2008,7 +2008,7 @@ def bitwise_and(input, other):
         >>> other = mindspore.tensor([1, 0, 3])
         >>> mindspore.ops.bitwise_and(input, other)
         Tensor(shape=[3], dtype=Int64, value= [1, 0, 3])
-        >>> # Same as calling via the | operator:
+        >>> # Same as calling via the & operator:
         >>> input & other
         Tensor(shape=[3], dtype=Int64, value= [1, 0, 3])
     """
@@ -2206,7 +2206,7 @@ def bitwise_left_shift(input, other):
 
     Args:
         input (Union[Tensor, int, bool]): The input to be left shifted.
-        other (Union[Tensor, int, bool]): The number of bit to be applied on left arithmetic shift.
+        other (Union[Tensor, int, bool]): The number of bits to be applied on left arithmetic shift.
 
     Returns:
         Tensor
@@ -2249,7 +2249,7 @@ def bitwise_right_shift(input, other):
 
     Args:
         input (Union[Tensor, int, bool]): The input to be right shifted.
-        other (Union[Tensor, int, bool]): The number of bit to be applied on right arithmetic shift.
+        other (Union[Tensor, int, bool]): The number of bits to be applied on right arithmetic shift.
 
     Returns:
         Tensor
@@ -5233,8 +5233,8 @@ def bernoulli(input, p=0.5, seed=None):
 
     Args:
         input (Tensor): The input Tensor.
-        p (Union[Tensor, float], optional): The probability of setting 1 for the
-            corresponding position of the returned tensor. The value of `p` must be in the range `[0, 1]`.
+        p (Union[Tensor, float], optional): The probability of the corresponding position
+            in the output tensor being 1. The value of `p` must be in the range `[0, 1]`.
             Default ``0.5`` .
         seed (Union[int, None], optional): The random seed. Default ``None`` means using the current timestamp.
 
@@ -5732,7 +5732,7 @@ def block_diag(*inputs):
     Creates a block diagonal matrix from the provided tensor.
 
     Args:
-        inputs (Tensor): One or more tensors, the dimension of tensor should be 0, 1 or 2.
+        inputs (Tensor): One or more tensors, the dimension of each tensor should be 0, 1 or 2.
 
     Returns:
         2-D Tensor, with all input tensors arranged in
@@ -6446,7 +6446,7 @@ def combinations(input, r=2, with_replacement=False):
     Args:
         input (Tensor): One-dimensional input tensor.
         r (int, optional): Number of elements to perform combination. Default ``2`` .
-        with_replacement (bool, optional): Allow duplication or not. Default ``False`` .
+        with_replacement (bool, optional): Whether to allow repeated elements in combinations. Default ``False`` .
 
     Returns:
         Tensor
@@ -8796,7 +8796,7 @@ def bmm(input_x, mat2):
 
         \text{output}[..., :, :] = \text{matrix}(input_x[..., :, :]) * \text{matrix}(mat2[..., :, :])
 
-    The dim of `input_x` can not be less than `3` and the dim of `mat2` can not be less than `2`.
+    The dimension of `input_x` can not be less than `3` and the dimension of `mat2` can not be less than `2`.
 
     Args:
         input_x (Tensor): The first tensor to be multiplied.
@@ -12085,7 +12085,7 @@ def batch_dot(x1, x2, axes=None):
         This interface is deprecated and will be removed after version 2.9.0.
 
     .. note::
-        `x1` or `x2` first dimension is batch size. Datatype must be float32 and the rank must
+        The first dimension of `x1` or `x2` is batch size. Datatype must be float32 and the rank must
         be greater than or equal to 2.
 
     .. math::

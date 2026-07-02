@@ -1522,11 +1522,11 @@ def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None
           Data type must be float16, float32 or bfloat16.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
           broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16.
-          Default: ``None``, it equals to `weight` is a Tensor whose value is ``1``.
+          Default: ``None``. It is equivalent to a Tensor with value 1.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
           number of classes. It can be broadcast to a tensor with shape of `input`.
           Data type must be float16, float32 or bfloat16.
-          Default: ``None``, it equals to `pos_weight` is a Tensor whose value is ``1``.
+          Default: ``None``. It is equivalent to a Tensor with value 1.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -3592,7 +3592,7 @@ def check_dense_inputs_same_shape(input1_shape, input2_shape, prim_name=None):
 
 def bidense(input1, input2, weight, bias=None):
     r"""
-    Applies bilinear dense connected layer for `input1` and `input2`. The bilinear dense function is defined as:
+    Applies bilinear dense connected layer to `input1` and `input2`. The bilinear dense function is defined as:
 
     .. math::
         output = x_{1}^{T}Ax_{2} + b
@@ -3610,7 +3610,7 @@ def bidense(input1, input2, weight, bias=None):
         input2 (Tensor): Input Tensor of shape :math:`(*, in2\_channels)`,
             where :math:`*` means any number of additional dimensions. All but the last dimension
             should be the same with `input1`.
-        weight (Tensor): The weight applied to the input1 and input2.
+        weight (Tensor): The weight applied to `input1` and `input2`.
             The shape is :math:`(out\_channels, in1\_channels, in2\_channels)`.
         bias (Tensor, optional): Additive biases to the output.
             The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None`` , the `bias` is 0.
@@ -3624,7 +3624,7 @@ def bidense(input1, input2, weight, bias=None):
         TypeError: If `input2` is not Tensor.
         TypeError: If `weight` is not Tensor.
         TypeError: If `bias` is not Tensor.
-        ValueError: If dimensions except the last of 'input1' are different from 'input2' .
+        ValueError: If dimensions except the last of `input1` are different from `input2` .
 
 
     Supported Platforms:
@@ -7078,10 +7078,10 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
 
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
-        running_mean (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
-        running_var (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
-        weight (Union[Tensor, Parameter]): The shape :math:`(C,)`, with float16 or float32 data type.
-        bias (Union[Tensor, Parameter]): The shape :math:`(C,)`, has the same data type with `weight`.
+        running_mean (Union[Tensor, Parameter]): The shape is :math:`(C,)`, has the same data type as `weight`.
+        running_var (Union[Tensor, Parameter]): The shape is :math:`(C,)`, has the same data type as `weight`.
+        weight (Union[Tensor, Parameter]): The shape is :math:`(C,)`, with float16 or float32 data type.
+        bias (Union[Tensor, Parameter]): The shape is :math:`(C,)`, has the same data type as `weight`.
         training (bool, optional): If `training` is `True`, `mean` and `variance` are computed during training.
             If `training` is `False`, they're loaded from checkpoint during inference. Default: ``False`` .
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
@@ -7090,7 +7090,7 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         eps (float, optional): A small value added for numerical stability. Default: ``1e-5``, value must be `(0, 1]` .
 
     Returns:
-        output_x (Tensor) - The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
+        Tensor. The same type and shape as the `input_x`. The shape is :math:`(N, C)`.
 
     Raises:
         TypeError: If `training` is not a bool.

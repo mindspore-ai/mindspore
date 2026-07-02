@@ -67,7 +67,7 @@ def _cal_total_norm(x, norm_type):
 
 def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
     r"""
-    The input Tensor is cropped based on norm. The computation is done by concatenating the norms of
+    The input Tensor is clipped based on norm. The computation is done by concatenating the norms of
     all the input elements into a vector and then computing the norm of that vector.
 
     .. warning::
@@ -423,7 +423,7 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
     Args:
         x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
         clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default ``1.0`` .
-        use_norm (None): The global norm. Currently only none is supported. Default ``None`` .
+        use_norm (None): The global norm. Currently only None is supported. Default ``None`` .
 
     Returns:
         Tuple of tensors
