@@ -28,12 +28,32 @@ Tags follow this format:
 
 | Field | Example Values | Description |
 |-------|---------------|-------------|
-| MindSpore Version | 2.9.0 | Corresponds to the version identifier in MindSpore official release tags |
+| MindSpore Version | 2.10.0 | Corresponds to the version identifier in MindSpore official release tags |
 | Hardware Info (Chip) | see below | Ascend chip model identifier |
 | Operating System | ubuntu22.04 / openeuler24.03 | Operating system distribution and version used in the base image |
 | Python Version | py3.11 | Major Python version built into the image |
 
 > Tips: System architecture is automatically detected via Docker Manifest, no need to specify in the tag.
+
+### Tag
+
+- `2.10.0-910b-ubuntu22.04-py3.11`
+- `2.10.0-910b-openeuler24.03-py3.11`
+- `2.10.0-a3-ubuntu22.04-py3.11`
+- `2.10.0-a3-openeuler24.03-py3.11`
+
+See dockerfile:[dockerfile](https://atomgit.com/mindspore/mindspore/blob/master/docker/Dockerfile)
+
+### Building Arguments
+
+| Parameter | Description | Required | Source | Example Values |
+|-----------|-------------|----------|--------|----------------|
+| CANN_VERSION | Ascend CANN toolkit version | Yes | CANN image tag | 9.0.0 |
+| CHIP_ARCH | Ascend chip architecture identifier | Yes | Tag specification | see below |
+| OS_SYSTEM | Base image operating system and version | Yes | Tag specification | ubuntu22.04 / openeuler24.03 |
+| PY_VERSION | Python version built into the base image | Yes | Tag specification | py3.11 |
+| MINDSPORE_VERSION | MindSpore version number | Yes | [MindSpore repository releases](https://atomgit.com/mindspore/mindspore/releases) | 2.10.0 |
+| PIP_INDEX_URL | pip installation source URL (default: Huawei Cloud mirror) | No | PyPI mirror source | https://mirrors.huaweicloud.com/repository/pypi/simple |
 
 ### Image Repository Address
 
@@ -46,23 +66,14 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore
 **Full Image Example:**
 
 ```text
-swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.11
+swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.10.0-910b-ubuntu22.04-py3.11
 ```
-
-### Building Arguments
-
-| Parameter | Description | Required | Source | Example Values |
-|-----------|-------------|----------|--------|----------------|
-| CANN_VERSION | Ascend CANN toolkit version | Yes | CANN image tag | 9.0.0 |
-| CHIP_ARCH | Ascend chip architecture identifier | Yes | Tag specification | see below |
-| OS_SYSTEM | Base image operating system and version | Yes | Tag specification | ubuntu22.04 / openeuler24.03 |
-| PY_VERSION | Python version built into the base image | Yes | Tag specification | py3.11 |
-| MINDSPORE_VERSION | MindSpore version number | Yes | [MindSpore repository releases](https://atomgit.com/mindspore/mindspore/releases) | 2.9.0 |
-| PIP_INDEX_URL | pip installation source URL (default: Huawei Cloud mirror) | No | PyPI mirror source | https://mirrors.huaweicloud.com/repository/pypi/simple |
 
 ## Quick Start
 
 ### Building MindSpore Image
+
+Taking the construction of the 2.10.0-910b-ubuntu22.04-py3.11 image as an example:
 
 ```bash
 docker build \
@@ -70,9 +81,9 @@ docker build \
     --build-arg CHIP_ARCH=910b \
     --build-arg OS_SYSTEM=ubuntu22.04 \
     --build-arg PY_VERSION=py3.11 \
-    --build-arg MINDSPORE_VERSION=2.9.0 \
+    --build-arg MINDSPORE_VERSION=2.10.0 \
     --build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
-    -t mindspore:2.9.0-910b-ubuntu22.04-py3.11 \
+    -t mindspore:2.10.0-910b-ubuntu22.04-py3.11 \
     -f Dockerfile .
 ```
 
@@ -96,13 +107,13 @@ docker run \
 
 Where:
 
-- `{tag}` is the tag specified during the MindSpore image build, for example, `mindspore:2.9.0-910b-ubuntu22.04-py3.11`.
+- `{tag}` is the tag specified during the MindSpore image build, for example, `mindspore:2.10.0-910b-ubuntu22.04-py3.11`.
 
 ### How to Extend for Custom Development
 
 ```bash
 # Use MindSpore image as base image, add user software
-FROM swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.9.0-910b-ubuntu22.04-py3.11
+FROM swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.10.0-910b-ubuntu22.04-py3.11
 
 RUN apt update -y && \
     apt install -y gcc g++
