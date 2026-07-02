@@ -22778,3 +22778,40 @@ def error_sample_inputs_mint_linspace(op_info:OpInfo, dtype=None, device=None, *
             op_error_type=RuntimeError,
             op_error_info=f'error dtype {case_dtype} is not supported for {op_info.name}',
         )
+
+def basic_sample_inputs_mint_ones(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    sizes = (
+        (),
+        2,
+        (M,),
+        (M, S),
+        (S, S, L),
+        (3, 1, 1),
+        (2, 1, 3, 2),
+        (2, 3, 4, 1, 2),
+        [2, 1, 2, 2, 1, 2],
+        (2, 1, 2, 2, 1, 2, 1),
+        (2, 1, 2, 2, 1, 2, 1, 2),
+    )
+    for size in sizes:
+        yield OpSampleInput(
+             op_input=size,
+             op_kwargs={'dtype': dtype},
+             sample_name=op_info.name,
+        )
+
+def error_sample_inputs_mint_ones(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = ('2', ['3'], ('1'),)
+    for op_input in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_kwargs={'dtype': dtype},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='other ops mint.ones error values'
+        )

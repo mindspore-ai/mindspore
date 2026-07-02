@@ -5934,6 +5934,30 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.int64: 0.2, ms.float16: 0.024, ms.bfloat16: 0.13},
         is_differentiable=False,
     ),
+    'mint.ones': OpInfo(
+        name='mint.ones',
+        op=mint.ones,
+        ref=torch.ones,
+        is_differentiable=False,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128]),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_ones,
+        op_error_inputs_func=error_sample_inputs_mint_ones,
+    ),
+    'mint.zeros': OpInfo(
+        name='mint.zeros',
+        op=mint.zeros,
+        ref=torch.zeros,
+        is_differentiable=False,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128]),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_ones,
+        op_error_inputs_func=error_sample_inputs_mint_ones,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -6322,6 +6346,8 @@ other_op_db = [
     'mint.full',
     'mint.full_like',
     'mint.linspace',
+    'mint.ones',
+    'mint.zeros',
 ]
 
 reduction_op_db = [
