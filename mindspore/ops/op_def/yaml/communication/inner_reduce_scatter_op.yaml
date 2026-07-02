@@ -9,6 +9,9 @@ inner_comm_reduce_scatter:
             dtype: str
         group:
             dtype: str
+        async_op:
+            dtype: bool
+            default: True
     returns:
         output:
             dtype: tensor

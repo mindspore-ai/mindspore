@@ -276,8 +276,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async
         raise TypeError("For all_reduce, the input op value must be one of sum, prod, min, max")
     group = _get_group(group)
     tensor = _contiguous(tensor)
-    output = inner_comm_all_reduce_op(tensor, op, group)
-    return _deal_comm_outputs(output, async_op)
+    output = inner_comm_all_reduce_op(tensor, op, group, async_op)
+    return _deal_dist_comm_outputs(output, async_op)
 
 
 @deprecated("2.9.0", "mindspore.ops.communication.all_gather_into_tensor", False)
@@ -349,8 +349,8 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     group_size = _GROPU_SIZE_CACHE[group]
     tensor = _contiguous(tensor)
-    output = inner_comm_all_gather_op(tensor, group_size, group)
-    return _deal_comm_outputs(output, async_op)
+    output = inner_comm_all_gather_op(tensor, group_size, group, async_op)
+    return _deal_dist_comm_outputs(output, async_op)
 
 
 @deprecated("2.9.0", "mindspore.ops.communication.reduce_scatter_tensor", False)
@@ -423,8 +423,8 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     rank_size = _GROPU_SIZE_CACHE[group]
     tensor = _contiguous(tensor)
-    output = inner_comm_reduce_scatter_op(tensor, rank_size, op, group)
-    return _deal_comm_outputs(output, async_op)
+    output = inner_comm_reduce_scatter_op(tensor, rank_size, op, group, async_op)
+    return _deal_dist_comm_outputs(output, async_op)
 
 
 @deprecated("2.9.0", "mindspore.ops.communication.reduce", False)
@@ -1414,8 +1414,8 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     rank_size = _GROPU_SIZE_CACHE[group]
     output = inner_comm_all_to_all_v_op(send_flatten_tensor, group, send_numel_list, recv_numel_list,
-                                        rank_size, False)
-    output, handle = _deal_comm_outputs(output, async_op)
+                                        rank_size, False, async_op)
+    output, handle = _deal_dist_comm_outputs(output, async_op)
     result = []
     offset = 0
     for numel, shape in zip(recv_numel_list, recv_shape_list):
@@ -1561,8 +1561,9 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     rank_size = _GROPU_SIZE_CACHE[group]
-    result = inner_comm_all_to_all_v_op(_input, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty)
-    result, handle = _deal_comm_outputs(result, async_op)
+    result = inner_comm_all_to_all_v_op(_input, group, send_numel_list, recv_numel_list, rank_size, split_sizes_empty,
+                                       async_op)
+    result, handle = _deal_dist_comm_outputs(result, async_op)
     if any(recv_numel_list):
         result = result.reshape((-1,) + recv_shape_without_first_dim)
 

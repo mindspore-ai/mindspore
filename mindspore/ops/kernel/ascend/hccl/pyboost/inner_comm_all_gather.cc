@@ -28,8 +28,9 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 void InnerCommAllGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                       const Int64ImmPtr &rank_size, const StringImmPtr &group) {
-  OpRunner::InferOpOutput(op, input_tensor, rank_size, group);
+                                       const Int64ImmPtr &rank_size, const StringImmPtr &group,
+                                       const BoolImmPtr &async_op) {
+  OpRunner::InferOpOutput(op, input_tensor, rank_size, group, async_op);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), kDefaultStreamIndex, input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), kDefaultStreamIndex, op->outputs());
@@ -58,6 +59,11 @@ void InnerCommAllGatherAscendCustomize(const std::shared_ptr<OpRunner> &op, cons
     CommonCommAscendFunc(op, input_tensor, group, launch_func, nullptr);
   };
   CommonCommRunTask(run_func);
+
+  const bool is_async_op = GetValue<bool>(async_op);
+  if (!is_async_op) {
+    op->comm_handle()->Wait();
+  }
 }
 
 }  // namespace pyboost

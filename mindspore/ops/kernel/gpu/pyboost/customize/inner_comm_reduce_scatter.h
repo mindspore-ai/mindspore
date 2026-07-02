@@ -27,7 +27,7 @@ namespace kernel {
 namespace pyboost {
 void InnerCommReduceScatterGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                                         const Int64ImmPtr &rank_size, const StringImmPtr &op_type,
-                                        const StringImmPtr &group);
+                                        const StringImmPtr &group, const BoolImmPtr &async_op);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
