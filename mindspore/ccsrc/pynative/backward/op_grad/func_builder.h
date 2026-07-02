@@ -904,17 +904,19 @@ class FuncBuilder : public BpropBuilder {
   NodePtr GmmV2(const NodePtr &x, const NodePtr &weight, const NodePtr &bias, const NodePtr &group_list,
                 const NodePtr &group_type, const NodePtr &group_list_type) override;
 
-  NodePtr InnerCommAllReduce(const NodePtr &grad, const NodePtr &op, const NodePtr &group) override;
-  NodePtr InnerCommAllGather(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group) override;
+  NodePtr InnerCommAllReduce(const NodePtr &grad, const NodePtr &op, const NodePtr &group,
+                             const NodePtr &async_op) override;
+  NodePtr InnerCommAllGather(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group,
+                             const NodePtr &async_op) override;
   NodePtr InnerCommReduceScatter(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &type,
-                                 const NodePtr &group) override;
+                                 const NodePtr &group, const NodePtr &async_op) override;
   NodePtr InnerCommIsend(const NodePtr &grad, const NodePtr &rank_size, const NodePtr &group,
                          const NodePtr &tag) override;
   NodePtr InnerCommIrecv(const NodePtr &tag, const NodePtr &rank_size, const NodePtr &shape, const NodePtr &group,
                          const NodePtr &type) override;
   NodePtr InnerCommAllToAllV(const NodePtr &grad, const NodePtr &group, const NodePtr &send_numel_list,
-                             const NodePtr &recv_numel_list, const NodePtr &rank_size,
-                             const NodePtr &split_sizes_empty) override;
+                             const NodePtr &recv_numel_list, const NodePtr &rank_size, const NodePtr &split_sizes_empty,
+                             const NodePtr &async_op) override;
   // paas
   NodePtr BatchNormGrad(const NodePtrList &inputs, bool is_scale_or_bias_grad) override;
   NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const expander::DAttr &attrs,

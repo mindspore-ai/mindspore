@@ -122,15 +122,16 @@ REG_BPROP_BUILDER(kInnerCommAllReduceOpName).SetBody(BODYFUNC(ib) {
   const auto &op = ib->GetInput(i1);
   const auto &op_type = GetStringFromNode(op);
   const auto &group = ib->GetInput(i2);
-  const auto &out = ib->GetInput(i3);
-  const auto &dout = ib->GetInput(i4);
+  const auto &async_op = ib->GetInput(i3);
+  const auto &out = ib->GetInput(i4);
+  const auto &dout = ib->GetInput(i5);
 
   auto dy = dout;
   if (op_type == "prod") {
     dy = ib->Mul(dout, out);
   }
 
-  auto dx = ib->InnerCommAllReduce(dy, op, group);
+  auto dx = ib->InnerCommAllReduce(dy, op, group, async_op);
   dx->set_debug_info("grad" + dx->debug_info());
   if (op_type == "prod") {
     dx = ib->RealDiv(dx, x);
@@ -140,19 +141,20 @@ REG_BPROP_BUILDER(kInnerCommAllReduceOpName).SetBody(BODYFUNC(ib) {
     dx = ib->Mul(dx, z);
   }
 
-  return {dx, ib->OutZeros(op), ib->OutZeros(group)};
+  return {dx, ib->OutZeros(op), ib->OutZeros(group), ib->OutZeros(async_op)};
 });
 
-REG_BPROP_BUILDER(kInnerCommAllGatherOpName).SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER(kInnerCommAllGatherOpName).SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   const auto &rank_size = ib->GetInput(i1);
   const auto &group = ib->GetInput(i2);
-  const auto &dout = ib->GetInput(i4);
+  const auto &async_op = ib->GetInput(i3);
+  const auto &dout = ib->GetInput(i5);
 
-  auto dx = ib->InnerCommReduceScatter(dout, rank_size, ib->Value("sum"), group);
+  auto dx = ib->InnerCommReduceScatter(dout, rank_size, ib->Value("sum"), group, async_op);
   auto ins_name = ib->GetInstanceName();
   dx->set_debug_info("grad" + ins_name);
 
-  return {dx, ib->OutZeros(rank_size), ib->OutZeros(group)};
+  return {dx, ib->OutZeros(rank_size), ib->OutZeros(group), ib->OutZeros(async_op)};
 });
 
 REG_BPROP_BUILDER(kInnerCommReduceScatterOpName).SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -160,15 +162,16 @@ REG_BPROP_BUILDER(kInnerCommReduceScatterOpName).SetUnusedInputs({i0}).SetBody(B
   const auto &op = ib->GetInput(i2);
   auto op_type = GetStringFromNode(op);
   const auto &group = ib->GetInput(i3);
+  const auto &async_op = ib->GetInput(i4);
 
   if (op_type != "sum") {
     MS_LOG(EXCEPTION) << "The reducescatter bprop only support ReduceOp.SUM until now.";
   }
-  const auto &dout = ib->GetInput(i5);
-  auto dx = ib->InnerCommAllGather(dout, rank_size, group);
+  const auto &dout = ib->GetInput(i6);
+  auto dx = ib->InnerCommAllGather(dout, rank_size, group, async_op);
   auto ins_name = ib->GetInstanceName();
   dx->set_debug_info("grad" + ins_name);
-  return {dx, ib->OutZeros(rank_size), ib->OutZeros(op), ib->OutZeros(group)};
+  return {dx, ib->OutZeros(rank_size), ib->OutZeros(op), ib->OutZeros(group), ib->OutZeros(async_op)};
 });
 
 REG_BPROP_BUILDER(kInnerCommIRecvOpName).FreeUselessValues_IO({i2, i4}, {}).SetBody(BODYFUNC(ib) {
@@ -207,14 +210,17 @@ REG_BPROP_BUILDER(kInnerCommAllToAllVOpName).FreeUselessValues_IO({i0}, {}).SetB
   auto recv_numel_list = ib->GetInput(i3);
   auto rank_size = ib->GetInput(i4);
   auto split_sizes_empty = ib->GetInput(i5);
-  auto dout = ib->GetInput(i7);
-  auto dx = ib->InnerCommAllToAllV(dout, group, recv_numel_list, send_numel_list, rank_size, split_sizes_empty);
+  auto async_op = ib->GetInput(i6);
+  auto dout = ib->GetInput(i8);
+  auto dx =
+    ib->InnerCommAllToAllV(dout, group, recv_numel_list, send_numel_list, rank_size, split_sizes_empty, async_op);
   return {dx,
           ib->OutZeros(group),
           ib->OutZeros(send_numel_list),
           ib->OutZeros(recv_numel_list),
           ib->OutZeros(rank_size),
-          ib->OutZeros(split_sizes_empty)};
+          ib->OutZeros(split_sizes_empty),
+          ib->OutZeros(async_op)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
