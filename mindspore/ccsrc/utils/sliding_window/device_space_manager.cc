@@ -99,7 +99,7 @@ size_t AscendPoolExpandableSize() {
     auto *pool = ctx->device_res_manager_->GetMemoryPool();
     if (pool != nullptr) {
       max_mem = static_cast<size_t>(pool->total_mem_size());
-      MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Initialized max_mem from memory pool: " << (max_mem / 1024 / 1024) << " MB";
+      MS_LOG(INFO) << "Initialized max_mem from memory pool: " << (max_mem / 1024 / 1024) << " MB";
     }
   }
   size_t total = ctx->device_res_manager_->GetTotalMemStatistics();
@@ -139,7 +139,7 @@ void PrintAscendMemStatistics(const std::string &location) {
   MS_EXCEPTION_IF_NULL(ctx);
   MS_EXCEPTION_IF_NULL(ctx->device_res_manager_);
   const auto &res = ctx->device_res_manager_;
-  MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "MemoryStatistics [" << location
+  MS_LOG(INFO) << "MemoryStatistics [" << location
                                    << "]: total=" << (res->GetTotalMemStatistics() / 1024.0 / 1024.0)
                                    << " MB, used=" << (res->GetTotalUsedMemStatistics() / 1024.0 / 1024.0)
                                    << " MB, idle=" << (res->GetTotalIdleMemStatistics() / 1024.0 / 1024.0)
@@ -149,7 +149,7 @@ void PrintAscendMemStatistics(const std::string &location) {
                                    << " MB";
   auto block_counts = res->GetBlockCountsStatistics();
   for (const auto &[block_type, count] : block_counts) {
-    MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "  Block " << block_type << ": " << count;
+    MS_LOG(INFO) << "  Block " << block_type << ": " << count;
   }
 }
 
@@ -178,7 +178,7 @@ size_t DeviceSpaceManager::TryOffloadGroup(SourceGroup *group) {
 
   auto host_tensor = SwapTensorToHost(source);
   if (host_tensor == nullptr) {
-    MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "Offload failed: source_id=" << group->source_id;
+    MS_LOG(INFO) << "Offload failed: source_id=" << group->source_id;
     return 0;
   }
 
@@ -188,7 +188,7 @@ size_t DeviceSpaceManager::TryOffloadGroup(SourceGroup *group) {
   group->aligned_size = AlignToPoolSize(source->Size());
   source->device_address()->ClearDeviceMemory();
 
-  MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "Offloaded source group: id=" << group->source_id
+  MS_LOG(INFO) << "Offloaded source group: id=" << group->source_id
                                    << " (" << (source->Size() / 1024 / 1024) << " MB)";
   return group->aligned_size;
 }
@@ -245,7 +245,7 @@ bool DeviceSpaceManager::ReloadGroup(SourceGroup *group, const TensorPtr &addr_t
     device_addr = group->shared_addr.lock();
   }
   if (device_addr == nullptr) {
-    MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "Skip reload for source group id=" << group->source_id
+    MS_LOG(INFO) << "Skip reload for source group id=" << group->source_id
                                        << ", shared DeviceAddress expired.";
     group->host_copy = nullptr;
     return false;
@@ -275,7 +275,7 @@ bool DeviceSpaceManager::EnsureDeviceSpaceEnough(size_t expected_size,
   }
   size_t size_needed = expected_size - available;
 
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "EnsureDeviceSpaceEnough: need "
+  MS_LOG(INFO) << "EnsureDeviceSpaceEnough: need "
                                  << (size_needed / 1024 / 1024) << " MB, protected=" << protected_source_ids.size();
 
   size_t freed = 0;
@@ -293,13 +293,13 @@ bool DeviceSpaceManager::EnsureDeviceSpaceEnough(size_t expected_size,
 
   if (offloaded > 0) {
     FinalizeOffload();
-    MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "EnsureDeviceSpaceEnough done: offloaded=" << offloaded
+    MS_LOG(INFO) << "EnsureDeviceSpaceEnough done: offloaded=" << offloaded
                                    << ", freed=" << (freed / 1024 / 1024)
                                    << " MB, source_groups=" << source_group_mgr_->Size();
   }
   size_t available_after = AscendPoolIdleSize() + AscendPoolExpandableSize();
   if (available_after < expected_size) {
-    MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "EnsureDeviceSpaceEnough could not free enough memory: need="
+    MS_LOG(INFO) << "EnsureDeviceSpaceEnough could not free enough memory: need="
                                       << (size_needed / 1024 / 1024) << " MB, freed="
                                       << (freed / 1024 / 1024) << " MB, available_after="
                                       << (available_after / 1024 / 1024) << " MB";
@@ -309,7 +309,7 @@ bool DeviceSpaceManager::EnsureDeviceSpaceEnough(size_t expected_size,
 }
 
 bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inputs) {
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "EnsureInputsOnDevice: inputs=" << inputs.size();
+  MS_LOG(INFO) << "EnsureInputsOnDevice: inputs=" << inputs.size();
 
   size_t reload_count = 0;
   size_t on_device_count = 0;
@@ -340,7 +340,7 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
     if (group == nullptr || group->status == ResidencyStatus::kOnDevice) {
       auto addr = tensor->device_address();
       if (addr == nullptr || addr->GetDevicePtr() == nullptr) {
-        MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "  No device memory and not offloaded: id=" << tensor_id
+        MS_LOG(INFO) << "  No device memory and not offloaded: id=" << tensor_id
                                            << (lookup_id != tensor_id
                                                  ? " (source=" + std::to_string(lookup_id) + ")"
                                                  : "");
@@ -355,7 +355,7 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
       success = EnsureDeviceSpaceEnough(reload_size, protected_source_ids) && success;
     }
 
-    MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "  Reloading tensor [" << reload_count << "]: id=" << lookup_id
+    MS_LOG(INFO) << "  Reloading tensor [" << reload_count << "]: id=" << lookup_id
                                    << (lookup_id != tensor_id
                                          ? " (triggered by view " + std::to_string(tensor_id) + ")"
                                          : "")
@@ -366,7 +366,7 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
     reload_count++;
   }
 
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "EnsureInputsOnDevice done: reloaded=" << reload_count
+  MS_LOG(INFO) << "EnsureInputsOnDevice done: reloaded=" << reload_count
                                    << ", on_device=" << on_device_count
                                    << ", source_groups=" << source_group_mgr_->Size();
   return success;
@@ -377,7 +377,7 @@ void DeviceSpaceManager::PurgeExpiredOffloaded() {
 }
 
 bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "EnsureAllOffloadedOnDevice: source_groups=" << source_group_mgr_->Size();
+  MS_LOG(INFO) << "EnsureAllOffloadedOnDevice: source_groups=" << source_group_mgr_->Size();
   size_t reload_count = 0;
   size_t skipped_count = 0;
   bool success = true;
@@ -393,7 +393,7 @@ bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
     auto shared_device_addr = group->shared_addr.lock();
 
     if (source_tensor == nullptr && shared_device_addr == nullptr) {
-      MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "DeviceAddress expired for offloaded source group id=" << source_id
+      MS_LOG(INFO) << "DeviceAddress expired for offloaded source group id=" << source_id
                                          << ", remove dangling host copy.";
       group->host_copy = nullptr;
       group->status = ResidencyStatus::kOnDevice;
@@ -402,7 +402,7 @@ bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
     }
 
     MS_EXCEPTION_IF_NULL(group->host_copy);
-    MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "  Reloading offloaded source group: id=" << source_id
+    MS_LOG(INFO) << "  Reloading offloaded source group: id=" << source_id
                                    << " size=" << (group->host_copy->Size() / 1024 / 1024) << " MB"
                                    << (source_tensor == nullptr ? " via surviving DeviceAddress" : "");
 
@@ -412,7 +412,7 @@ bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
 
   FinalizeOffload();
 
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "EnsureAllOffloadedOnDevice done: reloaded=" << reload_count
+  MS_LOG(INFO) << "EnsureAllOffloadedOnDevice done: reloaded=" << reload_count
                                    << ", skipped=" << skipped_count
                                    << ", source_groups=" << source_group_mgr_->Size();
   return success;

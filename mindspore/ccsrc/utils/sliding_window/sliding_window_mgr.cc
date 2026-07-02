@@ -240,28 +240,25 @@ uint64_t SlidingWindowMgr::GetCurrentTimestamp() {
 
 void SlidingWindowMgr::RegisterOutputs(const std::vector<tensor::TensorPtr> &outputs, uint64_t timestamp,
                                        const std::unordered_set<TensorId> &view_output_ids) {
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "RegisterOutputs: " << outputs.size() << " tensors, timestamp: " << timestamp;
+  MS_LOG(INFO) << "RegisterOutputs: " << outputs.size() << " tensors, timestamp: " << timestamp;
 
   for (const auto &tensor : outputs) {
     if (tensor != nullptr && view_output_ids.count(tensor->id()) > 0) {
-      MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "  Skipped view output: " << tensor->ToString();
+      MS_LOG(INFO) << "  Skipped view output: " << tensor->ToString();
       continue;
     }
     if (!CanOffloadTensor(tensor)) {
-      MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "  Skipped non-offloadable output: "
+      MS_LOG(INFO) << "  Skipped non-offloadable output: "
                                       << (tensor ? tensor->ToString() : "nullptr");
       continue;
     }
     source_group_mgr_->RegisterSource(tensor, timestamp);
   }
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "RegisterOutputs done, source group size: " << source_group_mgr_->Size();
+  MS_LOG(INFO) << "RegisterOutputs done, source group size: " << source_group_mgr_->Size();
 }
 
 void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
-  std::vector<tensor::TensorPtr> input_tensors;
-  for (const auto &val : inputs) {
-    CollectTensors(val, &input_tensors);
-  }
+  auto input_tensors = CollectInputTensors(inputs);
   if (input_tensors.empty()) {
     return;
   }
@@ -270,15 +267,14 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
   }
   size_t expected_output_size = InferOutputSize(op_name, inputs);
 
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "PreProcess op=" << op_name << ", inputs=" << input_tensors.size()
+  MS_LOG(INFO) << "PreProcess op=" << op_name << ", inputs=" << input_tensors.size()
                                  << ", expected_output_size=" << (expected_output_size / 1024 / 1024) << " MB";
   runtime::Pipeline::Get().WaitAll();
 
   PrintAscendMemStatistics("PreProcess::Entry");
 
-  source_group_mgr_->PurgeExpired();
   space_manager_->PurgeExpiredOffloaded();
-  MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "Source group size (before purge): " << source_group_mgr_->Size();
+  MS_LOG(INFO) << "Source group size (before purge): " << source_group_mgr_->Size();
 
   size_t memory_needed = 0;
   size_t new_inputs_size = 0;
@@ -302,7 +298,7 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
   }
   memory_needed += expected_output_size;
 
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Memory analysis: needed=" << (memory_needed / 1024 / 1024)
+  MS_LOG(INFO) << "Memory analysis: needed=" << (memory_needed / 1024 / 1024)
                                  << " MB, new_inputs=" << (new_inputs_size / 1024 / 1024)
                                  << " MB, cached=" << cached_inputs_count << "/" << input_tensors.size()
                                  << ", source_groups=" << source_group_mgr_->Size();
@@ -316,12 +312,12 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
     }
     auto protected_source_ids = source_group_mgr_->BuildProtectedSourceIdSet(input_tensors);
     if (!space_manager_->EnsureDeviceSpaceEnough(memory_needed + buffer_size, protected_source_ids)) {
-      MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "PreProcess could not ensure enough device space for op=" << op_name;
+      MS_LOG(INFO) << "PreProcess could not ensure enough device space for op=" << op_name;
     }
   }
 
   if (!space_manager_->EnsureInputsOnDevice(input_tensors)) {
-    MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "PreProcess could not reload all inputs for op=" << op_name;
+    MS_LOG(INFO) << "PreProcess could not reload all inputs for op=" << op_name;
   }
 
   // Update access times for input tensors (and source tensors for views).
@@ -350,7 +346,7 @@ void SlidingWindowMgr::PostProcess(const std::string &op_name, const std::vector
     return;
   }
 
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "PostProcess op=" << op_name << ", outputs=" << output_tensors.size();
+  MS_LOG(INFO) << "PostProcess op=" << op_name << ", outputs=" << output_tensors.size();
   runtime::Pipeline::Get().WaitAll();
 
   auto input_tensors = CollectInputTensors(inputs);
@@ -368,14 +364,14 @@ void SlidingWindowMgr::PostProcess(const std::string &op_name, const std::vector
       if (input->device_address() == out->device_address() && input->id() != out->id()) {
         source_group_mgr_->RegisterView(input, out, timestamp);
         (void)view_output_ids.insert(out->id());
-        MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Registered view output: " << out->ToString()
+        MS_LOG(INFO) << "Registered view output: " << out->ToString()
                                        << ", source input id=" << input->id();
         break;
       }
     }
   }
 
-  RegisterOutputs(output_tensors, GetCurrentTimestamp(), view_output_ids);
+  RegisterOutputs(output_tensors, timestamp, view_output_ids);
 }
 
 void SlidingWindowMgr::Finalize() {
@@ -383,10 +379,9 @@ void SlidingWindowMgr::Finalize() {
 
   PrintAscendMemStatistics("Finalize::Entry");
 
-  source_group_mgr_->PurgeExpired();
   space_manager_->PurgeExpiredOffloaded();
   if (!space_manager_->EnsureAllOffloadedOnDevice()) {
-    MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "Finalize could not reload all offloaded source groups.";
+    MS_LOG(INFO) << "Finalize could not reload all offloaded source groups.";
   }
 
   PrintAscendMemStatistics("Finalize::Exit");

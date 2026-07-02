@@ -319,7 +319,7 @@ Function: Indicate number of data to offload.
 Value Range: Int value.
     Default: 100
 """
-HYPER_OFFLOAD_SELECT_NUM = '10000'
+HYPER_OFFLOAD_SELECT_NUM = '100'
 
 """
 Name: HYPER_OFFLOAD_PREFETCH_DISTANCE
@@ -335,7 +335,7 @@ Function: Indicate data release wait distance.
 Value Range: Int value.
     Default: 0
 """
-HYPER_OFFLOAD_RELEASE_DISTANCE = '50'
+HYPER_OFFLOAD_RELEASE_DISTANCE = '0'
 
 """
 Name: HYPER_OFFLOAD_MAX_DEVICE_MEMORY

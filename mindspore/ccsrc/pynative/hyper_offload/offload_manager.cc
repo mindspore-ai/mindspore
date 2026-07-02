@@ -139,16 +139,10 @@ void OffloadPostHook(const std::string &op_name, const std::vector<ValuePtr> &in
 
 void ForwardVmOpPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
   SlidingWindowPreHook(op_name, inputs);
-  // if (!OffloadManager::skip_offload()) {
-  //   OffloadPreHook(op_name, inputs);
-  // }
 }
 
 void ForwardVmOpPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output) {
   SlidingWindowPostHook(op_name, inputs, output);
-  // if (!OffloadManager::skip_offload()) {
-  //   OffloadPostHook(op_name, inputs, output);
-  // }
 }
 
 // Static registrar to register PreHook and PostHook at program startup
@@ -230,7 +224,6 @@ void OffloadManager::Analyse() {
   }
   runtime::Pipeline::Get().WaitFrontend();
   // Mark warm-up as completed
-  runtime::Pipeline::Get().WaitFrontend();
   offload_ready_ = true;
 
   MS_LOG(INFO) << "OffloadManager::Analyse completed. Offload is now ready.";
