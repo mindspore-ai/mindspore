@@ -25,12 +25,24 @@
 #include "mindspore/ccsrc/frontend/jit/ps/resource.h"
 #include "mindspore/ccsrc/include/frontend/jit/ps/action_interface.h"
 #include "pynative/hyper_offload/offload_manager.h"
+#include "utils/ms_utils.h"
+#include "utils/hyper_offload/hyper_offload_utils.h"
 
 namespace mindspore {
 namespace pynative {
 namespace hyper_offload {
 
 using VmEvalPtr = std::shared_ptr<std::function<BaseRef(const VectorRef &)>>;
+
+namespace {
+bool IsSlidingWindowEnabled() {
+  const auto enable_hyper_offload = common::GetEnv("MS_DEV_HYPER_OFFLOAD");
+  return !enable_hyper_offload.empty() && enable_hyper_offload != "0" && !OffloadManager::IsOffloadReady();
+}
+}  // namespace
+
+void SlidingWindowPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs);
+void SlidingWindowPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output);
 
 OffloadManager &OffloadManager::GetInstance() {
   static OffloadManager instance;
@@ -44,10 +56,7 @@ void OffloadRunOPPreHook(const BackendOpRunInfoPtr &op_run_info) {
   // Get inputs from BackendOpRunInfo (already vector<ValuePtr>)
   const std::vector<ValuePtr> &inputs = op_run_info->base_op_run_info.expanded_input_values;
 
-  auto sliding_window_mgr = OffloadManager::GetInstance().GetSlidingWindowMgr();
-  if (sliding_window_mgr != nullptr) {
-    sliding_window_mgr->PreProcess(op_name, inputs);
-  }
+  SlidingWindowPreHook(op_name, inputs);
 
   if (OffloadManager::skip_offload()) {
     return;
@@ -74,10 +83,7 @@ void OffloadRunOPPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRe
 
   ValuePtr output_value = AutoGradUtil::VectorRefToValue(outputs, false, is_multi_output);
 
-  auto sliding_window_mgr = OffloadManager::GetInstance().GetSlidingWindowMgr();
-  if (sliding_window_mgr != nullptr) {
-    sliding_window_mgr->PostProcess(op_name, inputs, output_value);
-  }
+  SlidingWindowPostHook(op_name, inputs, output_value);
 
   if (OffloadManager::skip_offload()) {
     return;
@@ -90,6 +96,9 @@ void OffloadRunOPPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRe
 }
 
 void SlidingWindowPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
+  if (!IsSlidingWindowEnabled()) {
+    return;
+  }
   auto sliding_window_mgr = OffloadManager::GetInstance().GetSlidingWindowMgr();
   if (sliding_window_mgr != nullptr) {
     sliding_window_mgr->PreProcess(op_name, inputs);
@@ -97,6 +106,9 @@ void SlidingWindowPreHook(const std::string &op_name, const std::vector<ValuePtr
 }
 
 void SlidingWindowPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output) {
+  if (!IsSlidingWindowEnabled()) {
+    return;
+  }
   auto sliding_window_mgr = OffloadManager::GetInstance().GetSlidingWindowMgr();
   if (sliding_window_mgr != nullptr) {
     sliding_window_mgr->PostProcess(op_name, inputs, output);
@@ -126,18 +138,14 @@ void OffloadPostHook(const std::string &op_name, const std::vector<ValuePtr> &in
 }
 
 void ForwardVmOpPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
-  if (!OffloadManager::IsOffloadReady()) {
-    SlidingWindowPreHook(op_name, inputs);
-  }
+  SlidingWindowPreHook(op_name, inputs);
   // if (!OffloadManager::skip_offload()) {
   //   OffloadPreHook(op_name, inputs);
   // }
 }
 
 void ForwardVmOpPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output) {
-  if (!OffloadManager::IsOffloadReady()) {
-    SlidingWindowPostHook(op_name, inputs, output);
-  }
+  SlidingWindowPostHook(op_name, inputs, output);
   // if (!OffloadManager::skip_offload()) {
   //   OffloadPostHook(op_name, inputs, output);
   // }
@@ -158,11 +166,11 @@ struct OffloadHookRegistrar {
                                                 OffloadPostHook);                                     // handler
     MS_LOG(DEBUG) << "OffloadPostHook registered to OpRunner.";
 
-    kernel::pyboost::OpRunner::RegisterPreHook([]() { return !OffloadManager::IsOffloadReady(); },
+    kernel::pyboost::OpRunner::RegisterPreHook([]() { return IsSlidingWindowEnabled(); },
                                                SlidingWindowPreHook);
     MS_LOG(DEBUG) << "SlidingWindowPreHook registered to OpRunner.";
 
-    kernel::pyboost::OpRunner::RegisterPostHook([]() { return !OffloadManager::IsOffloadReady(); },
+    kernel::pyboost::OpRunner::RegisterPostHook([]() { return IsSlidingWindowEnabled(); },
                                                 SlidingWindowPostHook);
     MS_LOG(DEBUG) << "SlidingWindowPostHook registered to OpRunner.";
 

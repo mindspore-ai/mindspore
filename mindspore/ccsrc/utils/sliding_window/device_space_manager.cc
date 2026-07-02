@@ -16,17 +16,11 @@
 
 #include "mindspore/ccsrc/utils/sliding_window/device_space_manager.h"
 
-#include <functional>
-#include <utility>
-
 #include "device_address/device_address_maker.h"
-#include "include/pynative/utils/runtime/op_executor.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/pipeline/pipeline.h"
-#include "include/utils/pynative/variable.h"
 #include "ir/tensor_new.h"
 #include "mindspore/ccsrc/utils/sliding_window/sliding_window_internal.h"
-#include "pynative/hyper_offload/offload_task.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 
@@ -41,18 +35,6 @@ device::DeviceContext *GetAscendDeviceContext() {
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   device::DeviceContextKey key = {device::DeviceType::kAscend, device_id};
   return device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(key);
-}
-
-void RunOrPushTask(std::function<void()> func) {
-  auto task = std::make_shared<pynative::hyper_offload::OffloadAsyncTask>(
-    std::move(func), runtime::TaskType::kBackendTask);
-  static bool need_sync = runtime::OpExecutor::NeedSync();
-  if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
-    runtime::Pipeline::Get().WaitForward();
-    task->Run();
-  } else {
-    runtime::Pipeline::Get().backend_stage()->Push(task);
-  }
 }
 
 TensorPtr SwapTensorToDevice(const TensorPtr &host_tensor, uint32_t stream_id) {
@@ -204,7 +186,7 @@ size_t DeviceSpaceManager::TryOffloadGroup(SourceGroup *group) {
   source_group_mgr_->UpdateAddressMapping(group, source->device_address());
   group->status = ResidencyStatus::kOnHost;
   group->aligned_size = AlignToPoolSize(source->Size());
-  RunOrPushTask([source]() { source->device_address()->ClearDeviceMemory(); });
+  source->device_address()->ClearDeviceMemory();
 
   MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "Offloaded source group: id=" << group->source_id
                                    << " (" << (source->Size() / 1024 / 1024) << " MB)";
@@ -225,6 +207,12 @@ bool DeviceSpaceManager::ReloadDeviceAddress(TensorId source_id, const device::D
   MS_EXCEPTION_IF_NULL(host_copy);
   MS_EXCEPTION_IF_NULL(device_addr);
 
+  if (device_addr->GetDevicePtr() != nullptr) {
+    MS_LOG(ERROR) << "Skip reload for offloaded tensor id=" << source_id
+                  << ", shared DeviceAddress already has device ptr.";
+    return true;
+  }
+
   TensorPtr temp_device_tensor = SwapTensorToDevice(host_copy, device_addr->stream_id());
   if (temp_device_tensor == nullptr) {
     MS_LOG(ERROR) << "Failed to reload offloaded tensor to device. Tensor id: " << source_id;
@@ -233,16 +221,8 @@ bool DeviceSpaceManager::ReloadDeviceAddress(TensorId source_id, const device::D
   auto new_device_addr = temp_device_tensor->device_address();
   MS_EXCEPTION_IF_NULL(new_device_addr);
 
-  // SetDevicePtr on the source's shared DeviceAddress updates all views automatically.
-  RunOrPushTask([device_addr, new_device_addr, source_id]() {
-    if (device_addr->GetDevicePtr() != nullptr) {
-      MS_VLOG(VL_HYPER_OFFLOAD_WARNING) << "Skip reload for offloaded tensor id=" << source_id
-                                         << ", shared DeviceAddress already has device ptr.";
-      return;
-    }
-    device_addr->SetDevicePtr(new_device_addr->GetDevicePtr());
-    new_device_addr->set_from_mem_pool(false);  // prevent double-free
-  });
+  device_addr->SetDevicePtr(new_device_addr->GetDevicePtr());
+  new_device_addr->set_from_mem_pool(false);  // prevent double-free
   return true;
 }
 

@@ -59,6 +59,7 @@ inline bool CanOffloadTensor(const TensorPtr &tensor) {
   if (!tensor->is_contiguous()) return false;
   if (tensor->storage_offset() != 0) return false;
   if (tensor->storage_info() != nullptr) return false;
+  if (tensor->is_parameter()) return false;
   return true;
 }
 

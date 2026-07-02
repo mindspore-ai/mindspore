@@ -45,6 +45,7 @@ namespace sliding_window {
 namespace {
 
 constexpr char kSlidingWindowBufferSizeEnv[] = "MS_DEV_SLIDING_WINDOW_BUFFER_SIZE_MB";
+constexpr char kCellBackwardHookOpName[] = "CellBackwardHook";
 constexpr size_t kBytesPerMB = static_cast<size_t>(1024) * 1024;
 constexpr size_t kDefaultSlidingWindowBufferSize = static_cast<size_t>(1024) * 1024 * 1024;
 
@@ -179,6 +180,10 @@ size_t GetSlidingWindowBufferSize() {
 // PyBoostUtils::InferByOpDef. Returns 0 for view/inplace ops (offloading them is unsafe anyway)
 // and for ops without any of these paths — the caller's 1 GB headroom buffer absorbs misses.
 size_t InferOutputSize(const std::string &class_name, const std::vector<ValuePtr> &inputs) {
+  if (class_name == kCellBackwardHookOpName) {
+    return 0;
+  }
+
   auto *op_def = ops::GetOpDef(class_name);
   if (op_def != nullptr) {
     if (op_def->is_view_) {
