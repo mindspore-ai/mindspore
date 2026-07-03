@@ -49,7 +49,6 @@
 #include "utils/anf_utils.h"
 #include "utils/phase.h"
 #include "utils/ms_context.h"
-#include "include/frontend/operator/primitive_py.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
@@ -631,7 +630,7 @@ void AnfAlgo::SetNodeAttrSafely(const std::string &key, const ValuePtr &value, c
   }
   auto prim = common::AnfAlgo::GetCNodePrimitive(cnode);
   if (prim != nullptr) {
-    auto new_prim = prim->isa<PrimitivePy>() ? prim : prim->Clone();
+    auto new_prim = prim->IsPythonPrim() ? prim : prim->Clone();
     cnode->set_input(0, NewValueNode(new_prim));
   }
 

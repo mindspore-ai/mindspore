@@ -71,5 +71,6 @@ if(ENABLE_D OR ENABLE_ACL)
     file(GLOB_RECURSE _ADAPTER_SRC_LIST "${ADAPTER_PATH}/*.cc")
     set_property(SOURCE ${_ADAPTER_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
       SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
+    list(APPEND _ADAPTER_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/../../../../utils/anfalgo.cc")
     add_library(_mindspore_ascend_op_adapter_obj OBJECT ${_ADAPTER_SRC_LIST} ${OPS_PROTO_OBJECTS})
 endif()
