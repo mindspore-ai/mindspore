@@ -4082,22 +4082,25 @@ class Cell(Cell_):
 
         Examples:
             >>> import mindspore.nn as nn
-            >>> from mindspore._c_expression import OffloadManager
             >>> net = nn.Dense(128, 256)
             >>> net.auto_offload()
             >>> # Training loop
             >>> for step, data in enumerate(dataset):
             ...     loss = train_step(data)
-            ...     if step == 0:
-            ...         OffloadManager.get_instance().analyse()
         """
         # Get or create offload context for this cell
         offload_key = id(self)
         manager = OffloadManager.get_instance()
         ctx = manager.get_or_create_offload_ctx(offload_key)
 
+        self._auto_offload_bwd_done = False
+        self._auto_offload_analyzed = False
+
         # Forward hooks (async for pipeline)
         def forward_pre_hook_fn(cell, inputs):
+            if cell._auto_offload_bwd_done and not cell._auto_offload_analyzed:
+                manager.analyse()
+                cell._auto_offload_analyzed = True
             ctx.start_offload_async()
 
         def forward_hook_fn(cell, inputs, output):
@@ -4109,6 +4112,7 @@ class Cell(Cell_):
 
         def backward_hook_fn(cell, grad_input, grad_output):
             ctx.end_offload()
+            cell._auto_offload_bwd_done = True
 
         # Register hooks
         self.register_forward_pre_hook(forward_pre_hook_fn)
