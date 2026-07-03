@@ -19,7 +19,7 @@ mindspore.scipy.linalg.lu_factor
 
     参数：
         - **a** (Tensor) - 要分解的 :math:`(M, M)` 方阵。
-          如果输入Tensor不是float类型，那么它将被强制转换为：mstype.float32。
+          如果输入Tensor不是float类型，那么它将被强制转换为：mstype.float64类型。
         - **overwrite_a** (bool, 可选) - 是否覆盖 :math:`a` 中的数据（可能会提高性能）。
           默认值：``False``。
         - **check_finite** (bool, 可选) - 是否检查输入矩阵是否只包含有限数。
