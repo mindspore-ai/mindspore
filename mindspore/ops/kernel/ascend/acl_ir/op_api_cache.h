@@ -125,6 +125,12 @@ BACKEND_EXPORT void GatherInfo(const std::vector<T> &values) {
   MemcpyToBuf(values.data(), values.size() * sizeof(T));
 }
 
+template <typename T>
+BACKEND_EXPORT void GatherInfo(const std::pair<std::vector<T>, bool> &p) {
+  GatherInfo(p.first);
+  MemcpyToBuf(&p.second, sizeof(bool));
+}
+
 BACKEND_EXPORT inline void GatherInfo(TypeId type_id) { MemcpyToBuf(&type_id, sizeof(int)); }
 
 BACKEND_EXPORT void GatherInfo();
