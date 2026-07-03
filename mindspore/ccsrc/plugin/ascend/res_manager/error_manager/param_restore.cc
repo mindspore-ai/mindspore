@@ -80,7 +80,8 @@ DataExchangeInfo::DataExchangeInfo(const std::vector<tensor::TensorPtr> &params,
 
   for (size_t i = 0; i < params.size(); ++i) {
     auto &tensor = params[i];
-    auto tensor_size = (tensor->device_address() == nullptr || tensor->device_address()->GetMutablePtr() == nullptr)
+    auto tensor_size = (tensor->device_address() == nullptr || tensor->device_address()->GetMutablePtr() == nullptr ||
+                        tensor->device_address()->GetDeviceType() == device::DeviceType::kCPU)
                          ? kInvalidParamSize
                          : static_cast<uint64_t>(tensor->Size());
     data_[kDataExchangeInfoHeadSize + i] = tensor_size;
@@ -93,6 +94,8 @@ DataExchangeInfo::DataExchangeInfo(const std::vector<tensor::TensorPtr> &params,
       size_max_ = aligned_value;
     }
   }
+
+  need_copy_flags_.resize(params.size());
 }
 
 void ParamReplication::Init() {
@@ -180,14 +183,13 @@ int ParamReplication::DoParamInfoExchange(DataExchangeInfo *local_info, DataExch
 }
 
 int ParamReplication::CopyParamsInBatches(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank,
-                                          void *xchg_buf_addr, size_t xchg_buf_size) {
-  auto copy_param = [&params, &xchg_buf_addr, &xchg_buf_size, this](size_t beg_idx, bool is_send) -> size_t {
+                                          void *xchg_buf_addr, size_t xchg_buf_size, const std::vector<bool> &flags) {
+  auto copy_param = [&params, &xchg_buf_addr, &xchg_buf_size, &flags, this](size_t beg_idx, bool is_send) -> size_t {
     size_t index = beg_idx;
     uint64_t sum_size = 0;
     while (index < params.size()) {
       auto &tensor = params[index];
-      if (tensor->device_address() == nullptr || tensor->device_address()->GetMutablePtr() == nullptr ||
-          tensor->device_address()->GetDeviceType() == device::DeviceType::kCPU) {
+      if (!flags[index]) {
         index += 1;
         continue;
       }
@@ -234,7 +236,8 @@ int ParamReplication::CopyParamsInBatches(const std::vector<tensor::TensorPtr> &
   return 0;
 }
 
-int ParamReplication::CopyParamsOneByOne(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank) {
+int ParamReplication::CopyParamsOneByOne(const std::vector<tensor::TensorPtr> &params, int src_rank, int dst_rank,
+                                         const std::vector<bool> &flags) {
   if (rank_id_ != src_rank && rank_id_ != dst_rank) {
     MS_LOG(EXCEPTION) << "Neither source rank(" << src_rank << ") nor destination rank(" << dst_rank
                       << ") matches current rank id(" << rank_id_ << "), ignore it.";
@@ -242,8 +245,7 @@ int ParamReplication::CopyParamsOneByOne(const std::vector<tensor::TensorPtr> &p
 
   for (size_t index = 0; index < params.size(); ++index) {
     auto &tensor = params[index];
-    if (tensor->device_address() == nullptr || tensor->device_address()->GetMutablePtr() == nullptr ||
-        tensor->device_address()->GetDeviceType() == device::DeviceType::kCPU) {
+    if (!flags[index]) {
       MS_LOG(INFO) << "Device address is nullptr, skip copying parameter index = " << index << "/" << params.size()
                    << " " << (rank_id_ == src_rank ? " send" : " recv");
       continue;
@@ -306,10 +308,11 @@ int ParamReplication::SendRecv(const std::vector<tensor::TensorPtr> &params, int
   int ret_value = 0;
   if (xchg_buf_addr == nullptr) {
     MS_LOG(INFO) << "Copy parameters one by one.";
-    ret_value = CopyParamsOneByOne(params, src_rank, dst_rank);
+    ret_value = CopyParamsOneByOne(params, src_rank, dst_rank, local_info.GetParamNeedCopyFlags());
   } else {
     MS_LOG(INFO) << "Copy parameters on batches.";
-    ret_value = CopyParamsInBatches(params, src_rank, dst_rank, xchg_buf_addr, xchg_buf_size);
+    ret_value =
+      CopyParamsInBatches(params, src_rank, dst_rank, xchg_buf_addr, xchg_buf_size, local_info.GetParamNeedCopyFlags());
     res_mgr_->FreeMemory(xchg_buf_addr);
   }
 
