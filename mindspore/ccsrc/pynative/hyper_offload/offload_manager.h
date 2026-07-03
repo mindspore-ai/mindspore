@@ -29,9 +29,6 @@
 namespace mindspore {
 namespace pynative {
 namespace hyper_offload {
-void ForwardVmOpPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs);
-void ForwardVmOpPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output);
-
 // OffloadManager is a singleton that manages multiple HyperOffloadContext instances.
 // It provides the main interface for Python side to interact with offload functionality.
 class OffloadManager {

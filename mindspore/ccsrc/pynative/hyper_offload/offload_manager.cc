@@ -25,6 +25,7 @@
 #include "mindspore/ccsrc/frontend/jit/ps/resource.h"
 #include "mindspore/ccsrc/include/frontend/jit/ps/action_interface.h"
 #include "pynative/hyper_offload/offload_manager.h"
+#include "pynative/forward/op_graph/forward.h"
 #include "utils/ms_utils.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
@@ -130,14 +131,6 @@ void OffloadPostHook(const std::string &op_name, const std::vector<ValuePtr> &in
   current_ctx->OnOpExecuted(op_name, inputs, output);
 }
 
-void ForwardVmOpPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
-  SlidingWindowPreHook(op_name, inputs);
-}
-
-void ForwardVmOpPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output) {
-  SlidingWindowPostHook(op_name, inputs, output);
-}
-
 // Static registrar to register PreHook and PostHook at program startup
 struct OffloadHookRegistrar {
   OffloadHookRegistrar() {
@@ -164,6 +157,13 @@ struct OffloadHookRegistrar {
     kernel::pyboost::OpRunner::RegisterPostHook([]() { return !OffloadManager::IsOffloadReady(); },
                                                 SlidingWindowPostHook);
     MS_LOG(DEBUG) << "SlidingWindowPostHook registered to OpRunner.";
+
+    // Register PreHook for ForwardExecutor (VM ops)
+    pynative::ForwardExecutor::RegisterVmOpPreHook(SlidingWindowPreHook);
+    MS_LOG(DEBUG) << "SlidingWindowPreHook registered to ForwardExecutor.";
+
+    pynative::ForwardExecutor::RegisterVmOpPostHook(SlidingWindowPostHook);
+    MS_LOG(DEBUG) << "SlidingWindowPostHook registered to ForwardExecutor.";
 
     // Register PreHook for OpBackend (RunOp operators)
     compile::OpBackend::RegisterPreHook(OffloadRunOPPreHook);
