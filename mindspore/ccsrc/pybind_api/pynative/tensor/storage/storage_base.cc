@@ -38,8 +38,9 @@ device::DeviceAddressPtr CreateTempDeviceAddress(const device::DeviceAddressPtr 
     {device_address->GetDeviceType(), device_address->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
-  auto new_device_address = std::make_shared<device::DeviceAddress>(
-    device_address->GetMutablePtr(), device_address->size(), device_address->GetDeviceType(), CurrentStream::id());
+  auto new_device_address =
+    std::make_shared<device::DeviceAddress>(device_address->GetMutablePtr(), device_address->size(),
+                                            device_address->GetDeviceType(), device_address->stream_id());
   new_device_address->set_from_mem_pool(false);
   return new_device_address;
 }
