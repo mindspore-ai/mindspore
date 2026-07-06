@@ -27,9 +27,13 @@ mindspore.mint.nn.functional.binary_cross_entropy
         目前，当平台为Ascend时，梯度计算全部在NPU上执行。
 
     参数：
-        - **input** (Tensor) - 输入预测值，其数据类型为float16或float32。
+        - **input** (Tensor) - 输入预测值，其数据类型为float16或float32。在Ascend平台，也支持bfloat16。
         - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16或float32。
-        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input` 的shape保持一致。数据类型必须为float16或float32。默认值： ``None`` 。若为 ``None`` ，损失函数将不会考虑任何样本的权重，每个样本在计算损失时被视为具有相同的重要性。
+          在Ascend平台，也支持bfloat16。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input`
+          的shape保持一致。数据类型必须为float16或float32。在Ascend平台，也支持bfloat16。
+          默认值： ``None`` 。若为 ``None`` ，损失函数将不会考虑任何样本的权重，每个样本在计算损失时
+          被视为具有相同的重要性。
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
 
           - ``'none'``：不应用归约方法。
@@ -42,5 +46,6 @@ mindspore.mint.nn.functional.binary_cross_entropy
     异常：
         - **TypeError** - 输入 `input` 、 `target` 或 `weight` 不为Tensor。
         - **TypeError** - 输入 `input` 、 `target` 或 `weight` 的数据类型既不是float16也不是float32。
+          在Ascend平台，也支持bfloat16。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``  或 ``'sum'`` 。
         - **ValueError** - `target` 的shape大小与 `input` 或者 `weight` 不相同。

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CPU ST for BinaryCrossEntropy operator."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -30,7 +32,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class Net(nn.Cell):
     def __init__(self, reduction="none"):
-        super(Net, self).__init__()
+        super().__init__()
         self.bce = P.BinaryCrossEntropy(reduction)
 
     def construct(self, x, y, weight=None):
@@ -39,6 +41,11 @@ class Net(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_binary_cross_entropy_loss():
+    """
+    Feature: test BinaryCrossEntropy forward with float32 inputs and none reduction.
+    Description: run CPU BinaryCrossEntropy with float32 prediction, target and weight tensors.
+    Expectation: the output matches the expected element-wise loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -54,6 +61,11 @@ def test_binary_cross_entropy_loss():
 
 
 def test_binary_cross_entropy_loss_mean():
+    """
+    Feature: test BinaryCrossEntropy forward with float32 inputs and mean reduction.
+    Description: run CPU BinaryCrossEntropy with float32 prediction, target and weight tensors.
+    Expectation: the output matches the expected reduced loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -66,6 +78,11 @@ def test_binary_cross_entropy_loss_mean():
 
 
 def test_binary_cross_entropy_loss_sum():
+    """
+    Feature: test BinaryCrossEntropy forward with float32 inputs and sum reduction.
+    Description: run CPU BinaryCrossEntropy with float32 prediction, target and weight tensors.
+    Expectation: the output matches the expected summed loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -78,6 +95,11 @@ def test_binary_cross_entropy_loss_sum():
 
 
 def test_binary_cross_entropy_loss_sum_without_weight():
+    """
+    Feature: test BinaryCrossEntropy forward without weight input.
+    Description: run CPU BinaryCrossEntropy sum reduction with float32 prediction and target tensors only.
+    Expectation: the output matches the expected summed loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -89,6 +111,11 @@ def test_binary_cross_entropy_loss_sum_without_weight():
 
 
 def test_binary_cross_entropy_loss_16():
+    """
+    Feature: test BinaryCrossEntropy forward with float16 inputs and none reduction.
+    Description: run CPU BinaryCrossEntropy with float16 prediction, target and weight tensors.
+    Expectation: the output matches the expected element-wise loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float16)
     target = np.random.rand(20).astype(np.float16)
@@ -104,6 +131,11 @@ def test_binary_cross_entropy_loss_16():
 
 
 def test_binary_cross_entropy_loss_mean_16():
+    """
+    Feature: test BinaryCrossEntropy forward with float16 inputs and mean reduction.
+    Description: run CPU BinaryCrossEntropy with float16 prediction, target and weight tensors.
+    Expectation: the output matches the expected reduced loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float16)
     target = np.random.rand(20).astype(np.float16)
@@ -116,6 +148,11 @@ def test_binary_cross_entropy_loss_mean_16():
 
 
 def test_binary_cross_entropy_loss_sum_16():
+    """
+    Feature: test BinaryCrossEntropy forward with float16 inputs and sum reduction.
+    Description: run CPU BinaryCrossEntropy with float16 prediction, target and weight tensors.
+    Expectation: the output matches the expected summed loss.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float16)
     target = np.random.rand(20).astype(np.float16)
@@ -129,7 +166,7 @@ def test_binary_cross_entropy_loss_sum_16():
 
 class Grad(nn.Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = C.GradOperation(get_all=True, sens_param=True)
         self.network = network
 
@@ -140,6 +177,11 @@ class Grad(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_binary_cross_entropy_loss_grad():
+    """
+    Feature: test BinaryCrossEntropy backward with float32 inputs.
+    Description: run CPU BinaryCrossEntropy gradient with float32 prediction, target, sens and weight tensors.
+    Expectation: the gradient with respect to prediction matches the expected result.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -158,7 +200,7 @@ def test_binary_cross_entropy_loss_grad():
     assert np.allclose(dx[0].asnumpy(), dx1_expect)
 
 
-def test_binary_cross_entropy_forward_functional(nptype):
+def binary_cross_entropy_forward_functional(nptype):
     """
     Feature: test binary_cross_entropy forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -180,9 +222,9 @@ def test_binary_cross_entropy_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_binary_cross_entropy_forward_functional(np.float32)
+    binary_cross_entropy_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_binary_cross_entropy_forward_functional(np.float32)
+    binary_cross_entropy_forward_functional(np.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
@@ -204,7 +246,7 @@ def test_binary_cross_entropy_forward_float32_functional_with_optional(mode):
 
 class GradNet(nn.Cell):
     def __init__(self, network):
-        super(GradNet, self).__init__()
+        super().__init__()
         self.grad = C.GradOperation(get_all=True)
         self.network = network
 

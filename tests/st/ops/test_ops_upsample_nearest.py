@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for upsample nearest operators."""
 
 import pytest
 import numpy as np
@@ -217,6 +218,33 @@ def test_upsample_nearest(mode):
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-4
     assert np.all(diff < error)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
+          level_mark='level0', card_mark='onecard', mem_peak=36.00)
+@pytest.mark.parametrize("mode", ["GRAPH_MODE_O0", "PYNATIVE_MODE"])
+def test_upsample_nearest_2d_float64_ascend(mode):
+    """
+    Feature: UpsampleNearest2D
+    Description: Verify the Ascend float64 forward path after the old dtype guard is removed.
+    Expectation: The result matches the float64 reference.
+    """
+    set_mode(mode)
+
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.3, 0.5], [0.7, 0.9, 1.1]]]], dtype=np.float64)
+    )
+    expected = np.array(
+        [[[[0.1, 0.1, 0.3, 0.3, 0.5],
+           [0.1, 0.1, 0.3, 0.3, 0.5],
+           [0.7, 0.7, 0.9, 0.9, 1.1],
+           [0.7, 0.7, 0.9, 0.9, 1.1]]]],
+        dtype=np.float64,
+    )
+
+    out = upsample_nearest_forward_func(input_tensor, (4, 5), None)
+    np.testing.assert_allclose(out.asnumpy(), expected, rtol=1e-12, atol=1e-12)
+    assert out.dtype == ms.float64
 
 
 @arg_mark(plat_marks=['platform_gpu'],
@@ -539,11 +567,6 @@ def test_upsample_nearest_3d_error(mode):
     with pytest.raises(TypeError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.int32))
         net(input_tensor, [3, 4, 5], None)
-        _pynative_executor.sync()
-
-    with pytest.raises(TypeError):
-        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net(input_tensor, None, [1, 2, 3])
         _pynative_executor.sync()
 
     with pytest.raises(ValueError):

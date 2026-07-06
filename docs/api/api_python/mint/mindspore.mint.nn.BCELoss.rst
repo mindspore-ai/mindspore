@@ -37,12 +37,16 @@ mindspore.mint.nn.BCELoss
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **input** (Tensor) - 预测值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为mindspore.float16、mindspore.float32或mindspore.bfloat16。
+        - **input** (Tensor) - 预测值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加
+          维度。数据类型必须为mindspore.float16或mindspore.float32。在Ascend平台，也支持
+          mindspore.bfloat16。
         - **target** (Tensor) - 目标值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
 
     输出：
         Tensor，数据类型与 `input` 相同。如果 `reduction` 为 ``'none'`` ，则shape与 `input` 相同。否则，输出为scalar的tensor。
 
     异常：
+        - **TypeError** - `input` 、 `target` 或 `weight` （如果给定）的数据类型既不是
+          mindspore.float16，也不是mindspore.float32。在Ascend平台，也支持mindspore.bfloat16。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `input` 的shape与 `target` 或 `weight` （如果给定）不同。

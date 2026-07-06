@@ -17,15 +17,20 @@ mindspore.mint.nn.Embedding
         - **norm_type** (float, 可选) - 指定p-范数计算中的p值。默认 ``2.0`` 。
         - **scale_grad_by_freq** (bool, 可选) - 如果值为 ``True`` ，则反向梯度会按照 `input` 中索引值重复的次数进行缩放。默认 ``False`` 。
         - **sparse** (bool, 可选) - 如果值为 ``True`` ，则 `weight` 为稀疏Tensor，该场景暂未支持。默认 ``False`` 。
-        - **_weight** (Tensor, 可选) - 用于初始化Embedding的权重。如果为 ``None``，则权重从 :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})` 初始化。默认 ``None`` 。
+        - **_weight** (Tensor, 可选) - 用于初始化Embedding的权重。如果为 ``None``，则权重从
+          :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})` 初始化。默认 ``None`` 。当 `max_norm`
+          不为 ``None`` 时， `_weight` 的数据类型必须为float16、float32或bfloat16。
         - **_freeze** (bool, 可选) - 是否冻结该模型的可学习权重 `weight` 。默认 ``False`` 。
-        - **dtype** (mindspore.dtype, 可选) - 指定Embedding权重 `weight` 的类型。当 `_weight` 不是 ``None`` 时该参数无效。默认 ``None`` 。
+        - **dtype** (mindspore.dtype, 可选) - 指定Embedding权重 `weight` 的类型。当 `_weight` 不是
+          ``None`` 时该参数无效。当 `max_norm` 不为 ``None`` 时， `dtype` 必须为float16、float32
+          或bfloat16。默认 ``None`` 。
 
     可变参数：
         - **weight** (Parameter) - 模型的可学习参数，shape为 `(num_embeddings, embedding_dim)`，从 :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})` 或 `_weight` 初始化。
 
     输入：
-        - **input** (Tensor) - 索引tensor，取值范围： `[0, num_embeddings)` 。
+        - **input** (Tensor) - 索引tensor，取值范围： `[0, num_embeddings)` 。数据类型必须为int32或
+          int64。
 
     输出：
         Tensor。

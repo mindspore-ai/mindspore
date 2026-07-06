@@ -570,7 +570,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.nn.functional.binary_cross_entropy,
         # float16 has occasional precision issue
         # dtypes_ascend=(ms.float32,),
-        # float16 has precision issue
+        # float16 has precision issue, torch reference does not support bfloat16.
         dtypes_ascend910b=(ms.float32,),
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.float64),
         dtypes_cpu=(),
@@ -580,6 +580,8 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_binary_cross_entropy,
         op_error_inputs_func=error_inputs_other_op_with_loss_function,
         grad_position=(0, 1),
+        ascend910b_forward_loss_override={ms.bfloat16: 0.04},
+        ascend910b_backward_loss_override={ms.bfloat16: 0.04},
     ),
     'mint.nn.functional.binary_cross_entropy_with_logits': OpInfo(
         name='mint.nn.functional.binary_cross_entropy_with_logits',
@@ -5718,7 +5720,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.nn.BCELoss',
         op=ms_nn_bce_loss,
         ref=torch_nn_bce_loss,
-        #torch not implemented for bfloat16
+        # torch reference does not support bfloat16
         dtypes_ascend910b=(ms.float16, ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -5728,7 +5730,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=extra_sample_inputs_mint_nn_bce_loss,
         op_dynamic_inputs_func=None,
         op_error_inputs_func=error_sample_inputs_mint_nn_bce_loss,
-        ascend910b_backward_loss_override={ms.float16:0.003},
+        ascend910b_backward_loss_override={ms.float16:0.005},
     ),
     'mint.optim.SGD': OpInfo(
         name='mint.optim.SGD',

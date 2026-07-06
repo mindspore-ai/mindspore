@@ -50,6 +50,16 @@ BaseShapePtr EmbeddingFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr EmbeddingFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
+  auto input_type = input_args[kIndex0]->GetType();
+  auto tensor_type = input_type->cast<TensorTypePtr>();
+  if (tensor_type != nullptr && tensor_type->element() != nullptr) {
+    auto type_id = tensor_type->element()->type_id();
+    if (type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                              << "', the data type of 'input' must be int32 or int64, but got "
+                              << mindspore::TypeIdToString(type_id, true) << ".";
+    }
+  }
   return input_args[kIndex1]->GetType();
 }
 
@@ -110,6 +120,13 @@ ShapeArray EmbeddingFuncImpl::InferShape(const PrimitivePtr &primitive, const Va
 }
 
 TypePtrList EmbeddingFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto input_tensor = input_values[kIndex0]->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto type_id = input_tensor->Dtype()->type_id();
+  if (type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
+    MS_EXCEPTION(TypeError) << "For 'Embedding', the data type of 'input' must be int32 or int64, but got "
+                            << mindspore::TypeIdToString(type_id, true) << ".";
+  }
   auto weight_tensor = input_values[kIndex1]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(weight_tensor);
   return {weight_tensor->Dtype()};
