@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-# For more details, please refer to MindOCR (https://github.com/mindspore-lab/mindocr)
-
 
 """
 Model training
@@ -183,6 +181,8 @@ def main_test_process(args, cfg):
     load_checkpoint(os.path.join(data_dir, f"{case_name}/{case_name}.ckpt"), network)
 
     loss = None
+    first_step_end_time = None
+    loss_start = None
     train_start_time = time.time()
     for cur_epoch in range(num_epoch):
         for cur_step, data in enumerate(loader_train):
@@ -204,7 +204,6 @@ def main_test_process(args, cfg):
     return loss_start, loss_end, average_step_time, time_compile
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=8018.0)
 def test_db_r50_1p():
     """
     Feature: MindOCR dbnet-resnet50 1p test

@@ -340,7 +340,8 @@ def test_auto_mix_precision_infer_subnet_auto(mode):
     assert np.allclose(out.asnumpy(), out2.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 def test_auto_mix_precision_train_subnet_auto(mode):
     """
