@@ -653,7 +653,7 @@ inline ValuePtr OpOutputsToValues(const std::tuple<Ts...> &outputs) {
 // Guard class to prevent nested PostHook calls.
 // When executing PostHook, internal ops may also trigger PostHook, causing orphan nodes in trace graph.
 // This guard marks that we're inside a PostHook execution, and nested PostHook calls will be skipped.
-class PYBOOST_API PostHookGuard {
+class PostHookGuard {
  public:
   PostHookGuard() { ++in_post_hook_depth_; }
   ~PostHookGuard() { --in_post_hook_depth_; }

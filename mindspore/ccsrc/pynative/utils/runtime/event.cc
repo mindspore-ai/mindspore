@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "include/runtime/hardware_abstract/event/event.h"
+#include "include/pynative/utils/runtime/event.h"
+
+#include <sstream>
+
 #include "include/pynative/utils/runtime/op_executor.h"
 #include "include/pynative/utils/runtime/task/device_task.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "utils/ms_context.h"
-
-#include "include/pynative/forward/pyboost/forward_task.h"
-#include "include/pynative/utils/pynative_utils.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "include/runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace hal {

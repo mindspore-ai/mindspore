@@ -25,7 +25,7 @@
 #include "pynative/hyper_offload/op_tracer.h"
 #include "pynative/hyper_offload/offload_executor.h"
 #include "pynative/hyper_offload/offload_strategy.h"
-#include "include/runtime/hardware_abstract/stream/stream.h"
+#include "include/pynative/utils/runtime/stream.h"
 
 namespace mindspore {
 namespace pynative {

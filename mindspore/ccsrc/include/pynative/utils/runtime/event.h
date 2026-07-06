@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_EVENT_EVENT_H
-#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_EVENT_EVENT_H
+#ifndef MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_EVENT_H_
+#define MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_EVENT_H_
 
-#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <unordered_map>
-#include "runtime/hardware_abstract/visible.h"
-#include "include/runtime/hardware_abstract/stream/stream.h"
+#include "include/pynative/utils/runtime/stream.h"
+#include "include/utils/visible.h"
 #include "runtime/hardware_abstract/event/device_event.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace hal {
 class Event;
 using EventPtr = std::shared_ptr<Event>;
 
-class RUNTIME_HARDWARE_EXPORT Event {
+class PYNATIVE_UTILS_EXPORT Event {
  public:
   Event() = default;
   explicit Event(bool enable_timing, bool blocking) : enable_timing_(enable_timing), blocking_(blocking) {}
@@ -87,7 +90,7 @@ class RUNTIME_HARDWARE_EXPORT Event {
   device::DeviceContext *device_ctx_{nullptr};
 };
 
-class RUNTIME_HARDWARE_EXPORT EventCnt {
+class PYNATIVE_UTILS_EXPORT EventCnt {
  public:
   static void IncreaseUnrecordedCnt(const std::shared_ptr<DeviceEvent> &event) {
     std::lock_guard<std::mutex> lock(unrecorded_cnt_mtx_);
@@ -113,7 +116,7 @@ class RUNTIME_HARDWARE_EXPORT EventCnt {
   }
 
  private:
-  // The num of event in pipline.
+  // The num of event in pipeline.
   static std::unordered_map<std::shared_ptr<DeviceEvent>, int64_t> unrecorded_cnt_;
   static std::mutex unrecorded_cnt_mtx_;
 };
@@ -121,4 +124,4 @@ class RUNTIME_HARDWARE_EXPORT EventCnt {
 }  // namespace hal
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_EVENT_EVENT_H
+#endif  // MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_EVENT_H_

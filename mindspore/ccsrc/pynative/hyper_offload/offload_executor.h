@@ -20,8 +20,8 @@
 #include <memory>
 #include <unordered_map>
 #include "ir/tensor.h"
-#include "include/runtime/hardware_abstract/stream/stream.h"
-#include "include/runtime/hardware_abstract/event/event.h"
+#include "include/pynative/utils/runtime/event.h"
+#include "include/pynative/utils/runtime/stream.h"
 
 namespace mindspore {
 namespace pynative {

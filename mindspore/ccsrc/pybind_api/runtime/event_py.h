@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PYBIND_API_HAL_EVENT_PY_H
 
 #include <memory>
-#include "include/runtime/hardware_abstract/event/event.h"
+#include "include/pynative/utils/runtime/event.h"
 #include "include/utils/visible.h"
 #include "pybind_api/runtime/stream_py.h"
 

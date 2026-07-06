@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_STREAM_STREAM_H
-#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_STREAM_STREAM_H
+#ifndef MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_STREAM_H_
+#define MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_STREAM_H_
 
-#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
-#include "runtime/hardware_abstract/visible.h"
+#include <string>
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace hal {
-class RUNTIME_HARDWARE_EXPORT Stream {
+class PYNATIVE_UTILS_EXPORT Stream {
  public:
   Stream();
   explicit Stream(int priority);
@@ -69,21 +71,21 @@ class RUNTIME_HARDWARE_EXPORT Stream {
 };
 using StreamPtr = std::shared_ptr<Stream>;
 
-RUNTIME_HARDWARE_EXPORT void SetCurStream(const StreamPtr &cur_stream);
+PYNATIVE_UTILS_EXPORT void SetCurStream(const StreamPtr &cur_stream);
 
 // Synchronize all streams
-RUNTIME_HARDWARE_EXPORT void SynchronizeAllStreams();
+PYNATIVE_UTILS_EXPORT void SynchronizeAllStreams();
 
 // Get current stream
-RUNTIME_HARDWARE_EXPORT StreamPtr CurrentStream();
+PYNATIVE_UTILS_EXPORT StreamPtr CurrentStream();
 
-RUNTIME_HARDWARE_EXPORT size_t CurrentStreamId();
+PYNATIVE_UTILS_EXPORT size_t CurrentStreamId();
 
-RUNTIME_HARDWARE_EXPORT StreamPtr DefaultStream();
+PYNATIVE_UTILS_EXPORT StreamPtr DefaultStream();
 
-RUNTIME_HARDWARE_EXPORT StreamPtr CommunicationStream();
+PYNATIVE_UTILS_EXPORT StreamPtr CommunicationStream();
 
 }  // namespace hal
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_STREAM_STREAM_H
+#endif  // MINDSPORE_CCSRC_INCLUDE_PYNATIVE_UTILS_RUNTIME_STREAM_H_

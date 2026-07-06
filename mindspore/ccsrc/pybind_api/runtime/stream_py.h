@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PYBIND_API_HAL_STREAM_PY_H
 #define MINDSPORE_CCSRC_PYBIND_API_HAL_STREAM_PY_H
 
-// Re-export Stream class from hardware_abstract for backward compatibility
-#include "include/runtime/hardware_abstract/stream/stream.h"
+// Re-export Stream class from pynative runtime for backward compatibility
+#include "include/pynative/utils/runtime/stream.h"
 
 namespace mindspore {
 namespace hal {

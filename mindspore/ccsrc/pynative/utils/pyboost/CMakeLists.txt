@@ -8,6 +8,7 @@ file(GLOB_RECURSE _PYBOOST_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "grad_functions/auto_generate/*.cc"
         "comm_handle.cc"
         "comm_utils.cc"
+        "offload_copy_registry.cc"
         "pyboost_utils.cc"
         "kernel_mod_cache.cc"
         "tensor_memory.cc"

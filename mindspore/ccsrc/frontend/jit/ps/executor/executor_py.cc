@@ -63,7 +63,6 @@
 #include "utils/shape_utils.h"
 
 #include "pybind_api/pybind_patch.h"
-#include "pybind_api/runtime/event_py.h"
 #include "pybind11/pybind11.h"
 
 namespace mindspore {
@@ -382,7 +381,7 @@ py::object HandleArg(const py::object &arg, bool has_mutable_arg, bool is_predic
   }
 
   // Handle Event type
-  if (py::isinstance<mindspore::hal::EventPy>(arg)) {
+  if (py::cast<std::string>(arg.attr("__class__").attr("__name__")) == "Event") {
     return arg;
   }
 

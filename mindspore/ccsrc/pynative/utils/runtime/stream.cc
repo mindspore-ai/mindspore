@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-#include "include/runtime/hardware_abstract/stream/stream.h"
+#include "include/pynative/utils/runtime/stream.h"
+
+#include <sstream>
 #include <utility>
-#include "include/runtime/pipeline/pipeline.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
-#include "utils/ms_context.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "utils/convert_utils.h"
 #include "utils/current_state.h"
+#include "utils/ms_context.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
