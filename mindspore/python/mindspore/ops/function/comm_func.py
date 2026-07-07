@@ -207,8 +207,21 @@ def restricted_loads(s):
 
 
 def _object_to_tensor(obj, size=0):
+    """Serialize a Python object to a tensor using pickle.
+
+    Args:
+        obj (Any): The Python object to serialize.
+        size (int): The target size of the tensor. If larger than the serialized
+            size, the tensor will be padded to this size. Default: ``0``.
+
+    Returns:
+        tuple: (Tensor, int) - The serialized tensor and its actual size.
+    """
     f = io.BytesIO()
-    _pickler(f).dump(obj)
+    try:
+        _pickler(f).dump(obj)
+    except Exception as e:
+        raise RuntimeError("Failed to serialize object using pickle.") from e
     buf = np.frombuffer(f.getvalue(), dtype=np.int8)
     tensor_size = buf.size
     if size > tensor_size:
@@ -219,7 +232,10 @@ def _object_to_tensor(obj, size=0):
 
 def _tensor_to_object(tensor, tensor_size):
     buf = tensor.asnumpy().tobytes()[:tensor_size]
-    return restricted_loads(buf)
+    try:
+        return restricted_loads(buf)
+    except Exception as e:
+        raise RuntimeError("Failed to deserialize object using pickle.") from e
 
 
 comm_funcs = [

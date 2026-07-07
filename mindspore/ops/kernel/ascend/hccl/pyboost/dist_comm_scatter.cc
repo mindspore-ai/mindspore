@@ -66,7 +66,7 @@ void DistCommScatterAscendCustomize(const std::shared_ptr<OpRunner> &op, const T
                         scatter_tensors, op_name, rank_size_imm](const HcclComm &hccl_comm, void *comm_stream_ptr) {
       if (local_rank == src_rank) {
         for (int r = 0; r < rank_size_imm; r++) {
-          uint64_t offset = (uint64_t)(r * size);
+          uint64_t offset = static_cast<uint64_t>(r * size);
           auto data_ptr = GetDevicePtrFromTensor(op_name, scatter_tensors[r]);
           auto cp_ret = CALL_ASCEND_API(aclrtMemcpyAsync, static_cast<char *>(input_data_ptr) + offset, size, data_ptr,
                                         size, ACL_MEMCPY_DEVICE_TO_DEVICE, comm_stream_ptr);
