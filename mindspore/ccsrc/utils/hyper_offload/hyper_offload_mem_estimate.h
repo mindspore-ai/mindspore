@@ -37,17 +37,29 @@ struct PeakEstimateCandidate {
   size_t last_usage_index;  // Aligned with profile modeling (OutputLastUsageMap after missing-table extension).
 };
 
+struct MemoryProfileBuildInputs {
+  const UserInfoList &user_info_list;
+  const std::map<AnfNodePtr, size_t> &node_to_index;
+  size_t order_size;
+  size_t parameter_memory_baseline;
+  const CNodePtrList &index_order;
+  const FuncGraphPtr &graph;
+};
+
+struct MemoryProfileBuildOutputs {
+  std::vector<size_t> *memory_profile;
+  std::vector<PeakEstimateCandidate> *all_candidates;
+};
+
 /**
  * @brief Build the modeled memory profile and peak-offload candidates.
- * @note The function prefers `memory_block.csv` when it is available. If the table cannot be loaded,
- *       it falls back to static tensor-size estimation and uses `parameter_memory_baseline` as the
- *       profile baseline.
+ * @note Prefer memory_block.csv when it is
+ * available. If the table cannot be loaded, fall back to
+ *       static tensor-size estimation and use
+ * parameter_memory_baseline as the profile baseline.
  */
-void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
-                                     const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size,
-                                     size_t parameter_memory_baseline, std::vector<size_t> *memory_profile,
-                                     std::vector<PeakEstimateCandidate> *all_candidates,
-                                     const CNodePtrList &index_order, const FuncGraphPtr &graph);
+void BuildMemoryProfileAndCandidates(const MemoryProfileBuildInputs &inputs, const MemoryProfileBuildOutputs &outputs,
+                                     bool use_graph_output_last_usage = false);
 
 /**
  * @brief Extend UserInfo.users so ReplaceInfo/offload spans reach schedule last-use.

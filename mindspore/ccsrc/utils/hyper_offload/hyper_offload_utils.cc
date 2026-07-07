@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -42,6 +43,9 @@
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
+
+KernelWithIndex ResolveAliasSourceForUserCollection(const AnfNodePtr &node);
+
 namespace {
 constexpr std::string_view kMsDevHyperOffloadEnv = "MS_DEV_HYPER_OFFLOAD";
 constexpr std::string_view kMsDevHyperOffloadPeakStrategyEnv = "MS_DEV_HYPER_OFFLOAD_PEAK_STRATEGY";
@@ -283,14 +287,7 @@ void CollectSourcesForInput(const AnfNodePtr &input_node, std::vector<KernelWith
     }
     return;
   }
-  if (IsViewNode(input_node)) {
-    auto view_node = input_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(view_node);
-    MS_EXCEPTION_IF_CHECK_FAIL(view_node->inputs().size() > kViewDataInputIndex, "View node input size is not correct");
-    CollectSourcesForInput(view_node->input(kViewDataInputIndex), sources);
-    return;
-  }
-  const auto &source = GetRealDataNodeWithIndex(input_node);
+  auto source = ResolveAliasSourceForUserCollection(input_node);
   if (IsSupportedActivationSource(source.first)) {
     sources->emplace_back(source);
   }
@@ -468,9 +465,51 @@ bool IsInplaceNode(const AnfNodePtr &node) {
   return node->has_user_data("is_inplace");
 }
 
+KernelWithIndex ResolveAliasSourceForUserCollection(const AnfNodePtr &node) {
+  auto res = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false);
+  std::unordered_set<AnfNodePtr> visited;
+  while (true) {
+    if (res.first == nullptr) {
+      break;
+    }
+    if (!visited.insert(res.first).second) {
+      MS_LOG(ERROR) << "[HyperOffload] detected cycle while collecting alias users, origin node: "
+                    << (node == nullptr ? "nullptr" : node->DebugString())
+                    << ", repeated node: " << res.first->DebugString();
+      break;
+    }
+    if (IsViewNode(res.first)) {
+      auto cnode = res.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > kViewDataInputIndex, "View node input size is not correct");
+      res = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kViewDataInputIndex), 0, false);
+      continue;
+    }
+    if (IsPrimitiveCNode(res.first, prim::kPrimConditionSwitch)) {
+      auto switch_node = res.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(switch_node);
+      const size_t data_input_index = res.second + kConditionSwitchFirstDataInputIndex;
+      if (data_input_index >= switch_node->inputs().size()) {
+        break;
+      }
+      res = common::AnfAlgo::VisitKernelWithReturnType(switch_node->input(data_input_index), 0, false);
+      continue;
+    }
+    break;
+  }
+  return res;
+}
+
 KernelWithIndex GetRealDataNodeWithIndex(const AnfNodePtr &node) {
   auto res = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false);
+  std::unordered_set<AnfNodePtr> visited;
   while (true) {
+    if (res.first != nullptr && !visited.insert(res.first).second) {
+      MS_LOG(ERROR) << "[HyperOffload] detected cycle while resolving real data node, origin node: "
+                    << (node == nullptr ? "nullptr" : node->DebugString())
+                    << ", repeated node: " << res.first->DebugString();
+      break;
+    }
     if (IsViewNode(res.first)) {
       auto cnode = res.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -568,6 +607,10 @@ std::map<KernelWithIndex, std::pair<size_t, size_t>> BuildUserIndexRangeMap(cons
       }
     }
   }
+  for (const auto &[node, range] : user_index_ranges) {
+    MS_LOG(DEBUG) << "Node: " << node.first->DebugString() << ", Output Index: " << node.second << ", User Range: ["
+                  << range.first << ", " << range.second << "]";
+  }
   return user_index_ranges;
 }
 
@@ -589,14 +632,20 @@ UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
         auto iter = source_to_index.find(source);
         if (iter == source_to_index.end()) {
           source_to_index[source] = user_info_list.size();
-          user_info_list.emplace_back(UserInfo{source, {KernelWithIndex{node, i}}});
+          (void)user_info_list.emplace_back(UserInfo{source, {KernelWithIndex{node, i}}});
         } else {
-          user_info_list[iter->second].users.emplace_back(KernelWithIndex{node, i});
+          (void)user_info_list[iter->second].users.emplace_back(KernelWithIndex{node, i});
         }
       }
     }
   }
   MS_LOG(INFO) << "Collected " << user_info_list.size() << " node user entries";
+  for (const auto &user_info : user_info_list) {
+    MS_LOG(DEBUG) << "Node: " << user_info.node.first->DebugString() << ", Output Index: " << user_info.node.second;
+    for (const auto &user : user_info.users) {
+      MS_LOG(DEBUG) << "    User: " << user.first->DebugString() << ", Input Index: " << user.second;
+    }
+  }
   return user_info_list;
 }
 

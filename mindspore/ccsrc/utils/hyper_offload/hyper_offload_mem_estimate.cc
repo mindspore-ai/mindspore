@@ -62,6 +62,20 @@ struct HorizonSearchState {
   std::unordered_set<AnfNodePtr> *rec_stack;
 };
 
+struct ProfileBaselineDiffInputs {
+  const CNodePtrList &index_order;
+  size_t order_size;
+  const NodeFirstLastMap &node_first_last;
+  const OutputLastUsageMap &out_last_usage;
+  size_t baseline_bytes;
+};
+
+struct MemoryProfileBuildContext {
+  const MemoryProfileBuildInputs &inputs;
+  NodeFirstLastMap *node_first_last;
+  OutputLastUsageMap *out_last_usage;
+};
+
 namespace {
 constexpr size_t kCsvSizeColumnIndex = 5;
 constexpr size_t kCsvActualMemoryColumnIndex = 6;
@@ -154,6 +168,7 @@ size_t GetDynamicShapePlaceholderBytes() {
   }();
   return placeholder_bytes;
 }
+
 }  // namespace
 
 void FillLastUsageFromUserInfo(const UserInfoList &user_info_list, const std::map<AnfNodePtr, size_t> &node_to_index,
@@ -1033,18 +1048,16 @@ void BuildNodeFirstLastMap(const CNodePtrList &execution_order, NodeFirstLastMap
 
 // Build a baseline-plus-delta memory profile for each execution-order slot.
 // Modeling is performed per `(kernel, output_index)` rather than per whole operator.
-void BuildProfileBaselineAndDiff(const CNodePtrList &index_order, size_t order_size,
-                                 const NodeFirstLastMap &node_first_last, const OutputLastUsageMap &out_last_usage,
-                                 size_t baseline_bytes, std::vector<size_t> *memory_profile) {
+void BuildProfileBaselineAndDiff(const ProfileBaselineDiffInputs &inputs, std::vector<size_t> *memory_profile) {
   MS_EXCEPTION_IF_NULL(memory_profile);
   memory_profile->clear();
-  if (order_size == 0) {
+  if (inputs.order_size == 0) {
     return;
   }
-  const size_t profile_size = order_size + kProfilePaddingSlots;
+  const size_t profile_size = inputs.order_size + kProfilePaddingSlots;
   std::vector<int64_t> delta(profile_size, 0);
-  for (size_t i = 0; i < order_size; ++i) {
-    const auto &kernel = index_order[i];
+  for (size_t i = 0; i < inputs.order_size; ++i) {
+    const auto &kernel = inputs.index_order[i];
     if (kernel == nullptr) {
       continue;
     }
@@ -1064,10 +1077,10 @@ void BuildProfileBaselineAndDiff(const CNodePtrList &index_order, size_t order_s
         continue;
       }
       const size_t aligned_tensor_size = raw_tensor_size;
-      auto fl_it = node_first_last.find(kernel);
-      const size_t creation = (fl_it != node_first_last.end()) ? fl_it->second.first : i;
-      auto ol_it = out_last_usage.find({kernel, out_idx});
-      const size_t last = (ol_it != out_last_usage.end()) ? ol_it->second : creation;
+      auto fl_it = inputs.node_first_last.find(kernel);
+      const size_t creation = (fl_it != inputs.node_first_last.end()) ? fl_it->second.first : i;
+      auto ol_it = inputs.out_last_usage.find({kernel, out_idx});
+      const size_t last = (ol_it != inputs.out_last_usage.end()) ? ol_it->second : creation;
       if (last < creation) {
         continue;
       }
@@ -1080,7 +1093,7 @@ void BuildProfileBaselineAndDiff(const CNodePtrList &index_order, size_t order_s
       }
     }
   }
-  int64_t run = static_cast<int64_t>(baseline_bytes);
+  int64_t run = static_cast<int64_t>(inputs.baseline_bytes);
   memory_profile->resize(profile_size);
   for (size_t k = 0; k < profile_size; ++k) {
     run += delta[k];
@@ -1141,28 +1154,31 @@ static bool LoadMemoryBlockTableForModeling(const CNodePtrList &index_order) {
 // Build the memory profile without changing the execution order.
 // CSV modeling keeps the original table-based size/baseline path. Fallback modeling switches
 // to static tensor-size estimation and uses graph outputs/summary nodes to extend last-use.
-void BuildMemoryProfile(const UserInfoList &user_info_list, const std::map<AnfNodePtr, size_t> &node_to_index,
-                        size_t order_size, size_t parameter_memory_baseline, const CNodePtrList &index_order,
-                        const FuncGraphPtr &graph, std::vector<size_t> *memory_profile,
-                        NodeFirstLastMap *node_first_last, OutputLastUsageMap *out_last_usage) {
-  MS_EXCEPTION_IF_NULL(out_last_usage);
-  const bool use_memory_block_csv = LoadMemoryBlockTableForModeling(index_order);
-  BuildNodeFirstLastMap(index_order, node_first_last);
+void BuildMemoryProfile(const MemoryProfileBuildContext &context, std::vector<size_t> *memory_profile,
+                        bool use_graph_output_last_usage) {
+  MS_EXCEPTION_IF_NULL(context.out_last_usage);
+  const auto &inputs = context.inputs;
+  const bool use_memory_block_csv = LoadMemoryBlockTableForModeling(inputs.index_order);
+  BuildNodeFirstLastMap(inputs.index_order, context.node_first_last);
 
   if (use_memory_block_csv) {
-    BuildOutputLastUsageMap(user_info_list, node_to_index, index_order, out_last_usage);
+    BuildOutputLastUsageMap(inputs.user_info_list, inputs.node_to_index, inputs.index_order, context.out_last_usage);
   } else {
-    out_last_usage->clear();
-    FillLastUsageFromUserInfo(user_info_list, node_to_index, out_last_usage);
-    const size_t graph_end_index = order_size > 0 ? order_size - 1 : 0;
-    FillLastUsageFromGraphOutputs(graph, node_to_index, graph_end_index, out_last_usage);
-    FillLastUsageFromSummaryNodes(graph, node_to_index, graph_end_index, out_last_usage);
-    ExtendOutputLastUsageForBufferAliasing(user_info_list, node_to_index, index_order, out_last_usage);
+    context.out_last_usage->clear();
+    FillLastUsageFromUserInfo(inputs.user_info_list, inputs.node_to_index, context.out_last_usage);
+    const size_t graph_end_index = inputs.order_size > 0 ? inputs.order_size - 1 : 0;
+    if (use_graph_output_last_usage) {
+      FillLastUsageFromGraphOutputs(inputs.graph, inputs.node_to_index, graph_end_index, context.out_last_usage);
+    }
+    FillLastUsageFromSummaryNodes(inputs.graph, inputs.node_to_index, graph_end_index, context.out_last_usage);
+    ExtendOutputLastUsageForBufferAliasing(inputs.user_info_list, inputs.node_to_index, inputs.index_order,
+                                           context.out_last_usage);
   }
 
-  const size_t baseline_bytes = use_memory_block_csv ? g_csv_baseline_bytes : parameter_memory_baseline;
-  BuildProfileBaselineAndDiff(index_order, order_size, *node_first_last, *out_last_usage, baseline_bytes,
-                              memory_profile);
+  const size_t baseline_bytes = use_memory_block_csv ? g_csv_baseline_bytes : inputs.parameter_memory_baseline;
+  const ProfileBaselineDiffInputs profile_inputs{inputs.index_order, inputs.order_size, *context.node_first_last,
+                                                 *context.out_last_usage, baseline_bytes};
+  BuildProfileBaselineAndDiff(profile_inputs, memory_profile);
 }
 
 }  // namespace
@@ -1171,20 +1187,18 @@ void BuildMemoryProfile(const UserInfoList &user_info_list, const std::map<AnfNo
 // when available and otherwise falls back to static size estimation. Peak strategy loop uses only
 // memory_profile deltas and PeakEstimateCandidate.size after this point.
 // Invariant: memory analysis does not modify execution order (index_order is read-only).
-void BuildMemoryProfileAndCandidates(const UserInfoList &user_info_list,
-                                     const std::map<AnfNodePtr, size_t> &node_to_index, size_t order_size,
-                                     size_t parameter_memory_baseline, std::vector<size_t> *memory_profile,
-                                     std::vector<PeakEstimateCandidate> *all_candidates,
-                                     const CNodePtrList &index_order, const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(memory_profile);
-  MS_EXCEPTION_IF_NULL(all_candidates);
+void BuildMemoryProfileAndCandidates(const MemoryProfileBuildInputs &inputs, const MemoryProfileBuildOutputs &outputs,
+                                     bool use_graph_output_last_usage) {
+  MS_EXCEPTION_IF_NULL(outputs.memory_profile);
+  MS_EXCEPTION_IF_NULL(outputs.all_candidates);
   NodeFirstLastMap node_first_last;
   OutputLastUsageMap out_last_usage;
-  BuildMemoryProfile(user_info_list, node_to_index, order_size, parameter_memory_baseline, index_order, graph,
-                     memory_profile, &node_first_last, &out_last_usage);
+  const MemoryProfileBuildContext context{inputs, &node_first_last, &out_last_usage};
+  BuildMemoryProfile(context, outputs.memory_profile, use_graph_output_last_usage);
 
-  all_candidates->clear();
-  CollectPeakEstimateCandidates(user_info_list, node_to_index, node_first_last, out_last_usage, all_candidates);
+  outputs.all_candidates->clear();
+  CollectPeakEstimateCandidates(inputs.user_info_list, inputs.node_to_index, node_first_last, out_last_usage,
+                                outputs.all_candidates);
 }
 
 // Subtract candidate tensor size over lifecycle [start, end) on modeled baseline+diff profile.
