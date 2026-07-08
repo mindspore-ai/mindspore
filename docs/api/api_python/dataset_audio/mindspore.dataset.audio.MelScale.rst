@@ -9,7 +9,7 @@ mindspore.dataset.audio.MelScale
         - **n_mels** (int, 可选) - 梅尔滤波器的数量。默认值： ``128`` 。
         - **sample_rate** (int, 可选) - 音频信号采样速率。默认值： ``16000`` （单位：Hz）。
         - **f_min** (float, 可选) - 最小频率。默认值： ``0.0`` 。
-        - **f_max** (float, 可选) - 最大频率。默认值： ``None`` ，将设置为 `sample_rate//2` 。
+        - **f_max** (float, 可选) - 最大频率。默认值： ``None`` ，将设置为 `sample_rate // 2` 。
         - **n_stft** (int, 可选) - STFT中的频段数。默认值： ``201`` 。
         - **norm** (:class:`~.audio.NormType`, 可选) - 标准化方法，可以是 ``NormType.SLANEY`` 或 ``NormType.NONE`` 。默认值： ``NormType.NONE`` ，不使用标准化。
           若采用 ``NormType.SLANEY`` ，则三角梅尔权重将被除以梅尔频带的宽度。
