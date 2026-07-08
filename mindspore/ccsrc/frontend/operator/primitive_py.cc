@@ -27,6 +27,7 @@
 #include "include/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
 #include "include/utils/operator/primitive_utils.h"
+#include "include/utils/pynative/variable.h"
 #include "utils/check_convert_utils.h"
 #include "tools/profiler/profiler.h"
 #include "primitive/other_op_name.h"
@@ -56,7 +57,15 @@ std::map<HookType, std::string> hook_type_with_str = {
 };
 }  // namespace
 
-mindspore::OrderedMap<std::string, py::function> PrimitivePy::unpair_backward_hook_grad_{};
+std::map<size_t, mindspore::OrderedMap<std::string, py::function>> PrimitivePy::unpair_backward_hook_grad_{};
+
+namespace {
+size_t GetCurrentEngineId() {
+  auto engine = pynative::autograd::impl::CurrentAutoDiffEngine();
+  MS_EXCEPTION_IF_NULL(engine);
+  return engine->CurrentAutoDiffEngineId();
+}
+}  // namespace
 
 PrimitivePy::PrimitivePy(const std::string &name) : Primitive(name, false) {}
 
@@ -317,15 +326,35 @@ py::object PrimitivePy::RunInferValue(const py::tuple &args) {
   return infer_value(*args);
 }
 
+void PrimitivePy::EmplaceUnpairBackwardHookGrad(const std::string &ret, const py::function &hook_fn) {
+  auto engine_id = GetCurrentEngineId();
+  unpair_backward_hook_grad_[engine_id].emplace(ret, hook_fn);
+}
+
+void PrimitivePy::EraseUnpairBackwardHookGrad(const std::string &name) {
+  auto engine_id = GetCurrentEngineId();
+  auto it = unpair_backward_hook_grad_.find(engine_id);
+  if (it != unpair_backward_hook_grad_.end()) {
+    it->second.erase(name);
+  }
+}
+
+void PrimitivePy::ClearUnpairBackwardHookGrad() { unpair_backward_hook_grad_.clear(); }
+
 void PrimitivePy::ProcessUnPairedCellHook(bool execute_hook_fn) {
+  auto engine_id = GetCurrentEngineId();
   py::gil_scoped_acquire gil;
+  auto it = unpair_backward_hook_grad_.find(engine_id);
+  if (it == unpair_backward_hook_grad_.end()) {
+    return;
+  }
   if (execute_hook_fn) {
-    for (const auto &[cell_id, hook_fn] : unpair_backward_hook_grad_) {
+    for (const auto &[cell_id, hook_fn] : it->second) {
       MS_LOG(DEBUG) << "Run unpair backward cell hook " << cell_id;
       (void)hook_fn(py::make_tuple(py::none()));
     }
   }
-  unpair_backward_hook_grad_.clear();
+  unpair_backward_hook_grad_.erase(it);
 }
 
 void PrimitivePy::ClearHookRes() { unpair_backward_hook_grad_.clear(); }

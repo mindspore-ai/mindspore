@@ -1111,3 +1111,79 @@ def test_backward_grad_fn_input_metadata_leaf():
         assert meta is not None
         assert hasattr(meta, 'shape')
         assert hasattr(meta, 'dtype')
+
+
+def test_nested_backward_with_unpaired_cell_hook():
+    """
+    Feature: Test nested backward with unpaired cell backward hook isolation by engine_id
+    Description: The outer network registers a backward hook. The input x does not require grad,
+                 so the outer network's input-side hook never fires, making the hook unpaired.
+                 A sub-cell with custom bprop triggers inner GradOperation during outer backward.
+                 When the inner backward ends and calls ProcessUnPairedCellHook, it must NOT
+                 clear the outer engine's unpaired hooks. The outer hook should still fire when
+                 the outer backward ends.
+    Expectation: outer_hook fires during outer backward, not prematurely during inner backward.
+    """
+    from mindspore import nn, Parameter
+
+    hook_call_log = []
+
+    class InnerHookCell(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor(np.array([1.0]).astype(np.float32)), name='ihw')
+
+        def construct(self, b):
+            return b * self.w
+
+    inner_hook_cell = InnerHookCell()
+
+    def inner_hook_fn(_cell, _grad_input, _grad_output):
+        hook_call_log.append("inner_hook")
+
+    inner_hook_cell.register_backward_hook(inner_hook_fn)
+
+    class CustomBpropFunction(_Function):
+        @staticmethod
+        def forward(ctx, x):
+            return x * x
+
+        @staticmethod
+        def backward(ctx, dout):
+            b = Tensor(np.array([1.0]).astype(np.float32))
+            b.requires_grad = True
+            _pynative_executor.set_enable_grad(True)
+            inner_out = inner_hook_cell(b)
+            inner_out.backward()
+            _pynative_executor.set_enable_grad(False)
+            hook_call_log.append("inner_backward_done")
+            return (dout * 2,)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor(np.array([3.0]).astype(np.float32)), name='net_w')
+
+        def construct(self, x):
+            z = CustomBpropFunction.apply(x)
+            return z * self.w
+
+    net = Net()
+
+    def outer_hook_fn(_cell, _grad_input, _grad_output):
+        hook_call_log.append("outer_hook")
+
+    net.register_backward_hook(outer_hook_fn)
+
+    x = Tensor(np.array([3.0]).astype(np.float32))
+    x.requires_grad = True
+    out = net(x)
+    out.backward()
+
+    assert "inner_backward_done" in hook_call_log, f"Inner backward didn't run, log: {hook_call_log}"
+    assert "outer_hook" in hook_call_log, f"Outer hook not called at all, log: {hook_call_log}"
+    inner_done_idx = hook_call_log.index("inner_backward_done")
+    outer_hook_idx = hook_call_log.index("outer_hook")
+    assert outer_hook_idx > inner_done_idx, (
+        f"outer_hook fired before inner backward completed, log: {hook_call_log}"
+    )
