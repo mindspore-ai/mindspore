@@ -5,7 +5,7 @@ mindspore.dataset.audio.DeemphBiquad
 
     给音频波形施加CD（IEC 60908）去重音（一种高音衰减搁置滤波器）效果。
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     参数：
         - **sample_rate** (int) - 采样频率（单位：Hz），必须为 ``44100`` 或 ``48000``。

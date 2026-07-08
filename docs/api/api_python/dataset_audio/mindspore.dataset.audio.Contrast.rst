@@ -7,7 +7,7 @@ mindspore.dataset.audio.Contrast
 
     与音频压缩相比，该效果通过修改音频信号使其听起来更响亮。
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     .. note:: 待处理音频shape需为<..., time>。
 
