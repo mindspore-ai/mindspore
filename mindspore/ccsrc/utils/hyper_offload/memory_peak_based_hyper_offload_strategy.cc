@@ -23,6 +23,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -114,7 +115,29 @@ void BuildNodeToIndexMap(const CNodePtrList &execution_order, std::map<AnfNodePt
   }
 }
 
+std::vector<KernelWithIndex> FilterUsersInExecutionOrder(const UserInfo &user_info,
+                                                         const std::map<AnfNodePtr, size_t> &node_to_index) {
+  std::vector<KernelWithIndex> users;
+  std::unordered_set<AnfNodePtr> user_nodes;
+  auto append_user = [&users, &user_nodes, &node_to_index](const KernelWithIndex &user) {
+    if (user.first == nullptr) {
+      return;
+    }
+    if (node_to_index.find(user.first) == node_to_index.end()) {
+      return;
+    }
+    if (user_nodes.insert(user.first).second) {
+      users.emplace_back(user);
+    }
+  };
+  for (const auto &user : user_info.users) {
+    append_user(user);
+  }
+  return users;
+}
+
 AbsoluteDistanceList GeneratePeakAbsoluteDistanceList(const UserInfo &user_info, const CNodePtrList &execution_order,
+                                                      const std::map<AnfNodePtr, size_t> &node_to_index,
                                                       const std::optional<size_t> &producer_exec_anchor) {
   auto node = user_info.node.first;
   size_t node_distance = 0;
@@ -123,18 +146,18 @@ AbsoluteDistanceList GeneratePeakAbsoluteDistanceList(const UserInfo &user_info,
     MS_EXCEPTION_IF_CHECK_FAIL(node_distance < execution_order.size(),
                                "producer_exec_anchor out of range for execution order.");
   } else {
-    auto node_iter = std::find(execution_order.begin(), execution_order.end(), node);
-    MS_EXCEPTION_IF_CHECK_FAIL(node_iter != execution_order.end(), "Failed to find node in execution order.");
-    node_distance = static_cast<size_t>(std::distance(execution_order.begin(), node_iter));
+    auto node_iter = node_to_index.find(node);
+    MS_EXCEPTION_IF_CHECK_FAIL(node_iter != node_to_index.end(), "Failed to find node in execution order.");
+    node_distance = node_iter->second;
   }
   AbsoluteDistanceList absolute_distance_list{AbsoluteDistance{user_info.node, node_distance}};
-  for (const auto &node_user : user_info.users) {
-    auto user_node_iter = std::find(execution_order.begin(), execution_order.end(), node_user.first);
-    if (user_node_iter == execution_order.end()) {
+  for (const auto &node_user : FilterUsersInExecutionOrder(user_info, node_to_index)) {
+    auto user_node_iter = node_to_index.find(node_user.first);
+    if (user_node_iter == node_to_index.end()) {
       MS_LOG(EXCEPTION) << "Failed to find in executor for user node: " << node_user.first->DebugString()
                         << ", node is " << node->DebugString();
     }
-    size_t absolute_distance = static_cast<size_t>(std::distance(execution_order.begin(), user_node_iter));
+    size_t absolute_distance = user_node_iter->second;
     (void)absolute_distance_list.emplace_back(AbsoluteDistance{node_user, absolute_distance});
   }
   std::sort(absolute_distance_list.begin(), absolute_distance_list.end(),
@@ -167,12 +190,13 @@ ReplaceInfoList GeneratePeakReplaceInfoList(const RelativeDistanceList &relative
 }
 
 std::optional<OffloadInfo> GeneratePeakOffloadInfo(const UserInfo &user_info, const CNodePtrList &execution_order,
+                                                   const std::map<AnfNodePtr, size_t> &node_to_index,
                                                    const std::optional<size_t> &producer_exec_anchor = std::nullopt) {
   if (!IsValidOffloadNode(user_info)) {
     return std::nullopt;
   }
   const auto &absolute_distance_list =
-    GeneratePeakAbsoluteDistanceList(user_info, execution_order, producer_exec_anchor);
+    GeneratePeakAbsoluteDistanceList(user_info, execution_order, node_to_index, producer_exec_anchor);
   if (absolute_distance_list.size() <= 1) {
     return std::nullopt;
   }
@@ -182,25 +206,6 @@ std::optional<OffloadInfo> GeneratePeakOffloadInfo(const UserInfo &user_info, co
     return std::nullopt;
   }
   return OffloadInfo{user_info.node, replace_info_list};
-}
-
-OffloadInfoList GeneratePeakOffloadInfoFromUserList(const CNodePtrList &execution_order,
-                                                    const UserInfoList &user_info_list,
-                                                    const std::vector<std::optional<size_t>> *producer_exec_anchors) {
-  OffloadInfoList offload_info_list;
-  for (size_t i = 0; i < user_info_list.size(); ++i) {
-    const auto &cur_user_info = user_info_list[i];
-    std::optional<size_t> anchor;
-    if (producer_exec_anchors != nullptr && i < producer_exec_anchors->size()) {
-      anchor = (*producer_exec_anchors)[i];
-    }
-    const auto &offload_info_opt = GeneratePeakOffloadInfo(cur_user_info, execution_order, anchor);
-    if (!offload_info_opt.has_value()) {
-      continue;
-    }
-    (void)offload_info_list.emplace_back(offload_info_opt.value());
-  }
-  return offload_info_list;
 }
 
 std::optional<GapRangeList> GetGapRangesFromOffloadInfo(const OffloadInfo &info,
@@ -237,13 +242,12 @@ std::optional<GapRangeList> GetGapRangesFromOffloadInfo(const OffloadInfo &info,
 std::optional<GapRangeList> GetCandidateOffloadGaps(const PeakEstimateCandidate &candidate,
                                                     const CNodePtrList &execution_order,
                                                     const std::map<AnfNodePtr, size_t> &node_to_index) {
-  UserInfoList single{candidate.user_info};
-  std::vector<std::optional<size_t>> anchors{std::optional<size_t>(candidate.creation_index)};
-  auto offload_list = GeneratePeakOffloadInfoFromUserList(execution_order, single, &anchors);
-  if (offload_list.empty()) {
+  const auto offload_info =
+    GeneratePeakOffloadInfo(candidate.user_info, execution_order, node_to_index, candidate.creation_index);
+  if (!offload_info.has_value()) {
     return std::nullopt;
   }
-  return GetGapRangesFromOffloadInfo(offload_list[0], node_to_index);
+  return GetGapRangesFromOffloadInfo(offload_info.value(), node_to_index);
 }
 
 std::optional<std::pair<size_t, size_t>> FindGlobalPeak(const std::vector<size_t> &memory_profile) {
@@ -614,25 +618,25 @@ void RecordSelectedOffload(const SelectedOffloadRecordInputs &inputs) {
   }
 }
 
-bool ApplySingleOffload(const PeakEstimateCandidate &best_cand, const PeakSelectionInputs &inputs,
-                        const PeakSelectionOutputs &outputs, size_t peak_index) {
+void ApplySingleOffload(const PeakEstimateCandidate &best_cand, const PeakSelectionOutputs &outputs,
+                        const GapRangeList &gap_ranges, size_t peak_index) {
   MS_EXCEPTION_IF_NULL(outputs.working_profile);
   MS_EXCEPTION_IF_NULL(outputs.selected_user_infos);
-  const auto gap_ranges = GetCandidateOffloadGaps(best_cand, inputs.index_order, inputs.node_to_index);
-  if (!gap_ranges.has_value()) {
-    return false;
-  }
-  const auto &selected_gap_ranges = gap_ranges.value();
-  ReduceWorkingProfileForGaps(selected_gap_ranges, best_cand.size, outputs.working_profile);
+  ReduceWorkingProfileForGaps(gap_ranges, best_cand.size, outputs.working_profile);
   const SelectedOffloadRecordInputs record_inputs{best_cand,
-                                                  selected_gap_ranges,
+                                                  gap_ranges,
                                                   peak_index,
                                                   outputs.selected_user_infos,
                                                   outputs.selected_producer_anchors,
                                                   outputs.selected_gap_ranges,
                                                   outputs.selected_peak_indices};
   RecordSelectedOffload(record_inputs);
-  return true;
+  MS_LOG(DEBUG) << "[HyperOffload] selected peak offload candidate, node: "
+                << (best_cand.user_info.node.first == nullptr ? "nullptr"
+                                                              : best_cand.user_info.node.first->DebugString())
+                << ", output_index: " << best_cand.user_info.node.second << ", peak_index: " << peak_index
+                << ", candidate_size: " << best_cand.size << ", gap_count: " << gap_ranges.size()
+                << ", selected_count: " << outputs.selected_user_infos->size();
 }
 
 size_t EffectiveMemoryThresholdBytes(size_t configured_max_bytes) {
@@ -673,12 +677,10 @@ std::optional<size_t> SelectBestCandidateForPeak(const PeakSelectionInputs &inpu
                                 peak_index);
 }
 
-void ApplySelectedPeakCandidate(size_t best_candidate_idx, const PeakSelectionInputs &inputs,
-                                const PeakSelectionOutputs &outputs, size_t peak_index) {
-  const auto &best_candidate = inputs.all_candidates[best_candidate_idx];
-  if (ApplySingleOffload(best_candidate, inputs, outputs, peak_index)) {
-    (void)outputs.successfully_offloaded->insert(best_candidate.user_info.node);
-  }
+void ApplySelectedPeakCandidate(const PeakEstimateCandidate &best_candidate, const PeakSelectionOutputs &outputs,
+                                const GapRangeList &gap_ranges, size_t peak_index) {
+  ApplySingleOffload(best_candidate, outputs, gap_ranges, peak_index);
+  (void)outputs.successfully_offloaded->insert(best_candidate.user_info.node);
   (void)outputs.excluded_from_selection->insert(best_candidate.user_info.node);
 }
 
@@ -692,7 +694,12 @@ bool RunPeakOffloadSelectionRound(const PeakSelectionInputs &inputs, const PeakS
   if (!best_candidate_idx.has_value()) {
     return false;
   }
-  ApplySelectedPeakCandidate(best_candidate_idx.value(), inputs, outputs, peak_index.value());
+  const auto gap_it = inputs.candidate_gap_ranges.find(best_candidate_idx.value());
+  if (gap_it == inputs.candidate_gap_ranges.end()) {
+    return false;
+  }
+  ApplySelectedPeakCandidate(inputs.all_candidates[best_candidate_idx.value()], outputs, gap_it->second,
+                             peak_index.value());
   return true;
 }
 
@@ -850,6 +857,17 @@ struct SafeDistanceSearchState {
   size_t best_distance;
 };
 
+struct SafeDistanceSearchInput {
+  size_t data_size;
+  size_t anchor_index;
+  size_t min_distance;
+  size_t max_distance;
+  const std::vector<size_t> &memory_profile;
+  size_t memory_threshold;
+  bool is_release;
+  size_t profile_size;
+};
+
 bool UpdateSafeDistanceSearchState(size_t mid, size_t simulated_peak, size_t memory_threshold,
                                    SafeDistanceSearchState *state) {
   MS_EXCEPTION_IF_NULL(state);
@@ -865,19 +883,17 @@ bool UpdateSafeDistanceSearchState(size_t mid, size_t simulated_peak, size_t mem
   return true;
 }
 
-size_t FindMaxSafeDistanceValue(size_t data_size, size_t anchor_index, size_t min_distance, size_t max_distance,
-                                const std::vector<size_t> &memory_profile, size_t memory_threshold, bool is_release,
-                                size_t profile_size) {
-  SafeDistanceSearchState state{min_distance, max_distance, min_distance};
+size_t FindMaxSafeDistanceValue(const SafeDistanceSearchInput &input) {
+  SafeDistanceSearchState state{input.min_distance, input.max_distance, input.min_distance};
 
-  size_t min_index = CalculateFreeIndex(anchor_index, min_distance, profile_size, is_release);
+  size_t min_index = CalculateFreeIndex(input.anchor_index, input.min_distance, input.profile_size, input.is_release);
 
   while (state.left <= state.right) {
     size_t mid = state.left + (state.right - state.left) / 2;
-    size_t mid_index = CalculateFreeIndex(anchor_index, mid, profile_size, is_release);
-    size_t simulated_peak =
-      SimulateMemoryPeakWithDistanceChange(data_size, min_index, mid_index, memory_profile, is_release);
-    if (!UpdateSafeDistanceSearchState(mid, simulated_peak, memory_threshold, &state)) {
+    size_t mid_index = CalculateFreeIndex(input.anchor_index, mid, input.profile_size, input.is_release);
+    size_t simulated_peak = SimulateMemoryPeakWithDistanceChange(input.data_size, min_index, mid_index,
+                                                                 input.memory_profile, input.is_release);
+    if (!UpdateSafeDistanceSearchState(mid, simulated_peak, input.memory_threshold, &state)) {
       break;
     }
   }
@@ -895,8 +911,15 @@ struct SafeReleaseDistanceSearchInput {
 
 size_t FindMaxSafeReleaseDistanceValue(const SafeReleaseDistanceSearchInput &input) {
   size_t data_size = GetDataNodeSizeBytes(input.info.data_node.first);
-  return FindMaxSafeDistanceValue(data_size, input.last_user_index, input.min_distance, input.max_distance,
-                                  input.memory_profile, input.memory_threshold, true, input.memory_profile.size());
+  const SafeDistanceSearchInput search_input{data_size,
+                                             input.last_user_index,
+                                             input.min_distance,
+                                             input.max_distance,
+                                             input.memory_profile,
+                                             input.memory_threshold,
+                                             true,
+                                             input.memory_profile.size()};
+  return FindMaxSafeDistanceValue(search_input);
 }
 
 size_t GetIdealReleaseDistance(const AnfNodePtr &data_node, const CNodePtrList &exec_order,
@@ -1072,8 +1095,15 @@ size_t FindMaxSafePrefetchDistanceValue(const SafePrefetchDistanceSearchInput &i
     return input.min_distance;
   }
   size_t data_size = GetDataNodeSizeBytes(input.info.data_node.first);
-  return FindMaxSafeDistanceValue(data_size, input.first_use_index, input.min_distance, input.max_distance,
-                                  input.memory_profile, input.memory_threshold, false, input.memory_profile.size());
+  const SafeDistanceSearchInput search_input{data_size,
+                                             input.first_use_index,
+                                             input.min_distance,
+                                             input.max_distance,
+                                             input.memory_profile,
+                                             input.memory_threshold,
+                                             false,
+                                             input.memory_profile.size()};
+  return FindMaxSafeDistanceValue(search_input);
 }
 
 void PhaseOneGetIdealPrefetchDistance(std::vector<PrefetchInfo> &prefetch_infos,
@@ -1311,8 +1341,10 @@ OffloadInfoList MemoryPeakBasedHyperOffloadStrategy::Run(const CNodePtrList &exe
   std::vector<size_t> memory_profile;
   std::vector<PeakEstimateCandidate> all_candidates;
   const size_t parameter_memory_baseline = ComputeTotalParameterMemory(graph);
-  BuildMemoryProfileAndCandidates(user_info_list, node_to_index, execution_order.size(), parameter_memory_baseline,
-                                  &memory_profile, &all_candidates, execution_order, graph);
+  const MemoryProfileBuildInputs memory_profile_inputs{
+    user_info_list, node_to_index, execution_order.size(), parameter_memory_baseline, execution_order, graph};
+  const MemoryProfileBuildOutputs memory_profile_outputs{&memory_profile, &all_candidates};
+  BuildMemoryProfileAndCandidates(memory_profile_inputs, memory_profile_outputs);
 
   const size_t configured_max = HyperOffloadConfig::GetInstance().max_device_memory();
   if (configured_max == 0) {
