@@ -12,7 +12,7 @@ mindspore.dataset.audio.BandrejectBiquad
     .. math::
         H(s) = \frac{s^2 + 1}{s^2 + \frac{s}{Q} + 1}
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     .. note:: 待处理音频shape需为<..., time>。
 
