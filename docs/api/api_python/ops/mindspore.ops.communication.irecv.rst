@@ -19,8 +19,6 @@ mindspore.ops.communication.irecv
         - 若函数以in-place模式运行，返回CommHandle。
         - 若函数以非in-place模式运行，返回Tuple(Tensor, CommHandle)。第一个元素存储输出结果，第二个元素是CommHandle。
 
-        其中，当 `async_op` 是 ``True`` ，则CommHandle是一个异步工作句柄；当 `async_op` 是 ``False`` ，则CommHandle将返回 ``None`` 。
-
     异常：
         - **TypeError** - `tensor` 的类型不是Tensor，`src` 不是int或 `group` 不是str。
         - **ValueError** - 如果进程的rank ID大于通信组的rank size。

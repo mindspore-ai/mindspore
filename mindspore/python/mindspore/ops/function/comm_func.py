@@ -1054,7 +1054,7 @@ def new_group(ranks=None,
         backend (str, invalid, optional): Support backend Library, Currently support ``"hccl"`` and ``"mccl"``.
             when backend is ``"hccl"`` will use Huawei Collective Communication Library(HCCL).
             when  backend is ``"mccl"`` will use MindSpore Collective Communication Library(MCCL).
-            Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
+            Default: ``None``, which means ``"hccl"`` in Ascend.
         pg_options (GroupOptions, optional): Additional communication group configuration parameters.
             The backend will automatically select supported parameters and apply them during group
             initialization. i.e. for the ``HCCL`` backend, ``hccl_config`` can be specified so that
@@ -1742,7 +1742,7 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         >>> init_process_group()
         >>> input_tensor = Tensor(np.ones([8, 8]).astype(np.float32))
         >>> output_tensor = Tensor(np.ones([4, 8]).astype(np.float32))
-        >>> output = reduce_scatter_tensor(output_tensor ,input_tensor)
+        >>> output = reduce_scatter_tensor(output_tensor, input_tensor)
         >>> print(output_tensor)
         [[2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]
@@ -2062,7 +2062,7 @@ def batch_isend_irecv(p2p_op_list):
     Note:
         - The ``'isend'`` and ``'irecv'`` of `P2POp` in `p2p_op_list` between ranks need to match each other.
         - `P2POp` in `p2p_op_list` can only use the same communication group.
-        - `tag` of `P2POp` in `p2p_op_list` is not support yet.
+        - `tag` of `P2POp` in `p2p_op_list` is not supported yet.
         - `tensor` of `P2POp` in `p2p_op_list` will not be modified by result inplace.
         - Only support PyNative mode, Graph mode is not currently supported.
 
@@ -2171,7 +2171,7 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
     Scatter tensor evenly across the processes in the specified communication group.
 
     Note:
-        - The interface behavior only support Tensor input and scatter evenly, which
+        - The interface behavior only supports Tensor input and scatter evenly, which
           is different from that of `pytorch.distributed.scatter`.
         - Only the tensor in process `src` (global rank) will do scatter.
         - Only support PyNative mode, Graph mode is not currently supported.
@@ -2179,7 +2179,7 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
     Args:
         output_tensor (Tensor): Output tensor. It should have the same size across all ranks.
         input_tensor (Tensor):  The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
+        src (int, optional): Specifies the rank (global rank) of the process that sends the tensor.
             And only process `src` will send the tensor. Default is ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -2270,7 +2270,7 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
         output_tensor (Tensor): Output tensor to accommodate tensor elements from all ranks.
         input_tensor (Tensor): The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
             The input tensors in this API must have the same size across all ranks.
-        dst (int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank(global rank) of the process that receives the tensor.
             And only process `dst` will receive the gathered tensor. Default: 0.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -2362,7 +2362,7 @@ def broadcast(tensor, src, group=None, async_op=False):
     Args:
         tensor (Tensor): Data to be sent if src is the rank of current process,
             and tensor to be used to save received data otherwise.
-        src (int): Specifies the rank(global rank) of the process that broadcast the tensor.
+        src (int): Specifies the rank(global rank) of the process that broadcasts the tensor.
             And only process `src` will broadcast the tensor.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -2438,7 +2438,7 @@ def barrier(group=None, async_op=False, device_ids=None):
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False``.
-        device_ids (list[int], optional): Currently It is a reserved Parameter. Default is ``None``.
+        device_ids (list[int], optional): Currently it is a reserved Parameter. Default is ``None``.
 
     Returns:
         CommHandle. If `async_op` is set to ``True``, CommHandle is an async work handle.
@@ -2489,7 +2489,7 @@ def barrier(group=None, async_op=False, device_ids=None):
 
 def send(tensor, dst=0, group=None, tag=0):
     """
-    Send tensors to the specified dest_rank.
+    Send tensors to the specified dest rank.
 
     Note:
         - Only support PyNative mode, Graph mode is not currently supported.
@@ -2578,7 +2578,7 @@ def recv(tensor, src=0, group=None, tag=0):
 
     Args:
         tensor (Tensor): Tensor to fill with received data, If the function operates in-place. Otherwise,
-            Indicates the the shape and dtype of this tensor is used to receive tensor, but the value of
+            Indicates the shape and dtype of this tensor is used to receive tensor, but the value of
             input `tensor` would not take effect.
         src (int, optional): A required integer identifying the source rank(global rank). Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
@@ -2750,7 +2750,7 @@ def irecv(tensor, src=0, group=None, tag=0):
 
     Args:
         tensor (Tensor): Tensor to fill with received data, if the function operates in-place.Otherwise,
-            Indicates the the shape and dtype of this tensor is used to receive tensor, but the value of
+            Indicates the shape and dtype of this tensor is used to receive tensor, but the value of
             input `tensor` would not take effect.
         src (int, optional): A required integer identifying the source rank(global rank). Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
@@ -2762,9 +2762,6 @@ def irecv(tensor, src=0, group=None, tag=0):
         - If the function operates in-place, return CommHandle.
         - If the function operates non in-place, return Tuple(Tensor, CommHandle).
           The first element stores the output result, and the second element is CommHandle.
-
-        Among them, when `async_op` is ``True``, then CommHandle is an asynchronous working handle;
-        When `async_op` is ``False``, CommHandle will return ``None``.
 
     Raises:
         TypeError: If the type of `tensor` is not Tensor, If `src` is not an int or `group` is not a str.
@@ -3006,7 +3003,7 @@ def all_to_all_single(output,
                       group=None,
                       async_op=False):
     """
-    scatter and gather input with split size to/from all rank, and return result in a single tensor.
+    Scatter and gather input with split size to/from all ranks, and return result in a single tensor.
 
     Note:
         Only support PyNative mode, Graph mode is not currently supported.
@@ -3283,7 +3280,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
         >>> init_process_group()
         >>> input_tensors = [Tensor(np.ones([4, 8]).astype(np.float32)), Tensor(np.ones([4, 8]).astype(np.float32))]
         >>> output_tensor = Tensor(np.zeros([4, 8]).astype(np.float32))
-        >>> output = reduce_scatter(output_tensor ,input_tensors)
+        >>> output = reduce_scatter(output_tensor, input_tensors)
         >>> print(output_tensor)
         [[2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]
@@ -3337,8 +3334,8 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
     Args:
         tensor (Tensor): the output tensor.
         scatter_list (list[Tensor]): List of same-sized tensors to scatter.
-            default is None, must be specified on the source rank.
-        src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
+            Must be specified on the source rank.
+        src (int, optional): Specifies the rank (global rank) of the process that sends the tensor.
             And only process `src` will send the tensor. Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -3430,7 +3427,7 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
     Args:
         tensor (Tensor): The tensor to be gathered.
         gather_list (list[Tensor]): List of same-sized tensors to use for gathered data.
-        dst (int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank(global rank) of the process that receives the tensor.
             And only process `dst` will receive the gathered tensor. Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -3444,7 +3441,7 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
         TypeError: If the type of `tensor` is not Tensor, or `gather_list` is not Tensor list.
         TypeError: If `dst` is not an integer, `group` is not a string or `async_op` is not bool.
         TypeError: If size of `gather_list` is not equal to group size.
-        TypeError: If the type or shape of `tensor` not equal to the member of `gather_list`.
+        TypeError: If the type or shape of `tensor` is not equal to the member of `gather_list`.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -3536,8 +3533,8 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
         scatter_object_output_list (list[Any]): Non-empty list whose first element
             will store the object scattered to this rank.
         scatter_object_input_list (list[Any]): List of python objects to scatter.
-            it must be specified on the source rank.
-        src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
+            It must be specified on the source rank.
+        src (int, optional): Specifies the rank (global rank) of the process that sends the tensor.
             And only process `src` will send the tensor. Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -3633,11 +3630,11 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
         of the data used by the interface on their own.
 
     Args:
-        obj (Any): The python objects to be gathered.
+        obj (Any): The Python objects to be gathered.
         object_gather_list (list[Any], optional): List of same-sized tensors to use for gathered data.
             On the `dst` rank, it should be correctly sized as the size of the group for this
             collective and will contain the output. Default: ``None``.
-        dst (int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank(global rank) of the process that receives the tensor.
             And only process `dst` will receive the gathered tensor. Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -3724,7 +3721,7 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
     Args:
         object_list (list[Any]): list of input to be sent if src is the rank of current process,
             and list to be used to save received data otherwise.
-        src (int, optional): Specifies the rank(global rank) of the process that broadcast the Python objects.
+        src (int, optional): Specifies the rank(global rank) of the process that broadcasts the Python objects.
             And only process `src` will broadcast the Python objects. Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``None``, which means
             ``"hccl_world_group"`` in Ascend.
@@ -4000,7 +3997,7 @@ def send_object_list(object_list, dst, group=None, device=None):
         of the data used by the interface on their own.
 
     Args:
-        object_list (list[Any]): List of input objects to sent.
+        object_list (list[Any]): List of input objects to send.
             Each object must be picklable. Receiver must provide lists of equal sizes.
         dst (int): Destination global rank to send `object_list` to.
         group (str, optional): The process group to work on. Default: ``None``, which means
@@ -4008,7 +4005,7 @@ def send_object_list(object_list, dst, group=None, device=None):
         device (str, optional): Currently it is a reserved parameter. Default: ``None``.
 
     Raises:
-        TypeError: If `dst` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        TypeError: If `dst` is not of type int, `group` is not of type str, or `object_list` is not of type list.
         ValueError: If the `dst` process rank id is same as the current process.
 
     Supported Platforms:
@@ -4102,7 +4099,7 @@ def recv_object_list(object_list, src=0, group=None, device=None):
         int. If successful, it will return ``0``.
 
     Raises:
-        TypeError: If `src` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        TypeError: If `src` is not of type int, `group` is not of type str, or `object_list` is not of type list.
         ValueError: If the `src` process rank id is same as the current process.
 
     Supported Platforms:
