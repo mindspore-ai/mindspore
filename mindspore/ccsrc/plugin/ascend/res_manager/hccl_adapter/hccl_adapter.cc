@@ -259,7 +259,7 @@ bool HcclAdapter::HcclWatchdogThread(HcclComm comm, std::string *error_info, boo
     return true;
   }
   MS_EXCEPTION_IF_NULL(disable);
-  HcclResult hccl_async_error;
+  HcclResult hccl_async_error = HCCL_SUCCESS;
   auto ret = hccl_get_comm_async_error_(comm, &hccl_async_error);
   if (ret != HCCL_SUCCESS) {
     MS_LOG(WARNING) << "Call HcclGetCommAsyncError failed, close watchdog.";
