@@ -10,7 +10,7 @@ mindspore.dataset.audio.BassBiquad
     .. math::
         H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     .. note:: 待处理音频shape需为<..., time>。
 

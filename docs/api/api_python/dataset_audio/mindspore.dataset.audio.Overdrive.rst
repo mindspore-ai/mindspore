@@ -5,7 +5,7 @@ mindspore.dataset.audio.Overdrive
 
     给音频波形施加过载效果。
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     参数：
         - **gain** (float, 可选) - 期望提升（或衰减）的音频增益，单位为dB，取值范围为[0, 100]。默认值： ``20.0`` 。

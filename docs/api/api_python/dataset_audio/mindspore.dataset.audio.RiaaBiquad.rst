@@ -5,7 +5,7 @@ mindspore.dataset.audio.RiaaBiquad
 
     对输入音频波形施加RIAA均衡。
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     参数：
         - **sample_rate** (int) - 波形的采样率，单位为Hz。必须为 ``44100`` 、 ``48000`` 、 ``88200`` 、 ``96000`` 中的一个。
