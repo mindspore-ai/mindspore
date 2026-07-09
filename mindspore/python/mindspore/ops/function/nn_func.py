@@ -3093,14 +3093,6 @@ def interpolate_ext(input,
     if size is not None:
         size = _interploate_ext_make_tuple(input, size)
     elif scale_factor is not None:
-        # Normalize only static Python / numpy values. Dynamic sequences may be
-        # lowered as unknown-length tuples in graph mode and cannot be iterated
-        # in Python safely.
-        if isinstance(scale_factor, (list, tuple)):
-            if not F.is_sequence_value_unknown(scale_factor):
-                scale_factor = tuple(float(s) for s in scale_factor)
-        else:
-            scale_factor = float(scale_factor)
         scale_factor = _interploate_ext_make_tuple(input, scale_factor)
     else:
         raise ValueError(

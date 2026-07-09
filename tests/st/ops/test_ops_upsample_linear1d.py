@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for UpsampleLinear1D."""
+
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -74,6 +76,10 @@ def test_upsample_linear_1d(mode):
     expected = np.array([[[1.8, 2.4, 1.8], [1.8, 2.4, 1.8]]]).astype(np.float32)
     diff = abs(out.asnumpy() - expected)
     assert np.all(diff < error)
+
+    out_with_int_scales = upsample_linear1d_forward_func(input_tensor, None, (2,), True)
+    out_with_float_scales = upsample_linear1d_forward_func(input_tensor, None, (2.0,), True)
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out_with_float_scales.asnumpy(), rtol=0, atol=0)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)

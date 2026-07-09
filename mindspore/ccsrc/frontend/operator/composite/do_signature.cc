@@ -16,6 +16,7 @@
 
 #include "frontend/operator/composite/do_signature.h"
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 #include "abstract/abstract_value.h"
@@ -49,6 +50,11 @@ namespace mindspore {
 namespace prim {
 namespace {
 using TypeInfoPair = std::pair<std::vector<TypeId>, std::vector<bool>>;
+
+struct SequenceCastInfo {
+  bool is_tuple{false};
+  TypeId elem_type{kTypeUnknown};
+};
 
 const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();
@@ -131,6 +137,230 @@ TypeInfoPair GetTypeInfo(const std::vector<TypePtr> &input_types) {
     (void)type_info_pair.second.emplace_back(is_tensor);
   }
   return type_info_pair;
+}
+
+bool IsBoolType(const TypePtr &type) { return type != nullptr && type->isa<Bool>(); }
+
+bool IsIntType(const TypePtr &type) { return type != nullptr && (type->isa<Int>() || type->isa<UInt>()); }
+
+bool IsFloatType(const TypePtr &type) { return type != nullptr && (type->isa<Float>() || type->isa<BFloat>()); }
+
+bool IsNumberLikeType(const TypePtr &type) { return IsBoolType(type) || IsIntType(type) || IsFloatType(type); }
+
+TypePtr GetDynamicSequenceElemType(const TypePtr &input_type) {
+  if (input_type == nullptr) {
+    return nullptr;
+  }
+  if (input_type->isa<Tuple>()) {
+    auto tuple_type = input_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    return tuple_type->dynamic_len() ? tuple_type->dynamic_element_type() : nullptr;
+  }
+  if (input_type->isa<List>()) {
+    auto list_type = input_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    return list_type->dynamic_len() ? list_type->dynamic_element_type() : nullptr;
+  }
+  return nullptr;
+}
+
+std::optional<SequenceCastInfo> GetSequenceCastInfo(const ops::OP_DTYPE &dtype) {
+  switch (dtype) {
+    case ops::OP_DTYPE::DT_TUPLE_BOOL:
+      return SequenceCastInfo{true, kNumberTypeBool};
+    case ops::OP_DTYPE::DT_TUPLE_INT:
+      return SequenceCastInfo{true, kNumberTypeInt64};
+    case ops::OP_DTYPE::DT_TUPLE_FLOAT:
+      return SequenceCastInfo{true, kNumberTypeFloat32};
+    case ops::OP_DTYPE::DT_TUPLE_NUMBER:
+      return SequenceCastInfo{true, kTypeUnknown};
+    case ops::OP_DTYPE::DT_LIST_BOOL:
+      return SequenceCastInfo{false, kNumberTypeBool};
+    case ops::OP_DTYPE::DT_LIST_INT:
+      return SequenceCastInfo{false, kNumberTypeInt64};
+    case ops::OP_DTYPE::DT_LIST_FLOAT:
+      return SequenceCastInfo{false, kNumberTypeFloat32};
+    case ops::OP_DTYPE::DT_LIST_NUMBER:
+      return SequenceCastInfo{false, kTypeUnknown};
+    default:
+      return std::nullopt;
+  }
+}
+
+bool MatchSequenceElemType(const TypePtr &elem_type, const TypeId &target_elem_type) {
+  if (target_elem_type == kTypeUnknown) {
+    return IsNumberLikeType(elem_type);
+  }
+  if (target_elem_type == kNumberTypeBool) {
+    return IsBoolType(elem_type);
+  }
+  if (target_elem_type == kNumberTypeInt64) {
+    return IsIntType(elem_type);
+  }
+  if (target_elem_type == kNumberTypeFloat32) {
+    return IsFloatType(elem_type);
+  }
+  return false;
+}
+
+bool MatchSequenceInputType(const TypePtr &input_type, const ops::OP_DTYPE &dtype) {
+  auto seq_info = GetSequenceCastInfo(dtype);
+  if (!seq_info.has_value() || input_type == nullptr) {
+    return false;
+  }
+  TypePtrList elem_types;
+  if (seq_info->is_tuple) {
+    auto tuple_type = input_type->cast<TuplePtr>();
+    if (tuple_type == nullptr) {
+      return false;
+    }
+    if (tuple_type->dynamic_len()) {
+      return MatchSequenceElemType(tuple_type->dynamic_element_type(), seq_info->elem_type);
+    }
+    elem_types = tuple_type->elements();
+  } else {
+    auto list_type = input_type->cast<ListPtr>();
+    if (list_type == nullptr) {
+      return false;
+    }
+    if (list_type->dynamic_len()) {
+      return MatchSequenceElemType(list_type->dynamic_element_type(), seq_info->elem_type);
+    }
+    elem_types = list_type->elements();
+  }
+  return std::all_of(elem_types.cbegin(), elem_types.cend(), [&seq_info](const TypePtr &elem_type) {
+    return MatchSequenceElemType(elem_type, seq_info->elem_type);
+  });
+}
+
+AnfNodePtr NewNodeWithAnchor(const FuncGraphPtr &func_graph, const AnfNodePtr &anchor, const AnfNodePtrList &inputs) {
+  return anchor == nullptr ? func_graph->NewCNodeInOrder(inputs) : func_graph->NewCNodeBefore(anchor, inputs);
+}
+
+AnfNodePtr DoTypeCastForDynamicScalarSequence(const FuncGraphPtr &func_graph, const TypePtr &dynamic_elem_type,
+                                              const SequenceCastInfo &dst_info, const bool input_is_tuple,
+                                              const AnfNodePtr &input, const AnfNodePtr &old_cnode) {
+  if (!MatchSequenceElemType(dynamic_elem_type, kTypeUnknown)) {
+    return nullptr;
+  }
+  const bool need_elem_cast =
+    dst_info.elem_type != kTypeUnknown && !MatchSequenceElemType(dynamic_elem_type, dst_info.elem_type);
+  const bool need_container_cast = input_is_tuple != dst_info.is_tuple;
+  if (!need_elem_cast && !need_container_cast) {
+    return nullptr;
+  }
+  if (need_elem_cast) {
+    auto seq_to_tensor_prim = std::make_shared<Primitive>(input_is_tuple ? "TupleToTensor" : "ListToTensor");
+    auto dst_type_node = input_is_tuple ? NewValueNode(static_cast<int64_t>(dst_info.elem_type))
+                                        : NewValueNode(TypeIdToType(dst_info.elem_type));
+    auto tensor_node =
+      NewNodeWithAnchor(func_graph, old_cnode, {NewValueNode(seq_to_tensor_prim), input, dst_type_node});
+    auto tensor_to_seq_prim = std::make_shared<Primitive>(dst_info.is_tuple ? "TensorToTuple" : "TensorToList");
+    return NewNodeWithAnchor(func_graph, old_cnode, {NewValueNode(tensor_to_seq_prim), tensor_node});
+  }
+  auto seq_cast_prim = dst_info.is_tuple ? prim::kPrimListToTuple : prim::kPrimTupleToList;
+  return NewNodeWithAnchor(func_graph, old_cnode, {NewValueNode(seq_cast_prim), input});
+}
+
+AnfNodePtr DoTypeCastForStaticScalarSequence(const FuncGraphPtr &func_graph, const TypePtr &input_type,
+                                             const SequenceCastInfo &dst_info, const bool input_is_tuple,
+                                             const AnfNodePtr &input, const AnfNodePtr &old_cnode) {
+  TypePtrList elem_types;
+  if (input_is_tuple) {
+    auto tuple_type = input_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    if (tuple_type->dynamic_len()) {
+      return nullptr;
+    }
+    elem_types = tuple_type->elements();
+  } else {
+    auto list_type = input_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    if (list_type->dynamic_len()) {
+      return nullptr;
+    }
+    elem_types = list_type->elements();
+  }
+
+  bool need_cast = input_is_tuple != dst_info.is_tuple;
+  const auto getitem_prim = input_is_tuple ? prim::kPrimTupleGetItem : prim::kPrimListGetItem;
+  const auto make_prim = dst_info.is_tuple ? prim::kPrimMakeTuple : prim::kPrimMakeList;
+  AnfNodePtrList elem_inputs{NewValueNode(make_prim)};
+  for (size_t i = 0; i < elem_types.size(); ++i) {
+    auto elem_node =
+      NewNodeWithAnchor(func_graph, old_cnode, {NewValueNode(getitem_prim), input, NewValueNode(SizeToLong(i))});
+    auto new_elem = elem_node;
+    if (dst_info.elem_type != kTypeUnknown && !MatchSequenceElemType(elem_types[i], dst_info.elem_type)) {
+      new_elem = NewNodeWithAnchor(
+        func_graph, old_cnode,
+        {NewValueNode(prim::kPrimScalarCast), elem_node, NewValueNode(static_cast<int64_t>(dst_info.elem_type))});
+      need_cast = true;
+    }
+    (void)elem_inputs.emplace_back(new_elem);
+  }
+  return need_cast ? NewNodeWithAnchor(func_graph, old_cnode, elem_inputs) : nullptr;
+}
+
+AnfNodePtr DoTypeCastForScalarSequence(const FuncGraphPtr &func_graph, const TypePtr &input_type,
+                                       const ops::OP_DTYPE &dst_dtype, const AnfNodePtr &input,
+                                       const AnfNodePtr &old_cnode) {
+  auto dst_info = GetSequenceCastInfo(dst_dtype);
+  if (!dst_info.has_value() || input_type == nullptr) {
+    return nullptr;
+  }
+  const bool input_is_tuple = input_type->isa<Tuple>();
+  if (!input_is_tuple && !input_type->isa<List>()) {
+    return nullptr;
+  }
+  auto dynamic_elem_type = GetDynamicSequenceElemType(input_type);
+  if (dynamic_elem_type != nullptr) {
+    return DoTypeCastForDynamicScalarSequence(func_graph, dynamic_elem_type, dst_info.value(), input_is_tuple, input,
+                                              old_cnode);
+  }
+  return DoTypeCastForStaticScalarSequence(func_graph, input_type, dst_info.value(), input_is_tuple, input, old_cnode);
+}
+
+void DoTypeCastForSequenceInput(const FuncGraphPtr &func_graph, const ValuePtr &function,
+                                const std::vector<TypePtr> &input_types, AnfNodePtrList *op_inputs,
+                                const AnfNodePtr &old_cnode) {
+  MS_EXCEPTION_IF_NULL(op_inputs);
+  if (!function->isa<Primitive>()) {
+    return;
+  }
+  const auto &prim = function->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def == nullptr) {
+    return;
+  }
+  std::vector<ops::OpInputArg> op_call_args;
+  (void)std::copy_if(op_def->args_.cbegin(), op_def->args_.cend(), std::back_inserter(op_call_args),
+                     [](const ops::OpInputArg &arg) { return !arg.as_init_arg_; });
+  if (op_call_args.size() < op_inputs->size() || input_types.size() < op_inputs->size()) {
+    return;
+  }
+
+  for (size_t i = 0; i < op_inputs->size(); ++i) {
+    const auto &op_arg = op_call_args[i];
+    if (!op_arg.arg_handler_.empty() || op_arg.cast_dtype_.empty() ||
+        !GetSequenceCastInfo(op_arg.arg_dtype_).has_value() ||
+        MatchSequenceInputType(input_types[i], op_arg.arg_dtype_)) {
+      continue;
+    }
+    for (const auto &cast_dtype : op_arg.cast_dtype_) {
+      if (!MatchSequenceInputType(input_types[i], cast_dtype)) {
+        continue;
+      }
+      auto casted_input =
+        DoTypeCastForScalarSequence(func_graph, input_types[i], op_arg.arg_dtype_, op_inputs->at(i), old_cnode);
+      if (casted_input != nullptr) {
+        (*op_inputs)[i] = casted_input;
+      } else {
+        MS_EXCEPTION(TypeError) << prim::BuildOpInputsErrorMsg(op_def, op_arg.arg_name_, input_types[i]);
+      }
+      break;
+    }
+  }
 }
 
 void CheckSigSize(const ValuePtr &function, const size_t &sig_size, const bool &has_var,
@@ -491,6 +721,7 @@ std::vector<AnfNodePtr> GetNewInputsBySignatures(const FuncGraphPtr &func_graph,
   if (args_abs_list.size() < positional_size) {
     ProcessDefault(func_graph, func_name, args_abs_list, signature, &op_inputs, &input_types);
   }
+  DoTypeCastForSequenceInput(func_graph, function, input_types, &op_inputs, old_cnode);
   // Record type info.
   auto source_type_info = GetTypeInfo(input_types);
   auto target_type_info = source_type_info;

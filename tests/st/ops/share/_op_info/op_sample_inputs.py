@@ -4918,6 +4918,43 @@ def basic_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=Non
                 },
                 sample_name=op_info.name,
             )
+            yield OpSampleInput(
+                op_input=make_arg(shape_with_nc(D, rank)),
+                op_args=(),
+                op_kwargs={
+                    "size": None,
+                    "scale_factor": [True] * rank,
+                    "mode": internal_mode,
+                    "align_corners": align_corners,
+                    "recompute_scale_factor": False,
+                },
+                sample_name=op_info.name,
+            )
+            int_scale_factor = tuple([2] * rank)
+            yield OpSampleInput(
+                op_input=make_arg(shape_with_nc(D, rank)),
+                op_args=(),
+                op_kwargs={
+                    "size": None,
+                    "scale_factor": int_scale_factor,
+                    "mode": internal_mode,
+                    "align_corners": align_corners,
+                    "recompute_scale_factor": False,
+                },
+                sample_name=op_info.name,
+            )
+            yield OpSampleInput(
+                op_input=make_arg(shape_with_nc(D, rank)),
+                op_args=(),
+                op_kwargs={
+                    "size": None,
+                    "scale_factor": list(int_scale_factor),
+                    "mode": internal_mode,
+                    "align_corners": align_corners,
+                    "recompute_scale_factor": False,
+                },
+                sample_name=op_info.name,
+            )
 
 def extra_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
@@ -4955,7 +4992,6 @@ def extra_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=Non
                                "recompute_scale_factor": recompute, },
                     sample_name=op_info.name,
                 )
-
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
     # ---- small value tensors ----
@@ -5484,6 +5520,49 @@ def dynamic_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=N
                             ),
                         ),
                     )
+                for scale_name, int_scale_factor in (
+                        ("int_tuple", mutable(tuple([2] * rank))),
+                        ("int_list", mutable([2] * rank))):
+                    yield OpDynamicInput(
+                        op_compile_input=OpSampleInput(
+                            op_input=ms.Tensor(shape=tuple([N, C] + [None] * rank), dtype=dtype),
+                            op_args=(),
+                            op_kwargs={
+                                "size": None,
+                                "scale_factor": int_scale_factor,
+                                "mode": internal_mode,
+                                "align_corners": align_corners,
+                                "recompute_scale_factor": False,
+                            },
+                            sample_name=f'{op_info.name}_dynamic_shape_compile_input_{scale_name}_r{rank}',
+                        ),
+                        op_running_inputs=(
+                            OpSampleInput(
+                                op_input=make_func(shape=nc_shape(rank, D1)),
+                                op_args=(),
+                                op_kwargs={
+                                    "size": None,
+                                    "scale_factor": int_scale_factor,
+                                    "mode": internal_mode,
+                                    "align_corners": align_corners,
+                                    "recompute_scale_factor": False,
+                                },
+                                sample_name=f'{op_info.name}_dynamic_shape_running_input_{scale_name}_r{rank}',
+                            ),
+                            OpSampleInput(
+                                op_input=make_func(shape=nc_shape(rank, D2)),
+                                op_args=(),
+                                op_kwargs={
+                                    "size": None,
+                                    "scale_factor": int_scale_factor,
+                                    "mode": internal_mode,
+                                    "align_corners": align_corners,
+                                    "recompute_scale_factor": False,
+                                },
+                                sample_name=f'{op_info.name}_dynamic_shape_running_input_{scale_name}_r{rank}',
+                            ),
+                        ),
+                    )
 
     if not kwargs.get("only_dynamic_shape", False):
         # Dynamic rank with size specified
@@ -5530,6 +5609,51 @@ def dynamic_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=N
                     ),
                 ),
             )
+            for scale_name, int_scale_factor in (
+                    ("int_tuple", mutable(tuple([2] * rank))),
+                    ("int_list", mutable([2] * rank)),
+                    ("int_scalar", 2),
+                    ("bool_scalar", True)):
+                yield OpDynamicInput(
+                    op_compile_input=OpSampleInput(
+                        op_input=ms.Tensor(shape=None, dtype=dtype),
+                        op_args=(),
+                        op_kwargs={
+                            "size": None,
+                            "scale_factor": int_scale_factor,
+                            "mode": internal_mode,
+                            "align_corners": align_corners,
+                            "recompute_scale_factor": False,
+                        },
+                        sample_name=f'{op_info.name}_dynamic_rank_compile_input_{scale_name}_r{rank}',
+                    ),
+                    op_running_inputs=(
+                        OpSampleInput(
+                            op_input=make_func(shape=nc_shape(rank, D1)),
+                            op_args=(),
+                            op_kwargs={
+                                "size": None,
+                                "scale_factor": int_scale_factor,
+                                "mode": internal_mode,
+                                "align_corners": align_corners,
+                                "recompute_scale_factor": False,
+                            },
+                            sample_name=f'{op_info.name}_dynamic_rank_running_input_{scale_name}_r{rank}',
+                        ),
+                        OpSampleInput(
+                            op_input=make_func(shape=nc_shape(rank, D2)),
+                            op_args=(),
+                            op_kwargs={
+                                "size": None,
+                                "scale_factor": int_scale_factor,
+                                "mode": internal_mode,
+                                "align_corners": align_corners,
+                                "recompute_scale_factor": False,
+                            },
+                            sample_name=f'{op_info.name}_dynamic_rank_running_input_{scale_name}_r{rank}',
+                        ),
+                    ),
+                )
 
 
 # basic op_basic_reference_inputs_func for prelu
@@ -10623,6 +10747,24 @@ def error_inputs_other_op_interpolate(op_info: OpInfo, dtype=None, device=None, 
             ),
             op_error_type=ValueError,
             op_error_info=' align_corners not support mode nearest',
+        )
+
+    invalid_scale_factors = (
+        tuple([np.array(2)] * rank),
+        tuple([np.array(2.5)] * rank),
+        tuple([np.array([2.5])] * rank),
+        tuple([ms.Tensor(2)] * rank),
+    )
+    for invalid_scale_factor in invalid_scale_factors:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(shape_with_nc(D, rank)),
+                op_args=(),
+                op_kwargs={'size': None, 'scale_factor': invalid_scale_factor, 'mode': internal_mode},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info='invalid sequence scale_factor element type',
         )
 
 def error_inputs_other_op_pad(op_info: OpInfo, dtype=None, device=None, **kwargs):

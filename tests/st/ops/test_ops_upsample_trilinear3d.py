@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for UpsampleTrilinear3D."""
+
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -86,6 +88,10 @@ def test_upsample_trilinear_3d(mode):
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-4
     assert np.all(diff < error)
+
+    out_with_int_scales = upsample_trilinear3d_forward_func(input_tensor, None, (2, 2, 3), False)
+    out_with_float_scales = upsample_trilinear3d_forward_func(input_tensor, None, (2.0, 2.0, 3.0), False)
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out_with_float_scales.asnumpy(), rtol=0, atol=0)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
@@ -208,10 +214,10 @@ def test_upsample_trilinear_3d_error(mode):
         net(input_tensor, [3, 4, 5], None)
         _pynative_executor.sync()
 
-    with pytest.raises(TypeError):
-        input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
-        net(input_tensor, None, [1, 2, 3])
-        _pynative_executor.sync()
+    input_tensor = Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32))
+    out_with_int_scales = net(input_tensor, None, [1, 2, 3])
+    out_with_float_scales = net(input_tensor, None, [1.0, 2.0, 3.0])
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out_with_float_scales.asnumpy(), rtol=0, atol=0)
 
     with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))

@@ -87,6 +87,9 @@ def test_upsample_nearest(mode):
     error = np.ones(shape=expected.shape) * 1.0e-4
     assert np.all(diff < error)
 
+    out_with_int_scales = upsample_nearest_forward_func(input_tensor, None, (2,))
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out.asnumpy(), rtol=0, atol=0)
+
     expected = np.array([[[3.0, 3.0, 3.0, 3.0],
                           [3.0, 3.0, 3.0, 3.0]]]).astype(np.float32)
     out = upsample_nearest_backward_func(input_tensor, None, [3.,])
@@ -129,6 +132,9 @@ def test_upsample_nearest(mode):
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-4
     assert np.all(diff < error)
+
+    out_with_int_scales = upsample_nearest_forward_func(input_tensor, None, [2, 3])
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out.asnumpy(), rtol=0, atol=0)
 
     expected = np.array(
         [[[[6.0, 6.0, 6.0], [6.0, 6.0, 6.0]], [[6.0, 6.0, 6.0], [6.0, 6.0, 6.0]]]]
@@ -210,6 +216,9 @@ def test_upsample_nearest(mode):
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-4
     assert np.all(diff < error)
+
+    out_with_int_scales = upsample_nearest_forward_func(input_tensor, None, [2, 2, 2])
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out.asnumpy(), rtol=0, atol=0)
 
     expected = np.array(
         [[[[[12.0, 8.0, 8.0], [12.0, 8.0, 8.0]], [[6.0, 4.0, 4.0], [6.0, 4.0, 4.0]]]]]

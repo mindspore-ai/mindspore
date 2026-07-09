@@ -1489,6 +1489,8 @@ def ms_nn_up_sample(input, size=None, scale_factor=None, mode="nearest",
 
 def torch_nn_up_sample(input, size=None, scale_factor=None, mode="nearest",
                     align_corners=None, recompute_scale_factor=None):
+    if isinstance(scale_factor, list):
+        scale_factor = tuple(scale_factor)
     net = torch.nn.Upsample(size=size, scale_factor=scale_factor, mode=mode,
                            align_corners=align_corners, recompute_scale_factor=recompute_scale_factor)
     return net(input)
@@ -1899,4 +1901,3 @@ def mint_optim_AdamW_torch(input, weight, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
         scheduler.step()
 
     return net.weight.data
-

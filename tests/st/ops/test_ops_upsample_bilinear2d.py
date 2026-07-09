@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for UpsampleBilinear2D."""
+
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -92,6 +94,10 @@ def test_upsample_bilinear_2d(mode):
     diff = abs(out.asnumpy() - expected)
     error = np.ones(shape=expected.shape) * 1.0e-4
     assert np.all(diff < error)
+
+    out_with_int_scales = upsample_bilinear2d_forward_func(input_tensor, None, (2, 3), True)
+    out_with_float_scales = upsample_bilinear2d_forward_func(input_tensor, None, (2.0, 3.0), True)
+    np.testing.assert_allclose(out_with_int_scales.asnumpy(), out_with_float_scales.asnumpy(), rtol=0, atol=0)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
