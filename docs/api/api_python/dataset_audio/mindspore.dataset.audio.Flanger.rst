@@ -5,7 +5,7 @@ mindspore.dataset.audio.Flanger
 
     给音频施加镶边效果。
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     参数：
         - **sample_rate** (int) - 波形采样频率，单位为Hz。例如 ``44100`` 。

@@ -7,7 +7,7 @@ mindspore.dataset.audio.BandBiquad
 
     带通滤波器的频率响应在中心频率附近呈对数下降，下降的斜率由带宽决定。频带两端处输出音频的幅度为原始幅度的一半。
 
-    接口实现方式类似于 `SoX库 <http://sox.sourceforge.net/sox.html>`_ 。
+    接口实现方式类似于 `SoX库 <https://sourceforge.net/projects/sox/>`_ 。
 
     .. note:: 待处理音频shape需为<..., time>。
 
