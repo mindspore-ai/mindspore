@@ -11,7 +11,7 @@ mindspore.ops.communication.init_process_group
         - MCCL通信组不支持重复初始化和销毁。
 
     参数：
-        - **backend** (str, 可选) - 要使用的后端。默认值为 ``"hccl"``，目前仅支持 ``"hccl"``。
+        - **backend** (str, 可选) - 要使用的后端。默认值： ``"hccl"``，目前仅支持 ``"hccl"``。
         - **init_method** (str, 可选) - 指定如何初始化集合通信组的URL。默认值： ``None``。
         - **timeout** (timedelta, 可选) - API执行的超时时间。默认值： ``None``。目前，此参数仅在主机端集群网络配置中使用 `init_method` 或 `store` 时支持。
         - **world_size** (int, 可选) - 参与作业的进程数。默认值： ``-1``。

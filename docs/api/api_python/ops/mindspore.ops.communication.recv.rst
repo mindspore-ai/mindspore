@@ -18,6 +18,7 @@ mindspore.ops.communication.recv
     返回：
         - 若函数以in-place模式运行，返回int。如果成功，返回 ``0``。
         - 若函数以非in-place模式运行，返回Tensor。输出shape为 :math:`(x_1, x_2, ..., x_R)`。
+
     异常：
         - **TypeError** - `tensor` 不是Tensor，`src` 不是int或 `group` 不是str。
         - **ValueError** - 如果进程的rank ID大于通信组的rank size。
