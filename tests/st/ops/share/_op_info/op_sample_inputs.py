@@ -22280,3 +22280,501 @@ def extra_sample_inputs_functional_adaptivemaxpool(op_info: OpInfo, dtype=None, 
 
     yield from make_extra_tensor(op_info, (10, 60, 80), (9, ),
                                  {'return_indices': True}, dtype=dtype, device=device)
+
+def basic_sample_inputs_mint_eye(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((), None),
+        ((2, 23), 1),
+        ((2, 23), 23),
+        ((1, 5), 35),
+    )
+
+    for input_shape, m in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs={'m': m, 'dtype': dtype},
+            sample_name=f"{op_info.name}_{dtype}",
+        )
+
+def extra_sample_inputs_mint_eye(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((33, 23), 1),
+        ((50, 2), 50),
+        ((23, 23), 17),
+        ((0, 2), 0),
+    )
+
+    for input_shape, m in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs={'m': m, 'dtype': dtype},
+            sample_name=f"{op_info.name}_{dtype}",
+        )
+    # int large mix small values
+    values = (1, 31, 63, 127, 128, 195, 254, 1024)
+    for input_n in values:
+        yield OpSampleInput(
+            op_input=make_func(shape=(input_n,)),
+            op_args=(),
+            op_kwargs={'m': np.random.choice(values)},
+            sample_name=f"{op_info.name}_large_mix_small_values",
+        )
+
+def dynamic_sample_inputs_mint_eye(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate dynamic inputs for mint.eye.
+    """
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None,), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(6,)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(9,)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 2)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(7, 5)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_mint_eye(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    test_cases = [
+        # m is not int
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), 1.0, ms.int32),
+        # m is negative
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), -1, ms.int32),
+        # dtype is not ms.dtype
+        (ms.Tensor([[1, 2, 3], [4, 5, 6]]), 1, np.float32),
+    ]
+    for op_inputs, m, case_dtype in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_inputs,
+                op_args=(),
+                op_kwargs={'m': m, 'dtype': case_dtype},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f"{op_info.name}_{case_dtype}_error_params"
+        )
+    # n is negative and not int
+    n_cases = (None, 1.0)
+    for op_input in n_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_n_error"
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f'{op_info.name}: n is not supported negative and not int.'
+        )
+    # Tensor out not implemented for float64/complex64/complex128
+    output_not_support_dtypes = (
+        ms.float64, ms.complex64, ms.complex128
+    )
+    for case_dtype in output_not_support_dtypes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=ms.Tensor([[1, 2, 3], [4, 5, 6]]),
+                op_args=(),
+                op_kwargs={'dtype': case_dtype},
+                sample_name=f"{op_info.name}_dtype_{case_dtype}_error",
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'error dtype {case_dtype} is not supported for {op_info.name}',
+        )
+
+def basic_sample_inputs_mint_full(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((3, 5), 1.0),
+        ((3, 5), 0),
+        ((2, 1), 50),
+        ((1, 3, 6), -2.3),
+    )
+
+    for size, fill_value in cases:
+        if dtype is ms.uint8 and fill_value < 0:
+            # for torch cannot be converted to type uint8_t without overflow
+            fill_value = 2.3
+        yield OpSampleInput(
+            op_input=make_func(shape=size),
+            op_args=(fill_value,),
+            op_kwargs={'dtype': dtype},
+            sample_name=f"{op_info.name}_{dtype}",
+        )
+    # empty tensor
+    x_shape = (2, 0)
+    yield OpSampleInput(
+        op_input=make_func(x_shape),
+        op_args=(0.4,),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_empty_tensor",
+    )
+
+def extra_sample_inputs_mint_full(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    # currently, fill_value does not supported complex and bfloat16
+    if dtype.is_complex or dtype is ms.bfloat16:
+        fill_dtype = ms.float32
+    else:
+        fill_dtype = dtype
+    cases = (
+        ((), ms.Tensor([1.0])),
+        ((3, 5, 1), ms.Tensor(shape=(), dtype=fill_dtype)),
+        ((6, 1, 3, 6), ms.Tensor(np.random.rand(1,))),
+        ((2, 2, 3, 6, 5, 6, 7, 8), 12.2),
+    )
+
+    for size, fill_value in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=size),
+            op_args=(fill_value,),
+            op_kwargs={'dtype': dtype},
+            sample_name=f"{op_info.name}_{dtype}_extra",
+        )
+    # large mix small values
+    values = _small_large_values(dtype)
+    if values:
+        input_np_array = np.random.choice(values, size=(1, 3), replace=False)
+        np_array = np.random.choice(values, size=(1,), replace=False)
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(make_tensor_with_np_array(np_array, dtype=fill_dtype),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((5, 5), t), dtype=dtype),
+                op_args=(make_tensor_with_np_array(np.full((1,), t), dtype=fill_dtype),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def dynamic_sample_inputs_mint_full(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(-3,),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2)),
+                    op_args=(-3,),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(1, 2)),
+                    op_args=(-3,),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=ms.float16),),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 7, 2)),
+                    op_args=(ms.Tensor(shape=(1,), dtype=ms.float16),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 7, 8)),
+                    op_args=(ms.Tensor(shape=(), dtype=ms.float16),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_mint_full(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    yield from error_sample_inputs_mint_full_like(op_info, dtype, device, **kwargs)
+    # size has negative value and not list or tuple
+    # size is not tuple[int]/list[int]
+    n_cases = (None, 2.2)
+    for op_input in n_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(1,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_size_error"
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f'{op_info.name}: size is not supported negative and not list or tuple.'
+        )
+
+def basic_sample_inputs_mint_full_like(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    yield from basic_sample_inputs_mint_full(op_info, dtype, device, **kwargs)
+
+def extra_sample_inputs_mint_full_like(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    yield from extra_sample_inputs_mint_full(op_info, dtype, device, **kwargs)
+
+def dynamic_sample_inputs_mint_full_like(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    yield from dynamic_sample_inputs_mint_full(op_info, dtype, device, **kwargs)
+
+def error_sample_inputs_mint_full_like(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    test_cases = [
+        # fill_value is complex
+        ((4, 5), 1.0j, ms.float16),
+        # fill_value is 3D
+        ((4, 5), ms.Tensor(np.random.randn(2, 3, 4)), ms.float16),
+        # fill_value tensor with more than one element
+        ((4, 5), ms.Tensor(np.random.randn(2,)), ms.float16),
+        # dtype is not ms.dtype
+        ((4, 5), 1, np.float32),
+    ]
+    for size, fill_value, case_dtype in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=size),
+                op_args=(fill_value,),
+                op_kwargs={'dtype': case_dtype},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f"{op_info.name}_{case_dtype}_error_params"
+        )
+    # op_input is not tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=1.0,
+            op_args=(1,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_input_error"
+        ),
+        op_error_type=(TypeError, AttributeError),
+        op_error_info=f'{op_info.name}: input is not tensor.'
+    )
+
+def basic_sample_inputs_mint_linspace(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((3,), 0, 6),
+        ((2,), 6, -3),
+        ((1,), 0.4, 0.4),
+    )
+
+    for steps, start, end in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=steps),
+            op_args=(start, end),
+            op_kwargs={'dtype': dtype},
+            sample_name=f"{op_info.name}_{dtype}",
+        )
+
+def extra_sample_inputs_mint_linspace(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+    cases = (
+        ((), -2.0, -2.0),
+        ((16,), 6.9, 10),
+        ((19,), 6, -3),
+        ((22,), -21, -2.0),
+        ((38,), -12.3, 12.3),
+        ((50,), 0, 6.5),
+    )
+
+    for steps, start, end in cases:
+        if dtype is ms.uint8 and start < 0 and end == start:
+            # for torch cannot be converted to type uint8_t without overflow
+            dtype = ms.int8
+        yield OpSampleInput(
+            op_input=make_func(shape=steps),
+            op_args=(start, end),
+            op_kwargs={'dtype': dtype},
+            sample_name=f"{op_info.name}_{dtype}_extra",
+        )
+    yield OpSampleInput(
+        op_input=make_func(shape=()),
+        op_args=(-1, 3),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_0d",
+    )
+    # large mix small values
+    values = _small_large_values(dtype)
+    if values:
+        start_end = ms.Tensor(np.random.choice(values))
+        yield OpSampleInput(
+            op_input=make_func(shape=(6,)),
+            op_args=(start_end, start_end),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_large_mix_small_values",
+        )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            start_end = ms.Tensor(t)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((5,), t), dtype=dtype),
+                op_args=(start_end, start_end),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def dynamic_sample_inputs_mint_linspace(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None,), dtype=dtype),
+                op_args=(0.4, -2.0),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2,)),
+                    op_args=(12.3, 0.4),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(28,)),
+                    op_args=(12.3, -2.0),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(12.3, 0.4),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5,)),
+                    op_args=(12.3, 5.4),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(10,)),
+                    op_args=(0.4, 13.6),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_mint_linspace(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    test_cases = [
+        # start is not float/int
+        ((5,), (1, 2), 2, ms.int32),
+        # end is not float/int
+        ((5,), 1, 2j, None),
+        # dtype is not ms.dtype
+        ((5,), 1, 2, np.float32),
+    ]
+    for steps, start, end, case_dtype in test_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=steps),
+                op_args=(start, end),
+                op_kwargs={'dtype': case_dtype},
+                sample_name=op_info.name,
+            ),
+            op_error_type=TypeError,
+            op_error_info=f"{op_info.name}_{case_dtype}_error_params"
+        )
+    # steps is float/0/negative
+    steps_cases = (1.0, 0, None)
+    for case_input in steps_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=case_input,
+                op_args=(1, 3),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f"{op_info.name}_steps_{case_input}_error"
+        )
+    # Tensor out not implemented for bool_/complex64/complex128
+    output_not_support_dtypes = (
+        ms.bool_, ms.complex64, ms.complex128
+    )
+    for case_dtype in output_not_support_dtypes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=(3,)),
+                op_args=(1, 3),
+                op_kwargs={'dtype': case_dtype},
+                sample_name=f"{op_info.name}_dtype_{case_dtype}_error",
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'error dtype {case_dtype} is not supported for {op_info.name}',
+        )
