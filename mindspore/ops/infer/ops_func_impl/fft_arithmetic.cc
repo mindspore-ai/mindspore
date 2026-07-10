@@ -426,7 +426,8 @@ int32_t DCTCheckValidation(const PrimitivePtr &primitive, const std::vector<Abst
   2) The value in `dim` is not in the range of "[-`input.ndim`, `input.ndim`)"
   3) The value in `s` is less than or equal to 0.
   4) If `dim` has duplicate values.
-  5）If `s` and `dim` are given but have different shapes.
+  5) If `s` and `dim` are given but have different shapes.
+  6) If `dim` is an empty tuple/list.
 */
 int32_t FFTNCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto check_status = OP_CHECK_SUCCESS;
@@ -454,6 +455,10 @@ int32_t FFTNCheckValidation(const PrimitivePtr &primitive, const std::vector<Abs
     auto dim_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]->GetValue());
     if (dim_opt.has_value()) {
       dim = dim_opt.value().ToVector();
+      if (dim.empty()) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', at least 1 axis must be transformed, but got empty dim.";
+      }
       for (size_t i = 0; i < dim.size(); i++) {
         MS_CHECK_VALUE(
           dim[i] >= -x_rank && dim[i] < x_rank,
