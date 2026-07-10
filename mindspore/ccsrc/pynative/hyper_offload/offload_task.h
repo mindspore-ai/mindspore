@@ -16,25 +16,28 @@
 #ifndef MINDSPORE_CCSRC_PYNATIVE_HYPER_OFFLOAD_OFFLOAD_TASK_H_
 #define MINDSPORE_CCSRC_PYNATIVE_HYPER_OFFLOAD_OFFLOAD_TASK_H_
 
-#include "include/runtime/pipeline/pipeline.h"
-#include "runtime/pipeline/task/task.h"
-#include "include/pynative/utils/runtime/op_executor.h"
+#include <functional>
+#include <utility>
+
+#include "include/pynative/utils/runtime/pynative_async_task.h"
 
 namespace mindspore {
 namespace pynative {
 namespace hyper_offload {
 
 // AsyncTask for offload operations
-class OffloadAsyncTask : public runtime::AsyncTask {
+class OffloadAsyncTask : public PyNativeAsyncTask {
  public:
   explicit OffloadAsyncTask(std::function<void()> func, const runtime::TaskType &task)
-      : runtime::AsyncTask(task), func_(std::move(func)) {}
+      : PyNativeAsyncTask(task), func_(std::move(func)) {}
   ~OffloadAsyncTask() override = default;
 
   void Run() override {
-    if (func_) {
-      func_();
-    }
+    RunWithPyNativeContext([this]() {
+      if (func_) {
+        func_();
+      }
+    });
   }
 
  private:

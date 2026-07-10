@@ -18,8 +18,11 @@
 #include <mutex>
 #include <functional>
 #include "utils/log_adapter.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
+#include "include/pynative/utils/runtime/op_executor.h"
 #include "include/pynative/utils/runtime/op_backend/op_backend.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "pynative/hyper_offload/offload_manager.h"
 #include "pynative/hyper_offload/offload_task.h"
 
@@ -197,50 +200,7 @@ tensor::TensorPtr GetTensorFromEntry(const TensorOpEntry &entry, const std::vect
 }
 }  // namespace
 
-void HyperOffloadContext::HandlePreExecuting(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
-  // PreHook is called before op execution, current_op_index_ is the position of the op about to run
-  // size_t exec_id = current_op_index_;
-
-  // // Query strategy for pre-execution actions
-  // if (strategy_ == nullptr || !strategy_->IsReady()) {
-  //   MS_LOG(DEBUG) << "Pre-executing op[" << exec_id << "]: " << op_name << " (no strategy)";
-  //   return;
-  // }
-
-  // const auto *ops = strategy_->GetPreOpsAtPosition(exec_id);
-  // if (ops == nullptr || ops->empty()) {
-  //   MS_LOG(DEBUG) << "Pre-executing op[" << exec_id << "]: " << op_name << " (no pre-ops at this position)";
-  //   return;
-  // }
-
-  // MS_EXCEPTION_IF_NULL(executor_);
-
-  // // Execute each pre-operation at this position
-  // for (const auto &entry : *ops) {
-  //   switch (entry.action) {
-  //     case TensorAction::kWaitD2HAndSwitch: {
-  //       executor_->WaitD2HAndSwitch(entry.tensor_id);
-  //       MS_LOG(DEBUG) << "pre-op[" << exec_id << "] " << op_name
-  //                     << ": WaitD2HAndSwitch for tensor_id=" << entry.tensor_id;
-  //       break;
-  //     }
-  //     case TensorAction::kWaitH2DAndSwitch: {
-  //       executor_->WaitH2DAndSwitch(entry.tensor_id);
-  //       MS_LOG(DEBUG) << "pre-op[" << exec_id << "] " << op_name
-  //                     << ": WaitH2DAndSwitch for tensor_id=" << entry.tensor_id;
-  //       break;
-  //     }
-  //     case TensorAction::kH2DWithEvent: {
-  //       executor_->H2DWithEvent(entry.tensor_id);
-  //       MS_LOG(DEBUG) << "pre-op[" << exec_id << "] " << op_name << ": H2DWithEvent for tensor_id=" <<
-  //       entry.tensor_id; break;
-  //     }
-  //     default:
-  //       MS_LOG(WARNING) << "Unexpected pre-op action " << static_cast<int>(entry.action) << " at position " <<
-  //       exec_id; break;
-  //   }
-  // }
-}
+void HyperOffloadContext::HandlePreExecuting(const std::string &, const std::vector<ValuePtr> &) {}
 
 void HyperOffloadContext::HandleExecuting(const std::string &op_name, const std::vector<ValuePtr> &inputs,
                                           const ValuePtr &output) {
@@ -331,6 +291,7 @@ void HyperOffloadContext::InitStreams() {
 
 void HyperOffloadContext::StartOffloadAsync() {
   auto task = std::make_shared<OffloadAsyncTask>([this]() { StartOffload(); }, runtime::TaskType::kFrontendTask);
+  GilReleaseWithCheck no_gil;
   static bool need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
     runtime::Pipeline::Get().WaitForward();
@@ -342,6 +303,7 @@ void HyperOffloadContext::StartOffloadAsync() {
 
 void HyperOffloadContext::EndOffloadAsync() {
   auto task = std::make_shared<OffloadAsyncTask>([this]() { EndOffload(); }, runtime::TaskType::kFrontendTask);
+  GilReleaseWithCheck no_gil;
   static bool need_sync = runtime::OpExecutor::NeedSync();
   if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
     runtime::Pipeline::Get().WaitForward();

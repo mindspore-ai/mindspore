@@ -15,6 +15,7 @@
  */
 
 #include "pynative/hyper_offload/offload_manager.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "include/pynative/utils/pyboost/op_runner.h"
 #include "include/pynative/utils/runtime/op_backend/op_backend.h"
 #include "utils/log_adapter.h"
