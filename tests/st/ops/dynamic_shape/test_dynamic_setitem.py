@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests Tensor setitem with dynamic shapes and dynamic ranks."""
+
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -71,7 +73,7 @@ class GradOfFirstInput(_Grad):
 
 class CommonFunc():
     def __init__(self, ms_net, np_net):
-        super(CommonFunc, self).__init__()
+        super().__init__()
         self.ms_net = ms_net
         self.ms_net.set_grad()
         self.np_net = np_net
@@ -133,7 +135,7 @@ class DynamicRankCommonFunc():
 
 class NumpySetItem():
     def __init__(self, index, value):
-        super(NumpySetItem, self).__init__()
+        super().__init__()
         self.index = index
         self.value = value
 
@@ -145,7 +147,7 @@ class NumpySetItem():
 
 class TensorSetItem(nn.Cell):
     def __init__(self, index, value):
-        super(TensorSetItem, self).__init__()
+        super().__init__()
         self.index = index
         self.value = value
 
@@ -440,7 +442,7 @@ def test_dynamic_setitem_list_number():
 def test_dynamic_setitem_list_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
-    Description: The input shape is dynamic, the tensor index is al ist of bool and int, value is a tensor.
+    Description: The input shape is dynamic, the tensor index is a list of bool and int, value is a tensor.
     Expectation: Assert the result is equal the numpy result.
     """
     index = [True, 5]
@@ -637,19 +639,19 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
         def construct(self, x, axis):
             x = ops.reduce_min(x, axis)
             x[Tensor(np.ones((25), int)), :, Tensor(
-                np.ones((5, 5)).astype(np.bool_))] = Tensor([1], mstype.int64)
+                np.ones((5, 5)).astype(np.bool_))] = Tensor([-1], mstype.int64)
             return x
 
     class NumpyNet():
         @classmethod
         def __call__(cls, x, axis):
             x = x.min(axis=axis[0])
-            x[np.ones((25), int), :, np.ones((5, 5)).astype(np.bool_)] = 1
+            x[np.ones((25), int), :, np.ones((5, 5)).astype(np.bool_)] = -1
             return x
 
     net_ms = Net()
     net_np = NumpyNet()
-    input_np = np.ones((3, 6, 5, 5, 5)).astype(np.int64)
+    input_np = np.arange(3 * 6 * 5 * 5 * 5).reshape(3, 6, 5, 5, 5).astype(np.int64)
     axis_np = np.array([0])
 
     context.set_context(mode=context.PYNATIVE_MODE)
