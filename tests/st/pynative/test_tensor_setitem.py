@@ -158,6 +158,95 @@ def test_setitem_by_tuple_with_list():
     setup_testcase(x, cases)
 
 
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_setitem_with_bool_tensor_index():
+    """
+    Feature: Test setitem with mixed integer and bool tensor indices.
+    Description: Verify bool tensor indices are expanded to integer coordinates
+        before device execution.
+    Expectation: The result is equal to the NumPy result.
+    """
+    input_np = np.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5).astype(np.float32)
+    integer_index_np = np.array([0, 1], dtype=np.int64)
+    bool_mask_np = np.array([[True, False, False, False, False],
+                             [False, True, False, False, False],
+                             [False, False, False, False, False],
+                             [False, False, False, False, False]])
+    expected_np = input_np.copy()
+    expected_np[integer_index_np, :, bool_mask_np] = -1
+
+    output_ms = Tensor(input_np)
+    output_ms[Tensor(integer_index_np), :, Tensor(bool_mask_np)] = -1
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), expected_np)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_setitem_with_1d_bool_tensor_index():
+    """
+    Feature: Test setitem with a 1-D bool tensor index.
+    Description: Verify mixed integer and bool tensor indices with a trailing slice.
+    Expectation: The result is equal to the NumPy result.
+    """
+    input_np = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)
+    integer_index_np = np.array([0, 1], dtype=np.int64)
+    bool_mask_np = np.array([True, False, True])
+    value_np = np.array([[-1, -2, -3, -4], [-5, -6, -7, -8]], dtype=np.float32)
+    expected_np = input_np.copy()
+    expected_np[integer_index_np, bool_mask_np, :] = value_np
+
+    output_ms = Tensor(input_np)
+    output_ms[Tensor(integer_index_np), Tensor(bool_mask_np), :] = Tensor(value_np)
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), expected_np)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_setitem_with_uint8_tensor_index():
+    """
+    Feature: Test setitem with a uint8 tensor mask index.
+    Description: Verify uint8 masks follow the same coordinate conversion as bool masks.
+    Expectation: The result is equal to the bool-mask NumPy result.
+    """
+    input_np = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)
+    integer_index_np = np.array([0, 1], dtype=np.int64)
+    uint8_mask_np = np.array([1, 0, 1], dtype=np.uint8)
+    expected_np = input_np.copy()
+    expected_np[integer_index_np, uint8_mask_np.astype(np.bool_), :] = -1
+
+    output_ms = Tensor(input_np)
+    output_ms[Tensor(integer_index_np), Tensor(uint8_mask_np), :] = -1
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), expected_np)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_setitem_with_bool_list_index():
+    """
+    Feature: Test setitem with an integer tensor and a bool list index.
+    Description: Verify bool lists are converted to integer coordinates before device execution.
+    Expectation: The result is equal to the NumPy result.
+    """
+    input_np = np.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5).astype(np.float32)
+    integer_index_np = np.array([0, 1], dtype=np.int64)
+    bool_list = [True, False, True]
+    expected_np = input_np.copy()
+    expected_np[integer_index_np, bool_list, :] = -2
+
+    output_ms = Tensor(input_np)
+    output_ms[Tensor(integer_index_np), bool_list, :] = -2
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), expected_np)
+
+
 def test_setitem_by_nested_unit_list():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
