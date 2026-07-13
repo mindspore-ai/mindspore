@@ -51,8 +51,6 @@ std::vector<TensorPtr> InplaceIndexGetNewTensor(const TensorPtr &input_tensor, c
       MS_EXCEPTION(TypeError)
         << "For 'InplaceIndexPut', tensors used as indices must be long, int, uint8, or bool tensors";
     }
-    // For aclnnIndexPutImpl op, the indices element dtype supports bool and uint8, so there is no need to convert to
-    // int64 by nonzero conversion.
     if (type_id == kNumberTypeBool || type_id == kNumberTypeUInt8) {
       auto shape = tensor->shape();
       auto rank = SizeToLong(shape.size());
@@ -64,16 +62,12 @@ std::vector<TensorPtr> InplaceIndexGetNewTensor(const TensorPtr &input_tensor, c
                                    << input_shape << " at index " << srcIdx;
         }
       }
-      // For aclnnIndexPutImpl op, the indices element dtype supports bool.
-      if (type_id == kNumberTypeUInt8) {
-        auto nonzero_op = CREATE_PYBOOST_OP(InnerNonZero, device::DeviceType::kAscend);
-        auto nonzero_tensor = nonzero_op->Call(tensor);
-        for (int64_t j = 0; j < rank; j++) {
-          auto select_tensor = select_ext_view(nonzero_tensor, kIndex0, j);
-          result.emplace_back(select_tensor);
-        }
-      } else {
-        result.emplace_back(tensor);
+      // Normalize masks to integer coordinates before dispatching to aclnnIndexPutImpl.
+      auto nonzero_op = CREATE_PYBOOST_OP(InnerNonZero, device::DeviceType::kAscend);
+      auto nonzero_tensor = nonzero_op->Call(tensor);
+      for (int64_t j = 0; j < rank; j++) {
+        auto select_tensor = select_ext_view(nonzero_tensor, kIndex0, j);
+        result.emplace_back(select_tensor);
       }
     } else {
       result.emplace_back(tensor);
