@@ -18,6 +18,7 @@ from tests.mark_utils import arg_mark
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+import pytest
 from mindspore.ops.operations import _sequence_ops as seq
 from mindspore import context
 from mindspore import Tensor, mutable
@@ -71,19 +72,77 @@ def test_tensor_to_tuple_bool():
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
-def test_dynamic_list_to_tensor_cpu():
+@pytest.mark.parametrize(
+    "value, output_dtype, expected",
+    [
+        pytest.param([1.5, 2.5], mstype.float32, [1.5, 2.5], id="float64_to_float32"),
+        pytest.param([1.5, 2.5], mstype.float64, [1.5, 2.5], id="float64_to_float64"),
+        pytest.param([1.5, 2.5], mstype.int32, [1, 2], id="float64_to_int32"),
+        pytest.param([1.5, 2.5], mstype.int64, [1, 2], id="float64_to_int64"),
+        pytest.param([1, 2], mstype.float32, [1.0, 2.0], id="int64_to_float32"),
+        pytest.param([1, 2], mstype.float64, [1.0, 2.0], id="int64_to_float64"),
+        pytest.param([1, 2], mstype.int32, [1, 2], id="int64_to_int32"),
+        pytest.param([1, 2], mstype.int64, [1, 2], id="int64_to_int64"),
+        pytest.param([True, False], mstype.float32, [1.0, 0.0], id="bool_to_float32"),
+        pytest.param([True, False], mstype.float64, [1.0, 0.0], id="bool_to_float64"),
+        pytest.param([True, False], mstype.int32, [1, 0], id="bool_to_int32"),
+        pytest.param([True, False], mstype.int64, [1, 0], id="bool_to_int64"),
+        pytest.param([True, False], mstype.bool_, [True, False], id="bool_to_bool"),
+    ],
+)
+def test_dynamic_list_to_tensor_cpu(value, output_dtype, expected):
     """
     Feature: ListToTensor.
     Description: Test dynamic list conversion to Tensor through the CPU kernel in graph mode.
-    Expectation: The output Tensor contains the input values cast to float32.
+    Expectation: The output Tensor has the expected dtype and values.
     """
     class ListTensorNet(nn.Cell):
-        def __init__(self):
+        def __init__(self, dtype):
             super().__init__()
             self.list_to_tensor = seq.ListToTensor()
+            self.dtype = dtype
 
         def construct(self, value):
-            return self.list_to_tensor(value, mstype.float32)
+            return self.list_to_tensor(value, self.dtype)
 
-    output = ListTensorNet()(mutable([1, 2], True))
-    assert output.asnumpy().tolist() == [1.0, 2.0]
+    output = ListTensorNet(output_dtype)(mutable(value, True))
+    assert output.dtype == output_dtype
+    assert output.asnumpy().tolist() == expected
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+@pytest.mark.parametrize(
+    "input_values, input_dtype, output_dtype, expected",
+    [
+        pytest.param((1.5, 2.5), mstype.float32, mstype.float32, [1.5, 2.5], id="float32_to_float32"),
+        pytest.param((1.5, 2.5), mstype.float32, mstype.float64, [1.5, 2.5], id="float32_to_float64"),
+        pytest.param((1.5, 2.5), mstype.float32, mstype.int32, [1, 2], id="float32_to_int32"),
+        pytest.param((1.5, 2.5), mstype.float32, mstype.int64, [1, 2], id="float32_to_int64"),
+        pytest.param((1, 2), mstype.int32, mstype.float32, [1.0, 2.0], id="int32_to_float32"),
+        pytest.param((1, 2), mstype.int32, mstype.float64, [1.0, 2.0], id="int32_to_float64"),
+        pytest.param((1, 2), mstype.int32, mstype.int32, [1, 2], id="int32_to_int32"),
+        pytest.param((1, 2), mstype.int32, mstype.int64, [1, 2], id="int32_to_int64"),
+    ],
+)
+def test_tensor_scalar_list_to_tensor_cpu(input_values, input_dtype, output_dtype, expected):
+    """
+    Feature: ListToTensor.
+    Description: Test float32 and int32 scalar lists converted to Tensor through the CPU kernel in graph mode.
+    Expectation: The output Tensor has the expected dtype and values.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    class ListTensorNet(nn.Cell):
+        def __init__(self, dtype):
+            super().__init__()
+            self.tensor_to_scalar = seq.TensorToScalar()
+            self.list_to_tensor = seq.ListToTensor()
+            self.dtype = dtype
+
+        def construct(self, x, y):
+            value = [self.tensor_to_scalar(x), self.tensor_to_scalar(y)]
+            return self.list_to_tensor(value, self.dtype)
+
+    output = ListTensorNet(output_dtype)(Tensor(input_values[0], input_dtype), Tensor(input_values[1], input_dtype))
+    assert output.dtype == output_dtype
+    assert output.asnumpy().tolist() == expected
