@@ -324,7 +324,7 @@ class _RecomputationHook(saved_tensors_hooks):
     """
     def __init__(self, weak_handle, recompute_key):
         def pack(x):
-            x = ops.stop_gradient(x) if x._requires_grad else x  # pylint: disable=protected-access
+            x = x.data if x._requires_grad else x  # pylint: disable=protected-access
             handle = weak_handle()
             if handle is None:
                 raise RuntimeError("Recompute handle has been garbage collected unexpectedly.")
