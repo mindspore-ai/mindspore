@@ -174,11 +174,11 @@ void OffloadExecutor::FreeDevice(size_t tensor_id) {
   }
   auto &data = it->second;
   MS_EXCEPTION_IF_NULL(data.host_tensor);
-  MS_EXCEPTION_IF_NULL(data.device_tensor);
+  MS_EXCEPTION_IF_NULL(data.original_tensor);
   // Only perform OffloadAsync to free device memory.
   // The tensor data is already on host from a previous d2h cycle,
   // so we skip the redundant d2h and just release device memory.
-  OffloadAsync(data.device_tensor);
+  OffloadAsync(data.original_tensor);
   MS_LOG(DEBUG) << "FreeDevice[" << tensor_id << "]: OffloadAsync executed, device memory freed";
 }
 
