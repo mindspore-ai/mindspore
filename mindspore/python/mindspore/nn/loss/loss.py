@@ -1751,8 +1751,6 @@ class BCELoss(LossBase):
         Otherwise, it is a scalar Tensor.
 
     Raises:
-        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is not one of float16 or float32.
-            On Ascend, bfloat16 is also supported.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If shape of `logits` is not the same as `labels` or `weight` (if given).
 

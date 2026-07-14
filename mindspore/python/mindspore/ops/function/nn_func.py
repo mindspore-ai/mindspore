@@ -7215,8 +7215,6 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
     Raises:
         TypeError: If `logits`, `labels` or `weight` is not a Tensor.
-        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is not one of float16 or float32.
-            On Ascend, bfloat16 is also supported.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
 

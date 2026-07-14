@@ -43,7 +43,5 @@ mindspore.ops.binary_cross_entropy
 
     异常：
         - **TypeError** - 输入 `logits` ， `labels` ， `weight` 不为Tensor。
-        - **TypeError** - 输入 `logits` ， `labels` ， `weight` 的数据类型既不是float16也不是float32。
-          在Ascend平台，也支持bfloat16。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``  或 ``'sum'`` 。
         - **ValueError** - `labels` 的shape大小与 `logits` 或者 `weight` 不相同。
