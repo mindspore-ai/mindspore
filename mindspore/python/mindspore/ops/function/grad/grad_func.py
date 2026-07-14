@@ -264,7 +264,7 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False, sen
 
 def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False, sens_param=False):
     """
-    A wrapper function to generate the function to calculate forward output and gradient for the input function.
+    A wrapper function that generates a function to compute the forward output and gradient of the input function.
 
     As for gradient, three typical cases are included:
 
@@ -287,7 +287,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
             Default: ``None`` .
         has_aux (bool, optional): If ``True`` , only the first output of `fn` contributes the gradient of `fn`,
             while the other
-            outputs will be returned straightly. It means the `fn` must return more than one output in this case.
+            outputs will be returned straightly. It means `fn` must return more than one output in this case.
             Default: ``False`` .
         return_ids (bool, optional): Whether the returned derivation function contains
             `grad_position` or `weights` information. If ``True``,
@@ -297,8 +297,8 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If `sens_param` is ``False`` , a `ones_like(outputs)` sensitivity will be attached automatically.
             If `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
-            through the positional parameter or key-value pair parameter. If the value is transferred through
-            the key-value pair parameter, the key must be sens.
+            through the positional parameter or key-value pair parameter. If passed as a keyword argument,
+            the key must be sens.
             Default: ``False`` .
 
     Returns:

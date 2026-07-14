@@ -196,7 +196,7 @@ def _get_cur_rank_dp(parameter_layout_dict):
 def get_ckpt_path_with_strategy(cur_ckpt_path, cur_strategy_path):
     """
     Find available checkpoint file path from all backup checkpoint files of current rank.
-    It supposes that checkpoint path contains substring 'rank_{rank_id}' which is used to
+    It supposes that the checkpoint path contains substring 'rank_{rank_id}' which is used to
     distinguish between different paths. If cur_ckpt_path doesn't have 'rank_{rank_id}' substring, it will return
     cur_ckpt_path itself when cur_ckpt_path exists, otherwise return None.
 

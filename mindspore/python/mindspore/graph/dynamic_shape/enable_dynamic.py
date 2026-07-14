@@ -62,13 +62,13 @@ def _check_arg_type_valid(arg, name):
 
 def enable_dynamic(**kwargs):
     r"""
-    Use to specify whether the shape of the parameter is dynamic shape or dynamic rank.
+    Used to specify whether the shape of the parameter is dynamic shape or dynamic rank.
 
     Note:
         - It needs to be used in conjunction with the JIT interface. Without using the JIT decorator,
           the dynamic shape and dynamic rank functions will not be enabled.
         - In the scenario where both set_context(mode=GRAPH_MODE) and nn.Cell are set simultaneously,
-          use enable_dynamic to report an error.
+          using enable_dynamic will report an error.
 
     Args:
         \*\*kwargs (dict[str, Union[Tensor, tuple[Tensor], list[Tensor]]]): The input types are Tensor,

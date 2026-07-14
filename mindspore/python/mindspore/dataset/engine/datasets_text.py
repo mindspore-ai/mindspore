@@ -621,7 +621,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
             - ``Shuffle.FILES`` : Shuffle files only.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+            When this argument is specified, `num_samples` reflects the maximum sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -653,7 +653,7 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
 
     About DBpedia dataset:
 
-    The DBpedia dataset consists of 630,000 text samples in 14 classes, there are 560,000 samples in the train.csv
+    The DBpedia dataset consists of 630,000 text samples in 14 classes, with 560,000 samples in the train.csv
     and 70,000 samples in the test.csv.
     The 14 different classes represent Company, EducationalInstitution, Artist, Athlete, OfficeHolder,
     MeanOfTransportation, Building, NaturalPlace, Village, Animal, Plant, Album, Film, WrittenWork.
@@ -708,7 +708,7 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , will include all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: ``True``.
@@ -803,7 +803,7 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , will include all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -953,7 +953,7 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
@@ -1086,7 +1086,7 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
@@ -1176,7 +1176,7 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , will read all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
@@ -1287,7 +1287,7 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
             ``'all'`` will read from all 49,199 samples of string type. Default: ``None`` , all samples.
         num_samples (int, optional): Number of samples (rows) to read. Default: ``None`` , reads the full dataset.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.
@@ -1718,7 +1718,7 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , will include all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in.

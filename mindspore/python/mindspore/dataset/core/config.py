@@ -434,7 +434,7 @@ def set_callback_timeout(timeout):
 def get_callback_timeout():
     """
     Get the default timeout (in seconds) for :class:`mindspore.dataset.WaitedDSCallback` .
-    If `set_callback_timeout` is never called before, the default value(60) will be returned.
+    If `set_callback_timeout` is never called before, the default value (60) will be returned.
 
     Returns:
         int, Timeout (in seconds) to be used to end the wait in :class:`mindspore.dataset.WaitedDSCallback` in case of
@@ -604,7 +604,7 @@ def set_autotune_interval(interval):
         ValueError: If `interval` is negative.
 
     Examples:
-        >>> # set a new interval for AutoTune
+        >>> # Set a new interval for AutoTune
         >>> import mindspore.dataset as ds
         >>> ds.config.set_autotune_interval(30)
     """
@@ -619,7 +619,7 @@ def set_autotune_interval(interval):
 def get_autotune_interval():
     """
     Get the current configuration adjustment interval (in steps) for AutoTune.
-    If `set_autotune_interval` is never called before, the default value(0) will be returned.
+    If `set_autotune_interval` is never called before, the default value (0) will be returned.
 
     Returns:
         int, the configuration adjustment interval (in steps) for AutoTune.
