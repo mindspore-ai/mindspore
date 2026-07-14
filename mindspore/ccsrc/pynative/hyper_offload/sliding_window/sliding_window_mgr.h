@@ -25,14 +25,14 @@
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "include/utils/visible.h"
-#include "mindspore/ccsrc/utils/sliding_window/device_space_manager.h"
-#include "mindspore/ccsrc/utils/sliding_window/source_group_manager.h"
+#include "pynative/hyper_offload/sliding_window/device_space_manager.h"
+#include "pynative/hyper_offload/sliding_window/source_group_manager.h"
 
 namespace mindspore {
 namespace utils {
 namespace sliding_window {
 
-class COMMON_EXPORT SlidingWindowMgr {
+class PYNATIVE_EXPORT SlidingWindowMgr {
  public:
   SlidingWindowMgr();
   ~SlidingWindowMgr() = default;

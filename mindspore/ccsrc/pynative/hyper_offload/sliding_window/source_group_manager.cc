@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "mindspore/ccsrc/utils/sliding_window/source_group_manager.h"
+#include "pynative/hyper_offload/sliding_window/source_group_manager.h"
 
 #include <algorithm>
+#include <iterator>
 #include <utility>
 
 namespace mindspore {
@@ -257,7 +258,7 @@ const SourceGroup *SourceGroupManager::GetGroup(TensorId source_id) const {
 }
 
 std::unordered_set<TensorId> SourceGroupManager::BuildProtectedSourceIdSet(
-    const std::vector<TensorPtr> &tensors) const {
+  const std::vector<TensorPtr> &tensors) const {
   std::unordered_set<TensorId> ids;
   ids.reserve(tensors.size());
   for (const auto &tensor : tensors) {
@@ -302,9 +303,8 @@ std::vector<TensorId> SourceGroupManager::GetOffloadCandidatesLRU() const {
 std::vector<TensorId> SourceGroupManager::GetAllSourceIds() const {
   std::vector<TensorId> ids;
   ids.reserve(source_groups_.size());
-  for (const auto &item : source_groups_) {
-    ids.push_back(item.first);
-  }
+  std::transform(source_groups_.begin(), source_groups_.end(), std::back_inserter(ids),
+                 [](const auto &item) { return item.first; });
   return ids;
 }
 

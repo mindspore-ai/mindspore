@@ -12,6 +12,7 @@ file(GLOB_RECURSE _PYBOOST_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pyboost_utils.cc"
         "kernel_mod_cache.cc"
         "tensor_memory.cc"
+        "offload_copy_registry.cc"
 )
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

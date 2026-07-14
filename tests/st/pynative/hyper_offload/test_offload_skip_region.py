@@ -20,9 +20,6 @@ from mindspore._c_expression import OffloadManager
 
 
 class Net(nn.Cell):
-    def __init__(self):
-        super().__init__()
-
     def construct(self, x, w):
         y1 = ops.matmul(x, w)
 
@@ -37,6 +34,13 @@ class Net(nn.Cell):
 
 
 def test_offload_skip_region():
+    """
+    Feature: Auto offload with skip_offload region in PyNative mode.
+    Description: Run a network that marks an inner block with skip_offload and execute value_and_grad
+                 twice, with an analyse step in between.
+    Expectation: The forward output equals 11.0 and the offload manager skips the marked region
+                 without error.
+    """
     context.set_context(mode=context.PYNATIVE_MODE)
 
     manager = OffloadManager.get_instance()

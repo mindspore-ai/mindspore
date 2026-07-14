@@ -24,7 +24,7 @@
 #include <vector>
 #include "ir/value.h"
 #include "pynative/hyper_offload/hyper_offload_context.h"
-#include "mindspore/ccsrc/utils/sliding_window/sliding_window_mgr.h"
+#include "pynative/hyper_offload/sliding_window/sliding_window_mgr.h"
 
 namespace mindspore {
 namespace pynative {

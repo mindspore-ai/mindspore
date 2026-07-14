@@ -37,7 +37,7 @@ class SimpleNet(nn.Cell):
     """Simple network for testing."""
 
     def __init__(self):
-        super(SimpleNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256)
         self.fc2 = nn.Dense(256, 128)
         self.relu = nn.ReLU()
@@ -53,7 +53,7 @@ class DynamicBranchNet(nn.Cell):
     """Network with dynamic branch for testing dynamic graph detection."""
 
     def __init__(self, use_relu=True):
-        super(DynamicBranchNet, self).__init__()
+        super().__init__()
         self.use_relu = use_relu
         self.fc1 = nn.Dense(128, 256)
         self.fc2 = nn.Dense(256, 128)
@@ -72,7 +72,7 @@ class DynamicShapeNet(nn.Cell):
     """Network with dynamic output shape."""
 
     def __init__(self):
-        super(DynamicShapeNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256)
         self.fc2 = nn.Dense(256, 128)
 
@@ -89,14 +89,14 @@ class MultiOutputNet(nn.Cell):
     """Network with multiple outputs."""
 
     def __init__(self):
-        super(MultiOutputNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256)
         self.fc2 = nn.Dense(256, 128)
 
     def construct(self, x):
         x = self.fc1(x)
         x = mint.nn.functional.relu(x)
-        x1, x2, x3, x4 = mint.split(x, 64, dim=1)
+        x1, x2, _, _ = mint.split(x, 64, dim=1)
         return x1, x2
 
 
@@ -104,7 +104,7 @@ class NetWithLoop(nn.Cell):
     """Network with loop for testing loop detection."""
 
     def __init__(self, num_iterations=3):
-        super(NetWithLoop, self).__init__()
+        super().__init__()
         self.num_iterations = num_iterations
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
@@ -122,7 +122,7 @@ class MultiStreamNet(nn.Cell):
     """Network with multiple streams for testing stream errors."""
 
     def __init__(self):
-        super(MultiStreamNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(64, 128)
         self.fc2 = nn.Dense(128, 64)
         self.relu = nn.ReLU()
@@ -143,7 +143,7 @@ class TensorIdNet(nn.Cell):
     """Network that may cause tensor_id extraction issues."""
 
     def __init__(self):
-        super(TensorIdNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256)
         self.fc2 = nn.Dense(256, 128)
 
@@ -388,9 +388,9 @@ class TestGraphStructureErrors:
 
         output = net(x)
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(Exception):
             if not isinstance(output, tuple):
-                raise RuntimeError(f"output not make tuple")
+                raise RuntimeError("output not make tuple")
 
         ctx.end_offload()
         manager.reset()
@@ -776,14 +776,14 @@ class TestMemoryManagementErrors:
         nets = [SimpleNet() for _ in range(5)]
         x = Tensor(np.random.randn(2, 128).astype(np.float32))
 
-        for i, net in enumerate(nets):
+        for _, net in enumerate(nets):
             offload_key = id(net)
             ctx = manager.get_or_create_offload_ctx(offload_key)
             ctx.start_offload()
 
             try:
                 _ = net(x)
-            except Exception as exc_info:
+            except Exception as exc_info:  # pylint: disable=broad-exception-caught
                 _assert_error_match(exc_info, r"memory|cache|cached")
 
             ctx.end_offload()
@@ -800,7 +800,7 @@ class TestMemoryManagementErrors:
 
         class LargeNet(nn.Cell):
             def __init__(self):
-                super(LargeNet, self).__init__()
+                super().__init__()
                 self.fc1 = nn.Dense(4096, 4096)
                 self.fc2 = nn.Dense(4096, 2048)
 
@@ -820,7 +820,7 @@ class TestMemoryManagementErrors:
 
             try:
                 _ = net(x)
-            except Exception as exc_info:
+            except Exception as exc_info:  # pylint: disable=broad-exception-caught
                 _assert_error_match(exc_info, r"memory|cache|cached|OOM|out of")
 
             ctx.end_offload()
@@ -976,7 +976,7 @@ class TestControlFlowErrors:
 
         class WhileLoopNet(nn.Cell):
             def __init__(self, iterations):
-                super(WhileLoopNet, self).__init__()
+                super().__init__()
                 self.iterations = iterations
                 self.fc1 = nn.Dense(128, 128)
 
@@ -1020,7 +1020,7 @@ class TestControlFlowErrors:
 
         class NestedBranchNet(nn.Cell):
             def __init__(self, outer_cond, inner_cond):
-                super(NestedBranchNet, self).__init__()
+                super().__init__()
                 self.outer_cond = outer_cond
                 self.inner_cond = inner_cond
                 self.fc1 = nn.Dense(128, 256)
@@ -1070,7 +1070,7 @@ class TestControlFlowErrors:
 
         class DynamicBranchNetV2(nn.Cell):
             def __init__(self, num_branches):
-                super(DynamicBranchNetV2, self).__init__()
+                super().__init__()
                 self.num_branches = num_branches
                 self.fc_layers = nn.CellList([
                     nn.Dense(128, 128) for _ in range(num_branches)
@@ -1078,7 +1078,7 @@ class TestControlFlowErrors:
 
             def construct(self, x):
                 outputs = []
-                for i, fc in enumerate(self.fc_layers[:self.num_branches]):
+                for _, fc in enumerate(self.fc_layers[:self.num_branches]):
                     out = fc(x)
                     outputs.append(mint.nn.functional.relu(out))
                 return outputs[0] if outputs else x
@@ -1115,7 +1115,7 @@ class TestControlFlowErrors:
 
         class RecursiveNet(nn.Cell):
             def __init__(self, depth):
-                super(RecursiveNet, self).__init__()
+                super().__init__()
                 self.depth = depth
                 self.fc1 = nn.Dense(128, 128)
 
@@ -1168,7 +1168,7 @@ class TestDynamicShapeErrors:
         offload_key = id(net)
 
         x1 = Tensor(np.random.randn(4, 128).astype(np.float32))
-        x2 = Tensor(np.random.randn(8, 128).astype(np.float32))
+        _ = Tensor(np.random.randn(8, 128).astype(np.float32))
         x3 = Tensor(np.random.randn(16, 128).astype(np.float32))
 
         ctx = manager.get_or_create_offload_ctx(offload_key)
@@ -1198,7 +1198,7 @@ class TestDynamicShapeErrors:
 
         class SeqNet(nn.Cell):
             def __init__(self):
-                super(SeqNet, self).__init__()
+                super().__init__()
                 self.fc1 = nn.Dense(128, 128)
 
             def construct(self, x, seq_len):
@@ -1241,7 +1241,7 @@ class TestDynamicShapeErrors:
 
         class FeatureNet(nn.Cell):
             def __init__(self, feat_dim):
-                super(FeatureNet, self).__init__()
+                super().__init__()
                 self.feat_dim = feat_dim
                 self.fc1 = nn.Dense(feat_dim, 64)
 
@@ -1283,7 +1283,7 @@ class TestDynamicShapeErrors:
 
         class ReshapeNet(nn.Cell):
             def __init__(self, target_shape):
-                super(ReshapeNet, self).__init__()
+                super().__init__()
                 self.target_shape = target_shape
                 self.fc1 = nn.Dense(256, 128)
 
@@ -1327,7 +1327,7 @@ class TestDynamicShapeErrors:
 
         class ConcatNet(nn.Cell):
             def __init__(self, concat_dim):
-                super(ConcatNet, self).__init__()
+                super().__init__()
                 self.concat_dim = concat_dim
                 self.fc1 = nn.Dense(64, 64)
 
@@ -1370,7 +1370,7 @@ class TestDynamicShapeErrors:
 
         class SplitNet(nn.Cell):
             def __init__(self, split_size):
-                super(SplitNet, self).__init__()
+                super().__init__()
                 self.split_size = split_size
                 self.fc1 = nn.Dense(64, 64)
 
@@ -1413,7 +1413,7 @@ class TestDynamicShapeErrors:
 
         class TileNet(nn.Cell):
             def __init__(self, multiplier):
-                super(TileNet, self).__init__()
+                super().__init__()
                 self.multiplier = multiplier
                 self.fc1 = nn.Dense(256, 64)
 
@@ -1455,7 +1455,7 @@ class TestDynamicShapeErrors:
 
         class RepeatNet(nn.Cell):
             def __init__(self, repeat_times):
-                super(RepeatNet, self).__init__()
+                super().__init__()
                 self.repeat_times = repeat_times
                 self.fc1 = nn.Dense(128, 128)
 
@@ -1498,7 +1498,7 @@ class TestDynamicShapeErrors:
 
         class InterpolateNet(nn.Cell):
             def __init__(self, scale_factor):
-                super(InterpolateNet, self).__init__()
+                super().__init__()
                 self.scale_factor = scale_factor
                 self.fc1 = nn.Dense(4096, 64)
 
@@ -1541,7 +1541,7 @@ class TestDynamicShapeErrors:
 
         class MixedNet(nn.Cell):
             def __init__(self, apply_transform, transform_type):
-                super(MixedNet, self).__init__()
+                super().__init__()
                 self.apply_transform = apply_transform
                 self.transform_type = transform_type
                 self.fc1 = nn.Dense(128, 128)

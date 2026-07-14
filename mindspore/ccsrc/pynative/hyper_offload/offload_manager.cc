@@ -24,7 +24,6 @@
 #include "pynative/hyper_offload/offload_task.h"
 #include "mindspore/ccsrc/frontend/jit/ps/resource.h"
 #include "mindspore/ccsrc/include/frontend/jit/ps/action_interface.h"
-#include "pynative/hyper_offload/offload_manager.h"
 #include "pynative/forward/op_graph/forward.h"
 #include "utils/ms_utils.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"

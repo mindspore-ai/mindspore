@@ -16,15 +16,14 @@
 Test auto_offload functionality for view/inplace scenarios in PyNative mode.
 
 This test file covers:
-- View operations: Reshape, Transpose, View, ExpandDims, Unsqueeze, Squeeze, Flatten, Slice, StridedSlice, Narrow, Permute, Expand, ExpandAs
+- View operations: Reshape, Transpose, View, ExpandDims, Unsqueeze, Squeeze,
+  Flatten, Slice, StridedSlice, Narrow, Permute, Expand, ExpandAs
 - Inplace operations: InplaceAdd, InplaceMul, InplaceIndexAdd
 - Chained view operations
 - View + Inplace combinations
 """
 
 import numpy as np
-import pytest
-import mindspore as ms
 from mindspore import nn, Tensor, context, ops
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
@@ -62,7 +61,7 @@ class ReshapeNet(nn.Cell):
     """Network with reshape operations for testing auto_offload."""
 
     def __init__(self):
-        super(ReshapeNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(256, 128, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -87,7 +86,7 @@ class TransposeNet(nn.Cell):
     """Network with transpose operations for testing auto_offload."""
 
     def __init__(self):
-        super(TransposeNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                weight_init='ones', bias_init='zeros')
         self.fc = nn.Dense(16 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
@@ -136,7 +135,7 @@ def test_auto_offload_view_reshape():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -173,7 +172,7 @@ def test_auto_offload_view_transpose():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -193,7 +192,7 @@ class SliceNet(nn.Cell):
     """Network with slice operations for testing auto_offload."""
 
     def __init__(self):
-        super(SliceNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -220,7 +219,7 @@ class StridedSliceNet(nn.Cell):
     """Network with strided_slice operations for testing auto_offload."""
 
     def __init__(self):
-        super(StridedSliceNet, self).__init__()
+        super().__init__()
         self.fc = nn.Dense(32, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
@@ -262,7 +261,7 @@ def test_auto_offload_slice():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -299,7 +298,7 @@ def test_auto_offload_strided_slice():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -319,7 +318,7 @@ class ExpandDimsNet(nn.Cell):
     """Network with ExpandDims operations for testing auto_offload."""
 
     def __init__(self):
-        super(ExpandDimsNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                weight_init='ones', bias_init='zeros')
         self.fc = nn.Dense(16 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
@@ -342,7 +341,7 @@ class ExpandNet(nn.Cell):
     """Network with Expand operations for testing auto_offload."""
 
     def __init__(self):
-        super(ExpandNet, self).__init__()
+        super().__init__()
         self.fc = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
@@ -360,7 +359,7 @@ class UnsqueezeNet(nn.Cell):
     """Network with Unsqueeze operations for testing auto_offload."""
 
     def __init__(self):
-        super(UnsqueezeNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv3d(1, 8, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                weight_init='ones', bias_init='zeros')
         self.fc = nn.Dense(8 * 32 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
@@ -404,7 +403,7 @@ def test_auto_offload_expand_dims():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -441,7 +440,7 @@ def test_auto_offload_expand():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -478,7 +477,7 @@ def test_auto_offload_unsqueeze():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -498,7 +497,7 @@ class NarrowNet(nn.Cell):
     """Network with narrow operations for testing auto_offload."""
 
     def __init__(self):
-        super(NarrowNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(32, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -513,7 +512,7 @@ class NarrowNet(nn.Cell):
         x_narrow = self.relu(x_narrow)
 
         # Narrow along dim 0: start=0, length=16 (for batch dimension)
-        x_narrow2 = ops.narrow(x, 0, 0, 16)  # [16, 128]
+        _ = ops.narrow(x, 0, 0, 16)  # [16, 128]
 
         # Combine
         x = self.fc2(x_narrow)  # [batch, 64]
@@ -545,7 +544,7 @@ def test_auto_offload_narrow():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -565,7 +564,7 @@ class PermuteNet(nn.Cell):
     """Network with permute operations for testing auto_offload."""
 
     def __init__(self):
-        super(PermuteNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128 * 64, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(256, 10, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -618,7 +617,7 @@ def test_auto_offload_permute():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -638,7 +637,7 @@ class FlattenSqueezeNet(nn.Cell):
     """Network with Flatten and Squeeze operations for testing auto_offload."""
 
     def __init__(self):
-        super(FlattenSqueezeNet, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                 weight_init='ones', bias_init='zeros')
         self.conv2 = nn.Conv2d(16, 8, kernel_size=3, stride=1, padding=1, pad_mode='pad',
@@ -692,7 +691,7 @@ def test_auto_offload_flatten_squeeze():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -712,7 +711,7 @@ class ChainedViewNet(nn.Cell):
     """Network with chained view operations for testing auto_offload."""
 
     def __init__(self):
-        super(ChainedViewNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -770,7 +769,7 @@ def test_auto_offload_chained_view():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -790,7 +789,7 @@ class ViewInplaceNet(nn.Cell):
     """Network with view followed by inplace operations for testing auto_offload."""
 
     def __init__(self):
-        super(ViewInplaceNet, self).__init__()
+        super().__init__()
         self.weight1 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight1')
         self.weight2 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight2')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -847,7 +846,7 @@ def test_auto_offload_view_inplace():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -867,7 +866,7 @@ class CrossViewNet(nn.Cell):
     """Network with multiple views used by different operators for testing auto_offload."""
 
     def __init__(self):
-        super(CrossViewNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
@@ -883,7 +882,7 @@ class CrossViewNet(nn.Cell):
         # Create multiple views from same tensor
         view1 = x.reshape(batch_size, 32, 4)  # View 1
         view2 = x.reshape(batch_size, 16, 8)  # View 2
-        view3 = x.transpose(0, 1)  # Transpose view
+        _ = x.transpose(0, 1)  # Transpose view
 
         # Use each view with different operations
         out1 = self.fc2(view1)  # Uses view1
@@ -922,7 +921,7 @@ def test_auto_offload_cross_view():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -942,7 +941,7 @@ class InplaceOpsNet(nn.Cell):
     """Network with inplace operations for testing auto_offload."""
 
     def __init__(self):
-        super(InplaceOpsNet, self).__init__()
+        super().__init__()
         self.weight1 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight1')
         self.weight2 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight2')
         self.weight3 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight3')
@@ -971,7 +970,7 @@ class InplaceIndexAddNet(nn.Cell):
     """Network with InplaceIndexAdd operations for testing auto_offload."""
 
     def __init__(self):
-        super(InplaceIndexAddNet, self).__init__()
+        super().__init__()
         self.index = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]).astype(np.int32))
         self.weight = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -1016,7 +1015,7 @@ def test_auto_offload_inplace_ops():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -1054,7 +1053,7 @@ def test_auto_offload_inplace_index_add():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -1074,7 +1073,7 @@ class DeepNestedViewNet(nn.Cell):
     """Network with deep nested view operations for testing auto_offload."""
 
     def __init__(self):
-        super(DeepNestedViewNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -1131,7 +1130,7 @@ def test_auto_offload_deep_nested_view():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()

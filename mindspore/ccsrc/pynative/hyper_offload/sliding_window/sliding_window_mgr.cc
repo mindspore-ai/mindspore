@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#include "mindspore/ccsrc/utils/sliding_window/sliding_window_mgr.h"
+#include "pynative/hyper_offload/sliding_window/sliding_window_mgr.h"
 
+#include <algorithm>
 #include <atomic>
 #include <exception>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -30,7 +32,7 @@
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
-#include "mindspore/ccsrc/utils/sliding_window/sliding_window_internal.h"
+#include "pynative/hyper_offload/sliding_window/sliding_window_internal.h"
 #include "ops/infer_info/infer_info_utils.h"
 #include "ops/op_def.h"
 #include "ops/ops_func_impl/simple_infer.h"
@@ -189,10 +191,9 @@ size_t InferOutputSize(const std::string &class_name, const std::vector<ValuePtr
     if (op_def->is_view_) {
       return 0;
     }
-    for (const auto &ret : op_def->returns_) {
-      if (ret.inplace_input_index_ >= 0) {
-        return 0;
-      }
+    if (std::any_of(op_def->returns_.begin(), op_def->returns_.end(),
+                    [](const auto &ret) { return ret.inplace_input_index_ >= 0; })) {
+      return 0;
     }
     if (typeid(op_def->func_impl_) == typeid(ops::OpFuncImpl)) {
       return 0;
@@ -217,9 +218,8 @@ size_t InferOutputSize(const std::string &class_name, const std::vector<ValuePtr
   if (op_def != nullptr) {
     std::vector<abstract::AbstractBasePtr> input_abs;
     input_abs.reserve(inputs.size());
-    for (const auto &v : inputs) {
-      input_abs.push_back(v != nullptr ? v->ToAbstract() : kNone->ToAbstract());
-    }
+    std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_abs),
+                   [](const ValuePtr &v) { return v != nullptr ? v->ToAbstract() : kNone->ToAbstract(); });
     return ComputeSizeFromAbstract(kernel::pyboost::PyBoostUtils::InferByOpDef(prim, input_abs));
   }
 
@@ -248,8 +248,7 @@ void SlidingWindowMgr::RegisterOutputs(const std::vector<tensor::TensorPtr> &out
       continue;
     }
     if (!CanOffloadTensor(tensor)) {
-      MS_LOG(INFO) << "  Skipped non-offloadable output: "
-                                      << (tensor ? tensor->ToString() : "nullptr");
+      MS_LOG(INFO) << "  Skipped non-offloadable output: " << (tensor ? tensor->ToString() : "nullptr");
       continue;
     }
     source_group_mgr_->RegisterSource(tensor, timestamp);
@@ -268,7 +267,7 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
   size_t expected_output_size = InferOutputSize(op_name, inputs);
 
   MS_LOG(INFO) << "PreProcess op=" << op_name << ", inputs=" << input_tensors.size()
-                                 << ", expected_output_size=" << (expected_output_size / 1024 / 1024) << " MB";
+               << ", expected_output_size=" << (expected_output_size / 1024 / 1024) << " MB";
   runtime::Pipeline::Get().WaitAll();
 
   PrintAscendMemStatistics("PreProcess::Entry");
@@ -284,8 +283,7 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
     if (input != nullptr) {
       TensorId source_id = source_group_mgr_->ResolveSourceId(input);
       auto *group = source_group_mgr_->GetGroup(source_id);
-      bool in_cache =
-        (group != nullptr && group->source_registered && group->status == ResidencyStatus::kOnDevice);
+      bool in_cache = (group != nullptr && group->source_registered && group->status == ResidencyStatus::kOnDevice);
       auto addr = input->device_address();
       bool has_device_mem = (addr != nullptr) && (addr->GetDevicePtr() != nullptr);
       if (in_cache && has_device_mem) {
@@ -299,9 +297,8 @@ void SlidingWindowMgr::PreProcess(const std::string &op_name, const std::vector<
   memory_needed += expected_output_size;
 
   MS_LOG(INFO) << "Memory analysis: needed=" << (memory_needed / 1024 / 1024)
-                                 << " MB, new_inputs=" << (new_inputs_size / 1024 / 1024)
-                                 << " MB, cached=" << cached_inputs_count << "/" << input_tensors.size()
-                                 << ", source_groups=" << source_group_mgr_->Size();
+               << " MB, new_inputs=" << (new_inputs_size / 1024 / 1024) << " MB, cached=" << cached_inputs_count << "/"
+               << input_tensors.size() << ", source_groups=" << source_group_mgr_->Size();
 
   if (memory_needed > 0) {
     size_t buffer_size = GetSlidingWindowBufferSize();
@@ -364,8 +361,7 @@ void SlidingWindowMgr::PostProcess(const std::string &op_name, const std::vector
       if (input->device_address() == out->device_address() && input->id() != out->id()) {
         source_group_mgr_->RegisterView(input, out, timestamp);
         (void)view_output_ids.insert(out->id());
-        MS_LOG(INFO) << "Registered view output: " << out->ToString()
-                                       << ", source input id=" << input->id();
+        MS_LOG(INFO) << "Registered view output: " << out->ToString() << ", source input id=" << input->id();
         break;
       }
     }

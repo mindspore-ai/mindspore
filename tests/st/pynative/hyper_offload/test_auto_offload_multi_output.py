@@ -26,11 +26,8 @@ This test file covers:
 """
 
 import numpy as np
-import pytest
-import mindspore as ms
 from mindspore import nn, Tensor, context, ops
 from mindspore.ops import composite as C
-from mindspore.common.parameter import Parameter
 from mindspore._c_expression import OffloadManager
 
 
@@ -65,7 +62,7 @@ class SplitUniformNet(nn.Cell):
     """Network with uniform split operations for testing auto_offload."""
 
     def __init__(self):
-        super(SplitUniformNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -120,7 +117,7 @@ def test_auto_offload_split_uniform():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -140,7 +137,7 @@ class SplitNonUniformNet(nn.Cell):
     """Network with non-uniform split operations for testing auto_offload."""
 
     def __init__(self):
-        super(SplitNonUniformNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 200, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(50, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(100, 64, weight_init='ones', bias_init='zeros')
@@ -193,7 +190,7 @@ def test_auto_offload_split_non_uniform():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -213,7 +210,7 @@ class ChunkNet(nn.Cell):
     """Network with chunk operations for testing auto_offload."""
 
     def __init__(self):
-        super(ChunkNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 192, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -243,7 +240,7 @@ class ChunkDim0Net(nn.Cell):
     """Network with chunk along dim 0 for testing auto_offload."""
 
     def __init__(self):
-        super(ChunkDim0Net, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
@@ -292,7 +289,7 @@ def test_auto_offload_chunk():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -329,7 +326,7 @@ def test_auto_offload_chunk_dim0():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -349,7 +346,7 @@ class UnstackNet(nn.Cell):
     """Network with unstack operations for testing auto_offload."""
 
     def __init__(self):
-        super(UnstackNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(256, 128, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -373,7 +370,7 @@ class UnstackDim0Net(nn.Cell):
     """Network with unstack along dim 0 for testing auto_offload."""
 
     def __init__(self):
-        super(UnstackDim0Net, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
@@ -421,7 +418,7 @@ def test_auto_offload_unstack():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -458,7 +455,7 @@ def test_auto_offload_unstack_dim0():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -478,7 +475,7 @@ class MultiOutputBranchingNet(nn.Cell):
     """Network with multi-output branching for testing auto_offload."""
 
     def __init__(self):
-        super(MultiOutputBranchingNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -536,7 +533,7 @@ def test_auto_offload_multi_output_branching():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -556,7 +553,7 @@ class PartialOutputNet(nn.Cell):
     """Network with partial output usage for testing auto_offload."""
 
     def __init__(self):
-        super(PartialOutputNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -605,7 +602,7 @@ def test_auto_offload_partial_output():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -625,7 +622,7 @@ class NestedMultiOutputNet(nn.Cell):
     """Network with nested multi-output for testing auto_offload."""
 
     def __init__(self):
-        super(NestedMultiOutputNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -683,7 +680,7 @@ def test_auto_offload_nested_multi_output():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -703,7 +700,7 @@ class MultiOutputViewNet(nn.Cell):
     """Network with multi-output combined with view operations for testing auto_offload."""
 
     def __init__(self):
-        super(MultiOutputViewNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
@@ -741,7 +738,7 @@ class MultiOutputReshapeNet(nn.Cell):
     """Network with multi-output followed by reshape for testing auto_offload."""
 
     def __init__(self):
-        super(MultiOutputReshapeNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(1, 4, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                weight_init='ones', bias_init='zeros')
         self.fc = nn.Dense(16 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
@@ -801,7 +798,7 @@ def test_auto_offload_multi_output_view():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()
@@ -838,7 +835,7 @@ def test_auto_offload_multi_output_reshape():
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(x)
 
     # Warm-up phase
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(x)
+    _ = grad_fn(net, list(net.trainable_params()))(x)
 
     # Analyze
     manager.analyse()

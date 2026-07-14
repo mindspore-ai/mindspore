@@ -21,10 +21,8 @@ Key principle: Input data must be identical for accuracy comparison.
 """
 
 import os
-import random
 import numpy as np
 import pytest
-import mindspore as ms
 from mindspore import nn, Tensor, context, ops, mint
 from mindspore import hal
 from mindspore._c_expression import OffloadManager
@@ -70,7 +68,7 @@ def _copy_weights(net_from, net_to):
         if hasattr(p1, 'data') and hasattr(p2, 'data'):
             try:
                 p2.set_data(p1.data.copy())
-            except:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
 
@@ -80,7 +78,7 @@ def _set_weights(net, weights_dict):
         if name in weights_dict:
             try:
                 param.set_data(weights_dict[name])
-            except:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
 
@@ -100,15 +98,15 @@ class ShortDistanceNet(nn.Cell):
     """Tensor used by multiple operators with short distance."""
 
     def __init__(self):
-        super(ShortDistanceNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 128)
         self.fc3 = nn.Dense(128, 64)
 
     def construct(self, x):
         t0 = self.fc1(x)
-        x1 = mint.nn.functional.relu(t0)
-        x2 = mint.nn.functional.tanh(t0)
+        _ = mint.nn.functional.relu(t0)
+        _ = mint.nn.functional.tanh(t0)
         x3 = mint.nn.functional.sigmoid(t0)
         out = self.fc2(x3)
         return self.fc3(out)
@@ -118,7 +116,7 @@ class ThresholdNet(nn.Cell):
     """Tensor used by operators at threshold distance."""
 
     def __init__(self):
-        super(ThresholdNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
 
@@ -135,7 +133,7 @@ class MediumDistanceNet(nn.Cell):
     """Tensor used by operators with medium distance."""
 
     def __init__(self):
-        super(MediumDistanceNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 128)
         self.fc3 = nn.Dense(128, 64)
@@ -153,7 +151,7 @@ class LongDistanceNet(nn.Cell):
     """Tensor used by operators with long distance (15+ operators)."""
 
     def __init__(self):
-        super(LongDistanceNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
 
@@ -170,7 +168,7 @@ class BasicResidualNet(nn.Cell):
     """Basic residual connection: output = F(input) + input."""
 
     def __init__(self):
-        super(BasicResidualNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 128)
         self.fc3 = nn.Dense(128, 64)
@@ -190,7 +188,7 @@ class MultiLayerResidualNet(nn.Cell):
     """Multi-layer residual blocks."""
 
     def __init__(self, num_blocks=3):
-        super(MultiLayerResidualNet, self).__init__()
+        super().__init__()
         self.num_blocks = num_blocks
         self.fc_input = nn.Dense(128, 128)
         self.fc_blocks = nn.CellList([nn.Dense(128, 128) for _ in range(num_blocks)])
@@ -216,7 +214,7 @@ class SkipConnectionNet(nn.Cell):
     """Skip connection where early tensor is used much later."""
 
     def __init__(self):
-        super(SkipConnectionNet, self).__init__()
+        super().__init__()
         self.fc_early = nn.Dense(128, 128)
         self.fc_middle = nn.Dense(128, 128)
         self.fc_late = nn.Dense(128, 128)
@@ -236,7 +234,7 @@ class DualBranchNet(nn.Cell):
     """Dual branch network with shared tensor."""
 
     def __init__(self):
-        super(DualBranchNet, self).__init__()
+        super().__init__()
         self.fc_shared = nn.Dense(128, 256)
         self.fc1 = nn.Dense(256, 128)
         self.fc2 = nn.Dense(256, 128)
@@ -254,7 +252,7 @@ class QuadBranchNet(nn.Cell):
     """Four branch network with shared tensor."""
 
     def __init__(self):
-        super(QuadBranchNet, self).__init__()
+        super().__init__()
         self.fc_shared = nn.Dense(128, 128)
         self.fc_branches = nn.CellList([nn.Dense(128, 64) for _ in range(4)])
         self.fc_merge = nn.Dense(256, 64)
@@ -279,7 +277,7 @@ class SkipBranchNet(nn.Cell):
     """Branch network with skip connections."""
 
     def __init__(self):
-        super(SkipBranchNet, self).__init__()
+        super().__init__()
         self.fc_input = nn.Dense(128, 128)
         self.fc_branches = nn.CellList([nn.Dense(128, 128) for _ in range(3)])  # Output 128
         self.fc_skip_project = nn.Dense(128, 128)  # Project skip to 128
@@ -291,7 +289,7 @@ class SkipBranchNet(nn.Cell):
         skip = self.fc_skip_project(skip)  # (batch, 128)
         x = self.relu(skip)
         branches = []
-        for i, fc in enumerate(self.fc_branches):
+        for _, fc in enumerate(self.fc_branches):
             branch = x
             for _ in range(2):
                 branch = self.relu(fc(branch))  # (batch, 128)
@@ -304,7 +302,7 @@ class Distance10Net(nn.Cell):
     """Tensor with 10 intermediate operators."""
 
     def __init__(self):
-        super(Distance10Net, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
 
@@ -321,7 +319,7 @@ class Distance20Net(nn.Cell):
     """Tensor with 20 intermediate operators."""
 
     def __init__(self):
-        super(Distance20Net, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
 
@@ -338,7 +336,7 @@ class Distance50Net(nn.Cell):
     """Tensor with 50 intermediate operators (stress test)."""
 
     def __init__(self):
-        super(Distance50Net, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
 
@@ -355,7 +353,7 @@ class Distance100Net(nn.Cell):
     """Tensor with 100 intermediate operators (boundary test)."""
 
     def __init__(self):
-        super(Distance100Net, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 64)
 
@@ -372,7 +370,7 @@ class TupleShareNet(nn.Cell):
     """Tuple outputs shared by multiple operators."""
 
     def __init__(self):
-        super(TupleShareNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256)
         self.fc2 = nn.Dense(128, 128)
         self.fc3 = nn.Dense(128, 128)
@@ -393,7 +391,7 @@ class BroadcastShareNet(nn.Cell):
     """Broadcast tensor shared by multiple operations."""
 
     def __init__(self):
-        super(BroadcastShareNet, self).__init__()
+        super().__init__()
         self.fc_shared = nn.Dense(128, 128)
         self.fc_branches = nn.CellList([nn.Dense(128, 128) for _ in range(3)])
         self.fc_output = nn.Dense(384, 64)
@@ -402,14 +400,14 @@ class BroadcastShareNet(nn.Cell):
     def construct(self, x):
         shared = self.fc_shared(x)  # (batch, 128) -> (batch, 128)
         shared = self.relu(shared)
-        
+
         branches = []
         for fc in self.fc_branches:
             branch = shared
             for _ in range(2):
                 branch = self.relu(fc(branch))  # (batch, 128) -> (batch, 128)
             branches.append(branch)
-        
+
         merged = mint.cat(branches, dim=1)  # (batch, 128*3) = (batch, 384)
         return self.fc_output(merged)
 
@@ -418,7 +416,7 @@ class InplaceShareNet(nn.Cell):
     """Inplace operations sharing tensor."""
 
     def __init__(self):
-        super(InplaceShareNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128)
         self.fc2 = nn.Dense(128, 128)
         self.fc3 = nn.Dense(128, 64)
@@ -437,7 +435,7 @@ class SplitNet(nn.Cell):
     """Split operator with multiple tensor outputs."""
 
     def __init__(self):
-        super(SplitNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(256, 256)
         self.fc2 = nn.Dense(128, 64)
         self.fc3 = nn.Dense(128, 64)
@@ -457,7 +455,7 @@ class SplitFirstNet(nn.Cell):
     """Split with TupleGetItem to get first tensor only."""
 
     def __init__(self):
-        super(SplitFirstNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(256, 256)
         self.fc2 = nn.Dense(128, 64)
         self.relu = mint.nn.functional.relu
@@ -475,7 +473,7 @@ class SplitSecondNet(nn.Cell):
     """Split with TupleGetItem to get second tensor only."""
 
     def __init__(self):
-        super(SplitSecondNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(256, 256)
         self.fc2 = nn.Dense(128, 64)
         self.relu = mint.nn.functional.relu
@@ -493,7 +491,7 @@ class MultiSplitNet(nn.Cell):
     """Split into multiple parts with TupleGetItem for some."""
 
     def __init__(self):
-        super(MultiSplitNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(256, 256)
         self.fc2 = nn.Dense(64, 64)
         self.fc3 = nn.Dense(64, 64)
@@ -518,7 +516,7 @@ class MultiSplitNet(nn.Cell):
 def _run_accuracy_test(net_class, input_data, select_distance, prefetch_distance, test_name):
     """
     Run accuracy test with consistent input data.
-    
+
     Key: Uses SAME input tensor for both with/without offload comparison.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -556,14 +554,14 @@ def _run_accuracy_test(net_class, input_data, select_distance, prefetch_distance
     _verify_gradients(grads_with_offload, grads_no_offload)
 
     _restore_offload_config(origin_select, origin_prefetch)
-    
+
     return output_no_offload, output_with_offload, grads_no_offload, grads_with_offload
 
 
 def _run_memory_test(net_class, input_data, select_distance, prefetch_distance, test_name):
     """
     Run memory test to measure peak memory usage.
-    
+
     Key: Separate test from accuracy to avoid resource interference.
     Key: Verify that peak memory decreases with hyperoffload enabled.
     Key: Ensure weight consistency between with/without offload runs.
@@ -576,7 +574,7 @@ def _run_memory_test(net_class, input_data, select_distance, prefetch_distance, 
     net_no_offload = net_class()
     net_no_offload.set_grad()
     weights = _get_weights(net_no_offload)
-    
+
     hal.reset_peak_memory_stats()
     _ = net_no_offload(input_data)
     _ = grad_net(net_no_offload, list(net_no_offload.trainable_params()))(input_data)
@@ -601,12 +599,12 @@ def _run_memory_test(net_class, input_data, select_distance, prefetch_distance, 
     mem_with_offload = hal.max_memory_allocated()
 
     print(f"{test_name}: No-offload={mem_no_offload}, With-offload={mem_with_offload}")
-    
+
     assert mem_with_offload < mem_no_offload, \
         f"{test_name}: Memory with offload ({mem_with_offload}) should be less than without offload ({mem_no_offload})"
 
     _restore_offload_config(origin_select, origin_prefetch)
-    
+
     return mem_no_offload, mem_with_offload
 
 

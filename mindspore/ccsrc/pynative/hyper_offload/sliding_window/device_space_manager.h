@@ -23,7 +23,7 @@
 #include <memory>
 #include "ir/tensor.h"
 #include "device_address/device_address.h"
-#include "mindspore/ccsrc/utils/sliding_window/source_group_manager.h"
+#include "pynative/hyper_offload/sliding_window/source_group_manager.h"
 
 namespace mindspore {
 namespace utils {
@@ -60,8 +60,7 @@ class DeviceSpaceManager {
 
   // Reload one offloaded entry through the shared DeviceAddress. This is used when the
   // source Tensor has been destroyed while a view still keeps the DeviceAddress alive.
-  bool ReloadDeviceAddress(TensorId source_id, const device::DeviceAddressPtr &device_addr,
-                           const TensorPtr &host_copy);
+  bool ReloadDeviceAddress(TensorId source_id, const device::DeviceAddressPtr &device_addr, const TensorPtr &host_copy);
 
   bool ReloadGroup(SourceGroup *group, const TensorPtr &addr_tensor);
 

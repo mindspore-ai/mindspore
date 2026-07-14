@@ -26,7 +26,7 @@
 
 #include "device_address/device_address.h"
 #include "ir/tensor.h"
-#include "mindspore/ccsrc/utils/sliding_window/sliding_window_internal.h"
+#include "pynative/hyper_offload/sliding_window/sliding_window_internal.h"
 
 namespace mindspore {
 namespace utils {

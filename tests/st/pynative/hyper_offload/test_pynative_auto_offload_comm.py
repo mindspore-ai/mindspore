@@ -121,7 +121,7 @@ class AllGatherNet(nn.Cell):
         y = mint.nn.functional.relu(y)
 
         # AllGather: gather tensors from all ranks
-        z = all_gather(output_tensor, y)  # Output shape: [batch * world_size, 64]
+        _ = all_gather(output_tensor, y)  # Output shape: [batch * world_size, 64]
 
         # Continue computation with gathered tensor
         y = ms.ops.ReduceMean(keep_dims=True)(output_tensor[0], axis=0)  # [1, 64]
@@ -156,13 +156,13 @@ def test_auto_offload_allgather():
         p2.set_data(p1.data.copy())
 
     output = []
-    for i in range(size):
+    for _ in range(size):
         output.append(Tensor(np.random.randn(8, 64).astype(np.float32)))
 
     grad_fn = C.GradOperation(get_all=True, get_by_list=True)
     ref_grads = grad_fn(net_ref, list(net_ref.trainable_params()))(output, x)
 
-    warmup_grads = grad_fn(net, list(net.trainable_params()))(output, x)
+    _ = grad_fn(net, list(net.trainable_params()))(output, x)
 
     manager.analyse()
 

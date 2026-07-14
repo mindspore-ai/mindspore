@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "mindspore/ccsrc/utils/sliding_window/device_space_manager.h"
+#include "pynative/hyper_offload/sliding_window/device_space_manager.h"
 
 #include "device_address/device_address_maker.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ccsrc/utils/sliding_window/sliding_window_internal.h"
+#include "pynative/hyper_offload/sliding_window/sliding_window_internal.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 
@@ -139,14 +139,12 @@ void PrintAscendMemStatistics(const std::string &location) {
   MS_EXCEPTION_IF_NULL(ctx);
   MS_EXCEPTION_IF_NULL(ctx->device_res_manager_);
   const auto &res = ctx->device_res_manager_;
-  MS_LOG(INFO) << "MemoryStatistics [" << location
-                                   << "]: total=" << (res->GetTotalMemStatistics() / 1024.0 / 1024.0)
-                                   << " MB, used=" << (res->GetTotalUsedMemStatistics() / 1024.0 / 1024.0)
-                                   << " MB, idle=" << (res->GetTotalIdleMemStatistics() / 1024.0 / 1024.0)
-                                   << " MB, eager_free=" << (res->GetTotalEagerFreeMemStatistics() / 1024.0 / 1024.0)
-                                   << " MB, used_peak=" << (res->GetUsedMemPeakStatistics() / 1024.0 / 1024.0)
-                                   << " MB, reserved_peak=" << (res->GetReservedMemPeakStatistics() / 1024.0 / 1024.0)
-                                   << " MB";
+  MS_LOG(INFO) << "MemoryStatistics [" << location << "]: total=" << (res->GetTotalMemStatistics() / 1024.0 / 1024.0)
+               << " MB, used=" << (res->GetTotalUsedMemStatistics() / 1024.0 / 1024.0)
+               << " MB, idle=" << (res->GetTotalIdleMemStatistics() / 1024.0 / 1024.0)
+               << " MB, eager_free=" << (res->GetTotalEagerFreeMemStatistics() / 1024.0 / 1024.0)
+               << " MB, used_peak=" << (res->GetUsedMemPeakStatistics() / 1024.0 / 1024.0)
+               << " MB, reserved_peak=" << (res->GetReservedMemPeakStatistics() / 1024.0 / 1024.0) << " MB";
   auto block_counts = res->GetBlockCountsStatistics();
   for (const auto &[block_type, count] : block_counts) {
     MS_LOG(INFO) << "  Block " << block_type << ": " << count;
@@ -188,8 +186,7 @@ size_t DeviceSpaceManager::TryOffloadGroup(SourceGroup *group) {
   group->aligned_size = AlignToPoolSize(source->Size());
   source->device_address()->ClearDeviceMemory();
 
-  MS_LOG(INFO) << "Offloaded source group: id=" << group->source_id
-                                   << " (" << (source->Size() / 1024 / 1024) << " MB)";
+  MS_LOG(INFO) << "Offloaded source group: id=" << group->source_id << " (" << (source->Size() / 1024 / 1024) << " MB)";
   return group->aligned_size;
 }
 
@@ -245,8 +242,7 @@ bool DeviceSpaceManager::ReloadGroup(SourceGroup *group, const TensorPtr &addr_t
     device_addr = group->shared_addr.lock();
   }
   if (device_addr == nullptr) {
-    MS_LOG(INFO) << "Skip reload for source group id=" << group->source_id
-                                       << ", shared DeviceAddress expired.";
+    MS_LOG(INFO) << "Skip reload for source group id=" << group->source_id << ", shared DeviceAddress expired.";
     group->host_copy = nullptr;
     return false;
   }
@@ -275,8 +271,8 @@ bool DeviceSpaceManager::EnsureDeviceSpaceEnough(size_t expected_size,
   }
   size_t size_needed = expected_size - available;
 
-  MS_LOG(INFO) << "EnsureDeviceSpaceEnough: need "
-                                 << (size_needed / 1024 / 1024) << " MB, protected=" << protected_source_ids.size();
+  MS_LOG(INFO) << "EnsureDeviceSpaceEnough: need " << (size_needed / 1024 / 1024)
+               << " MB, protected=" << protected_source_ids.size();
 
   size_t freed = 0;
   size_t offloaded = 0;
@@ -293,16 +289,14 @@ bool DeviceSpaceManager::EnsureDeviceSpaceEnough(size_t expected_size,
 
   if (offloaded > 0) {
     FinalizeOffload();
-    MS_LOG(INFO) << "EnsureDeviceSpaceEnough done: offloaded=" << offloaded
-                                   << ", freed=" << (freed / 1024 / 1024)
-                                   << " MB, source_groups=" << source_group_mgr_->Size();
+    MS_LOG(INFO) << "EnsureDeviceSpaceEnough done: offloaded=" << offloaded << ", freed=" << (freed / 1024 / 1024)
+                 << " MB, source_groups=" << source_group_mgr_->Size();
   }
   size_t available_after = AscendPoolIdleSize() + AscendPoolExpandableSize();
   if (available_after < expected_size) {
-    MS_LOG(INFO) << "EnsureDeviceSpaceEnough could not free enough memory: need="
-                                      << (size_needed / 1024 / 1024) << " MB, freed="
-                                      << (freed / 1024 / 1024) << " MB, available_after="
-                                      << (available_after / 1024 / 1024) << " MB";
+    MS_LOG(INFO) << "EnsureDeviceSpaceEnough could not free enough memory: need=" << (size_needed / 1024 / 1024)
+                 << " MB, freed=" << (freed / 1024 / 1024) << " MB, available_after=" << (available_after / 1024 / 1024)
+                 << " MB";
     return false;
   }
   return true;
@@ -341,9 +335,7 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
       auto addr = tensor->device_address();
       if (addr == nullptr || addr->GetDevicePtr() == nullptr) {
         MS_LOG(INFO) << "  No device memory and not offloaded: id=" << tensor_id
-                                           << (lookup_id != tensor_id
-                                                 ? " (source=" + std::to_string(lookup_id) + ")"
-                                                 : "");
+                     << (lookup_id != tensor_id ? " (source=" + std::to_string(lookup_id) + ")" : "");
       }
       on_device_count++;
       continue;
@@ -356,25 +348,20 @@ bool DeviceSpaceManager::EnsureInputsOnDevice(const std::vector<TensorPtr> &inpu
     }
 
     MS_LOG(INFO) << "  Reloading tensor [" << reload_count << "]: id=" << lookup_id
-                                   << (lookup_id != tensor_id
-                                         ? " (triggered by view " + std::to_string(tensor_id) + ")"
-                                         : "")
-                                   << ", size=" << (reload_size / 1024 / 1024) << " MB";
+                 << (lookup_id != tensor_id ? " (triggered by view " + std::to_string(tensor_id) + ")" : "")
+                 << ", size=" << (reload_size / 1024 / 1024) << " MB";
 
     success = ReloadGroup(group, tensor) && success;
     reloaded_sources.insert(lookup_id);
     reload_count++;
   }
 
-  MS_LOG(INFO) << "EnsureInputsOnDevice done: reloaded=" << reload_count
-                                   << ", on_device=" << on_device_count
-                                   << ", source_groups=" << source_group_mgr_->Size();
+  MS_LOG(INFO) << "EnsureInputsOnDevice done: reloaded=" << reload_count << ", on_device=" << on_device_count
+               << ", source_groups=" << source_group_mgr_->Size();
   return success;
 }
 
-void DeviceSpaceManager::PurgeExpiredOffloaded() {
-  source_group_mgr_->PurgeExpired();
-}
+void DeviceSpaceManager::PurgeExpiredOffloaded() { source_group_mgr_->PurgeExpired(); }
 
 bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
   MS_LOG(INFO) << "EnsureAllOffloadedOnDevice: source_groups=" << source_group_mgr_->Size();
@@ -394,7 +381,7 @@ bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
 
     if (source_tensor == nullptr && shared_device_addr == nullptr) {
       MS_LOG(INFO) << "DeviceAddress expired for offloaded source group id=" << source_id
-                                         << ", remove dangling host copy.";
+                   << ", remove dangling host copy.";
       group->host_copy = nullptr;
       group->status = ResidencyStatus::kOnDevice;
       ++skipped_count;
@@ -403,8 +390,8 @@ bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
 
     MS_EXCEPTION_IF_NULL(group->host_copy);
     MS_LOG(INFO) << "  Reloading offloaded source group: id=" << source_id
-                                   << " size=" << (group->host_copy->Size() / 1024 / 1024) << " MB"
-                                   << (source_tensor == nullptr ? " via surviving DeviceAddress" : "");
+                 << " size=" << (group->host_copy->Size() / 1024 / 1024) << " MB"
+                 << (source_tensor == nullptr ? " via surviving DeviceAddress" : "");
 
     success = ReloadGroup(group, source_tensor) && success;
     ++reload_count;
@@ -412,12 +399,10 @@ bool DeviceSpaceManager::EnsureAllOffloadedOnDevice() {
 
   FinalizeOffload();
 
-  MS_LOG(INFO) << "EnsureAllOffloadedOnDevice done: reloaded=" << reload_count
-                                   << ", skipped=" << skipped_count
-                                   << ", source_groups=" << source_group_mgr_->Size();
+  MS_LOG(INFO) << "EnsureAllOffloadedOnDevice done: reloaded=" << reload_count << ", skipped=" << skipped_count
+               << ", source_groups=" << source_group_mgr_->Size();
   return success;
 }
-
 
 }  // namespace sliding_window
 }  // namespace utils

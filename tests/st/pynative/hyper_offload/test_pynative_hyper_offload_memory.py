@@ -20,9 +20,7 @@ tensor resource interference during memory measurement.
 
 import os
 import numpy as np
-import pytest
-import mindspore as ms
-from mindspore import nn, Tensor, context, ops, mint
+from mindspore import nn, Tensor, context, ops
 from mindspore import hal
 from mindspore._c_expression import OffloadManager
 from mindspore.graph._parse import compile_config
@@ -37,7 +35,7 @@ class SimpleNet(nn.Cell):
     """Simple network for testing."""
 
     def __init__(self):
-        super(SimpleNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(256, 128, weight_init='ones', bias_init='zeros')
         self.fc3 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
@@ -56,7 +54,7 @@ class ConvNet(nn.Cell):
     """Convolutional network for testing."""
 
     def __init__(self):
-        super(ConvNet, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, weight_init='ones', has_bias=False)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, weight_init='ones', has_bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -79,7 +77,7 @@ class DeepResidualNet(nn.Cell):
     """Deep network with residual connections."""
 
     def __init__(self, num_layers=4):
-        super(DeepResidualNet, self).__init__()
+        super().__init__()
         self.fc_input = nn.Dense(128, 128, weight_init='ones', bias_init='zeros')
         self.layers = nn.CellList()
         for _ in range(num_layers):
@@ -108,7 +106,7 @@ class LargeTensorNet(nn.Cell):
     """Network with large intermediate tensors."""
 
     def __init__(self):
-        super(LargeTensorNet, self).__init__()
+        super().__init__()
         self.matmul1 = ops.matmul
         self.matmul2 = ops.matmul
         self.relu = ops.relu
@@ -716,7 +714,8 @@ def test_auto_offload_memory_peak_different_batch_sizes():
         _cleanup_resources(net_with_offload, x_new)
 
         reduction = ((mem_no_offload - mem_with_offload) / mem_no_offload) * 100
-        print(f"Batch size {batch_size}: No offload={mem_no_offload}, With offload={mem_with_offload}, Reduction={reduction:.2f}%")
+        print(f"Batch size {batch_size}: No offload={mem_no_offload}, "
+              f"With offload={mem_with_offload}, Reduction={reduction:.2f}%")
 
         assert mem_with_offload < mem_no_offload, \
             f"Batch size {batch_size}: Expected memory with offload ({mem_with_offload}) < without ({mem_no_offload})"
