@@ -140,11 +140,19 @@ void OpBackend::Run(const BackendOpRunInfoPtr &op_run_info, device::DeviceType d
     return;
   }
   ViewBackend::ContiguousInputByRunInfo(op_run_info);
+  // Call pre-hook for hyper offload tracing (before op execution)
+  if (HasPreHook()) {
+    CallPreHook(op_run_info);
+  }
   auto device_name = device::GetDeviceNameByType(device_type);
   if (op_run_info->base_op_run_info.use_dynamic_shape_process) {
     RunInnerDynamic(op_run_info, device_name, device_id, outputs);
   } else {
     RunInner(op_run_info, device_name, device_id, outputs);
+  }
+  // Call post-hook for hyper offload tracing (after op execution)
+  if (HasPostHook()) {
+    CallPostHook(op_run_info, *outputs);
   }
 }
 
@@ -678,4 +686,27 @@ void ViewBackend::AllocateMemForTensor(const tensor::TensorPtr &tensor, DeviceCo
     MarkTensorAsOutput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
     device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
 }
+
+void OpBackend::CallPreHook(const BackendOpRunInfoPtr &op_run_info) {
+  if (pre_hook_funcs_.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  // Call all registered pre-hook functions
+  for (const auto &func : pre_hook_funcs_) {
+    func(op_run_info);
+  }
+}
+
+void OpBackend::CallPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRef &outputs) {
+  if (post_hook_funcs_.empty()) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  // Call all registered post-hook functions
+  for (const auto &func : post_hook_funcs_) {
+    func(op_run_info, outputs);
+  }
+}
+
 }  // namespace mindspore::compile

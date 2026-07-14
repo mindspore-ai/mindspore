@@ -12,7 +12,14 @@ ${return_type} ${op_name}_impl(${input_args_with_type}) {
   device::DeviceType device_target = EnableDispatch() ? get_device(${input_args}) : GetDeviceTarget();
   OpRunStatus::Get().HeterBarrier(device_target);
   ${create_op}
-  return op->Call(${input_args});
+  ${return_type} output;
+  OpRunner::CallPreHook("${class_name}", ${input_args});
+  {
+    PostHookGuard guard;
+    output = op->Call(${input_args});
+  }
+  OpRunner::CallPostHook("${class_name}", output, ${input_args});
+  return output;
 }
 
 ${return_type} ${op_name}(${input_args_with_type}) {

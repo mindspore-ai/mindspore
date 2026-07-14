@@ -21,15 +21,25 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <functional>
 #include "include/utils/visible.h"
 #include "include/backend/common/kernel_graph/session_basic.h"
 #include "include/pynative/utils/runtime/op_compiler.h"
 #include "include/pynative/utils/runtime/task/device_task.h"
 
 namespace mindspore::compile {
-using BackendOpRunInfoPtr = session::BackendOpRunInfoPtr;
+using BackendOpRunInfoPtr = mindspore::session::BackendOpRunInfoPtr;
 using KernelTensor = kernel::KernelTensor;
 using KernelTensorPtr = kernel::KernelTensorPtr;
+
+// Pre-hook function type for tracing RunOp execution (called before op execution).
+// Parameters: op_run_info (contains op_name, inputs, etc.)
+using OpBackendPreHookFunc = std::function<void(const BackendOpRunInfoPtr &op_run_info)>;
+
+// Post-hook function type for tracing RunOp execution (called after op execution).
+// Parameters: op_run_info (contains op_name, inputs, etc.), outputs
+using OpBackendPostHookFunc =
+  std::function<void(const BackendOpRunInfoPtr &op_run_info, const mindspore::VectorRef &outputs)>;
 
 class PYNATIVE_UTILS_EXPORT ViewBackend {
  public:
@@ -92,6 +102,32 @@ class PYNATIVE_UTILS_EXPORT OpBackend {
 
   void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async) const;
 
+  // Register a pre-hook function that will be called before RunOp execution.
+  // Multiple hooks can be registered and will be called in registration order.
+  static void RegisterPreHook(const OpBackendPreHookFunc &func) { pre_hook_funcs_.emplace_back(func); }
+
+  // Clear all registered pre-hook functions.
+  static void ClearPreHook() { pre_hook_funcs_.clear(); }
+
+  // Check if any pre-hook function is registered.
+  static bool HasPreHook() { return !pre_hook_funcs_.empty(); }
+
+  // Call all registered pre-hook functions.
+  static void CallPreHook(const BackendOpRunInfoPtr &op_run_info);
+
+  // Register a post-hook function that will be called after RunOp execution.
+  // Multiple hooks can be registered and will be called in registration order.
+  static void RegisterPostHook(const OpBackendPostHookFunc &func) { post_hook_funcs_.emplace_back(func); }
+
+  // Clear all registered post-hook functions.
+  static void ClearPostHook() { post_hook_funcs_.clear(); }
+
+  // Check if any post-hook function is registered.
+  static bool HasPostHook() { return !post_hook_funcs_.empty(); }
+
+  // Call all registered post-hook functions.
+  static void CallPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRef &outputs);
+
  protected:
   void RunInner(const BackendOpRunInfoPtr &op_run_info, const std::string &device_name, uint32_t device_id,
                 VectorRef *outputs);
@@ -120,6 +156,11 @@ class PYNATIVE_UTILS_EXPORT OpBackend {
 
   PostRunOp post_run_;
   ViewBackend view_backend_;
+
+  // Static pre-hook functions for hyper offload tracing (supports multiple hooks).
+  inline static std::vector<OpBackendPreHookFunc> pre_hook_funcs_;
+  // Static post-hook functions for hyper offload tracing (supports multiple hooks).
+  inline static std::vector<OpBackendPostHookFunc> post_hook_funcs_;
 };
 using OpBackendPtr = std::unique_ptr<OpBackend>;
 }  // namespace mindspore::compile

@@ -17,7 +17,15 @@ ${return_type} ${op_name}_dispatch(${input_args_with_type}, CommHandlePtr comm_h
   }
   auto op = CREATE_PYBOOST_OP(${class_name}, target);
   op->set_comm_handle(comm_handle);
-  return op->Call(${input_args});
+  
+  ${return_type} output;
+  OpRunner::CallPreHook("${class_name}", ${input_args});
+  {
+    PostHookGuard guard;
+    output = op->Call(${input_args});
+  }
+  OpRunner::CallPostHook("${class_name}", output, ${input_args}); 
+  return output;
 }
 
 ${return_type} ${op_name}_inner(${input_args_with_type}, CommHandlePtr comm_handle, device::DeviceType target) {

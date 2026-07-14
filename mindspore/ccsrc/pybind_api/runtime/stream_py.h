@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,68 +16,18 @@
 
 #ifndef MINDSPORE_CCSRC_PYBIND_API_HAL_STREAM_PY_H
 #define MINDSPORE_CCSRC_PYBIND_API_HAL_STREAM_PY_H
-#include <string>
-#include <memory>
-#include "include/runtime/hardware_abstract/device_context/device_context.h"
+
+// Re-export Stream class from pynative runtime for backward compatibility
+#include "include/pynative/utils/runtime/stream.h"
 
 namespace mindspore {
 namespace hal {
-class StreamPy {
- public:
-  StreamPy();
-  explicit StreamPy(int priority);
-  StreamPy(int priority, int stream_id);
-  StreamPy(device::DeviceContext *device_ctx, const size_t &stream_id);
-  explicit StreamPy(const StreamPy &stream);
-  ~StreamPy();
+// Backward compatibility aliases for Python binding
+using StreamPy = Stream;
+using StreamPyPtr = StreamPtr;
 
-  // Query if the event has completed
-  bool Query();
-
-  void Synchronize();
-
-  device::DeviceContext *device_ctx() const {
-    MS_EXCEPTION_IF_NULL(device_ctx_);
-    return device_ctx_;
-  }
-
-  std::string ToStringRepr() const;
-
-  size_t stream_id() const { return stream_id_; }
-
-  void *stream() const;
-
-  uintptr_t stream_ptr() const;
-
-  bool StreamEqual(const std::shared_ptr<StreamPy> other_stream);
-
-  std::string device_name() const {
-    MS_EXCEPTION_IF_NULL(device_ctx_);
-    return device::GetDeviceNameByType(device_ctx_->device_context_key().device_type_);
-  }
-
-  uint32_t device_id() const {
-    MS_EXCEPTION_IF_NULL(device_ctx_);
-    return device_ctx_->device_context_key().device_id_;
-  }
-
- private:
-  device::DeviceContext *device_ctx_;
-  size_t stream_id_{0};
-};
-using StreamPyPtr = std::shared_ptr<StreamPy>;
-
-void SetCurStream(const StreamPyPtr &cur_stream);
-
-// Synchronize all stream
-void Synchronize();
-
-// Get current stream
-StreamPyPtr CurrentStream();
-
-StreamPyPtr DefaultStream();
-
-StreamPyPtr CommunicationStream();
+// Use the functions from stream.h, with alias for backward compatibility
+inline void Synchronize() { SynchronizeAllStreams(); }
 }  // namespace hal
 }  // namespace mindspore
 

@@ -48,13 +48,13 @@ using mindspore::profiler::ProfilerManager;
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "pynative/backward/grad_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_reg.h"
-#include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "include/utils/tensor_py.h"
 #include "utils/current_state.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/runtime/utils/dispatch/dispatch_env.h"
 #include "include/pynative/utils/pyboost/functions/dispatch.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace pynative {
@@ -64,6 +64,26 @@ const std::set<std::string> kVmOperators = {"InsertGradientOf", "StopGradient", 
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
 constexpr auto kOpNameCustom = "Custom";
+
+class ScopedOpRunStatus {
+ public:
+  explicit ScopedOpRunStatus(const kernel::pyboost::OpStatus &status)
+      : previous_status_(kernel::pyboost::OpRunStatus::Get().op_status()) {
+    kernel::pyboost::OpRunStatus::Get().set_run_info(
+      kernel::pyboost::OpStatus(status.disable_mix_precision, status.device_target));
+  }
+
+  ~ScopedOpRunStatus() {
+    kernel::pyboost::OpRunStatus::Get().set_run_info(
+      kernel::pyboost::OpStatus(previous_status_.disable_mix_precision, previous_status_.device_target));
+  }
+
+  ScopedOpRunStatus(const ScopedOpRunStatus &) = delete;
+  ScopedOpRunStatus &operator=(const ScopedOpRunStatus &) = delete;
+
+ private:
+  kernel::pyboost::OpStatus previous_status_;
+};
 
 #ifndef ENABLE_TEST
 void CreateDeviceAddressForTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &tensor) {
@@ -314,11 +334,14 @@ tensor::TensorPtr TensorContiguous(const tensor::TensorPtr &tensor) {
   auto old_device_address = tensor->device_address();
   MS_EXCEPTION_IF_NULL(old_device_address);
 
-  const DeviceContext *device_context = runtime::OpRunner::GetDeviceContext(old_device_address->GetDeviceType());
+  const auto device_target = old_device_address->GetDeviceType();
+  const DeviceContext *device_context = runtime::OpRunner::GetDeviceContext(device_target);
   MS_EXCEPTION_IF_NULL(device_context);
   GilReleaseWithCheck release_gil;
-  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_context->GetDeviceType());
-  const auto &contiguous_tensor = contiguous_op->Call(tensor);
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
+  const auto &previous_status = kernel::pyboost::OpRunStatus::Get().op_status();
+  ScopedOpRunStatus status_guard(kernel::pyboost::OpStatus(previous_status.disable_mix_precision, device_target));
+  auto contiguous_tensor = kernel::pyboost::contiguous(tensor);
   // Need to wait contiguous finish in heterogeneous scenarios.
   runtime::Pipeline::Get().WaitForward();
   return contiguous_tensor;
