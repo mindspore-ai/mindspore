@@ -1639,8 +1639,8 @@ class MultiMarginLoss(LossBase):
             - ``'mean'``: compute and return the weighted mean of elements in the output.
             - ``'sum'``: the output elements will be summed.
 
-        weight (Tensor, optional): The rescaling weight to each class with shape :math:`(C,)`. Data type only
-            support float32, float16 or float64. Default: ``None`` , all classes are weighted equally.
+        weight (Tensor, optional): The rescaling weight for each class with shape :math:`(C,)`. Data type only
+            supports float32, float16 or float64. Default: ``None`` , all classes are weighted equally.
 
     Inputs:
         - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only supports float32, float16 or float64.
@@ -1650,7 +1650,7 @@ class MultiMarginLoss(LossBase):
 
     Outputs:
         Tensor. When `reduction` is ``'none'``, the shape is :math:`(N,)`.
-        Otherwise, it is a scalar. Has the same data type with `x`.
+        Otherwise, it is a scalar. Has the same data type as `x`.
 
     Raises:
         TypeError: If dtype of `p` or `target` is not int.
@@ -1662,7 +1662,7 @@ class MultiMarginLoss(LossBase):
         ValueError: If `reduction` is not one of { ``'none'`` , ``'sum'`` , ``'mean'`` }.
         ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
         ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
-        ValueError: IF rank of `weight` is not 1.
+        ValueError: If rank of `weight` is not 1.
         ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
 
     Supported Platforms:
@@ -1877,7 +1877,7 @@ class MultilabelMarginLoss(LossBase):
     It takes a 2D mini-batch Tensor :math:`x` as input and a 2D
     Tensor :math:`y` containing target class indices as output.
 
-    Each sample in the mini-batch, the loss is computed as follows:
+    For each sample in the mini-batch, the loss is computed as follows:
 
     .. math::
         \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
@@ -1885,7 +1885,7 @@ class MultilabelMarginLoss(LossBase):
     where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
     :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
     :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
-    and for all :math:`i` and :math:`j`, :math:`i` does not equal to :math:`y[j]`.
+    and for all :math:`i` and :math:`j`, :math:`i` is not equal to :math:`y[j]`.
 
     Furthermore, both :math:`y` and :math:`x` should have identical sizes.
 
@@ -2407,7 +2407,7 @@ class NLLLoss(LossBase):
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}\{c \not= \text{ignore_index}\}
 
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
-    :math:`N` is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index,
+    :math:`N` is the batch size, :math:`c`, belonging to :math:`[0, C-1]`, is the class index,
     where :math:`C` is the number of classes.
 
     If :math:`reduction \neq none` (default ``'mean'`` ), then
@@ -2434,7 +2434,7 @@ class NLLLoss(LossBase):
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, C)`
           or :math:`(N, C, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data, where `C = number of classes`.
-          Data type must be float16 or float32. `inputs` needs to be logarithmic probability.
+          Data type must be float16 or float32. `logits` need to be logarithmic probability.
         - **labels** (Tensor) - :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data.
           Data type must be int32.
 

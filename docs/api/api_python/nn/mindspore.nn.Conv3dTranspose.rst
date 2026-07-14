@@ -23,7 +23,7 @@ mindspore.nn.Conv3dTranspose
           - ``"valid"``：不对输入进行填充，返回输出可能的最大深度、高度和宽度，如果不能构成一个完整stride，那么额外的像素将被丢弃。如果设置了此模式， `padding` 必须为0。
           - ``"pad"``：对输入填充指定的量。在这种模式下，在输入的深度、高度和宽度方向上填充的量由 `padding` 参数指定。如果设置此模式， `padding` 必须大于或等于0。
 
-        - **padding** (Union(int, tuple[int])，可选) - 输入的深度、高度和宽度方向上填充的数量。数据类型为int，或包含六个整数的tuple。若 `padding` 是一个整数，则前部、后部、顶部、底部、左边和右边的填充都等于 `padding` ；若 `padding` 是包含六个整数的tuple，则前部、尾部、顶部、底部、左边和右边的填充分别等于填充 `padding[0]` 、 `padding[1]` 、 `padding[2]` 、 `padding[3]` 、 `padding[4]` 和 `padding[5]` 。值要大于等于0，默认值： ``0`` 。
+        - **padding** (Union(int, tuple[int])，可选) - 输入的深度、高度和宽度方向上填充的数量。数据类型为int，或包含六个整数的tuple。若 `padding` 是一个整数，则前部、后部、顶部、底部、左边和右边的填充都等于 `padding` ；若 `padding` 是包含六个整数的tuple，则前部、后部、顶部、底部、左边和右边的填充分别等于填充 `padding[0]` 、 `padding[1]` 、 `padding[2]` 、 `padding[3]` 、 `padding[4]` 和 `padding[5]` 。值要大于等于0，默认值： ``0`` 。
         - **dilation** (Union[int, tuple[int]]，可选) - 三维卷积核的膨胀尺寸。数据类型为int，或包含三个整数的tuple。若为一个整数，则表示在深度、高度和宽度方向的膨胀尺寸均为该整数值；若为包含三个整数的tuple，则分别表示在深度、高度和宽度方向的膨胀尺寸。
           假设 :math:`dilation=(d0, d1, d2)`, 则卷积核在深度方向间隔 :math:`d0-1` 个元素进行采样，在高度方向间隔 :math:`d1-1` 个元素进行采样，在宽度方向间隔 :math:`d2-1` 个元素进行采样。深度、高度和宽度上取值范围分别为[1, D]、[1, H]和[1, W]。默认值： ``1`` 。
         - **group** (int，可选) - 将过滤器拆分为组， `in_channels` 和 `out_channels` 必须可被 `group` 整除。当 `group` 大于1时，暂不支持Ascend平台。默认值： ``1`` 。

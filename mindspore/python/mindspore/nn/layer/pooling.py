@@ -2160,7 +2160,7 @@ class MaxUnpool1d(Cell):
 
     Outputs:
         Tensor, with shape :math:`(N, C, H_{out})` or :math:`(C, H_{out})`,
-        with the same data type with `x`.
+        with the same data type as `x`.
 
     Raises:
         TypeError: If data type of `x` or `indices` is not supported.

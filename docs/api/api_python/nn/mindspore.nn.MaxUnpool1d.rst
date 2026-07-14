@@ -4,7 +4,7 @@ mindspore.nn.MaxUnpool1d
 .. py:class:: mindspore.nn.MaxUnpool1d(kernel_size, stride=None, padding=0)
 
     计算 :class:`mindspore.nn.MaxPool1d` 的逆过程。
-    `MaxUnPool1d` 保留最大值并将所有非最大值置0。支持的输入数据格式为 :math:`(N, C, H_{in})` 或 :math:`(C, H_{in})` ，输出数据的格式为 :math:`(N, C, H_{out})`
+    `MaxUnpool1d` 保留最大值并将所有非最大值置0。支持的输入数据格式为 :math:`(N, C, H_{in})` 或 :math:`(C, H_{in})` ，输出数据的格式为 :math:`(N, C, H_{out})`
     或 :math:`(C, H_{out})` ，计算公式如下：
 
     .. math::

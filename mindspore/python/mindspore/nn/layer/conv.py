@@ -877,7 +877,7 @@ class Conv3d(_Conv):
 class Conv3dTranspose(_Conv):
     r"""
     Calculates a 3D transposed convolution, which can be regarded as Conv3d for the gradient of the input.
-    It also called deconvolution (although it is not an actual deconvolution).
+    It is also called deconvolution (although it is not an actual deconvolution).
 
     The input is typically of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C_{in}` is a number of
@@ -886,7 +886,7 @@ class Conv3dTranspose(_Conv):
     When Conv3d and Conv3dTranspose are initialized with the same parameters, and `pad_mode` is set to ``'pad'``,
     :math:`dilation * (kernel\_size - 1) - padding` amount of zero will be padded to the depth, height and width
     directions of the input, they are inverses of each other in regard to the input and output shapes in this case.
-    However, when `stride` > 1, Conv2d maps multiple input shapes to the same output shape.
+    However, when `stride` > 1, Conv3d maps multiple input shapes to the same output shape.
     For the detailed information of Deconvolutional network,
     refer to `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_.
 
