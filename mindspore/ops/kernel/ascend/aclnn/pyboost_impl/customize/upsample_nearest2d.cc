@@ -28,10 +28,6 @@ namespace pyboost {
 tensor::TensorPtr UpsampleNearest2DAscendCustomize(const TensorPtr &input_tensor,
                                                    const std::optional<ValueTuplePtr> &output_size,
                                                    const std::optional<ValueTuplePtr> &scale_factors) {
-  auto input_dtype_id = input_tensor->data_type();
-  if (input_dtype_id == TypeId::kNumberTypeFloat64 || input_dtype_id == TypeId::kNumberTypeDouble) {
-    MS_EXCEPTION(ValueError) << "For UpsampleNearest2D, input's type should not be float64, which is not supported.";
-  }
   auto output = InferOutput<1>(prim::kPrimUpsampleNearest2D, input_tensor, output_size, scale_factors);
 
   const ShapeVector &osize = output->shape();

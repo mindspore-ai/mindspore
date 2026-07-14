@@ -751,6 +751,16 @@ ValuePtr ConvertBoolOrIntToFloat(const py::object &obj) {
   return nullptr;
 }
 
+ValuePtr ConvertNumberToFloatWithoutTensor(const py::object &obj) {
+  if (ParseUtilsCheckFloat(obj.ptr(), false)) {
+    return ConvertFloatWithType(obj);
+  }
+  if (ParseUtilsCheckScalar(obj.ptr(), false)) {
+    return MakeFP32Imm(PyFloat_AsDouble(obj.ptr()));
+  }
+  return nullptr;
+}
+
 // convert functions without type_cast
 ConverterMap InitBasicConverters() {
   ConverterMap kConverters = {
@@ -803,6 +813,10 @@ ConverterMap InitSequenceToSequenceConverters() {
                                ConvertSequence<py::tuple, ValueTuple, ConvertTensorAndInt>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_LIST_FLOAT),
                                ConvertSequence<py::tuple, ValueTuple, ConvertFloat<false>>},
+                              {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_NUMBER, mindspore::ops::DT_LIST_FLOAT),
+                               ConvertSequence<py::tuple, ValueTuple, ConvertNumberToFloatWithoutTensor>},
+                              {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_NUMBER, mindspore::ops::DT_TUPLE_FLOAT),
+                               ConvertSequence<py::tuple, ValueTuple, ConvertNumberToFloatWithoutTensor>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_LIST_BOOL),
                                ConvertSequence<py::tuple, ValueTuple, ConvertBool>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_TENSOR, mindspore::ops::DT_LIST_TENSOR),
@@ -811,6 +825,10 @@ ConverterMap InitSequenceToSequenceConverters() {
                                ConvertSequence<py::list, ValueTuple, ConvertTensorAndInt>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TUPLE_FLOAT),
                                ConvertSequence<py::list, ValueTuple, ConvertFloat<false>>},
+                              {CombineTypesForTypeCast(mindspore::ops::DT_LIST_NUMBER, mindspore::ops::DT_LIST_FLOAT),
+                               ConvertSequence<py::list, ValueTuple, ConvertNumberToFloatWithoutTensor>},
+                              {CombineTypesForTypeCast(mindspore::ops::DT_LIST_NUMBER, mindspore::ops::DT_TUPLE_FLOAT),
+                               ConvertSequence<py::list, ValueTuple, ConvertNumberToFloatWithoutTensor>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TUPLE_BOOL),
                                ConvertSequence<py::list, ValueTuple, ConvertBool>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_TENSOR, mindspore::ops::DT_TUPLE_TENSOR),

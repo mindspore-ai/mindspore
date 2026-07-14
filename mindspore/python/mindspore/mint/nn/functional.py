@@ -561,8 +561,9 @@ def binary_cross_entropy(input, target, weight=None, reduction='mean'):
 
     Args:
         input (Tensor): The predictive value whose data type must be float16 or float32.
+            On Ascend, bfloat16 is also supported.
         target (Tensor): The target value which has the same shape and data type as `input`.
-            And the data type is float16 or float32.
+            And the data type is float16 or float32. On Ascend, bfloat16 is also supported.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             Its shape must be able to broadcast to that of `input` and `target`.
             And it must have the same shape and data type as `input`. Default: ``None`` . If set to ``None`` ,
@@ -582,7 +583,8 @@ def binary_cross_entropy(input, target, weight=None, reduction='mean'):
 
     Raises:
         TypeError: If `input`, `target` or `weight` is not a Tensor.
-        TypeError: If dtype of `input`, `target` or `weight` (if given) is neither float16 nor float32.
+        TypeError: If dtype of `input`, `target` or `weight` (if given) is not one of float16 or float32.
+            On Ascend, bfloat16 is also supported.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If shape of `target` is not the same as `input` or `weight` (if given).
 

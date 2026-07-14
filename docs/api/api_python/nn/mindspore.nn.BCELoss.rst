@@ -37,13 +37,15 @@ mindspore.nn.BCELoss
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16或float32。
+        - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的
+          附加维度。数据类型必须为float16或float32。在Ascend平台，也支持bfloat16。
         - **labels** (Tensor) - 输入目标值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `logits` 的shape和数据类型相同。
 
     输出：
         Tensor，数据类型与 `logits` 相同。如果 `reduction` 为 ``'none'``，则shape与 `logits` 相同。否则，输出为Scalar的Tensor。
 
     异常：
-        - **TypeError** - `logits` 的数据类型， `labels` 或 `weight` （如果给定）既不是float16，也不是float32。
+        - **TypeError** - `logits` 的数据类型， `labels` 或 `weight` （如果给定）既不是float16，也不是
+          float32。在Ascend平台，也支持bfloat16。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `logits` 的shape与 `labels` 或 `weight` （如果给定）不同。

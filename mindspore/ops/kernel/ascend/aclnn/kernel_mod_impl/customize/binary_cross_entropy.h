@@ -36,7 +36,12 @@ class BinaryCrossEntropyAclnnKernelMod : public AclnnKernelMod {
   int64_t reduction_{1};
 
  private:
-  DEFINE_GET_WORKSPACE_FOR_RESIZE()
+  DEFINE_GET_WORKSPACE_FOR_OPS(aclnnExpand, ExpandWeight)
+  DEFINE_GET_WORKSPACE_FOR_OPS(aclnnBinaryCrossEntropy, BCE)
+
+  KernelTensor weight_expand_;
+  bool need_expand_weight_{false};
+  ShapeVector input_shape_{};
 };
 
 }  // namespace kernel

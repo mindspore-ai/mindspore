@@ -9,7 +9,7 @@ upsample_nearest3d:
             default: None
         scales:
             dtype: tuple[float]
-            type_cast: list[float]
+            type_cast: list[float], tuple[number], list[number]
             default: None
     returns:
         y:

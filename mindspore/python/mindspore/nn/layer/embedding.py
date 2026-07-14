@@ -187,10 +187,12 @@ class EmbeddingExt(Cell):
             has not been supported. Default: ``False``.
         _weight (Tensor, optional): Use to initialize the `weight` of Embedding. If ``None``, the weight will be
             initialized from normal distribution :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})`. Default: ``None``.
-        _freeze(bool, optional): If `weight`, the learnable weight of this module, should be frozen.
+            When `max_norm` is not ``None``, the data type of `_weight` must be float16, float32 or bfloat16.
+        _freeze (bool, optional): If `weight`, the learnable weight of this module, should be frozen.
             Default: ``False``.
         dtype (mindspore.dtype, optional): Dtype of Embedding's `weight`. It is meaningless when `_weight` is
-            not None. Default: ``None``.
+            not None. When `max_norm` is not ``None``, `dtype` must be float16, float32 or bfloat16.
+            Default: ``None``.
 
     Variables:
         - **weight** (Parameter) - The learnable weights of this module of shape (num_embeddings, embedding_dim),
@@ -198,6 +200,7 @@ class EmbeddingExt(Cell):
 
     Inputs:
         - **input** (Tensor) - The input tensor containing the indices to extract, which in range `[0, num_embeddings)`.
+          The data type must be int32 or int64.
 
     Outputs:
         Tensor.
@@ -228,7 +231,7 @@ class EmbeddingExt(Cell):
         super().__init__()
         self.sparse = Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
         if self.sparse:
-            raise ValueError("For Embedding, the scenerio, where `sparse` is True, has not be supported.")
+            raise ValueError("For Embedding, the scenario, where `sparse` is True, has not be supported.")
         self.num_embeddings = Validator.check_value_type(
             'num_embeddings', num_embeddings, [int], self.cls_name)
         self.embedding_dim = Validator.check_value_type(
@@ -236,8 +239,16 @@ class EmbeddingExt(Cell):
         self.dtype = dtype if dtype is not None else mstype.float32
         Validator.check_subclass(
             "dtype", self.dtype, mstype.number_type, self.cls_name)
+        self.max_norm = max_norm
+        if max_norm is not None:
+            self.max_norm = Validator.check_value_type('max_norm', max_norm, [float], self.cls_name)
+
+        allowed_renorm_dtypes = (mstype.float16, mstype.float32, mstype.bfloat16)
         self.padding_idx = padding_idx
         if _weight is None:
+            if self.max_norm is not None and self.dtype not in allowed_renorm_dtypes:
+                raise TypeError(f"For Embedding, when 'max_norm' is specified, dtype of 'weight' should be one of "
+                                f"{[str(d) for d in allowed_renorm_dtypes]}, but got {self.dtype}.")
             init_tensor = Tensor(shape=[num_embeddings, embedding_dim], dtype=self.dtype, init=Normal(1, 0))
             init_tensor = self._zero_weight_by_index(init_tensor)
             self.weight = Parameter(init_tensor, name='weight', requires_grad=not _freeze)
@@ -246,11 +257,10 @@ class EmbeddingExt(Cell):
                 raise ValueError(f"For Embedding, shape of weight should be match with num_embeddings "
                                  f"and embedding_dim, but got weight.shape: {_weight.shape}, "
                                  f"and (num_embeddings, embedding_dim): ({num_embeddings}, {embedding_dim})")
+            if self.max_norm is not None and _weight.dtype not in allowed_renorm_dtypes:
+                raise TypeError(f"For Embedding, when 'max_norm' is specified, dtype of '_weight' should be one of "
+                                f"{[str(d) for d in allowed_renorm_dtypes]}, but got {_weight.dtype}.")
             self.weight = Parameter(_weight, name='weight', requires_grad=not _freeze)
-
-        self.max_norm = max_norm
-        if max_norm is not None:
-            self.max_norm = Validator.check_value_type('max_norm', max_norm, [float], self.cls_name)
 
         self.norm_type = norm_type
         if norm_type is not None:

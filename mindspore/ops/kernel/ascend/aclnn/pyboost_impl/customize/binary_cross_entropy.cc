@@ -20,6 +20,8 @@
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "mindapi/base/types.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
 
@@ -42,10 +44,18 @@ tensor::TensorPtr BinaryCrossEntropyAscendCustomize(const TensorPtr &input_tenso
   }
   auto reduction_value = iter->second;
 
-  // No need to convert input
-  TensorToDevice(input_tensor, target_tensor, weight_tensor);
+  // aclnnBinaryCrossEntropy does not support low-dim weight broadcast; expand weight to input shape.
+  // This aligns with the existing MS pattern in l1_loss_ext.cc / mse_loss_ext.cc.
+  auto actual_weight = weight_tensor;
+  if (weight_tensor.has_value() && weight_tensor.value()->shape() != input_tensor->shape()) {
+    kernel::pyboost::RequireGradGuard require_grad_guard(false);
+    const auto &input_shape = input_tensor->shape();
+    actual_weight = broadcast_to(weight_tensor.value(), input_shape);
+  }
+
+  TensorToDevice(input_tensor, target_tensor, actual_weight);
   TensorMalloc(output);
-  DISPATCH_ACLNN(aclnnBinaryCrossEntropy, input_tensor, target_tensor, weight_tensor, reduction_value, output);
+  DISPATCH_ACLNN(aclnnBinaryCrossEntropy, input_tensor, target_tensor, actual_weight, reduction_value, output);
   return output;
 }
 }  // namespace pyboost

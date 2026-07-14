@@ -65,6 +65,7 @@ from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d
                                          func_max_pool2d_op, dropout2d_ext_op)
 # 2
 from mindspore.ops.auto_generate.pyboost_inner_prim import grid_sampler_2d_impl, grid_sampler_3d_impl
+from mindspore.ops.auto_generate.pyboost_inner_prim import binary_cross_entropy_impl
 # 3
 
 # 4
@@ -2582,7 +2583,8 @@ def interpolate(input,
             If size is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: ``None`` .
-        scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
+        scale_factor (Union[int, float, tuple[int], tuple[float], list[int], list[float]], optional):
+            The scale factor of new size of the tensor.
             If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: ``None`` .
@@ -2947,7 +2949,8 @@ def interpolate_ext(input,
             If `size` is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of `size` and `scale_factor` can be set to ``None``. Default: ``None`` .
-        scale_factor (Union[float, tuple[float], list[float]], optional): The scale factor of new size of the tensor.
+        scale_factor (Union[int, float, tuple[int], tuple[float], list[int], list[float]], optional):
+            The scale factor of new size of the tensor.
             If `scale_factor` is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of `size` and `scale_factor` can be set to ``None``. Default: ``None`` .
@@ -7190,8 +7193,9 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.
+            On Ascend, bfloat16 is also supported.
         labels (Tensor): The target value which has the same shape and data type as `logits`.
-            And the data type is float16 or float32.
+            And the data type is float16 or float32. On Ascend, bfloat16 is also supported.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             Its shape must be able to broadcast to that of `logits` and `labels`.
             And it must have the same shape and data type as `logits`. Default: ``None`` . If set to ``None`` ,
@@ -7211,7 +7215,8 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
 
     Raises:
         TypeError: If `logits`, `labels` or `weight` is not a Tensor.
-        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 nor float32.
+        TypeError: If dtype of `logits`, `labels` or `weight` (if given) is not one of float16 or float32.
+            On Ascend, bfloat16 is also supported.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
         ValueError: If shape of `labels` is not the same as `logits` or `weight` (if given).
 
@@ -7229,8 +7234,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         >>> print(output)
         0.38240486
     """
-    binary_cross_entropy_op = _get_cache_prim(P.BinaryCrossEntropy)(reduction=reduction)
-    return binary_cross_entropy_op(logits, labels, weight)
+    return binary_cross_entropy_impl(logits, labels, weight, reduction)
 
 
 def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dilation=1, groups=1):
@@ -9257,6 +9261,7 @@ def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, sca
         Tensor, with the same data type as `weight`, and the shape is :math:`(*input.shape, weight.shape[1])`.
 
     Raises:
+        TypeError: If dtype of `input` is neither int32 nor int64.
         ValueError: If `padding_idx` is out of valid range.
         ValueError: If the shape of `weight` is invalid.
 

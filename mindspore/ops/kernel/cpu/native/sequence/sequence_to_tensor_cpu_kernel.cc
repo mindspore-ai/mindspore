@@ -89,6 +89,17 @@ bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
      .AddOutputAttr(kNumberType##out_dtype),                    \
    &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>}
 
+#define ADD_LIST_KERNEL(x_dtype, out_dtype, in_type, out_type)                                              \
+  {KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype).AddOutputAttr(kNumberType##out_dtype), \
+   &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>}
+
+#define ADD_LIST_KERNEL_WITH_TYPE(x_dtype, out_dtype, in_type, out_type) \
+  {KernelAttr()                                                          \
+     .AddInputAttr(kObjectTypeTuple, kNumberType##x_dtype)               \
+     .AddInputAttr(kMetaTypeTypeType)                                    \
+     .AddOutputAttr(kNumberType##out_dtype),                             \
+   &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>}
+
 #define ADD_SCALAR_KERNEL(x_dtype, out_dtype, in_type, out_type) \
   {KernelAttr()                                                  \
      .AddInputAttr(kObjectTypeNumber, kNumberType##x_dtype)      \
@@ -97,15 +108,69 @@ bool SeqToTensorCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
    &SeqToTensorCpuKernelMod::LaunchKernel<in_type, out_type>}
 
 std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>> SeqToTensorCpuKernelMod::seq_func_list_ = {
-  ADD_TUPLE_KERNEL(Float32, Float32, float, float),  ADD_TUPLE_KERNEL(Float32, Float64, float, double),
-  ADD_TUPLE_KERNEL(Float32, Int32, float, int32_t),  ADD_TUPLE_KERNEL(Float32, Int64, float, int64_t),
-  ADD_TUPLE_KERNEL(Float64, Float32, double, float), ADD_TUPLE_KERNEL(Float64, Float64, double, double),
-  ADD_TUPLE_KERNEL(Float64, Int32, double, int32_t), ADD_TUPLE_KERNEL(Float64, Int64, double, int64_t),
-  ADD_TUPLE_KERNEL(Int32, Float32, int32_t, float),  ADD_TUPLE_KERNEL(Int32, Float64, int32_t, double),
-  ADD_TUPLE_KERNEL(Int32, Int32, int32_t, int32_t),  ADD_TUPLE_KERNEL(Int32, Int64, int32_t, int64_t),
-  ADD_TUPLE_KERNEL(Int64, Float32, int64_t, float),  ADD_TUPLE_KERNEL(Int64, Float64, int64_t, double),
-  ADD_TUPLE_KERNEL(Int64, Int32, int64_t, int32_t),  ADD_TUPLE_KERNEL(Int64, Int64, int64_t, int64_t),
-  ADD_TUPLE_KERNEL(Bool, Bool, bool, bool)};
+  ADD_TUPLE_KERNEL(Float32, Float32, float, float),
+  ADD_TUPLE_KERNEL(Float32, Float64, float, double),
+  ADD_TUPLE_KERNEL(Float32, Int32, float, int32_t),
+  ADD_TUPLE_KERNEL(Float32, Int64, float, int64_t),
+  ADD_TUPLE_KERNEL(Float64, Float32, double, float),
+  ADD_TUPLE_KERNEL(Float64, Float64, double, double),
+  ADD_TUPLE_KERNEL(Float64, Int32, double, int32_t),
+  ADD_TUPLE_KERNEL(Float64, Int64, double, int64_t),
+  ADD_TUPLE_KERNEL(Int32, Float32, int32_t, float),
+  ADD_TUPLE_KERNEL(Int32, Float64, int32_t, double),
+  ADD_TUPLE_KERNEL(Int32, Int32, int32_t, int32_t),
+  ADD_TUPLE_KERNEL(Int32, Int64, int32_t, int64_t),
+  ADD_TUPLE_KERNEL(Int64, Float32, int64_t, float),
+  ADD_TUPLE_KERNEL(Int64, Float64, int64_t, double),
+  ADD_TUPLE_KERNEL(Int64, Int32, int64_t, int32_t),
+  ADD_TUPLE_KERNEL(Int64, Int64, int64_t, int64_t),
+  ADD_TUPLE_KERNEL(Bool, Float32, bool, float),
+  ADD_TUPLE_KERNEL(Bool, Float64, bool, double),
+  ADD_TUPLE_KERNEL(Bool, Int32, bool, int32_t),
+  ADD_TUPLE_KERNEL(Bool, Int64, bool, int64_t),
+  ADD_TUPLE_KERNEL(Bool, Bool, bool, bool),
+  ADD_LIST_KERNEL(Float32, Float32, float, float),
+  ADD_LIST_KERNEL(Float32, Float64, float, double),
+  ADD_LIST_KERNEL(Float32, Int32, float, int32_t),
+  ADD_LIST_KERNEL(Float32, Int64, float, int64_t),
+  ADD_LIST_KERNEL(Float64, Float32, double, float),
+  ADD_LIST_KERNEL(Float64, Float64, double, double),
+  ADD_LIST_KERNEL(Float64, Int32, double, int32_t),
+  ADD_LIST_KERNEL(Float64, Int64, double, int64_t),
+  ADD_LIST_KERNEL(Int32, Float32, int32_t, float),
+  ADD_LIST_KERNEL(Int32, Float64, int32_t, double),
+  ADD_LIST_KERNEL(Int32, Int32, int32_t, int32_t),
+  ADD_LIST_KERNEL(Int32, Int64, int32_t, int64_t),
+  ADD_LIST_KERNEL(Int64, Float32, int64_t, float),
+  ADD_LIST_KERNEL(Int64, Float64, int64_t, double),
+  ADD_LIST_KERNEL(Int64, Int32, int64_t, int32_t),
+  ADD_LIST_KERNEL(Int64, Int64, int64_t, int64_t),
+  ADD_LIST_KERNEL(Bool, Float32, bool, float),
+  ADD_LIST_KERNEL(Bool, Float64, bool, double),
+  ADD_LIST_KERNEL(Bool, Int32, bool, int32_t),
+  ADD_LIST_KERNEL(Bool, Int64, bool, int64_t),
+  ADD_LIST_KERNEL(Bool, Bool, bool, bool),
+  ADD_LIST_KERNEL_WITH_TYPE(Float32, Float32, float, float),
+  ADD_LIST_KERNEL_WITH_TYPE(Float32, Float64, float, double),
+  ADD_LIST_KERNEL_WITH_TYPE(Float32, Int32, float, int32_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Float32, Int64, float, int64_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Float64, Float32, double, float),
+  ADD_LIST_KERNEL_WITH_TYPE(Float64, Float64, double, double),
+  ADD_LIST_KERNEL_WITH_TYPE(Float64, Int32, double, int32_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Float64, Int64, double, int64_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Int32, Float32, int32_t, float),
+  ADD_LIST_KERNEL_WITH_TYPE(Int32, Float64, int32_t, double),
+  ADD_LIST_KERNEL_WITH_TYPE(Int32, Int32, int32_t, int32_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Int32, Int64, int32_t, int64_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Int64, Float32, int64_t, float),
+  ADD_LIST_KERNEL_WITH_TYPE(Int64, Float64, int64_t, double),
+  ADD_LIST_KERNEL_WITH_TYPE(Int64, Int32, int64_t, int32_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Int64, Int64, int64_t, int64_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Bool, Float32, bool, float),
+  ADD_LIST_KERNEL_WITH_TYPE(Bool, Float64, bool, double),
+  ADD_LIST_KERNEL_WITH_TYPE(Bool, Int32, bool, int32_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Bool, Int64, bool, int64_t),
+  ADD_LIST_KERNEL_WITH_TYPE(Bool, Bool, bool, bool)};
 
 std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>>
   SeqToTensorCpuKernelMod::scalar_func_list_ = {
@@ -139,6 +204,8 @@ std::vector<KernelAttr> SeqToTensorCpuKernelMod::GetOpSupport() {
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TupleToTensor,
                                  []() { return std::make_shared<SeqToTensorCpuKernelMod>(kTupleToTensor); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ListToTensor,
+                                 []() { return std::make_shared<SeqToTensorCpuKernelMod>(kListToTensor); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarToTensor,
                                  []() { return std::make_shared<SeqToTensorCpuKernelMod>(kScalarToTensor); });
 }  // namespace kernel

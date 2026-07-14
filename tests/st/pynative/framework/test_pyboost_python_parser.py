@@ -224,12 +224,14 @@ def test_mint_n_f_interpolate_with_scales_argument_provided_in_various_types():
     Expectation: Run success
     """
     x = ms.Tensor(np.random.randn(1, 1, 3, 4).astype(np.float32))
-    candidates = [2.5, np.array([2.5]).astype(np.float16)[0]]
+    candidates = [2, True, np.longlong(2), 2.5, np.array([2.5]).astype(np.float16)[0]]
     for first in candidates:
         for second in candidates:
             scales = [first, second]
             out = ms.mint.nn.functional.interpolate(x, None, scales)
-            assert out.shape == (1, 1, 7, 10)
+            expect_h = int(np.floor(3 * float(first)))
+            expect_w = int(np.floor(4 * float(second)))
+            assert out.shape == (1, 1, expect_h, expect_w)
 
 
 def test_mint_n_f_interpolate_with_invalid_scales_argument():
@@ -240,7 +242,7 @@ def test_mint_n_f_interpolate_with_invalid_scales_argument():
     Expectation: Run success
     """
     x = ms.Tensor(np.random.randn(1, 1, 3, 4).astype(np.float32))
-    candidates = [2, True, np.longlong(2), np.array([2.5]), ms.Tensor(2)]
+    candidates = [np.array(2), np.array(2.5), np.array([2.5]), ms.Tensor(2)]
     for first in candidates:
         for second in candidates:
             scales = [first, second]

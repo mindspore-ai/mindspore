@@ -125,6 +125,25 @@ def test_other_op_dynamic_forward(mode, op_info):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=2048.01)
+@pytest.mark.parametrize("mode", ['kbk'])
+@pytest.mark.parametrize("op_info", ['mint.nn.functional.interpolate(mode="nearest")-2d'])
+def test_other_op_dynamic_interpolate_sequence_cast(mode, op_info):
+    '''
+    Feature: Other operations.
+    Description: Test dynamic sequence scale_factor casting for interpolate.
+    Expectation: Run success.
+    '''
+    fact = OpsFactory(
+        op_info=get_op_info(op_info),
+    )
+    fact.set_context_mode(mode=mode)
+    fact.test_op_dynamic(only_dynamic_shape=True)
+    fact.test_op_dynamic(only_dynamic_rank=True)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_dynamic_backward'][0])
