@@ -1901,3 +1901,76 @@ def mint_optim_AdamW_torch(input, weight, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
         scheduler.step()
 
     return net.weight.data
+
+def mint_eye_ms(op_input, m=None, dtype=None):
+    if op_input is None:
+        n = -1
+    elif not isinstance(op_input, ms.Tensor):
+        n = 1.0
+    elif len(op_input.shape) == 0:
+        n = 0
+    else:
+        n = op_input.shape[0]
+    return mint.eye(n, m=m, dtype=dtype)
+
+def mint_eye_torch(op_input, m=None, dtype=None):
+    if len(op_input.shape) == 0:
+        n = 0
+    else:
+        n = op_input.shape[0]
+    if m is None:
+        m = n
+    # for torch 2.1.0 does not implemented for bfloat16
+    if dtype is torch.bfloat16:
+        dtype = torch.float16
+    return torch.eye(n, m=m, dtype=dtype)
+
+def mint_full_ms(op_input, fill_value, dtype=None):
+    if op_input is None:
+        size = [1, -1]
+    elif not isinstance(op_input, ms.Tensor):
+        if op_input == 2.2:
+            # size is not tuple[int] / list[int]
+            size = (2.2, 3)
+        else:
+            # size is not list or tuple
+            size = 1
+    else:
+        size = op_input.shape
+    return mint.full(size, fill_value=fill_value, dtype=dtype)
+
+def mint_full_torch(op_input, fill_value, dtype=None):
+    size = op_input.shape
+    if isinstance(fill_value, torch.Tensor):
+        fill_value = fill_value.float().cpu().detach().numpy().item() \
+            if dtype == torch.bfloat16 else fill_value.cpu().detach().numpy().item()
+    return torch.full(size, fill_value=fill_value, dtype=dtype)
+
+def mint_full_like_torch(op_input, fill_value, dtype=None):
+    if isinstance(fill_value, torch.Tensor):
+        fill_value = fill_value.float().cpu().detach().numpy().item() \
+            if dtype == torch.bfloat16 else fill_value.cpu().detach().numpy().item()
+    return torch.full_like(op_input, fill_value=fill_value, dtype=dtype)
+
+def mint_linspace_ms(op_input, start, end, dtype=None):
+    if op_input is None:
+        steps = -1
+    elif not isinstance(op_input, ms.Tensor):
+        if op_input == 1.0:
+            # steps is float
+            steps = 1.0
+        else:
+            # steps is 0
+            steps = 0
+    elif len(op_input.shape) == 0:
+        steps = 1
+    else:
+        steps = op_input.shape[0]
+    return mint.linspace(start, end, steps, dtype=dtype)
+
+def mint_linspace_torch(op_input, start, end, dtype=None):
+    if len(op_input.shape) == 0:
+        steps = 1
+    else:
+        steps = op_input.shape[0]
+    return torch.linspace(start, end, steps, dtype=dtype)

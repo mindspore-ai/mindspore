@@ -5874,6 +5874,66 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_sample_inputs_functional_adaptivemaxpool,
         op_extra_reference_inputs_func=extra_sample_inputs_functional_adaptivemaxpool,
     ),
+    'mint.eye': OpInfo(
+        name='mint.eye',
+        op=mint_eye_ms,
+        ref=mint_eye_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.float64, ms.complex64, ms.complex128]),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_eye,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_eye,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_eye,
+        op_error_inputs_func=error_sample_inputs_mint_eye,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'mint.full': OpInfo(
+        name='mint.full',
+        op=mint_full_ms,
+        ref=mint_full_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        # torch does not support: fill_value is tensor
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_full,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_full,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_full,
+        op_error_inputs_func=error_sample_inputs_mint_full,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'mint.full_like': OpInfo(
+        name='mint.full_like',
+        op=mint.full_like,
+        ref=mint_full_like_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        # torch does not support: fill_value is tensor
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_full_like,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_full_like,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_full_like,
+        op_error_inputs_func=error_sample_inputs_mint_full_like,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'mint.linspace': OpInfo(
+        name='mint.linspace',
+        op=mint_linspace_ms,
+        ref=mint_linspace_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128]),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_linspace,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_linspace,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_linspace,
+        op_error_inputs_func=error_sample_inputs_mint_linspace,
+        # start is 6.9, dtype is int64, the result is different with torch.
+        ascend910b_forward_loss_override={ms.int64: 0.2, ms.float16: 0.024, ms.bfloat16: 0.13},
+        is_differentiable=False,
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -6258,6 +6318,10 @@ other_op_db = [
     'mint.nn.functional.max_unpool2d',
     'mint.nn.functional.avg_pool1d',
     'mint.nn.functional.adaptive_max_pool1d',
+    'mint.eye',
+    'mint.full',
+    'mint.full_like',
+    'mint.linspace',
 ]
 
 reduction_op_db = [
