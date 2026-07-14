@@ -1873,6 +1873,7 @@ class Net(nn.Cell):
 def mint_optim_Adam_ms(input, net, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0, amsgrad=False,
                        maximize=False,):
 
+    #  only error_sample_inputs net.optimizer is None
     net.optimizer(net.construct(input)) if net.optimizer is not None else mint.optim.Adam(net.trainable_params(),lr=lr,
             betas=betas, eps=eps,weight_decay=weight_decay,amsgrad=amsgrad, maximize=maximize)(net.construct(input))
 
