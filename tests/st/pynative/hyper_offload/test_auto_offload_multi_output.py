@@ -25,10 +25,14 @@ This test file covers:
 - Multi-output combined with view operations
 """
 
+import os
+
 import numpy as np
-from mindspore import nn, Tensor, context, ops
+from mindspore import nn, Tensor, context, ops, mint
 from mindspore.ops import composite as C
 from mindspore._c_expression import OffloadManager
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
 
 
 def sync_weights(net_with_offload, net_ref):
@@ -139,8 +143,9 @@ class SplitNonUniformNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Dense(128, 200, weight_init='ones', bias_init='zeros')
+        # All four slices are 50-wide, so every fc consumes 50 input features.
         self.fc2 = nn.Dense(50, 64, weight_init='ones', bias_init='zeros')
-        self.fc3 = nn.Dense(100, 64, weight_init='ones', bias_init='zeros')
+        self.fc3 = nn.Dense(50, 64, weight_init='ones', bias_init='zeros')
         self.fc4 = nn.Dense(50, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
@@ -149,9 +154,10 @@ class SplitNonUniformNet(nn.Cell):
         x = self.fc1(x)  # [batch, 200]
         x = self.relu(x)
 
-        # Split into 4 parts of different sizes: [50, 50, 50, 50]
-        # Total = 200
-        split_outputs = ops.Split(1, [50, 50, 50, 50])(x)
+        # Non-uniform split into [50, 50, 50, 50] along dim 1.
+        # ``ops.Split`` only supports equal split count (output_num: int); for a list of
+        # section sizes use ``mint.split`` which accepts a list/tuple of sizes.
+        split_outputs = mint.split(x, [50, 50, 50, 50], dim=1)
 
         # Use each split output
         out1 = self.fc2(split_outputs[0])
@@ -222,8 +228,10 @@ class ChunkNet(nn.Cell):
         x = self.fc1(x)  # [batch, 192]
         x = self.relu(x)
 
-        # Chunk into 3 parts along dim 1 (192 / 3 = 64)
-        chunks = ops.Chunk(3)(x)  # Returns tuple of 3 tensors
+        # Split into 3 equal parts along dim 1 (192 / 3 = 64).
+        # ``ops.Chunk`` is not exposed in the ``mindspore.ops`` namespace; use the legacy
+        # ``ops.Split(axis, output_num)`` which returns a tuple of tensors.
+        chunks = ops.Split(1, 3)(x)  # Returns tuple of 3 tensors
 
         # Use each chunk
         out1 = self.fc2(chunks[0])
@@ -251,8 +259,8 @@ class ChunkDim0Net(nn.Cell):
         x = self.fc1(x)  # [batch, 128]
         x = self.relu(x)
 
-        # Chunk into 2 parts along dim 0 (batch dimension)
-        chunks = ops.Chunk(2)(x)  # Returns tuple of 2 tensors
+        # Split into 2 equal parts along dim 0 (batch dimension).
+        chunks = ops.Split(0, 2)(x)  # Returns tuple of 2 tensors
 
         # Use each chunk
         out1 = self.fc2(chunks[0])
@@ -357,7 +365,7 @@ class UnstackNet(nn.Cell):
         x = self.relu(x)
 
         # Unstack along dim 1 (split the 256 features into 4 tensors of 64)
-        unstacked = ops.unstack(x, axis=1, num=4)
+        unstacked = ops.Split(1, 4)(x)
 
         # Concatenate back
         x_concat = ops.concat(unstacked, axis=1)
@@ -741,7 +749,7 @@ class MultiOutputReshapeNet(nn.Cell):
         super().__init__()
         self.conv = nn.Conv2d(1, 4, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                weight_init='ones', bias_init='zeros')
-        self.fc = nn.Dense(16 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
+        self.fc = nn.Dense(4 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
     def construct(self, x):

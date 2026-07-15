@@ -259,6 +259,10 @@ void OffloadManager::Analyse() {
 void OffloadManager::Reset() {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  runtime::Pipeline::Get().WaitAll();
+  ClearCurrentContext();
+  skip_offload_ = false;
+
   // Reset all contexts
   for (auto &item : contexts_) {
     const auto &ctx = item.second;
@@ -274,6 +278,10 @@ void OffloadManager::Reset() {
 
 void OffloadManager::ClearResources() {
   std::lock_guard<std::mutex> lock(mutex_);
+
+  runtime::Pipeline::Get().WaitBackend();
+  ClearCurrentContext();
+  skip_offload_ = false;
 
   // Clear all contexts
   contexts_.clear();

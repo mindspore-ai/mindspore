@@ -14,12 +14,16 @@
 # ============================================================================
 """Test auto_offload functionality in PyNative mode."""
 
+import os
+
 import numpy as np
 import mindspore as ms
 from mindspore import nn, Tensor, context, ops, mint, _Function
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
 from mindspore._c_expression import OffloadManager
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
 
 
 class ComplexNet(nn.Cell):
@@ -834,10 +838,10 @@ class ContiguousAfterViewNet(nn.Cell):
         y_transposed = mint.transpose(y_view, 1, 2)  # [batch, 16, 8]
 
         # contiguous() creates a copy with new tensor_id
-        y_transposed.contiguous()
+        y_contig = y_transposed.contiguous()
 
         # Use the contiguous tensor
-        y_contig = mint.nn.functional.relu(y_transposed)
+        y_contig = mint.nn.functional.relu(y_contig)
 
         # Reshape back
         out = y_contig.reshape(batch_size, 128)
@@ -1100,7 +1104,7 @@ class ConvNet(nn.Cell):
         x = mint.nn.functional.relu(x)
 
         # Global average pooling
-        x = ops.reduce_mean(x, axis=(2, 3))
+        x = mint.mean(x, dim=(2, 3))
 
         return x
 

@@ -14,6 +14,10 @@
 # ============================================================================
 """Test hyper_offload functionality in PyNative mode."""
 
+import os
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
+
 import numpy as np
 import mindspore as ms
 from mindspore import nn, Tensor, context, ops

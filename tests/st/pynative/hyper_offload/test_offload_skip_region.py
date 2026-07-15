@@ -13,6 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Test skip_offload region functionality in PyNative mode."""
+import os
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
+
 import mindspore as ms
 from mindspore import nn, ops, Tensor, context
 from mindspore.utils import skip_offload

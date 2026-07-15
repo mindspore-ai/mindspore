@@ -23,11 +23,15 @@ This test file covers:
 - View + Inplace combinations
 """
 
+import os
+
 import numpy as np
 from mindspore import nn, Tensor, context, ops
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
 from mindspore._c_expression import OffloadManager
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
 
 
 def sync_weights(net_with_offload, net_ref):
@@ -194,7 +198,7 @@ class SliceNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
-        self.fc2 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
+        self.fc2 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
     def construct(self, x):
@@ -206,8 +210,8 @@ class SliceNet(nn.Cell):
         x_slice = x[:, :64]  # [batch, 64]
         x_slice = self.relu(x_slice)
 
-        # Slice with step: every other row
-        x_step = x[::2, :]  # [batch/2, 128]
+        # Slice with step: every other column
+        x_step = x[:, ::2]  # [batch, 64]
         x_step = self.fc2(x_step)
 
         # Combine results
@@ -220,7 +224,7 @@ class StridedSliceNet(nn.Cell):
 
     def __init__(self):
         super().__init__()
-        self.fc = nn.Dense(32, 64, weight_init='ones', bias_init='zeros')
+        self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
     def construct(self, x):
@@ -251,7 +255,7 @@ def test_auto_offload_slice():
     net.auto_offload()
     net.set_grad()
 
-    x = Tensor(np.random.randn(32, 128).astype(np.float32))
+    x = Tensor(np.random.randn(32, 64).astype(np.float32))
 
     # Reference without auto_offload
     net_ref = SliceNet()
@@ -348,8 +352,8 @@ class ExpandNet(nn.Cell):
     def construct(self, x):
         """Forward pass with Expand operations."""
         # x: [batch, 32]
-        # Expand to [batch, 64] by broadcasting
-        expanded = ops.expand(x, (-1, 64))
+        # Expand [batch, 1] to [batch, 64] by broadcasting
+        expanded = ops.broadcast_to(x[:, :1], (x.shape[0], 64))
         x = self.fc(expanded)  # [batch, 128]
         x = self.relu(x)
         return x
@@ -360,16 +364,16 @@ class UnsqueezeNet(nn.Cell):
 
     def __init__(self):
         super().__init__()
-        self.conv = nn.Conv3d(1, 8, kernel_size=3, stride=1, padding=1, pad_mode='pad',
+        self.conv = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1, pad_mode='pad',
                                weight_init='ones', bias_init='zeros')
-        self.fc = nn.Dense(8 * 32 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
+        self.fc = nn.Dense(16 * 32 * 32, 10, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
     def construct(self, x):
         """Forward pass with Unsqueeze operations."""
-        # x: [batch, 32, 32, 32] -> [batch, 1, 32, 32, 32]
+        # x: [batch, 32, 32] -> [batch, 1, 32, 32]
         x = ops.unsqueeze(x, 1)
-        x = self.conv(x)  # [batch, 8, 32, 32, 32]
+        x = self.conv(x)  # [batch, 16, 32, 32]
         x = self.relu(x)
         # Flatten for fully connected
         batch_size = x.shape[0]
@@ -467,7 +471,7 @@ def test_auto_offload_unsqueeze():
     net.auto_offload()
     net.set_grad()
 
-    x = Tensor(np.random.randn(4, 32, 32, 32).astype(np.float32))
+    x = Tensor(np.random.randn(4, 32, 32).astype(np.float32))
 
     # Reference without auto_offload
     net_ref = UnsqueezeNet()
@@ -565,27 +569,27 @@ class PermuteNet(nn.Cell):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Dense(128 * 64, 256, weight_init='ones', bias_init='zeros')
+        self.fc1 = nn.Dense(128, 256, weight_init='ones', bias_init='zeros')
         self.fc2 = nn.Dense(256, 10, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
     def construct(self, x):
         """Forward pass with permute operations."""
-        x = x.reshape(32, 2, 64)  # [batch=32, 2, 64]
+        x = x.reshape(32, 4, 32)  # [batch=32, 4, 32]
         x = self.relu(x)
 
-        # Permute: [32, 2, 64] -> [32, 64, 2]
+        # Permute: [32, 4, 32] -> [32, 32, 4]
         x = ops.permute(x, (0, 2, 1))
 
         # Use permuted tensor
         x = x * 2.0
 
-        # Permute back: [32, 64, 2] -> [32, 2, 64]
+        # Permute back: [32, 32, 4] -> [32, 4, 32]
         x = ops.permute(x, (0, 2, 1))
 
         # Flatten and process
         batch_size = x.shape[0]
-        x = x.reshape(batch_size, -1)
+        x = x.reshape(batch_size, -1)  # [batch, 128]
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
@@ -650,18 +654,20 @@ class FlattenSqueezeNet(nn.Cell):
         # x: [batch, 1, 32, 32]
         x = self.conv1(x)
         x = self.relu(x)
+        x = self.conv2(x)
+        x = self.relu(x)
 
-        # Flatten: [batch, 1, 32, 32] -> [batch, 1024]
-        x = ops.flatten(x, 1)
+        # Flatten: [batch, 8, 32, 32] -> [batch, 8192]
+        x = x.reshape(x.shape[0], -1)
 
         x = self.fc(x)
         x = self.relu(x)
 
-        # Reshape for next conv (not ideal but tests reshape tracking)
-        x = x.reshape(32, 8, 4, 4)
+        # Reshape to 4D (not ideal but tests reshape tracking)
+        x = x.reshape(32, 2, 5, -1)
 
         # Squeeze: remove dimensions of size 1
-        x = ops.squeeze(x)  # [batch, 8, 4, 4] -> [batch, 8, 4, 4] (no change if no dim of size 1)
+        x = ops.squeeze(x)  # [batch, 2, 5, 1] -> [batch, 2, 5]
 
         return x
 
@@ -790,10 +796,12 @@ class ViewInplaceNet(nn.Cell):
 
     def __init__(self):
         super().__init__()
-        self.weight1 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight1')
-        self.weight2 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight2')
+        # Row-0 update tensors; shape (1, 8, 8) matches y[[0], :, :] so batch size is unconstrained.
+        self.weight1 = Parameter(Tensor(np.ones((1, 8, 8)).astype(np.float32) * 0.1), name='weight1')
+        self.weight2 = Parameter(Tensor(np.ones((1, 8, 8)).astype(np.float32) * 0.2), name='weight2')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
+        self.inplace_add = ops.InplaceAdd((0,))
 
     def construct(self, x):
         """Forward pass with view followed by inplace operations."""
@@ -805,10 +813,9 @@ class ViewInplaceNet(nn.Cell):
         # View operation
         y = x.reshape(batch_size, 8, 8)  # [batch, 8, 8]
 
-        # Inplace-like operation on the view (using operations that may modify)
-        # Note: InplaceAdd and InplaceMul directly modify input
-        y = ops.InplaceAdd(self.weight1[:8, :8], y)  # Inplace add
-        y = ops.InplaceMul(self.weight2[:8, :8], y)  # Inplace mul
+        # Inplace add on row 0 of the view (modifies the view's underlying storage in place).
+        y = self.inplace_add(y, self.weight1)
+        y = self.inplace_add(y, self.weight2)
 
         # Reshape back
         y = y.reshape(batch_size, 64)  # [batch, 64]
@@ -868,8 +875,8 @@ class CrossViewNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.fc1 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
-        self.fc2 = nn.Dense(64, 128, weight_init='ones', bias_init='zeros')
-        self.fc3 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
+        self.fc2 = nn.Dense(128, 64, weight_init='ones', bias_init='zeros')
+        self.fc3 = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
 
     def construct(self, x):
@@ -879,17 +886,20 @@ class CrossViewNet(nn.Cell):
 
         batch_size = x.shape[0]
 
-        # Create multiple views from same tensor
-        view1 = x.reshape(batch_size, 32, 4)  # View 1
-        view2 = x.reshape(batch_size, 16, 8)  # View 2
+        # Create multiple views from same tensor — all with last dim=128 so fc2 works
+        view1 = x.reshape(batch_size, 1, 128)  # View 1: [batch, 1, 128]
+        view2 = x.reshape(batch_size, 128, 1)  # View 2: [batch, 128, 1] — NOT passed to fc2
         _ = x.transpose(0, 1)  # Transpose view
 
-        # Use each view with different operations
-        out1 = self.fc2(view1)  # Uses view1
-        out2 = self.fc2(view2)  # Uses view2 (same source as view1)
+        # Use view1 with fc2 (last dim=128 matches fc2 input)
+        out1 = self.fc2(view1)  # [batch, 1, 64]
+        # Reduce view2 and combine with out1
+        view2_reduced = ops.reduce_mean(view2, -1)  # [batch, 128]
+        out2 = self.fc2(view2_reduced)  # [batch, 64]
 
-        # Combine
-        x = out1 + out2
+        # Combine — reshape out1 to match out2
+        out1_flat = out1.reshape(batch_size, -1)  # [batch, 64]
+        x = out1_flat + out2  # [batch, 64]
         x = self.fc3(x)
         x = self.relu(x)
 
@@ -938,51 +948,63 @@ def test_auto_offload_cross_view():
 # =============================================================================
 
 class InplaceOpsNet(nn.Cell):
-    """Network with inplace operations for testing auto_offload."""
+    """Network with inplace operations for testing auto_offload.
+
+    Note: ``ops.InplaceMul`` is not exposed in the ``mindspore.ops`` namespace (it only exists
+    as an auto-generated primitive), so this network uses the legacy ``ops.InplaceAdd`` Primitive
+    (Ascend/GPU/CPU) to exercise in-place tensor modification that the offload tracer must track.
+    """
 
     def __init__(self):
         super().__init__()
-        self.weight1 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight1')
-        self.weight2 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight2')
-        self.weight3 = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight3')
+        # Row-0 update tensors; shape (1, 64) matches x[[0], :] so batch size is unconstrained.
+        self.weight1 = Parameter(Tensor(np.ones((1, 64)).astype(np.float32) * 0.1), name='weight1')
+        self.weight2 = Parameter(Tensor(np.ones((1, 64)).astype(np.float32) * 0.2), name='weight2')
+        self.weight3 = Parameter(Tensor(np.ones((1, 64)).astype(np.float32) * 0.3), name='weight3')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
+        # ops.InplaceAdd(indices): constructed with row indices, called as op(x, input_v) doing
+        # x[indices,] += input_v in place (same tensor object / device address reused).
+        self.inplace_add = ops.InplaceAdd((0,))
 
     def construct(self, x):
         """Forward pass with inplace operations."""
         x = self.fc(x)  # [batch, 64]
         x = self.relu(x)
 
-        # InplaceAdd: x += weight1
-        x = ops.InplaceAdd(self.weight1, x)
-
-        # InplaceMul: x *= weight2
-        x = ops.InplaceMul(self.weight2, x)
-
-        # Another InplaceAdd
-        x = ops.InplaceAdd(self.weight3, x)
+        # InplaceAdd on row 0: x[0, :] += weight  (in-place)
+        x = self.inplace_add(x, self.weight1)
+        x = self.inplace_add(x, self.weight2)
+        x = self.inplace_add(x, self.weight3)
 
         x = self.relu(x)
         return x
 
 
 class InplaceIndexAddNet(nn.Cell):
-    """Network with InplaceIndexAdd operations for testing auto_offload."""
+    """Network with InplaceIndexAdd operations for testing auto_offload.
+
+    ``ops.InplaceIndexAdd`` is a legacy Primitive constructed as ``InplaceIndexAdd(axis)`` and
+    called as ``op(var, indices, updates)`` where ``updates`` has the same shape as ``var``
+    except along ``axis`` (whose size must equal ``len(indices)``).
+    """
 
     def __init__(self):
         super().__init__()
-        self.index = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]).astype(np.int32))
-        self.weight = Parameter(Tensor(np.ones((64, 64)).astype(np.float32) * 0.1), name='weight')
+        # 4 column indices; updates shape matches x[:, index] -> [batch, 4] (batch fixed to 32).
+        self.index = Tensor(np.array([0, 1, 2, 3]).astype(np.int32))
+        self.updates = Parameter(Tensor(np.ones((32, 4)).astype(np.float32) * 0.1), name='updates')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
+        self.inplace_index_add = ops.InplaceIndexAdd(axis=1)
 
     def construct(self, x):
         """Forward pass with InplaceIndexAdd operations."""
         x = self.fc(x)  # [batch, 64]
         x = self.relu(x)
 
-        # InplaceIndexAdd: x[:, self.index] += weight[:, :8]
-        x = ops.InplaceIndexAdd(self.index, x, self.weight)
+        # InplaceIndexAdd along axis 1: x[:, index] += updates (in place)
+        x = self.inplace_index_add(x, self.index, self.updates)
 
         x = self.relu(x)
         return x
@@ -1097,7 +1119,7 @@ class DeepNestedViewNet(nn.Cell):
         v5 = v4.reshape(batch_size, 128)  # [batch, 128]
 
         # Use deepest level
-        x = v5 * 0.5 + v1[:, 0, :] * 0.5
+        x = v5 * 0.5 + x * 0.5
 
         x = self.fc2(x)
         x = self.relu(x)

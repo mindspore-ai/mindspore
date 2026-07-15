@@ -4116,7 +4116,7 @@ class Cell(Cell_):
 
         # Register hooks
         self.register_forward_pre_hook(forward_pre_hook_fn)
-        self.register_forward_hook(forward_hook_fn)
+        self.register_forward_hook(forward_hook_fn, always_call=True)
         self.register_backward_pre_hook(backward_pre_hook_fn)
         self.register_backward_hook(backward_hook_fn)
 

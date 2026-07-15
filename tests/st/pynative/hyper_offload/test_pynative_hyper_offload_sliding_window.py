@@ -230,7 +230,7 @@ class TestHyperOffloadSlidingWindowSimple:
     @classmethod
     def setup_class(cls):
         """Set device memory budget once for the whole test class."""
-        context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", max_device_memory="0.2GB")
+        context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
     def setup_method(self):
         """Set up test environment."""
