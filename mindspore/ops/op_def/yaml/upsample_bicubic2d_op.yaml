@@ -9,7 +9,7 @@ upsample_bicubic2d:
             default: None
         scales:
             dtype: tuple[float]
-            type_cast: list[float], tuple[number], list[number]
+            type_cast: tuple[number], list[number]
             default: None
         align_corners:
             dtype: bool

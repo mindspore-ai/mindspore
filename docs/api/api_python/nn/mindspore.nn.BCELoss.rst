@@ -45,7 +45,5 @@ mindspore.nn.BCELoss
         Tensor，数据类型与 `logits` 相同。如果 `reduction` 为 ``'none'``，则shape与 `logits` 相同。否则，输出为Scalar的Tensor。
 
     异常：
-        - **TypeError** - `logits` 的数据类型， `labels` 或 `weight` （如果给定）既不是float16，也不是
-          float32。在Ascend平台，也支持bfloat16。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `logits` 的shape与 `labels` 或 `weight` （如果给定）不同。

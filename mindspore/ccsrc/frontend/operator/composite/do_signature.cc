@@ -38,6 +38,7 @@
 #include "ops/op_def.h"
 #include "utils/flags.h"
 #include "primitive/arithmetic_ops.h"
+#include "primitive/sequence_ops.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_i.h"
 #include "primitive/auto_generate/gen_ops_primitive_l.h"
@@ -250,12 +251,12 @@ AnfNodePtr DoTypeCastForDynamicScalarSequence(const FuncGraphPtr &func_graph, co
     return nullptr;
   }
   if (need_elem_cast) {
-    auto seq_to_tensor_prim = std::make_shared<Primitive>(input_is_tuple ? "TupleToTensor" : "ListToTensor");
+    auto seq_to_tensor_prim = input_is_tuple ? prim::kPrimTupleToTensor : prim::kPrimListToTensor;
     auto dst_type_node = input_is_tuple ? NewValueNode(static_cast<int64_t>(dst_info.elem_type))
                                         : NewValueNode(TypeIdToType(dst_info.elem_type));
     auto tensor_node =
       NewNodeWithAnchor(func_graph, old_cnode, {NewValueNode(seq_to_tensor_prim), input, dst_type_node});
-    auto tensor_to_seq_prim = std::make_shared<Primitive>(dst_info.is_tuple ? "TensorToTuple" : "TensorToList");
+    auto tensor_to_seq_prim = dst_info.is_tuple ? prim::kPrimTensorToTuple : prim::kPrimTensorToList;
     return NewNodeWithAnchor(func_graph, old_cnode, {NewValueNode(tensor_to_seq_prim), tensor_node});
   }
   auto seq_cast_prim = dst_info.is_tuple ? prim::kPrimListToTuple : prim::kPrimTupleToList;
