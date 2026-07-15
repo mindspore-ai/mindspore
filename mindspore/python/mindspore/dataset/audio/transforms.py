@@ -616,7 +616,7 @@ class ComplexNorm(AudioTensorOperation):
     Raises:
         TypeError: If `power` is not of type float.
         ValueError: If `power` is a negative number.
-        RuntimeError: If input tensor is not in shape of <..., complex=2>.
+        RuntimeError: If input tensor is not in the shape of <..., complex=2>.
 
     Supported Platforms:
         ``CPU``
@@ -740,20 +740,20 @@ class Contrast(AudioTensorOperation):
 
     Comparable with compression, this effect modifies an audio signal to make it sound louder.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
 
     Args:
         enhancement_amount (float, optional): Controls the amount of the enhancement,
-            in range of [0, 100]. Default: ``75.0``. Note that `enhancement_amount` equal
+            in the range of [0, 100]. Default: ``75.0``. Note that `enhancement_amount` equal
             to 0 still gives a significant contrast enhancement.
 
     Raises:
         TypeError: If `enhancement_amount` is not of type float.
         ValueError: If `enhancement_amount` is not in range [0, 100].
-        RuntimeError: If input tensor is not in shape of <..., time>.
+        RuntimeError: If input tensor is not in the shape of <..., time>.
 
     Supported Platforms:
         ``CPU``

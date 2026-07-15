@@ -347,7 +347,7 @@ class Dropout2d(Cell):
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `2D` tensor input[i,j].
     At each forward propagation,
-    each channel will be independently determined to be set to zero with probability `p`.
+    each channel will be independently set to zero with probability `p`.
 
     `Dropout2d` can improve the independence between channel feature maps.
 
