@@ -1585,6 +1585,44 @@ def sample_inputs_loss(op_info, dtype, device, **kwargs):
             _make_tensor(shape), op_args=(_make_tensor(shape),), op_kwargs=p_kwargs, sample_name=op_info.name
         )
 
+def extra_sample_inputs_mse_loss(op_info, dtype, device, **kwargs):
+    cases=(
+        ((30, ), (30, )),
+        ((60, 1), (1, 30)),
+        ((3, 6, 90), (1, 6, 1)),
+        ((30, 6, 9, 10 ), (30, 6, 9, 10))
+    )
+
+    multi_dim_cases = (
+        ((), ()),
+        ((2, 3, 4, 5, 6, 7, 8, 9), (2, 3, 1, 5, 1, 7, 1, 9))
+    )
+
+    empty_cases = (
+        ((0,), (0,)),
+        ((0, 1), (1, 0)),
+        ((0, 3, 0), (0, 1, 0)),
+        ((1, 0, 0, 0), (3, 0, 0, 0))
+    )
+
+
+    for input_shape, target_shape in cases:
+        for reduction in ['none', 'mean', 'sum']:
+            yield from make_extra_tensor(op_info, input_shape, (target_shape,),
+                                         {'reduction': reduction}, dtype=dtype, device=device,)
+
+    for input_shape, target_shape in multi_dim_cases:
+        for reduction in ['none', 'mean', 'sum']:
+            yield from make_extra_tensor(op_info, input_shape, (target_shape,),
+                                         {'reduction': reduction}, dtype=dtype, device=device,
+                                         support_multi_dim=True)
+
+    for input_shape, target_shape in empty_cases:
+        for reduction in ['none', 'mean', 'sum']:
+            yield from make_extra_tensor(op_info, input_shape, (target_shape,),
+                                         {'reduction': reduction}, dtype=dtype, device=device,
+                                         empty_tensor=True)
+
 def sample_inputs_l1_loss(op_info, dtype, device, **kwargs):
     yield from sample_inputs_loss(op_info, dtype, device, **kwargs)
 
@@ -4957,169 +4995,59 @@ def basic_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=Non
             )
 
 def extra_sample_inputs_mint_interpolate(op_info: OpInfo, dtype=None, device=None, **kwargs):
-
     mode = kwargs.get("mode")
     internal_mode, ranks = _normalize_mode_and_ranks(mode)
-    ranks = ranks[0]
-
-    if internal_mode in ("linear", "bilinear", "bicubic", "trilinear"):
-        align_corners_options = (True, False, None)
-    else:
-        align_corners_options = (None,)
-
-    def _extra_sample_inputs_mint_interpolate(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input=input_values[0]
-        for align_corners in align_corners_options:
-            yield OpSampleInput(
-                op_input=op_input,
-                op_kwargs={"size": (2,) * ranks,
-                           "scale_factor": None,
-                           "mode": internal_mode,
-                           "align_corners": align_corners,
-                           "recompute_scale_factor": None, },
-                sample_name=op_info.name,
-            )
-            for recompute in (False, True):
-                yield OpSampleInput(
-                    op_input=op_input,
-                    op_kwargs={"size": None,
-                               "scale_factor": (1.7,) * ranks,
-                               "mode": internal_mode,
-                               "align_corners": align_corners,
-                               "recompute_scale_factor": recompute, },
-                    sample_name=op_info.name,
-                )
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
-
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if mode not in ['nearest3d','nearest2d','nearest1d']:
-            _float_small_values = tuple(d for d in dtypes_extra_values['_float_small_values'] if d not in(-math.pi,
-                math.pi,math.pi / 2,-math.pi / 2) )
-            input_values = np.array(_float_small_values).reshape(1, 1, len(_float_small_values), *((1,)*(ranks-1)))
-            yield from  _extra_sample_inputs_mint_interpolate(input_values)
-
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, 1, len(_large_values), *((1,)*(ranks-1)))
-        if not (dtype == ms.float16 and mode in ['bilinear','trilinear','linear']):
-            yield from _extra_sample_inputs_mint_interpolate(input_values)
-
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if mode not in ['bilinear','trilinear','linear']:
-        if dtype is not None and dtype.is_floating_point:
-            if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-                for t in [np.inf, -np.inf, np.nan]:
-                    input_values = np.full((1, 1, *((3,)*ranks)), t)
-                    yield from _extra_sample_inputs_mint_interpolate(input_values)
-
-    # ---- discontiguous tensors ----
-    if mode not in ['nearest1d','nearest2d']:
-        for discontiguous in (True,):
-            input_shape = (1, 3, *((8,) * ranks))
-            input_values = make_arg(input_shape, discontiguous=discontiguous)
-            yield from _extra_sample_inputs_mint_interpolate(input_values)
-
-
+    rank = ranks[0]
+    yield from make_extra_tensor(op_info, (1, 1,) + (2, ) * rank, (),
+                        {'size': 3, 'mode': internal_mode}, dtype=dtype, device=device,)
+    yield from make_extra_tensor(op_info, (0, 10,) + (2,) * rank, (),
+                        {'size': 4, 'mode': internal_mode}, dtype=dtype, device=device, empty_tensor=True)
 
 def extra_sample_inputs_mint_linear(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    def _extra_sample_inputs_mint_linear(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input = input_values
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(make_arg((op_input.shape[-1],)),),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(make_arg((2, op_input.shape[-1],)),),
-            op_kwargs={'bias': make_arg((2,))},
-            sample_name=op_info.name,
-        )
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        _float_small_values = dtypes_extra_values['_float_small_values']
-        input_values = np.array(_float_small_values).reshape(1, 1, len(_float_small_values))
-        yield from  _extra_sample_inputs_mint_linear(input_values)
+    yield from make_extra_tensor(op_info, (3, 30), (make_arg((2, 30)), ),
+                                 {'bias': make_arg((2, ))}, device=device, dtype=dtype)
 
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, 1, len(_large_values))
-        yield from _extra_sample_inputs_mint_linear(input_values)
+    yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9,), ((2, 9), ),
+                                 {'bias': (2, )}, device=device, dtype=dtype, support_multi_dim=True)
 
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if dtype is not None and dtype.is_floating_point:
-        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-            for t in [np.inf, -np.inf, np.nan]:
-                input_values = np.full((1, 1, 2), t)
-                yield from _extra_sample_inputs_mint_linear(input_values)
+    empty_cases=(
+        ((0, 6), (6, ), None),
+        ((0, 6), (0, 6), (0, )),
+        ((1, 0), (0, 0), (0, ))
+    )
+    for input_shape, weight_shape, bias_shape in empty_cases:
 
-    # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((1,3), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_linear(input_values)
+        yield from make_extra_tensor(op_info, input_shape, (weight_shape, ),
+                                     {'bias': bias_shape}, device=device, dtype=dtype, empty_tensor=True)
 
 def extra_sample_inputs_mint_batch_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype, low=-9, high=0)
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
-    def _extra_sample_inputs_mint_batch_norm(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input = input_values
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(make_arg((op_input.shape[1],)),make_arg((op_input.shape[1],)),make_arg((op_input.shape[1],)),
-                     make_arg((op_input.shape[1],))),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
+    def _make_other_params(dim_value):
+        running_mean = make_arg((dim_value, ))
+        runing_var = make_tensor((dim_value, ), device=device, dtype=dtype, low=0)
+        weight = make_arg((dim_value, ))
+        bias = make_arg((dim_value, ))
+        return (running_mean, runing_var, weight, bias)
 
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        _float_small_values = dtypes_extra_values['_float_small_values']
-        input_values = np.array(_float_small_values).reshape(1, len(_float_small_values))
-        yield from  _extra_sample_inputs_mint_batch_norm(input_values)
+    yield from make_extra_tensor(op_info, (3, 10, 20, 30), _make_other_params(10),
+                                 {}, device=device, dtype=dtype, exclude_value=(-5062757.7, 5062757.7, -1e20, 1e20))
+    empty_cases=(
+        (0, 1),
+        #(1, 0, 3),
+        (1, 3, 0, 0),
+    )
 
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, len(_large_values))
-        yield from _extra_sample_inputs_mint_batch_norm(input_values)
+    for empty_input_shape in empty_cases:
+        yield from make_extra_tensor(op_info, empty_input_shape, _make_other_params(empty_input_shape[1]),
+                                     {}, device=device, dtype=dtype, empty_tensor=True)
 
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if dtype is not None and dtype.is_floating_point:
-        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-            for t in [np.inf, -np.inf, np.nan]:
-                input_values = np.full((1, 2), t)
-                yield from _extra_sample_inputs_mint_batch_norm(input_values)
-
-    # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((1,2), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_batch_norm(input_values)
+    yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9), _make_other_params(3),
+                                     {}, device=device, dtype=dtype, support_multi_dim=True)
 
 def basic_sample_inputs_reduction_count_nonzero(op_info, dtype, device=None, **kwargs):
     """count_nonzero does not have keepdim parameter"""
@@ -5130,180 +5058,110 @@ def basic_sample_inputs_reduction_count_nonzero(op_info, dtype, device=None, **k
 
 def extra_sample_inputs_mint_layer_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    yield from make_extra_tensor(op_info, (3, 6, 10, 20), ([6, 10, 20], ), {},
+                                dtype=dtype, device=device, exclude_value=(-1e20, 1e20))
 
-    def _extra_sample_inputs_mint_layer_norm(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input = input_values
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(op_input.shape[1:],),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
+    empty_cases=(
+        ((0, ), [0]),
+        ((1, 0), [0]),
+        ((0 ,3, 7), [7]),
+        ((3, 0, 0, 9), [3, 0, 0, 9])
+    )
 
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        _float_small_values = dtypes_extra_values['_float_small_values']
-        input_values = np.array(_float_small_values).reshape(1, len(_float_small_values))
-        yield from  _extra_sample_inputs_mint_layer_norm(input_values)
+    for empty_input_shape, normailized_shape in empty_cases:
+         yield from make_extra_tensor(op_info, empty_input_shape, (normailized_shape,), {},
+        dtype=dtype, device=device, empty_tensor=True)
 
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, len(_large_values))
-        yield from _extra_sample_inputs_mint_layer_norm(input_values)
+    yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9 ), (((5, 6, 7, 8, 9 ),), ),
+                                 {}, dtype=dtype, device=device, support_multi_dim=True)
 
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if dtype is not None and dtype.is_floating_point:
-        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-            for t in [np.inf, -np.inf, np.nan]:
-                input_values = np.full((1, 2), t)
-                yield from _extra_sample_inputs_mint_layer_norm(input_values)
+def extra_sample_inputs_mint_log_softmax_or_softmax(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((1,2), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_layer_norm(input_values)
+    yield from make_extra_tensor(op_info, (3, 6, 1, 1), (), {'dim': -3}, dtype=dtype,
+                                 device=device, )
 
-def extra_sample_inputs_mint_log_softmax(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9), (), {'dim': 3}, dtype=dtype,
+                                 device=device, support_multi_dim=True)
 
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
-    def _extra_sample_inputs_mint_log_softmax(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input = input_values
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(),
-            op_kwargs={'dim': 1},
-            sample_name=op_info.name,
-        )
-
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        _float_small_values = dtypes_extra_values['_float_small_values']
-        input_values = np.array(_float_small_values).reshape(1, len(_float_small_values))
-        yield from  _extra_sample_inputs_mint_log_softmax(input_values)
-
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, len(_large_values))
-        yield from _extra_sample_inputs_mint_log_softmax(input_values)
-
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if dtype is not None and dtype.is_floating_point:
-        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-            for t in [np.inf, -np.inf, np.nan]:
-                input_values = np.full((1, 2), t)
-                yield from _extra_sample_inputs_mint_log_softmax(input_values)
-
-    # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((1, 2), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_log_softmax(input_values)
-
-def extra_sample_inputs_mint_AdaptiveAvgPool(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_mint_adaptiveavgpool(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     pool_dim = kwargs.get('pool_dim')
 
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    if pool_dim == 'Pool3d':
+        yield from make_extra_tensor(op_info, (2, 3, 10, 20, 30), (((3, 6, 9),), ),
+                                     {}, dtype=dtype, device=device)
+    else:
+        yield from make_extra_tensor(op_info, (10, 20, 30), (((3, 6, ),), ),
+                                     {}, dtype=dtype, device=device)
 
-    rank = {'Pool1d': 1, 'Pool2d': 2, 'Pool3d': 3,
-            'functional_Pool1d': 1, 'functional_Pool2d': 2, 'functional_Pool3d': 3}[pool_dim]
+def dynamic_sample_inputs_mint_adaptiveavgpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    def _extra_sample_inputs_mint_AdaptiveAvgPool(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input = input_values
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(tuple(np.random.randint(2,9,size=rank)),),
-            op_kwargs={},
-            sample_name=op_info.name,
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device,)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None, None), dtype=dtype),
+                op_args=((2, 3), ),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(1, 3, 8, 8)),
+                    op_args=((2, 3), ),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 10, 10)),
+                    op_args=((2, 3), ),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
         )
 
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        _float_small_values = dtypes_extra_values['_float_small_values']
-        input_values = np.array(_float_small_values).reshape(1, 1, *((1,)*(rank-1)), len(_float_small_values))
-        yield from  _extra_sample_inputs_mint_AdaptiveAvgPool(input_values)
-
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, *((1,)*(rank-1)), len(_large_values))
-        yield from _extra_sample_inputs_mint_AdaptiveAvgPool(input_values)
-
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if dtype is not None and dtype.is_floating_point:
-        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-            for t in [np.inf, -np.inf, np.nan]:
-                input_values = np.full((1, 1, *(2,)*rank), t)
-                yield from _extra_sample_inputs_mint_AdaptiveAvgPool(input_values)
-
-    # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((1, 1, *(2,)*rank), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_AdaptiveAvgPool(input_values)
-
-def extra_sample_inputs_mint_GroupNorm(op_info: OpInfo, dtype=None, device=None, **kwargs):
-
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
-
-    def _extra_sample_inputs_mint_GroupNorm(input_values):
-        if isinstance(input_values, np.ndarray):
-            op_input = make_tensor_with_np_array(input_values, dtype=dtype, device=device)
-        else:
-            op_input = input_values
-        yield OpSampleInput(
-            op_input=op_input,
-            op_args=(1, 1, ),
-            op_kwargs={},
-            sample_name=op_info.name,
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=((2, 3),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(1, 3, 8, 8)),
+                    op_args=((2, 3), ),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 10, 10)),
+                    op_args=((2, 3),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
         )
 
-    # ---- small value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        _float_small_values = dtypes_extra_values['_float_small_values']
-        input_values = np.array(_float_small_values).reshape(1, 1, len(_float_small_values))
-        yield from  _extra_sample_inputs_mint_GroupNorm(input_values)
+def extra_sample_inputs_mint_groupnorm(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    # ---- large value tensors ----
-    if dtype is not None and dtype.is_floating_point:
-        if dtype == ms.float16:
-            _large_values = dtypes_extra_values['_fp16_large_values']
-        else:
-            _large_values = dtypes_extra_values['_fp32_large_values']
-        input_values = np.array(_large_values).reshape(1, 1, len(_large_values))
-        yield from _extra_sample_inputs_mint_GroupNorm(input_values)
+    yield from make_extra_tensor(op_info, (3, 10, 20, 30), (2, 10), {},
+                                 dtype=dtype, device=device, exclude_value=(-1e20, 1e20))
 
-    # ---- extremal value tensors (inf, -inf, nan) ----
-    if dtype is not None and dtype.is_floating_point:
-        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
-            for t in [np.inf, -np.inf, np.nan]:
-                input_values = np.full((1, 1, 2), t)
-                yield from _extra_sample_inputs_mint_GroupNorm(input_values)
+    yield from make_extra_tensor(op_info, (3, 4, 3, 3, 3, 3, 3, 3), (2, 4),
+                                 {}, dtype=dtype, device=device, support_multi_dim=True)
 
-    # ---- discontiguous tensors ----
-    for discontiguous in (True,):
-        input_values = make_arg((1, 1, 2), discontiguous=discontiguous)
-        yield from _extra_sample_inputs_mint_GroupNorm(input_values)
+    empty_cases = (
+        (0, 6),
+        (1, 6, 0)
+    )
+    for empty_shape in empty_cases:
+        yield from make_extra_tensor(op_info, empty_shape, (2, empty_shape[1]), {}, dtype=dtype,
+                                     device=device, empty_tensor=True)
 
 def extra_sample_inputs_mint_dropout(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype, exclude_value=(0,))
@@ -8975,7 +8833,7 @@ def basic_sample_inputs_mint_unique_consecutive(op_info: OpInfo, dtype=None, dev
                     op_kwargs=unique_kwargs,
                     sample_name=op_info.name,
                 )
-def basic_sample_inputs_GroupNorm(
+def basic_sample_inputs_groupnorm(
     op_info: OpInfo,
     dtype,
     device=None,
@@ -9018,7 +8876,7 @@ def basic_sample_inputs_GroupNorm(
         )
 
 
-def basic_sample_inputs_LayerNorm(
+def basic_sample_inputs_layernorm(
     op_info: OpInfo,
     dtype,
     device=None,
@@ -9078,7 +8936,7 @@ def basic_sample_inputs_layer_norm(
     Returns:
         Generator of OpSampleInput objects.
     '''
-    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype, exclude_value=op_info.exclude_value)
 
     # Basic shape test cases: (input_shape, normalized_shape, eps, desc)
     shape_cases = [
@@ -9939,6 +9797,35 @@ def basic_sample_inputs_adaptive_avg_pool1d(op_info: OpInfo, dtype=None, device=
         # Unbatched
         yield OpSampleInput(make_arg(input_shape[1:]), op_args=(output_size,), op_kwargs={}, sample_name=op_info.name)
 
+def extra_sample_inputs_adaptive_avg_pool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (3, 10, 20), (6, ), {}, device=device, dtype=dtype)
+
+def error_sample_inputs_adaptive_avg_pool1d(op_info: OpInfo, dtype, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, )),
+            op_args=(3, ),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info='input must be 2d or 3d',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, 2, 3, 4)),
+            op_args=(3,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info='input must be 2d or 3d',
+    )
 
 def basic_sample_inputs_adaptive_avg_pool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
@@ -10397,6 +10284,7 @@ def extra_sample_inputs_mint_div(op_info: OpInfo, dtype=None, device=None, **kwa
 
 # op error sense for convolutional operators
 def error_inputs_other_op_with_convolution(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
 
     conv_dim=kwargs.get('conv_dim')
@@ -10535,6 +10423,17 @@ def error_inputs_other_op_mint_nn_functional_linear(op_info: OpInfo, dtype=None,
         op_error_info='bias shape does not match',
     )
 
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, 2, 3, 4, 5, 6, 7)),
+            op_args=(make_arg((7, 3)),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='when bias is not 1d, input should less than  7d',
+    )
+
 # the error inputs scene of op with bce loss
 def error_inputs_other_op_with_loss_function(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
@@ -10585,6 +10484,70 @@ def error_inputs_other_op_with_loss_function(op_info: OpInfo, dtype=None, device
             op_error_info='the target shape should equal  or can be broadcast to input shape',
         )
 
+def extra_sample_inputs_binary_cross_entropy(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    make_prob = functools.partial(make, low=0, high=1)
+
+    for shape, weight, reduction in itertools.product([(2, 3, 4, 5, 6, 7 ,8 ,9)],[None, make((2, 3, 4, 5, 6, 7 ,8 ,9)),],
+                                                      ['none', 'mean', 'sum']):
+        yield OpSampleInput(
+            make_prob(shape),
+            op_args=(make_prob(shape), ),
+            op_kwargs={'weight': weight, 'reduction': reduction},
+            sample_name=op_info.name + '8d',
+        )
+
+        yield OpSampleInput(
+            make_tensor(shape, device=device, dtype=dtype, discontiguous=True, low=0, high=1),
+            op_args=(make_prob(shape), ),
+            op_kwargs={'weight': weight, 'reduction': reduction},
+            sample_name=op_info.name + 'discontiguous',
+        )
+
+        yield OpSampleInput(
+            ms.Tensor(np.random.choice(np.array((0.0, -0.0, 1.0, 1.25e-1, 1e-3,)), size=shape),dtype=dtype),
+            op_args=(ms.Tensor(np.random.choice(np.array((0.0, -0.0, 1.0, 1.25e-1, 1e-3,)), size=shape), dtype=dtype), ),
+            op_kwargs={'weight': weight, 'reduction': reduction},
+            sample_name=op_info.name + 'small_value',
+        )
+
+def extra_sample_inputs_l1_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (
+        ((30,), (30,)),
+        ((60, 1), (1, 30)),
+        ((3, 6, 90), (1, 6, 1)),
+        ((30, 6, 9, 10), (30, 6, 9, 10))
+    )
+
+    empty_cases = (
+        ((0,), (0,)),
+        ((0, 1), (1, 0)),
+        ((0, 3, 0), (0, 1, 0)),
+        ((1, 0, 0, 0), (3, 0, 0, 0))
+    )
+
+    multi_dim_cases = (
+        ((), ()),
+        ((2, 3, 4, 5, 6, 7, 8, 9), (1, 3, 1, 5, 1, 7, 1, 9))
+    )
+
+    for input_shape, target_shape in cases:
+        for reduction in ['none', 'mean', 'sum']:
+            yield from make_extra_tensor(op_info, input_shape, (target_shape,),
+                                         {'reduction': reduction}, dtype=dtype, device=device, )
+
+    for input_shape, target_shape in multi_dim_cases:
+        for reduction in ['none', 'mean', 'sum']:
+            yield from make_extra_tensor(op_info, input_shape, (target_shape, ),
+                                         {'reduction': reduction}, dtype=dtype, device=device,
+                                         support_multi_dim=True)
+
+    for input_shape, target_shape in empty_cases:
+        for reduction in ['none', 'mean', 'sum']:
+            yield from make_extra_tensor(op_info, input_shape, (target_shape,),
+                                         {'reduction': reduction}, dtype=dtype, device=device, empty_tensor=True)
 
 def error_inputs_mint_nn_bce_with_logits_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_logits = functools.partial(make_tensor, device=device, dtype=ms.float32, low=-1.5, high=1.5)
@@ -10662,7 +10625,7 @@ def error_inputs_other_op_group_norm(op_info: OpInfo, dtype=None, device=None, *
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=(ValueError, TypeError),
+        op_error_type=ValueError,
         op_error_info='num_channels should equal ''C'' ',
     )
     yield OpErrorInput(
@@ -10672,8 +10635,18 @@ def error_inputs_other_op_group_norm(op_info: OpInfo, dtype=None, device=None, *
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=(ValueError, TypeError),
+        op_error_type=ValueError,
         op_error_info='num_groups should be divided with no remainder by  num_channels',
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((4, )),
+            op_args=(2, 4,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=RuntimeError,
+        op_error_info='dim of input must be between 2 and 8',
     )
 
 def error_inputs_other_op_layer_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -10699,7 +10672,7 @@ def error_inputs_other_op_layer_norm(op_info: OpInfo, dtype=None, device=None, *
         op_error_info='''if normalizd_shape type is int,it should be equal input's last dim ''',
     )
 
-def error_inputs_other_op_with_AdaptiveAvgPool(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def error_inputs_other_op_with_adaptiveavgpool(op_info: OpInfo, dtype=None, device=None, **kwargs):
     pool_dim = kwargs.get('pool_dim')
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
@@ -12884,7 +12857,7 @@ def extra_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
 
 def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=None, device=None,
-                      exclude_value=(), empty_tensor=False, dtype_promotion=False):
+                      exclude_value=(), empty_tensor=False, dtype_promotion=False, support_multi_dim=False):
 
     '''
     (1, 2, 3) : need to make tensor
@@ -12937,14 +12910,23 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
             else make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
             sample_name=op_info.name + 'empty_tensor',
         )
+    elif support_multi_dim:
+        yield OpSampleInput(
+            op_input=make_arg(op_input_shape),
+            op_args=tuple(i[0] if isinstance(i, tuple) and not _whether_to_tensor(i)
+                          else make_arg(i) if isinstance(i, tuple) else i for i in op_args_shapes),
+            op_kwargs={k: v[0] if isinstance(v, tuple) and not _whether_to_tensor(v)
+            else make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
+            sample_name=op_info.name + 'multi_dim',
+        )
     else:
         data_dict={}
         if dtype is not None and dtype.is_floating_point:
-            data_dict.update({'_float_small_values':dtypes_extra_values['_float_small_values']})
+            data_dict.update({f'{dtype}_small_values':dtypes_extra_values['_float_small_values']})
             if dtype == ms.float16:
-                data_dict.update({'_fp16_large_values': dtypes_extra_values['_fp16_large_values']})
+                data_dict.update({f'{dtype}_large_values': dtypes_extra_values['_fp16_large_values']})
             else:
-                data_dict.update({'_fp32_large_values': dtypes_extra_values['_fp32_large_values']})
+                data_dict.update({f'{dtype}_large_values': dtypes_extra_values['_fp32_large_values']})
 
             if not op_info.disable_extremal_value_tensor_inputs:
                 if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
@@ -12953,12 +12935,12 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
 
         if dtype in dtypes_integral and dtype != ms.bool_:
             if dtype in dtypes_extra_uint or dtype == ms.uint8:
-                data_dict.update({'_uint_small_values':[dtypes_extra_values['_uint_small_values']]})
+                data_dict.update({f'{dtype}_small_values':[dtypes_extra_values['_uint_small_values']]})
             else:
-                data_dict.update({'_int_small_values':[dtypes_extra_values['_int_small_values']]})
+                data_dict.update({f'{dtype}_small_values':[dtypes_extra_values['_int_small_values']]})
 
             if dtype in [ms.int16, ms.int32, ms.int64]:
-                data_dict.update({'_int_large_values': [dtypes_extra_values['_int_large_values']]})
+                data_dict.update({f'{dtype}_large_values': [dtypes_extra_values['_int_large_values']]})
 
         for data_title,data in data_dict.items():
             yield  from _make_extra_op(data, op_input_shape, op_args_shapes, op_kwargs, data_title )
@@ -16696,7 +16678,7 @@ def extra_sample_inputs_mint_tril(op_info: OpInfo, dtype=None, device=None, **kw
                 sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
             )
 
-def basic_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_sample_inputs_adaptivemaxpool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
@@ -16721,7 +16703,7 @@ def basic_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=No
             sample_name=op_info.name,
         )
 
-def error_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def error_sample_inputs_adaptivemaxpool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
 
@@ -16763,7 +16745,7 @@ def error_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=No
         op_error_info='input.dim must be 2 or 3',
     )
 
-def extra_sample_inputs_AdaptiveMaxPool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_adaptivemaxpool1d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     yield from make_extra_tensor(op_info, (1, 1, 16, ), (8, ),
                                  {'return_indices': True}, dtype=dtype, device=device)
@@ -16812,6 +16794,10 @@ def extra_sample_inputs_pad(op_info: OpInfo, dtype=None, device=None, dim=None, 
 
     yield from make_extra_tensor(op_info, (1, 1,) + (16, ) * dim, op_args, {},
                                  dtype=dtype, device=device)
+
+    if mode == 'ZeroPad':
+        yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9), op_args, {},
+                                     dtype=dtype, device=device, support_multi_dim=True)
 
 def error_sample_inputs_pad(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
 
@@ -16920,7 +16906,7 @@ def error_sample_inputs_pad(op_info: OpInfo, dtype=None, device=None, dim=None, 
         op_error_info='negative pad makes output size invalid',
     )
 
-def basic_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_sample_inputs_maxunpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
     def _normalize_output_size(shape_before_pooling, output_size_mode):
         if output_size_mode is None:
             return None
@@ -16971,7 +16957,7 @@ def basic_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, **
     for shape_before_pooling, kernel_size, stride, padding, output_size_mode, sample_name in cases:
         yield from _make_sample(shape_before_pooling, kernel_size, stride, padding, output_size_mode, sample_name)
 
-def error_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
+def error_sample_inputs_maxunpool2d(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
 
     N = 1
     C = 3
@@ -17112,7 +17098,7 @@ def error_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, di
         op_error_info='input shape should be equal indices shape',
     )
 
-def extra_sample_inputs_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_maxunpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
 
     data_list=[]
@@ -17293,7 +17279,7 @@ def dynamic_sample_inputs_mint_triu(
         )
 
 
-def basic_sample_inputs_Avgpool(op_info: OpInfo, dtype=None, device=None, dim=None, **kwargs):
+def basic_sample_inputs_avgpool(op_info: OpInfo, dtype=None, device=None, dim=None, **kwargs):
 
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
@@ -17330,7 +17316,7 @@ def basic_sample_inputs_Avgpool(op_info: OpInfo, dtype=None, device=None, dim=No
                 sample_name=op_info.name,
             )
 
-def error_sample_inputs_Avgpool3d(op_info: OpInfo, dtype=None, device=None, dim=None, **kwargs):
+def error_sample_inputs_avgpool3d(op_info: OpInfo, dtype=None, device=None, dim=None, **kwargs):
 
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
@@ -17562,7 +17548,7 @@ def error_sample_inputs_Avgpool3d(op_info: OpInfo, dtype=None, device=None, dim=
                 op_error_info='output_size',
             )
 
-def extra_sample_inputs_Avgpool3d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_avgpool3d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     yield from make_extra_tensor(op_info, (2, 10, 32, 64), (5, ),
                                  {'stride': 3, 'padding':2,} ,dtype=dtype, device=device)
@@ -17570,7 +17556,7 @@ def extra_sample_inputs_Avgpool3d(op_info: OpInfo, dtype=None, device=None, **kw
     yield from make_extra_tensor(op_info, (0, 2, 10, 32, 64), (5,),
                                  {'stride': 3, 'padding': 2, }, dtype=dtype, device=device, empty_tensor=True)
 
-def extra_sample_inputs_Avgpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_avgpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     yield from make_extra_tensor(op_info, (10, 32, 64), (5, ),
                                  {'stride': 3, 'padding':2,} ,dtype=dtype, device=device)
@@ -22201,6 +22187,9 @@ def extra_sample_inputs_smooth_l1_loss(op_info: OpInfo, dtype=None, device=None,
         yield from make_extra_tensor(op_info, (0, 10, 32, 64), ((0, 10, 32, 64), ),
                                      {'reduction': reduction}, dtype=dtype, device=device, empty_tensor=True)
 
+        yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9),
+            ((2, 3, 4, 5, 6, 7, 8, 9), ),{'reduction': reduction}, dtype=dtype, device=device, support_multi_dim=True)
+
 def basic_sample_inputs_nll_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
@@ -22219,7 +22208,7 @@ def basic_sample_inputs_nll_loss(op_info: OpInfo, dtype=None, device=None, **kwa
         target = make_tensor( () if len(input_shape) == 1 else (input_shape[0],), low=0, high=input_shape[-1] - 1,
                               dtype=ms.int64, device=device)
         ingore_index = target if len(target.shape) == 0 else  ms.Tensor(np.array(np.random.choice(target.numpy())),
-                                                                        dtype=ms.int64).to('Ascend')
+                                                                        dtype=ms.int64)
         weight = make_tensor((input_shape[-1],),device=device, dtype=dtype,low=0,high=1)
        
         for wei, ing, red in itertools.product([None, weight], [-100, ingore_index], ['none', 'mean', 'sum']):
@@ -22326,12 +22315,19 @@ def error_sample_inputs_kl_div(op_info: OpInfo, dtype=None, device=None, **kwarg
 
 def extra_sample_inputs_kl_div(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    target =  make_tensor((10, 32), low=0, high=1, device=device, dtype=dtype)
+    make_arg = functools.partial(make_tensor, low=0, high=1, device=device, dtype=dtype)
 
     for reduction in ['none', 'mean', 'sum', 'batchmean']:
 
-        yield from make_extra_tensor(op_info, (10, 32,), (target,),
+        yield from make_extra_tensor(op_info, (10, 32,), (make_arg((10, 32)), ),
                         {'reduction': reduction}, dtype=dtype, device=device,)
+
+        yield from make_extra_tensor(op_info, (), (make_arg(()), ),
+                                {'reduction': reduction}, dtype=dtype, device=device, support_multi_dim=True)
+
+        yield from make_extra_tensor(op_info, (2, 3, 4, 5, 6, 7, 8, 9),
+             (make_arg((1, 3, 1, 5, 1, 7, 1, 9)), ),{'reduction': reduction}, dtype=dtype,
+                                     device=device, support_multi_dim=True )
 
 def basic_sample_inputs_cosine_embedding_loss(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
@@ -22465,7 +22461,7 @@ def extra_sample_inputs_cosine_embedding_loss(op_info: OpInfo, dtype=None, devic
             yield from make_extra_tensor(op_info, input1_shape, (
             inpu2_shape,target_shape),{'reduction': reduction}, dtype=dtype, device=device, empty_tensor=True)
 
-def basic_sample_inputs_optim_Adam(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_sample_inputs_optim_adam(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
     cases = (
@@ -22491,7 +22487,7 @@ def basic_sample_inputs_optim_Adam(op_info: OpInfo, dtype=None, device=None, **k
             sample_name=op_info.name,
         )
 
-def basic_sample_inputs_optim_AdamW(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_sample_inputs_optim_adamw(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
@@ -22513,7 +22509,7 @@ def basic_sample_inputs_optim_AdamW(op_info: OpInfo, dtype=None, device=None, **
                 sample_name=op_info.name,
             )
 
-def error_sample_inputs_optim_Adam(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def error_sample_inputs_optim_adam(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
@@ -22570,7 +22566,7 @@ def error_sample_inputs_optim_Adam(op_info: OpInfo, dtype=None, device=None, **k
         op_error_info='weight_decay should >=0',
     )
 
-def error_sample_inputs_optim_AdamW(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def error_sample_inputs_optim_adamw(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
 
@@ -22622,7 +22618,7 @@ def error_sample_inputs_optim_AdamW(op_info: OpInfo, dtype=None, device=None, **
         op_error_info='weight_decay should >=0',
     )
 
-def extra_sample_inputs_optim_Adam(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_optim_adam(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
@@ -22637,7 +22633,7 @@ def extra_sample_inputs_optim_Adam(op_info: OpInfo, dtype=None, device=None, **k
 
 
 
-def extra_sample_inputs_optim_AdamW(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_sample_inputs_optim_adamw(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
@@ -22646,9 +22642,7 @@ def extra_sample_inputs_optim_AdamW(op_info: OpInfo, dtype=None, device=None, **
     yield from make_extra_tensor(op_info, (2, 3, 4, 5), (weight, ),
                                  {}, dtype=dtype, device=device, exclude_value=(-13141.5, 13141.5))
 
-
-
-def basic_sample_inputs_functional_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_sample_inputs_functional_maxunpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     case = (
         ((1, 3, 4, 5), 3, 2, 0, ),                  # mint.nn.MaxPool2d not support 4D input
@@ -22744,7 +22738,7 @@ def extra_sample_inputs_functional_MaxUnpool2d(op_info: OpInfo, dtype=None, devi
         sample_name=op_info.name,
     )
 
-def error_sample_inputs_functional_MaxUnpool2d(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
+def error_sample_inputs_functional_maxunpool2d(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None, **kwargs):
 
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
 
@@ -22877,9 +22871,54 @@ def basic_sample_inputs_functional_adaptivemaxpool(op_info: OpInfo, dtype=None, 
             sample_name=op_info.name,
         )
 
+def extra_sample_inputs_functional_maxunpool2d(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    data_list = []
+
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+
+        data_list.extend([_float_small_values, _large_values])
+
+    if not op_info.disable_extremal_value_tensor_inputs:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            data_list.extend([(np.inf,), (-np.inf,), (np.nan,)])
+
+    for data in data_list:
+        out = (mint.nn.MaxPool2d(kernel_size=5, stride=2, padding=2, return_indices=True)
+               (make_tensor_with_np_array(np.random.choice(np.array(data), size=(2, 5, 7, 19)),
+                 dtype=dtype if dtype != ms.float64 else ms.float32, device=device)))
+
+        yield OpSampleInput(
+            op_input=out[0],
+            op_args=(out[1].to(ms.int64), 5),
+            op_kwargs={'stride': 2, 'padding': 2, },
+            sample_name=op_info.name,
+        )
+
+    yield OpSampleInput(
+        op_input=make_tensor((0, 1, 2, 3), device=device, dtype=dtype),
+        op_args=(make_tensor((0, 1, 2, 3), device=device, dtype=ms.int64), 5,),
+        op_kwargs={'stride': 2, 'padding': 2},
+        sample_name=op_info.name,
+    )
+
+    out = (mint.nn.MaxPool2d(kernel_size=5, stride=2, padding=2, return_indices=True)
+           (make_tensor((2, 5, 7, 19), dtype=dtype if dtype != ms.float64 else ms.float32, device=device)))
+
+    yield OpSampleInput(
+        op_input=_tensor_to_discontiguous(out[0]),
+        op_args=(out[1].to(ms.int64), 5),
+        op_kwargs={'stride': 2, 'padding': 2, },
+        sample_name=op_info.name,
+    )
+    
 def error_sample_inputs_functional_adaptivemaxpool(op_info: OpInfo, dtype=None, device=None, dim=None, mode=None,
                                                    **kwargs):
-
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
 
     yield OpErrorInput(
