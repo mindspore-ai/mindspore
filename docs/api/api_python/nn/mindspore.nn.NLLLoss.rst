@@ -39,7 +39,7 @@ mindspore.nn.NLLLoss
         - **labels** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)` (针对 :math:`K` 维数据)。
           数据类型仅支持int32。
 
-    返回：
+    输出：
         Tensor，一个数据类型与logits相同的Tensor。
 
     异常：

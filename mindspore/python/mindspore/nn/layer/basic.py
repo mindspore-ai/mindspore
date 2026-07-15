@@ -115,13 +115,13 @@ class Dropout(Cell):
     Dropout layer for the input.
 
     Dropout is a means of regularization that reduces overfitting by preventing correlations between neuronal nodes.
-    The operator randomly sets some neurons output to 0 according to `p`, which means the probability of discarding
+    The operator randomly sets some neurons' output to 0 according to `p`, which means the probability of discarding
     during training. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
-    During the reasoning, this layer returns the same Tensor as the `x`.
+    During inference, this layer returns the same Tensor as the `x`.
 
-    This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    This technique is proposed in the paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
     <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
-    overfitting and prevents neurons from co-adaptation. See more details in `Improving neural networks by
+    overfitting and prevent neurons from co-adaptation. See more details in `Improving neural networks by
     preventing co-adaptation of feature detectors
     <https://arxiv.org/pdf/1207.0580.pdf>`_.
 
@@ -137,7 +137,7 @@ class Dropout(Cell):
         - A future version will add an `inplace` parameter and keep the keep-probability logic aligned with `p`.
 
     Args:
-        keep_prob (float): Deprecated. The keep rate, greater than 0 and less equal than 1.
+        keep_prob (float): Deprecated. The keep rate, greater than 0 and less than or equal to 1.
             E.g. rate=0.9, dropping out 10% of input neurons. Default: ``0.5`` .
         p (Union[float, int, None]): The dropout rate, greater than or equal to 0 and less than 1.
             E.g. rate=0.9, dropping out 90% of input neurons. Default: ``None`` .
