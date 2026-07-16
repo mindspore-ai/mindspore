@@ -6445,7 +6445,7 @@ def combinations(input, r=2, with_replacement=False):
 
     Args:
         input (Tensor): One-dimensional input tensor.
-        r (int, optional): Number of elements to perform combination. Default ``2`` .
+        r (int, optional): Length of each combination subsequence. Default ``2`` .
         with_replacement (bool, optional): Whether to allow repeated elements in combinations. Default ``False`` .
 
     Returns:
@@ -6928,12 +6928,13 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     Args:
         input (Tensor[Number]): The input tensor.
         axis (Union[int, tuple(int), list(int), Tensor], optional): Specify the axis for computation. If ``None`` ,
-            compute all elements in the `input` . Default ``None`` .
-        keepdims (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
+            compute the maximum over all elements in `input`. Default ``None`` .
+        keepdims (bool, optional): Whether to retain the reduced dimensions in the output tensor. Default ``False`` .
 
     Keyword Args:
         initial (scalar, optional): Initial value for the maximum. Default ``None`` .
-        where (Tensor[bool], optional): Specifies the range over which to compute the maximum values. The shape of this
+        where (Tensor[bool], optional): Specifies which elements to include when computing the maximum values.
+            The shape of this
             tensor must be broadcastable to the shape of `input` . An `initial` value must be specified. Default
             ``None`` , indicating that all elements are to be computed.
 

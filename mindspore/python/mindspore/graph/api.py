@@ -1209,7 +1209,8 @@ def jit(
             - O1: Using commonly used optimizations and automatic operator fusion optimizations. This optimization
               level is experimental and is being improved.
 
-        dynamic (int, optional): Whether dynamic shape compilation should be performed. Default: ``0``. The value range
+        dynamic (int, optional): Controls whether dynamic shape compilation should be performed.
+            Default: ``0``. The value range
             is as follows:
 
             - 0: Do not perform dynamic shape compilation.
@@ -1660,8 +1661,8 @@ class saved_tensors_hooks:
     Certain tensors from the forward pass are stored for use in the backward process.
     By using this context, users can specify:
 
-    - How these tensors are packed before saving (pack stage) .
-    - How they are restored when accessed during gradient computation (unpack stage) .
+    - How these tensors are packed before saving (pack stage).
+    - How they are restored when accessed during gradient computation (unpack stage).
 
     The hooks should have the following signatures:
 
@@ -2532,7 +2533,7 @@ def ms_memory_recycle():
 
 def set_recursion_limit(recursion_limit=1000):
     """
-    Specify the recursion depth limit of function call before compiling graph.
+    Specify the recursion depth limit of function call before compiling the graph.
     It needs to be called when the nested function call is too deep or the number of subgraphs is too large.
     If `recursion_limit` is set larger than before, the system max stack depth should be set larger too,
     otherwise a `core dumped` exception may be raised because of system stack overflow.

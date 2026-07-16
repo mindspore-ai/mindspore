@@ -403,7 +403,7 @@ def adaptive_avg_pool3d(input, output_size):
         >>> output = ops.adaptive_avg_pool3d(input, output_size)
         >>> print(output.shape)
         (4, 3, 3, 3, 4)
-        >>> # case 2: output_size=4
+        >>> # case 2: output_size=5
         >>> output_size=5
         >>> input_val = np.random.randn(2, 3, 8, 6, 12)
         >>> input = Tensor(input_val, mindspore.float32)
@@ -929,8 +929,8 @@ def adaptive_max_pool1d(input, output_size):
     Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
     a composition of 1D input planes.
 
-    Typically, the input is of shape :math:`(N, C, L_{in})`,
-    adaptive_max_pool1d outputs regional maximum in the :math:`L_{in}`-dimension. The output is of
+    Typically, the input is of shape :math:`(N, C, L_{in})`, and
+    adaptive_max_pool1d outputs the regional maximum in the :math:`L_{in}`-dimension. The output is of
     shape :math:`(N, C, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
 
     Note:
@@ -6171,7 +6171,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     Args:
         input (Tensor): Input Tensor of shape :math:`(N, C_{in}, L_{in})`.
         weight (Tensor): The convolutional kernel value, it should have shape
-            :math:`(N, C_{in} / \text{groups}, \text{kernel_size})`.
+            :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size})`.
         bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
             When bias is None, zeros will be used. Default: ``None`` .
         stride (Union(int, tuple[int]), optional): The distance of kernel moving, an int number or a tuple of one int
@@ -6327,7 +6327,8 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     Args:
         input (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         weight (Tensor): Tensor of shape
-            :math:`(N, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`, then the size of kernel
+            :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
+            then the size of kernel
             is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`.
         bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
             When bias is ``None`` , zeros will be used. Default: ``None`` .
@@ -7293,8 +7294,8 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     Args:
         input (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
         weight (Tensor): Set size of kernel is :math:`(\text{kernel_size[0]}, \text{kernel_size[1]},
-            \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in}, \text{kernel_size[0]},
-            \text{kernel_size[1]}, \text{kernel_size[1]})`.
+            \text{kernel_size[2]})`, then the shape is :math:`(C_{out}, C_{in} / \text{groups},
+            \text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`.
         bias (Tensor, optional): Bias Tensor with shape :math:`(C_{out})`.
             When bias is None, zeros will be used. Default: ``None`` .
         stride (Union[int, tuple[int]], optional): The distance of kernel moving,
@@ -7335,14 +7336,14 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         :class:`mindspore.nn.Conv3d` for more details.
 
     Raises:
-        TypeError: If `out_channel` or `groups` is not an int.
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
+        TypeError: If `groups` is not an int.
         TypeError: If `bias` is not a Tensor.
         ValueError: If the shape of `bias` is not :math:`(C_{out})`.
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple or list whose length is not equal to 3.
-        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is greater than 0.
+        ValueError: If `pad_mode` is not equal to 'pad' and `padding` is greater than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

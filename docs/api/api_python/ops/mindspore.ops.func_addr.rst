@@ -18,8 +18,8 @@ mindspore.ops.addr
 
     参数：
         - **x** (Tensor) - 输入tensor。
-        - **vec1** (Tensor) - 将被乘的向量。
-        - **vec2** (Tensor) - 将被乘的向量。
+        - **vec1** (Tensor) - 第一个将被乘的向量。
+        - **vec2** (Tensor) - 第二个将被乘的向量。
 
     关键字参数：
         - **beta** (scalar[int, float, bool], 可选) - `x` 的尺度因子。默认 ``1`` 。

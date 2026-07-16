@@ -129,7 +129,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             it represents for a list of dataset files to be read directly.
         columns_list (list[str], optional): List of columns to be read. Default: ``None`` , read all columns.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch, bool type and ``Shuffle``
             enum are both supported to pass in. Default: ``None``, performs ``mindspore.dataset.Shuffle.ADAPTIVE`` .

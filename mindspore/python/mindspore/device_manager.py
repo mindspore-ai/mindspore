@@ -121,8 +121,8 @@ def set_deterministic(deterministic):
 
     This configuration is a global configuration, and once enabled, subsequent calculation operations
     will follow the configuration setting. When deterministic computing is enabled, the same output
-    is generated if an operator is executed multiple times with the same hardware and input. This often
-    slows down operator execution.
+    is generated if an operator is executed multiple times with the same hardware and input. This may
+    slow down operator execution.
 
     The framework does not enable deterministic computation by default.
 

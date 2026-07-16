@@ -171,14 +171,14 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
-            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+            When this argument is specified, `num_samples` reflects the max sample number per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -291,7 +291,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -419,7 +419,7 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
@@ -843,7 +843,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         num_samples (int, optional): The number of audio to be included in the dataset.
             Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.

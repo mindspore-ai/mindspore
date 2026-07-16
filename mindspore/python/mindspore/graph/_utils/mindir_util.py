@@ -73,7 +73,7 @@ def save_mindir(model, file_name):
         The interface is deprecated from version 2.5 and will be removed in a future version.
 
     Args:
-        model (ModelProto): mindir model
+        model (ModelProto): MindIR model
         file_name (str): File name.
 
     Raises:

@@ -1369,7 +1369,7 @@ def set_context(**kwargs):
     parameter-related functionalities will be provided through new APIs.
 
     Args:
-        mode (int): GRAPH_MODE(0) or PYNATIVE_MODE(1). Default ``PYNATIVE_MODE`` .
+        mode (int): GRAPH_MODE (0) or PYNATIVE_MODE (1). Default ``PYNATIVE_MODE`` .
         device_id (int): ID of the target device. Default ``0`` . This parameter will be deprecated
             and removed in future versions. Please use the API :func:`mindspore.set_device` instead.
         device_target (str): The target device to run, supports ``"Ascend"``, ``"GPU"``, and ``"CPU"``. This parameter
@@ -1405,8 +1405,9 @@ def set_context(**kwargs):
             use the related parameter of :func:`mindspore.jit` instead.
         jit_syntax_level (int): Set JIT syntax support level. Default ``LAX`` . This parameter is deprecated
             and removed in future versions. Please use the `fullgraph` parameter of :func:`mindspore.jit` instead.
-            Setting the `fullgraph` parameter to True is equivalent to setting the `jit_syntax_level` parameter to
-            ``STRICT``, and setting the `fullgraph` parameter to False is equivalent to setting the `jit_syntax_level`
+            Setting the `fullgraph` parameter to ``True`` is equivalent to setting the `jit_syntax_level` parameter to
+            ``STRICT``, and setting the `fullgraph` parameter to ``False``
+            is equivalent to setting the `jit_syntax_level`
             parameter to ``LAX``.
         jit_config (dict): Set the global jit config for compile. This parameter is deprecated
             and removed in future versions. Please use the related parameter of :func:`mindspore.jit` instead.

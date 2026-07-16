@@ -533,7 +533,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
     """
     CIFAR-10 dataset.
 
-    This api only supports parsing CIFAR-10 file in binary version now.
+    This API only supports parsing CIFAR-10 file in binary version now.
     The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
     The tensor of column :py:obj:`label` is a scalar of the uint32 type.
@@ -546,7 +546,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
@@ -554,7 +554,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
             dataset. Default: ``None`` , expected order behavior shown in the table below.
         num_shards (int, optional): Number of shards that the dataset will be divided
             into. Default: ``None`` . When this argument is specified, `num_samples` reflects
-            the maximum sample number of per shard.
+            the maximum number of samples per shard.
             Used in `data parallel training <https://www.mindspore.cn/tutorials/en/master/
             parallel/data_parallel.html#loading-datasets>`_ .
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
@@ -1332,7 +1332,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
 class EMnistDataset(MappableDataset, VisionBaseDataset):
     """
-    EMNIST(Extended MNIST) dataset.
+    EMNIST (Extended MNIST) dataset.
 
     The generated dataset has two columns :py:obj:`[image, label]` .
     The tensor of column :py:obj:`image` is of the uint8 type.
@@ -1348,7 +1348,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -1464,7 +1464,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -1537,7 +1537,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -1642,7 +1642,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
@@ -2020,7 +2020,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -2137,7 +2137,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -2289,7 +2289,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will include all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
@@ -2413,7 +2413,7 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -2521,7 +2521,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -2662,7 +2662,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -2782,7 +2782,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will include all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether to perform shuffle on the dataset. Default: ``None`` , expected
             order behavior shown in the table below.
@@ -2911,7 +2911,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -3018,7 +3018,7 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -3144,7 +3144,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -3275,7 +3275,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -3401,7 +3401,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , will read all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -3510,7 +3510,7 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
@@ -4229,7 +4229,7 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
             It can be less than the total number of datasets.
             Default: ``None`` , all images.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
-            Default: ``None`` , will use global default workers(8), it can be set
+            Default: ``None`` , will use global default workers (8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.

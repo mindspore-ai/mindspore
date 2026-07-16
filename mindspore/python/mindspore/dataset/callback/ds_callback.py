@@ -86,7 +86,7 @@ class DSCallback:
         Called before the data pipeline is started.
 
         Args:
-            ds_run_context (RunContext): Include some information of the data pipeline.
+            ds_run_context (RunContext): Includes some information about the data pipeline.
         """
 
     def ds_epoch_begin(self, ds_run_context):
@@ -94,7 +94,7 @@ class DSCallback:
         Called before a new epoch is started.
 
         Args:
-            ds_run_context (RunContext): Include some information of the data pipeline.
+            ds_run_context (RunContext): Includes some information about the data pipeline.
         """
 
     def ds_epoch_end(self, ds_run_context):
@@ -102,7 +102,7 @@ class DSCallback:
         Called after an epoch is finished.
 
         Args:
-            ds_run_context (RunContext): Include some information of the data pipeline.
+            ds_run_context (RunContext): Includes some information about the data pipeline.
         """
 
     def ds_step_begin(self, ds_run_context):
@@ -110,7 +110,7 @@ class DSCallback:
         Called before a step starts.
 
         Args:
-            ds_run_context (RunContext): Include some information of the data pipeline.
+            ds_run_context (RunContext): Includes some information about the data pipeline.
         """
 
     def ds_step_end(self, ds_run_context):
@@ -118,7 +118,7 @@ class DSCallback:
         Called after a step finishes.
 
         Args:
-            ds_run_context (RunContext): Include some information of the data pipeline.
+            ds_run_context (RunContext): Includes some information about the data pipeline.
         """
 
     def create_runtime_obj(self):
@@ -266,8 +266,8 @@ class WaitedDSCallback(Callback, DSCallback):
         Called before a new dataset epoch is started and after the previous training epoch is ended.
 
         Args:
-            train_run_context: Include some information of the model with feedback from the previous epoch.
-            ds_run_context: Include some information of the data pipeline.
+            train_run_context: Includes some information of the model with feedback from the previous epoch.
+            ds_run_context: Includes some information of the data pipeline.
         """
 
     def sync_step_begin(self, train_run_context, ds_run_context):
@@ -275,8 +275,8 @@ class WaitedDSCallback(Callback, DSCallback):
         Called before a new dataset step is started and after the previous training step is ended.
 
         Args:
-            train_run_context: Include some information of the model with feedback from the previous step.
-            ds_run_context: Include some information of the data pipeline.
+            train_run_context: Includes some information of the model with feedback from the previous step.
+            ds_run_context: Includes some information of the data pipeline.
         """
 
     def epoch_end(self, run_context):
@@ -284,7 +284,7 @@ class WaitedDSCallback(Callback, DSCallback):
         Internal method, do not call/override. Defines epoch_end of Callback to release the wait in ds_epoch_begin.
 
         Args:
-          run_context: Include some information of the model.
+          run_context: Includes some information of the model.
         """
         self.epoch_run_context = run_context
         self.epoch_event.set()
