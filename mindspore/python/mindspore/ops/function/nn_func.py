@@ -2583,8 +2583,8 @@ def interpolate(input,
             If size is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: ``None`` .
-        scale_factor (Union[int, float, tuple[int], tuple[float], list[int], list[float]], optional):
-            The scale factor of new size of the tensor.
+        scale_factor (Union[int, float, tuple[int], tuple[float], list[int], list[float]], optional): The scale factor 
+            of new size of the tensor.
             If scale_factor is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: ``None`` .
@@ -2949,8 +2949,8 @@ def interpolate_ext(input,
             If `size` is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of `size` and `scale_factor` can be set to ``None``. Default: ``None`` .
-        scale_factor (Union[int, float, tuple[int], tuple[float], list[int], list[float]], optional):
-            The scale factor of new size of the tensor.
+        scale_factor (Union[int, float, tuple[int], tuple[float], list[int], list[float]], optional): The scale factor
+            of new size of the tensor.
             If `scale_factor` is a tuple or list, its length should be the same as the number of dimensions in input
             after removing the first two dimensions N, C.
             One and only one of `size` and `scale_factor` can be set to ``None``. Default: ``None`` .
@@ -9260,7 +9260,6 @@ def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, sca
         Tensor, with the same data type as `weight`, and the shape is :math:`(*input.shape, weight.shape[1])`.
 
     Raises:
-        TypeError: If dtype of `input` is neither int32 nor int64.
         ValueError: If `padding_idx` is out of valid range.
         ValueError: If the shape of `weight` is invalid.
 

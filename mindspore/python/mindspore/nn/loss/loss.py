@@ -2436,7 +2436,7 @@ class NLLLoss(LossBase):
         - **labels** (Tensor) - :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for :math:`K`-dimensional data.
           Data type must be int32.
 
-    Returns:
+    Outputs:
         Tensor, the computed negative log likelihood loss value.
 
     Raises:
