@@ -562,6 +562,42 @@ def tensor_logical_not_ms(op_input):
 def tensor_logical_not_torch(op_input):
     return op_input.logical_not()
 
+def tensor_adjoint_ms(op_input):
+    return op_input.adjoint()
+
+def tensor_adjoint_torch(op_input):
+    return op_input.adjoint()
+
+def tensor_addbmm_ms(op_input, batch1, batch2, beta=1, alpha=1):
+    return op_input.addbmm(batch1, batch2, beta=beta, alpha=alpha)
+
+def tensor_addbmm_torch(op_input, batch1, batch2, beta=1, alpha=1):
+    return op_input.addbmm(batch1, batch2, beta=beta, alpha=alpha)
+
+def tensor_addmv_ms(op_input, vec1, vec2, beta=1, alpha=1):
+    return op_input.addmv(vec1, vec2, beta=beta, alpha=alpha)
+
+def tensor_addmv_torch(op_input, vec1, vec2, beta=1, alpha=1):
+    return op_input.addmv(vec1, vec2, beta=beta, alpha=alpha)
+
+def tensor_addr_ms(op_input, vec1, vec2, beta=1, alpha=1):
+    return op_input.addr(vec1, vec2, beta=beta, alpha=alpha)
+
+def tensor_addr_torch(op_input, vec1, vec2, beta=1, alpha=1):
+    return op_input.addr(vec1, vec2, beta=beta, alpha=alpha)
+
+def tensor_addcdiv_ms(op_input, tensor1, tensor2, value=1):
+    return op_input.addcdiv(tensor1, tensor2, value=value)
+
+def tensor_addcdiv_torch(op_input, tensor1, tensor2, value=1):
+    return op_input.addcdiv(tensor1, tensor2, value=value)
+
+def tensor_addcmul_ms(op_input, tensor1, tensor2, value=1):
+    return op_input.addcmul(tensor1, tensor2, value=value)
+
+def tensor_addcmul_torch(op_input, tensor1, tensor2, value=1):
+    return op_input.addcmul(tensor1, tensor2, value=value)
+
 # wrap tensor method for bfloat16
 def tensor_bfloat16_ms(op_input):
     return op_input.bfloat16()
@@ -831,26 +867,36 @@ def tensor_triangular_solve_ms(B, A, upper=True, transpose=False, unitriangular=
 def tensor_triangular_solve_torch(B, A, upper=True, transpose=False, unitriangular=False ):
     return torch.triangular_solve(B, A, upper=upper, transpose=transpose, unitriangular=unitriangular)[0]
 
-def tensor_baddbmm_ms(input, batch1, batch2, beta=1, alpha=1 ):
+def tensor_baddbmm_ms(input, batch1, batch2, beta=1, alpha=1):
     return mint.baddbmm(input, batch1, batch2, beta=beta, alpha=alpha)
 
-def tensor_addmv_ms(input, mat1, mat2, beta=1, alpha=1 ):
+def mint_addmv_ms(input, mat1, mat2, beta=1, alpha=1):
     return mint.addmv(input, mat1, mat2, beta=beta, alpha=alpha)
 
-def tensor_addmv_torch(input, mat1, mat2, beta=1, alpha=1 ):
+def mint_addmv_torch(input, mat1, mat2, beta=1, alpha=1):
     return torch.addmv(input, mat1, mat2, beta=beta, alpha=alpha)
 
-def mint_addmm_ms(input, mat1, mat2, beta=1, alpha=1 ):
+def mint_addmm_ms(input, mat1, mat2, beta=1, alpha=1):
     return mint.addmm(input, mat1, mat2, beta=beta, alpha=alpha)
 
-def mint_addmm_torch(input, mat1, mat2, beta=1, alpha=1 ):
+def mint_addmm_torch(input, mat1, mat2, beta=1, alpha=1):
     return torch.addmm(input, mat1, mat2, beta=beta, alpha=alpha)
 
-def tensor_addmm_ms(input, mat1, mat2, beta=1, alpha=1 ):
-    return input.addmm(mat1, mat2, beta=beta, alpha=alpha)
+def tensor_addmm_ms(op_input, mat1, mat2, beta=1, alpha=1):
+    return op_input.addmm(mat1, mat2, beta=beta, alpha=alpha)
 
-def tensor_addmm_torch(input, mat1, mat2, beta=1, alpha=1 ):
-    return input.addmm(mat1, mat2, beta=beta, alpha=alpha)
+def tensor_addmm_torch(op_input, mat1, mat2, beta=1, alpha=1):
+    return op_input.addmm(mat1, mat2, beta=beta, alpha=alpha)
+
+def tensor_addmm__ms(op_input, mat1, mat2, beta=1, alpha=1):
+    cloned_input = op_input.clone()
+    result_ms = cloned_input.addmm_(mat1, mat2, beta=beta, alpha=alpha)
+    return result_ms
+
+def tensor_addmm__torch(op_input, mat1, mat2, beta=1, alpha=1):
+    cloned_input = op_input.clone()
+    result_pt = cloned_input.addmm_(mat1, mat2, beta=beta, alpha=alpha)
+    return result_pt
 
 # NOTE: customize_op_func, used by gradient comparison only when there are kwargs in op!
 def add_ext_func_grad_without_kwargs(x, y, alpha=1):

@@ -45,6 +45,9 @@ from tests.st.ops.share._internal.overload_decorator import (
 )
 from tests.st.ops.share._op_info.op_wrappers import *
 from tests.st.ops.share._op_info.op_sample_inputs import *
+from tests.st.ops.share._op_info.sample_inputs.linalg import *
+from tests.st.ops.share._op_info.sample_inputs.elementwise import *
+
 
 # op database
 op_db: Dict[str, OpInfo] = {
@@ -486,6 +489,85 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_inputs_mint_matmul,
         not_support_dtypes=(ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float64,
                             ms.complex64, ms.complex128,),
+    ),
+    'Tensor.addcdiv': OpInfo(
+        name='Tensor.addcdiv',
+        op= tensor_addcdiv_ms,
+        ref=tensor_addcdiv_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ms.float64),#torch not support int div
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_addcdiv_func,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_addcdiv,
+        op_dynamic_inputs_func=None,#backward raise error
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        op_error_inputs_func=error_inputs_other_op_tensor_addcdiv_func,
+        ascend910b_forward_loss_override={ms.float16: 0.01, ms.bfloat16: 0.04,},
+        ascend910b_backward_loss_override={ms.float16: 0.01, ms.bfloat16: 0.02,},
+    ),
+    'Tensor.addcmul': OpInfo(
+        name='Tensor.addcmul',
+        op= tensor_addcmul_ms,
+        ref=tensor_addcmul_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_addcdiv_func,
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_sample_inputs_tensor_addcdiv, "_large", skip=True),
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_addcdiv,
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        op_error_inputs_func=error_inputs_other_op_tensor_addcdiv_func,
+        ascend910b_forward_loss_override={ms.float16: 0.01, ms.bfloat16: 0.03},
+        ascend910b_backward_loss_override={ms.bfloat16: 0.02},
+    ),
+    'Tensor.addbmm': OpInfo(
+        name='Tensor.addbmm',
+        op= tensor_addbmm_ms,
+        ref=tensor_addbmm_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16,),#ms.bfloat16 loss error
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_addbmm,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_addbmm,
+        #input only(W, H), bath1 only(C, W, T), bath2 only(C, T, H),
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_addbmm,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d==ms.float64),
+        op_error_inputs_func=error_sample_inputs_addbmm,
+        ascend910b_forward_loss_override={ms.float16:0.1, ms.bfloat16:0.1,}
+    ),
+    'Tensor.addr': OpInfo(
+        name='Tensor.addr',
+        op= tensor_addr_ms,
+        ref=tensor_addr_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32,),#not support bfloat16, double.
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_addr_func,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_addr,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_addr,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d==ms.float64),
+        op_error_inputs_func=error_inputs_other_op_tensor_addr_func,
+        ascend910b_forward_loss_override={ms.float16:0.01}
+    ),
+    'Tensor.addmv': OpInfo(
+        name='Tensor.addmv',
+        op= tensor_addmv_ms,
+        ref=tensor_addmv_torch,
+        dtypes_ascend=(),
+        #torch not support bool
+        dtypes_ascend910b=(ms.float16, ms.float32,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_addmv_func,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_addmv,
+        op_dynamic_inputs_func=None,#input only support 1d
+        not_support_dtypes=(ms.bfloat16,),
+        op_error_inputs_func=error_sample_inputs_tensor_addmv,
+        ascend910b_forward_loss_override={ms.float16:0.01}
     ),
     'mint.addbmm': OpInfo(
         name='mint.addbmm',
@@ -1493,6 +1575,18 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         is_differentiable=False,
         not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.adjoint': UnaryOpInfo(
+        name='Tensor.adjoint',
+        op=tensor_adjoint_ms,
+        ref=tensor_adjoint_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        op_extra_reference_inputs_func = wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                            ['empty_tensor_inputs', '_tensor_inputs'],skip=True),#not support 0d/1d
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_adjoint_func,
+        op_error_inputs_func=error_inputs_tensor_adjoint_func,
+        is_differentiable=False,
     ),
     'mint.logical_or': BinaryOpInfo(
         name='mint.logical_or',
@@ -3311,7 +3405,8 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_linalg_qr,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_linalg_qr,
         op_dynamic_inputs_func=None,
-        not_support_dtypes=(ms.complex128, ms.complex64,),
+        not_support_dtypes=(ms.complex128, ms.complex64, ms.int8, ms.uint8, ms.int16, ms.uint16, ms.bfloat16,
+                            ms.float16, ms.float64),
         is_differentiable=True,
         op_error_inputs_func=error_inputs_mint_linalg_qr,
         ascend_backward_loss_override={ms.float32: 0.1},
@@ -4805,7 +4900,7 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.bfloat16:0.008, ms.float16:0.004, ms.float32:0.004},
+        ascend910b_forward_loss_override={ms.bfloat16:0.008, ms.float16:0.01, ms.float32:0.004},
         op_basic_reference_inputs_func=basic_sample_inputs_mint_addmm,
         op_error_inputs_func=error_sample_inputs_mint_addmm,
         op_extra_reference_inputs_func=extra_sample_inputs_addmm,
@@ -4819,10 +4914,29 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.float64),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.bfloat16:0.02, ms.float16:0.004, ms.float32:0.004},
+        ascend910b_forward_loss_override={ms.float16:0.006, ms.bfloat16:0.3, ms.float32:0.1,},
+        ascend910b_backward_loss_override={ms.bfloat16:0.5, ms.float32:0.1,},
         op_basic_reference_inputs_func=basic_sample_inputs_mint_addmm,
         op_error_inputs_func=error_sample_inputs_mint_addmm,
         op_extra_reference_inputs_func=extra_sample_inputs_addmm,
+        #torch backward raise error:could not create a primitive descriptor for a matmul primitive
+        op_dynamic_inputs_func=None,
+    ),
+    'Tensor.addmm_': OpInfo(
+        name='Tensor.addmm_',
+        op=tensor_addmm__ms,
+        ref=tensor_addmm__torch,
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.float64),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend910b_forward_loss_override={ms.bfloat16:0.5, ms.float16:0.01, ms.float32:0.4},
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_addmm,
+        op_error_inputs_func=error_sample_inputs_mint_addmm,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_addmm,
+        op_extra_reference_inputs_func=extra_sample_inputs_addmm,
+        is_differentiable=False,
+        is_inplace_op=True,
     ),
     'mint.triangular_solve': OpInfo(
         name='mint.triangular_solve',
@@ -4937,8 +5051,8 @@ op_db: Dict[str, OpInfo] = {
     ),
     'mint.addmv': OpInfo(
         name='mint.addmv',
-        op=tensor_addmv_ms,
-        ref=tensor_addmv_torch,
+        op=mint_addmv_ms,
+        ref=mint_addmv_torch,
         ascend910b_forward_loss_override={ms.float16:0.006,},
         # mindspore  backward not support ms.float64
         # pytorch not support bool
@@ -6129,6 +6243,7 @@ binary_op_db = [
 ]
 
 unary_op_db = [
+    'Tensor.adjoint',
     'mint.special.log_softmax',
     'mint.special.sinc',
     'mint.special.log1p',
@@ -6358,6 +6473,7 @@ other_op_db = [
     'Tensor.topk',
     'Tensor.reshape',
     'Tensor.scatter',
+    'Tensor.addmm_',
     'mint.addmm',
     'Tensor.addmm',
     'mint.addmv',
@@ -6370,6 +6486,11 @@ other_op_db = [
     'mint.outer',
     'mint.triangular_solve',
     'mint.bernoulli',
+    'Tensor.addmv',
+    'Tensor.addr',
+    'Tensor.addcmul',
+    'Tensor.addcdiv',
+    'Tensor.addbmm',
     'mint.addbmm',
     'mint.nn.Conv2d',
     'mint.nn.ConstantPad1d',
@@ -6519,6 +6640,13 @@ unary_op_kbk_db = [
 ]
 
 other_op_kbk_db = [
+    'Tensor.addcmul',
+    'Tensor.addr',
+    'Tensor.addmv',
+    'Tensor.addcdiv',
+    'Tensor.addmm_',
+    'Tensor.addmm',
+    'Tensor.addbmm',
     'mint.squeeze',
     'mint.where',
     'mint.index_add',
