@@ -912,6 +912,7 @@ def test_ops_lightning_indexer_tnd_tnd_normal(mode, dtype):
           level_mark='level1',
           card_mark='onecard',
           mem_peak=2048.01)
+@pytest.mark.skip(reason="LightningIndexerGrad multi-batch case fails on current CANN version.")
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 def test_ops_lightning_indexer_bsnd_bsnd_multi_batch(mode, dtype):
@@ -955,6 +956,7 @@ def test_ops_lightning_indexer_bsnd_bsnd_multi_batch(mode, dtype):
           level_mark='level1',
           card_mark='onecard',
           mem_peak=2048.01)
+@pytest.mark.skip(reason="LightningIndexerGrad multi-batch case fails on current CANN version.")
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 def test_ops_lightning_indexer_tnd_tnd_multi_batch(mode, dtype):
