@@ -922,7 +922,7 @@ class DiceLoss(LossBase):
     .. math::
         dice = 1 - \frac{2 * |pred \bigcap true|}{|pred| + |true| + smooth}
 
-    :math:`pred` represent `logits`, :math:`true` represent `labels` .
+    :math:`pred` represents `logits`, :math:`true` represents `labels` .
 
     Args:
         smooth (float, optional): A term added to the denominator to improve numerical stability.

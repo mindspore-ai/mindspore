@@ -5,7 +5,7 @@ mindspore.nn.CellList
 
     构造Cell列表。关于Cell的介绍，可参考 `Cell <https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_。
 
-    CellList可以像普通Python列表一样使用，其包含的Cell均已初始化。CellList包含的Cell的类型不能为CellDict。
+    CellList可以像普通Python列表一样使用，其包含的Cell均已初始化。CellList包含的Cell的类型不能为CellDict。与 SequentialCell 不同，CellList 内各个 Cell 之间不存在连接关系。
 
     参数：
         - **args** (list，可选) - Cell列表。

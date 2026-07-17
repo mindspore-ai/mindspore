@@ -59,7 +59,7 @@ class Embedding(Cell):
         and `use_one_hot` and `embedding_table` will be removed.
 
     Note:
-        When 'use_one_hot' is set to True, the type of the `x` must be mindspore.int32.
+        When `use_one_hot` is set to True, the type of the `x` must be mindspore.int32.
 
     Args:
         vocab_size (int): Size of the dictionary of embeddings.
@@ -93,7 +93,7 @@ class Embedding(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> net = nn.Embedding(20000, 768,  True)
+        >>> net = nn.Embedding(20000, 768, True)
         >>> x = Tensor(np.ones([8, 128]), mindspore.int32)
         >>> # Maps the input word IDs to word embedding.
         >>> output = net(x)
