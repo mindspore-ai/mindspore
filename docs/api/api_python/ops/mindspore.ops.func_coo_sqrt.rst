@@ -15,7 +15,7 @@ mindspore.ops.coo_sqrt
         - **x** (COOTensor) - 输入COOTensor，数据类型为number.Number。
 
     返回：
-        COOTensor，shape与 `x` 相同。
+        COOTensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是COOTensor。

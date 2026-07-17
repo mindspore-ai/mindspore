@@ -3,7 +3,7 @@ mindspore.ops.coo_floor
 
 .. py:function:: mindspore.ops.coo_floor(x)
 
-    COOTensor逐元素向下取整函数。
+    逐元素对COOTensor向下取整至最接近的整数。
 
     .. math::
         out_i = \lfloor x_i \rfloor
@@ -18,5 +18,5 @@ mindspore.ops.coo_floor
         COOTensor，shape与 `x` 相同。
 
     异常：
-        - **TypeError** - `x` 的数据类型不是COOTensor。
+        - **TypeError** - `x` 不是COOTensor。
         - **TypeError** - `x` 的数据类型不是float16、float32、float64。

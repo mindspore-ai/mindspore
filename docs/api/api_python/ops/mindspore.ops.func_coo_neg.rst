@@ -12,7 +12,7 @@ mindspore.ops.coo_neg
         该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
-        - **x** (COOTensor) - Neg的输入，数据类型为数值型。
+        - **x** (COOTensor) - 输入COOTensor，数据类型为数值型。
 
     返回：
         COOTensor，shape和数据类型与输入 `x` 相同。

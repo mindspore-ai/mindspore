@@ -16,7 +16,7 @@ mindspore.ops.coo_acosh
         - **x** (COOTensor) - 需要计算反双曲余弦函数的输入COOTensor。
 
     返回：
-        COOTensor，数据类型与 `x` 相同。
+        COOTensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - `x` 不是COOTensor。

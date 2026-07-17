@@ -16,7 +16,7 @@ mindspore.ops.csr_log
         - **x** (CSRTensor) - 任意维度的输入CSRTensor。值小于0时，返回nan。
 
     返回：
-        CSRTensor，具有与 `x` 相同的shape。
+        CSRTensor，具有与 `x` 相同的shape和数据类型。
 
     异常：
         - **TypeError** - `x` 不是CSRTensor。

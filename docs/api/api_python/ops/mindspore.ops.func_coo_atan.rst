@@ -15,7 +15,7 @@ mindspore.ops.coo_atan
         - **x** (COOTensor) - COOTensor的输入，数据类型支持：float16、float32。
 
     返回：
-        COOTensor的数据类型与输入相同。
+        COOTensor，数据类型与输入相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是COOTensor。

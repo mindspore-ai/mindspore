@@ -20,7 +20,7 @@ mindspore.ops.csr_isinf
         - **x** (CSRTensor) - IsInf的输入。
 
     返回：
-        CSRTensor，shape与相同的输入，数据的类型为bool。
+        CSRTensor，shape与输入相同，数据的类型为bool。
 
     异常：
         - **TypeError** - 如果 `x` 不是CSRTensor。

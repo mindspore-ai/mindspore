@@ -19,4 +19,4 @@ mindspore.ops.csr_acos
 
     异常：
         - **TypeError** - 如果 `x` 不是CSRTensor。
-        - **TypeError** - 如果 `x` 的数据类型不是float16、float32或float64。
+        - **TypeError** - 如果 `x` 的数据类型不是float16、float32、float64、complex64或complex128。

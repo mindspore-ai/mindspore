@@ -3,7 +3,7 @@ mindspore.ops.coo_ceil
 
 .. py:function:: mindspore.ops.coo_ceil(x)
 
-    COOTensor向上取整函数。
+    逐元素对COOTensor向上取整至最接近的整数。
 
     .. math::
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
@@ -18,5 +18,5 @@ mindspore.ops.coo_ceil
         COOTensor，shape与 `x` 相同。
 
     异常：
-        - **TypeError** - `x` 的不是COOTensor。
+        - **TypeError** - `x` 不是COOTensor。
         - **TypeError** - `x` 的数据类型既不是float16也不是float32。
