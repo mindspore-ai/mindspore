@@ -278,8 +278,8 @@ def csr_mm(a: CSRTensor, b: CSRTensor, trans_a: bool = False, trans_b: bool = Fa
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        If right matrix is CSRTensor, currently only supports GPU backend.
-        If right matrix is Tensor, currently supports CPU backend with LLVM no lower than 12.0.1, and GPU backend.
+        - If right matrix is CSRTensor, currently only supports GPU backend.
+        - If right matrix is Tensor, currently supports CPU backend with LLVM no lower than 12.0.1, and GPU backend.
 
     Args:
         a (CSRTensor): Sparse CSR Tensor, rank should be 2.

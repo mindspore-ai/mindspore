@@ -640,7 +640,7 @@ def csr_asin(x: CSRTensor) -> CSRTensor:
 
 def coo_asin(x: COOTensor) -> COOTensor:
     r"""
-    Computes arcsine of input coo_tensors element-wise.
+    Computes arcsine of input COOTensor element-wise.
 
     .. math::
 
@@ -977,7 +977,7 @@ def csr_acos(x: CSRTensor) -> CSRTensor:
 
 def coo_acos(x: COOTensor) -> COOTensor:
     r"""
-    Computes arccosine of input coo_tensors element-wise.
+    Computes arccosine of input COOTensor element-wise.
 
     .. math::
 
@@ -1805,7 +1805,7 @@ def coo_round(x: COOTensor) -> COOTensor:
         x (COOTensor): The input COOTensor.
 
     Returns:
-        COOTensor, has the same shape and type as the `x`.
+        COOTensor, has the same shape and dtype as the `x`.
 
     Raises:
         TypeError: If `x` is not a COOTensor.
@@ -2458,7 +2458,7 @@ def csr_abs(x: CSRTensor) -> CSRTensor:
 
 def coo_abs(x: COOTensor) -> COOTensor:
     """
-    Returns coo_absolute value of a COOTensor element-wise.
+    Returns the absolute value of a COOTensor element-wise.
 
     .. math::
 

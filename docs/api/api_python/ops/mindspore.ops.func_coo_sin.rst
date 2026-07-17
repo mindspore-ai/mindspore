@@ -15,7 +15,7 @@ mindspore.ops.coo_sin
         - **x** (COOTensor) - COOTensor的输入。
 
     返回：
-        COOTensor，shape与 `x` 相同。
+        COOTensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是COOTensor。

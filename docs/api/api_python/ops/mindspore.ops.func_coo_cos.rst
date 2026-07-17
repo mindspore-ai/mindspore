@@ -9,14 +9,14 @@ mindspore.ops.coo_cos
         out_i = \cos(x_i)
 
     .. warning::
-        - 目前支持float16、float32数据类型。如果使用float64，可能会存在精度丢失的问题。
+        - 如果使用float64，可能会存在精度丢失的问题。
         - 该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
         - **x** (COOTensor) - COOTensor的输入。
 
     返回：
-        COOTensor，shape与 `x` 相同。
+        COOTensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - `x` 不是COOTensor。

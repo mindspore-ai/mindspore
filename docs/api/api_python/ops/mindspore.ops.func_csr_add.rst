@@ -12,6 +12,8 @@ mindspore.ops.csr_add
 
         out = alpha * a + beta * b
 
+    其中 :math:`a` 和 :math:`b` 为CSRTensor， :math:`alpha` 和 :math:`beta` 为Tensor。
+
     .. note::
         用户需要确保输入的CSRTensor的合法性。否则，算子将返回错误结果。
         例如，当同一个位置有多个元素时，算子可能会返回错误结果或执行失败。

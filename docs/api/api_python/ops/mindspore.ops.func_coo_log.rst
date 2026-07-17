@@ -16,7 +16,7 @@ mindspore.ops.coo_log
         - **x** (COOTensor) - 任意维度的输入COOTensor。该值必须大于0。
 
     返回：
-        COOTensor，具有与 `x` 相同的shape。
+        COOTensor，具有与 `x` 相同的shape和数据类型。
 
     异常：
         - **TypeError** - `x` 不是COOTensor。
