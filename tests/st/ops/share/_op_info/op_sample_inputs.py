@@ -10649,6 +10649,21 @@ def error_inputs_other_op_group_norm(op_info: OpInfo, dtype=None, device=None, *
         op_error_info='dim of input must be between 2 and 8',
     )
 
+
+def error_inputs_other_op_functional_group_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3, 4)),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='num_groups should be divided with no remainder by  num_channels',
+    )
+
+
 def error_inputs_other_op_layer_norm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
     yield OpErrorInput(
@@ -14672,7 +14687,7 @@ def dynamic_sample_inputs_mint_diag(
         Generator of OpDynamicInput objects.
     '''
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
-    if not kwargs.get("only_dynamic_shape", False):
+    if not kwargs.get("only_dynamic_rank", False):
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=(None, 3), dtype=dtype),
@@ -14695,7 +14710,7 @@ def dynamic_sample_inputs_mint_diag(
                 ),
             )
         )
-    if not kwargs.get("only_dynamic_rank", False):
+    if not kwargs.get("only_dynamic_shape", False):
         # dynamic rank
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
@@ -17854,7 +17869,7 @@ def basic_sample_inputs_mint_where(op_info, dtype=None, device=None, **kwargs):
         (ms.Tensor(np.random.randn(7, 9, 3), dtype=ms.bool_),
          ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),
          ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),),
-        (ms.Tensor(np.random.randint(0, 255, (7, 4, 8, 3)), dtype) > 125,
+        (ms.Tensor(np.random.randint(0, 255, (7, 4, 8, 3)) > 125, dtype=ms.bool_),
          ms.Tensor(np.random.randint(0, 255, (7, 4, 8, 3)), dtype),
          ms.Tensor(np.random.randint(0, 255, (7, 4, 1, 3)), dtype),),
         (ms.Tensor(np.random.randn(10, 8, 7, 10, 3, 3), dtype=ms.bool_),
@@ -17887,7 +17902,7 @@ def error_inputs_other_op_mint_where_func(op_info, dtype=None, device=None, **kw
          "[1.0, 2,0]",),#other not tensor
         (ms.Tensor(np.random.randn(8,), dtype=ms.bool_),
          ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),
-         ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),),# cant broadcast with other
+         ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),),# can't broadcast with other
         (ms.Tensor(np.random.randn(7, 9, 3), dtype=ms.int8),
          ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),
          ms.Tensor(np.random.randint(0, 255, (7, 9, 3)), dtype),),#condition not bool_
@@ -17916,7 +17931,7 @@ def extra_sample_inputs_mint_where(op_info, dtype=None, device=None, **kwargs):
     #small/large values
     values=_small_large_values(dtype)
     yield OpSampleInput(
-        op_input=ms.Tensor(np.random.choice(values, size=(2, 3, 4)), dtype=dtype) > 10,
+        op_input=ms.Tensor(np.random.randint(0, 2, (2, 3, 4)), dtype=ms.bool_),
         op_args=(ms.Tensor(np.random.choice(values, size=(2, 3, 4)), dtype=dtype),
                  ms.Tensor(np.random.choice(values, size=(2, 3, 4)), dtype=dtype),),
         op_kwargs={},
@@ -17924,7 +17939,7 @@ def extra_sample_inputs_mint_where(op_info, dtype=None, device=None, **kwargs):
     )
     #inf/nan values
     yield OpSampleInput(
-        op_input=ms.Tensor(np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(3, 3, 4)), dtype=dtype) > 10,
+        op_input=ms.Tensor(np.random.randint(0, 2, (3, 3, 4)), dtype=ms.bool_),
         op_args=(ms.Tensor(np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(3, 3, 4)), dtype=dtype),
                  ms.Tensor(np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(3, 3, 4)), dtype=dtype)),
         op_kwargs={},
@@ -17933,7 +17948,7 @@ def extra_sample_inputs_mint_where(op_info, dtype=None, device=None, **kwargs):
     #discontiguous value
     for discontiguous in [True, False]:
         yield OpSampleInput(
-            op_input=make_arg(shape=(4, 3), discontiguous=discontiguous) > 3,
+            op_input=make_tensor(shape=(4, 3), dtype=ms.bool_, device=device, discontiguous=discontiguous),
             op_args=(make_arg(shape=(4, 3), discontiguous=discontiguous),
                      make_arg(shape=(4, 3), discontiguous=discontiguous),),
             op_kwargs={},

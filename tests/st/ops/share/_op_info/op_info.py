@@ -72,6 +72,7 @@ class OpInfo:
         skip_forward_comparison: Whether to skip forward comparison with the reference implementation.
             This is useful for inherently non-deterministic ops (e.g., random sampling). When enabled,
             the forward will still be executed (to catch runtime errors), but outputs will not be compared.
+        skip_dynamic_rank_backward: Whether to skip dynamic rank backward testing.
         is_inplace_op: Whether the op mutates its input (in-place semantics).
         convert_extra_uint: Whether to convert extra uint dtypes for references
             that do not support them (e.g., PyTorch).
@@ -124,6 +125,7 @@ class OpInfo:
     is_differentiable: Optional[bool] = True
     # skip forward comparison against reference
     skip_forward_comparison: Optional[bool] = False
+    skip_dynamic_rank_backward: Optional[bool] = False
     is_inplace_op: Optional[bool] = False
     convert_extra_uint: Optional[bool] = True
     convert_half_to_float: Optional[bool] = True

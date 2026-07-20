@@ -5429,6 +5429,9 @@ REG_BPROP_BUILDER("DiagExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   const auto &out = ib->GetInput(i2);
   const auto &dout = ib->GetInput(i3);
   auto x_shape = ib->GetShape(x);
+  if (IsDynamicRank(x_shape)) {
+    MS_LOG(EXCEPTION) << "For 'DiagExt', dynamic rank is not supported in backward.";
+  }
   auto ndimension = x_shape.size();
   MS_ASSERT(ndimension == 1 || ndimension == 2);
   if (ndimension == 1 || x_shape[0] == x_shape[1]) {

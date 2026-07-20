@@ -16,7 +16,10 @@
 """
 Tests for other operations (non-unary/binary), e.g., chunk/gather.
 """
+import numpy as np
 import pytest
+import mindspore as ms
+from mindspore import Tensor, mint, nn, ops
 from tests.mark_utils import arg_mark
 from tests.st.ops.share._internal.meta import OpsFactory
 from tests.st.ops.share._op_info.op_database import get_op_info, other_op_db, other_op_kbk_db, \
@@ -32,6 +35,20 @@ ops_params_dict = {
     'test_other_op_error': (['pynative'], other_op_error_db),
     'test_other_op_error_kbk': (['kbk'], other_op_error_kbk_db),
 }
+
+
+class DiagDynamicRankNet(nn.Cell):
+    def construct(self, x):
+        return mint.diag(x, diagonal=0)
+
+
+class DiagDynamicRankGradNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.grad = ops.GradOperation()(DiagDynamicRankNet())
+
+    def construct(self, x):
+        return self.grad(x)
 
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
@@ -159,7 +176,25 @@ def test_other_op_dynamic_backward(mode, op_info):
     )
     fact.set_context_mode(mode=mode)
     fact.test_op_dynamic(only_dynamic_shape=True, grad_cmp=True)
-    fact.test_op_dynamic(only_dynamic_rank=True, grad_cmp=True)
+    if not fact.op_info.skip_dynamic_rank_backward:
+        fact.test_op_dynamic(only_dynamic_rank=True, grad_cmp=True)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=2048.0)
+def test_mint_diag_dynamic_rank_backward_error():
+    '''
+    Feature: mint.diag.
+    Description: Test that backward does not support dynamic rank.
+    Expectation: Raise RuntimeError.
+    '''
+    ms.set_context(mode=ms.GRAPH_MODE)
+    grad_net = DiagDynamicRankGradNet()
+    grad_net.set_inputs(Tensor(shape=None, dtype=ms.float32))
+
+    with pytest.raises(RuntimeError, match="For 'DiagExt', dynamic rank is not supported in backward"):
+        grad_net(Tensor(np.ones((5,), np.float32)))
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
