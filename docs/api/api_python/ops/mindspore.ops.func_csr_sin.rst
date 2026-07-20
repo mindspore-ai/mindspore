@@ -15,7 +15,7 @@ mindspore.ops.csr_sin
         - **x** (CSRTensor) - CSRTensor的输入。
 
     返回：
-        CSRTensor，shape与 `x` 相同。
+        CSRTensor，shape和数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是CSRTensor。
