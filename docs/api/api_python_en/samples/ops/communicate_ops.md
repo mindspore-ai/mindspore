@@ -699,10 +699,10 @@ ms.set_context(mode=ms.GRAPH_MODE)
 init()
 class BarrierNet(nn.Cell):
     def __init__(self):
-    ​    super(BarrierNet, self).__init__()
-    ​    self.barrier = ops.Barrier()
+        super(BarrierNet, self).__init__()
+        self.barrier = ops.Barrier()
     def construct(self):
-    ​    self.barrier()
+        self.barrier()
 
 net = BarrierNet()
 net()
