@@ -235,25 +235,16 @@ def test_upsample_nearest(mode):
 def test_upsample_nearest_2d_float64_ascend(mode):
     """
     Feature: UpsampleNearest2D
-    Description: Verify the Ascend float64 forward path after the old dtype guard is removed.
-    Expectation: The result matches the float64 reference.
+    Description: Verify that Ascend does not support float64 input.
+    Expectation: Raise ValueError.
     """
     set_mode(mode)
 
     input_tensor = Tensor(
         np.array([[[[0.1, 0.3, 0.5], [0.7, 0.9, 1.1]]]], dtype=np.float64)
     )
-    expected = np.array(
-        [[[[0.1, 0.1, 0.3, 0.3, 0.5],
-           [0.1, 0.1, 0.3, 0.3, 0.5],
-           [0.7, 0.7, 0.9, 0.9, 1.1],
-           [0.7, 0.7, 0.9, 0.9, 1.1]]]],
-        dtype=np.float64,
-    )
-
-    out = upsample_nearest_forward_func(input_tensor, (4, 5), None)
-    np.testing.assert_allclose(out.asnumpy(), expected, rtol=1e-12, atol=1e-12)
-    assert out.dtype == ms.float64
+    with pytest.raises(ValueError, match="input's type should not be float64, which is not supported"):
+        upsample_nearest_forward_func(input_tensor, (4, 5), None)
 
 
 @arg_mark(plat_marks=['platform_gpu'],
