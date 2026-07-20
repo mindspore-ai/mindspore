@@ -58,7 +58,7 @@ class ProximalAdagrad(Optimizer):
     r"""
     `mindspore.nn.ProximalAdagrad` is deprecated from version 2.9.0 and will be removed in a future version.
 
-    Implements the ProximalAdagrad algorithm that is an online Learning and Stochastic Optimization.
+    This class implements the ProximalAdagrad algorithm, which is used for online learning and stochastic optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
 
@@ -75,7 +75,7 @@ class ProximalAdagrad(Optimizer):
     `learning_rate`, `params`, accumulation and current step respectively.
 
     Note:
-        The sparse strategy is applied while the SparseGatherV2 operator is used for forward network. If the sparse
+        The sparse strategy is applied while the SparseGatherV2 operator is used for the forward network. If the sparse
         strategy wants to be executed on the host, set the target to the CPU.
         The sparse feature is under continuous development.
 
@@ -87,7 +87,7 @@ class ProximalAdagrad(Optimizer):
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `params` is a list of `dict`, the string `"params"`, `"lr"`, `"weight_decay"`, `"grad_centralization"` and
-            `"order_params"` are the keys can be parsed.
+            `"order_params"` are the keys that can be parsed.
 
             - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
@@ -107,7 +107,7 @@ class ProximalAdagrad(Optimizer):
 
             - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
-              order will be followed in optimizer.
+              order will be followed in the optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 

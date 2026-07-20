@@ -798,21 +798,21 @@ class WithEvalCell(Cell):
 
 class ParameterUpdate(Cell):
     """
-    Cell that updates parameter.
+    Cell that updates the parameter.
 
-    With this Cell, one can manually update `param` with the input `Tensor`.
+    With this Cell, you can manually update `param` with the input `Tensor`.
 
     Args:
         param (Parameter): The parameter to be updated manually.
 
     Inputs:
-        - **x** (Tensor) - A tensor whose shape and type are the same with `param`.
+        - **x** (Tensor) - A tensor whose shape and type are the same as `param`.
 
     Outputs:
         Tensor, the updated value.
 
     Raises:
-        KeyError: If parameter with the specified name does not exist.
+        KeyError: If the parameter with the specified name does not exist.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

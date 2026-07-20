@@ -109,7 +109,7 @@ class LossBase(Cell):
 
     def get_axis(self, x):
         """
-        Get a range of axis for input.
+        Get a range of axis for the input.
 
         Args:
             x (Tensor): Tensor of any shape.
@@ -129,7 +129,7 @@ class LossBase(Cell):
             weights (Union[float, Tensor], optional): Weights. When `weights` is a Tensor,
                 the rank is either 0, or the same rank as inputs,
                 and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
-                or the same as the corresponding inputs dimension). Default: ``1.0`` .
+                or the same as the dimension of the corresponding inputs). Default: ``1.0`` .
 
         Returns:
             Return the weighted loss.
@@ -1907,7 +1907,7 @@ class MultilabelMarginLoss(LossBase):
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
           is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
         - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
-          label targets padded by -1.
+          label targets are padded by -1.
 
     Outputs:
         - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is ``"none"``, its shape
@@ -2649,7 +2649,7 @@ class KLDivLoss(LossBase):
         and `log_target` will be added.
 
     For tensors of the same shape :math:`x` and :math:`target`,
-    the updating formulas of KLDivLoss algorithm are as follows,
+    the updating formulas of the KLDivLoss algorithm are as follows,
 
     .. math::
         L(x, target) = target \cdot (\log target - \log x)

@@ -98,15 +98,16 @@ class RMSProp(Optimizer):
         adjusted.
 
     Note:
-        If parameters are not grouped, the `weight_decay` in optimizer will be applied on the network parameters
-        without 'beta' or 'gamma' in their names. Users can group parameters to change the strategy of decaying weight.
-        When parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
-        applied.
+        If parameters are not grouped, the `weight_decay` in the optimizer will be applied 
+        on the network parameters without 'beta' or 'gamma' in their names. Users can group parameters 
+        to change the strategy of decaying weight.
+        When parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in the optimizer 
+        will be applied.
 
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `params` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
-            "order_params" are the keys can be parsed.
+            "order_params" are the keys that can be parsed.
 
             - params: Required. Parameters in current group. The value must be a list of `Parameter`.
 
@@ -126,7 +127,7 @@ class RMSProp(Optimizer):
 
             - order_params: Optional. When parameters are grouped, this usually is used to maintain the order of
               parameters that appeared in the network to improve performance. The value should be parameters whose
-              order will be followed in optimizer.
+              order will be followed in the optimizer.
               If `order_params` in the keys, other keys will be ignored and the element of 'order_params' must be in
               one group of `params`.
 

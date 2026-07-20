@@ -99,7 +99,7 @@ class LARS(Optimizer):
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the
-          as same as the `params` in the optimizer.
+          same as the `params` in the optimizer.
 
     Supported Platforms:
         Deprecated
