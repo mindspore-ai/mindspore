@@ -4070,12 +4070,17 @@ class Cell(Cell_):
         (replay phase), it applies offload strategies based on the traced graph.
 
         The offload mechanism works by:
-        - Registering forward_pre_hook and forward_hook to trace/execute forward pass
-        - Registering backward_pre_hook and backward_hook to trace/execute backward pass
+        - Registering `forward_pre_hook` and `forward_hook` to trace/execute forward pass
+        - Registering `backward_pre_hook` and `backward_hook` to trace/execute backward pass
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
         Note:
             - This feature only works in PyNative mode.
-            - The computation graph structure must be static (no dynamic control flow).
+            - The computation graph structure must be static. For code that contains
+              dynamic control flow or otherwise cannot be traced, decorate the function
+              with :func:`mindspore.utils.skip_offload` to skip offload for it.
 
         Returns:
             Cell, the cell itself.

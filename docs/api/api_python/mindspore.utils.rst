@@ -6,3 +6,4 @@ mindspore.utils
 .. include:: utils/mindspore.utils.dryrun.rst
 .. include:: utils/mindspore.utils.sdc_detect.rst
 .. include:: utils/mindspore.utils.ms_dispatch.rst
+.. include:: utils/mindspore.utils.skip_offload.rst

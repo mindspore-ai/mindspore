@@ -347,18 +347,39 @@ _tft_handler = TftHandle()
 
 def skip_offload(func):
     """
-    Decorator to skip offload for both forward and backward passes of an function.
+    Decorator to skip offload for both forward and backward passes of a function.
 
     This decorator wraps a function or method. When called, it temporarily disables
     offload during the forward execution of the function. It also registers
     backward hooks on the input and output tensors to temporarily disable tracing
     during the backward execution of the function.
 
+    It is mainly used to skip offload for code segments that contain dynamic control flow
+    or cannot be traced, after :func:`mindspore.nn.Cell.auto_offload` is enabled.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         func (function): The function to wrap.
 
     Returns:
-        function: The wrapped function.
+        function, the wrapped function.
+
+    Examples:
+        >>> from mindspore import nn, ops
+        >>> from mindspore.utils import skip_offload
+        >>> @skip_offload
+        ... def inner_block(y1):
+        ...     y2 = ops.relu(y1)
+        ...     return ops.mul(y2, 2.0)
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, w):
+        ...         y1 = ops.matmul(x, w)
+        ...         z = inner_block(y1)
+        ...         return ops.add(z, 1.0)
+        >>> net = Net()
+        >>> net.auto_offload()
     """
 
     @functools.wraps(func)
