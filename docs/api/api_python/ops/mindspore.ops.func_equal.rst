@@ -21,4 +21,4 @@ mindspore.ops.equal
         - **other** (Union[Tensor, Number]) - 第二个输入。
 
     返回：
-        Tensor
+        Tensor。和广播后的 `input` 和 `other` 的shape一样，数据类型为bool。

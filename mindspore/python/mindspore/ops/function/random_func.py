@@ -1048,6 +1048,9 @@ def laplace(shape, mean, lambda_param, seed=None):
 @_function_forbid_reuse
 def gamma(shape, alpha, beta, seed=None):
     r"""
+    `mindspore.ops.gamma` is deprecated from version 2.10.0
+    and will be removed in a future version.
+    
     Generates random numbers according to the Gamma random number distribution.
 
     Support broadcasting.

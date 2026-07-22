@@ -9,7 +9,7 @@ mindspore.ops.embedding
         在Ascend后端， `input` 的值非法将导致不可预测的行为。
 
     参数：
-        - **input** (Tensor) - 用于检索的索引输入。取值范围： `[0, weight.shape[0])` 。
+        - **input** (Tensor) - 用于检索的索引输入。取值范围： `[0, weight.shape[0])` 。数据类型必须为 mindspore.int32 或 mindspore.int64。
         - **weight** (Union[Parameter, Tensor]) - 用于检索的数据。必须是2D输入。
         - **padding_idx** (int, 可选) - 如果给定非 ``None`` 值，则 `weight` 中对应行在反向计算中不会更新。取值范围：`[-weight.shape[0], weight.shape[0])`。默认值 ``None`` 。
         - **max_norm** (float, 可选) - 如果给定非 ``None`` 值，则先求出 `input` 指定位置的 `weight` 的p-范数结果result（p的值通过 `norm_type` 指定），然后对 `result > max_norm` 位置的 `weight` 进行原地更新，
