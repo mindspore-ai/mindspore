@@ -433,7 +433,7 @@ Others
 {{ fullname | underline }}
 
 .. autoclass:: {{ name }}
-    :inherited-members:
+    :inherited-members: str, Enum, IntEnum
     :exclude-members: parse_tree, create_ir_tree, create_runtime_obj
     :members:
 
