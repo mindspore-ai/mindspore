@@ -2649,6 +2649,9 @@ def bessel_y1(x):
 @deprecated("2.10.0", None, False, "ops.")
 def eps(x):
     r"""
+    `mindspore.ops.eps` is deprecated from version 2.10.0
+    and will be removed in a future version.
+
     Create a tensor with the same data type and shape as input, and the element value is the minimum value that the
     corresponding data type can express.
 

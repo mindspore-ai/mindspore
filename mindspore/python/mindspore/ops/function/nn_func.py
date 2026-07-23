@@ -2082,7 +2082,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
     Raises:
         TypeError: If `input` is not a 4D or 5D tensor.
         TypeError: If `_random_samples` is not a 3D tensor.
-        TypeError: If data type of `input` is not float16, float32, double, int32, int64.
+        TypeError: If data type of `input` is not float16, float32, double.
         TypeError: If dtype of `_random_samples` is not float16, float32, double.
         TypeError: If dtype of `argmax` is not int32, int64.
         TypeError: If _random_samples has the different dtype as input.
@@ -5562,7 +5562,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str, optional): An optional string specifying the interpolation method. The optional values are
-            ``'bilinear'``, ``'nearest'``. Note: ``'bicubic'`` is not supported yet. When
+            ``'bilinear'`` and ``'nearest'``. Note: ``'bicubic'`` is not supported yet. When
             `mode="bilinear"` and the input is 5-D, the interpolation mode used internally will actually
             be trilinear. However, when the input is 4-D, the interpolation mode will legitimately be bilinear.
             Default: ``'bilinear'`` .
