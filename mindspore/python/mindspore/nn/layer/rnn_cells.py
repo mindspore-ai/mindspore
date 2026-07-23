@@ -282,7 +282,7 @@ class LSTMCell(RNNCellBase):
         - **hx'** (Tensor) - A tuple of two Tensors (h', c') both of data shape :math:`(batch\_size, hidden\_size)` .
 
     Raises:
-        TypeError: If `input_size`, `hidden_size` is not an int.
+        TypeError: If `input_size` or `hidden_size` is not an int.
         TypeError: If `has_bias` is not a bool.
 
     Supported Platforms:

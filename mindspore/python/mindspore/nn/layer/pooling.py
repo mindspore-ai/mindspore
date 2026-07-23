@@ -109,7 +109,7 @@ class LPPool1d(Cell):
         stride (int): The distance of kernel moving, an int number that represents the width of movement is stride,
             if the value is None, the default value `kernel_size` is used. Default: ``None`` .
         ceil_mode (bool): If ``True``, use ceil to calculate output shape.
-            If ``False``, use ceil to calculate output shape. Default: ``False`` .
+            If ``False``, use floor to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, L_{in})` or :math:`(C_{in}, L_{in})`.
@@ -338,7 +338,7 @@ class MaxPool3d(_PoolNd):
             representing the maxpool result and where
             the max values are generated. Otherwise, only the maxpool result is returned. Default: ``False`` .
         ceil_mode (bool, optional): If ``True``, use ceil to calculate output shape.
-            If ``False``, use ceil to calculate output shape. Default: ``False`` .
+            If ``False``, use floor to calculate output shape. Default: ``False`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` or
