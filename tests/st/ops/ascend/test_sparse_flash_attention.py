@@ -19,7 +19,7 @@ import math
 import numpy as np
 import pytest
 import mindspore as ms
-from mindspore import Tensor, ops
+from mindspore import Tensor, nn, ops
 from mindspore import context
 from tests.mark_utils import arg_mark
 from tests.st.ops.test_tools.test_op import TEST_OP
@@ -366,6 +366,25 @@ def sparse_flash_attention_backward_func(query, key, value, sparse_indices, scal
 _sparse_flash_attention_grad_prim = ops.Primitive("SparseFlashAttentionGrad")
 
 
+class SparseFlashAttentionGradNet(nn.Cell):
+    """Invoke SparseFlashAttentionGrad with fixed non-tensor arguments."""
+
+    def __init__(self, scale_value, sparse_block_size, layout, sparse_mode, attention_mode):
+        super().__init__()
+        self.scale_value = scale_value
+        self.sparse_block_size = sparse_block_size
+        self.layout = layout
+        self.sparse_mode = sparse_mode
+        self.attention_mode = attention_mode
+
+    def construct(self, query, key, value, sparse_indices, d_out, out, softmax_max, softmax_sum,
+                  actual_seq_lengths_query, actual_seq_lengths_kv, query_rope, key_rope):
+        return _sparse_flash_attention_grad_prim(
+            query, key, value, sparse_indices, d_out, out, softmax_max, softmax_sum, self.scale_value,
+            self.sparse_block_size, query_rope, key_rope, actual_seq_lengths_query, actual_seq_lengths_kv,
+            self.layout, self.sparse_mode, 9223372036854775807, 9223372036854775807, self.attention_mode)
+
+
 @test_utils.run_with_cell
 def sparse_flash_attention_direct_backward_func(query, key, value, sparse_indices,
                                                 d_out, out, softmax_max, softmax_sum,
@@ -487,6 +506,50 @@ def _ms_forward_direct_backward(context_mode, query_np, key_np, value_np, sparse
         attention_mode=attention_mode)
 
     return f_out, b_out
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          mem_peak=1250.0)
+def test_sparse_flash_attention_grad_graph_cache_hit():
+    """Feature: SparseFlashAttentionGrad executor cache in Graph mode.
+
+    Description: Invoke the same direct gradient Cell twice so the second execution refreshes
+    the cached ACLNN executor's tensor addresses.
+    Expectation: Both executions succeed and return gradients with identical shapes.
+    """
+    batch, query_seq, kv_seq, query_heads, kv_heads, head_dim, rope_dim = 4, 1, 8192, 128, 1, 512, 64
+    sparse_block_count = 2048
+    scale_value = 1.0 / (head_dim ** 0.5)
+    query_np, key_np, value_np = get_qkv_bsnd(
+        batch, query_seq, kv_seq, query_heads, kv_heads, head_dim, dtype=np.float16)
+    query_rope_np, key_rope_np = get_rope_tensors(
+        batch, query_seq, kv_seq, query_heads, kv_heads, rope_dim, dtype=np.float16)
+    sparse_indices_np = get_sparse_indices(batch, query_seq, kv_heads, sparse_block_count, kv_seq)
+    actual_seq_q = [query_seq] * batch
+    actual_seq_kv = [kv_seq] * batch
+
+    context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+    query = Tensor(query_np, dtype=ms.float16)
+    key = Tensor(key_np, dtype=ms.float16)
+    value = Tensor(value_np, dtype=ms.float16)
+    sparse_indices = Tensor(sparse_indices_np, dtype=ms.int32)
+    query_rope = Tensor(query_rope_np, dtype=ms.float16)
+    key_rope = Tensor(key_rope_np, dtype=ms.float16)
+    actual_seq_lengths_query = Tensor(actual_seq_q, dtype=ms.int32)
+    actual_seq_lengths_kv = Tensor(actual_seq_kv, dtype=ms.int32)
+    forward_out = sparse_flash_attention_forward_func(
+        query, key, value, sparse_indices, scale_value, actual_seq_lengths_query=actual_seq_lengths_query,
+        actual_seq_lengths_kv=actual_seq_lengths_kv, query_rope=query_rope, key_rope=key_rope,
+        sparse_block_size=1, layout_query="BSND", layout_kv="BSND", sparse_mode=3, attention_mode=2,
+        return_softmax_lse=True)
+    grad_net = SparseFlashAttentionGradNet(scale_value, 1, "BSND", 3, 2)
+    grad_inputs = (query, key, value, sparse_indices, ops.ones_like(forward_out[0]), forward_out[0], forward_out[1],
+                   forward_out[2], actual_seq_lengths_query, actual_seq_lengths_kv, query_rope, key_rope)
+    first_grads = grad_net(*grad_inputs)
+    second_grads = grad_net(*grad_inputs)
+
+    for first_grad, second_grad in zip(first_grads, second_grads):
+        assert first_grad.shape == second_grad.shape
 
 
 def get_qkv_bsnd(B, S1, S2, N1, N2, D, dtype=np.float16, seed=42):
@@ -1726,7 +1789,7 @@ def test_sparse_flash_attention_empty_input_tensor(context_mode):
     actual_seq_q = Tensor([0] * B, dtype=ms.int32)
     actual_seq_kv = Tensor([0] * B, dtype=ms.int32)
 
-    # Forward only — empty tensors have no values; only verify no crash + correct shapes.
+    # Forward only - empty tensors have no values; only verify no crash + correct shapes.
     # attention_mode=2 is used (default), RoPE is None; ACLNN skips validation for empty inputs.
     ms_f_out = sparse_flash_attention_forward_func(
         query, key, value, sparse_indices, 0.1,
