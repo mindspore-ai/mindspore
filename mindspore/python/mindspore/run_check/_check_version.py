@@ -363,13 +363,15 @@ class AscendEnvChecker(EnvChecker):
         cust_aicore_path = os.path.realpath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicore_ops"))
         cust_ascendc_ascend910b_path = os.path.realpath(
             os.path.join(curr_path, "../lib/plugin/ascend/custom_ascendc_910b"))
-        if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
-            os.environ['ASCEND_CUSTOM_OPP_PATH'] = os.environ['ASCEND_CUSTOM_OPP_PATH'] + ":" + \
-                                                   cust_ascendc_ascend910b_path + ":" + cust_aicore_path + ":" + \
-                                                   cust_aicpu_path
-        else:
-            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_ascendc_ascend910b_path + ":" + cust_aicore_path + ":" + \
-                                                   cust_aicpu_path
+        paths_to_append = [cust_ascendc_ascend910b_path, cust_aicore_path, cust_aicpu_path]
+        existing_path_str = os.environ.get('ASCEND_CUSTOM_OPP_PATH', '')
+        existing_paths = [p for p in existing_path_str.split(':') if p]
+        new_paths = [p for p in paths_to_append if p not in existing_paths]
+        if new_paths:
+            if existing_path_str:
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = existing_path_str + ":" + ":".join(new_paths)
+            else:
+                os.environ['ASCEND_CUSTOM_OPP_PATH'] = ":".join(new_paths)
         # Ignore ge infer missing error. To be removed after infers are completed.
         os.environ['FAST_IGNORE_INFER_ERROR'] = "1"
         os.environ['IGNORE_INFER_ERROR'] = "1"
