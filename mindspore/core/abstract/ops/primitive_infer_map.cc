@@ -30,6 +30,7 @@
 #include "ops/infer_info/infer_info_utils.h"
 #include "ops/op_def_utils.h"
 #include "utils/ms_context.h"
+#include "primitive/framework_ops.h"
 
 namespace mindspore {
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
@@ -175,6 +176,11 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode, bool is_proto)
       ori.clear();
       ori.insert(value_depend_vector.begin(), value_depend_vector.end());
     }
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimCustom) && primitive->HasAttr(kAttrValueDepend)) {
+    auto value_depend_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrValueDepend));
+    ori.clear();
+    ori.insert(value_depend_vector.begin(), value_depend_vector.end());
   }
   if (ori.empty()) {
     return ori;
