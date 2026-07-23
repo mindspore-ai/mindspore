@@ -65,7 +65,7 @@ class LazyFusionManager {
   }
 
  private:
-  LazyFusionKernelAscend *NewKernel();
+  LazyFusionKernelAscend *NewKernel(const device::DeviceContext *context);
 
   std::queue<LazyFusionKernelAscend *> pool_;
   LazyFusionKernelAscend *current_{nullptr};
@@ -77,7 +77,7 @@ extern LazyFusionManager g_lazy_fusion_manager;
 
 class LazyFusionKernelAscend final : public dvm::Kernel, public dvm::WsAllocator {
  public:
-  LazyFusionKernelAscend();
+  explicit LazyFusionKernelAscend(const device::DeviceContext *context);
   ~LazyFusionKernelAscend();
   void Flush();
 
