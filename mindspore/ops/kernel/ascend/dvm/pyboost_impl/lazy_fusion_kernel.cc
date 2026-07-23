@@ -23,6 +23,7 @@
 #include "tools/profiler/profiling.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "utils/file_utils.h"
+#include "utils/ms_utils.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
 
 namespace mindspore {
@@ -127,7 +128,7 @@ LazyFusionKernelAscend *LazyFusionManager::Get(const device::DeviceContext *cont
     }
     current_->Flush();
   }
-  current_ = NewKernel();
+  current_ = NewKernel(context);
   current_->Reset(context, stream);
   current_->set_id(id_.fetch_add(1, std::memory_order_relaxed));
   return current_;
@@ -140,7 +141,7 @@ void LazyFusionManager::Flush() {
   }
 }
 
-LazyFusionKernelAscend *LazyFusionManager::NewKernel() {
+LazyFusionKernelAscend *LazyFusionManager::NewKernel(const device::DeviceContext *context) {
   {
     std::lock_guard<std::mutex> guard(mutex_);
     if (!pool_.empty()) {
@@ -149,10 +150,23 @@ LazyFusionKernelAscend *LazyFusionManager::NewKernel() {
       return k;
     }
   }
-  return new LazyFusionKernelAscend();
+  return new LazyFusionKernelAscend(context);
 }
 
-LazyFusionKernelAscend::LazyFusionKernelAscend() { dvm::Kernel::Reset(dvm::KernelType::kEager, 0); }
+LazyFusionKernelAscend::LazyFusionKernelAscend(const device::DeviceContext *context) {
+  static const bool is_dry_run = common::IsCompileSimulation();
+  if (!is_dry_run && !dvm::Config::Instance().IsInitialized()) {
+    MS_EXCEPTION_IF_NULL(context);
+    MS_EXCEPTION_IF_NULL(context->device_res_manager_);
+    if (!context->device_res_manager_->BindDeviceToCurrentThread(false)) {
+      MS_LOG(ERROR) << "Failed to bind device context before DVM kernel reset.";
+    }
+  }
+  dvm::Kernel::Reset(dvm::KernelType::kEager, 0);
+  if (!is_dry_run && !dvm::Config::Instance().IsInitialized()) {
+    MS_LOG(EXCEPTION) << "DVM initialization failed.";
+  }
+}
 
 LazyFusionKernelAscend::~LazyFusionKernelAscend() {
   for (auto load : inputs_) {
