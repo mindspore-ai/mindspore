@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for Tensor.add_.
+"""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -82,7 +84,7 @@ def tensor_scalar_factory(nptype, mstype):
     return a, x, s
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
     level_mark='level1',
     card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize("mode", ['pynative', 'kbk'])

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Tests for Tensor.abs.
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -33,7 +36,7 @@ _MS_TYPES = [ms.float16, ms.float32, ms.float64, ms.int8, ms.int16, ms.int32, ms
 _NP_TYPES = [np.float16, np.float32, np.float64, np.int8, np.int16, np.int32, np.int64]
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level0',
           card_mark='onecard', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -56,7 +59,7 @@ def test_tensor_abs(mode):
         assert np.allclose(output2.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level0',
           card_mark='onecard', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

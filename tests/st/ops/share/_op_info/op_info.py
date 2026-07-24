@@ -842,6 +842,7 @@ class BinaryOpInfo(OpInfo):
       - disable_scalar_inputs: Whether to disable scalar inputs.
       - promotion_dtypes_exclude: promotion dtypes
       - disable_extremal_value_tensor_inputs: Whether to disable extremal value tensor inputs.
+      - disable_scalar_x_tensor_promotion: Whether to disable scalar_x_tensor_promotion 0d to 1d.
     """
     def __init__(
             self,
@@ -862,6 +863,7 @@ class BinaryOpInfo(OpInfo):
             disable_broadcasting_and_discontiguous_tensor_inputs: Optional[bool] = False,
             disable_scalar_inputs: Optional[bool] = False,
             disable_extremal_value_tensor_inputs: Optional[bool] = False,
+            disable_scalar_x_tensor_promotion: Optional[bool] = False,
             **kwargs,
     ):
         super().__init__(
@@ -883,6 +885,7 @@ class BinaryOpInfo(OpInfo):
         self.disable_broadcasting_and_discontiguous_tensor_inputs = disable_broadcasting_and_discontiguous_tensor_inputs
         self.disable_scalar_inputs = disable_scalar_inputs
         self.disable_extremal_value_tensor_inputs = disable_extremal_value_tensor_inputs
+        self.disable_scalar_x_tensor_promotion = disable_scalar_x_tensor_promotion
         self.input_low = None if not self.domain else self.domain[0][0]
         self.input_high = None if not self.domain else self.domain[0][1]
         self.other_low = None if not self.domain else self.domain[1][0]

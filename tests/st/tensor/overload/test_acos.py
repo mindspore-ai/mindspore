@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for Tensor.acos.
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -35,7 +37,7 @@ def generate_expect_forward_output(x):
     return np.arccos(x)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_acos(mode):

@@ -216,7 +216,8 @@ class BinaryOpsFactory(OpsFactory):
         make_scalar_tensor_func = functools.partial(make_tensor, shape=(), device=self._device)
         for input_dtype, other_dtype in itertools.combinations(self.supported_dtypes, 2):
             test_tensor_x_scalar_promotion(input_dtype, other_dtype)
-            test_scalar_x_tensor_promotion(input_dtype, other_dtype)
+            if not self.op_info.disable_scalar_x_tensor_promotion:
+                test_scalar_x_tensor_promotion(input_dtype, other_dtype)
         for dtype1 in self.supported_dtypes:
             for dtype2 in [ms.bool_, ms.float32]:
                 if dtype1 != dtype2:

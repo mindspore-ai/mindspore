@@ -534,12 +534,10 @@ def tensor_sin_torch(op_input):
 
 # wrap tensor method for add
 def tensor_add_ms(op_input, other, alpha=1):
-    cloned_input = op_input.clone()
-    return cloned_input.add(other, alpha=alpha)
+    return op_input.add(other, alpha=alpha)
 
 def tensor_add_torch(op_input, other, alpha=1):
-    cloned_input_pt = op_input.clone()
-    return cloned_input_pt.add(other, alpha=alpha)
+    return op_input.add(other, alpha=alpha)
 
 # wrap tensor method for sub
 def tensor_sub_ms(op_input, args):
@@ -2058,3 +2056,35 @@ def mint_linspace_torch(op_input, start, end, dtype=None):
     else:
         steps = op_input.shape[0]
     return torch.linspace(start, end, steps, dtype=dtype)
+
+def tensor_h_ms(op_input):
+    return op_input.H
+
+def tensor_h_torch(op_input):
+    return op_input.H
+
+def tensor_t_ms(op_input):
+    return op_input.T
+
+def tensor_t_torch(op_input):
+    return op_input.T
+
+# wrap tensor method for Tensor.absolute
+def tensor_absolute_ms(op_input):
+    return op_input.absolute()
+
+def tensor_absolute_torch(op_input):
+    return op_input.absolute()
+
+def tensor_acos_ms(op_input):
+    return op_input.acos()
+
+def tensor_acosh_ms(op_input):
+    return op_input.acosh()
+
+# wrap tensor method for add
+def tensor_add_ms_overload(op_input, other):
+    return op_input.add(other)
+
+def tensor_add_torch_overload(op_input, other):
+    return op_input.add(other)
