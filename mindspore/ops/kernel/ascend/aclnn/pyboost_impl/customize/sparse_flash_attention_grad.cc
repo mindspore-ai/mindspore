@@ -16,7 +16,10 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/sparse_flash_attention_grad.h"
 
+#include <functional>
+#include <memory>
 #include <string>
+#include <tuple>
 
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
@@ -27,6 +30,42 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
+template <typename... Args>
+void LaunchSparseFlashAttentionGrad(const device::DeviceContext *device_context, uint32_t stream_id,
+                                    const Args &...args) {
+  static const std::string aclnn_name = "aclnnSparseFlashAttentionGrad";
+  static const auto simulation = common::IsCompileSimulation();
+  if (simulation) {
+    return;
+  }
+
+  device_context->device_res_manager_->UseStreamResInCurrentThread(stream_id);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostLaunchAclnn,
+                                     aclnn_name, false);
+  auto stream_ptr = device_context->device_res_manager_->GetStream(stream_id);
+  auto executor_info = GEN_EXECUTOR(aclnn_name, args...);
+  auto workspace_size = std::get<0>(executor_info);
+  auto executor = std::get<1>(executor_info);
+  auto release_function = std::get<3>(executor_info);
+  std::function<void()> update_function = nullptr;
+  if (workspace_size == 0) {
+    DISPATCH_LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor, stream_ptr, release_function, update_function);
+  } else {
+    auto workspace = std::make_shared<MemBlock>(device_context, workspace_size, stream_id);
+    DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, workspace->ptr_, workspace_size, executor, stream_ptr,
+                           release_function, update_function);
+  }
+  if (runtime::RuntimeConf::GetInstance()->launch_blocking()) {
+    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;
+    }
+  } else {
+    runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id, args...);
+  }
+}
+}  // namespace
+
 SparseFlashAttentionGradResult SparseFlashAttentionGradAscendCustomize(
   const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const TensorPtr &sparse_indices,
   const TensorPtr &d_out, const TensorPtr &out, const TensorPtr &softmax_max, const TensorPtr &softmax_sum,
@@ -57,14 +96,17 @@ SparseFlashAttentionGradResult SparseFlashAttentionGradAscendCustomize(
                  actual_seq_qlen, actual_seq_kvlen);
   TensorMalloc(outputs);
 
-  // Dispatch async run
-  DISPATCH_ACLNN(aclnnSparseFlashAttentionGrad, query, key, value, sparse_indices, d_out, out, softmax_max, softmax_sum,
-                 std::optional<TensorPtr>(actual_seq_qlen), std::optional<TensorPtr>(actual_seq_kvlen),
-                 std::optional<TensorPtr>(query_rope), std::optional<TensorPtr>(key_rope), scale_value_val,
-                 sparse_block_size_val, layout_val.c_str(), sparse_mode_val, pre_tokens_val, next_tokens_val,
-                 deterministic_val, std::get<kOutputDQuery>(outputs), std::get<kOutputDKey>(outputs),
-                 std::get<kOutputDValue>(outputs), std::get<kOutputDQueryRope>(outputs),
-                 std::get<kOutputDKeyRope>(outputs));
+  auto device_context = CurrentDeviceContext::get();
+  auto stream_id = CurrentStream::id();
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([=]() {
+    LaunchSparseFlashAttentionGrad(
+      device_context, stream_id, query, key, value, sparse_indices, d_out, out, softmax_max, softmax_sum,
+      std::optional<TensorPtr>(actual_seq_qlen), std::optional<TensorPtr>(actual_seq_kvlen),
+      std::optional<TensorPtr>(query_rope), std::optional<TensorPtr>(key_rope), scale_value_val, sparse_block_size_val,
+      layout_val, sparse_mode_val, pre_tokens_val, next_tokens_val, deterministic_val, std::get<kOutputDQuery>(outputs),
+      std::get<kOutputDKey>(outputs), std::get<kOutputDValue>(outputs), std::get<kOutputDQueryRope>(outputs),
+      std::get<kOutputDKeyRope>(outputs));
+  }));
 
   return outputs;
 }
