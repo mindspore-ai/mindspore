@@ -245,6 +245,7 @@ def test_upsample_nearest_2d_float64_ascend(mode):
     )
     with pytest.raises(ValueError, match="input's type should not be float64, which is not supported"):
         upsample_nearest_forward_func(input_tensor, (4, 5), None)
+        _pynative_executor.sync()
 
 
 @arg_mark(plat_marks=['platform_gpu'],
