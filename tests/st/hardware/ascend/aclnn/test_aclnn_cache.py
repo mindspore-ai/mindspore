@@ -162,6 +162,8 @@ def test_aclnn_cache_with_multi_input():
     Description: aclnn cache with multi input
     Expectation: aclnn cache is failed
     """
+    # hash id is 0 log is INFO level, need GLOG_v=1 to capture it
+    os.environ["GLOG_v"] = "1"
     # 400 inputs is supported, hash id is not 0 and cache is available
     os.system("pytest -sv test_aclnn_cache.py::test_aclnn_cache_with_multi_input_1 > log_cache_multi_input_1.txt 2>&1")
     ret_miss = os.popen("grep -i 'aclnnCat cache is available, but hash id is 0, do not use cache.' \
@@ -175,6 +177,7 @@ def test_aclnn_cache_with_multi_input():
                          log_cache_multi_input_2.txt | wc -l").read()
     assert int(ret_miss.strip()) == 5
     os.system("rm -rf log_cache_multi_input_2.txt")
+    del os.environ["GLOG_v"]
 
 
 class SimpleNet1(Cell):
