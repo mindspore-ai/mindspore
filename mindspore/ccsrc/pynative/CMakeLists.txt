@@ -12,6 +12,7 @@ file(GLOB _PYNATIVE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "utils/*.cc"
         "parallel/*.cc"
         "hyper_offload/*.cc"
+        "hyper_offload/sliding_window/*.cc"
         "*.cc"
 )
 set_property(SOURCE ${_PYNATIVE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PYNATIVE)

@@ -267,10 +267,6 @@ class PYBOOST_API OpRunner : public std::enable_shared_from_this<OpRunner> {
     if (!HasPreHook()) {
       return;
     }
-    // Skip if already inside a PostHook execution (prevents nested calls from internal ops).
-    if (PostHookGuard::IsInPostHook()) {
-      return;
-    }
     // Fast path: check if any hook needs to execute
     bool any_need_execute = false;
     for (const auto &hook : pre_hooks_) {

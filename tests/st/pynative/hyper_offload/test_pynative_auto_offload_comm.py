@@ -21,6 +21,10 @@ Manual run:
 #msrun --worker_num=2 --local_worker_num=2 --master_port=10971 --join=True --cluster_time_out=300 pytest -sv --disable-warnings test_pynative_auto_offload_comm.py
 """
 
+import os
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
+
 import numpy as np
 from mindspore import nn, Tensor, context, mint
 from mindspore.ops import composite as C

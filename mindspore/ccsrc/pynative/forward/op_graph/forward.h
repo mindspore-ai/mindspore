@@ -39,6 +39,11 @@ class GradExecutor;
 using GradExecutorPtr = std::shared_ptr<GradExecutor>;
 using GradExecutorWeakPtr = std::weak_ptr<GradExecutor>;
 
+// Pre-hook function type for VM op execution (called before op execution).
+using ForwardVmPreHookFunc = std::function<void(const std::string &, const std::vector<ValuePtr> &)>;
+// Post-hook function type for VM op execution (called after op execution).
+using ForwardVmPostHookFunc = std::function<void(const std::string &, const std::vector<ValuePtr> &, const ValuePtr &)>;
+
 class ForwardExecutor {
  public:
   ForwardExecutor()
@@ -100,7 +105,24 @@ class ForwardExecutor {
   }
   void ChildAfterFork();
 
+  // Register a pre-hook for VM ops. Multiple hooks can be registered and will be called in registration order.
+  static void RegisterVmOpPreHook(const ForwardVmPreHookFunc &func) { vm_pre_hooks_.emplace_back(func); }
+  // Register a post-hook for VM ops. Multiple hooks can be registered and will be called in registration order.
+  static void RegisterVmOpPostHook(const ForwardVmPostHookFunc &func) { vm_post_hooks_.emplace_back(func); }
+
  private:
+  // Call all registered VM op pre-hook functions.
+  static void CallVmPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
+    for (const auto &func : vm_pre_hooks_) {
+      func(op_name, inputs);
+    }
+  }
+  // Call all registered VM op post-hook functions.
+  static void CallVmPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output) {
+    for (const auto &func : vm_post_hooks_) {
+      func(op_name, inputs, output);
+    }
+  }
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);
     return cast_operation_;
@@ -154,6 +176,10 @@ class ForwardExecutor {
   InferOperationPtr infer_operation_;
   compile::OpBackendPtr op_backend_{nullptr};
   mindspore::HashMap<std::string, PrimitivePtr> slice_prim_cache_;
+
+  // Static hook storage for VM ops.
+  inline static std::vector<ForwardVmPreHookFunc> vm_pre_hooks_;
+  inline static std::vector<ForwardVmPostHookFunc> vm_post_hooks_;
 };
 }  // namespace pynative
 }  // namespace mindspore

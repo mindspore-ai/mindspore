@@ -21,8 +21,12 @@
 #include "utils/log_adapter.h"
 #include "utils/ir_dump/anf_ir_dump.h"
 #include "pynative/backward/grad_utils.h"
+#include "pynative/hyper_offload/offload_task.h"
 #include "mindspore/ccsrc/frontend/jit/ps/resource.h"
 #include "mindspore/ccsrc/include/frontend/jit/ps/action_interface.h"
+#include "pynative/forward/op_graph/forward.h"
+#include "utils/ms_utils.h"
+#include "utils/hyper_offload/hyper_offload_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -30,32 +34,34 @@ namespace hyper_offload {
 
 using VmEvalPtr = std::shared_ptr<std::function<BaseRef(const VectorRef &)>>;
 
+void SlidingWindowPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs);
+void SlidingWindowPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output);
+
 OffloadManager &OffloadManager::GetInstance() {
   static OffloadManager instance;
   return instance;
 }
 
 void OffloadRunOPPreHook(const BackendOpRunInfoPtr &op_run_info) {
-  auto current_ctx = OffloadManager::GetCurrentContext();
-  if (current_ctx == nullptr) {
-    return;
-  }
-
   // Get op_name from BackendOpRunInfo
   const std::string &op_name = op_run_info->base_op_run_info.op_name;
 
   // Get inputs from BackendOpRunInfo (already vector<ValuePtr>)
   const std::vector<ValuePtr> &inputs = op_run_info->base_op_run_info.expanded_input_values;
 
-  current_ctx->OnOpWillExecute(op_name, inputs);
-}
+  SlidingWindowPreHook(op_name, inputs);
 
-void OffloadRunOPPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRef &outputs) {
+  if (OffloadManager::skip_offload()) {
+    return;
+  }
   auto current_ctx = OffloadManager::GetCurrentContext();
   if (current_ctx == nullptr) {
     return;
   }
+  current_ctx->OnOpWillExecute(op_name, inputs);
+}
 
+void OffloadRunOPPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRef &outputs) {
   // Get op_name from BackendOpRunInfo
   const std::string &op_name = op_run_info->base_op_run_info.op_name;
 
@@ -70,7 +76,36 @@ void OffloadRunOPPostHook(const BackendOpRunInfoPtr &op_run_info, const VectorRe
 
   ValuePtr output_value = AutoGradUtil::VectorRefToValue(outputs, false, is_multi_output);
 
+  SlidingWindowPostHook(op_name, inputs, output_value);
+
+  if (OffloadManager::skip_offload()) {
+    return;
+  }
+  auto current_ctx = OffloadManager::GetCurrentContext();
+  if (current_ctx == nullptr) {
+    return;
+  }
   current_ctx->OnOpExecuted(op_name, inputs, output_value);
+}
+
+void SlidingWindowPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
+  if (OffloadManager::IsOffloadReady()) {
+    return;
+  }
+  auto sliding_window_mgr = OffloadManager::GetInstance().GetSlidingWindowMgr();
+  if (sliding_window_mgr != nullptr) {
+    sliding_window_mgr->PreProcess(op_name, inputs);
+  }
+}
+
+void SlidingWindowPostHook(const std::string &op_name, const std::vector<ValuePtr> &inputs, const ValuePtr &output) {
+  if (OffloadManager::IsOffloadReady()) {
+    return;
+  }
+  auto sliding_window_mgr = OffloadManager::GetInstance().GetSlidingWindowMgr();
+  if (sliding_window_mgr != nullptr) {
+    sliding_window_mgr->PostProcess(op_name, inputs, output);
+  }
 }
 
 void OffloadPreHook(const std::string &op_name, const std::vector<ValuePtr> &inputs) {
@@ -98,6 +133,10 @@ void OffloadPostHook(const std::string &op_name, const std::vector<ValuePtr> &in
 // Static registrar to register PreHook and PostHook at program startup
 struct OffloadHookRegistrar {
   OffloadHookRegistrar() {
+    const auto enable = common::GetEnv("MS_DEV_HYPER_OFFLOAD");
+    if (enable.empty() || enable == "0") {
+      return;
+    }
     // Register PreHook for PyBoost OpRunner (pyboost operators)
     // is_enabled: fast check if there is an active context
     // handler: the actual hook function
@@ -109,6 +148,21 @@ struct OffloadHookRegistrar {
     kernel::pyboost::OpRunner::RegisterPostHook([]() { return OffloadManager::HasActiveContext(); },  // is_enabled
                                                 OffloadPostHook);                                     // handler
     MS_LOG(DEBUG) << "OffloadPostHook registered to OpRunner.";
+
+    kernel::pyboost::OpRunner::RegisterPreHook([]() { return !OffloadManager::IsOffloadReady(); },
+                                               SlidingWindowPreHook);
+    MS_LOG(DEBUG) << "SlidingWindowPreHook registered to OpRunner.";
+
+    kernel::pyboost::OpRunner::RegisterPostHook([]() { return !OffloadManager::IsOffloadReady(); },
+                                                SlidingWindowPostHook);
+    MS_LOG(DEBUG) << "SlidingWindowPostHook registered to OpRunner.";
+
+    // Register PreHook for ForwardExecutor (VM ops)
+    pynative::ForwardExecutor::RegisterVmOpPreHook(SlidingWindowPreHook);
+    MS_LOG(DEBUG) << "SlidingWindowPreHook registered to ForwardExecutor.";
+
+    pynative::ForwardExecutor::RegisterVmOpPostHook(SlidingWindowPostHook);
+    MS_LOG(DEBUG) << "SlidingWindowPostHook registered to ForwardExecutor.";
 
     // Register PreHook for OpBackend (RunOp operators)
     compile::OpBackend::RegisterPreHook(OffloadRunOPPreHook);
@@ -122,6 +176,17 @@ struct OffloadHookRegistrar {
 
 // This static instance triggers registration at program startup
 static OffloadHookRegistrar g_offload_hook_registrar;
+
+void OffloadManager::SetSkipOffloadAsync(bool skip) {
+  auto task = std::make_shared<OffloadAsyncTask>([skip]() { skip_offload_ = skip; }, runtime::TaskType::kFrontendTask);
+  static bool need_sync = runtime::OpExecutor::NeedSync();
+  if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
+    runtime::Pipeline::Get().WaitForward();
+    task->Run();
+  } else {
+    runtime::Pipeline::Get().frontend_stage()->Push(task);
+  }
+}
 
 HyperOffloadContextPtr OffloadManager::GetOrCreateOffloadCtx(size_t offload_key) {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -160,6 +225,12 @@ void OffloadManager::Analyse() {
   MS_LOG(INFO) << "OffloadManager::Analyse completed. Offload is now ready.";
   MS_LOG(INFO) << "Total contexts: " << contexts_.size();
 
+  // Finalize sliding window manager
+  if (sliding_window_mgr_ != nullptr) {
+    sliding_window_mgr_->Finalize();
+    sliding_window_mgr_ = nullptr;
+  }
+
   // Finalize all graphs and generate strategies
   for (const auto &[key, ctx] : contexts_) {
     // Finalize graph: set output (return node)
@@ -188,6 +259,10 @@ void OffloadManager::Analyse() {
 void OffloadManager::Reset() {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  runtime::Pipeline::Get().WaitAll();
+  ClearCurrentContext();
+  skip_offload_ = false;
+
   // Reset all contexts
   for (auto &item : contexts_) {
     const auto &ctx = item.second;
@@ -203,6 +278,10 @@ void OffloadManager::Reset() {
 
 void OffloadManager::ClearResources() {
   std::lock_guard<std::mutex> lock(mutex_);
+
+  runtime::Pipeline::Get().WaitBackend();
+  ClearCurrentContext();
+  skip_offload_ = false;
 
   // Clear all contexts
   contexts_.clear();

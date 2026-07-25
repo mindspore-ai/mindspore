@@ -14,12 +14,16 @@
 # ============================================================================
 """Test auto_offload functionality in PyNative mode."""
 
+import os
+
 import numpy as np
 import mindspore as ms
 from mindspore import nn, Tensor, context, ops, mint, _Function
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
 from mindspore._c_expression import OffloadManager
+
+os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
 
 
 class ComplexNet(nn.Cell):

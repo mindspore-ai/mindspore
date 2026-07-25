@@ -294,7 +294,7 @@ struct BACKEND_EXPORT MemStat {
   }
 
   size_t IdleSize() const {
-    return alloc_size_ + custom_alloc_size_ - used_size_ - eager_free_size_ - used_by_event_size_;
+    return alloc_size_ + custom_alloc_size_ - used_size_ - eager_free_size_;
   }
 
   inline void UpdatePeakSize(const bool is_enable_vmm, size_t vmm_used_mem_size) {

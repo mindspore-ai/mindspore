@@ -914,6 +914,9 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   }
   if (PyNativeAlgo::Common::IsVmOp(op_run_info->base_op_run_info.op_name)) {
     LazyFusionFlush();
+    const auto &op_name = op_run_info->base_op_run_info.op_name;
+    const auto &inputs = op_run_info->op_grad_info->input_value;
+    ForwardExecutor::CallVmPreHook(op_name, inputs);
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       result[i] = CopyTensorValueWithNewId(op_run_info, op_run_info->op_grad_info->input_value[i]);
@@ -923,6 +926,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
       // Later we need modify hook op to view op.
       (void)AutoGradUtil::SetValueGradInfo(result_v, InputType::kOpOutput);
     }
+    ForwardExecutor::CallVmPostHook(op_name, inputs, result_v);
     MS_LOG(DEBUG) << "RunOpInVM end";
     return result_v;
   }

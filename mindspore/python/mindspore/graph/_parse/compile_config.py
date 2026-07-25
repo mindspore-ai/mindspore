@@ -311,7 +311,7 @@ Function: Indicate minimum usage distance for node to offload.
 Value Range: Int value.
     Default: 100
 """
-HYPER_OFFLOAD_SELECT_DISTANCE = '100'
+HYPER_OFFLOAD_SELECT_DISTANCE = '500'
 
 """
 Name: HYPER_OFFLOAD_SELECT_NUM

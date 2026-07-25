@@ -20,3 +20,5 @@ mindspore.utils
 .. autofunction:: mindspore.utils.get_sdc_detect_result
 
 .. autoclass:: mindspore.utils.MsDispatchMode
+
+.. autofunction:: mindspore.utils.skip_offload

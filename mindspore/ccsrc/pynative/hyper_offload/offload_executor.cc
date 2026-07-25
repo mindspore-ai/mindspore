@@ -54,7 +54,7 @@ tensor::TensorPtr OffloadExecutor::ToDeviceTensor(const tensor::TensorPtr &host_
 void OffloadExecutor::D2HWithEvent(size_t tensor_id, const tensor::TensorPtr &original_tensor) {
   MS_EXCEPTION_IF_NULL(original_tensor);
   if (original_tensor->storage_info() != nullptr) {
-    MS_LOG(EXCEPTION) << "Try offload view's output, which is not supported! tensor id: " << tensor_id;
+    MS_LOG(WARNING) << "Try offload tensor with storage_info, might be view's output, tensor id: " << tensor_id;
   }
   auto &data = offload_cache_[tensor_id];
   data.original_tensor = original_tensor;

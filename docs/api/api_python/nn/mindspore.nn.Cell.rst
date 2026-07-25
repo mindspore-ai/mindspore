@@ -43,6 +43,28 @@ mindspore.nn.Cell
         返回：
             Cell类型，Cell本身。
 
+    .. py:method:: auto_offload()
+
+        为该Cell使能自动卸载（automatic offload）。
+
+        该方法为该Cell的前向和反向过程使能自动内存卸载。在第一步（预热阶段），它将追踪计算图；在后续步骤（重放阶段），
+        它将根据追踪到的计算图应用卸载策略。
+
+        卸载机制的工作方式如下：
+
+        - 注册 `forward_pre_hook` 和 `forward_hook` 以追踪/执行前向过程；
+        - 注册 `backward_pre_hook` 和 `backward_hook` 以追踪/执行反向过程。
+
+        .. warning::
+            这是一个实验性API，后续可能修改或删除。
+
+        .. note::
+            - 该特性仅在PyNative模式下有效。
+            - 计算图结构必须是静态的。对于包含动态控制流或无法被追踪的代码，可使用 :func:`mindspore.utils.skip_offload` 装饰器装饰对应函数，以跳过其卸载。
+
+        返回：
+            Cell类型，Cell本身。
+
     .. py:method:: bprop_debug
         :property:
 

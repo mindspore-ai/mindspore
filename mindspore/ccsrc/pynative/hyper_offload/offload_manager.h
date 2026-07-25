@@ -20,7 +20,11 @@
 #include <memory>
 #include <unordered_map>
 #include <mutex>
+#include <string>
+#include <vector>
+#include "ir/value.h"
 #include "pynative/hyper_offload/hyper_offload_context.h"
+#include "pynative/hyper_offload/sliding_window/sliding_window_mgr.h"
 
 namespace mindspore {
 namespace pynative {
@@ -65,11 +69,23 @@ class OffloadManager {
   // Get current active offload context
   static HyperOffloadContext *GetCurrentContext() { return current_offload_context_; }
 
+  // Get warm-up context
+  utils::sliding_window::SlidingWindowMgr *GetSlidingWindowMgr() { return sliding_window_mgr_.get(); }
+
   // Fast check if there is an active context (for performance optimization)
-  static bool HasActiveContext() { return current_offload_context_ != nullptr; }
+  static bool HasActiveContext() { return current_offload_context_ != nullptr && !skip_offload_; }
+
+  // Set whether to skip offload temporarily
+  static void SetSkipOffload(bool skip) { skip_offload_ = skip; }
+
+  // Set whether to skip offload temporarily asynchronously
+  static void SetSkipOffloadAsync(bool skip);
+
+  // Check if offload is currently skipped
+  static bool skip_offload() { return skip_offload_; }
 
  private:
-  OffloadManager() = default;
+  OffloadManager() : sliding_window_mgr_(std::make_unique<utils::sliding_window::SlidingWindowMgr>()) {}
   ~OffloadManager() = default;
   DISABLE_COPY_AND_ASSIGN(OffloadManager);
 
@@ -80,8 +96,14 @@ class OffloadManager {
   // Shared across all contexts
   inline static bool offload_ready_{false};
 
+  // SlidingWindowMgr for executing offload/load operations in warmup state
+  std::unique_ptr<utils::sliding_window::SlidingWindowMgr> sliding_window_mgr_;
+
   // Current active offload context (set by StartOffload, cleared by EndOffload)
   inline static HyperOffloadContext *current_offload_context_{nullptr};
+
+  // Static flag indicating whether to skip offload temporarily
+  inline static bool skip_offload_{false};
 
   // Mutex for thread safety
   std::mutex mutex_;
