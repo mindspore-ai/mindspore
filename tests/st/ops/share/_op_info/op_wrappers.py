@@ -2267,3 +2267,51 @@ def mint_less_ms(input, other):
 
 def mint_floor_divide_ms(input, other):
     return mint.floor_divide(input, other)
+
+def tensor_bitwise_and_ms(op_input, other):
+    return op_input.bitwise_and(other)
+
+def tensor_bitwise_and_torch(op_input, other):
+    return op_input.bitwise_and(other)
+
+def tensor_bitwise_left_shift_ms(op_input, other):
+    return op_input.bitwise_left_shift(other)
+
+def tensor_bitwise_left_shift_torch(op_input, other):
+    return op_input.bitwise_left_shift(other)
+
+def tensor_bitwise_not_ms(op_input):
+    return op_input.bitwise_not()
+
+def tensor_bitwise_not_torch(op_input):
+    return op_input.bitwise_not()
+
+def tensor_bitwise_or_ms(op_input, other):
+    return op_input.bitwise_or(other)
+
+def tensor_bitwise_or_torch(op_input, other):
+    return op_input.bitwise_or(other)
+
+def tensor_bitwise_right_shift_ms(op_input, other):
+    return op_input.bitwise_right_shift(other)
+
+def tensor_bitwise_right_shift_torch(op_input, other):
+    return op_input.bitwise_right_shift(other)
+
+def tensor_bitwise_xor_ms(op_input, other):
+    return op_input.bitwise_xor(other)
+
+def tensor_bitwise_xor_torch(op_input, other):
+    return op_input.bitwise_xor(other)
+
+def tensor_bmm_ms(op_input, mat2):
+    return op_input.bmm(mat2)
+
+def tensor_bmm_torch(op_input, mat2):
+    return op_input.bmm(mat2)
+
+def tensor_broadcast_to_ms(op_input, shape):
+    return op_input.broadcast_to(shape)
+
+def tensor_broadcast_to_torch(op_input, shape):
+    return op_input.broadcast_to(shape)
