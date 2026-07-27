@@ -382,6 +382,8 @@ class OpsFactory():
         def default_golden_compare(expect, actual, rtol, atol):
             def convert_tensor_to_nparray(tensor):
                 if isinstance(tensor, torch.Tensor):
+                    if tensor.is_conj():
+                        tensor = tensor.resolve_conj()
                     return tensor.float().cpu().detach().numpy() \
                         if tensor.dtype == torch.bfloat16 else tensor.cpu().detach().numpy()
                 if isinstance(tensor, ms.Tensor):

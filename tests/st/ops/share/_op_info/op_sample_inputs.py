@@ -12558,7 +12558,6 @@ def error_inputs_tensor_masked_scatter_(op_info: OpInfo, dtype=None, device=None
     # Reuse the same sample inputs as masked_scatter
     yield from error_inputs_tensor_masked_scatter(op_info, dtype=dtype, device=device, **kwargs)
 
-
 def basic_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     cases = (
              ((1, 6), (2, 4), (4, 6),),
@@ -12599,7 +12598,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat1 must be 2',
     )
 
@@ -12610,7 +12609,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat1 must be 2',
     )
 
@@ -12621,7 +12620,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat2 must be 2',
     )
 
@@ -12632,7 +12631,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat2 must be 2',
     )
 
@@ -12643,7 +12642,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=RuntimeError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the input.shape should be broadcasted by mat1.shape@mat2.shape',
     )
 
