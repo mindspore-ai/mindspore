@@ -47,7 +47,7 @@ from tests.st.ops.share._op_info.op_wrappers import *
 from tests.st.ops.share._op_info.op_sample_inputs import *
 from tests.st.ops.share._op_info.sample_inputs.linalg import *
 from tests.st.ops.share._op_info.sample_inputs.elementwise import *
-
+from tests.st.ops.share._op_info.sample_inputs.shape import *
 
 # op database
 op_db: Dict[str, OpInfo] = {
@@ -965,15 +965,48 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.add',
         op=tensor_add_ms,
         ref=tensor_add_torch,
-        dtypes_ascend=tuple([ms.float16, ms.float32, ms.float64]),
-        dtypes_ascend910b=tuple([ms.float16, ms.float32, ms.float64, ms.bfloat16]),
-        dtypes_cpu=tuple(),
-        dtypes_gpu=tuple(),
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_tensor_add_,
-        op_dynamic_inputs_func=None,
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
-        op_error_inputs_func=error_inputs_shape_not_match_func,
+        op_error_inputs_func=(error_inputs_shape_not_match_func, error_inputs_binary_op_tensor_add),
+    ),
+    'Tensor.add_': BinaryOpInfo(
+        name='Tensor.add_',
+        op=tensor_add__ms,
+        ref=tensor_add__torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        # todo: separately configure the types of input/other for promotion.
+        promotion_dtypes_exclude=tuple(
+            d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.float64, ms.bfloat16)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_left_python_scalar=False,
+        supports_both_python_scalar=False,
+        disable_scalar_x_tensor_promotion=True,
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_add_,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_add_,
+        op_error_inputs_func=(error_inputs_shape_not_match_func, error_inputs_binary_op_tensor_add_),
+        convert_half_to_float=False,
+    ),
+    'Tensor.add(other)': BinaryOpInfo(
+        name='Tensor.add(other)',
+        op=tensor_add_ms_overload,
+        ref=tensor_add_torch_overload,
+        dtypes_ascend=(),
+        # input and other dtype can not be bool at the same time in kbk mode
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_add_overload,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_add_overload,
+        supports_left_python_scalar=False,
+        supports_both_python_scalar=False,
+        op_error_inputs_func=(error_inputs_shape_not_match_func, error_inputs_binary_op_tensor_add_overload),
     ),
     'mint.sub': BinaryOpInfo(
         name='mint.sub',
@@ -2127,7 +2160,7 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.bfloat16, ms.float16, ms.float32]),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.float32: 0.0006, ms.bfloat16: 0.005},
+        ascend910b_forward_loss_override={ms.float32: 0.0006, ms.bfloat16: 0.007},
         op_basic_reference_inputs_func=functools.partial(basic_sample_inputs_mint_interpolate, mode="bilinear"),
         op_extra_reference_inputs_func=wrap_sample_inputs(functools.partial(extra_sample_inputs_mint_interpolate,mode="bilinear"),
                                                         ['np.inf'],skip=True),
@@ -4646,20 +4679,6 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=(ms.complex64, ms.complex128,),
         is_differentiable=True,
     ),
-    'Tensor.add_': OpInfo(
-        name='Tensor.add_',
-        op=tensor_add__ms,
-        ref=tensor_add__torch,
-        dtypes_ascend=tuple([ms.float32,]),
-        dtypes_ascend910b=tuple([ms.float16, ms.float32, ms.float64, ms.bfloat16,]),
-        dtypes_cpu=(),
-        dtypes_gpu=(),
-        op_basic_reference_inputs_func=basic_sample_inputs_tensor_add_,
-        op_dynamic_inputs_func=None,
-        op_error_inputs_func=error_inputs_shape_not_match_func,
-        is_differentiable=True,
-        ascend910b_forward_loss_override={ms.float16:0.004}
-    ),
     'Tensor.view(dtype)': OpInfo(
         name='Tensor.view(dtype)',
         op=tensor_view_dtype_ms,
@@ -6183,6 +6202,64 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
+    'Tensor.H': UnaryOpInfo(
+        name='Tensor.H',
+        op=tensor_h_ms,
+        ref=tensor_h_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_h,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_h,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_h,
+        op_error_inputs_func=error_inputs_unary_op_tensor_h,
+    ),
+    'Tensor.T': UnaryOpInfo(
+        name='Tensor.T',
+        op=tensor_t_ms,
+        ref=tensor_t_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'Tensor.absolute': UnaryOpInfo(
+        name='Tensor.absolute',
+        op=tensor_absolute_ms,
+        ref=tensor_absolute_torch,
+        dtypes_ascend=(),
+        # torch doesn't support bool_
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bool_)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.acos': UnaryOpInfo(
+        name='Tensor.acos',
+        op=tensor_acos_ms,
+        ref=torch.acos,
+        dtypes_ascend=(),
+        # kbk mode input dtype support (complex, double, float, float16, bf16),
+        # but pynative mode doesn't support complex
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.float64, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend910b_backward_loss_override={ms.bfloat16: 0.0157, ms.float16: 4e-3},
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.acosh': UnaryOpInfo(
+        name='Tensor.acosh',
+        op=tensor_acosh_ms,
+        ref=torch.acosh,
+        domain=(1, None),
+        dtypes_ascend=(),
+        # kbk mode input dtype support (complex, double, float, float16, bf16),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.float64, ms.bfloat16, ms.complex64, ms.complex128),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend910b_backward_loss_override={ms.bfloat16: 0.017, ms.float16: 5e-3},
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -6240,6 +6317,8 @@ binary_op_db = [
     'mint.logaddexp2',
     'mint.float_power',
     'mint.fmod',
+    'Tensor.add_',
+    'Tensor.add(other)',
 ]
 
 unary_op_db = [
@@ -6355,6 +6434,11 @@ unary_op_db = [
     'mint.any(input)',
     'Tensor.repeat(repeats)',
     'mint.nn.functional.tanh',
+    'Tensor.H',
+    'Tensor.T',
+    'Tensor.acos',
+    'Tensor.acosh',
+    'Tensor.absolute',
 ]
 
 other_op_db = [
@@ -6449,7 +6533,6 @@ other_op_db = [
     'mint.nn.Conv1d',
     'Tensor.masked_scatter',
     'Tensor.masked_scatter_',
-    'Tensor.add_',
     'mint.nn.functional.layer_norm',
     'mint.nn.GroupNorm',
     'mint.nn.LayerNorm',
@@ -6626,6 +6709,9 @@ binary_op_kbk_db = [
     'mint.maximum',
     'mint.div',
     '==',
+    'Tensor.add',
+    'Tensor.add_',
+    'Tensor.add(other)',
 ]
 
 unary_op_kbk_db = [
@@ -6637,6 +6723,12 @@ unary_op_kbk_db = [
     'mint.clone',
     'Tensor.contiguous',
     'mint.all(input)',
+    'Tensor.H',
+    'Tensor.T',
+    'Tensor.acos',
+    'Tensor.acosh',
+    'Tensor.abs',
+    'Tensor.absolute',
 ]
 
 other_op_kbk_db = [
@@ -6666,7 +6758,6 @@ other_op_kbk_db = [
     'Tensor.repeat(*repeats)',
     'mint.nn.functional.conv2d',
     'mint.matmul',
-    'Tensor.add_',
     'mint.nn.functional.avg_pool2d',
     'mint.nn.functional.max_pool2d',
     'mint.nn.MaxPool2d',

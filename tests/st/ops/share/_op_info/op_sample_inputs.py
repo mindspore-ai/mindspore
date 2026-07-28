@@ -63,6 +63,7 @@ from tests.st.ops.share._op_info.op_common import (
     op_dtype_need_convert,
     dtypes_extra_values
 )
+from tests.st.ops.share._op_info.sample_inputs.common import _small_large_values
 
 
 # ====================================custom sample inputs functions===================================
@@ -578,23 +579,6 @@ def basic_sample_inputs_mint_repeat_interleave(
         op_kwargs={'dim': 0},
         sample_name=f"{op_info.name}_1d_rand_repeats_tensor_dim0"
     )
-
-def _small_large_values(dtype):
-    values = []
-    if dtype == ms.uint8:
-        values = dtypes_extra_values['_uint_small_values']
-    elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
-        values = dtypes_extra_values['_int_small_values'] + dtypes_extra_values['_int_large_values']
-    else:
-        if dtype in [ms.float16]:
-            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp16_large_values']
-        else:
-            float_vals = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
-            if dtype.is_complex:
-                values = [complex(r, i) for r, i in itertools.product(float_vals, float_vals)]
-            else:
-                values = float_vals
-    return values
 
 def extra_sample_inputs_for_shape_func(
     op_info: OpInfo,
@@ -2408,10 +2392,11 @@ def basic_sample_inputs_tensor_add_(op_info: OpInfo, dtype=None, device=None, **
     _input = make_arg((50,))
     _other = make_arg((1,))
     if dtype is not ms.bool_:
+        alpha = -2.5 if (dtype.is_floating_point or dtype.is_complex) else -2
         yield OpSampleInput(
             op_input=_input,
             op_args=(_other,),
-            op_kwargs={'alpha': -2.5},
+            op_kwargs={'alpha': alpha},
             sample_name=op_info.name
         )
     else:
