@@ -12,7 +12,7 @@ mindspore.numpy.mean
 
     参数：
         - **a** (Tensor) - 包含要计算均值的数字的输入Tensor。如果 `a` 不是数组，将尝试进行转换。
-        - **axis** (Union[int, tuple(int), None], 可选) - 计算均值的所沿的一个或多个轴。默认计算展平数组的均值。如果这是一个整数tuple，将在多个轴上计算均值。默认值： ``None`` 。
+        - **axis** (Union[int, tuple(int), None], 可选) - 计算均值所沿的一个或多个轴。默认计算展平数组的均值。如果这是一个整数tuple，将在多个轴上计算均值。默认值： ``None`` 。
         - **keepdims** (bool, 可选) - 如果设置为 ``True``，减少的轴在结果中保留为大小为1的维度。若使用此选项，结果会广播到和输入Tensor同一个维度数。默认值： ``False`` 。
         - **dtype** (mindspore.dtype, 可选) - 默认值： ``None`` 。覆盖输出Tensor的dtype。
 
