@@ -363,7 +363,23 @@ class AscendEnvChecker(EnvChecker):
         cust_aicore_path = os.path.realpath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicore_ops"))
         cust_ascendc_ascend910b_path = os.path.realpath(
             os.path.join(curr_path, "../lib/plugin/ascend/custom_ascendc_910b"))
-        paths_to_append = [cust_ascendc_ascend910b_path, cust_aicore_path, cust_aicpu_path]
+        # discover user vendor packages from opp/vendors/config.ini, put them first (vendor priority)
+        # aligning dynamic-graph nnopbase tiling with static-graph FE.
+        vendor_roots = []
+        if self.ascend_opp_path:
+            _cfg = os.path.join(self.ascend_opp_path, 'vendors', 'config.ini')
+            if os.path.exists(_cfg):
+                try:
+                    with open(_cfg, encoding='utf-8') as _f:
+                        for _line in _f:
+                            _line = _line.strip()
+                            if _line.startswith('load_priority='):
+                                vendor_roots = [os.path.join(self.ascend_opp_path, 'vendors', _v.strip())
+                                                for _v in _line.split('=', 1)[1].split(',') if _v.strip()]
+                                break
+                except OSError as e:
+                    logger.debug("Failed to read vendor config.ini from %s: %s", _cfg, e)
+        paths_to_append = vendor_roots + [cust_ascendc_ascend910b_path, cust_aicore_path, cust_aicpu_path]
         existing_path_str = os.environ.get('ASCEND_CUSTOM_OPP_PATH', '')
         existing_paths = [p for p in existing_path_str.split(':') if p]
         new_paths = [p for p in paths_to_append if p not in existing_paths]
