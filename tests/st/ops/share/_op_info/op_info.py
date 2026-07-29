@@ -69,6 +69,7 @@ class OpInfo:
         domain: The [low, high) domain of the operator.
         exclude_value: values to exclude during generation, Default is None, which means no values to exclude.
         is_differentiable: Whether gradients are expected/computed for the op.
+        is_dynamic_differentiable: whether gradients are expected/computed for the dynamic op.
         skip_forward_comparison: Whether to skip forward comparison with the reference implementation.
             This is useful for inherently non-deterministic ops (e.g., random sampling). When enabled,
             the forward will still be executed (to catch runtime errors), but outputs will not be compared.
@@ -123,6 +124,7 @@ class OpInfo:
     domain: Optional[tuple] = None
     exclude_value: Optional[tuple] = None
     is_differentiable: Optional[bool] = True
+    is_dynamic_differentiable: Optional[bool] = True
     # skip forward comparison against reference
     skip_forward_comparison: Optional[bool] = False
     skip_dynamic_rank_backward: Optional[bool] = False

@@ -20,7 +20,6 @@ tensor/nn methods to a uniform call signature used by the OpInfo framework.
 """
 import mindspore as ms
 from mindspore import nn, mint
-import numpy as np
 from mindspore.common.parameter import Parameter
 from mindspore.experimental import optim
 import torch
@@ -2056,6 +2055,93 @@ def mint_linspace_torch(op_input, start, end, dtype=None):
     else:
         steps = op_input.shape[0]
     return torch.linspace(start, end, steps, dtype=dtype)
+
+def mint_stack_func_with_flatten_inputs(*args):
+    """A kwargs-free wrapper for mint.stack used by ms.grad in tests.
+
+    Note:
+        OpSampleInput.convert_to_args() expands op_input lists/tuples into multiple
+        positional arguments. For mint.stack, the first argument should be a single
+        sequence of tensors, so this wrapper repacks positional tensor args into
+        a list and treats an optional trailing int as dim.
+    """
+    if not args:
+        raise ValueError("mint_stack_func_with_flatten_inputs expects at least one argument.")
+    dim = 0
+    tensors = args
+    # In our tests, dim is passed as a Python int when present.
+    if isinstance(args[-1], int):
+        dim = args[-1]
+        tensors = args[:-1]
+    return mint.stack(list(tensors), dim=dim)
+
+
+def mint_cat_func_with_flatten_inputs(*args):
+    """A kwargs-free wrapper for mint.cat used by ms.grad in tests.
+
+    Note:
+        OpSampleInput.convert_to_args() expands op_input tuples/lists into multiple
+        positional arguments. For mint.cat, the first argument should be a single
+        sequence of tensors, so this wrapper repacks positional tensor args into
+        a tuple and treats an optional trailing int as dim.
+    """
+    if not args:
+        raise ValueError("mint_cat_func_with_flatten_inputs expects at least one argument.")
+    dim = 0
+    tensors = args
+    # In our tests, dim is passed as a Python int when present.
+    if isinstance(args[-1], int):
+        dim = args[-1]
+        tensors = args[:-1]
+    return mint.cat(tuple(tensors), dim=dim)
+
+def mint_nn_adaptiveavgpool1d(op_input, output_size):
+    return mint.nn.AdaptiveAvgPool1d(output_size)(op_input)
+
+def torch_nn_adaptiveavgpool1d(op_input, output_size):
+    return torch.nn.AdaptiveAvgPool1d(output_size)(op_input)
+
+def mint_nn_constantpad1d(input,padding,value):
+    return mint.nn.ConstantPad1d(padding, value)(input)
+
+def torch_nn_constantpad1d(input,padding,value):
+    return torch.nn.ConstantPad1d(padding, value)(input)
+
+def ms_tensor_scatter(input, dim, index, src):
+    return input.scatter(dim, index, src)
+
+def torch_tensor_scatter(input, dim, index, src):
+    return input.scatter(dim, index, src)
+
+def mint_bernoulli(input, generator=None):
+    return mint.bernoulli(input, generator=generator)
+
+def torch_bernoulli(input, generator=None):
+    return torch.bernoulli(input, generator=generator)
+
+def tensor_mint_remainder(input, other):
+    return mint.remainder(input, other)
+
+def tensor_torch_remainder(input, other):
+    return torch.remainder(input, other)
+
+def tensor_mint_less(input, other):
+    return mint.less(input, other)
+
+def tensor_torch_less(input, other):
+    return torch.less(input, other)
+
+def tensor_mint_lt(input, other):
+    return mint.lt(input, other)
+
+def tensor_torch_lt(input, other):
+    return torch.lt(input, other)
+
+def tensor_mint_floor_divide(input, other):
+    return mint.floor_divide(input, other)
+
+def tensor_torch_floor_divide(input, other):
+    return torch.floor_divide(input, other)
 
 def tensor_h_ms(op_input):
     return op_input.H
