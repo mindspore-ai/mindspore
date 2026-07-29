@@ -22,6 +22,7 @@ This module provides:
 # pylint: disable=R1705
 import math
 import torch
+import re
 import numpy as np
 import mindspore as ms
 from mindspore.graph.api import _pynative_executor
@@ -601,7 +602,7 @@ def wrap_sample_inputs(input_func, sample_names, *, skip=False,
     def wrapped_func(op_info, dtype=None, device=None, **kwargs):
         device_key = _get_device_key(device)
         for sample_input in input_func(op_info, dtype, device, **kwargs):
-            is_match = any(name in sample_input.sample_name for name in sample_names)
+            is_match = any(re.search(name, sample_input.sample_name) for name in sample_names)
             if not is_match:
                 yield sample_input
                 continue

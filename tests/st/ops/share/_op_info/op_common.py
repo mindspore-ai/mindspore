@@ -21,6 +21,7 @@ This module provides:
 """
 import torch
 import numpy as np
+import itertools
 import mindspore as ms
 import math
 
@@ -169,3 +170,24 @@ def get_default_loss(dtype):
     if dtype in (ms.bfloat16, torch.bfloat16):
         return 4e-3
     return 0
+
+def small_large_values(dtype, exclude_values=None):
+    values = []
+    if dtype == ms.uint8:
+        values = dtypes_extra_values['_uint_small_values']
+    elif dtype in [ms.int8, ms.int16, ms.int32, ms.int64]:
+        values = dtypes_extra_values['_int_small_values'] + dtypes_extra_values['_int_large_values']
+    else:
+        if dtype in [ms.float16]:
+            values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp16_large_values']
+        else:
+            float_vals = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
+            if dtype.is_complex:
+                values = [complex(r, i) for r, i in itertools.product(float_vals, float_vals)]
+            else:
+                values = float_vals
+    if exclude_values:
+        if not isinstance(exclude_values, (tuple, list, set)):
+            exclude_values = [exclude_values]
+        values = [d for d in values if d not in exclude_values]
+    return values

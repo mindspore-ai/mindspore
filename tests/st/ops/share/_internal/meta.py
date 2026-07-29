@@ -22,6 +22,7 @@ This module provides:
 - Comparison routines: static and dynamic-shape forward/grad parity checks
   against reference backends.
 """
+import copy
 # pylint: disable=R1705
 import warnings
 import torch
@@ -73,7 +74,8 @@ class OpsFactory():
             op_info: OpInfo,
             **kwargs,
     ):
-        self.op_info = op_info
+        # some attras may be changed to OpInfo in the sample creation process, so using deepcopy
+        self.op_info = copy.copy(op_info)
         # inner params
         self._douts = None
         self._device = None
@@ -311,8 +313,14 @@ class OpsFactory():
                     ms.context.set_context(mode=ms.PYNATIVE_MODE)
                 else:
                     raise ValueError(f"Invalid mode: {mode}, expected: 'kbk', 'ge', 'pynative'.")
+                # some samples will take different effects in different modes, so use name to
+                self.op_info.name = self.op_info.name + "_" + mode
             else:
                 ms.context.set_context(mode=mode)
+                if mode == 0:
+                    self.op_info.name = self.op_info.name + "_graph"
+                elif mode == 1:
+                    self.op_info.name = self.op_info.name + "_pynative"
             self._context_mode = mode
         # Ensure dtype list matches current device_target (which might be set outside this factory).
         self._refresh_device_and_supported_dtypes()
@@ -1006,7 +1014,9 @@ class OpsFactory():
             # For dynamic, use ones_like grads; handle multi-output
             if isinstance(outi, (tuple, list)):
                 grad_list = [torch.ones_like(o) for o in outi]
-                torch.autograd.backward(list(outi), grad_tensors=grad_list)
+                tensor_require_grad = [t for t in outi if t.requires_grad]
+                grad_list_filtered = [g for t, g in zip(outi, grad_list) if t.requires_grad]
+                torch.autograd.backward(tensor_require_grad, grad_tensors=grad_list_filtered)
             else:
                 outi_grad = torch.ones_like(outi)
                 outi.backward(gradient=outi_grad)
@@ -1159,7 +1169,8 @@ class OpsFactory():
         self._dynamic_inputs = op_dynamic_inputs
 
         if grad_cmp:
-            if not self.op_info.is_differentiable:
+            #
+            if not self.op_info.is_differentiable or not self.op_info.is_dynamic_differentiable:
                 return
             ms_out = self.grad_mindspore_dynamic_shape_impl()
             pt_out = self.grad_pytorch_dynamic_shape_impl()
