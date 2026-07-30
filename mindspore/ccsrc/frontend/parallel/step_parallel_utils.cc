@@ -602,10 +602,25 @@ std::vector<std::pair<AnfNodePtr, int>> NextNodeUsers(const AnfNodePtr &node) {
   return node_set;
 }
 
+// The result of RedistributionNextNode() is fully determined by the triple
+// (node, get_item_index, make_tuple_index). The search walks along node users and jumps over
+// MakeTuple/TupleGetItem/Depend/Return, so on a DAG the same triple can be reached through many
+// different paths. Without memoization the recursion enumerates paths instead of nodes, which grows
+// exponentially with the number of joins and makes compilation hang on large pipeline-parallel graphs.
+using RedistributionVisitKey = std::pair<const AnfNode *, std::pair<std::vector<int>, int64_t>>;
+using RedistributionVisitSet = std::set<RedistributionVisitKey>;
+
+void RedistributionNextNodeImpl(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
+                                const NodeUsersMap &node_users_map, const std::vector<int> &get_item_index,
+                                int64_t make_tuple_index,
+                                std::vector<std::pair<std::pair<AnfNodePtr, PosPair>, std::vector<int>>> *next_nodes,
+                                RedistributionVisitSet *visited);
+
 void FindFuncGraphNextNode(const CNodePtr &use_cnode, const std::pair<AnfNodePtr, int> &node_pair,
                            const FuncGraphManagerPtr &manager, const NodeUsersMap &node_users_map,
                            const std::vector<int> &get_item_index, int64_t make_tuple_index,
-                           std::vector<std::pair<std::pair<AnfNodePtr, PosPair>, std::vector<int>>> *next_nodes) {
+                           std::vector<std::pair<std::pair<AnfNodePtr, PosPair>, std::vector<int>>> *next_nodes,
+                           RedistributionVisitSet *visited) {
   auto cur_fg = use_cnode->func_graph();
   auto fg = GetValueNode<FuncGraphPtr>(use_cnode->input(0));
   MS_EXCEPTION_IF_NULL(fg);
@@ -634,18 +649,24 @@ void FindFuncGraphNextNode(const CNodePtr &use_cnode, const std::pair<AnfNodePtr
     next_nodes->push_back(std::make_pair(next_node, RemovePlaceholderIdx(get_item_index)));
     return;
   }
-  RedistributionNextNode(param, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+  RedistributionNextNodeImpl(param, manager, node_users_map, get_item_index, make_tuple_index, next_nodes, visited);
   for (const auto &next_node : *next_nodes) {
     auto param_out_index = std::make_shared<ParamOutIndex>(param, index);
     next_node.first.first->set_user_data<ParamOutIndex>(PARAM_OUT_INDEX, param_out_index);
   }
 }
 
-void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
-                            const NodeUsersMap &node_users_map, const std::vector<int> &get_item_index,
-                            int64_t make_tuple_index,
-                            std::vector<std::pair<std::pair<AnfNodePtr, PosPair>, std::vector<int>>> *next_nodes) {
+void RedistributionNextNodeImpl(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
+                                const NodeUsersMap &node_users_map, const std::vector<int> &get_item_index,
+                                int64_t make_tuple_index,
+                                std::vector<std::pair<std::pair<AnfNodePtr, PosPair>, std::vector<int>>> *next_nodes,
+                                RedistributionVisitSet *visited) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(visited);
+  // Skip the states that have already been expanded, they would append exactly the same next_nodes again.
+  if (!visited->insert(std::make_pair(node.get(), std::make_pair(get_item_index, make_tuple_index))).second) {
+    return;
+  }
   if (node_users_map.count(node) == 0) {
     return;
   }
@@ -654,13 +675,14 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
     auto use_cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(use_cnode);
     if (IsValueNode<FuncGraph>(use_cnode->input(0))) {
-      FindFuncGraphNextNode(use_cnode, node_pair, manager, node_users_map, get_item_index, make_tuple_index,
-                            next_nodes);
+      FindFuncGraphNextNode(use_cnode, node_pair, manager, node_users_map, get_item_index, make_tuple_index, next_nodes,
+                            visited);
       continue;
     }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimMakeTuple)) {
       make_tuple_index = node_pair.second - 1;
-      RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+      RedistributionNextNodeImpl(use_cnode, manager, node_users_map, get_item_index, make_tuple_index, next_nodes,
+                                 visited);
       continue;
     }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(use_cnode, prim::kPrimListGetItem)) {
@@ -672,7 +694,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       std::vector<int> new_get_item_index;
       std::copy(get_item_index.begin(), get_item_index.end(), std::back_inserter(new_get_item_index));
       new_get_item_index.push_back(temp);
-      RedistributionNextNode(use_cnode, manager, node_users_map, new_get_item_index, -1, next_nodes);
+      RedistributionNextNodeImpl(use_cnode, manager, node_users_map, new_get_item_index, -1, next_nodes, visited);
       continue;
     }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimReturn)) {
@@ -684,7 +706,8 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
         if (IsWhileGraph(fg, fg) && fg_use.first->second != SWITCH_LAST_INPUT_INDEX) {
           continue;
         }
-        RedistributionNextNode(fg_node, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+        RedistributionNextNodeImpl(fg_node, manager, node_users_map, get_item_index, make_tuple_index, next_nodes,
+                                   visited);
       }
     }
     // depend, auto monad and control flow op don't need to jump over
@@ -696,8 +719,17 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       continue;
     }
     // search recursively
-    RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+    RedistributionNextNodeImpl(use_cnode, manager, node_users_map, get_item_index, make_tuple_index, next_nodes,
+                               visited);
   }
+}
+
+void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
+                            const NodeUsersMap &node_users_map, const std::vector<int> &get_item_index,
+                            int64_t make_tuple_index,
+                            std::vector<std::pair<std::pair<AnfNodePtr, PosPair>, std::vector<int>>> *next_nodes) {
+  RedistributionVisitSet visited;
+  RedistributionNextNodeImpl(node, manager, node_users_map, get_item_index, make_tuple_index, next_nodes, &visited);
 }
 
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
