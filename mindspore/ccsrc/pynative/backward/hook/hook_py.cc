@@ -15,7 +15,9 @@
  */
 
 #include "pynative/backward/hook/hook_py.h"
+#include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <map>
@@ -30,9 +32,68 @@
 
 namespace mindspore::pynative::autograd {
 namespace {
-// For store hook
-uint64_t unique_id_ = 0;
-std::unordered_map<uint64_t, std::weak_ptr<BackwardNode>> hook_id_node_map_;
+class TensorBackwardHookRegistry {
+ public:
+  uint64_t NewHandleId() { return handle_id_.fetch_add(1, std::memory_order_relaxed) + 1; }
+
+  void Register(uint64_t handle_id, const BackwardNodePtr &grad_node) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    hook_id_node_map_.emplace(handle_id, grad_node);
+  }
+
+  BackwardNodePtr Pop(uint64_t handle_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    const auto iter = hook_id_node_map_.find(handle_id);
+    if (iter == hook_id_node_map_.end()) {
+      return nullptr;
+    }
+    auto grad_node = iter->second.lock();
+    hook_id_node_map_.erase(iter);
+    return grad_node;
+  }
+
+  void Erase(uint64_t handle_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    hook_id_node_map_.erase(handle_id);
+  }
+
+  void Clear() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    hook_id_node_map_.clear();
+  }
+
+  size_t Size() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return hook_id_node_map_.size();
+  }
+
+ private:
+  std::atomic<uint64_t> handle_id_{0};
+  mutable std::mutex mutex_;
+  std::unordered_map<uint64_t, std::weak_ptr<BackwardNode>> hook_id_node_map_;
+};
+
+const std::shared_ptr<TensorBackwardHookRegistry> &GetTensorBackwardHookRegistry() {
+  static const auto registry = std::make_shared<TensorBackwardHookRegistry>();
+  return registry;
+}
+
+class RegisteredPyTensorBackwardNodePreHook final : public PyTensorBackwardNodePreHook {
+ public:
+  RegisteredPyTensorBackwardNodePreHook(const py::function &hook_fn, size_t output_idx, uint64_t handle_id,
+                                        const std::shared_ptr<TensorBackwardHookRegistry> &registry)
+      : PyTensorBackwardNodePreHook(hook_fn, output_idx), handle_id_(handle_id), registry_(registry) {}
+
+  ~RegisteredPyTensorBackwardNodePreHook() override {
+    if (auto registry = registry_.lock(); registry != nullptr) {
+      registry->Erase(handle_id_);
+    }
+  }
+
+ private:
+  uint64_t handle_id_;
+  std::weak_ptr<TensorBackwardHookRegistry> registry_;
+};
 
 BackwardNodePtr BuildAutoGradMeta(const tensor::TensorPtr &tensor) {
   runtime::Pipeline::Get().WaitFrontend();
@@ -80,15 +141,16 @@ void PyTensorBackwardNodePreHook::operator()(ValuePtrList *grad) {
 }
 
 uint64_t RegisterHook::RegisterTensorBackwardHook(const tensor::TensorPtr &tensor, const py::function &hook) {
-  ++unique_id_;
+  const auto &registry = GetTensorBackwardHookRegistry();
+  const auto handle_id = registry->NewHandleId();
   MS_LOG(DEBUG) << "Register hook " << py::str(py::cast<py::object>(hook)).cast<std::string>() << " for tensor "
-                << tensor->id() << " with handle " << unique_id_;
+                << tensor->id() << " with handle " << handle_id;
 
   auto grad_node = BuildAutoGradMeta(tensor);
-  grad_node->AddPyTensorHook(
-    unique_id_, std::make_unique<PyTensorBackwardNodePreHook>(hook, tensor->auto_grad_meta_data()->output_index()));
-  hook_id_node_map_.emplace(unique_id_, grad_node);
-  return unique_id_;
+  grad_node->AddPyTensorHook(handle_id, std::make_unique<RegisteredPyTensorBackwardNodePreHook>(
+                                          hook, tensor->auto_grad_meta_data()->output_index(), handle_id, registry));
+  registry->Register(handle_id, grad_node);
+  return handle_id;
 }
 
 void RegisterHook::RemoveTensorBackwardHook(uint64_t handle_id) {
@@ -97,11 +159,8 @@ void RegisterHook::RemoveTensorBackwardHook(uint64_t handle_id) {
   runtime::Pipeline::Get().WaitFrontend();
   runtime::Pipeline::Get().WaitBpropStage();
 
-  if (const auto iter = hook_id_node_map_.find(handle_id); iter != hook_id_node_map_.end()) {
-    if (auto grad_node = iter->second.lock(); grad_node != nullptr) {
-      grad_node->RemovePyTensorHook(handle_id);
-    }
-    hook_id_node_map_.erase(iter);
+  if (auto grad_node = GetTensorBackwardHookRegistry()->Pop(handle_id); grad_node != nullptr) {
+    grad_node->RemovePyTensorHook(handle_id);
   }
 }
 
@@ -140,7 +199,9 @@ void RegisterHook::RemoveCppTensorBackwardHook(const tensor::TensorPtr &tensor, 
   }
 }
 
-void RegisterHook::ClearHookMap() { hook_id_node_map_.clear(); }
+void RegisterHook::ClearHookMap() { GetTensorBackwardHookRegistry()->Clear(); }
+
+size_t RegisterHook::GetTensorBackwardHookMapSize() { return GetTensorBackwardHookRegistry()->Size(); }
 
 struct HookAdapterRegister {
   HookAdapterRegister() {
