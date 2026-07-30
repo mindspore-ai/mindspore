@@ -23,6 +23,7 @@ This module provides:
 import functools
 import itertools
 import warnings
+import re
 import numpy as np
 import mindspore as ms
 from mindspore import mutable
@@ -148,6 +149,8 @@ class OpInfo:
     not_support_dtypes:Optional[tuple] = None
     customize_op_func_for_error_scene: Optional[Callable] = None
     not_support_dtypes_check_in_op_error_func: Optional[bool] = False
+    support_dynamic_shape: Optional[bool] = True
+    support_dynamic_rank: Optional[bool] = True
 
     def __post_init__(self):
         if not self.dtypes_intersection:
@@ -677,7 +680,8 @@ def dynamic_inputs_binary_op_common_func(
         Generator[OpDynamicInput]: Dynamic compile-time and runtime inputs.
     """
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
-    if not kwargs.get("only_dynamic_rank", False):
+
+    if op_info.support_dynamic_shape and not kwargs.get("only_dynamic_rank", False):
         # dyncamic shape
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
@@ -705,7 +709,7 @@ def dynamic_inputs_binary_op_common_func(
                 ),
             ),
         )
-    if not kwargs.get("only_dynamic_shape", False):
+    if op_info.support_dynamic_rank and not kwargs.get("only_dynamic_shape", False):
         # dyncamic rank
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
@@ -1829,14 +1833,54 @@ def error_inputs_reduction_op_common_func(op_error_inputs_func = None):
                 op_sample_input=OpSampleInput(
                     op_input=make_tensor(shape=(S,S,S), dtype=dtype, device=device),
                     op_args=(),
-                    op_kwargs={"dim":3},
-                    sample_name=f"{op_info.name}_error_dim_exceed",
+                    op_kwargs={"dim":3} if 'axis' not in  op_info.name else {"axis": 3},
+                    sample_name=f"{op_info.name}_error_{'dim' if 'axis' not in  op_info.name else 'axis' }_exceed",
                 ),
                 op_error_type=ValueError,
-                op_error_info=f'dim exceed max shape size: {op_info.name}.',
+                op_error_info=f"{'dim' if 'axis' not in  op_info.name else 'axis'} "
+                              f"exceed max shape size: {op_info.name}.",
             )
 
     return _error_inputs_reduction_op_func
+
+def convert_params_name(sample_input, keep_dim_paraname=None, args_param=None):
+    def _convert(obj):
+        op_kwargs = {}
+
+        keepdimname = re.search(r'\((.*?)\)', obj.sample_name).group(1).split(',')[
+            1].strip() if keep_dim_paraname is None else keep_dim_paraname
+
+        if 'dim' in obj.op_kwargs.keys():
+            op_kwargs['axis'] = obj.op_kwargs['dim']
+
+        if 'keepdim' in obj.op_kwargs.keys():
+            op_kwargs[keepdimname] = obj.op_kwargs['keepdim']
+
+        obj.op_kwargs = op_kwargs
+        if args_param:
+            obj.op_args = args_param
+        obj.sample_name = obj.sample_name.replace('_dim', '_axis').replace('_keepdim', '_' + keepdimname)
+        return obj
+
+    if sample_input.__class__.__name__ == 'OpDynamicInput':
+        sample_input.op_compile_input = _convert(sample_input.op_compile_input)
+        op_running_input_tuple = ()
+        for obj in sample_input.op_running_inputs:
+            op_running_input_tuple += (_convert(obj),)
+        sample_input.op_running_inputs = op_running_input_tuple
+        yield sample_input
+    else:
+        yield _convert(sample_input)
+
+def convert_func(func, is_convert_params_name):
+
+    def _convert_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+        for sample_input in func(op_info=op_info, dtype=dtype, device=device, **kwargs):
+            yield from convert_params_name(sample_input)
+
+    if is_convert_params_name:
+        return _convert_func
+    return func
 
 class ReductionOpInfo(OpInfo):
     """OpInfo for reduction operators.
@@ -1854,6 +1898,7 @@ class ReductionOpInfo(OpInfo):
             op_extra_reference_inputs_func: Optional[Callable] = extra_reference_inputs_reduction_op_common_func,
             op_dynamic_inputs_func: Optional[Callable] = dynamic_inputs_reduction_op_common_func,
             op_error_inputs_func: Optional[Callable] = None,
+            is_convert_params_name: bool = False,
             supports_multiple_dims: bool = True,
             **kwargs,
     ):
@@ -1866,3 +1911,6 @@ class ReductionOpInfo(OpInfo):
         )
         self.supports_multiple_dims = supports_multiple_dims
         self.op_error_inputs_func = error_inputs_reduction_op_common_func(op_error_inputs_func)
+        self.op_basic_reference_inputs_func = convert_func(op_basic_reference_inputs_func, is_convert_params_name)
+        self.op_extra_reference_inputs_func = convert_func(op_extra_reference_inputs_func, is_convert_params_name)
+        self.op_dynamic_inputs_func = convert_func(op_dynamic_inputs_func, is_convert_params_name)

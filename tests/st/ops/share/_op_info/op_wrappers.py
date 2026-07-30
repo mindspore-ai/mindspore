@@ -2174,3 +2174,96 @@ def tensor_add_ms_overload(op_input, other):
 
 def tensor_add_torch_overload(op_input, other):
     return op_input.add(other)
+
+def tensor_arccos_ms(op_input):
+    return op_input.arccos()
+
+def tensor_arccos_torch(op_input):
+    return op_input.arccos()
+
+def tensor_any_ms(op_input, dim=None, keepdim=False):
+    if dim==None:
+        return op_input.any()
+    return op_input.any(dim=dim, keepdim=keepdim)
+
+def tensor_any_torch(op_input, dim=None, keepdim=False):
+    if dim==None:
+        return op_input.any()
+    return op_input.any(dim=dim, keepdim=keepdim)
+
+def tensor_any_ms_override(op_input, axis=None, keep_dims=False):
+    if axis==None:
+        return op_input.any()
+    return op_input.any(axis=axis, keep_dims=keep_dims)
+
+def tensor_any_torch_override(op_input, axis=None, keep_dims=False):
+    if axis==None:
+        return op_input.any()
+    return op_input.any(axis=axis, keepdim=keep_dims)
+
+def tensor_angle_ms(op_input):
+    return op_input.angle()
+
+def tensor_angle_torch(op_input):
+    return op_input.angle()
+
+def tensor_aminmax_ms(op_input, axis=0, keepdims=False):
+    return op_input.aminmax(axis=axis, keepdims=keepdims)
+
+def tensor_aminmax_torch(op_input, axis=0, keepdims=False):
+    return op_input.aminmax(axis=axis, keepdims=keepdims)
+
+def tensor_amin_ms(op_input, is_kbk=False, axis=None, keepdims=False):
+    if is_kbk:
+        return op_input.amin(axis=axis, keep_dims=keepdims)
+    return op_input.amin(axis=axis, keepdims=keepdims)
+
+def tensor_amin_torch(op_input, is_kbk, axis=None, keepdims=False):
+    return op_input.amin(axis=axis, keepdims=keepdims)
+
+def tensor_amax_ms(op_input, is_kbk=False, axis=None, keepdims=False):
+    if is_kbk:
+        return op_input.amax(axis=axis, keep_dims=keepdims)
+    return op_input.amax(axis=axis, keepdims=keepdims)
+
+def tensor_amax_torch(op_input, is_kbk, axis=None, keepdims=False):
+    return op_input.amax(axis=axis, keepdims=keepdims)
+
+def tensor_allclose_ms(op_input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
+    return ms.Tensor(op_input.allclose(other, rtol=rtol, atol=atol, equal_nan=equal_nan))
+
+def tensor_allclose_torch(op_input, other, rtol=1e-05, atol=1e-08, equal_nan=False ):
+    return torch.tensor(op_input.allclose(other, rtol=rtol, atol=atol, equal_nan=equal_nan))
+
+#torch not support dim=None
+def tensor_all_ms(op_input, dim=None, keepdim=False):
+    if dim == None:
+        return op_input.all()
+    return op_input.all(dim=dim, keepdim=keepdim)
+
+def tensor_all_torch(op_input, dim=None, keepdim=False):
+    if dim == None:
+        return op_input.all()
+    return op_input.all(dim=dim, keepdim=keepdim)
+
+def tensor_all_ms_override(op_input, axis=None, keep_dims=False):
+    if axis == None:
+        return op_input.all()
+    return op_input.all(axis=axis, keep_dims=keep_dims)
+
+def tensor_all_torch_override(op_input, axis=None, keep_dims=False):
+    if axis == None:
+        return op_input.all()
+    return op_input.all(axis=axis, keepdims=keep_dims)
+
+def mint_remainder_ms(input, other):
+    return mint.remainder(input, other)
+
+def mint_lt_ms(input, other):
+    return mint.lt(input, other)
+
+def mint_less_ms(input, other):
+    return mint.less(input, other)
+
+def mint_floor_divide_ms(input, other):
+    return mint.floor_divide(input, other)

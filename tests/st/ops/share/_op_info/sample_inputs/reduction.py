@@ -32,6 +32,8 @@ from tests.st.ops.share._op_info.op_info import (
     basic_reference_inputs_unary_op_common_func,
     extra_reference_inputs_binary_op_common_func,
     extra_reference_inputs_reduction_op_common_func,
+    dynamic_inputs_reduction_op_common_func,
+    convert_params_name
 )
 from tests.st.ops.share._op_info.sample_inputs.common import make_extra_tensor
 
@@ -1233,3 +1235,18 @@ def error_inputs_mint_cummax(op_info: OpInfo, dtype=None, device=None, **kwargs)
             op_error_type=(TypeError, ValueError),
             op_error_info='other ops mint.cummax error values'
         )
+
+def basic_reference_inputs_tensor_amax_or_amin(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    is_kbk = 'kbk' in op_info.name
+    for sample_name in basic_reference_inputs_reduction_op_common_func(op_info=op_info, dtype=dtype, device=device):
+        yield from convert_params_name(sample_name, args_param=(is_kbk, ))
+
+def extra_reference_inputs_tensor_amax_or_amin(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    is_kbk = 'kbk' in op_info.name
+    for sample_name in extra_reference_inputs_reduction_op_common_func(op_info=op_info, dtype=dtype, device=device):
+        yield from convert_params_name(sample_name, args_param=(is_kbk, ))
+
+def dynamic_reference_inputs_tensor_amax_or_amin(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    is_kbk = 'kbk' in op_info.name
+    for sample_name in dynamic_inputs_reduction_op_common_func(op_info=op_info, dtype=dtype, device=device):
+        yield from convert_params_name(sample_name, args_param=(is_kbk, ))
