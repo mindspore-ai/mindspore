@@ -39,6 +39,8 @@ struct RegisterHook {
   static void RemoveCppTensorBackwardHook(const tensor::TensorPtr &tensor, unsigned hook_id);
 
   static void ClearHookMap();
+  /// \brief Get the tensor backward hook registry size for tests.
+  PYNATIVE_EXPORT static size_t GetTensorBackwardHookMapSize();
 };
 }  // namespace mindspore::pynative::autograd
 #endif  // MINDSPORE_CCSRC_PYBIND_API_IR_HOOK_PY_H_
