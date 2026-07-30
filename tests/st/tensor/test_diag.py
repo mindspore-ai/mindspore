@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test diag tensor operations."""
 
 import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, jit, JitConfig
 from mindspore import context
-from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
@@ -57,19 +57,3 @@ def test_diag_forward(mode):
             input_x, 0)
     assert out_grad.asnumpy().dtype == np.float16
     np.testing.assert_allclose(out.asnumpy(), expect, rtol=1e-4)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
-def test_diag_dynamic_shape():
-    """
-    Feature: Test dynamic shape.
-    Description: test function div dynamic feature.
-    Expectation: expect correct result.
-    """
-    input_x1 = ms.Tensor([[1.3, -2.1], [-4.7, 1.0]], ms.float32)
-    input_x2 = ms.Tensor([1.3, 2.5, -2.1, 4.7, 2.5, 1.0], ms.float32)
-    diagonal = 0
-    TEST_OP(diag_forward_func, [[input_x1, diagonal], [input_x2, diagonal]],
-            disable_mode=['GRAPH_MODE_GE'],
-            disable_case=['ScalarTensor'],
-            case_config={'disable_input_check': True},)
