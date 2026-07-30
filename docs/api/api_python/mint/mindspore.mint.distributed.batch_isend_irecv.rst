@@ -3,7 +3,7 @@ mindspore.mint.distributed.batch_isend_irecv
 
 .. py:function:: mindspore.mint.distributed.batch_isend_irecv(p2p_op_list)
 
-    异步地发送和接收张量。
+    批量地异步发送和接收张量。
 
     .. note::
         - 不同设备中， `p2p_op_list` 中的 `P2POp` 的 ``"isend"`` 和 ``"irecv"`` 应该互相匹配。

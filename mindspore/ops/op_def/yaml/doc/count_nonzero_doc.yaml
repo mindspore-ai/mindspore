@@ -28,15 +28,15 @@ count_nonzero:
             >>> nonzero_num = ops.count_nonzero(input=x, dim=[0, 1])
             >>> print(nonzero_num)
             3
-            >>> # case 2: all value is default.
+            >>> # case 2: all values are default.
             >>> nonzero_num = ops.count_nonzero(input=x)
             >>> print(nonzero_num)
             3
-            >>> # case 3: dim value was specified 0.
+            >>> # case 3: dim value is specified as 0.
             >>> nonzero_num = ops.count_nonzero(input=x, dim=[0,])
             >>> print(nonzero_num)
             [1 2 0]
-            >>> # case 4: dim value was specified 1.
+            >>> # case 4: dim value is specified as 1.
             >>> nonzero_num = ops.count_nonzero(input=x, dim=[1,])
             >>> print(nonzero_num)
             [1 2]

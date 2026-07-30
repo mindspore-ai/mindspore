@@ -22,3 +22,5 @@ mindspore.mint.distributed.get_world_size
 
     .. note::
         .. include:: mindspore.mint.comm_note.rst
+
+        此示例需要运行在8个设备上。

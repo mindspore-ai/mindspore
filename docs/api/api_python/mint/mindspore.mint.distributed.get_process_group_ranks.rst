@@ -3,7 +3,7 @@ mindspore.mint.distributed.get_process_group_ranks
 
 .. py:function:: mindspore.mint.distributed.get_process_group_ranks(group=None)
 
-    获取指定通信组中的进程，并将通信组中的进程编号以列表方式返回。
+    获取指定通信组中的进程编号，并将通信组中的进程编号以列表方式返回。
 
     .. note::
         当前仅支持PyNative模式，不支持Graph模式。
@@ -22,3 +22,5 @@ mindspore.mint.distributed.get_process_group_ranks
 
     .. note::
         .. include:: mindspore.mint.comm_note.rst
+
+        此示例需要运行在4个设备上。

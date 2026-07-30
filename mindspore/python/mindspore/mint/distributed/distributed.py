@@ -179,7 +179,7 @@ class TCPStore:
           which are reserved parameters and invalid settings.
         - The current TCPStore function is limited and only supports scenarios where the key is
           less than 4k and the value is less than 1G. Complex scenarios are to be supported.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         host_name (str): The hostname or IP Address the server store should run on.
@@ -618,7 +618,7 @@ def destroy_process_group(group=None):
     Note:
         - This method isn't supported in GPU and CPU versions of MindSpore.
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -669,7 +669,7 @@ def get_rank(group=None):
 
     Note:
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -727,7 +727,7 @@ def get_world_size(group=None):
 
     Note:
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -881,8 +881,8 @@ def get_backend(group=None):
 
     Note:
         - The backend types include ``"hccl"``, ``"nccl"``, and ``"mccl"``.
-          Currently only support ``"hccl"`` and ``"mccl"``.
-        - Only support PyNative mode, Graph mode is not currently supported.
+          Currently only supports ``"hccl"`` and ``"mccl"``.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on.
@@ -936,7 +936,7 @@ def get_global_rank(group, group_rank):
 
     Note:
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str): The communication group to work on. Normally, the group should
@@ -1004,7 +1004,7 @@ def get_group_rank(group, global_rank):
 
     Note:
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be
@@ -1068,7 +1068,7 @@ def get_process_group_ranks(group=None):
     Gets the ranks of the specific group and returns the process ranks in the communication group as a list.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -1166,12 +1166,12 @@ def _check_output_dtype(output, expected_dtype, op_name):
 
 def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
     """
-    Reduce tensors across all devices in such a way that all deviceswill get the same final result,
+    Reduce tensors across all devices in such a way that all devices will get the same final result,
     returns the tensor which is all reduced.
 
     Note:
         - The tensors must have the same shape and format in all processes of the collection.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The input and output tensor of collective. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -1189,8 +1189,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         when `async_op` is ``False``.
 
     Raises:
-        TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str,
-                   `op` range is illegal or async_op is not bool.
+        TypeError: If the type of the first input parameter is not Tensor, `op` or `group` is not a str,
+            `op` range is illegal, or `async_op` is not bool.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -1215,7 +1215,7 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
         >>>
         >>> init_process_group()
         >>> tensor = Tensor(np.ones([2, 8]).astype(np.float32))
-        >>> output = all_reduce(tensor)
+        >>> all_reduce(tensor)
         >>> print(tensor)
         [[2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]]
@@ -1254,7 +1254,7 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
 
     Note:
         - The tensors must have the same shape and format in all processes of the collection.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         output_tensor (Tensor): The output tensor to be all gathered into tensor. If the number of devices
@@ -1338,7 +1338,7 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
 
     Note:
         - Input tensors must have identical shapes except for the first dimension.
-        - Output tensor's first dimension should equal to the sum of all devices' input first dimensions.
+        - Output tensor's first dimension should be equal to the sum of all devices' input first dimensions.
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
@@ -1425,7 +1425,7 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
 
     Note:
         - The tensors must have the same shape and format in all processes of the collection.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         output (Tensor): The output tensor with the same dtype as `input` with a shape of :math:`(N/rank\_size, *)`.
@@ -1703,7 +1703,7 @@ class P2POp:
 
     Note:
         - The `tensor` will be modified in-place by final result when `op` is ``"irecv"``.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         op (Union[str, function]): The operation type. Either the string ``"isend"`` or ``"irecv"``, or the
@@ -1726,7 +1726,6 @@ class P2POp:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore
         >>> from mindspore.mint.distributed import P2POp, isend, irecv
         >>> from mindspore import Tensor
@@ -1782,8 +1781,8 @@ def batch_isend_irecv(p2p_op_list):
     Note:
         - The ``'isend'`` and ``'irecv'`` of `P2POp` in `p2p_op_list` between ranks need to match each other.
         - `P2POp` in `p2p_op_list` can only use the same communication group.
-        - `tag` of `P2POp` in `p2p_op_list` is not support yet.
-        - `tensor` of `P2POp` in `p2p_op_list` will not be modified by result inplace.
+        - `tag` of `P2POp` in `p2p_op_list` is not supported yet.
+        - `tensor` of `P2POp` in `p2p_op_list` will not be modified by the result in-place.
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
@@ -1794,9 +1793,9 @@ def batch_isend_irecv(p2p_op_list):
 
     Raises:
         TypeError: If `p2p_op_list` is empty or not all elements are of type `P2POp`.
-        TypeError: The group name in `p2p_op_list` are not consistent.
-        TypeError: The `tensor` in `p2p_op_list` are not Tensor.
-        TypeError: The `op` in `p2p_op_list` are not ``'isend'`` or ``'irecv'``.
+        TypeError: The group name in `p2p_op_list` is not consistent.
+        TypeError: The `tensor` in `p2p_op_list` is not Tensor.
+        TypeError: The `op` in `p2p_op_list` is not ``'isend'`` or ``'irecv'``.
 
     Supported Platforms:
         ``Ascend``
@@ -1813,7 +1812,6 @@ def batch_isend_irecv(p2p_op_list):
 
             This example should be run with 2 devices.
 
-        >>> import numpy as np
         >>> import mindspore
         >>> from mindspore.mint.distributed import init_process_group, get_rank, get_world_size
         >>> from mindspore.mint.distributed import batch_isend_irecv, P2POp
@@ -2070,12 +2068,12 @@ def broadcast(tensor, src, group=None, async_op=False):
 
     Note:
         - The tensors must have the same shape and format in all processes of the collection.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): Data to be sent if `src` is the rank of current process,
             and tensor to be used to save received data otherwise.
-        src (int): Specifies the rank (global rank) of the process that broadcast the tensor.
+        src (int): Specifies the rank (global rank) of the process that broadcasts the tensor.
             And only process `src` will broadcast the tensor.
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -2141,25 +2139,25 @@ def broadcast(tensor, src, group=None, async_op=False):
 
 def barrier(group=None, async_op=False, device_ids=None):
     """
-    Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
+    Synchronizes all processes in the specified group. Once the process calls this operation, it will be blocked until
     all processes call this operation. After all processes finish calling the operations, the blocked processes
-    will be woken and continue their task.
+    will be woken up and continue their task.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
-        device_ids (list[int], optional): Currently It is a reserved Parameter.
+        device_ids (list[int], optional): Currently it is a reserved Parameter. Default: ``None`` .
 
     Returns:
         CommHandle. CommHandle is an async work handle, if `async_op` is set to ``True``.
         CommHandle will be ``None``, when `async_op` is ``False``.
 
     Raises:
-        TypeError: `group` is not a str or `async_op` is not a bool.
+        TypeError: If `group` is not a str or `async_op` is not a bool.
         RuntimeError: If backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -2701,11 +2699,11 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
     scatter and gather list of tensor to/from all rank according to input/output tensor list.
 
     Note:
-        - The tensor shape in `output_tensor_list` and `input_tensor_list` should be match across ranks.
+        - The tensor shape in `output_tensor_list` and `input_tensor_list` should match across ranks.
         - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        output_tensor_list (List[Tensor]): List of tensors that indicate the gathered from remote ranks.
+        output_tensor_list (List[Tensor]): List of tensors that indicate the gathered tensors from remote ranks.
         input_tensor_list (List[Tensor]): List of tensors to scatter to the remote rank.
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -2846,13 +2844,13 @@ def all_to_all_single(output,
                       group=None,
                       async_op=False):
     """
-    scatter and gather input with split size to/from all rank, and return result in a single tensor.
+    Scatter and gather input with split size to/from all ranks, and return result in a single tensor.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
-        output (Tensor): The output tensor is gathered concatenated from remote ranks.
+        output (Tensor): The output tensor is gathered and concatenated from remote ranks.
         input (Tensor): The input tensor to be scattered to remote rank.
         output_split_sizes (Union(Tuple(int), List(int)), optional): The output split size at dim 0.
             Default: ``None``, which means equally split by ``world_size``.
@@ -2887,11 +2885,9 @@ def all_to_all_single(output,
             This example should be run with 2 devices.
 
         >>> import numpy as np
-        >>> import mindspore
         >>> from mindspore.mint.distributed import init_process_group, get_rank
         >>> from mindspore.mint.distributed import all_to_all_single
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import zeros
         >>>
         >>> init_process_group()
         >>> this_rank = get_rank()
@@ -2990,8 +2986,8 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
     Raises:
         TypeError: If the type of input `tensor` is not Tensor, `tensor_list` is not Tensor List,
             `group` is not a str or `async_op` is not bool.
-        TypeError: If size of `tensor_list` is not equal to group size。
-        TypeError: If the type or shape of `tensor` not equal to the member of `tensor_list`。
+        TypeError: If size of `tensor_list` is not equal to group size.
+        TypeError: If the type or shape of `tensor` is not equal to the member of `tensor_list`.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -3010,7 +3006,6 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
             This example should be run with 2 devices.
 
         >>> import numpy as np
-        >>> import mindspore as ms
         >>> from mindspore.mint.distributed import init_process_group
         >>> from mindspore.mint.distributed import all_gather
         >>> from mindspore import Tensor
@@ -3245,12 +3240,12 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
         - Only the tensor in process `dst` (global rank) will keep the gathered tensor. The other process
           will keep a tensor list which has no mathematical meaning.
         - The tensors must have the same shape and format in all processes of the collection.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The tensor to be gathered.
         gather_list (list[Tensor]): List of same-sized tensors to use for gathered data.
-        dst (int, optional): Specifies the rank (global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank (global rank) of the process that receives the tensor.
             And only process `dst` will receive the gathered tensor. Default: ``0`` .
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -3283,8 +3278,6 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
             This example should be run with 2 devices.
 
         >>> import numpy as np
-        >>> import mindspore as ms
-        >>> import mindspore.nn as nn
         >>> from mindspore.mint.distributed import init_process_group, gather
         >>> from mindspore import Tensor
         >>> # Launch 2 processes.
@@ -3438,11 +3431,11 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
 
 def gather_object(obj, object_gather_list=None, dst=0, group=None):
     r"""
-    Gathers python objects from the whole group in a single process.
+    Gathers Python objects from the whole group in a single process.
 
     Note:
         - Similar to :func:`mindspore.mint.distributed.gather`, but Python objects can be passed in.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     .. warning::
         This interface will implicitly use the pickle module, which is not secure. The core reason
@@ -3451,11 +3444,11 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
         of the data used by the interface on their own.
 
     Args:
-        obj (Any): The python objects to be gathered.
-        object_gather_list (list[Any], optional): List of same-sized tensors to use for gathered data.
+        obj (Any): The Python objects to be gathered.
+        object_gather_list (list[Any], optional): List of Python objects to use for gathered data.
             On the `dst` rank, it should be correctly sized as the size of the group for this
             collective and will contain the output. Default: ``None``.
-        dst (int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank(global rank) of the process that receives the tensor.
             And only process `dst` will receive the gathered tensor. Default: ``0`` .
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -3529,7 +3522,7 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
 
     Note:
         - Similar to :func:`mindspore.mint.distributed.broadcast`, but Python objects can be passed in.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     .. warning::
         This interface will implicitly use the pickle module, which is not secure. The core reason
@@ -3540,7 +3533,7 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
     Args:
         object_list (list[Any]): The list of input to be sent if src is the rank of current process,
             and list to be used to save received data otherwise.
-        src (int, optional): Specifies the rank (global rank) of the process that broadcast the Python objects.
+        src (int, optional): Specifies the rank (global rank) of the process that broadcasts the Python objects.
             And only process `src` will broadcast the Python objects. Default: ``0`` .
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -3630,7 +3623,7 @@ def all_gather_object(object_list, obj, group=None):
 
     Args:
         object_list (list[Any]): Output Python object list.
-        obj (Any): Python object to be broadcast from current process.
+        obj (Any): Python object to be gathered from current process.
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
 

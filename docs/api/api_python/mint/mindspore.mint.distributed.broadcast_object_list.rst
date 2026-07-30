@@ -14,7 +14,7 @@ mindspore.mint.distributed.broadcast_object_list
 
     参数：
         - **object_list** (list[Any]) - 待广播出去的或接收广播的Python对象。
-        - **src** (int，可选) - 表示发送源的进程编号。只有该进程会广播张量。默认值： ``0`` 。
+        - **src** (int，可选) - 表示发送源的进程编号。只有该进程会广播Python对象。默认值： ``0`` 。
         - **group** (str，可选) - 通信组名称。默认值： ``None`` ，即Ascend平台表示为 ``"hccl_world_group"`` 。
         - **device** (str，可选) - 当前为预留参数。默认值： ``None`` 。
 

@@ -10,7 +10,7 @@ mindspore.mint.argsort
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **dim** (int，可选) - 指定维度。默认 ``-1`` 。
+        - **dim** (int，可选) - 指定维度。默认 ``-1`` 。Ascend 后端仅支持最后一维排序。
         - **descending** (bool，可选) - 指定排序（升序或降序）。默认 ``False``。
         - **stable** (bool，可选) - 控制等效元素的相对顺序。默认 ``False``。
 

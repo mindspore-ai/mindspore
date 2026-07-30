@@ -11,7 +11,7 @@ mindspore.mint.cumsum
     参数：
         - **input** (Tensor) - 输入tensor。
         - **dim** (int) - 指定计算维度。
-        - **dtype** (:class:`mindspore.dtype`, 可选) - 指定数据类型。默认 ``None`` 。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 返回的数据类型。默认 ``None`` 。
 
     返回：
         Tensor
