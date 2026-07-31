@@ -1,4 +1,4 @@
-# Copyright 2025-2026 Huawei Technologies Co., Ltd
+# Copyright 2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ This module provides sample input builders for unary/binary/logical/clamp variou
 basic, extra, dynamic, and error case generators.
 """
 import functools
-
 import numpy as np
 import random
 import warnings
@@ -41,7 +40,6 @@ from tests.st.ops.share._op_info.op_info import (
     basic_reference_inputs_unary_op_common_func,
     extra_reference_inputs_binary_op_common_func,
 )
-
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
     make_tensor, make_tensor_with_np_array
@@ -58,7 +56,13 @@ from tests.st.ops.share._op_info.op_common import (
 from tests.st.ops.share._op_info.sample_inputs.common import (
     _generate_binary_inplace_op_broadcasting_and_discontiguous_tensor_inputs_func,
 )
-
+import mindspore as ms
+from tests.st.ops.share._op_info.op_info import OpInfo
+from tests.st.ops.share._op_info.op_info import (
+    basic_reference_inputs_unary_op_common_func,
+    dynamic_inputs_unary_op_common_func,
+    extra_reference_inputs_unary_op_common_func
+)
 
 # op_basic_reference_inputs_func for ops
 def basic_sample_inputs_add_sub_ext(
@@ -2872,3 +2876,4 @@ def error_inputs_binary_op_tensor_add_overload(op_info:OpInfo, dtype=None, devic
         op_error_type=TypeError,
         op_error_info=f'other is str is not supported for {op_info.name}',
     )
+

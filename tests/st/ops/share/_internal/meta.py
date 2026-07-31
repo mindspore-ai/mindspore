@@ -22,10 +22,10 @@ This module provides:
 - Comparison routines: static and dynamic-shape forward/grad parity checks
   against reference backends.
 """
-import copy
 # pylint: disable=R1705
 import warnings
 import torch
+import copy
 import numpy as np
 import mindspore as ms
 from mindspore import nn
@@ -74,7 +74,6 @@ class OpsFactory():
             op_info: OpInfo,
             **kwargs,
     ):
-        # some attras may be changed to OpInfo in the sample creation process, so using deepcopy
         self.op_info = copy.copy(op_info)
         # inner params
         self._douts = None

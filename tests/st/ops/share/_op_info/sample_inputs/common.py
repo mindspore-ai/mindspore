@@ -1,4 +1,5 @@
 # Copyright 2026 Huawei Technologies Co., Ltd
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Utility helpers for operation testing.
+"""
+Common functions for operation testing.
+This module provides common sample input builders for various ops, including
+basic, extra, dynamic, error case generators and small combination tools.
 
-This module provides:
-- sample_inputs for common-types ops
 """
 import functools
 

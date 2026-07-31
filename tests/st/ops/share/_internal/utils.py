@@ -22,8 +22,8 @@ This module provides:
 # pylint: disable=R1705
 import math
 import torch
-import re
 import numpy as np
+import re
 import mindspore as ms
 from mindspore.graph.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
