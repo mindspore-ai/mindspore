@@ -712,7 +712,8 @@ typedef enum ActType {
   ActType_Swish = 18,
   ActType_Gelu = 19,
   ActType_FastGelu = 20,
-  ActType_Unknown = 21
+  ActType_Celu = 27,
+  ActType_Unknown = 40
 } ActType;
 typedef enum PadType { Pad_pad, Pad_same, Pad_valid } PadType;
 typedef enum EltwiseType { Eltwise_PROD, Eltwise_SUM, Eltwise_MAXIMUM, Eltwise_UNKNOWN } EltwiseType;
