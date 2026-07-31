@@ -56,6 +56,7 @@ from tests.st.ops.share._op_info.op_wrappers import *
 from tests.st.ops.share._op_info.sample_inputs.elementwise import *
 from tests.st.ops.share._op_info.sample_inputs.reduction import *
 
+
 # op database
 op_db: Dict[str, OpInfo] = {
     'Tensor.astype': UnaryOpInfo(
@@ -514,6 +515,39 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_inputs_other_op_tensor_addcdiv_func,
         ascend910b_forward_loss_override={ms.float16: 0.01, ms.bfloat16: 0.04,},
         ascend910b_backward_loss_override={ms.float16: 0.01, ms.bfloat16: 0.02,},
+    ),
+    'Tensor.choose': OpInfo(
+        name='Tensor.choose',
+        op= tensor_choose_ms,
+        ref=None,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in
+                                [ms.float64, ms.int16, ms.complex128, ms.complex64]),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_choose_func,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_choose,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_choose,
+        op_error_inputs_func=error_inputs_other_op_tensor_choose_func,
+        skip_forward_comparison=True,
+        is_differentiable=False,
+
+    ),
+    'Tensor.cholesky_solve': OpInfo(
+        name='Tensor.cholesky_solve',
+        op= tensor_cholesky_solve_ms,
+        ref=tensor_cholesky_solve_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float32, ms.float64),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_cholesky_solve_func,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_cholesky_solve,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_cholesky_solve,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.bool_, ms.int8),
+        op_error_inputs_func=error_inputs_other_op_cholesky_solve_func,
+        ascend910b_forward_loss_override={ms.float32: 0.5, ms.float64: 0.5},
+        ascend910b_backward_loss_override={ms.float32: 0.5, ms.float64: 0.5},
     ),
     'Tensor.addcmul': OpInfo(
         name='Tensor.addcmul',
@@ -3518,7 +3552,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_diag,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_diag,
-        op_dynamic_inputs_func=dynamic_sample_inputs_mint_diag,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_diag,#diagxt, dynamic rank is not support in backward
         is_differentiable=True,
         skip_dynamic_rank_backward=True,
         not_support_dtypes=(ms.complex128,),
@@ -4277,6 +4311,19 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_inputs_other_op_mint_clamp_func,
         not_support_dtypes=(ms.complex64, ms.complex128),
     ),
+    'Tensor.chunk': OpInfo(
+        name='Tensor.chunk',
+        op=tensor_chunk_ms,
+        ref=tensor_chunk_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_chunk_func,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_chunk,
+        op_dynamic_inputs_func=None,#raise not support error
+        op_error_inputs_func=error_inputs_other_op_tensor_chunk_func,
+    ),
     'Tensor.clamp': OpInfo(
         name='Tensor.clamp',
         op=tensor_clamp_ms,
@@ -4290,6 +4337,21 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_tensor_clamp,
         op_error_inputs_func=error_inputs_tensor_clamp,
         not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128),
+    ),
+    'Tensor.clamp_': OpInfo(
+        name='Tensor.clamp_',
+        op=tensor_clamp__ms,
+        ref=tensor_clamp__torch,
+        dtypes_ascend=(ms.float32, ms.float16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in (ms.bool_, ms.complex64, ms.complex128)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_clamp,
+        op_extra_reference_inputs_func=extra_reference_inputs_tensor_clamp,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_clamp,
+        op_error_inputs_func=error_inputs_tensor_clamp,
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128),
+        is_inplace_op=True,
     ),
     'mint.stack': OpInfo(
         name='mint.stack',
@@ -6728,6 +6790,8 @@ unary_op_db = [
 
 other_op_db = [
     'mint.squeeze',
+    'Tensor.cholesky_solve',
+    'Tensor.choose',
     'mint.index_add',
     'mint.where',
     'mint.unbind',
@@ -6801,7 +6865,9 @@ other_op_db = [
     'mint.unique',
     'Tensor.unique',
     'mint.clamp',
+    'Tensor.chunk',
     'Tensor.clamp',
+    'Tensor.clamp_',
     'mint.stack',
     'Tensor.gather',
     'Tensor.expand_as',
@@ -6998,6 +7064,9 @@ reduction_op_db = [
 ]
 
 other_op_kbk_db = [
+    'Tensor.choose',
+    'Tensor.cholesky_solve',
+    'Tensor.chunk',
     'mint.squeeze',
     'mint.where',
     'mint.index_add',

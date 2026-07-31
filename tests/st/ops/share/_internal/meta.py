@@ -1056,12 +1056,11 @@ class OpsFactory():
                 return
         else:
             ms_out = self.forward_mindspore_impl()
+            # Some ops are inherently non-deterministic (e.g., random sampling). For those ops, we still
+            # execute forward to catch runtime errors, but skip output comparison.
+            if self.op_info.skip_forward_comparison:
+                return
             pt_out = self.forward_pytorch_impl()
-
-        # Some ops are inherently non-deterministic (e.g., random sampling). For those ops, we still
-        # execute forward to catch runtime errors, but skip output comparison.
-        if not grad_cmp and self.op_info.skip_forward_comparison:
-            return
 
         for sample_input, ms_outi, pt_outi in zip(self._sample_inputs, ms_out, pt_out):
             sample_loss = getattr(sample_input, "loss", None)

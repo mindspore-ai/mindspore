@@ -3365,3 +3365,185 @@ def error_inputs_unary_op_tensor_h(op_info:OpInfo, dtype=None, device=None, **kw
         op_error_type=ValueError,
         op_error_info=f'input tensor not 2D is not supported by {op_info.name}.',
     )
+
+def basic_reference_inputs_tensor_chunk_func(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    """Yield typical shape cases for tensor.chunk ops.
+
+    Covers scalars, vectors, singleton dims, medium 2D/3D, and empty-dimension cases.
+
+    Args:
+        op_info: OpInfo object.
+        dtype: Data type of the tensors.
+        device: Device of the tensors.
+        kwargs: Additional keyword arguments.
+    Returns:
+        Generator of OpSampleInput objects.
+    """
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    #input, chunks, dim
+    base_shapes = (
+        ((S,), 1, 0),
+        ((M, S), 1, 1),
+        ((S, S, L), 2, 1),
+        ((2, 0, 3, 2), 2, 1),
+        ((2, 3, 4, 1, 2), 3, 2),
+        ((2, 1, 2, 2, 1, 2), 3, 1),
+        ((2, 1, 2, 2, 1, 2, 1), 4, 2),
+        ((2, 1, 2, 2, 1, 2, 1, 2), 3, 5),
+    )
+    for input_shape, chunks, dims in base_shapes:
+        _input = make_arg(input_shape)
+        slen = len(input_shape)
+        yield OpSampleInput(
+            op_input= _input,
+            op_args=(chunks, dims,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_tensor_chunk(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate extra sample inputs for tensor.chunk
+    Covers: various padding modes, dilation, groups, small/large/extremal value
+            tensors, discontiguous tensors, type promotion.
+    Skips: scalar inputs (conv2d requires tensor inputs).
+    '''
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_shape = (1, 1, len(_float_small_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_small",
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_shape = (1, 1, len(_large_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_large",
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                input_values = np.full((1, 1, 3), t)
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+                    op_args=(2,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_inf",
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        input_shape = (1, 3, 3)
+        yield OpSampleInput(
+            op_input=make_arg(input_shape, discontiguous=discontiguous),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_inputs_other_op_tensor_chunk_func(op_info, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device, low=None, high=None)
+    shapes = (
+        (1.0, 1, 0),#input is not tensor
+        (make_arg((M, S)), True, 1),#CHUNKS is not int
+        (make_arg((S, S, L)), 2, make_arg((S, S, L))),#dims is tensor
+        (make_arg((2, 3, 4, 1, 2)), 3, 10),#dims out range
+        (make_arg((2, 1, 2, 2, 1, 2)), -3, 1),
+    )
+    for input_shape, chunks, dims in shapes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(chunks, dims,),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError, AttributeError),
+            op_error_info='other ops tensor.chunk error values')
+
+def dynamic_sample_inputs_tensor_chunk(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate dynamic sample inputs for Tensor.chunk.
+    Consider both dynamic_shape and dynamic_rank.
+    """
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape
+        chunk, dim = 1, 0
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(chunk, dim,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input_2D",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 4)),
+                    op_args=(chunk,dim,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_3D",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4 ,5, 7)),
+                    op_args=(chunk,dim,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_3D",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        # Dynamic rank
+        chunk, dim = 1, 0
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(chunk, dim,),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_{dtype}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(chunk, dim,),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_input_1'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 4)),
+                    op_args=(chunk, dim,),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_input_2'
+                ),
+            )
+        )

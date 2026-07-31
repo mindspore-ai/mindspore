@@ -895,6 +895,42 @@ def tensor_addmm__torch(op_input, mat1, mat2, beta=1, alpha=1):
     result_pt = cloned_input.addmm_(mat1, mat2, beta=beta, alpha=alpha)
     return result_pt
 
+def tensor_clamp__ms(op_input, min=None, max=None):
+    cloned_input = op_input.clone()
+    cloned_input.clamp_(min=min, max=max)
+    return cloned_input
+
+def tensor_clamp__torch(op_input, min=None, max=None):
+    cloned_input = op_input.clone()
+    cloned_input.clamp_(min=min, max=max)
+    return cloned_input
+
+def tensor_choose_ms(op_input, choices, mode="clip"):
+    cloned_input = op_input.clone()
+    return cloned_input.choose(choices, mode=mode)
+
+def tensor_cholesky_solve_ms(op_input, input2, upper=False):
+    return op_input.cholesky_solve(input2, upper=upper)
+
+def tensor_cholesky_solve_torch(op_input, input2, upper=False):
+    return op_input.cholesky_solve(input2, upper=upper)
+
+def tensor_cholesky_inverse_ms(op_input, upper=False):
+    cloned_input = op_input.clone()
+    return cloned_input.cholesky_inverse(upper=upper)
+
+def tensor_cholesky_inverse_torch(op_input, upper=False):
+    cloned_input_pt = op_input.clone()
+    return cloned_input_pt.cholesky_inverse(upper=upper)
+
+def tensor_chunk_ms(op_input, chunks, dim=0):
+    cloned_input = op_input.clone()
+    return cloned_input.chunk(chunks, dim=dim)
+
+def tensor_chunk_torch(op_input, chunks, dim=0):
+    cloned_input_pt = op_input.clone()
+    return cloned_input_pt.chunk(chunks, dim=dim)
+
 # NOTE: customize_op_func, used by gradient comparison only when there are kwargs in op!
 def add_ext_func_grad_without_kwargs(x, y, alpha=1):
     return mint.add(x, y, alpha=alpha)

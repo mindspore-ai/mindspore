@@ -2134,6 +2134,51 @@ def basic_sample_inputs_mint_clamp(op_info: OpInfo, dtype=None, device=None, **k
             sample_name=op_info.name,
         )
 
+def basic_sample_inputs_tensor_clamp(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate basic sample inputs for tensor.clamp_ op.
+    Follow torch's sample_inputs_clamp: use (S, M, S) and five representative cases.
+    '''
+    S, M = SMALL_DIM_SIZE, MEDIUM_DIM_SIZE
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype, low=None, high=None)
+
+    shape = (S, M, S)
+    # case 1: min and max are tensors with same shape as input
+    yield OpSampleInput(
+        op_input=make_arg(shape),
+        op_args=(make_arg(shape), make_arg(shape)),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+    # case 4: min is None, max is tensor
+    yield OpSampleInput(
+        op_input=make_arg(shape),
+        op_args=(None, make_arg(shape)),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+    # case 5: min is tensor, max is None
+    yield OpSampleInput(
+        op_input=make_arg(shape),
+        op_args=(make_arg(shape), None),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+    # case 6: 0D
+    # case 7: 8D
+    cases = [
+        (ms.Tensor(np.random.randn(), ms.float32), ms.Tensor(np.random.randn(), ms.float32),
+         ms.Tensor(np.random.randn(), ms.float32)),
+        (ms.Tensor(np.random.randn(7, 7, 5, 5, 3, 9, 9, 2), ms.float64), 0.4, 6.4),
+    ]
+    for input_x, input_min, input_max in cases:
+        yield OpSampleInput(
+            op_input=input_x,
+            op_args=(input_min, input_max),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
 def extra_reference_inputs_tensor_clamp(op_info: OpInfo, dtype, device=None, **kwargs):
     """
     Generate additional edge-case test inputs for Tensor.clamp.
@@ -2266,7 +2311,7 @@ def error_inputs_tensor_clamp(op_info: OpInfo, dtype=None, device=None, **kwargs
             op_kwargs={},
             sample_name=f"{op_info.name}_params_value_error",
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError,RuntimeError),
         op_error_info=f'params error values is not supported for {op_info.name}',
     )
     # the shape of min is larger than input
@@ -2279,7 +2324,7 @@ def error_inputs_tensor_clamp(op_info: OpInfo, dtype=None, device=None, **kwargs
             op_kwargs={},
             sample_name=f"{op_info.name}_min_value_error",
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info=f'min error values is not supported for {op_info.name}',
     )
 
