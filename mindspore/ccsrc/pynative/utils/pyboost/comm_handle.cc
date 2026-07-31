@@ -64,7 +64,9 @@ CommHandle::~CommHandle() {
 DeviceEventPtr CommHandle::CreateEvent() {
   MS_EXCEPTION_IF_NULL(device_ctx_);
   device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-  event_ = device_ctx_->device_res_manager_->CreateEventWithFlag(false, false);
+  // Runtime events are not retained by DeviceResManager. CommHandle can therefore destroy the event without
+  // accessing device_ctx_, which may already be invalid during process exit.
+  event_ = device_ctx_->device_res_manager_->CreateRuntimeEvent(true, false);
   if (event_ != nullptr) {
     MS_LOG(DEBUG) << "CreateEvent: event=" << event_ << ", op_name=" << op_name_ << ", CommHandle=" << this;
   }
