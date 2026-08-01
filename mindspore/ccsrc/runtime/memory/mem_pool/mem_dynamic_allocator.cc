@@ -1380,6 +1380,37 @@ bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t memory
   return true;
 }
 
+bool DynamicMemPoolBestFit::WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) {
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+  for (auto &stream_pair_addresses : stream_pair_addresses_) {
+    const auto &[user_stream, memory_stream] = stream_pair_addresses.first;
+    if (user_stream != user_stream_id) {
+      continue;
+    }
+    auto addresses = stream_pair_addresses.second;
+    for (const auto &address : addresses) {
+      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for : " << address->device_addr_ << ".";
+      address->WaitEvent(task_id_on_stream, user_stream);
+      if (address->IsEventNotUsed()) {
+        for (auto &kv : stream_pair_addresses_) {
+          (void)kv.second.erase(address);
+        }
+        if (address->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
+          FreeTensorMemInner(address->device_addr_);
+        }
+      }
+    }
+  }
+  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "After release events, task_id_on_stream : " << task_id_on_stream
+                                       << ", user_stream_id : " << user_stream_id
+                                       << ", used by event size : " << TotalUsedByEventMemStatistics() << ".";
+  return true;
+}
+
 void DynamicMemPoolBestFit::WaitPipelineWithCallback() {
   // Not worked currently.
 }

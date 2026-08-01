@@ -165,7 +165,7 @@ void EventPy::Synchronize() {
   // Clear cross stream memory event which task id less than task_id_on_stream.
   (void)device::DeviceContextManager::GetInstance()
     .GetMultiStreamController(device_ctx_->device_context_key().device_type_)
-    ->WaitEvent(*task_id_on_stream_, record_stream_id_);
+    ->WaitEventByUserStream(*task_id_on_stream_, record_stream_id_);
 }
 
 float EventPy::ElapsedTime(const EventPyPtr &other_event) {

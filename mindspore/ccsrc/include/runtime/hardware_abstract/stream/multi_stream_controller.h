@@ -68,6 +68,7 @@ class RUNTIME_HARDWARE_EXPORT MultiStreamController {
                    const DeviceEventPtr &input_event = nullptr);
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id);
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id);
+  bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id);
   bool DispatchRecordWaitEvent(uint32_t user_stream_id, uint32_t memory_stream_id);
 
   /// \brief Dispatch a record event on the specified stream

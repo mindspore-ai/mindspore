@@ -1932,6 +1932,14 @@ bool AscendResManager::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream
   return GetMemoryPool()->WaitEvent(task_id_on_stream, user_stream_id);
 }
 
+bool AscendResManager::WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) {
+  if (GetMemoryPool() == nullptr) {
+    MS_LOG(WARNING) << "memory pool is nullptr.";
+    return false;
+  }
+  return GetMemoryPool()->WaitEventByUserStream(task_id_on_stream, user_stream_id);
+}
+
 bool AscendResManager::SyncAllEvents() {
   if (GetMemoryPool() == nullptr) {
     MS_LOG(WARNING) << "memory pool is nullptr.";
