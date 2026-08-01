@@ -892,6 +892,30 @@ bool AbstractDynamicMemPool::WaitEvent(int64_t task_id_on_stream, uint32_t memor
   return true;
 }
 
+bool AbstractDynamicMemPool::WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) {
+  LockGuard lock(lock_);
+  for (auto &stream_pair_mem_bufs : stream_pair_mem_bufs_) {
+    const auto &[user_stream, memory_stream] = stream_pair_mem_bufs.first;
+    if (user_stream != user_stream_id) {
+      continue;
+    }
+    auto mem_bufs = stream_pair_mem_bufs.second;
+    for (const auto &mem_buf : mem_bufs) {
+      mem_buf->WaitEvent(task_id_on_stream, user_stream);
+      if (mem_buf->IsEventNotUsed()) {
+        mem_stat_ptr_->used_by_event_size_ -= mem_buf->size_;
+        for (auto &kv : stream_pair_mem_bufs_) {
+          (void)kv.second.erase(mem_buf);
+        }
+        if (mem_buf->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
+          (void)DoFreeTensorMem(mem_buf->addr_);
+        }
+      }
+    }
+  }
+  return true;
+}
+
 bool AbstractDynamicMemPool::SyncAllEvents() {
   LockGuard lock(lock_);
   return DoSyncAllEvents();

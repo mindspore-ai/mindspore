@@ -293,9 +293,7 @@ struct BACKEND_EXPORT MemStat {
     iter_alloc_peak_size_ = 0;
   }
 
-  size_t IdleSize() const {
-    return alloc_size_ + custom_alloc_size_ - used_size_ - eager_free_size_;
-  }
+  size_t IdleSize() const { return alloc_size_ + custom_alloc_size_ - used_size_ - eager_free_size_; }
 
   inline void UpdatePeakSize(const bool is_enable_vmm, size_t vmm_used_mem_size) {
     peak_size_ = std::max(peak_size_, used_size_);
@@ -532,6 +530,7 @@ class BACKEND_EXPORT AbstractDynamicMemPool : virtual public DynamicMemPool {
                    const DeviceEventPtr &event) override;
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) override;
   bool WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) override;
+  bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) override;
   bool SyncAllEvents() override;
   bool DoSyncAllEvents();
 

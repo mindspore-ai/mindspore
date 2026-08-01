@@ -187,6 +187,8 @@ class RUNTIME_HARDWARE_EXPORT DeviceResManager {
 
   virtual bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id) { return false; }
 
+  virtual bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) { return false; }
+
   virtual bool SyncAllEvents() { return false; }
 
   // Relevant function to allocate and free device memory of DeviceAddress.
