@@ -178,6 +178,7 @@ class ASCEND_RES_MANAGER_EXPORT AscendResManager : public DeviceResManager {
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) override;
 
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id) override;
+  bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) override;
 
   bool SyncAllEvents() override;
 
