@@ -3019,7 +3019,10 @@ def all_to_all_single(output,
                       group=None,
                       async_op=False):
     """
-    Scatter and gather input with split size to/from all ranks, and return result in a single tensor.
+    Exchanges data among all processes (ranks) in the communication group. The function first splits `input` along
+    dimension 0 according to `input_split_sizes`, then sends each chunk in order to the corresponding rank. Meanwhile,
+    each rank receives data from all ranks in the group and concatenates the received data along dimension 0 according
+    to `output_split_sizes` into a single output tensor.
 
     Note:
         Only support PyNative mode, Graph mode is not currently supported.
