@@ -243,18 +243,18 @@ TEST_F(TestMemDynamicAllocator, test_malloc_with_multi_stream_id) {
 
 class DummyDeviceEvent : public DeviceEvent {
   bool IsReady() const override { return true; };
-  void WaitEvent() override{};
+  void WaitEvent() override {};
   bool WaitEvent(uint32_t stream_id) override { return true; };
-  void WaitEventWithoutReset() override{};
-  void RecordEvent() override{};
-  void RecordEvent(uint32_t stream_id) override{};
+  void WaitEventWithoutReset() override {};
+  void RecordEvent() override {};
+  void RecordEvent(uint32_t stream_id) override {};
   bool NeedWait() override { return true; };
-  void SyncEvent() override{};
+  void SyncEvent() override {};
   bool QueryEvent() override { return true; };
-  void ElapsedTime(float *cost_time, const DeviceEvent *other) override{};
+  void ElapsedTime(float *cost_time, const DeviceEvent *other) override {};
   bool DestroyEvent() override { return true; };
-  void set_wait_stream(void *stream) override{};
-  void set_record_stream(void *stream) override{};
+  void set_wait_stream(void *stream) override {};
+  void set_record_stream(void *stream) override {};
 };
 using DummyDeviceEventPtr = std::shared_ptr<DummyDeviceEvent>;
 
@@ -308,6 +308,43 @@ TEST_F(TestMemDynamicAllocator, test_malloc_with_multi_stream) {
   mem_pool_.WaitEvent(task_id_on_stream_1, user_stream_id, memory_stream_id);
   EXPECT_EQ(mem_pool_.stream_pair_addresses_.size(), 2);
   EXPECT_EQ(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].size(), 0);
+}
+
+/// Feature: release events by user stream.
+/// Description: release all events recorded on the synchronized user stream only.
+/// Expectation: events on other user streams remain pending.
+TEST_F(TestMemDynamicAllocator, test_wait_event_by_user_stream) {
+  constexpr int64_t task_id_on_stream = 1;
+  constexpr uint32_t user_stream_id = 7;
+  constexpr uint32_t other_user_stream_id = 8;
+  constexpr uint32_t memory_stream_id_0 = 0;
+  constexpr uint32_t memory_stream_id_1 = 1;
+
+  auto addr0 = mem_pool_.AllocTensorMem(kSize1G >> 1, false, true, memory_stream_id_0);
+  auto addr1 = mem_pool_.AllocTensorMem(kSize1G >> 1, false, true, memory_stream_id_1);
+  auto other_addr = mem_pool_.AllocTensorMem(kSize1G >> 1, false, true, memory_stream_id_0);
+  auto event0 = std::make_shared<DummyDeviceEvent>();
+  auto event1 = std::make_shared<DummyDeviceEvent>();
+  auto other_event = std::make_shared<DummyDeviceEvent>();
+  std::weak_ptr<DeviceEvent> weak_event0 = event0;
+  std::weak_ptr<DeviceEvent> weak_event1 = event1;
+  std::weak_ptr<DeviceEvent> weak_other_event = other_event;
+
+  EXPECT_TRUE(mem_pool_.RecordEvent(task_id_on_stream, user_stream_id, {{memory_stream_id_0, addr0}}, event0));
+  EXPECT_TRUE(mem_pool_.RecordEvent(task_id_on_stream, user_stream_id, {{memory_stream_id_1, addr1}}, event1));
+  EXPECT_TRUE(
+    mem_pool_.RecordEvent(task_id_on_stream, other_user_stream_id, {{memory_stream_id_0, other_addr}}, other_event));
+  event0.reset();
+  event1.reset();
+  other_event.reset();
+
+  EXPECT_TRUE(mem_pool_.WaitEventByUserStream(task_id_on_stream, user_stream_id));
+  EXPECT_TRUE(weak_event0.expired());
+  EXPECT_TRUE(weak_event1.expired());
+  EXPECT_FALSE(weak_other_event.expired());
+  EXPECT_TRUE(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id_0)].empty());
+  EXPECT_TRUE(mem_pool_.stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id_1)].empty());
+  EXPECT_EQ(mem_pool_.stream_pair_addresses_[std::make_pair(other_user_stream_id, memory_stream_id_0)].size(), 1);
 }
 }  // namespace device
 }  // namespace mindspore

@@ -561,6 +561,34 @@ bool DefaultEnhancedAscendMemoryPool::WaitEvent(int64_t task_id_on_stream, uint3
   return true;
 }
 
+bool DefaultEnhancedAscendMemoryPool::WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) {
+  MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Wait event for task id on stream : " << task_id_on_stream
+                                       << ", user stream id : " << user_stream_id << ".";
+  LockGuard lock(instance_->lock());
+  for (auto &stream_pair_mem_bufs : instance_->stream_pair_mem_bufs()) {
+    const auto &[user_stream, memory_stream] = stream_pair_mem_bufs.first;
+    if (user_stream != user_stream_id) {
+      continue;
+    }
+    auto mem_bufs = stream_pair_mem_bufs.second;
+    for (const auto &mem_buf : mem_bufs) {
+      mem_buf->WaitEvent(task_id_on_stream, user_stream);
+      MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY)
+        << "Wait event for : " << mem_buf->ToJson() << ", events : " << mem_buf->Events() << ".";
+      if (mem_buf->IsEventNotUsed()) {
+        instance_->mem_stat_ptr()->used_by_event_size_ -= mem_buf->size_;
+        for (auto &kv : instance_->stream_pair_mem_bufs()) {
+          (void)kv.second.erase(mem_buf);
+        }
+        if (mem_buf->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
+          (void)DoFreeTensorMem(mem_buf->addr_);
+        }
+      }
+    }
+  }
+  return true;
+}
+
 bool DefaultEnhancedAscendMemoryPool::SyncAllEvents() {
   MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Sync all events, stream_pair_addresses_ size : "
                                        << instance_->stream_pair_mem_bufs().size() << ".";

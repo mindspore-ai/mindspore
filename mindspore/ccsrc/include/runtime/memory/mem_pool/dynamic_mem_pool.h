@@ -156,6 +156,8 @@ class BACKEND_EXPORT DynamicMemPool {
 
   virtual bool WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) { return false; }
 
+  virtual bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) { return false; }
+
   virtual bool SyncAllEvents() { return false; }
 
   // The real size by memory alloc aligned.
