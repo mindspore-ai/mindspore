@@ -187,8 +187,6 @@ class RUNTIME_HARDWARE_EXPORT DeviceResManager {
 
   virtual bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id) { return false; }
 
-  virtual bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) { return false; }
-
   virtual bool SyncAllEvents() { return false; }
 
   // Relevant function to allocate and free device memory of DeviceAddress.
@@ -377,6 +375,11 @@ class RUNTIME_HARDWARE_EXPORT DeviceResManager {
   DynamicMemPool *memory_pool_{nullptr};
 
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
+
+ public:
+  // Keep newly added virtual interfaces at the end of DeviceResManager to preserve the vtable layout for
+  // custom operators compiled against an earlier MindSpore version.
+  virtual bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id) { return false; }
 
  private:
   template <class... Args>
