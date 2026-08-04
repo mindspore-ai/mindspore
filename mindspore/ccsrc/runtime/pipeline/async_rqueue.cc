@@ -154,7 +154,7 @@ void AsyncRQueue::WorkerLoop() {
 void AsyncRQueue::Push(const AsyncTaskPtr &task) {
   static bool blocking_run = common::GetEnv(kMsDevHostBlockingRun) == "1";
   if (blocking_run || disable_multi_thread_) {
-    task->Run();
+    task->RunWithExceptionHandling();
     return;
   }
   if (worker_ == nullptr) {

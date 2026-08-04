@@ -1444,3 +1444,55 @@ def test_non_reentrant_recompute_nested_grad_no_closure_tensor_cycle():
         "Non-reentrant recompute nested grad should not leave _Grad cycles that keep closure tensors alive, "
         f"but found {leaked_grad_count} _Grad objects and tensors {leaked_tensor_shapes}."
     )
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_non_reentrant_recompute_early_stop_does_not_retain_placeholder_tensors():
+    """
+    Feature: Non-reentrant recompute with early stop.
+    Description: Repeated early-stop exceptions unwind while a PyBoost placeholder Tensor exists.
+    Expectation: Completed gradient calls do not retain placeholder Tensors.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+
+    class RecomputeBlock(Cell):
+        def construct(self, x):
+            return ops.reshape(x * x, (2, 2))
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.block = RecomputeBlock()
+            self.block.recompute(use_reentrant=False, early_stop=True)
+
+        def construct(self, x):
+            return self.block(x).sum()
+
+    def is_mindspore_tensor(obj):
+        obj_type = type(obj)
+        return obj_type.__name__ == "Tensor" and obj_type.__module__ == "mindspore.common.tensor"
+
+    def count_tracked_tensors():
+        _pynative_executor.sync()
+        gc.collect()
+        return sum(is_mindspore_tensor(obj) for obj in gc.get_objects())
+
+    grad_fn = ms.grad(Net())
+    x = Tensor([[1.0, 2.0], [3.0, 4.0]])
+    for _ in range(5):
+        grad = grad_fn(x)
+        del grad
+    tensors_before_repeated_grad = count_tracked_tensors()
+
+    for _ in range(10):
+        grad = grad_fn(x)
+        del grad
+    tensors_after_repeated_grad = count_tracked_tensors()
+
+    assert tensors_after_repeated_grad == tensors_before_repeated_grad, (
+        "Non-reentrant recompute early stop should not retain PyBoost placeholder Tensors, "
+        f"but the tracked Tensor count grew from {tensors_before_repeated_grad} "
+        f"to {tensors_after_repeated_grad}."
+    )

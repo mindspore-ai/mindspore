@@ -29,9 +29,38 @@ namespace mindspore {
 namespace tensor {
 class COMMON_EXPORT TensorWrapper {
  public:
+  // PackTensor returns a new reference. TensorWrapper owns it until release() transfers it to Python.
   explicit TensorWrapper(bool has_side_effect) { empty_tensor_ = PackTensor(nullptr, has_side_effect); }
+  ~TensorWrapper() { Py_XDECREF(empty_tensor_); }
+
+  TensorWrapper(const TensorWrapper &other) : empty_tensor_(other.empty_tensor_) { Py_XINCREF(empty_tensor_); }
+
+  TensorWrapper &operator=(const TensorWrapper &other) {
+    if (this != &other) {
+      Py_XINCREF(other.empty_tensor_);
+      Py_XDECREF(empty_tensor_);
+      empty_tensor_ = other.empty_tensor_;
+    }
+    return *this;
+  }
+
+  TensorWrapper(TensorWrapper &&other) noexcept : empty_tensor_(other.release()) {}
+
+  TensorWrapper &operator=(TensorWrapper &&other) noexcept {
+    if (this != &other) {
+      Py_XDECREF(empty_tensor_);
+      empty_tensor_ = other.release();
+    }
+    return *this;
+  }
 
   PyObject *value() const { return empty_tensor_; }
+
+  PyObject *release() noexcept {
+    auto output = empty_tensor_;
+    empty_tensor_ = nullptr;
+    return output;
+  }
 
   const stub::StubNodePtr &MakeFuture() const {
     PyType<TensorPy> *tensor = (PyType<TensorPy> *)empty_tensor_;
@@ -68,19 +97,19 @@ std::vector<TensorWrapper> MakeVector(size_t num) {
 
 // Helper function to apply a transformation to each element of the tuple
 template <typename Tuple, size_t... Indices>
-void TransformTupleImpl(PyObject *py_tuple, const Tuple &tuple, std::index_sequence<Indices...>) {
-  // Create a new tuple by calling `value()` on each element
-  (PyTuple_SET_ITEM(py_tuple, Indices, std::get<Indices>(tuple).value()), ...);
+void TransformTupleImpl(PyObject *py_tuple, Tuple &tuple, std::index_sequence<Indices...>) {
+  // Transfer each wrapper-owned reference to the Python tuple.
+  (PyTuple_SET_ITEM(py_tuple, Indices, std::get<Indices>(tuple).release()), ...);
 }
 
 // Main function to transform a tuple
 template <typename Tuple>
-auto TransformOutput(const Tuple &tuple) {
+auto TransformOutput(Tuple &tuple) {
   constexpr size_t tuple_size = std::tuple_size_v<Tuple>;
 
   if constexpr (tuple_size == 1) {
-    // If the tuple has only 1 element, return item->value()
-    return std::get<0>(tuple).value();
+    // If the tuple has only 1 element, transfer its reference directly.
+    return std::get<0>(tuple).release();
   } else {
     PyObject *py_tuple = PyTuple_New(tuple_size);
     // If the tuple has more than 1 element, return a new tuple
@@ -89,10 +118,10 @@ auto TransformOutput(const Tuple &tuple) {
   }
 }
 
-COMMON_EXPORT PyObject *TransformVectorOutput(const std::vector<TensorWrapper> &py_output);
+COMMON_EXPORT PyObject *TransformVectorOutput(std::vector<TensorWrapper> &py_output);
 
 template <typename Tuple>
-PyObject *TransformOutput(const Tuple &tuple, PyObject *comm_handle) {
+PyObject *TransformOutput(Tuple &tuple, PyObject *comm_handle) {
   constexpr size_t tuple_size = std::tuple_size_v<Tuple>;
   PyObject *py_tuple = PyTuple_New(tuple_size + 1);
   TransformTupleImpl(py_tuple, tuple, std::make_index_sequence<tuple_size>{});
