@@ -48,6 +48,15 @@ class AsyncTask {
   virtual bool RunWithRet() { return false; }
   virtual void SetException(const std::exception_ptr & /* e */) {}
 
+  void RunWithExceptionHandling() {
+    try {
+      Run();
+    } catch (...) {
+      SetException(std::current_exception());
+      throw;
+    }
+  }
+
   TaskType task_type() const { return task_type_; }
   uint64_t task_id() const { return task_id_; }
   void set_task_id(uint64_t task_id) { task_id_ = task_id; }
