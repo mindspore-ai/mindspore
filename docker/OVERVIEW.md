@@ -14,7 +14,7 @@
 
 ## MindSpore
 
-MindSpore is a new open source deep learning training/inference framework that could be used for mobile, edge and cloud scenarios. MindSpore is designed to provide development experience with friendly design and efficient execution for the data scientists and algorithmic engineers, native support for Ascend AI processor, and software hardware co-optimization. At the meantime MindSpore as a global AI open source community, aims to further advance the development and enrichment of the AI software/hardware application ecosystem.
+MindSpore is a new open source deep learning training/inference framework that could be used for mobile, edge and cloud scenarios. MindSpore is designed to provide development experience with friendly design and efficient execution for the data scientists and algorithmic engineers, native support for Atlas AI processor, and software hardware co-optimization. At the meantime MindSpore as a global AI open source community, aims to further advance the development and enrichment of the AI software/hardware application ecosystem.
 
 ## Supported Tags and Dockerfile Usage
 
@@ -29,8 +29,8 @@ Tags follow this format:
 | Field | Example Values | Description |
 |-------|---------------|-------------|
 | MindSpore Version | 2.10.0 | Corresponds to the version identifier in MindSpore official release tags |
-| CANN Version | cann9.1.0 | Corresponds to the version identifier in Ascend official release tags |
-| Hardware Info (Chip) | see below | Ascend chip model identifier |
+| CANN Version | cann9.1.0 | Corresponds to the version identifier in Atlas official release tags |
+| Hardware Info (Chip) | see below | Atlas chip model identifier |
 | Operating System | ubuntu22.04 / openeuler24.03 | Operating system distribution and version used in the base image |
 | Python Version | py3.12 | Major Python version built into the image |
 
@@ -49,8 +49,8 @@ See dockerfile:[dockerfile](https://atomgit.com/mindspore/mindspore/blob/master/
 
 | Parameter | Description | Required | Source | Example Values |
 |-----------|-------------|----------|--------|----------------|
-| CANN_VERSION | Ascend CANN toolkit version | Yes | CANN image tag | 9.1.0 |
-| CHIP_ARCH | Ascend chip architecture identifier | Yes | Tag specification | see below |
+| CANN_VERSION | Atlas CANN toolkit version | Yes | CANN image tag | 9.1.0 |
+| CHIP_ARCH | Atlas chip architecture identifier | Yes | Tag specification | see below |
 | OS_SYSTEM | Base image operating system and version | Yes | Tag specification | ubuntu22.04 / openeuler24.03 |
 | PY_VERSION | Python version built into the base image | Yes | Tag specification | py3.12 |
 | MINDSPORE_VERSION | MindSpore version number | Yes | [MindSpore repository releases](https://atomgit.com/mindspore/mindspore/releases) | 2.10.0 |
@@ -58,7 +58,7 @@ See dockerfile:[dockerfile](https://atomgit.com/mindspore/mindspore/blob/master/
 
 ### Image Repository Address
 
-MindSpore Ascend images are hosted on Huawei Cloud SWR image repository:
+MindSpore Atlas images are hosted on Huawei Cloud SWR image repository:
 
 ```text
 swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore
@@ -146,4 +146,4 @@ As with all container images, pre-installed software packages (Python, system li
 
 ## Image Usage Responsibility
 
-The released Ascend software images are community versions, not intended for commercial use, and serve only as references for production practices.
+The released Atlas software images are community versions, not intended for commercial use, and serve only as references for production practices.
