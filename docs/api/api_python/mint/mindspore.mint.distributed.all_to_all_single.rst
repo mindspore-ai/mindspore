@@ -3,7 +3,9 @@ mindspore.mint.distributed.all_to_all_single
 
 .. py:function:: mindspore.mint.distributed.all_to_all_single(output,input,output_split_sizes=None,input_split_sizes=None,group=None,async_op=False)
 
-    根据用户输入的切分大小，把输入tensor切分后，发送到其他的设备上，并从其他设备接收切分块，然后合并到一个输出tensor中。
+    在通信组内的所有进程（rank）之间交换数据。该接口首先根据 `input_split_sizes` 将 `input` 沿第0维切分，
+    然后按顺序将各切分块分别发送给通信组内对应的rank。每个rank同时从组内各rank接收数据，
+    并根据 `output_split_sizes` 将接收到的数据沿第0维拼接成一个输出张量。
 
     .. note::
         当前仅支持PyNative模式，不支持Graph模式。
