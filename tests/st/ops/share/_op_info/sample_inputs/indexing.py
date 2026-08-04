@@ -29,6 +29,7 @@ from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
     make_tensor, make_tensor_with_np_array,
 )
+from tests.st.ops.share._op_info.sample_inputs.common import make_extra_tensor
 from tests.st.ops.share._op_info.op_common import (
     EXTRA_SMALL_DIM_SIZE,
     LARGE_DIM_SIZE,
@@ -2457,7 +2458,7 @@ def dynamic_sample_inputs_mint_diag(
         Generator of OpDynamicInput objects.
     '''
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
-    if not kwargs.get("only_dynamic_shape", False):
+    if not kwargs.get("only_dynamic_rank", False):
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=(None, 3), dtype=dtype),
@@ -2480,7 +2481,7 @@ def dynamic_sample_inputs_mint_diag(
                 ),
             )
         )
-    if not kwargs.get("only_dynamic_rank", False):
+    if not kwargs.get("only_dynamic_shape", False):
         # dynamic rank
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
@@ -2503,4 +2504,54 @@ def dynamic_sample_inputs_mint_diag(
                     sample_name=f'{op_info.name}_dynamic_rank_running_input'
                 ),
             )
+        )
+
+def basic_reference_inputs_tensor_argsort(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    S = EXTRA_SMALL_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
+    L = LARGE_DIM_SIZE
+
+    make_func = functools.partial(
+        make_tensor,
+        device=device,
+        dtype=dtype,
+    )
+
+    cases = [
+        ((), 0, True, False),
+        ((S,), -1, True, True),
+        ((M, S), 1, False, True),
+        ((S, S, L), -2, False, False),
+        ((5, 3, 4, 2), 3, True, False),
+    ]
+    for shape, dim, descending, stable in cases:
+        yield OpSampleInput(
+            make_func(shape),
+            op_args=(),
+            op_kwargs={'dim': dim, 'descending': descending, 'stable': stable},
+            sample_name=op_info.name,
+        )
+
+def extra_reference_inputs_tensor_argsort(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (2, 3, 4),(),
+                        {'dim': -2, 'descending': True, 'stable': False}, dtype=dtype, device=device)
+    yield from make_extra_tensor(op_info, (0, 4),(),
+        {'dim': 0, 'descending': True, 'stable': False}, dtype=dtype, device=device, empty_tensor=True)
+
+
+def error_reference_inputs_tensor_argsort(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_func = functools.partial(make_tensor,device=device,dtype=ms.float32,)
+
+    for error_dim in [-3, 2]:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func((2, 3)),
+                op_args=(),
+                op_kwargs={'dim': error_dim},
+                sample_name=op_info.name,
+            ),
+            op_error_type=ValueError,
+            op_error_info='dim error values'
         )
