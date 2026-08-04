@@ -19,6 +19,7 @@
 #include "backend/ms_backend/graph_fusion/expander/base/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "include/op_enum.h"
+#include "ops_utils/op_utils.h"
 #include "utils/value_utils.h"
 
 namespace mindspore::graphkernel::expander {
@@ -465,12 +466,17 @@ REG_EXPANDER_FUNC("Muls").SetBody(BODYFUNC(ib) {
                   << TypeIdToString(scalar_type->type_id());
     return {};
   }
+  auto output_type = ops::PromoteTensorScalarType(input_type->type_id(), scalar_type->type_id());
   auto dst_type = TypeToLevel(input_type->type_id()) >= TypeToLevel(scalar_type->type_id()) ? input_type : scalar_type;
   scalar = ib->ScalarToTensor(scalar, dst_type);
   if (input_type != dst_type) {
     input = ib->Cast(input, dst_type);
   }
-  return {ib->Mul(input, scalar)};
+  auto result = ib->Mul(input, scalar);
+  if (result->GetDtype()->type_id() != output_type) {
+    result = ib->Cast(result, output_type);
+  }
+  return {result};
 });
 
 REG_EXPANDER_FUNC("TanhGrad").SetBody(BODYFUNC(ib) {
