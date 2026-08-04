@@ -21,7 +21,7 @@ mindspore.mint.chunk
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `dim` 不是int类型。
         - **TypeError** - `chunks` 不是int。
+        - **TypeError** - `dim` 不是int类型。
         - **ValueError** - 参数 `dim` 超出 :math:`[-input.ndim, input.ndim)` 范围。
         - **ValueError** - 参数 `chunks` 不是正数。

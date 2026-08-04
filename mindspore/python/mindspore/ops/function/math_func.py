@@ -6055,10 +6055,10 @@ def diff_ext(input, n=1, dim=-1, prepend=None, append=None):
             Default: ``1`` .
         dim (int, optional): The dimension to compute the difference along.
             Default: ``-1`` (the last dimension).
-        prepend (Tensor, optional): values to prepend or append to `input` along `dim`
+        prepend (Tensor, optional): values to prepend to `input` along `dim`
             before computing the difference. Their dimensions must be equivalent to that of input,
             and their shapes must match input's shape except on `dim`. Default: ``None`` .
-        append (Tensor, optional): values to prepend or append to `input` along `dim`
+        append (Tensor, optional): values to append to `input` along `dim`
             before computing the difference. Their dimensions must be equivalent to that of input,
             and their shapes must match input's shape except on `dim`. Default: ``None`` .
 

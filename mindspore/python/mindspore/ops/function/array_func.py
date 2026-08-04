@@ -981,7 +981,7 @@ def chunk_ext(input, chunks, dim=0):
     Args:
         input (Tensor): A Tensor to be cut.
         chunks (int): Number of sub-tensors to cut.
-        dim (int, optional): Specify the dimensions that you want to split. Default: ``0`` .
+        dim (int, optional): Specify the dimension that you want to split. Default: ``0`` .
 
     Returns:
         A tuple of sub-tensors.

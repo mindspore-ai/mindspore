@@ -24,7 +24,8 @@ diag_ext:
 
             - If `input` shape is :math:`(x_0)` : then output shape is :math:`(x_0 + \left | diagonal \right | , x_0 + \left | diagonal \right | )` 2-D tensor.
 
-            - If `input` shape is :math:`(x_0, x_1)` : then output shape is main diagonal to move :math:`(\left | diagonal \right |)` elements remaining elements' length 1-D tensor.
+            - If `input` shape is :math:`(x_0, x_1)` : then the output is a 1-D tensor whose length equals the number of remaining elements
+              after shifting the main diagonal by :math:`(\left | diagonal \right |)`.
 
         Raises:
             ValueError: If shape of `input` is not 1-D or 2-D.
