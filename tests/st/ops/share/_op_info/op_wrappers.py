@@ -18,6 +18,7 @@
 This module provides wrapper functions that adapt MindSpore and PyTorch
 tensor/nn methods to a uniform call signature used by the OpInfo framework.
 """
+import numpy as np
 import mindspore as ms
 from mindspore import nn, mint
 from mindspore.common.parameter import Parameter
@@ -29,11 +30,13 @@ from torch.nn import functional as torch_F
 # =====================================wrap tensor/nn method====================================
 
 # wrap tensor method for astype
-def tensor_astype_ms(op_input, dtype=ms.float32, copy=False):
+def tensor_astype_ms(op_input, dtype, copy=True):
     return op_input.astype(dtype=dtype, copy=copy)
 
-def tensor_astype_torch(op_input,  dtype=torch.float32, copy=False):
-    return op_input.type_as(torch.tensor(1.0, dtype=dtype))
+def tensor_astype_torch(op_input, dtype, copy=True):
+    if isinstance(dtype, str):
+        dtype = torch.float32
+    return op_input.to(dtype=dtype, copy=copy)
 
 # wrap tensor method for byte
 def tensor_byte_ms(op_input):
@@ -864,7 +867,7 @@ def tensor_triangular_solve_ms(B, A, upper=True, transpose=False, unitriangular=
 def tensor_triangular_solve_torch(B, A, upper=True, transpose=False, unitriangular=False ):
     return torch.triangular_solve(B, A, upper=upper, transpose=transpose, unitriangular=unitriangular)[0]
 
-def tensor_baddbmm_ms(input, batch1, batch2, beta=1, alpha=1):
+def mint_baddbmm_ms(input, batch1, batch2, beta=1, alpha=1):
     return mint.baddbmm(input, batch1, batch2, beta=beta, alpha=alpha)
 
 def mint_addmv_ms(input, mat1, mat2, beta=1, alpha=1):
@@ -2424,3 +2427,66 @@ def tensor_argmin_ms_overload(input, axis=None, keepdims=False):
 
 def tensor_argmin_torch_overload(input, axis=None, keepdims=False):
     return input.argmin(axis=axis, keepdims=keepdims)
+
+def tensor_asinh_ms(op_input):
+    return op_input.asinh()
+
+def tensor_asinh_torch(op_input):
+    return op_input.asinh()
+
+def tensor_asin_ms(op_input):
+    return op_input.asin()
+
+def tensor_asin_torch(op_input):
+    return op_input.asin()
+
+def tensor_asnumpy_ms(op_input):
+    # for torch.bfloat16, to ensure the output dtypes are the same during result comparison.
+    if op_input.dtype == ms.bfloat16:
+        return op_input.asnumpy().astype(np.float32)
+    else:
+        return op_input.asnumpy()
+
+def tensor_asnumpy_torch(op_input):
+    # unsupported bfloat16
+    if op_input.dtype == torch.bfloat16:
+        op_input = op_input.float()
+    return op_input.numpy()
+
+def tensor_atan_ms(op_input):
+    return op_input.atan()
+
+def tensor_atan_torch(op_input):
+    return op_input.atan()
+
+def tensor_atanh_ms(op_input):
+    return op_input.atanh()
+
+def tensor_atanh_torch(op_input):
+    return op_input.atanh()
+
+def tensor_baddbmm_ms(op_input, batch1, batch2, beta=1, alpha=1):
+    return op_input.baddbmm(batch1, batch2, beta=beta, alpha=alpha)
+
+def tensor_baddbmm_torch(op_input, batch1, batch2, beta=1, alpha=1):
+    return op_input.baddbmm(batch1, batch2, beta=beta, alpha=alpha)
+
+def tensor_bernoulli_ms(op_input, generator=None):
+    return op_input.bernoulli(generator=generator)
+
+def tensor_bernoulli_torch(op_input, generator=None):
+    return op_input.bernoulli(generator=generator)
+
+def tensor_bernoulli__ms(op_input, p=0.5, generator=None):
+    cloned_input = op_input.clone()
+    return cloned_input.bernoulli_(p=p, generator=generator)
+
+def tensor_bernoulli__torch(op_input, p=0.5, generator=None):
+    cloned_input = op_input.clone()
+    return cloned_input.bernoulli_(p=p, generator=generator)
+
+def tensor_bincount_ms(op_input, weights=None, minlength=0):
+    return op_input.bincount(weights=weights, minlength=minlength)
+
+def tensor_bincount_torch(op_input, weights=None, minlength=0):
+    return op_input.bincount(weights=weights, minlength=minlength)

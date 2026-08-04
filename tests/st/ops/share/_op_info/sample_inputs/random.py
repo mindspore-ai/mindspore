@@ -25,7 +25,10 @@ import itertools
 import mindspore as ms
 from mindspore._c_expression import MSContext
 from tests.st.ops.share._op_info.op_info import OpInfo
-
+from tests.st.ops.share._op_info.op_info import (
+    basic_reference_inputs_unary_op_common_func,
+    extra_reference_inputs_unary_op_common_func,
+)
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
     make_tensor, make_tensor_with_np_array
@@ -1461,4 +1464,212 @@ def error_inputs_mint_randperm(op_info: OpInfo, dtype=None, device=None, **kwarg
             ),
             op_error_type=(TypeError, ValueError),
             op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+
+def dynamic_sample_inputs_mint_bernoulli(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=1)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def error_sample_inputs_mint_bernoulli(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device, low=2)
+    # the element values in input is not in [0, 1]
+    # when the element is negative or not in [0, 1], multiple cases are executed together,
+    # it may cause program exceptions that affect the execution of other cases.
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(1, 2)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_input_element_greater_than_1",
+        ),
+        op_error_type=RuntimeError,
+        op_error_info=f'the element values in input is not in [0, 1] is not supported by {op_info.name}.',
+    )
+
+def basic_sample_inputs_tensor_bernoulli_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=1)
+    cases = (
+        (),
+        (1, 1),
+    )
+    if dtype.is_floating_point:
+        p_dtype = dtype
+    else:
+        p_dtype = ms.float32
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info, dtype=dtype, device=device, **kwargs):
+        for p_shape in cases:
+            if len(sample_input.op_input.shape) >= len(p_shape):
+                p = make_arg(p_shape, dtype=p_dtype)
+            else:
+                p = 0.9
+            sample_input.op_kwargs.update({'p': p})
+            yield sample_input
+
+def extra_sample_inputs_tensor_bernoulli_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from extra_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        ((2, 3, 4), (1, 1, 1)),
+        ((2, 3, 4, 5), (2, 3, 4, 5)),
+        ((2, 3, 4, 5, 6, 7), (2, 3, 4, 5, 6, 7)),
+        ((2, 3, 4, 5, 6, 7, 8, 9), (2, 3, 4, 5, 6, 7, 8, 9)),
+    )
+    if dtype.is_floating_point:
+        p_dtype = dtype
+    else:
+        p_dtype = ms.float32
+    for input_shape, p_shape in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs={'p': make_func(shape=p_shape, dtype=p_dtype, low=0, high=1)},
+            sample_name=f"{op_info.name}_{dtype}_{len(input_shape)}d_extra",
+        )
+    yield OpSampleInput(
+        op_input=make_func(shape=(10, 13, 11)),
+        op_args=(),
+        op_kwargs={'p': 0.00001},
+        sample_name=f"{op_info.name}_{dtype}_p_float_extra",
+    )
+
+def dynamic_sample_inputs_tensor_bernoulli_(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(1, 4, 5)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4, 1)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def error_sample_inputs_tensor_bernoulli_(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device, low=2)
+    make_args = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=1)
+    cases = (
+        # input is not tensor
+        (2, 0.5),
+        # p is float but not in [0, 1]
+        (make_func((1, 2)), 1.1),
+        # p is not float
+        (make_func((1, 2)), (0, 1.1)),
+        # the element values in p is not in [0, 1]
+        # when the element in p is negative or not in [0, 1], multiple cases are executed together,
+        # it may cause program exceptions that affect the execution of other cases.
+        # (make_func((1, 2)), make_func((1, 2))),
+    )
+    for case_input, p in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=case_input,
+                op_args=(),
+                op_kwargs={'p': p},
+                sample_name=f"{op_info.name}_error_param",
+            ),
+            op_error_type=(AttributeError, RuntimeError, TypeError),
+            op_error_info=f'error values of input or p is not supported by {op_info.name}.',
+        )
+    # p does not support bool/uint/int/complex when p is Tensor
+    tensor_p_not_support_dtypes = (
+        ms.bool_, ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.complex64, ms.complex128
+    )
+    for p_dtype in tensor_p_not_support_dtypes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=(1, 3, 2)),
+                op_args=(),
+                op_kwargs={'p': make_args(shape=(3, 2), dtype=p_dtype)},
+                sample_name=f"{op_info.name}_tensor_p_dtype_{p_dtype}_error",
+            ),
+            op_error_type=RuntimeError,
+            op_error_info=f'tensor p error dtype {p_dtype} is not supported for {op_info.name}',
         )
