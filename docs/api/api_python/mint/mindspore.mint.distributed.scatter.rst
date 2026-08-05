@@ -12,7 +12,7 @@ mindspore.mint.distributed.scatter
 
     参数：
         - **tensor** (Tensor) - 输出散射的tensor。
-        - **scatter_list** (list[Tensor]) - 输入待散射的tensor列表。
+        - **scatter_list** (list[Tensor]) - 输入待散射的tensor列表。必须在源 rank 上指定。
         - **src** (int，可选) - 表示发送源的进程编号。只有该进程会发送散射源tensor。默认值： ``0`` 。
         - **group** (str，可选) - 通信组名称。默认值： ``None`` ，即在Ascend平台表示为 ``"hccl_world_group"`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。

@@ -7,7 +7,7 @@ mindspore.mint.distributed.reduce_scatter_tensor_uneven
 
     .. note::
         - 输入张量在所有进程中的shape和格式必须一致。
-        - 输出张量的第一个维度尺寸应该等于 `input_split_sizes` 的所有值之和。
+        - 输入张量的第一个维度尺寸应该等于 `input_split_sizes` 的所有值之和。
         - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：

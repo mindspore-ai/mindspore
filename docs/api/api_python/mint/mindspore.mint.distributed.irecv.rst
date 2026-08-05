@@ -3,7 +3,7 @@ mindspore.mint.distributed.irecv
 
 .. py:function:: mindspore.mint.distributed.irecv(tensor, src=0, group=None, tag=0)
 
-    异步接收tensor到指定线程。
+    异步从指定源进程接收tensor。
 
     .. note::
         - 当前仅支持PyNative模式，不支持Graph模式。
@@ -20,7 +20,7 @@ mindspore.mint.distributed.irecv
 
     异常：
         - **TypeError** - `tensor` 不是Tensor， `src` 不是int或 `group` 不是str。
-        - **ValueError** - 如果该线程的rank id 大于通信组的rank size。
+        - **ValueError** - 如果该进程的rank id 大于通信组的rank size。
 
     样例：
 

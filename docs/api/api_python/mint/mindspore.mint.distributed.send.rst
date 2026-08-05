@@ -3,7 +3,7 @@ mindspore.mint.distributed.send
 
 .. py:function:: mindspore.mint.distributed.send(tensor, dst=0, group=None, tag=0)
 
-    同步发送张量到指定线程。
+    同步发送张量到指定进程。
 
     .. note::
         - 当前仅支持PyNative模式，不支持Graph模式。
@@ -17,7 +17,7 @@ mindspore.mint.distributed.send
 
     异常：
         - **TypeError** - 输入 `tensor` 的数据类型不为Tensor， `dst` 不是int或 `group` 不是str。
-        - **ValueError** - 如果发送线程和目的线程号相同。
+        - **ValueError** - 如果发送进程号和目的进程号相同。
 
     样例：
 
