@@ -1488,7 +1488,7 @@ void DispatchOp(const std::shared_ptr<runtime::AsyncTask> &task) {
   if (need_sync && !runtime::OpExecutor::GetInstance().async_for_graph()) {
     MS_LOG(INFO) << "PyBoost sync run frontend task";
     runtime::Pipeline::Get().WaitForward();
-    task->Run();
+    task->RunWithExceptionHandling();
   } else {
     runtime::ProfilerAnalyzer::GetInstance().RecordFlowData(task->task_id());
     runtime::Pipeline::Get().frontend_stage()->Push(task);
