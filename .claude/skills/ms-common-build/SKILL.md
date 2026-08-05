@@ -28,18 +28,18 @@ pip install output/mindspore_*.whl --force-reinstall
 
 ## Key Build Options
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-e cpu\|gpu\|ascend\|d` | Target device | (required) |
-| `-j[N]` | Parallel jobs | `-j8` |
-| `-d` | Debug mode (with symbols) | off |
-| `-r` | Release mode | on |
-| `-i` | Incremental build (skip clean) | off |
-| `-v` | Verbose (show cmake commands) | off |
-| `-a on` | Enable ASAN (AddressSanitizer) | off |
-| `-t ut` | Run unit tests after build | off |
-| `-g on\|off` | Use glog for logging | on |
-| `-D on\|off` | Dump IR graphs to file | on |
+| Flag                     | Description                    | Default    |
+|--------------------------|--------------------------------|------------|
+| `-e cpu\|gpu\|ascend\|d` | Target device                  | (required) |
+| `-j[N]`                  | Parallel jobs                  | `-j8`      |
+| `-d`                     | Debug mode (with symbols)      | off        |
+| `-r`                     | Release mode                   | on         |
+| `-i`                     | Incremental build (skip clean) | off        |
+| `-v`                     | Verbose (show cmake commands)  | off        |
+| `-a on`                  | Enable ASAN (AddressSanitizer) | off        |
+| `-t on`                  | Build unit test binary         | off        |
+| `-g on\|off`             | Use glog for logging           | on         |
+| `-D on\|off`             | Dump IR graphs to file         | on         |
 
 ## Incremental Build (Fast Rebuild)
 
@@ -129,8 +129,9 @@ output/
 ## Running Tests
 
 ```bash
-# Unit tests (C++)
-bash build.sh -e gpu -t ut
+# Unit tests (C++) — two steps: build the binaries, then run them
+bash build.sh -t on -j8        # -t on only BUILDS the tests; do NOT add -e (build.sh resets device to empty with -t)
+bash tests/ut/cpp/runtest.sh   # runs the built ut_*_tests binaries
 
 # System tests (Python)
 pytest tests/st/ops/test_{op_name}.py -v
