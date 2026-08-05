@@ -372,6 +372,30 @@ def test_custom_function_need_grad_forward():
     assert np.allclose(grads[0].asnumpy(), np.array([1], dtype=np.float32), 0.00001, 0.00001)
 
 
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard')
+def test_custom_function_needs_input_grad_release():
+    """
+    Feature: Custom autograd function.
+    Description: FunctionBase destruction releases the object held by needs_input_grad.
+    Expectation: The object is released after the FunctionBase instance is destroyed.
+    """
+    class RefTracker:
+        pass
+
+    ctx = CustomFunctionNeedGradNet()
+    tracker = RefTracker()
+    tracker_ref = weakref.ref(tracker)
+    ctx.needs_input_grad = tracker
+    del tracker
+    assert tracker_ref() is not None
+
+    del ctx
+    gc.collect()
+    assert tracker_ref() is None
+
+
 class CustomFunctionDirtyTensorError1Net(_Function):
     @staticmethod
     def forward(ctx, x, y):

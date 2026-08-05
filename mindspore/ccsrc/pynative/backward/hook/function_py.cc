@@ -540,10 +540,10 @@ namespace mindspore::pynative::autograd {
 namespace py = pybind11;
 namespace {
 void FunctionBase_clear(FunctionBase *self) {
+  Py_CLEAR(self->needs_input_grad);
   Py_CLEAR(self->saved_tensors);
   Py_CLEAR(self->dirty_tensors);
   Py_CLEAR(self->non_differentiable);
-  Py_CLEAR(self->saved_tensors);
   self->is_tensor_input.clear();
 }
 
