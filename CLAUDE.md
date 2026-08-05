@@ -107,8 +107,9 @@ pytest tests/st/ops/test_{op_name}.py -v -s
 # Run with specific backend
 pytest tests/st/ops/test_add.py -v --device=CPU
 
-# C++ unit tests (built with -t ut flag)
-./build/mindspore/tests/ut/cpp/mindspore_ut
+# C++ unit tests (build with -t on, then run via runtest.sh)
+bash build.sh -t on -j8
+bash tests/ut/cpp/runtest.sh
 ```
 
 Test files live in:
