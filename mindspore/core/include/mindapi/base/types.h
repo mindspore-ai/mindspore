@@ -76,6 +76,7 @@ enum ActivationType : int64_t {
   GEGLU = 24,
   SWIGLU = 25,
   REGLU = 26,
+  CELU = 27,
 };
 
 enum ReduceMode : int64_t {
