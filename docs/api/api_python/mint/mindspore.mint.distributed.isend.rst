@@ -3,7 +3,7 @@ mindspore.mint.distributed.isend
 
 .. py:function:: mindspore.mint.distributed.isend(tensor, dst=0, group=None, tag=0)
 
-    异步发送张量到指定线程。
+    异步发送张量到指定进程。
 
     .. note::
         - 当前仅支持PyNative模式，不支持Graph模式。
@@ -20,7 +20,7 @@ mindspore.mint.distributed.isend
 
     异常：
         - **TypeError** -  `tensor` 不是Tensor， `dst` 不是int或 `group` 不是str。
-        - **ValueError** - 如果发送线程和目的线程号相同。
+        - **ValueError** - 如果发送进程和目的进程号相同。
 
     样例：
 

@@ -23,9 +23,11 @@ mindspore.mint.distributed.recv_object_list
 
     异常：
         - **TypeError** - 如果 `src` 不是int类型、 `group` 不是str类型，或者 `object_list` 不是list类型。
-        - **ValueError** - 如果 `src` 线程和当前线程号相同。
+        - **ValueError** - 如果 `src` 进程和当前进程号相同。
 
     样例：
 
     .. note::
         .. include:: mindspore.mint.comm_note.rst
+
+        此示例需要运行在2个设备上。

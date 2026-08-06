@@ -3,7 +3,7 @@ mindspore.mint.einsum
 
 .. py:function:: mindspore.mint.einsum(equation, *operands)
 
-    基于爱因斯坦求和约定（Einsum）符号，沿着指定维度对输入Tensor元素的乘积求和。可以使用这个运算符来执行对角线、减法、转置、矩阵乘法、乘法、内积等运算。
+    基于爱因斯坦求和约定（Einsum）符号，沿着指定维度对输入Tensor元素的乘积求和。可以使用这个运算符来执行对角线、求和、转置、矩阵乘法、乘法、内积等运算。
 
     .. note::
         现在支持子列表模式。例如，mint.einsum(op1, sublist1, op2, sublist2, ..., sublist_out)。在子列表模式中， `equation` 由子列表推导得到，Python的省略号和介于[0, 52)的整数list组成子列表。每个操作数后面都有一个子列表，并且最后有一个表示输出的子列表。

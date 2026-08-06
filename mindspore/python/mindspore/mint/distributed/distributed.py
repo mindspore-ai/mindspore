@@ -414,7 +414,7 @@ def is_available():
 
     Note:
         - Always returns ``True`` because MindSpore always has distributed ability on all platforms.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Returns:
         bool, whether this distributed module is available.
@@ -446,7 +446,7 @@ def is_initialized():
     Check whether the default process group has been initialized.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        Only supports PyNative mode. Graph mode is not currently supported.
 
     Returns:
         bool, whether the default process group has been initialized.
@@ -493,11 +493,11 @@ def init_process_group(
         - This method isn't supported in GPU and CPU versions of MindSpore.
         - On Ascend hardware platforms, this API should be called before the definition of any Tensor and Parameter,
           and before the instantiation and execution of any operation and net.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
         - The MCCL communication group does not support repeated initialization and destruction.
 
     Args:
-        backend (str, optional): The backend to use. Default is ``"hccl"`` and now only support ``"hccl"``.
+        backend (str, optional): The backend to use. Default is ``"hccl"`` and now only supports ``"hccl"``.
         init_method (str, optional): URL specifying how to initialize the collective communication group.
             Default is ``None``.
         timeout (timedelta, optional): Timeout for API execution. Default is ``None``. Currently, this parameter is
@@ -791,15 +791,15 @@ def new_group(ranks=None,
 
     Note:
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         ranks (list[int], optional): List of ranks of group members. Default: ``None``,
-            which will be create the world group.
+            which will create the world group.
         timeout (int, invalid): Currently it is a reserved parameter.
-        backend (str, invalid): Support backend Library. Currently support ``"hccl"`` and ``"mccl"``.
-            When backend is ``"hccl"``, Huawei Collective Communication Library (HCCL) is used.
-            When backend is ``"mccl"``, MindSpore Collective Communication Library (MCCL) is used.
+        backend (str, invalid): Support backend Library. Currently supports ``"hccl"`` and ``"mccl"``.
+            - When backend is ``"hccl"``, Huawei Collective Communication Library (HCCL) is used.
+            - When backend is ``"mccl"``, MindSpore Collective Communication Library (MCCL) is used.
             Default: ``None``, which means ``"hccl"`` in Ascend.
         pg_options (GroupOptions, optional): Additional communication group configuration parameters.
             The backend will automatically select supported parameters and apply them during group
@@ -831,7 +831,7 @@ def new_group(ranks=None,
         str. The name of the created group. Return ``""`` in the abnormal scenarios.
 
     Raises:
-        TypeError: If the list of `ranks` contains duplicate rank IDs.
+        TypeError: If `ranks` is not a list or contains duplicate rank IDs.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1475,7 +1475,7 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
         >>> init_process_group()
         >>> input_tensor = Tensor(np.ones([8, 8]).astype(np.float32))
         >>> output_tensor = Tensor(np.ones([4, 8]).astype(np.float32))
-        >>> output = reduce_scatter_tensor(output_tensor ,input_tensor)
+        >>> output = reduce_scatter_tensor(output_tensor, input_tensor)
         >>> print(output_tensor)
         [[2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]
@@ -1519,7 +1519,7 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
     Note:
         - The input tensor must have identical shape and format across all processes.
         - The first dimension of input tensor should equal the sum of `input_split_sizes`.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         output (Tensor): The output tensor has the same dtype as `input` with a shape of
@@ -1615,8 +1615,8 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
 
     Note:
         - Only process with destination rank receives the reduced output.
-        - Only support PyNative mode, Graph mode is not currently supported.
-        - Other processes only get a tensor with shape [1], which has no mathematical meaning.
+        - Only supports PyNative mode. Graph mode is not currently supported.
+        - Other processes require a tensor to be passed in. This tensor has no mathematical significance.
 
     Args:
         tensor (Tensor): Input and output of the collective. The function operates in-place.
@@ -1652,10 +1652,8 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
-            This example should be run with 4 devices.
+            This example should be run with 2 devices.
 
-        >>> from mindspore import ops
-        >>> import mindspore.nn as nn
         >>> from mindspore.mint.distributed import init_process_group, reduce
         >>> from mindspore import Tensor
         >>> import numpy as np
@@ -1884,18 +1882,18 @@ def batch_isend_irecv(p2p_op_list):
 
 def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=False):
     r"""
-    Scatter tensor evently across the processes in the specified communication group.
+    Scatter tensor evenly across the processes in the specified communication group.
 
     Note:
-        - The interface behavior only support Tensor input and scatter evenly, which
+        - The interface behavior only supports Tensor input and scatter evenly, which
             is different from that of `pytoch.distributed.scatter`.
         - Only the tensor in process `src` (global rank) will do scatter.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         output_tensor (Tensor): Output tensor. It should have the same size across all ranks.
         input_tensor (Tensor):  The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
+        src (int, optional): Specifies the rank(global rank) of the process that sends the tensor.
             And only process `src` will send the tensor. Default is 0.
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
             Ascend. Default: ``None``.
@@ -2204,7 +2202,7 @@ def send(tensor, dst=0, group=None, tag=0):
     Send the tensor to the specified destination rank.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
         - In the MCCL communication group scenario, :func:`mindspore.mint.distributed.send` and
           :func:`mindspore.mint.distributed.recv` are not strongly synchronized.
 
@@ -2280,8 +2278,8 @@ def recv(tensor, src=0, group=None, tag=0):
     Receive the tensor from the specified source rank.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
-        - In the mccl communication group scenario, :func:`mindspore.mint.distributed.send` and
+        - Only supports PyNative mode. Graph mode is not currently supported.
+        - In the MCCL communication group scenario, :func:`mindspore.mint.distributed.send` and
           :func:`mindspore.mint.distributed.recv` are not strongly synchronized.
 
     Args:
@@ -2289,8 +2287,8 @@ def recv(tensor, src=0, group=None, tag=0):
         src (int, optional): A required integer identifying the source rank (global rank). Default: ``0``.
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
-        tag (int, optional): A required integer identifying the send/recv message tag. The message will
-            be received by the Send op with the same "tag". Default: ``0``. It is a reserved parameter currently.
+        tag (int, optional): A required integer identifying the send/recv message tag. The message sent
+            by the Send op with the same "tag" will be received. Default: ``0``. It is a reserved parameter currently.
 
     Returns:
         int. If successful, it will return ``0``.
@@ -2356,7 +2354,7 @@ def send_object_list(object_list, dst, group=None, device=None):
     Send picklable objects to the specified destination rank synchronously.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
         - Similar to :func:`mindspore.mint.distributed.send`, but Python objects can be passed in.
 
     .. warning::
@@ -2366,7 +2364,7 @@ def send_object_list(object_list, dst, group=None, device=None):
         of the data used by the interface on their own.
 
     Args:
-        object_list (list[Any]): List of input objects to sent.
+        object_list (list[Any]): List of input objects to send.
             Each object must be picklable. Receiver must provide lists of equal sizes.
         dst (int): Destination global rank to send `object_list` to.
         group (str, optional): The process group to work on.
@@ -2374,7 +2372,7 @@ def send_object_list(object_list, dst, group=None, device=None):
         device (str, optional): Currently it is a reserved parameter. Default: ``None``.
 
     Raises:
-        TypeError: If `dst` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        TypeError: If `dst` is not of type int, `group` is not of type str, or `object_list` is not of type list.
         ValueError: If the `dst` process rank id is same as the current process.
 
     Supported Platforms:
@@ -2445,7 +2443,7 @@ def recv_object_list(object_list, src=0, group=None, device=None):
     Receive picklable objects from the specified source rank synchronously.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
         - Similar to :func:`mindspore.mint.distributed.recv`, but can receive Python objects.
 
     .. warning::
@@ -2466,7 +2464,7 @@ def recv_object_list(object_list, src=0, group=None, device=None):
         int. If successful, it will return ``0``.
 
     Raises:
-        TypeError: If `src` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        TypeError: If `src` is not of type int, `group` is not of type str, or `object_list` is not of type list.
         ValueError: If the `src` process rank id is same as the current process.
 
     Supported Platforms:
@@ -2539,7 +2537,7 @@ def isend(tensor, dst=0, group=None, tag=0):
     Send the tensor to the specified destination rank asynchronously.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
         - In the MCCL communication group scenario, :func:`mindspore.mint.distributed.isend` and
           :func:`mindspore.mint.distributed.irecv` are not strongly synchronized.
 
@@ -2621,8 +2619,8 @@ def irecv(tensor, src=0, group=None, tag=0):
     Receive the tensor from the specified source rank asynchronously.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
-        - In the mccl communication group scenario, :func:`mindspore.mint.distributed.isend` and
+        - Only supports PyNative mode. Graph mode is not currently supported.
+        - In the MCCL communication group scenario, :func:`mindspore.mint.distributed.isend` and
           :func:`mindspore.mint.distributed.irecv` are not strongly synchronized.
 
     Args:
@@ -2630,12 +2628,12 @@ def irecv(tensor, src=0, group=None, tag=0):
         src (int, optional): A required integer identifying the source rank (global rank). Default: ``0``.
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
-        tag (int, optional): A required integer identifying the send/recv message tag. The message will
-            be received by the Send op with the same "tag". Default: ``0``. It is a reserved parameter currently.
+        tag (int, optional): A required integer identifying the send/recv message tag.
+            The message sent by the Send op with the same "tag" will be received.
+            Default: ``0``. It is a reserved parameter currently.
 
     Returns:
-        CommHandle. CommHandle is an async work handle, if `async_op` is set to ``True``.
-        CommHandle will be ``None``, when `async_op` is ``False``.
+        CommHandle. CommHandle is an async work handle.
 
     Raises:
         TypeError: If the type of `tensor` is not Tensor, `src` is not an int or `group` is not a str.
@@ -3058,7 +3056,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
     returns the tensor which is reduced and scattered.
 
     Note:
-        Only support PyNative mode, Graph mode is not currently supported.
+        Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         output (Tensor): The output tensor.
@@ -3104,7 +3102,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
         >>> init_process_group()
         >>> input_tensors = [Tensor(np.ones([4, 8]).astype(np.float32)), Tensor(np.ones([4, 8]).astype(np.float32))]
         >>> output_tensor = Tensor(np.zeros([4, 8]).astype(np.float32))
-        >>> output = reduce_scatter(output_tensor ,input_tensors)
+        >>> output = reduce_scatter(output_tensor, input_tensors)
         >>> print(output_tensor)
         [[2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]
@@ -3147,18 +3145,18 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
 
 def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
     r"""
-    Scatter tensor evently across the processes in the specified communication group.
+    Scatter tensor evenly across the processes in the specified communication group.
 
     Note:
-        - The interface behavior only support Tensor List input and scatter evenly.
+        - The interface behavior only supports Tensor List input and scatter evenly.
         - Only the tensor in process `src` (global rank) will do scatter.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The output tensor.
         scatter_list (list[Tensor]): List of same-sized tensors to scatter.
             Must be specified on the source rank.
-        src (int, optional): Specifies the rank (global rank) of the process that send the tensor.
+        src (int, optional): Specifies the rank (global rank) of the process that sends the tensor.
             And only process `src` will send the tensor. Default: ``0``.
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -3340,7 +3338,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
     Note:
         - Similar to :func:`mindspore.mint.distributed.scatter`, but Python objects can be passed in.
         - Only the objects in process `src` (global rank) will do scatter.
-        - Only support PyNative mode, Graph mode is not currently supported.
+        - Only supports PyNative mode. Graph mode is not currently supported.
 
     .. warning::
         This interface will implicitly use the pickle module, which is not secure. The core reason
@@ -3353,7 +3351,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
             will store the object scattered to this rank.
         scatter_object_input_list (list[Any]): List of python objects to scatter.
             It must be specified on the source rank.
-        src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
+        src (int, optional): Specifies the rank(global rank) of the process that sends the tensor.
             And only process `src` will send the tensor. Default: ``0`` .
         group (str, optional): The communication group to work on.
             Default: ``None``, which means ``"hccl_world_group"`` in Ascend.

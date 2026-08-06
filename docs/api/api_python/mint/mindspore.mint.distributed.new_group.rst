@@ -12,7 +12,12 @@ mindspore.mint.distributed.new_group
     参数：
         - **ranks** (list[int], 可选) - 设备编号列表。默认值为 ``None`` ，将创建全局通信组。
         - **timeout** (int, 无效参数) - 当前为预留参数。
-        - **backend** (str, 无效参数) - 当前为预留参数。
+        - **backend** (str, 无效参数) - 支持backend库。当前支持 ``"hccl"`` 和 ``"mccl"``。
+
+          - 当 `backend` 为 ``"hccl"`` 时，使用HCCL。
+          - 当 `backend` 为 ``"mccl"`` 时，使用 MindSpore 集体通信库（MCCL）。
+
+          默认值： ``None`` ，在 Ascend 环境中表示 ``"hccl"``。
         - **pg_options** (GroupOptions, 可选) - 额外通信组配置参数。后端会自动选择支持的参数，并在通信组初始化时生效。例如对于 `HCCL` 后端，可以指定 `hccl_config` 来应用特定的通信组初始化配置。默认值为 ``None`` 。
 
           `GroupOptions` 被定义为一个可以实例化为Python对象的类。
