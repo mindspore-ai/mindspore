@@ -2457,7 +2457,7 @@ def dynamic_sample_inputs_mint_diag(
         Generator of OpDynamicInput objects.
     '''
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
-    if not kwargs.get("only_dynamic_shape", False):
+    if not kwargs.get("only_dynamic_rank", False):
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=(None, 3), dtype=dtype),
@@ -2480,7 +2480,7 @@ def dynamic_sample_inputs_mint_diag(
                 ),
             )
         )
-    if not kwargs.get("only_dynamic_rank", False):
+    if not kwargs.get("only_dynamic_shape", False):
         # dynamic rank
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
