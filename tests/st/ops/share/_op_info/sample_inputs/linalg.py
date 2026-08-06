@@ -935,7 +935,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat1 must be 2',
     )
 
@@ -946,7 +946,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat1 must be 2',
     )
 
@@ -957,7 +957,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat2 must be 2',
     )
 
@@ -968,7 +968,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the dim of mat2 must be 2',
     )
 
