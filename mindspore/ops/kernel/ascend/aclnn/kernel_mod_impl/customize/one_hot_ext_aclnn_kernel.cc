@@ -54,6 +54,43 @@ void SetKernelTensorSize(KernelTensor *tensor) {
   tensor->set_size(size);
 }
 
+std::shared_ptr<KernelTensor> CreateTempKernelTensor(const KernelTensor *base_tensor, const ShapeVector &shape_vector,
+                                                     const TypePtr &type_ptr) {
+  MS_EXCEPTION_IF_NULL(base_tensor);
+  auto tensor = std::make_shared<KernelTensor>();
+  tensor->SetType(type_ptr);
+  tensor->SetShape(std::make_shared<abstract::TensorShape>(shape_vector));
+  tensor->SetDeviceType(base_tensor->GetDeviceType());
+  tensor->set_stream_id(base_tensor->stream_id());
+  tensor->set_alloc_stream_id(base_tensor->alloc_stream_id());
+  tensor->set_format(base_tensor->format());
+  return tensor;
+}
+
+device::DeviceContext *GetAscendDeviceContext() {
+  return device::DeviceContextManager::GetInstance().GetDeviceContext("Ascend").get();
+}
+
+void EnsureOutputDeviceMemory(KernelTensor *tensor, device::DeviceContext *device_context, void *stream_ptr,
+                              size_t previous_size) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto device_address = tensor->device_address();
+  MS_EXCEPTION_IF_NULL(device_address);
+  auto current_size = device_address->GetSize();
+  if (device_address->GetPtr() != nullptr && previous_size >= current_size) {
+    return;
+  }
+
+  if (device_address->GetPtr() != nullptr) {
+    device_context->device_res_manager_->FreeMemory(device_address.get());
+  }
+  auto stream_id = device::ascend::AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get(), stream_id)) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed for OneHotExt output, size: " << current_size;
+  }
+}
+
 void ResetMaxOutputTensor(KernelTensor *max_output_tensor, KernelTensor *input_tensor, KernelTensor *depth_tensor) {
   SetKernelTensorShapeAndType(max_output_tensor, depth_tensor->GetShapeVector(), input_tensor->GetType());
   SetKernelTensorSize(max_output_tensor);
@@ -100,9 +137,10 @@ void OneHotExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs
   SetKernelTensorSize(outputs[kIndex0]);
   GetWorkspaceForResizeDoOneHot(inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_, outputs[kIndex0]);
   if (auto_depth_) {
-    max_output_tensor_ = outputs[kIndex0];
-    ResetMaxOutputTensor(max_output_tensor_, inputs[kIndex0], inputs[kIndex1]);
-    GetWorkspaceForResizeDoMax(inputs[kIndex0], max_output_tensor_);
+    max_output_tensor_ =
+      CreateTempKernelTensor(outputs[kIndex0], inputs[kIndex1]->GetShapeVector(), inputs[kIndex0]->GetType());
+    SetKernelTensorSize(max_output_tensor_.get());
+    GetWorkspaceForResizeDoMax(inputs[kIndex0], max_output_tensor_.get());
   }
 }
 
@@ -115,14 +153,21 @@ bool OneHotExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const st
     return true;
   }
 
-  ResetMaxOutputTensor(max_output_tensor_, inputs[kIndex0], inputs[kIndex1]);
-  RunOpDoMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_);
-  const auto max_value = GetValueFromTensorToInt64(max_output_tensor_);
+  ResetMaxOutputTensor(max_output_tensor_.get(), inputs[kIndex0], inputs[kIndex1]);
+  auto output_device_context = GetAscendDeviceContext();
+  auto max_output_mem =
+    std::make_shared<kernel::MemBlock>(output_device_context, max_output_tensor_->size(), stream_ptr);
+  max_output_tensor_->set_device_ptr(max_output_mem->ptr_);
+  RunOpDoMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_.get());
+  const auto max_value = GetValueFromTensorToInt64(max_output_tensor_.get());
   depth_ = std::max(max_value + 1, kMinDepth);
   output_shape_[kIndex0] = BuildOutputShape(inputs[kIndex0]->GetShapeVector(), depth_, axis_);
+  const auto previous_output_size = outputs[kIndex0]->size();
   SetKernelTensorShapeAndType(outputs[kIndex0], output_shape_[kIndex0], origin_output_typeptr_);
   SetKernelTensorSize(outputs[kIndex0]);
-
+  outputs[kIndex0]->set_tensor_storage_info(nullptr);
+  SetOutputSizeList({outputs[kIndex0]->size()});
+  EnsureOutputDeviceMemory(outputs[kIndex0], output_device_context, stream_ptr, previous_output_size);
   hash_id_DoOneHot_ = 0;
   auto res = GEN_EXECUTOR_CUST(op_type_DoOneHot_, inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_,
                                outputs[kIndex0]);
