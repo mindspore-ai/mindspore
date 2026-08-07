@@ -58,7 +58,7 @@ bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   MS_EXCEPTION_IF_NULL(start_addr);
   MS_EXCEPTION_IF_NULL(stop_addr);
   MS_EXCEPTION_IF_NULL(step_addr);
-  int64_t len = static_cast<int64_t>(inputs[1]->size());
+  int64_t len = static_cast<int64_t>(inputs[1]->size() / sizeof(T));
   MS_EXCEPTION_IF_NULL(output_addr);
   int64_t start = start_addr[0];
   int64_t stop = stop_addr[0];
@@ -107,10 +107,10 @@ bool SequenceSliceGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
       return true;
     }
     MS_EXCEPTION_IF_NULL(dout_addr);
-    size_t idx = inputs[0]->size();
+    int64_t idx = 0;
     for (int64_t i = start; i > stop; i += step) {
-      idx--;
       output_addr[i + len] = dout_addr[idx];
+      idx++;
     }
     return true;
   }
