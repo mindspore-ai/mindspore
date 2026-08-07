@@ -1,0 +1,45 @@
+dynamic_mx_quant:
+    description: |
+        dynamic_mx_quant(input, *, dst_type, axis=-1, round_mode="rint", block_size=32, scale_alg=0, dst_type_max=0.0, max_low_bound=0.0) -> (Tensor, Tensor)
+
+        Dynamically quantizes blocks of ``input`` and returns the quantized data and MX scale data.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Args:
+            input (Tensor): A 1-D to 7-D tensor of type ``float16`` or ``bfloat16``.
+
+        Keyword Args:
+            dst_type (int): Required destination data-type identifier. ``23`` and its alias ``291``
+                select FP8 E5M2; ``24`` and its alias ``292`` select FP8 E4M3FN.
+            axis (int, optional): Axis divided into quantization blocks. Its value must be in
+                :math:`[-R, R)`, where :math:`R` is the rank of ``input``. Default: ``-1``.
+            round_mode (str, optional): Rounding mode. The runtime-tested value is ``"rint"``.
+                Default: ``"rint"``.
+            block_size (int, optional): Number of input elements in a quantization block. The
+                runtime-tested value is ``32``. Default: ``32``.
+            scale_alg (int, optional): Scale algorithm identifier in [0, 2]. Supported combinations
+                depend on ``dst_type`` and the installed ACLNN version. Default: ``0``.
+            dst_type_max (float, optional): Destination maximum used by ACLNN scale algorithms that
+                support it. Default: ``0.0``.
+            max_low_bound (float, optional): Lower bound for the scale maximum used by ACLNN versions
+                that support it. CANN V2 ignores this parameter and emits a one-time warning; the base
+                API also ignores ``dst_type_max`` and emits a one-time warning. Default: ``0.0``.
+
+        Returns:
+            A tuple of two tensors ``(y, mxscale)``.
+
+            - ``y`` has the same shape as ``input``. Its dtype is ``float8_e5m2`` for
+              ``dst_type=23`` or ``291``, and ``float8_e4m3fn`` for ``dst_type=24`` or ``292``.
+            - ``mxscale`` has dtype ``uint8``. Its shape is the shape of ``input`` with a trailing
+              dimension of size 2, except that ``axis`` is replaced by
+              :math:`\lceil\lceil input.shape[axis] / block\_size\rceil / 2\rceil`.
+
+        Raises:
+            TypeError: If the dtype of ``input`` is not ``float16`` or ``bfloat16``.
+            ValueError: If an argument is outside the documented runtime-tested subset or the rank
+                is invalid.
+
+        Supported Platforms:
+            ``Ascend``

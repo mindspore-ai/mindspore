@@ -1,0 +1,8 @@
+dynamic_mx_quant:
+  op_yaml: dynamic_mx_quant_op.yaml
+  py_method: tensor_dynamic_mx_quant
+  kwonlyargs: dst_type, axis, round_mode, block_size, scale_alg, dst_type_max, max_low_bound
+  Ascend: pyboost
+  CPU: py_method
+  GPU: py_method
+  interface: function

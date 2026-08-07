@@ -17,8 +17,9 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/quant_matmul.h"
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
+#include "kernel/ascend/aclnn/pyboost_impl/aclnn_tensor_wrapper.h"
+#include "kernel/ascend/acl_ir/acl_convert.h"
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
 #include "plugin/ascend/res_manager/op_adapter/op_adapter_base.h"
@@ -63,6 +64,17 @@ TensorPtr QuantMatmulCreateEmpty(const ShapeVector &shape, const TypeId &type) {
   TensorMalloc(tensor);
   return tensor;
 }
+
+aclDataType GetQuantMatmulAclDtype(const TensorPtr &tensor, const std::optional<Int64ImmPtr> &dtype_override,
+                                   bool byte_mx_scale = false) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (byte_mx_scale && !dtype_override.has_value() && tensor->data_type() == kNumberTypeUInt8) {
+    return ACL_FLOAT8_E8M0;
+  }
+  const auto dtype =
+    dtype_override.has_value() ? static_cast<TypeId>(dtype_override.value()->value()) : tensor->data_type();
+  return device::ascend::AclConverter::ConvertType(dtype);
+}
 }  // namespace
 
 tensor::TensorPtr QuantMatmulAscendCustomize(
@@ -74,15 +86,13 @@ tensor::TensorPtr QuantMatmulAscendCustomize(
   auto output = InferOutput<1>(prim::kPrimQuantMatmul, x1, x2, scale, offset, pertoken_scale, bias, output_dtype,
                                x1_dtype, x2_dtype, pertoken_scale_dtype, scale_dtype, group_sizes);
 
-  TensorPtr x1_val = x1;
-  if (x1_dtype.has_value()) {
-    x1_val =
-      PyBoostUtils::CastTensor(x1_val, static_cast<TypeId>(x1_dtype.value()->value()), device::DeviceType::kAscend);
-  }
-  TensorPtr x2_val = x2;
-  if (x2_dtype.has_value()) {
-    x2_val =
-      PyBoostUtils::CastTensor(x2_val, static_cast<TypeId>(x2_dtype.value()->value()), device::DeviceType::kAscend);
+  const device::ascend::AclTensorWrapper x1_wrapper = {x1, GetQuantMatmulAclDtype(x1, x1_dtype)};
+  const device::ascend::AclTensorWrapper x2_wrapper = {x2, GetQuantMatmulAclDtype(x2, x2_dtype)};
+  const device::ascend::AclTensorWrapper scale_wrapper = {scale, GetQuantMatmulAclDtype(scale, scale_dtype, true)};
+  std::optional<device::ascend::AclTensorWrapper> pertoken_scale_wrapper;
+  if (pertoken_scale.has_value()) {
+    pertoken_scale_wrapper = device::ascend::AclTensorWrapper{
+      pertoken_scale.value(), GetQuantMatmulAclDtype(pertoken_scale.value(), pertoken_scale_dtype, true)};
   }
   auto output_dtype_id = output->data_type();
   auto y_scale = QuantMatmulCreateEmpty({0}, output_dtype_id);
@@ -93,13 +103,13 @@ tensor::TensorPtr QuantMatmulAscendCustomize(
   auto group_sizes_list = ConvertValueTupleToVector<int64_t>(group_sizes);
   auto group_size_val = CheckAndGetGroups(group_sizes_list);
 
-  TensorToDevice(x1_val, x2_val, scale, offset, pertoken_scale, bias);
+  TensorToDevice(x1, x2, scale, offset, pertoken_scale, bias);
   TensorMalloc(output);
 
-  MS_LOG(DEBUG) << "QuantMatmul x1_val.shape = " << ShapeVectorToStr(x1_val->shape())
-                << ", dtype = " << TypeIdToString(x1_val->Dtype()->type_id())
-                << "; x2_val.shape = " << ShapeVectorToStr(x2_val->shape())
-                << ", dtype = " << TypeIdToString(x2_val->Dtype()->type_id())
+  MS_LOG(DEBUG) << "QuantMatmul x1.shape = " << ShapeVectorToStr(x1->shape())
+                << ", dtype = " << TypeIdToString(x1->Dtype()->type_id())
+                << "; x2.shape = " << ShapeVectorToStr(x2->shape())
+                << ", dtype = " << TypeIdToString(x2->Dtype()->type_id())
                 << "; scale.shape = " << ShapeVectorToStr(scale->shape())
                 << ", dtype = " << TypeIdToString(scale->Dtype()->type_id());
 
@@ -113,11 +123,11 @@ tensor::TensorPtr QuantMatmulAscendCustomize(
     }
     auto quant_param = QuantMatmulCreateEmpty(quant_param_shape, kNumberTypeInt64);
     DISPATCH_ACLNN(aclnnTransQuantParamV2, scale, offset, quant_param);
-    DISPATCH_ACLNN(aclnnQuantMatmulV5, x1_val, x2_val, pertoken_scale, quant_param, y_scale, x1_offset, offset,
+    DISPATCH_ACLNN(aclnnQuantMatmulV5, x1_wrapper, x2_wrapper, pertoken_scale, quant_param, y_scale, x1_offset, offset,
                    y_offset, bias, transpose1, transpose2, group_size_val, output);
   } else {
-    DISPATCH_ACLNN(aclnnQuantMatmulV5, x1_val, x2_val, pertoken_scale, scale, y_scale, x1_offset, offset, y_offset,
-                   bias, transpose1, transpose2, group_size_val, output);
+    DISPATCH_ACLNN(aclnnQuantMatmulV5, x1_wrapper, x2_wrapper, pertoken_scale_wrapper, scale_wrapper, y_scale,
+                   x1_offset, offset, y_offset, bias, transpose1, transpose2, group_size_val, output);
   }
   return output;
 }
