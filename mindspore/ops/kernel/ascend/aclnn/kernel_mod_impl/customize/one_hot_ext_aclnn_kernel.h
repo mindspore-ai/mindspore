@@ -46,7 +46,7 @@ class OneHotExtAscend : public AclnnKernelMod {
   int64_t axis_;
   bool auto_depth_{false};
   bool need_update_output_shape_{false};
-  KernelTensor *max_output_tensor_{nullptr};
+  std::shared_ptr<KernelTensor> max_output_tensor_{nullptr};
   std::vector<ShapeVector> output_shape_{{0}};
   TypePtr origin_output_typeptr_;
 };

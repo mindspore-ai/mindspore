@@ -127,3 +127,34 @@ def test_ops_onehot_huge_binary_cases():
     """
     ms.context.set_context(mode=ms.PYNATIVE_MODE)
     ops_one_hot_binary_case4()
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2048.0)
+def test_onehot_ext_auto_depth_reallocate_output():
+    """
+    Feature: OneHotExt dynamic output allocation.
+    Description: run auto-depth OneHotExt with increasing output sizes.
+    Expectation: output shape and values remain correct after output reallocation.
+    """
+    class OneHotExtAutoDepthNet(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.one_hot = ops.auto_generate.OneHotExt()
+            self.depth = ms.Tensor(-1, ms.int64)
+            self.on_value = ms.Tensor(1, ms.int32)
+            self.off_value = ms.Tensor(0, ms.int32)
+
+        def construct(self, x):
+            return self.one_hot(x, self.depth, self.on_value, self.off_value)
+
+    ms.set_context(mode=ms.GRAPH_MODE, jit_level='O0')
+    net = OneHotExtAutoDepthNet()
+    # Value-dependent graph output metadata is initialized before validating reallocations.
+    net(ms.Tensor(np.array([0, 0], dtype=np.int32)))
+    for depth in (256, 4096, 16384):
+        input_data = ms.Tensor(np.array([0, depth - 1], dtype=np.int32))
+        output = net(input_data).asnumpy()
+        expected = np.zeros((2, depth), dtype=np.int32)
+        expected[0, 0] = 1
+        expected[1, depth - 1] = 1
+        np.testing.assert_array_equal(output, expected)
