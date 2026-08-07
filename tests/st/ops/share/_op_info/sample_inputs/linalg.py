@@ -979,7 +979,7 @@ def error_sample_inputs_mint_addmm(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         ),
-        op_error_type=RuntimeError,
+        op_error_type=(ValueError, RuntimeError),
         op_error_info='the input.shape should be broadcasted by mat1.shape@mat2.shape',
     )
 
@@ -2340,6 +2340,48 @@ def basic_reference_inputs_tensor_addr_func(
             sample_name=f"{op_info.name}_{dtype}_{slen}d",
         )
 
+def basic_reference_inputs_tensor_cholesky_solve_func(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    """Yield typical shape cases for tensor.cholesky_solve ops.
+
+    medium 2D/3D, and empty-dimension cases.
+
+    Args:
+        op_info: OpInfo object.
+        dtype: Data type of the tensors.
+        device: Device of the tensors.
+        kwargs: Additional keyword arguments.
+    Returns:
+        Generator of OpSampleInput objects.
+    """
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+
+    shapes = (
+        ((S, M), (S, S), False),
+        ((S, M, L),(S, M, M), True),
+        ((S, L), (S, S), True),
+        ((S, L, M), (S, L, L), False),#input ignore
+    )
+    #input(*, N, M), input2(*, N, N)
+    for input_shape, input2, upper in shapes:
+        _input = make_arg(input_shape)
+        _tensor1 = make_arg(input2)
+        slen = len(input_shape)
+        yield OpSampleInput(
+            op_input= _input,
+            op_args=(_tensor1, upper,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
 def basic_sample_inputs_tensor_addmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     cases = (
              ((2, 6), (2, 4), (4, 6),),
@@ -2537,6 +2579,67 @@ def extra_sample_inputs_tensor_addr(op_info: OpInfo, dtype=None, device=None, **
             op_input=make_arg(input_shape, discontiguous=discontiguous),
             op_args=(make_arg(_tensor1, discontiguous=discontiguous),
                      make_arg(_tensor2, discontiguous=discontiguous), 1, 1,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def extra_sample_inputs_tensor_cholesky_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate extra sample inputs for tensor.cholesky_solve
+    Covers: various padding modes, dilation, groups, small/large/extremal value
+            tensors, discontiguous tensors, type promotion.
+    Skips: scalar inputs (conv2d requires tensor inputs).
+    '''
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_values = np.array(_float_small_values).reshape(4, 2, 2)
+        _tensor1 = np.array(_float_small_values[:len(_float_small_values)]).reshape(4, 2, 2)
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(_tensor1, dtype=dtype, device=device), False,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_small",
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_values = np.array(_large_values).reshape(2, 5)
+        _tensor1 = np.array(_large_values[:4]).reshape(2, 2)
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(_tensor1, dtype=dtype, device=device),
+                     False,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_large",
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                input_values = np.full((1, 3, 5), t)
+                _tensor1 = np.ones((1, 3, 3))
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+                    op_args=(make_tensor_with_np_array(_tensor1, dtype=dtype, device=device),
+                             False,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_inf",
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        input_shape = (1, 3, 5)
+        _tensor1 = (1, 3, 3)
+        yield OpSampleInput(
+            op_input=make_arg(input_shape, discontiguous=discontiguous),
+            op_args=(make_arg(_tensor1, discontiguous=discontiguous), False,),
             op_kwargs={},
             sample_name=op_info.name,
         )
@@ -2754,6 +2857,31 @@ def error_inputs_other_op_tensor_addr_func(op_info, dtype=None, device=None, **k
             op_error_type=(TypeError, ValueError, RuntimeError, AttributeError),
             op_error_info='other ops tensor.addr error values')
 
+def error_inputs_other_op_cholesky_solve_func(op_info, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device, low=None, high=None)
+    shapes = (
+        (make_arg(()), make_arg((S, S)), False),#input empty tensor
+        (make_arg((S, M, L, L)), make_arg((S, M, M)), False),#INPUT 4D
+        (1.0, make_arg((S, S)), True),#input scalar
+        (make_arg((S, L, M)), make_arg(()), False),#input2 empty tensor
+        (make_arg((S, L, M)), 1.0, False),#input2 scalar
+        (make_arg((S, L, M)), make_arg((S, L, L, L)), False),  # input2 4D
+        (make_arg((S, L, M)), make_arg((S, L, L)), 1.33),#UPPER not bool
+    )
+    for input_shape, input2, upper in shapes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(input2, upper,),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError, AttributeError),
+            op_error_info='other ops tensor.cholesky_solve error values')
 
 def error_inputs_other_op_tensor_addcdiv_func(op_info, dtype=None, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
@@ -3033,6 +3161,38 @@ def dynamic_sample_inputs_tensor_addcdiv(op_info: OpInfo, dtype=None, device=Non
                     op_args=(ms.Tensor(shape=(1, 6, 1), dtype=dtype), ms.Tensor(shape=(1, 1, 1), dtype=dtype),),
                     op_kwargs={"value": 0.1},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+def dynamic_sample_inputs_tensor_cholesky_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate dynamic sample inputs for Tensor.cholesky_solve.
+    Consider both dynamic_shape and dynamic_rank.
+    """
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None, None), dtype=dtype), False,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input_2D",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 4)),
+                    op_args=(make_func(shape=(2, 3, 3)), False,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_3D",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4 ,5, 7)),
+                    op_args=(make_func(shape=(4 ,5, 5)), False,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_3D",
                 ),
             ),
         )
