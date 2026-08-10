@@ -47,6 +47,19 @@ bool IsOutputPlaceHolder(const ValuePtr &output) {
   return true;
 }
 
+bool IsFloatType(TypeId type_id) {
+  return type_id == TypeId::kNumberTypeFloat || type_id == TypeId::kNumberTypeFloat16 ||
+         type_id == TypeId::kNumberTypeFloat32 || type_id == TypeId::kNumberTypeFloat64 ||
+         type_id == TypeId::kNumberTypeBFloat16 || type_id == TypeId::kNumberTypeFloat8E4M3FN ||
+         type_id == TypeId::kNumberTypeFloat8E5M2 || type_id == TypeId::kNumberTypeHiFloat8 ||
+         type_id == TypeId::kNumberTypeDouble;
+}
+
+bool IsComplexType(TypeId type_id) {
+  return type_id == TypeId::kNumberTypeComplex || type_id == TypeId::kNumberTypeComplex64 ||
+         type_id == TypeId::kNumberTypeComplex128;
+}
+
 AutoDiffInterfacePtr local_auto_diff_engine{nullptr};
 }  // namespace
 
@@ -237,5 +250,7 @@ bool RequiresGrad(const tensor::TensorPtr &tensor) {
 }
 
 AutoDiffInterfacePtr CurrentAutoDiffEngine() { return local_auto_diff_engine; }
+
+bool IsDifferentiable(TypeId type_id) { return IsFloatType(type_id) || IsComplexType(type_id); }
 }  // namespace impl
 }  // namespace mindspore::pynative::autograd
