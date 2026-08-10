@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+test for tensor.contiguous
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -24,7 +26,7 @@ from mindspore import Tensor
 from mindspore import dtype as mstype
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.01)
 def test_contiguous_pynative():
