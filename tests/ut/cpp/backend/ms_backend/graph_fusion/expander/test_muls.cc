@@ -68,8 +68,8 @@ INSTANTIATE_TEST_CASE_P(
   testing::Values(Params{true, kFloat16, kInt64, kFloat16, true}, Params{true, kFloat32, kInt64, kFloat32, true},
                   Params{true, kBFloat16, kInt64, kBFloat16, true}, Params{true, kFloat16, kFloat32, kFloat16, true},
                   Params{true, kFloat32, kFloat32, kFloat32, true}, Params{true, kBFloat16, kFloat32, kBFloat16, true},
-                  Params{true, kFloat16, kFloat64, kFloat16, true}, Params{true, kFloat32, kFloat64, kFloat32, true},
-                  Params{true, kBFloat16, kFloat64, kBFloat16, true}, Params{false, kInt32, kInt64, kInt32, true},
+                  Params{false, kFloat16, kFloat64, kFloat16, true}, Params{false, kFloat32, kFloat64, kFloat32, true},
+                  Params{false, kBFloat16, kFloat64, kBFloat16, true}, Params{false, kInt32, kInt64, kInt32, true},
                   Params{false, kInt64, kInt64, kInt64, true}, Params{false, kInt8, kInt64, kInt8, true},
                   Params{false, kFloat16, kInt64, kFloat16, false}, Params{false, kFloat32, kInt64, kFloat32, false},
                   Params{false, kBFloat16, kInt64, kBFloat16, false}));
