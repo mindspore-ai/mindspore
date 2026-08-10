@@ -460,6 +460,9 @@ REG_EXPANDER_FUNC("Muls").SetBody(BODYFUNC(ib) {
   auto scalar = ib->input(kIndex1);
   auto input_type = input->GetDtype();
   auto scalar_type = scalar->GetDtype();
+  if (scalar_type->type_id() == kNumberTypeFloat64) {
+    return {};
+  }
   auto scalar_value = scalar->GetValue();
   if (scalar_value == nullptr || !IsValueKnown(scalar_value)) {
     MS_LOG(DEBUG) << "scalar is not const value and the data type of it is not supported: "
