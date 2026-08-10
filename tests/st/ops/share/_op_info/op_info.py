@@ -1007,7 +1007,7 @@ def _generate_unary_op_tensors_sample_inputs_func(
             ),
             op_args=(),
             op_kwargs={},
-            sample_name=f"{op_info.name}_{dtype}_tensor_inputs",
+            sample_name=f"{op_info.name}_{dtype}_{len(shape)}d_tensor_inputs",
         )
 
 

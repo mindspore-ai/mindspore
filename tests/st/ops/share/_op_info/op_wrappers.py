@@ -2351,3 +2351,76 @@ def tensor_broadcast_to_ms(op_input, shape):
 
 def tensor_broadcast_to_torch(op_input, shape):
     return op_input.broadcast_to(shape)
+
+def tensor_arccosh_ms(input):
+    return input.arccosh()
+
+def tensor_arccosh_torch(input):
+    return input.arccosh()
+
+def tensor_arcsin_ms(input):
+    return input.arcsin()
+
+def tensor_arcsin_torch(input):
+    return input.arcsin()
+
+def tensor_arcsinh_ms(input):
+    return input.arcsinh()
+
+def tensor_arcsinh_torch(input):
+    return input.arcsinh()
+
+def tensor_arctanh_ms(input):
+    return input.arctanh()
+
+def tensor_arctanh_torch(input):
+    return input.arctanh()
+
+def tensor_argwhere_ms(input):
+    return input.argwhere()
+
+def tensor_argwhere_torch(input):
+    return input.argwhere()
+
+def tensor_arctan_ms(input):
+    return input.arctan()
+
+def tensor_arctan_torch(input):
+    return input.arctan()
+
+def tensor_arctan2_ms(input, other):
+    return input.arctan2(other)
+
+def tensor_arctan2_torch(input, other):
+    return input.arctan2(other)
+
+def tensor_argsort_ms(input, dim=-1, descending=False, stable=False):
+    return input.argsort(dim=dim, descending=descending, stable=stable)
+
+def tensor_argsort_torch(input, dim=-1, descending=False, stable=False):
+    return input.argsort(dim=dim, descending=descending, stable=stable)
+
+def tensor_argmin_with_value_ms(input, axis=0, keep_dims=False):
+    return input.argmin_with_value(axis=axis, keep_dims=keep_dims)
+
+def tensor_argmin_with_value_torch(input, axis=0, keep_dims=False):
+    #argmin not support bool
+    if axis == None:
+        return (input.min(), (input.to(torch.int32) if input.dtype ==torch.bool else input).argmin(axis=axis, keepdims=keep_dims))
+    return tuple(input.min(axis=axis, keepdims=keep_dims))
+
+def tensor_argmax_with_value_ms(input, axis=0, keep_dims=False):
+    return input.argmax_with_value(axis=axis, keep_dims=keep_dims)
+
+def tensor_argmax_with_value_torch(input, axis=0, keep_dims=False):
+    # argmin not support bool
+    if axis == None:
+        return (input.max(),
+                (input.to(torch.int32) if input.dtype == torch.bool else input).argmax(axis=axis, keepdims=keep_dims))
+    return tuple(input.max(axis=axis, keepdims=keep_dims))
+
+def tensor_argmin_ms_overload(input, axis=None, keepdims=False):
+    return input.argmin(axis=axis, keepdims=keepdims)
+
+def tensor_argmin_torch_overload(input, axis=None, keepdims=False):
+    return input.argmin(axis=axis, keepdims=keepdims)

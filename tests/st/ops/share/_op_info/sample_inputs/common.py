@@ -13,19 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=ungrouped-imports
 """
 Common functions for operation testing.
 This module provides common sample input builders for various ops, including
 basic, extra, dynamic, error case generators and small combination tools.
 
 """
-import functools
-
-import numpy as np
 import warnings
 import itertools
+import functools
 import mindspore as ms
 from mindspore import mint
+import numpy as np
 from mindspore._c_expression import MSContext
 from tests.st.ops.share._op_info.op_info import OpInfo
 from tests.st.ops.share._op_info.op_info import (
@@ -46,8 +46,8 @@ from tests.st.ops.share._op_info.op_common import (
     SMALL_DIM_SIZE,
     dtypes_extra_uint,
     dtypes_integral,
-    dtypes_extra_values,
-    small_large_values
+    small_large_values,
+    dtypes_extra_values
 )
 from tests.st.ops.share._op_info.op_wrappers import Net
 

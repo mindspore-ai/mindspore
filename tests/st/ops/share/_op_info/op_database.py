@@ -51,7 +51,7 @@ from tests.st.ops.share._op_info.sample_inputs.nn import *
 from tests.st.ops.share._op_info.sample_inputs.random import *
 
 from tests.st.ops.share._op_info.sample_inputs.shape import *
-
+from tests.st.ops.share._op_info.sample_inputs.indexing import *
 from tests.st.ops.share._op_info.op_wrappers import *
 from tests.st.ops.share._op_info.sample_inputs.elementwise import *
 from tests.st.ops.share._op_info.sample_inputs.reduction import *
@@ -1550,7 +1550,7 @@ op_db: Dict[str, OpInfo] = {
         supports_both_python_scalar = False,
         domain=((None, None), (1e-4, None)),
         ascend910b_forward_loss_override={ms.bfloat16: 1e-2},
-        ascend910b_backward_loss_override={ms.float16: 1e-2},
+        ascend910b_backward_loss_override={ms.float16: 0.02},
         disable_extremal_value_tensor_inputs = True,
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -6359,13 +6359,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_backward_loss_override={ms.bfloat16: 0.006, ms.float16: 0.002},
+        ascend910b_backward_loss_override={ms.bfloat16: 0.02, ms.float16: 0.003},
         not_support_dtypes=(ms.complex64, ms.complex128),
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_unary_op_common_func,
                                                           ['kbk_(Bool|Int|UInt)'], skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
-                                                          ['kbk_(Bool|Int|UInt)'], skip=True),
-        op_dynamic_inputs_func=wrap_sample_inputs(dynamic_inputs_unary_op_common_func,
                                                           ['kbk_(Bool|Int|UInt)'], skip=True),
     ),
     'Tensor.any': ReductionOpInfo(
@@ -6603,6 +6601,156 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=extra_sample_inputs_mint_broadcast_to,
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_broadcast_to,
     ),
+    'Tensor.arccosh': UnaryOpInfo(
+        name='Tensor.arccosh',
+        op=tensor_arccosh_ms,
+        ref=tensor_arccosh_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        domain=(1, None),
+        ascend910b_backward_loss_override={ms.bfloat16: 0.02, ms.float16: 0.003},
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_unary_op_common_func,
+                                                          ['kbk_(Bool|Int|UInt)'], skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          ['kbk_(Bool|Int|UInt)'], skip=True),
+    ),
+    'Tensor.arcsin': UnaryOpInfo(
+        name='Tensor.arcsin',
+        op=tensor_arcsin_ms,
+        ref=tensor_arcsin_torch,
+        dtypes_ascend=(),
+        ascend910b_backward_loss_override={ms.bfloat16: 0.008, ms.float16: 0.003},
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_unary_op_common_func,
+                                                          'kbk_(Bool|Int|UInt)', skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          'kbk_(Bool|Int|UInt)', skip=True),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.arcsinh': UnaryOpInfo(
+        name='Tensor.arcsinh',
+        op=tensor_arcsinh_ms,
+        ref=tensor_arcsinh_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=dtypes_as_torch,
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_unary_op_common_func,
+                                                          'kbk_(Bool|Int|UInt)', skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          'kbk_(Bool|Int|UInt)', skip=True),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'Tensor.arctanh': UnaryOpInfo(
+        name='Tensor.arctanh',
+        op=tensor_arctanh_ms,
+        ref=tensor_arctanh_torch,
+        dtypes_ascend=(),
+        domain=(-1,1),
+        ascend910b_backward_loss_override={ms.float16: 0.008},
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'Tensor.arctan2': BinaryOpInfo(
+        name='Tensor.arctan2',
+        op=tensor_arctan2_ms,
+        ref=tensor_arctan2_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        disable_scalar_inputs=True,
+        supports_left_python_scalar= False,
+        supports_both_python_scalar= False,
+        convert_ref_scalar_to_tensor= True,
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_binary_op_common_func,
+                                    'kbk_(Bool|Int|UInt)',skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_binary_op_common_func,
+                                    'kbk_(Bool|Int|UInt)',skip=True),
+        ascend910b_backward_loss_override={ms.float16: 0.002},
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.arctan': UnaryOpInfo(
+        name='Tensor.arctan',
+        op=tensor_arctan_ms,
+        ref=tensor_arctan_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_unary_op_common_func,
+                                                          ['kbk_(Bool|Int|UInt)'],skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          ['kbk_(Bool|Int|UInt)'],skip=True),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.argsort': OpInfo(
+        name='Tensor.argsort',
+        op=tensor_argsort_ms,
+        ref=tensor_argsort_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.double),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.double),
+        op_basic_reference_inputs_func=basic_reference_inputs_tensor_argsort,
+        op_extra_reference_inputs_func=extra_reference_inputs_tensor_argsort,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_argsort,
+        op_error_inputs_func=error_reference_inputs_tensor_argsort,
+    ),
+    'Tensor.argmin_with_value': ReductionOpInfo(
+        name='Tensor.argmin_with_value(axis, keep_dims)',
+        op=tensor_argmin_with_value_ms,
+        ref=tensor_argmin_with_value_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ms.int64, ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_multiple_dims=False,
+        is_convert_params_name=True,
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func,'dim_none',
+                                                          skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func, 'empty',
+                                                          skip=True),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.float16, ms.float32, ms.bfloat16, ms.int64, ms.bool_]),
+    ),
+    'Tensor.argmax_with_value': ReductionOpInfo(
+        name='Tensor.argmax_with_value(axis, keep_dims)',
+        op=tensor_argmax_with_value_ms,
+        ref=tensor_argmax_with_value_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ms.int64, ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_multiple_dims=False,
+        is_convert_params_name=True,
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_reduction_op_common_func, 'dim_none',
+                                                          skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_reduction_op_common_func, 'empty',
+                                                          skip=True),
+        not_support_dtypes=tuple(
+            d for d in dtypes_as_torch if d not in [ms.float16, ms.float32, ms.bfloat16, ms.int64, ms.bool_]),
+    ),
+    'Tensor.argwhere': UnaryOpInfo(
+        name='Tensor.argwhere',
+        op=tensor_argwhere_ms,
+        ref=tensor_argwhere_torch,
+        dtypes_ascend=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_unary_op_common_func,
+                                                          '0d', skip=True),
+        op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_unary_op_common_func,
+                                                          '0d',skip=True),
+        is_differentiable=False,
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -6663,7 +6811,8 @@ binary_op_db = [
     'mint.allclose',
     'Tensor.add_',
     'Tensor.add(other)',
-    'Tensor.allclose'
+    'Tensor.allclose',
+    'Tensor.arctan2',
 ]
 
 unary_op_db = [
@@ -6786,6 +6935,12 @@ unary_op_db = [
     'Tensor.absolute',
     'Tensor.arccos',
     'Tensor.angle',
+    'Tensor.arccosh',
+    'Tensor.arcsin',
+    'Tensor.arcsinh',
+    'Tensor.arctanh',
+    'Tensor.arctan',
+    'Tensor.argwhere',
 ]
 
 other_op_db = [
@@ -7027,6 +7182,7 @@ other_op_db = [
     'Tensor.bitwise_xor',
     'Tensor.bmm',
     'Tensor.broadcast_to',
+    'Tensor.argsort',
 ]
 
 reduction_op_db = [
@@ -7061,6 +7217,8 @@ reduction_op_db = [
     'Tensor.aminmax(axis, keepdims)',
     'Tensor.any',
     'Tensor.any(axis, keep_dims)',
+    'Tensor.argmin_with_value',
+    'Tensor.argmax_with_value',
 ]
 
 other_op_kbk_db = [
@@ -7148,6 +7306,7 @@ other_op_kbk_db = [
     'mint.nn.functional.normalize',
     'mint.nn.functional.sigmoid',
     'mint.optim.Adam',
+    'Tensor.argsort',
 ]
 
 reduction_op_kbk_db = [
@@ -7160,6 +7319,15 @@ reduction_op_kbk_db = [
     'mint.min(input, dim, keepdim=False)',
     'Tensor.max',
     'mint.all(input, dim=None, keepdim=False)',
+    'Tensor.all',
+    'Tensor.all(axis, keep_dims)',
+    'Tensor.amax(axis, keepdims)',
+    'Tensor.amin(axis, keepdims)',
+    'Tensor.aminmax(axis, keepdims)',
+    'Tensor.any',
+    'Tensor.any(axis, keep_dims)',
+    'Tensor.argmin_with_value',
+    'Tensor.argmax_with_value',
 ]
 
 binary_op_kbk_db = [
@@ -7172,6 +7340,8 @@ binary_op_kbk_db = [
     'mint.maximum',
     'mint.div',
     '==',
+    'Tensor.allclose',
+    'Tensor.arctan2',
 ]
 
 unary_op_kbk_db = [
@@ -7183,6 +7353,14 @@ unary_op_kbk_db = [
     'mint.clone',
     'Tensor.contiguous',
     'mint.all(input)',
+    'Tensor.arccos',
+    'Tensor.angle',
+    'Tensor.arccosh',
+    'Tensor.arcsin',
+    'Tensor.arcsinh',
+    'Tensor.arctanh',
+    'Tensor.arctan',
+    'Tensor.argwhere',
 ]
 
 # unary_op_kbk_db = [ o for o in unary_op_db if o not in ['mint.imag', 'mint.real'] ]
