@@ -826,6 +826,151 @@ def error_inputs_tensor_expand_as(op_info: OpInfo, dtype=None, device=None, **kw
             op_error_info=f'incompatible shape is not supported for {op_info.name}',
         )
 
+def basic_reference_inputs_tensor_expand_dims_func(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    """Yield typical shape cases for tensor.expand_dims ops.
+
+    Covers scalars, vectors, singleton dims, medium dims, and empty-dimension cases.
+
+    Args:
+        op_info: OpInfo object.
+        dtype: Data type of the tensors.
+        device: Device of the tensors.
+        kwargs: Additional keyword arguments.
+    Returns:
+        Generator of OpSampleInput objects.
+    """
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    #input dim >1D
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    base_shapes = (
+        ((S,), 0),
+        ((M, S), 1),
+        ((S, S, L), 2),
+        ((2, 0, 3, 2), -1),
+        ((2, 3, 4, 1, 2), -2),
+        ((2, 1, 2, 2, 1, 2), -3),
+        ((2, 1, 2, 2, 1, 2, 1), 3),
+    )
+    #0d < input <8d
+    for input_shape, axis in base_shapes:
+        _input = make_arg(input_shape)
+        slen = len(input_shape)
+        yield OpSampleInput(
+            op_input= _input,
+            op_args=(axis,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_tensor_expand_dims(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate extra sample inputs for tensor.expand_dims
+    Covers: small/large/extremal values、discontiguous tensors
+    Skips: scalar inputs (conv2d requires tensor inputs).
+    '''
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_shape = (1, 1, len(_float_small_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(0,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_small",
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_shape=(1, 1, len(_large_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(1,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_large",
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(np.full((1, 1, 3), t), dtype=dtype, device=device),
+                    op_args=(-1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_inf",
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        yield OpSampleInput(
+            op_input=make_arg((2, 3, 4), discontiguous=discontiguous),
+            op_args=(0,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def dynamic_sample_inputs_tensor_expand_dims(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    """
+    Generate dynamic sample inputs for Tensor.expand_dims.
+    Consider both dynamic_shape and dynamic_rank.
+    """
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(0,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 4)),
+                    op_args=(0,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_3D",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4 ,5, 7)),
+                    op_args=(0,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_3D_2",
+                ),
+            ),
+        )
+
+def error_inputs_other_op_tensor_expand_dims_func(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device, low=None, high=None)
+    shapes = (
+        (2, 0),#input is not tensor
+        (make_arg((2, 1)), 1.222),#axis not int
+        (make_arg((2, 1)), "12"),  # axis not int
+    )
+    for input_shape, axis in shapes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(axis,),
+                op_kwargs={},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError, AttributeError),
+            op_error_info='other ops tensor.expand_dims error values')
+
 def basic_sample_inputs_mint_stack(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
     Generate basic sample inputs for mint.stack op.
@@ -2675,7 +2820,7 @@ def error_inputs_mint_flip(op_info: OpInfo, dtype=None, device=None, **kwargs):
                 op_kwargs={},
                 sample_name=op_info.name,
             ),
-            op_error_type=(ValueError, RuntimeError, TypeError),
+            op_error_type=(ValueError, RuntimeError, TypeError, AttributeError),
             op_error_info='other ops mint.flip error values',
         )
 

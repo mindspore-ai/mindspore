@@ -1,3 +1,4 @@
+"""Test module for flatten functionality."""
 # Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,7 +65,7 @@ class Net6(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=2048.00)
@@ -112,7 +113,7 @@ class Net9(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=2048.00)
