@@ -169,13 +169,12 @@ bool OneHotExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const st
   SetOutputSizeList({outputs[kIndex0]->size()});
   EnsureOutputDeviceMemory(outputs[kIndex0], output_device_context, stream_ptr, previous_output_size);
   hash_id_DoOneHot_ = 0;
-  auto res = GEN_EXECUTOR_CUST(op_type_DoOneHot_, inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_,
-                               outputs[kIndex0]);
+  auto res = GEN_EXECUTOR_BOOST(op_type_DoOneHot_, hash_id_DoOneHot_, inputs[kIndex0], depth_, inputs[kIndex2],
+                                inputs[kIndex3], axis_, outputs[kIndex0]);
   UpdateWorkspace(res);
-  auto op_one_hot_pair =
-    GetExecutorDoOneHot(inputs[kIndex0], depth_, inputs[kIndex2], inputs[kIndex3], axis_, outputs[kIndex0]);
-  executor_DoOneHot_ = op_one_hot_pair.first;
-  auto release_func = op_one_hot_pair.second;
+  executor_DoOneHot_ = std::get<kIndex1>(res);
+  auto release_func = std::get<kIndex2>(res);
+  hash_id_DoOneHot_ = std::get<kIndex3>(res);
   auto ws_size = std::get<kIndex0>(res);
   const auto &iter = ops_workspace_size_map_.find("DoOneHot");
   if (iter == ops_workspace_size_map_.end() || ws_size == 0) {

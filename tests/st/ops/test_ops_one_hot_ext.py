@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import nn, ops
 from mindspore.ops.function.array_func import one_hot_ext as one_hot
 from tests.mark_utils import arg_mark
 from tests.st.ops.test_tools.ops_binary_cases import ops_binary_cases, OpsBinaryCase
@@ -35,6 +35,43 @@ def onehot_forward_func(tensor, num_classes):
 
 def call_onehot(tensor, num_classes):
     return ops.function.array_func.one_hot_ext(tensor, num_classes)
+
+
+def get_process_rss_kb():
+    """Return the current process resident memory in KiB."""
+    with open('/proc/self/status', encoding='utf-8') as status_file:
+        for line in status_file:
+            if line.startswith('VmRSS:'):
+                return int(line.split()[1])
+    raise RuntimeError('Failed to get process RSS.')
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=3072.0)
+def test_onehot_auto_depth_repeated_call_memory():
+    """
+    Feature: Test OneHotExt auto-depth repeated calls on Ascend.
+    Description: Verify repeated calls do not continuously retain host memory.
+    Expectation: Output shapes are correct and RSS growth remains bounded.
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            return one_hot(x, -1)
+
+    ms.set_context(mode=ms.GRAPH_MODE, jit_level='O0')
+    net = Net()
+    input_array = np.arange(32, dtype=np.int64)
+    for _ in range(10):
+        net(ms.Tensor(input_array)).asnumpy()
+
+    initial_rss_kb = get_process_rss_kb()
+    for index in range(5000):
+        input_values = (input_array + index) % ((index % 127) + 1)
+        input_tensor = ms.Tensor(input_values)
+        output = net(input_tensor).asnumpy()
+        assert output.shape == (32, int(input_values.max()) + 1)
+
+    assert get_process_rss_kb() - initial_rss_kb < 16 * 1024
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.05)
