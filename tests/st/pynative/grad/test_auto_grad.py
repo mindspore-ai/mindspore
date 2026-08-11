@@ -25,7 +25,7 @@ from mindspore.ops.composite import GradOperation
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],  # pylint: disable=unexpected-keyword-arg
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -47,9 +47,9 @@ def test_int_intermediate_output_not_requires_grad():
 
     np.testing.assert_allclose(grad.asnumpy(), np.ones(3, dtype=np.float32))
     values, indices = intermediate_outputs[0]
-    assert values._requires_grad
+    assert values._requires_grad  # pylint: disable=protected-access
     assert indices.dtype == mindspore.int32
-    assert not indices._requires_grad
+    assert not indices._requires_grad  # pylint: disable=protected-access
 
 
 class MultiInputNet(nn.Cell):
