@@ -33,7 +33,7 @@ tensor::TensorPtr BaddbmmAscendCustomize(const TensorPtr &input_tensor, const Te
   TensorToDevice(input_tensor, batch1_tensor, batch2_tensor);
   TensorMalloc(output);
 
-  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
+  auto cube_math_type = GetCubeMathTypeForAddOps(IsAllowMatmulHF32());
   DISPATCH_ACLNN(aclnnBaddbmm, input_tensor, batch1_tensor, batch2_tensor, beta, alpha, output, cube_math_type);
   return output;
 }

@@ -27,7 +27,7 @@ void BaddbmmAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &
                                              const std::vector<KernelTensor *> &outputs) {
   beta_ = device::ascend::ConvertKernelTensor<ScalarPtr>(inputs[kIndex3]);
   alpha_ = device::ascend::ConvertKernelTensor<ScalarPtr>(inputs[kIndex4]);
-  cube_math_type_ = OpApiUtil::GetCubeMathType(OpApiUtil::IsAllowMatmulHF32());
+  cube_math_type_ = OpApiUtil::GetCubeMathTypeForAddOps(OpApiUtil::IsAllowMatmulHF32());
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], beta_, alpha_, outputs[kIndex0],
                         cube_math_type_);
 }
