@@ -770,12 +770,11 @@ def dynamic_sample_inputs_mint_bincount(op_info: OpInfo, dtype=None, device=None
             ),
         )
 
-def error_inputs_mint_bincount(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def error_inputs_bincount_common(op_info: OpInfo, dtype=None, device=None, **kwargs):
     valid_input = make_tensor_with_np_array(np.array([0, 1, 1], dtype=np.int64), dtype=ms.int32, device=device)
     valid_weights = make_tensor_with_np_array(np.array([1.0, 2.0, 3.0], dtype=np.float32), dtype=ms.float32,
                                               device=device)
     error_cases = (
-        ([0, 1, 1], (), {}, TypeError, "input_not_tensor"),
         (valid_input, ([1.0, 2.0, 3.0],), {}, TypeError, "weights_not_tensor"),
         (valid_input, (), {"minlength": True}, TypeError, "minlength_bool"),
         (make_tensor_with_np_array(np.array([[0, 1], [1, 2]], dtype=np.int64), dtype=ms.int32, device=device),
@@ -787,6 +786,40 @@ def error_inputs_mint_bincount(op_info: OpInfo, dtype=None, device=None, **kwarg
          (), {}, (ValueError, RuntimeError), "negative_input"),
         (make_tensor_with_np_array(np.array([], dtype=np.int64), dtype=ms.int32, device=device),
          (valid_weights,), {}, (ValueError, RuntimeError), "empty_input_weights_mismatch"),
+    )
+    for op_input, op_args, op_kwargs, op_error_type, error_info in error_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=op_args,
+                op_kwargs=op_kwargs,
+                sample_name=f"{op_info.name}_{error_info}",
+            ),
+            op_error_type=op_error_type,
+            op_error_info=f"{op_info.name}_{error_info}",
+        )
+
+def error_inputs_mint_bincount(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from error_inputs_bincount_common(op_info, dtype, device, **kwargs)
+    error_cases = (
+        ([0, 1, 1], (), {}, TypeError, "input_not_tensor"),
+    )
+    for op_input, op_args, op_kwargs, op_error_type, error_info in error_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=op_args,
+                op_kwargs=op_kwargs,
+                sample_name=f"{op_info.name}_{error_info}",
+            ),
+            op_error_type=op_error_type,
+            op_error_info=f"{op_info.name}_{error_info}",
+        )
+
+def error_inputs_tensor_bincount(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from error_inputs_bincount_common(op_info, dtype, device, **kwargs)
+    error_cases = (
+        ([0, 1, 1], (), {}, AttributeError, "input_not_tensor"),
     )
     for op_input, op_args, op_kwargs, op_error_type, error_info in error_cases:
         yield OpErrorInput(

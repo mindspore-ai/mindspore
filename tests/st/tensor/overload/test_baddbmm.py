@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for Tensor.baddbmm.
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -35,7 +37,7 @@ class BaddbmmNet(nn.Cell):
         return bias.baddbmm(mat1, mat2, beta=beta, alpha=alpha)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
     level_mark='level1',
     card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])

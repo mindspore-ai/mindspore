@@ -39,6 +39,7 @@ from tests.st.ops.share._op_info.op_info import (
     basic_reference_inputs_binary_op_common_func,
     basic_reference_inputs_unary_op_common_func,
     extra_reference_inputs_binary_op_common_func,
+    dynamic_inputs_unary_op_common_func,
 )
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
@@ -51,18 +52,13 @@ from tests.st.ops.share._op_info.op_common import (
     SMALL_DIM_SIZE,
     dtypes_extra_uint,
     dtypes_extra_values,
-    small_large_values
+    small_large_values,
+    dtypes_as_torch
 )
 from tests.st.ops.share._op_info.sample_inputs.common import (
     _generate_binary_inplace_op_broadcasting_and_discontiguous_tensor_inputs_func,
 )
-import mindspore as ms
-from tests.st.ops.share._op_info.op_info import OpInfo
-from tests.st.ops.share._op_info.op_info import (
-    basic_reference_inputs_unary_op_common_func,
-    dynamic_inputs_unary_op_common_func,
-    extra_reference_inputs_unary_op_common_func
-)
+
 
 # op_basic_reference_inputs_func for ops
 def basic_sample_inputs_add_sub_ext(
@@ -2503,24 +2499,118 @@ def error_inputs_gelu_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     )
 
 def basic_reference_inputs_tensor_astype(op_info, dtype=None, device=None, **kwargs):
-    yield from basic_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
-    #loss error, dtype is uint8
-    for i in [ms.float32, ms.float64, ms.float16]:
-        #add copy and output dtype cases
-        yield OpSampleInput(
-            op_input=make_tensor((1, 6,), dtype=dtype, device=device, ),
-            op_kwargs={'dtype': i,  'copy': random.choice([True, False])},
-            sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_1_6'
-        )
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info, dtype=dtype, device=device, **kwargs):
+        arg_dtype = random.choice(dtypes_as_torch)
+        # loss error, arg_dtype is uint8
+        if dtype is ms.float64 and ms.ops.any(sample_input.op_input < 0) and arg_dtype is ms.uint8:
+            # any() does not support complex, determining whether there are negative numbers.
+            arg_dtype = ms.int8
+        elif dtype.is_complex and arg_dtype is ms.uint8:
+            arg_dtype = ms.int8
+        sample_input.op_args=(arg_dtype,)
+        sample_input.op_kwargs.update({'copy': random.choice([True, False])})
+        # int do not support backward
+        if not arg_dtype.is_complex and not arg_dtype.is_floating_point:
+            sample_input.grad_position=()
+        yield sample_input
 
 def extra_reference_inputs_tensor_astype(op_info, dtype=None, device=None, **kwargs):
-    yield from extra_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
-    #bool dtype not support uint output dtype
-    for i in [ms.int8, ms.int32, ms.int64, ms.int16, ms.bool_, ms.complex64, ms.complex128]:
-        yield OpSampleInput(
-            op_input=make_tensor((1, 6,), dtype=dtype, device=device, ),
-            op_kwargs={'dtype': i, 'copy': random.choice([True, False])},
-            sample_name=f'{op_info.name}_{dtype}out-dtype{i}_minus-dim_1_6'
+    for sample_input in extra_reference_inputs_unary_op_common_func(op_info, dtype=dtype, device=device, **kwargs):
+        arg_dtype = random.choice(dtypes_as_torch)
+        # loss error, arg_dtype is uint8
+        if dtype is ms.float64 and ms.ops.any(sample_input.op_input < 0) and arg_dtype is ms.uint8:
+            # any() does not support complex, determining whether there are negative numbers.
+            arg_dtype = ms.int8
+        elif dtype.is_complex and arg_dtype is ms.uint8:
+            arg_dtype = ms.int8
+        sample_input.op_args=(arg_dtype,)
+        sample_input.op_kwargs.update({'copy': random.choice([True, False])})
+        # int do not support backward
+        if not arg_dtype.is_complex and not arg_dtype.is_floating_point:
+            sample_input.grad_position=()
+        yield sample_input
+    # dtype is str
+    yield OpSampleInput(
+        op_input=make_tensor(shape=(1, 6), dtype=dtype),
+        op_args=('float32',),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_output_dtype_str_extra",
+    )
+
+def dynamic_inputs_unary_op_tensor_astype(op_info, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    # int do not support backward
+    arg_dtype = random.choice((ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ms.bfloat16))
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(arg_dtype,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
+                    op_args=(arg_dtype,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
+                    op_args=(arg_dtype,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(arg_dtype,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
+                    op_args=(arg_dtype,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 4), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
+                    op_args=(arg_dtype,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def error_inputs_unary_op_tensor_astype(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (
+        # dtype is str of mindspore.dtype
+        ('ms.int32', False),
+        # copy is not bool
+        # (ms.int32, 'False')
+    )
+    for dtype, copy in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_tensor(shape=(2, 2, 1), dtype=ms.float32),
+                op_args=(dtype,),
+                op_kwargs={'copy': copy},
+                sample_name=f"{op_info.name}_error_dtype_copy",
+            ),
+            op_error_type=TypeError,
+            op_error_info=f'error dtype or copy is not supported for {op_info.name}',
         )
 
 def basic_reference_inputs_leaky_relu(op_info, dtype=None, device=None, **kwargs):

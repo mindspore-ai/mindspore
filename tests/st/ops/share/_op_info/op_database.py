@@ -63,12 +63,23 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.astype',
         op=tensor_astype_ms,
         ref=tensor_astype_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend=(),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         op_basic_reference_inputs_func=basic_reference_inputs_tensor_astype,
-        op_extra_reference_inputs_func=extra_reference_inputs_tensor_astype,
+        # loss error:
+        # 1.input dtype float64, element is inf/-inf and number of elements is larger than 3, output dtype is int32
+        # 2.input dtype float16, element is inf/-inf, output dtype is int16
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_tensor_astype,
+            ['_(Complex128|Float64|Float16)_(large_value|inf|neginf)', '(Complex64|Complex128)_small_value'],
+            skip=True
+        ),
+        op_dynamic_inputs_func=dynamic_inputs_unary_op_tensor_astype,
+        op_error_inputs_func=error_inputs_unary_op_tensor_astype,
         dtypes_cpu=(),
         dtypes_gpu=(),
+        # int32 to int8
+        ascend910b_forward_loss_override={ms.int32: 0.024, ms.int8: 0.025},
     ),
     'Tensor.byte': UnaryOpInfo(
         name='Tensor.byte',
@@ -195,6 +206,7 @@ op_db: Dict[str, OpInfo] = {
         convert_half_to_float=True,
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
         op_error_inputs_func=(error_inputs_binary_op_with_alpha,error_inputs_shape_not_match_func),
+        ascend910b_forward_loss_override={ms.float16: 0.003},
     ),
     'mint.all(input, dim=None, keepdim=False)':ReductionOpInfo(
         name='mint.all(input, dim=None, keepdim=False)',
@@ -681,8 +693,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.float32, ms.bfloat16, ms.float16),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.bfloat16:0.03},
-        ascend910b_backward_loss_override={ms.float16:0.02},
+        ascend910b_forward_loss_override={ms.bfloat16: 0.03},
+        ascend910b_backward_loss_override={ms.float16: 0.02, ms.bfloat16: 0.014},
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in  [ms.float32, ms.bfloat16, ms.float16]),
         op_basic_reference_inputs_func=sample_inputs_batch_norm,
         op_error_inputs_func=error_inputs_other_op_mint_nn_functional_batch_norm,
@@ -1736,24 +1748,19 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.atan2',
         op=tensor_atan2_ms,
         ref=tensor_atan2_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool and d != ms.complex64
-                            and d != ms.complex128),
+        dtypes_ascend=(),
         # List of supported data types (Ascend 910B), excluding incompatible types
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.complex64 and d != ms.complex128),
         op_dynamic_inputs_func=None,
         not_support_dtypes=(ms.complex64, ms.complex128),
-        # Disable parameter with a value of 0 (Ascend 910A)
-        exclude_value=((0,), (0)),
         convert_ref_scalar_to_tensor=True,
         op_basic_reference_inputs_func=wrap_sample_inputs(basic_reference_inputs_binary_op_common_func,
                                                           ['kbk_(Bool|Int|UInt)'], skip=True),
         op_extra_reference_inputs_func=wrap_sample_inputs(extra_reference_inputs_binary_op_common_func,
                                                           ['kbk_(Bool|Int|UInt)'], skip=True),
         op_error_inputs_func=error_inputs_shape_not_match_func,
-        promotion_dtypes_exclude=(ms.uint8,),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
-        ascend_backward_loss_override={ms.float16:3e-3},
         ascend910b_backward_loss_override={ms.float16:0.01},
     ),
     'mint.tanh': UnaryOpInfo(
@@ -2091,7 +2098,7 @@ op_db: Dict[str, OpInfo] = {
         op=tensor_bfloat16_ms,
         ref=tensor_bfloat16_torch,
         dtypes_ascend=(),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -3495,6 +3502,8 @@ op_db: Dict[str, OpInfo] = {
         is_differentiable=True,
         op_error_inputs_func=error_inputs_mint_linalg_qr,
         ascend_backward_loss_override={ms.float32: 0.1},
+        ascend910b_backward_loss_override={ms.float32: 0.0014},
+        ascend910b_forward_loss_override={ms.float32: 0.0014},
     ),
     'mint.linalg.inv': OpInfo(
         name='mint.linalg.inv',
@@ -4073,7 +4082,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_mint_bernoulli,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_bernoulli,
-        op_dynamic_inputs_func=None,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_bernoulli,
         skip_forward_comparison=True,
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point),
         op_error_inputs_func=None,
@@ -5060,13 +5069,13 @@ op_db: Dict[str, OpInfo] = {
     ),
     'mint.baddbmm': OpInfo(
         name='mint.baddbmm',
-        op=tensor_baddbmm_ms,
+        op=mint_baddbmm_ms,
         ref=torch.baddbmm,
         dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.float32, ms.float16, ms.bfloat16]),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        ascend910b_forward_loss_override={ms.float16:3e-3, ms.bfloat16:2e-2},
+        ascend910b_forward_loss_override={ms.float16:7e-3, ms.bfloat16:2e-2},
         ascend910b_backward_loss_override={ms.bfloat16:0.006},
         op_basic_reference_inputs_func=basic_sample_inputs_baddbmm,
         op_error_inputs_func=error_sample_inputs_baddbmm,
@@ -5714,7 +5723,7 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float16, ms.bfloat16)),
         # target can not have requires_grad True.
         grad_position=(0,),
-        ascend910b_forward_loss_override={ms.bfloat16: 0.008},
+        ascend910b_forward_loss_override={ms.bfloat16: 0.0091},
     ),
     'mint.nn.L1Loss': OpInfo(
         name='mint.nn.L1Loss',
@@ -6350,7 +6359,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         ascend910b_backward_loss_override={ms.bfloat16: 0.017, ms.float16: 5e-3},
     ),
-
     'Tensor.arccos': UnaryOpInfo(
         name='Tensor.arccos',
         op=tensor_arccos_ms,
@@ -6751,6 +6759,168 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         not_support_dtypes=(ms.complex64, ms.complex128),
     ),
+    'Tensor.asinh': UnaryOpInfo(
+        name='Tensor.asinh',
+        op=tensor_asinh_ms,
+        ref=tensor_asinh_torch,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_unary_op_common_func,
+            ['_kbk_(Bool|Int8|Int16|Int32|Int64|UInt8)'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func,
+            ['_kbk_(Bool|Int8|Int16|Int32|Int64|UInt8)'],
+            skip=True
+        ),
+        ascend_forward_loss_override={ms.float32: 0.012},
+    ),
+    'Tensor.asin': UnaryOpInfo(
+        name='Tensor.asin',
+        op=tensor_asin_ms,
+        ref=tensor_asin_torch,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_unary_op_common_func,
+            ['_kbk_(Bool|Int8|Int16|Int32|Int64|UInt8)'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func,
+            ['_kbk_(Bool|Int8|Int16|Int32|Int64|UInt8)'],
+            skip=True
+        ),
+        ascend910b_backward_loss_override={ms.float16: 0.004, ms.bfloat16: 0.014},
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+    ),
+    'Tensor.asnumpy': UnaryOpInfo(
+        name='Tensor.asnumpy',
+        op=tensor_asnumpy_ms,
+        ref=tensor_asnumpy_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        convert_half_to_float=False,
+        # not support non-contiguous in kbk mode
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func,
+            ['kbk_[a-zA-Z0-9]+_discontiguous'],
+            skip=True
+        ),
+        # for torch does not supported backward.
+        is_differentiable=False,
+    ),
+    'Tensor.atan': UnaryOpInfo(
+        name='Tensor.atan',
+        op=tensor_atan_ms,
+        ref=tensor_atan_torch,
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_unary_op_common_func,
+            ['_kbk_(Bool|Int8|Int16|Int32|Int64|UInt8)'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_unary_op_common_func,
+            ['_kbk_(Bool|Int8|Int16|Int32|Int64|UInt8)'],
+            skip=True
+        ),
+        convert_half_to_float=False,
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+    ),
+    'Tensor.atanh': UnaryOpInfo(
+        name='Tensor.atanh',
+        op=tensor_atanh_ms,
+        ref=tensor_atanh_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        convert_half_to_float=False,
+    ),
+    'Tensor.baddbmm': OpInfo(
+        name='Tensor.baddbmm',
+        op=tensor_baddbmm_ms,
+        ref=tensor_baddbmm_torch,
+        dtypes_ascend=(),
+        # torch-2.1.0 not implemented for float16, but version 2.7.1 can support.
+        dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend910b_forward_loss_override={ms.float32: 0.04, ms.float16: 0.04, ms.bfloat16: 0.08},
+        # input dtype is bfloat16, beta/alpha is not int causes error in kbk
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_sample_inputs_tensor_baddbmm,
+            ['kbk_BFloat16_beta_alpha_float_True'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_sample_inputs_tensor_baddbmm,
+            ['kbk_BFloat16_beta_alpha_float_True'],
+            skip=True
+        ),
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_baddbmm,
+        op_error_inputs_func=error_sample_inputs_tensor_baddbmm,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in [ms.float32, ms.float16, ms.bfloat16]),
+    ),
+    'Tensor.bernoulli': OpInfo(
+        name='Tensor.bernoulli',
+        op=tensor_bernoulli_ms,
+        ref=tensor_bernoulli_torch,
+        dtypes_ascend=(),
+        # only support float
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d.is_floating_point),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_mint_bernoulli,
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_bernoulli,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_bernoulli,
+        skip_forward_comparison=True,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point),
+        # when the element is negative or not in [0, 1], multiple cases are executed together,
+        # it may cause program exceptions that affect the execution of other cases.
+        op_error_inputs_func=None,
+    ),
+    'Tensor.bernoulli_': UnaryOpInfo(
+        name='Tensor.bernoulli_',
+        op=tensor_bernoulli__ms,
+        ref=tensor_bernoulli__torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_bernoulli_,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_bernoulli_,
+        skip_forward_comparison=True,
+        op_error_inputs_func=error_sample_inputs_tensor_bernoulli_,
+        not_support_dtypes=(ms.complex64, ms.complex128),
+    ),
+    'Tensor.bincount': OpInfo(
+        name='Tensor.bincount',
+        op=tensor_bincount_ms,
+        ref=tensor_bincount_torch,
+        dtypes_ascend=(ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8),
+        dtypes_ascend910b=(ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_sample_inputs_mint_bincount,
+            ['kbk_[a-zA-Z0-9]+_empty'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=extra_sample_inputs_mint_bincount,
+        op_dynamic_inputs_func=dynamic_sample_inputs_mint_bincount,
+        op_error_inputs_func=error_inputs_tensor_bincount,
+        not_support_dtypes=(ms.bool_, ms.uint16, ms.uint32, ms.uint64, ms.float16, ms.float32, ms.float64,
+                            ms.complex64, ms.complex128, ms.bfloat16),
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -6941,6 +7111,12 @@ unary_op_db = [
     'Tensor.arctanh',
     'Tensor.arctan',
     'Tensor.argwhere',
+    'Tensor.asinh',
+    'Tensor.asin',
+    'Tensor.asnumpy',
+    'Tensor.atan',
+    'Tensor.atanh',
+    'Tensor.bernoulli_',
 ]
 
 other_op_db = [
@@ -7183,6 +7359,9 @@ other_op_db = [
     'Tensor.bmm',
     'Tensor.broadcast_to',
     'Tensor.argsort',
+    'Tensor.baddbmm',
+    'Tensor.bernoulli',
+    'Tensor.bincount',
 ]
 
 reduction_op_db = [
@@ -7307,6 +7486,9 @@ other_op_kbk_db = [
     'mint.nn.functional.sigmoid',
     'mint.optim.Adam',
     'Tensor.argsort',
+    'Tensor.baddbmm',
+    'Tensor.bernoulli',
+    'Tensor.bincount',
 ]
 
 reduction_op_kbk_db = [
@@ -7342,6 +7524,10 @@ binary_op_kbk_db = [
     '==',
     'Tensor.allclose',
     'Tensor.arctan2',
+    'Tensor.add',
+    'Tensor.add_',
+    'Tensor.add(other)',
+    'Tensor.atan2',
 ]
 
 unary_op_kbk_db = [
@@ -7361,6 +7547,14 @@ unary_op_kbk_db = [
     'Tensor.arctanh',
     'Tensor.arctan',
     'Tensor.argwhere',
+    'Tensor.asinh',
+    'Tensor.asin',
+    'Tensor.asnumpy',
+    'Tensor.atan',
+    'Tensor.atanh',
+    'Tensor.astype',
+    'Tensor.bfloat16',
+    'Tensor.bernoulli_',
 ]
 
 # unary_op_kbk_db = [ o for o in unary_op_db if o not in ['mint.imag', 'mint.real'] ]

@@ -3196,3 +3196,173 @@ def dynamic_sample_inputs_tensor_cholesky_solve(op_info: OpInfo, dtype=None, dev
                 ),
             ),
         )
+
+def basic_sample_inputs_tensor_baddbmm(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    # batch1, batch2 must 3D, input 0~3D
+    cases = (
+        ((), (1, 5, 3), (1, 3, 5), 1, 1),
+        ((1,), (5, 4, 4), (5, 4, 4), 0.001, 1),
+        ((1, 1), (1, 5, 3), (1, 3, 5), 0, 0),
+        ((1, 5, 5), (1, 5, 3), (1, 3, 5), 0, 1.1),
+        ((2, 4, 4), (2, 4, 0), (2, 0, 4), -2.6, -2.4),
+        ((4, 6), (2, 4, 0), (2, 0, 6), 2.2, 2.8),
+    )
+
+    for input_shape, batch1_shape, batch2_shape, beta, alpha in cases:
+        _input = make_arg(input_shape)
+        _batch1 = make_arg(batch1_shape)
+        _batch2 = make_arg(batch2_shape)
+        slen = len(input_shape)
+        # input dtype is bfloat16, beta/alpha is not int causes error in kbk
+        if isinstance(beta, float) or isinstance(alpha, float):
+            beta_alpha_float = True
+        else:
+            beta_alpha_float = False
+        yield OpSampleInput(
+            op_input= _input,
+            op_args=(_batch1, _batch2),
+            op_kwargs={'beta': beta, 'alpha': alpha},
+            sample_name=f"{op_info.name}_{dtype}_beta_alpha_float_{beta_alpha_float}_{slen}d",
+        )
+
+def extra_sample_inputs_tensor_baddbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        ((8, 5, 5), (8, 5, 3), (8, 3, 5), 0.002, 0),
+        ((7, 12, 12), (7, 12, 6), (7, 6, 12), -3, 2.1),
+        ((128, 16, 16), (128, 16, 8), (128, 8, 16), 40, 8),
+        ((11, 10, 10), (11, 10, 5), (11, 5, 10), -3.3, -2.8),
+        ((512, 17, 17), (512, 17, 6), (512, 6, 17), 3.7, -1.2),
+    )
+
+    for input_shape, batch1_shape, batch2_shape, beta, alpha in cases:
+        _input = make_arg(input_shape)
+        _batch1 = make_arg(batch1_shape)
+        _batch2 = make_arg(batch2_shape)
+        # input dtype is bfloat16, beta/alpha is not int causes error in kbk
+        if isinstance(beta, float) or isinstance(alpha, float):
+            beta_alpha_float = True
+        else:
+            beta_alpha_float = False
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_batch1, _batch2),
+            op_kwargs={'beta': beta, 'alpha': alpha},
+            sample_name=f"{op_info.name}_{dtype}_beta_alpha_float_{beta_alpha_float}_extra",
+        )
+    # large mix small values
+    values = small_large_values(dtype)
+    if values:
+        input_np_array = np.random.choice(values, size=(2, 3))
+        np_array1 = np.random.choice(values, size=(1, 2, 3))
+        np_array2 = np.random.choice(values, size=(1, 3, 3))
+        for discontiguous in [True, False]:
+            _batch1 = make_tensor_with_np_array(np_array1, dtype=dtype, discontiguous=discontiguous)
+            _batch2 = make_tensor_with_np_array(np_array2, dtype=dtype, discontiguous=discontiguous)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(_batch1, _batch2),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            _batch1 = make_tensor_with_np_array(np.full((1, 4, 3), t), dtype=dtype)
+            _batch2 = make_tensor_with_np_array(np.full((1, 3, 3), t), dtype=dtype)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((4, 3), t), dtype=dtype),
+                op_args=(_batch1, _batch2),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def dynamic_sample_inputs_tensor_baddbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None, None), dtype=dtype), ms.Tensor(shape=(None, None, None), dtype=dtype)),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(1, 2, 4)),
+                    op_args=(make_func(shape=(1, 2, 4)), make_func(shape=(1, 4, 4))),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 4, 4)),
+                    op_args=(make_func(shape=(2, 4, 3)), make_func(shape=(2, 3, 4))),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=dtype), ms.Tensor(shape=None, dtype=dtype)),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5,)),
+                    op_args=(make_func(shape=(2, 3, 5)), make_func(shape=(2, 5, 5))),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4, 1)),
+                    op_args=(make_func(shape=(3, 4, 6)), make_func(shape=(3, 6, 8))),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_tensor_baddbmm(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.bfloat16, device=device)
+    shapes = (
+        # input is not tensor
+        (2, make_arg((1, 2, 3)), make_arg((1, 3, 2)), 1, 1),
+        # batch1 is not tensor
+        (make_arg((1, 2, 1)), 1, make_arg((1, 3, 2)), 0, 1.1),
+        # batch2 is not tensor
+        (make_arg((1, 2, 1)), make_arg((1, 2, 3)), 1, 2.1, 1),
+        # beta is str
+        (make_arg((1, 2, 1)), make_arg((1, 2, 3)), make_arg((1, 3, 2)), "1", 1),
+        # alpha is tuple
+        (make_arg((1, 2, 1)), make_arg((1, 2, 3)), make_arg((1, 3, 2)), 1, (1, 2)),
+        # batch1 is (C, W, T), but batch2 is not (C, T, H)
+        (make_arg((1, 2, 1)), make_arg((1, 2, 3)), make_arg((1, 2, 3)), 1, 2),
+        # batch1 is not 3D
+        (make_arg((1, 2, 1)), make_arg((1, 2)), make_arg((1, 2, 3)), 1, 2),
+        # batch2 is not 3D
+        (make_arg((1, 2, 1)), make_arg((1, 2, 3)), make_arg((3, 2)), 1, 2),
+        # input can not broadcast with batch1/batch2
+        (make_arg((1, 2, 2)), make_arg((1, 2, 3)), make_arg((1, 3, 3)), 1, 2),
+        # input is 4D
+        (make_arg((1, 1, 2, 3)), make_arg((1, 2, 3)), make_arg((1, 3, 3)), 1, 2),
+    )
+    for input, batch1, batch2, beta, alpha in shapes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(batch1, batch2),
+                op_kwargs={'beta': beta, 'alpha': alpha},
+                sample_name=f"{op_info.name}_error_params",
+            ),
+            op_error_type=(AttributeError, TypeError, RuntimeError),
+            op_error_info=f'{op_info.name}: error params.'
+        )
