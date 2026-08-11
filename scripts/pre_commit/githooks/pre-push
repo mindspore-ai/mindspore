@@ -262,7 +262,7 @@ cat "${CODE_PATH}/pr_filelist.txt"
 print_info "Filelist number: $(cat <"${CODE_PATH}"/pr_filelist.txt | wc -l)"
 
 if [ "${REPOSITORY_NAME}" = "mindspore" ]; then
-    COMMON_EXCLUDE_FOLDER="third_party,graphengine,akg,mindspore/ccsrc/minddata/dataset/kernels/image/dvpp/utils,mindspore/lite/micro/example,tests/models,mindspore/lite/examples/quick_start_micro"
+    COMMON_EXCLUDE_FOLDER="third_party,akg,mindspore/ccsrc/minddata/dataset/kernels/image/dvpp/utils,mindspore/lite/micro/example,tests/models,mindspore/lite/examples/quick_start_micro"
 elif [ "${REPOSITORY_NAME}" = "mindpandas" ]; then
     COMMON_EXCLUDE_FOLDER="third_party,tests/ut/data,tests/st/data"
 elif [ "${REPOSITORY_NAME}" = "docs" ]; then
