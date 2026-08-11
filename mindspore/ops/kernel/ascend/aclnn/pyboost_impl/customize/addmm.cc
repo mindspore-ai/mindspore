@@ -32,7 +32,7 @@ tensor::TensorPtr AddmmAscendCustomize(const TensorPtr &input_tensor, const Tens
   TensorToDevice(input_tensor, mat1_tensor, mat2_tensor);
   TensorMalloc(output);
 
-  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
+  auto cube_math_type = GetCubeMathTypeForAddOps(IsAllowMatmulHF32());
   DISPATCH_ACLNN(aclnnAddmm, input_tensor, mat1_tensor, mat2_tensor, beta, alpha, output, cube_math_type);
   return output;
 }

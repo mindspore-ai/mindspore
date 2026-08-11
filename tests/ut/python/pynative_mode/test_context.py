@@ -19,6 +19,7 @@ import pytest
 
 from mindspore import context
 from mindspore._c_expression import security
+from mindspore.device_context.ascend import op_precision
 from tests.security_utils import security_off_wrap
 
 
@@ -208,6 +209,20 @@ def test_ascend_config():
         "matmul_allow_hf32": False, "conv_allow_hf32": True, "op_precision_mode": "./", "op_debug_option": "oom",
         "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
                        "session": {"ge.exec.atomicCleanPolicy": "0"}}})
+
+
+def test_cube_math_type_validation():
+    """
+    Feature: Configure cube_math_type through the device context API.
+    Description: Verify strict type and range validation for cube_math_type.
+    Expectation: Invalid types raise TypeError and out-of-range values raise ValueError.
+    """
+    for cube_math_type in (True, 4.0, "4"):
+        with pytest.raises(TypeError):
+            op_precision.cube_math_type(cube_math_type)
+    for cube_math_type in (-1, 5):
+        with pytest.raises(ValueError):
+            op_precision.cube_math_type(cube_math_type)
 
 
 def test_print_file_path():

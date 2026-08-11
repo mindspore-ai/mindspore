@@ -24,7 +24,7 @@ except ImportError:
     pass
 
 function_status = {'precision_mode': False, 'op_precision_mode': False,
-                   'matmul_allow_hf32': False, 'conv_allow_hf32': False}
+                   'matmul_allow_hf32': False, 'conv_allow_hf32': False, 'cube_math_type': False}
 
 
 def precision_mode(mode):
@@ -189,3 +189,41 @@ def conv_allow_hf32(value):
     if AscendOpPrecisionConf.get_instance().is_conv_allow_hf32_configured():
         raise RuntimeError("The 'conv_allow_hf32' can not be set repeatedly.")
     AscendOpPrecisionConf.get_instance().set_conv_allow_hf32(is_enable)
+
+
+def cube_math_type(value):
+    """
+    Configure the cube calculation mode for Addmm and Baddbmm operators.
+
+    The value is forwarded to the ACLNN ``cubeMathType`` parameter. The explicitly configured value takes
+    precedence over the existing automatic precision policy. When it is not configured, the automatic policy is
+    retained. Mode ``4`` uses FP32 for the addition following FP16 or BF16 matrix multiplication. Its support and
+    behavior depend on the input shape, data type, hardware, and CANN version. When using mode ``4`` with Addmm or
+    Baddbmm, the input tensor must not be broadcast relative to the matrix multiplication result.
+
+    Note:
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        value (int): The cube calculation mode. Supported values are ``0`` (KEEP_DTYPE),
+            ``1`` (ALLOW_FP32_DOWN_PRECISION), ``2`` (FORCE_FP16), ``3`` (FORCE_HF32), and
+            ``4`` (USE_FP32_ADD).
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.device_context.ascend.op_precision.cube_math_type(4)
+    """
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise TypeError(f"For 'cube_math_type', the type of 'value' must be int, but got {type(value)}.")
+    if value not in range(5):
+        raise ValueError(f"For 'cube_math_type', the value must be one of [0, 1, 2, 3, 4], but got {value}.")
+    if not function_status['cube_math_type']:
+        function_status['cube_math_type'] = True
+        if not _is_supported():
+            return
+    value = str(value)
+    if value == AscendOpPrecisionConf.get_instance().cube_math_type():
+        return
+    if AscendOpPrecisionConf.get_instance().is_cube_math_type_configured():
+        raise RuntimeError("The 'cube_math_type' can not be set repeatedly.")
+    AscendOpPrecisionConf.get_instance().set_cube_math_type(value)

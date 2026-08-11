@@ -25,26 +25,31 @@ namespace addmm {
 
 void AddmmAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
+  cube_math_type_ = OpApiUtil::GetCubeMathTypeForAddOps(OpApiUtil::IsAllowMatmulHF32());
+  const auto input_dtype_id = inputs[kIndex0]->dtype_id();
+  const bool use_fp32_scalar = cube_math_type_ == device::ascend::USE_FP32_ADD &&
+                               (input_dtype_id == kNumberTypeFloat16 || input_dtype_id == kNumberTypeBFloat16);
+  const auto scalar_dtype_id = use_fp32_scalar ? kNumberTypeFloat32 : inputs[kIndex0]->dtype_id();
   auto beta_dtype_id = inputs[kIndex3]->dtype_id();
   switch (beta_dtype_id) {
     case kNumberTypeBool: {
       auto beta_value = inputs[kIndex3]->GetValueWithCheck<bool>();
-      MAKE_SCALAR(beta_value, inputs[0]->dtype_id(), beta_);
+      MAKE_SCALAR(beta_value, scalar_dtype_id, beta_);
       break;
     }
     case kNumberTypeFloat32: {
       auto beta_value = inputs[kIndex3]->GetValueWithCheck<float>();
-      MAKE_SCALAR(beta_value, inputs[0]->dtype_id(), beta_);
+      MAKE_SCALAR(beta_value, scalar_dtype_id, beta_);
       break;
     }
     case kNumberTypeFloat64: {
       auto beta_value = inputs[kIndex3]->GetValueWithCheck<double>();
-      MAKE_SCALAR(beta_value, inputs[0]->dtype_id(), beta_);
+      MAKE_SCALAR(beta_value, scalar_dtype_id, beta_);
       break;
     }
     case kNumberTypeInt64: {
       auto beta_value = inputs[kIndex3]->GetValueWithCheck<int64_t>();
-      MAKE_SCALAR(beta_value, inputs[0]->dtype_id(), beta_);
+      MAKE_SCALAR(beta_value, scalar_dtype_id, beta_);
       break;
     }
     default:
@@ -55,29 +60,28 @@ void AddmmAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &in
   switch (alpha_dtype_id) {
     case kNumberTypeBool: {
       auto alpha_value = inputs[kIndex4]->GetValueWithCheck<bool>();
-      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      MAKE_SCALAR(alpha_value, scalar_dtype_id, alpha_);
       break;
     }
     case kNumberTypeFloat32: {
       auto alpha_value = inputs[kIndex4]->GetValueWithCheck<float>();
-      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      MAKE_SCALAR(alpha_value, scalar_dtype_id, alpha_);
       break;
     }
     case kNumberTypeFloat64: {
       auto alpha_value = inputs[kIndex4]->GetValueWithCheck<double>();
-      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      MAKE_SCALAR(alpha_value, scalar_dtype_id, alpha_);
       break;
     }
     case kNumberTypeInt64: {
       auto alpha_value = inputs[kIndex4]->GetValueWithCheck<int64_t>();
-      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      MAKE_SCALAR(alpha_value, scalar_dtype_id, alpha_);
       break;
     }
     default:
       MS_LOG(EXCEPTION) << "Addmm alpha only support bool, float32, float64 and int64, but got "
                         << TypeIdToString(alpha_dtype_id);
   }
-  cube_math_type_ = OpApiUtil::GetCubeMathType(OpApiUtil::IsAllowMatmulHF32());
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], beta_, alpha_, outputs[kIndex0],
                         cube_math_type_);
 }

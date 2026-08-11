@@ -55,6 +55,9 @@ static const std::unordered_map<std::string, aclCubeMathType> kCubeMathType = {
   {"allow_mix_precision_fp16", ALLOW_FP32_DOWN_PRECISION},
   {"allow_mix_precision_bf16", ALLOW_FP32_DOWN_PRECISION}};
 
+static const std::unordered_map<std::string, aclCubeMathType> kConfiguredCubeMathType = {
+  {"0", KEEP_DTYPE}, {"1", ALLOW_FP32_DOWN_PRECISION}, {"2", FORCE_FP16}, {"3", FORCE_HF32}, {"4", USE_FP32_ADD}};
+
 static const std::unordered_map<uint8_t, aclCubeMathType> kSelectMoreMathType = {
   {0b01, KEEP_DTYPE}, {0b00, FORCE_FP16}, {0b11, FORCE_HF32}, {0b10, ALLOW_FP32_DOWN_PRECISION}};
 
@@ -137,6 +140,20 @@ aclCubeMathType OpApiUtil::GetCubeMathType(bool use_hf32) {
     return kSelectMoreMathType.at(select_mode);
   }
   return AclUtil::KeepOriginDType() ? KEEP_DTYPE : ALLOW_FP32_DOWN_PRECISION;
+}
+
+aclCubeMathType OpApiUtil::GetCubeMathTypeForAddOps(bool use_hf32) {
+  auto op_precision_conf = device::ascend::OpPrecisionConf::GetInstance();
+  MS_EXCEPTION_IF_NULL(op_precision_conf);
+  const auto &configured_cube_math_type = op_precision_conf->cube_math_type();
+  if (configured_cube_math_type.empty()) {
+    return GetCubeMathType(use_hf32);
+  }
+  auto iter = kConfiguredCubeMathType.find(configured_cube_math_type);
+  if (iter == kConfiguredCubeMathType.end()) {
+    MS_LOG(EXCEPTION) << "Unexpected config cube_math_type, which is " << configured_cube_math_type;
+  }
+  return iter->second;
 }
 
 bool OpApiUtil::IsAllowMatmulHF32() {
