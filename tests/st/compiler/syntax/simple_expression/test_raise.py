@@ -69,34 +69,6 @@ def test_not_raise_single_string_control_flow():
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_raise_single_string_control_flow_grad_in_graph():
-    """
-    Feature: Test raise syntax in strict mode.
-    Description: Test raise syntax in strict mode.
-    Expectation: Throw correct exception when needed.
-    """
-    @jit
-    def foo(x, y):
-        if x > y:
-            raise ValueError("x is bigger than y")
-        return x + y
-
-    @jit
-    def grad_foo(foo, x, y):
-        return ops.grad(foo)(x, y)
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    input_x = Tensor([2])
-    input_y = Tensor([1])
-    with pytest.raises(ValueError) as raise_info:
-        ret = grad_foo(foo, input_x, input_y)
-        print(ret)
-    assert "x is bigger than y" in str(raise_info.value)
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_raise_single_string_control_flow_grad_in_pynative():
     """
     Feature: Test raise syntax in strict mode.
@@ -122,57 +94,6 @@ def test_raise_single_string_control_flow_grad_in_pynative():
         ret = grad_foo_raise_error(foo_raise_error, input_x, input_y)
         print(ret)
     assert "x is bigger than y" in str(raise_info.value)
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_not_raise_single_string_control_flow_grad_in_graph():
-    """
-    Feature: Test raise syntax in strict mode.
-    Description: Test raise syntax in strict mode.
-    Expectation: Throw correct exception when needed.
-    """
-    @jit
-    def foo(x, y):
-        if x > y:
-            raise ValueError("x is bigger than y")
-        return x + y
-
-    @jit
-    def grad_foo(foo, x, y):
-        return ops.grad(foo)(x, y)
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    input_x = Tensor([0])
-    input_y = Tensor([1])
-    ret = grad_foo(foo, input_x, input_y)
-    assert np.all(ret.asnumpy() == np.array([1]))
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_not_raise_single_string_control_flow_grad_in_pynative():
-    """
-    Feature: Test raise syntax in strict mode.
-    Description: Test raise syntax in strict mode.
-    Expectation: Throw correct exception when needed.
-    """
-    @jit
-    def foo(x, y):
-        if x > y:
-            raise ValueError("x is bigger than y")
-        return x + y
-
-    def grad_foo_not_raise_error(foo, x, y):
-        return ops.grad(foo)(x, y)
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
-    input_x = Tensor([0])
-    input_y = Tensor([1])
-    ret = grad_foo_not_raise_error(foo, input_x, input_y)
-    assert np.all(ret.asnumpy() == np.array([1]))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 

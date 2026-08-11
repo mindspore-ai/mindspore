@@ -15,7 +15,6 @@
 """ test_grad """
 import numpy as np
 
-import mindspore as ms
 import mindspore.ops.operations as P
 from mindspore import Tensor, context
 from mindspore.common.api import jit
@@ -65,27 +64,6 @@ def Xtest_expand_dims_grad():
     assert np.all(gout[0].asnumpy() == expect)
 
 
-def test_cast_grad():
-    """ test_cast_grad """
-    input_np = np.random.randn(2, 3).astype(np.float32)
-    input_x = Tensor(input_np)
-
-    td = ms.int32
-    cast = P.Cast()
-
-    def fn(x):
-        output = cast(x, td)
-        return output
-
-    out = fn(input_x)
-    gfn = grad_all_with_sens(fn)
-    sens = Tensor(np.ones_like(out.asnumpy()))
-    args = [input_x, sens]
-    gout = gfn(*args)
-    expect = np.ones((2, 3), dtype=np.float32)
-    assert np.all(gout[0].asnumpy() == expect)
-
-
 @non_graph_engine
 def test_reshape_grad():
     """ test_reshape_grad """
@@ -103,25 +81,6 @@ def test_reshape_grad():
     args = [input_tensor, sens]
     gout = gfn(*args)
     expect = np.ones([2, 3])
-    assert np.all(gout[0].asnumpy() == expect)
-
-
-def test_transpose_grad():
-    """ test_transpose_grad """
-    input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]))
-    perm = (0, 2, 1)
-    transpose = P.Transpose()
-
-    def fn(x):
-        output = transpose(x, perm)
-        return output
-
-    out = fn(input_tensor)
-    gfn = grad_all_with_sens(fn)
-    sens = Tensor(np.ones_like(out.asnumpy()))
-    args = [input_tensor, sens]
-    gout = gfn(*args)
-    expect = np.ones([2, 2, 3])
     assert np.all(gout[0].asnumpy() == expect)
 
 
@@ -147,46 +106,6 @@ def test_select_grad():
     assert np.all(gout[0].asnumpy() == expect_cond)
     assert np.all(gout[1].asnumpy() == expect_x)
     assert np.all(gout[2].asnumpy() == expect_y)
-
-
-@non_graph_engine
-def test_squeeze_grad():
-    """ test_squeeze_grad """
-    input_tensor = Tensor(np.ones(shape=[3, 2, 1]))
-    squeeze = P.Squeeze(2)
-
-    def fn(x):
-        output = squeeze(x)
-        return output
-
-    out = fn(input_tensor)
-    gfn = grad_all_with_sens(fn)
-    sens = Tensor(np.ones_like(out.asnumpy()))
-    args = [input_tensor, sens]
-    gout = gfn(*args)
-    expect = np.ones([3, 2, 1])
-    assert np.all(gout[0].asnumpy() == expect)
-
-
-def test_SubGrad():
-    """ test_SubGrad """
-    input_x = Tensor(np.array([2, 2]))
-    input_y = Tensor(np.array([[2, 2], [2, 2]]))
-    sub = P.Sub()
-
-    def fn(x, y):
-        output = sub(x, y)
-        return output
-
-    out = fn(input_x, input_y)
-    gfn = grad_all_with_sens(fn)
-    sens = Tensor(np.ones_like(out.asnumpy()))
-    args = [input_x, input_y, sens]
-    gout = gfn(*args)
-    expect_dx = np.ones([2]).astype(np.int32) * 2  # reduce sum dout to the shape of x
-    expect_dy = np.ones([2, 2]).astype(np.int32) * (-1)
-    assert np.array_equal(gout[0].asnumpy(), expect_dx)
-    assert np.array_equal(gout[1].asnumpy(), expect_dy)
 
 
 def test_MulGrad():

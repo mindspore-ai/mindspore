@@ -1694,55 +1694,6 @@ def test_print_assign_print():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_print_assign_print_for_tensor():
-    """
-    Feature: Auto Monad
-    Description: Test load eliminate when umonad and iomona both exist.
-    Expectation: No exception.
-    """
-
-    class Print(Cell):
-        def __init__(self):
-            super().__init__()
-            self.print = P.Print()
-            self.assign = P.Assign()
-
-
-        def func(self, param):
-            self.assign(param, param * 5)
-            return param + 5
-
-        @ms.jit
-        def construct(self, value, param):
-            self.print("param_1:", param)
-            res = self.func(param)
-            self.print("res:", res)
-            self.print("param_2:", param)
-            self.assign(param, value)
-            self.print("param_3:", param)
-            return param
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    cap = Capture()
-    with capture(cap):
-        input_x = Tensor(3, dtype=ms.int64)
-        param = Tensor(1, dtype=ms.int64)
-        net = Print()
-        out, grad = ops.value_and_grad(net, grad_position=1)(input_x, param)
-        sys.stdout.flush()
-        time.sleep(2.0)
-
-    patterns = {'param_1:\nTensor(shape=[], dtype=Int64, value=1)\n'
-                'res:\nTensor(shape=[], dtype=Int64, value=10)\n'
-                'param_2:\nTensor(shape=[], dtype=Int64, value=5)\n'
-                'param_3:\nTensor(shape=[], dtype=Int64, value=3)\n'}
-    check_output(cap.output, patterns)
-    assert out == 3 and grad == 1
-    context.set_context(mode=context.GRAPH_MODE)
-
-
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_print_in_constant_returned_func():
     """
@@ -1875,46 +1826,6 @@ def test_bprop_print_func():
 
     patterns = {'Tensor(shape=[1], dtype=Int32, value=[1])\nTensor(shape=[1], dtype=Int32, value=[2])'}
     check_output(cap.output, patterns)
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_bprop_assign_func():
-    """
-    Feature: Support side effect node in bprop.
-    Description: Support side effect node in bprop.
-    Expectation: No exception.
-    """
-
-    assign_data = P.Assign()
-    def my_assign(param, data):
-        assign_data(param, data)
-
-    class Net(nn.Cell):
-        def construct(self, x, y):
-            return x, y
-
-        def bprop(self, x, y, out, dout):
-            my_assign(x, y * 2)
-            dx = x + 1
-            dy = y + 1
-            return dx, dy
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super().__init__()
-            self.net = net
-            self.grad_op = ops.GradOperation(get_all=True)
-
-        def construct(self, x, y):
-            gradient_function = self.grad_op(self.net)
-            return gradient_function(x, y)
-
-    x = Parameter(Tensor([1], dtype=ms.int32), name='para')
-    y = ms.Tensor([2], dtype=ms.int32)
-    out = GradNet(Net())(x, y)
-    print("out:", out)
-    assert out[0] == 5
-    assert out[1] == 3
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')

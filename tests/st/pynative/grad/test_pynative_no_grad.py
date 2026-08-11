@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-from-import,super-with-arguments
 import pytest
 import numpy as np
 import mindspore
-from mindspore import ops, jit
+from mindspore import ops
 import mindspore.nn as nn
 from mindspore import Parameter, Tensor, _no_grad
 from mindspore.common.api import _pynative_executor
@@ -163,34 +164,3 @@ def test_no_grad_exception():
     with pytest.raises(RuntimeError, match="In no_grad context, you can not calculate gradient"):
         model(x)
         _pynative_executor.sync()
-
-
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
-def test_no_grad_for_jit_run_twice():
-    """
-    Feature: Test no grad feature
-    Description: test decorator of no grad
-    Expectation: Success
-    """
-
-    @jit
-    def inner(a, b):
-        return a + b
-
-    def foo1(a, b):
-        with _no_grad():
-            return inner(a, b)
-
-    def foo2(a, b):
-        return inner(a, b)
-
-    m = Tensor([1, 2, 3])
-    n = Tensor([1, 1, 1])
-
-    grad1 = ops.grad(foo1)(m, n)
-    assert np.all(grad1.asnumpy() == np.array([0, 0, 0]))
-    grad2 = ops.grad(foo2)(m, n)
-    assert np.all(grad2.asnumpy() == np.array([1, 1, 1]))

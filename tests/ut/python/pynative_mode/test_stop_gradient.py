@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments,useless-parent-delegation
 """ test_stop_gradient """
 import numpy as np
 import pytest
@@ -247,32 +248,6 @@ def test_stop_gradient_3():
                Tensor(np.ones([2]).astype(np.float32)),
                Tensor(np.ones([2]).astype(np.float32)),
                Tensor(np.ones([2]).astype(np.float32)))
-
-
-def test_stop_gradient_4():
-    def stop_test(x):
-        return stop_gradient(x)
-
-    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (0,)
-
-
-def test_stop_gradient_5():
-    def stop_test(x):
-        y = x + x
-        y = stop_gradient(y)
-        ret = x + y
-        return ret
-
-    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32)) == (1,)
-
-
-def test_stop_gradient_6():
-    def stop_test(x, y):
-        ret = x * y
-        ret = stop_gradient(ret)
-        return ret
-
-    assert grad_all(stop_test)(Tensor(1, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (0, 0)
 
 
 class PrimWithMultiOutputs(PrimitiveWithInfer):

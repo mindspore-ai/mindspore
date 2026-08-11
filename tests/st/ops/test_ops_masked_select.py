@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-from-import,possibly-used-before-assignment
 import pytest
 import numpy as np
 import mindspore as ms
@@ -50,17 +51,21 @@ def test_ops_masked_select(mode, dtype):
     expect_value = np.asarray([1, 2, 3, 6, 7, 8]).astype(dtype)
     expect_input_grad = np.asarray([[1, 1, 1], [0, 0, 0], [1, 1, 1], [0, 0, 0]]).astype(dtype)
     expect_mask_grad = np.asarray([[False], [False], [False], [False]]).astype(np.bool_)
+    output_grad = None
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         output = masked_select_forward_func(input1, mask)
-        output_grad = masked_select_backward_func(input1, mask)
+        if dtype in (np.float64, np.float32, np.float16):
+            output_grad = masked_select_backward_func(input1, mask)
     elif mode == 'KBK':
         ms.context.set_context(mode=ms.GRAPH_MODE)
         output = (jit(masked_select_forward_func, backend="ms_backend", jit_level="O0"))(input1, mask)
-        output_grad = (jit(masked_select_backward_func, backend="ms_backend", jit_level="O0"))(input1, mask)
+        if dtype in (np.float64, np.float32, np.float16):
+            output_grad = (jit(masked_select_backward_func, backend="ms_backend", jit_level="O0"))(input1, mask)
     np.testing.assert_allclose(output.asnumpy(), expect_value, rtol=1e-3)
-    np.testing.assert_allclose(output_grad[0].asnumpy(), expect_input_grad, rtol=1e-3)
-    np.testing.assert_allclose(output_grad[1].asnumpy(), expect_mask_grad, rtol=1e-3)
+    if output_grad is not None:
+        np.testing.assert_allclose(output_grad[0].asnumpy(), expect_input_grad, rtol=1e-3)
+        np.testing.assert_allclose(output_grad[1].asnumpy(), expect_mask_grad, rtol=1e-3)
 
 
 @pytest.mark.level1

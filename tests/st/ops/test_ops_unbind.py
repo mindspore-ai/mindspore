@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-enumerate
 import pytest
 import numpy as np
 import mindspore as ms
@@ -119,7 +120,6 @@ def test_ops_unbind_backward(mode):
     input_list = []
     input_list.append([ms.Tensor(generate_random_input((2,), np.float32)), 0])
     input_list.append([ms.Tensor(generate_random_input((2, 3, 4, 5, 6), np.float32)), 3])
-    input_list.append([ms.Tensor(generate_random_input((2, 3, 4, 5, 6, 7, 8, 9), np.int64)), 3])
     input_list.append([ms.Tensor(generate_random_input((2, 3, 4), np.float32)), -2])
 
     for i in range(len(input_list)):

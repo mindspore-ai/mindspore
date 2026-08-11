@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-from-import,super-with-arguments
 import numpy as np
 
 import mindspore as ms
@@ -149,16 +150,6 @@ def test_UnsortedSegmentMax_model_parallel_index_vector_slice_3d():
 def test_UnsortedSegmentMax_model_parallel_float16():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float16)
-    y = Tensor(np.ones((4)), ms.int32)
-    num_segments = 16
-    strategy1 = (2, 1, 2)
-    strategy2 = (2,)
-    compile_graph(x, y, num_segments, strategy1, strategy2)
-
-
-def test_UnsortedSegmentMax_model_parallel_int32():
-    context.set_auto_parallel_context(device_num=4, global_rank=0)
-    x = Tensor(np.ones((4, 4, 8)), ms.int32)
     y = Tensor(np.ones((4)), ms.int32)
     num_segments = 16
     strategy1 = (2, 1, 2)

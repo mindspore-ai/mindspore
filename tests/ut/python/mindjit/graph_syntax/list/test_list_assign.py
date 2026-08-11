@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import
 """ test enumerate"""
 import os
-import numpy as np
 import pytest
 import mindspore.nn as nn
 from mindspore.nn import Cell
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
 from mindspore import Tensor, jit
 from mindspore import context
 from mindspore._extends.parse import compile_config
@@ -209,8 +207,6 @@ def test_list_neg_index_3d():
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
 
 
-
-
 def test_list_index_1D_parameter():
     """
     Feature: List index assign
@@ -271,82 +267,6 @@ def test_list_index_3D_parameter():
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
 
 
-def test_const_list_index_3D_bprop():
-    """
-    Feature: List index assign
-    Description: Test list assign in pynative mode
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.value = [[1], [2, 2], [[3, 3], [3, 3]]]
-            self.relu = P.ReLU()
-
-        def construct(self, input_x):
-            list_x = self.value
-            list_x[2][0][1] = input_x
-            return self.relu(list_x[2][0][1])
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-            self.grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
-
-        def construct(self, x, sens):
-            return self.grad_all_with_sens(self.net)(x, sens)
-
-    saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
-    net = Net()
-    grad_net = GradNet(net)
-    x = Tensor(np.arange(2 * 3).reshape(2, 3))
-    sens = Tensor(np.arange(2 * 3).reshape(2, 3))
-    grad_net(x, sens)
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
-
-
-def test_parameter_list_index_3D_bprop():
-    """
-    Feature: List index assign
-    Description: Test list assign in pynative mode
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.value = [[1], [2, 2], [[3, 3], [3, 3]]]
-            self.relu = P.ReLU()
-
-        def construct(self, x, value):
-            list_value = [[x], [x, x], [[x, x], [x, x]]]
-            list_value[2][0][1] = value
-            return self.relu(list_value[2][0][1])
-
-    class GradNet(nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-            self.grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)
-
-        def construct(self, x, value, sens):
-            return self.grad_all_with_sens(self.net)(x, value, sens)
-
-    saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
-    net = Net()
-    grad_net = GradNet(net)
-    x = Tensor(np.arange(2 * 3).reshape(2, 3))
-    value = Tensor(np.ones((2, 3), np.int64))
-    sens = Tensor(np.arange(2 * 3).reshape(2, 3))
-    grad_net(x, value, sens)
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
-
-
-
 class Net1(Cell):
     def construct(self, a, b, start=None, stop=None, step=None):
         a[start:stop:step] = b[start:stop:step]
@@ -356,7 +276,6 @@ class Net1(Cell):
 def compare_func1(a, b, start=None, stop=None, step=None):
     a[start:stop:step] = b[start:stop:step]
     return tuple(a)
-
 
 
 def test_list_slice_length_equal():

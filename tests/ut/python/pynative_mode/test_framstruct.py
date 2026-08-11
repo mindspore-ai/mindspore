@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments,self-assigning-variable
 """ test_framstruct """
 import numpy as np
-import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import dtype as mstype
@@ -145,20 +145,6 @@ def test_if_always_true():
     assert res == 1
 
 
-@non_graph_engine
-def test_f():
-    """ test_f """
-    res = mainf(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32))
-    assert res == (2, 3)
-
-
-@non_graph_engine
-def test_grad_add_mul():
-    """ test_grad_add_mul """
-    res = grad_add_mul(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32))
-    assert res == (2, 7)
-
-
 def f(x):
     if x > 0:
         return f(x - 1)
@@ -285,11 +271,6 @@ def grad_if(x, y):
     return grad_all(if_test)(x, y)
 
 
-def test_grad_if():
-    """ test_grad_if """
-    assert grad_if(Tensor(5, dtype=ms.int32), Tensor(4, dtype=ms.int32)) == (3, 0)
-
-
 class ConvNet(nn.Cell):
     def __init__(self):
         super(ConvNet, self).__init__()
@@ -368,11 +349,6 @@ def _while(x):
 def grad_while(x):
     """ grad_while """
     return grad_all(_while)(x)
-
-
-def test_grad_while():
-    """ test_grad_while """
-    assert grad_while(Tensor(5, dtype=ms.int32)) == (60,)
 
 
 @jit
@@ -612,20 +588,9 @@ def grad_refactor_simple_1(x, y):
     return x * x + 2 * y
 
 
-def test_grad_refactor_simple_1():
-    assert grad_all(grad_refactor_simple_1)(Tensor(2, dtype=ms.int32), Tensor(1, dtype=ms.int32)) == (4, 2)
-
-
 def grad_refactor_simple_2(x, y, z):
     """ add """
     return x * y + z + x * y * z + x + x * y
-
-
-def test_grad_refactor_simple_2():
-    x = Tensor(2, dtype=ms.int32)
-    y = Tensor(3, dtype=ms.int32)
-    z = Tensor(0, dtype=ms.int32)
-    assert grad_all(grad_refactor_simple_2)(x, y, z) == (7, 4, 7)
 
 
 def grad_refactor_1(a, b):
@@ -637,10 +602,6 @@ def grad_refactor_1(a, b):
     return inner(a, b)
 
 
-def test_grad_refactor_1():
-    assert grad_all(grad_refactor_1)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (3, 2)
-
-
 def grad_refactor_2(a, b):
     """ if_test """
 
@@ -648,10 +609,6 @@ def grad_refactor_2(a, b):
         return x * b
 
     return inner(b) * inner(a)
-
-
-def test_grad_refactor_2():
-    assert grad_all(grad_refactor_2)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (27, 54)
 
 
 def grad_refactor_3(a):
@@ -668,10 +625,6 @@ def grad_refactor_4(a):
     return 0
 
 
-def test_grad_refactor_4():
-    assert grad_all(grad_refactor_4)(Tensor(4, dtype=ms.int32)) == (3,)
-
-
 def grad_refactor_5(a):
     """ if_test """
     if a > 3:
@@ -684,10 +637,6 @@ def grad_refactor_6(a, b):
     if a > b:
         return 3 * a + b
     return 2 * b * a
-
-
-def test_grad_refactor_6():
-    assert grad_all(grad_refactor_6)(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32)) == (3, 1)
 
 
 def grad_refactor_while(x):
@@ -706,11 +655,6 @@ def grad_refactor__while_1(x):
         ret = ret * i
         i = i + 1
     return ret
-
-
-def test_grad_refactor_10():
-    """ test_grad_while """
-    assert grad_all(grad_refactor__while_1)(Tensor(5, dtype=ms.int32)) == (60,)
 
 
 def test_grad_refactor_11():

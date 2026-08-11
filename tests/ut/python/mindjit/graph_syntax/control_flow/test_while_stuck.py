@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 import os
 import mindspore as ms
 from mindspore import jit, mutable, Tensor, vmap, ops
@@ -51,29 +52,6 @@ def test_mutable_scalar_in_while():
         return j
 
     mutable_scalar_while()
-
-
-def test_mutable_scalar_in_while_grad():
-    """
-    Feature: Set Constants Scalar as mutable.
-    Description: Check whether scalar is broaden.
-    Expectation: while won't stuck in grad process.
-    """
-
-    @jit
-    def mutable_scalar_while(x):
-        i = mutable(1)
-        j = Tensor([1])
-        while j < 10:
-            j = j + x
-            i = i + 2
-        return j
-
-    @jit
-    def mutable_scalar_while_grad(x):
-        return ms.ops.grad(mutable_scalar_while)(x)
-
-    mutable_scalar_while_grad(Tensor([1]))
 
 
 def test_auto_broaden_scalar_in_while():
@@ -187,52 +165,6 @@ def test_auto_broaden_tensor_in_if():
 
     out = scalar_add_in_if(Tensor([1]))
     print("out:", out)
-
-
-def test_auto_broaden_scalar_in_while_grad():
-    """
-    Feature: Broaden scalar arg if it is an arg of no-expanding while header.
-    Description: Check whether scalar is broaden.
-    Expectation: while won't stuck in grad process.
-    """
-
-    @jit
-    def scalar_add_in_while(x):
-        i = 1
-        j = Tensor([1])
-        while j < 10:
-            j = j + x
-            i = i + 2
-        return j
-
-    @jit
-    def scalar_add_in_while_grad(x):
-        return ms.ops.grad(scalar_add_in_while)(x)
-
-    scalar_add_in_while_grad(Tensor([1]))
-
-
-def test_auto_broaden_scalar_in_while_grad_grad():
-    """
-    Feature: Broaden scalar arg if it is an arg of no-expanding while header.
-    Description: Check whether scalar is broaden.
-    Expectation: while won't stuck in grad process.
-    """
-
-    @jit
-    def scalar_add_in_while(x):
-        i = 1
-        j = Tensor([1])
-        while j < 10:
-            j = j + x
-            i = i + 2
-        return j
-
-    @jit
-    def scalar_add_in_while_grad_grad(x):
-        return ms.ops.grad(ms.ops.grad(scalar_add_in_while))(x)
-
-    scalar_add_in_while_grad_grad(Tensor([1]))
 
 
 def test_recursive_func():

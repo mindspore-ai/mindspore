@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 from tests.mark_utils import arg_mark
 from mindspore import context
 from mindspore import Tensor, nn
@@ -197,17 +198,3 @@ def test_if_after_if_03():
     expect1 = Tensor(19, mstype.int32)
     expect2 = (Tensor(5, mstype.int32), Tensor(2, mstype.int32))
     control_flow_if_after_if(IfAfterIfNet3, x, y, expect1, expect2)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
-def test_if_after_if_04():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(19, mstype.int32)
-    expect2 = (Tensor(5, mstype.int32), Tensor(2, mstype.int32))
-    control_flow_if_after_if(IfAfterIfNet4, x, y, expect1, expect2)

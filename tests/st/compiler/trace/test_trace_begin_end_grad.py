@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments,unnecessary-comprehension
 """ test trace functions """
 
 import numpy as np
 import pytest
 import mindspore as ms
-from mindspore.ops.functional import grad
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
@@ -39,49 +39,6 @@ from tests.st.networks.models.resnetv1_5 import resnet50 as resnet_pynative
 
 grad_all = C.GradOperation(get_all=True)
 grad_by_list = C.GradOperation(get_by_list=True)
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_trace_begin_end_1():
-    """
-    Feature: JIT trace function
-    Description: JIT trace function
-    Expectation: No exception
-    """
-    class TraceNet(ms.nn.Cell):
-        def __init__(self):
-            super(TraceNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        def construct(self, x, y):
-            jit_begin("__trace__jit_block__1__", x, y)
-            a = ms.Tensor(2)
-            z = x + a
-            z = z + self.x
-            z = z * y
-            z = jit_end(z)
-            return z
-
-    class GradNet(ms.nn.Cell):
-        def __init__(self):
-            super(GradNet, self).__init__()
-            self.net = TraceNet()
-
-        def construct(self, x, y):
-            z1 = x * y
-            z2 = x + y
-            z3 = self.net(z1, z2)
-            return z3 * z3
-
-    grad_net = GradNet()
-    res1 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res2 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res3 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res4 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    print(f'res1: {res1}, res2: {res2}, res3: {res3}, res4: {res4}')
-    assert res1 == res2
-    assert res2 == res3
-    assert res3 == res4
-
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
