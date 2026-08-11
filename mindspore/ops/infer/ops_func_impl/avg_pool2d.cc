@@ -98,6 +98,7 @@ void Avgpool2DInferOutputShape(const PrimitivePtr &primitive, const std::vector<
   const size_t input_rank = input_shape.size();
   std::array<int64_t, kIndex2> spatial_output_shape = {abstract::TensorShape::kShapeDimAny,
                                                        abstract::TensorShape::kShapeDimAny};
+  std::array<bool, kIndex2> spatial_dim_is_unknown = {true, true};
   for (size_t i = 0; i < kIndex2; ++i) {
     auto dim = input_rank - kIndex2 + i;
     auto cur_dim_value = input_shape[dim];
@@ -113,10 +114,13 @@ void Avgpool2DInferOutputShape(const PrimitivePtr &primitive, const std::vector<
     auto output_size = AvgPool2DOutputShapePadLR(cur_dim_value, kernel_size[idx_kernel_size], padding[idx_padding],
                                                  stride[idx_stride], ceil_mode);
     spatial_output_shape[i] = output_size;
+    spatial_dim_is_unknown[i] = false;
     (*output_shape)[dim] = output_size;
   }
-  if (std::any_of(spatial_output_shape.begin(), spatial_output_shape.end(),
-                  [](int64_t value) { return value != abstract::TensorShape::kShapeDimAny && value <= 0; })) {
+  for (size_t i = 0; i < kIndex2; ++i) {
+    if (spatial_dim_is_unknown[i] || spatial_output_shape[i] > 0) {
+      continue;
+    }
     auto channel_size = input_rank == kDim3 ? input_shape[kIndex0] : input_shape[kIndex1];
     MS_EXCEPTION(ValueError) << "Given input size: (" << channel_size << "x" << input_shape[input_rank - kIndex2] << "x"
                              << input_shape[input_rank - kIndex1] << "). Calculated output size: (" << channel_size

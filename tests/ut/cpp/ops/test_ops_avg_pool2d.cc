@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "common/common_test.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -82,6 +83,36 @@ TEST_P(TestAvgPool2D, dyn_shape) {
     auto expect_shape = ShapeArray{param.out_shape};
     auto infer_shape = infer_impl->InferShape(prim, input_valus);
     ShapeCompare(infer_shape, expect_shape);
+  }
+}
+
+/// Feature: AvgPool2D output shape inference.
+/// Description: Verify that an invalid calculated output size reports detailed dimensions.
+/// Expectation: InferShape throws an exception containing the input and calculated output sizes.
+TEST_F(TestOps, AvgPool2DInvalidOutputSize) {
+  auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{1, 1, 1, 1});
+  auto prim = std::make_shared<Primitive>(kNameAvgPool2D);
+  auto infer_impl = std::make_shared<AvgPool2DFuncImpl>();
+  auto kernel_size = CreatePyIntTuple({3});
+  auto stride = CreatePyIntTuple({1});
+  auto padding = CreatePyIntTuple({0});
+  auto ceil_mode = CreateScalar<bool>(false);
+  auto count_include_pad = CreateScalar<bool>(false);
+  auto divisor_override = CreateScalar<int64_t>(int64_t(1));
+  std::vector<AbstractBasePtr> input_args{input_abs,
+                                          kernel_size->ToAbstract(),
+                                          stride->ToAbstract(),
+                                          padding->ToAbstract(),
+                                          ceil_mode->ToAbstract(),
+                                          count_include_pad->ToAbstract(),
+                                          divisor_override->ToAbstract()};
+
+  try {
+    (void)infer_impl->InferShape(prim, input_args);
+    FAIL() << "Expected InferShape to throw an exception.";
+  } catch (const std::exception &e) {
+    EXPECT_NE(std::string(e.what()).find("Given input size: (1x1x1). Calculated output size: (1x-1x-1)."),
+              std::string::npos);
   }
 }
 
