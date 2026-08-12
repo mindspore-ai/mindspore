@@ -194,12 +194,14 @@ def conv_allow_hf32(value):
 def cube_math_type(value):
     """
     Configure the cube calculation mode for Addmm and Baddbmm operators.
-
     The value is forwarded to the ACLNN ``cubeMathType`` parameter. The explicitly configured value takes
-    precedence over the existing automatic precision policy. When it is not configured, the automatic policy is
-    retained. Mode ``4`` uses FP32 for the addition following FP16 or BF16 matrix multiplication. Its support and
-    behavior depend on the input shape, data type, hardware, and CANN version. When using mode ``4`` with Addmm or
-    Baddbmm, the input tensor must not be broadcast relative to the matrix multiplication result.
+    precedence over the existing automatic precision policy.
+    When it is not configured, the automatic precision policy is retained.
+
+    ``4`` indicates that after an FP16 or BF16 matrix multiplication, the addition is performed using FP32.
+    Its support and behavior depend on the input shape, data type, hardware, and CANN version.
+    When using mode ``4`` with Addmm or Baddbmm,
+    the input tensor must not be broadcast relative to the matrix multiplication result.
 
     Note:
         This is an experimental prototype that is subject to change and/or deletion.
