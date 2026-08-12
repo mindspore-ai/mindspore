@@ -1582,26 +1582,32 @@ def extra_sample_inputs_tensor_bernoulli_(op_info: OpInfo, dtype=None, device=No
 
 def dynamic_sample_inputs_tensor_bernoulli_(op_info: OpInfo, dtype, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if dtype.is_floating_point:
+        p_dtype = dtype
+    else:
+        p_dtype = ms.float32
     if not kwargs.get("only_dynamic_rank", False):
         # dynamic shape
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
                 op_args=(),
-                op_kwargs={},
+                op_kwargs={'p': ms.mutable(0.11222)},
                 sample_name=f"{op_info.name}_dynamic_shape_compile_input",
             ),
             op_running_inputs=(
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3)),
+                    op_input=make_func(shape=(1, 5, 24), low=op_info.input_low, high=op_info.input_high,
+                                       exclude_value=op_info.exclude_value),
                     op_args=(),
-                    op_kwargs={},
+                    op_kwargs={'p': ms.mutable(0.22562)},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
                 ),
                 OpSampleInput(
-                    op_input=make_func(shape=(1, 4, 5)),
+                    op_input=make_func(shape=(9, 5, 38), low=op_info.input_low, high=op_info.input_high,
+                                       exclude_value=op_info.exclude_value),
                     op_args=(),
-                    op_kwargs={},
+                    op_kwargs={'p': ms.mutable(0.)},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
                 ),
             ),
@@ -1612,21 +1618,23 @@ def dynamic_sample_inputs_tensor_bernoulli_(op_info: OpInfo, dtype, device=None,
             op_compile_input=OpSampleInput(
                 op_input=ms.Tensor(shape=None, dtype=dtype),
                 op_args=(),
-                op_kwargs={},
+                op_kwargs={'p': make_func(shape=None, dtype=p_dtype, low=0, high=1)},
                 grad_position=(),
                 sample_name=f"{op_info.name}_dynamic_rank_compile_input",
             ),
             op_running_inputs=(
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3)),
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low, high=op_info.input_high,
+                                       exclude_value=op_info.exclude_value),
                     op_args=(),
-                    op_kwargs={},
+                    op_kwargs={'p': make_func(shape=(2, 3), dtype=p_dtype, low=0, high=1)},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),
                 OpSampleInput(
-                    op_input=make_func(shape=(3, 4, 1)),
+                    op_input=make_func(shape=(2, 3, 4), low=op_info.input_low, high=op_info.input_high,
+                                       exclude_value=op_info.exclude_value),
                     op_args=(),
-                    op_kwargs={},
+                    op_kwargs={'p': make_func(shape=(2, 3, 4), dtype=p_dtype, low=0, high=1)},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),
             ),

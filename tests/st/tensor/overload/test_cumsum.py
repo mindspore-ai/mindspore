@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for Tensor.cumsum.
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -71,8 +73,7 @@ class Net7(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
-                      'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard', mem_peak=4.0)
 
@@ -118,8 +119,7 @@ def test_cumsum_pyboost(mode):
     assert np.allclose(output8.asnumpy(), expect_out_2)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
-                      'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

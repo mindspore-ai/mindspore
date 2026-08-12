@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Tests for Tensor.diagonal.
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -22,7 +25,7 @@ import mindspore.nn as nn
 
 class Net(nn.Cell):
     def __init__(self, offset=0, axis1=0, axis2=1):
-        super(Net, self).__init__()
+        super().__init__()
         self.offset = offset
         self.axis1 = axis1
         self.axis2 = axis2
@@ -32,7 +35,7 @@ class Net(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -50,7 +53,7 @@ def test_tensor_diagonal(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

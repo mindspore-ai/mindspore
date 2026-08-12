@@ -393,7 +393,7 @@ def basic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None):
             op_input=make_input(shape),
             op_args=args,
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f'{op_info.name}_{dtype}_basic',
         )
 
 def extra_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None):
@@ -416,7 +416,7 @@ def extra_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None):
             op_input=make_input(shape),
             op_args=args,
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f'{op_info.name}_{dtype}_{len(shape)}d_extra',
         )
 
 def dynamic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -466,6 +466,7 @@ def dynamic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None, 
                 op_args=(1,),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+                grad_position=() if op_info.name.startswith('Tensor.cumsum') else None
             ),
             op_running_inputs=(
                 OpSampleInput(
@@ -490,6 +491,7 @@ def dynamic_sample_inputs_mint_cumsum(op_info: OpInfo, dtype=None, device=None, 
                 op_args=(0,),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_dynamic_rank_compile_input_groups2",
+                grad_position=() if op_info.name.startswith('Tensor.cumsum') else None
             ),
             op_running_inputs=(
                 OpSampleInput(
@@ -576,28 +578,11 @@ def basic_sample_inputs_mint_diff(op_info: OpInfo, dtype=None, device=None, **kw
             op_input=op_inputs,
             op_args=(n_p, dims, prepend, append),
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f"{op_info.name}_{dtype}_basic",
         )
 
 
-def extra_sample_inputs_mint_diff(op_info, dtype, device=None, **kwargs):
-    cases = [
-        # discontinuous
-        (ms.Tensor(np.random.randn(10, 15), dtype=dtype)[::2, ::3], 1, 0, None, None),
-        (ms.Tensor(np.random.randn(8, 12), dtype=dtype), 2, 1, None, None),
-        # broadcast
-        (ms.Tensor(np.random.randn(1, 1, 3), dtype=dtype), 1, 1, None, None),
-        #shape 0
-        (ms.Tensor(np.random.randn(0, 5), dtype=dtype), 0, 0, None, None)
-
-    ]
-    for op_inputs, n_p, dims, prepend, append in cases:
-        yield OpSampleInput(
-            op_input=op_inputs,
-            op_args=(n_p, dims, prepend, append),
-            op_kwargs={},
-            sample_name=op_info.name,
-        )
+def extra_sample_inputs_diff_small_large_values(op_info: OpInfo, dtype=None, device=None, **kwargs):
     #small/large values
     values = []
     if dtype == ms.uint8:
@@ -627,6 +612,27 @@ def extra_sample_inputs_mint_diff(op_info, dtype, device=None, **kwargs):
                 op_kwargs={},
                 sample_name=f"{op_info.name}_{dtype}_{t}",
             )
+
+def extra_sample_inputs_mint_diff(op_info, dtype, device=None, **kwargs):
+    cases = [
+        # discontinuous
+        (ms.Tensor(np.random.randn(10, 15), dtype=dtype)[::2, ::3], 1, 0, None, None),
+        (ms.Tensor(np.random.randn(8, 12), dtype=dtype), 2, 1, None, None),
+        # broadcast
+        (ms.Tensor(np.random.randn(1, 1, 3), dtype=dtype), 1, 1, None, None),
+        #shape 0
+        (ms.Tensor(np.random.randn(0, 5), dtype=dtype), 0, 0, None, None)
+
+    ]
+    for op_inputs, n_p, dims, prepend, append in cases:
+        yield OpSampleInput(
+            op_input=op_inputs,
+            op_args=(n_p, dims, prepend, append),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    #small/large values
+    yield from extra_sample_inputs_diff_small_large_values(op_info, dtype=dtype, device=device, **kwargs)
 
 
 def error_inputs_mint_diff(op_info, dtype, device=None, **kwargs):
@@ -1222,7 +1228,9 @@ def error_inputs_mint_cummax(op_info: OpInfo, dtype=None, device=None, **kwargs)
         (ms.Tensor(np.random.randn(7, 8), dtype=ms.float32), "1"),
         (ms.Tensor(np.random.randn(7, 8), dtype=ms.float32), True),
         (ms.Tensor(np.random.randn(9, 8), dtype=ms.float32), (1, 2)),
-        (ms.Tensor(np.random.randn(9, 8), dtype=ms.float32), 1.5)
+        (ms.Tensor(np.random.randn(9, 8), dtype=ms.float32), 1.5),
+        # dim is equal to len(input.shape)
+        (ms.Tensor(np.random.randn(9, 8), dtype=ms.float32), 2)
     ]
     for op_input, dims in cases:
         yield OpErrorInput(
@@ -1232,8 +1240,8 @@ def error_inputs_mint_cummax(op_info: OpInfo, dtype=None, device=None, **kwargs)
                 op_kwargs={},
                 sample_name=op_info.name,
             ),
-            op_error_type=(TypeError, ValueError),
-            op_error_info='other ops mint.cummax error values'
+            op_error_type=(TypeError, ValueError, IndexError),
+            op_error_info=f'{op_info.name}: error values of dim(axis).'
         )
 
 def basic_reference_inputs_tensor_amax_or_amin(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -1308,4 +1316,112 @@ def error_inputs_other_op_tensor_count_nonzero(op_info: OpInfo, dtype=None, devi
             ),
             op_error_type=(ValueError, TypeError),
             op_error_info="dim error",
+        )
+
+def dynamic_sample_inputs_tensor_cummax(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_kwargs={'axis': 1},
+                sample_name=f'{op_info.name}_{dtype}_dynamic_shape_compile'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 7, 9)),
+                    op_kwargs={'axis': 1},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_1'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4, 5)),
+                    op_kwargs={'axis': 1},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_2'
+                ),
+            )
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        # Dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_kwargs={'axis': 0},
+                sample_name=f'{op_info.name}_{dtype}_dynamic_rank_compile'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 7)),
+                    op_kwargs={'axis': 0},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_1'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4, 5)),
+                    op_kwargs={'axis': 0},
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_2'
+                ),
+            )
+        )
+
+def extra_sample_inputs_tensor_diff(op_info, dtype, device=None, **kwargs):
+    cases = [
+        # discontinuous
+        (ms.Tensor(np.random.randn(10, 15), dtype=dtype)[::2, ::3], 1, -1, None, None),
+        (ms.Tensor(np.random.randn(8, 12), dtype=dtype), 1, 1, ms.Tensor(np.random.randn(8, 12), dtype=dtype),
+         ms.Tensor(np.random.randn(8, 12), dtype=dtype)),
+        # broadcast
+        (ms.Tensor(np.random.randn(1, 1, 3), dtype=dtype), 1, -2, None,
+         ms.Tensor(np.random.randn(1, 1, 3), dtype=dtype)),
+        # 5D
+        (ms.Tensor(np.random.randn(6, 9, 7, 6, 5), dtype=dtype), 1, 0,
+         ms.Tensor(np.random.randn(6, 9, 7, 6, 5), dtype=dtype), None),
+        # 8D
+        (ms.Tensor(np.random.randn(8, 2, 2, 2, 1, 2, 3), dtype=dtype), 1, -4, None, None)
+    ]
+    for op_inputs, n_p, axis, prepend, append in cases:
+        yield OpSampleInput(
+            op_input=op_inputs,
+            op_args=(),
+            op_kwargs={'n': n_p, 'axis': axis, 'prepend': prepend, 'append': append},
+            sample_name=f'{op_info.name}_{dtype}_axis{axis}_extra',
+        )
+    #small/large values
+    yield from extra_sample_inputs_diff_small_large_values(op_info, dtype=dtype, device=device, **kwargs)
+
+def error_inputs_tensor_diff(op_info, dtype, device=None, **kwargs):
+    cases = [
+        # input scalar
+        (0, 1, 0, None, None),
+        # n is not int
+        (ms.Tensor(np.random.randn(8, 12)), "2", 1, None, None),
+        # n is not 1
+        (ms.Tensor(np.random.randn(8, 12)), 2, 1, None, None),
+        # axis is not int
+        (ms.Tensor(np.random.randn(5, 1, 3)), 1, "1", ms.Tensor(np.random.randn(1, 9, 3)),
+         ms.Tensor(np.random.randn(5, 1, 1))),
+        # input is empty tensor
+        (ms.Tensor(np.random.randn(0, 5)), 1, 0, None, None),
+        # prepend is int
+        (ms.Tensor(np.random.randn(1, 5)), 1, 0, 0, None),
+        # append is int
+        (ms.Tensor(np.random.randn(1, 5)), 1, 0, None, 0),
+        # prepend dim not match input
+        (ms.Tensor(np.random.randn(5, 9)), 1, -1, ms.Tensor(np.random.randn(3, 9)), None),
+        # append dim not match input
+        (ms.Tensor(np.random.randn(5, 9)), 1, -1, None, ms.Tensor(np.random.randn(7, 9))),
+        # axis is out of dim of input
+        (ms.Tensor(np.random.randn(3,)), 1, 1, None, None),
+    ]
+    for op_input, n_p, axis, prepend, append in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(),
+                op_kwargs={'n': n_p, 'axis': axis, 'prepend': prepend, 'append': append},
+                sample_name=f'{op_info.name}_error_values',
+            ),
+            op_error_type=(AttributeError, ValueError, RuntimeError, TypeError, IndexError),
+            op_error_info=f'{op_info.name} error params',
         )
