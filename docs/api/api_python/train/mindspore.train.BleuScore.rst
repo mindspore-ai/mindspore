@@ -3,7 +3,7 @@ mindspore.train.BleuScore
 
 .. py:class:: mindspore.train.BleuScore(n_gram=4, smooth=False)
 
-    计算BLEU分数。BLEU指的是具有一个或多个引用的机器翻译文本的metric。
+    计算BLEU分数。BLEU是一种用于评估机器翻译文本质量的指标。
 
     参数：
         - **n_gram** (int，可选) - 取值范围为1~4。默认值： ``4`` 。
@@ -28,7 +28,7 @@ mindspore.train.BleuScore
 
     .. py:method:: update(*inputs)
 
-        使用输入的内容更新内部评估结果。
+        使用 `candidate_corpus` 和 `reference_corpus` 更新内部评估结果。
 
         参数：
             - **inputs** (iterator) - 输入的元组。第一个输入是机器翻译语料库列表 `candidate_corpus` ，第二个输入是引用语料库列表 `reference_corpus` 。

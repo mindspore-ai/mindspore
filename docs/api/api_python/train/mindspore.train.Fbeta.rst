@@ -12,7 +12,7 @@ mindspore.train.Fbeta
                 {(1+\beta^2) \cdot true\_positive +\beta^2 \cdot false\_negative + false\_positive}
 
     参数：
-        - **beta** (Union[float, int]) - F-measure中的beta系数。
+        - **beta** (Union[float, int]) - F-measure中的beta系数。 `beta` 需大于0。
 
     .. py:method:: clear()
 

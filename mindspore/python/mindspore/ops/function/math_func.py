@@ -3421,7 +3421,7 @@ def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
 
     Args:
         input (Tensor): The first input tensor.
-        other (Tensor): The second input tensor.
+        other (Tensor): The second input tensor. The dtype and shape should be the same as those of `input`.
         rtol (Union[float, int, bool], optional): Relative tolerance. Default ``1e-05`` .
         atol (Union[float, int, bool], optional): Absolute tolerance. Default ``1e-08`` .
         equal_nan (bool, optional): Whether two NaNs are considered equal. Default ``False`` .

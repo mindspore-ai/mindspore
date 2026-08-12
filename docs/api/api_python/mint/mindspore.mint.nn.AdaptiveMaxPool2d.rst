@@ -32,9 +32,9 @@ mindspore.mint.nn.AdaptiveMaxPool2d
         输出的shape为 :math:`input\_shape[:len(input\_shape) - len(out\_shape)] + out\_shape` 。
 
     异常：
-        - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 中的数据不是float16、float32、float64。
         - **TypeError** - `output_size` 不是int或者tuple。
+        - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `return_indices` 不是bool。
+        - **TypeError** - `input` 中的数据不是float16、float32、float64。
         - **ValueError** - `output_size` 是tuple，但大小不是2。
         - **ValueError** - `input` 的维度不是CHW或者NCHW。

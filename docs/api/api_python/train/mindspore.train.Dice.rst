@@ -6,6 +6,7 @@ mindspore.train.Dice
     集合相似性度量。
 
     用于计算两个样本之间的相似性。当分割结果最好时，Dice系数的值为1；当分割结果最差时，Dice系数的值为0。Dice系数表示预测值与真实值交集同预测值和真实值并集之间的比值。
+    该函数如下所示：
 
     .. math::
         dice = \frac{2 * (pred \bigcap true)}{pred \bigcup true}
