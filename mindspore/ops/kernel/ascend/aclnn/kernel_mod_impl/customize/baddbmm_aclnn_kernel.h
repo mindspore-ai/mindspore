@@ -37,6 +37,7 @@ class BaddbmmAclnnKernelMod : public AclnnKernelMod {
 
  private:
   int8_t cube_math_type_ = 0;
+  KernelTensorPtr input_broadcast_{nullptr};
   ScalarPtr beta_ = nullptr;
   ScalarPtr alpha_ = nullptr;
 

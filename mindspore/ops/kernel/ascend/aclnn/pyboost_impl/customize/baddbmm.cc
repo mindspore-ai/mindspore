@@ -19,6 +19,8 @@
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 #include "include/pynative/utils/pyboost/tensor_memory.h"
 #include "include/pynative/utils/pyboost/infer_output.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
 
 namespace mindspore {
@@ -29,12 +31,18 @@ tensor::TensorPtr BaddbmmAscendCustomize(const TensorPtr &input_tensor, const Te
                                          const ScalarPtr &alpha) {
   auto output = InferOutput<1>(prim::kPrimBaddbmm, input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
 
+  auto actual_input = input_tensor;
+  auto cube_math_type = GetCubeMathTypeForAddOps(IsAllowMatmulHF32());
+  if (cube_math_type == device::ascend::USE_FP32_ADD && input_tensor->shape() != output->shape()) {
+    kernel::pyboost::RequireGradGuard require_grad_guard(false);
+    actual_input = broadcast_to(input_tensor, output->shape());
+  }
+
   // No need to convert input
-  TensorToDevice(input_tensor, batch1_tensor, batch2_tensor);
+  TensorToDevice(actual_input, batch1_tensor, batch2_tensor);
   TensorMalloc(output);
 
-  auto cube_math_type = GetCubeMathType(IsAllowMatmulHF32());
-  DISPATCH_ACLNN(aclnnBaddbmm, input_tensor, batch1_tensor, batch2_tensor, beta, alpha, output, cube_math_type);
+  DISPATCH_ACLNN(aclnnBaddbmm, actual_input, batch1_tensor, batch2_tensor, beta, alpha, output, cube_math_type);
   return output;
 }
 }  // namespace pyboost

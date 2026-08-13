@@ -74,6 +74,8 @@ std::string OpPrecisionConf::conv_allow_hf32() const {
   return conv_allow_hf32;
 }
 
+std::string OpPrecisionConf::cube_math_type() const { return cube_math_type_; }
+
 void RegOpPrecisionConf(py::module *m) {
   (void)py::class_<OpPrecisionConf, std::shared_ptr<OpPrecisionConf>>(*m, "AscendOpPrecisionConf")
     .def_static("get_instance", &OpPrecisionConf::GetInstance, "Get OpPrecisionConf instance.")
@@ -85,13 +87,15 @@ void RegOpPrecisionConf(py::module *m) {
     .def("matmul_allow_hf32", &OpPrecisionConf::matmul_allow_hf32, "Get Matmul Op allow fp32 to hf32 Conf.")
     .def("set_conv_allow_hf32", &OpPrecisionConf::set_conv_allow_hf32, "Conv Op allow fp32 tp hf32.")
     .def("conv_allow_hf32", &OpPrecisionConf::conv_allow_hf32, "Get Conv Op allow fp32 tp hf32 Conf.")
+    .def("set_cube_math_type", &OpPrecisionConf::set_cube_math_type, "Set Cube Math Type.")
+    .def("cube_math_type", &OpPrecisionConf::cube_math_type, "Get Cube Math Type.")
     .def("is_precision_mode_configured", &OpPrecisionConf::IsPrecisionModeConfigured, "Is Precision Mode Configured.")
     .def("is_op_precision_mode_configured", &OpPrecisionConf::IsOpPrecisionModeConfigured,
          "Is Op Precision Mode Configured.")
     .def("is_matmul_allow_hf32_configured", &OpPrecisionConf::IsMatmulAllowHf32Configured,
          "Is Matmul Allow Hf32 Configured.")
-    .def("is_conv_allow_hf32_configured", &OpPrecisionConf::IsConvAllowHf32Configured,
-         "Is Conv Allow Hf32 Configured.");
+    .def("is_conv_allow_hf32_configured", &OpPrecisionConf::IsConvAllowHf32Configured, "Is Conv Allow Hf32 Configured.")
+    .def("is_cube_math_type_configured", &OpPrecisionConf::IsCubeMathTypeConfigured, "Is Cube Math Type Configured.");
 }
 }  // namespace ascend
 }  // namespace device
