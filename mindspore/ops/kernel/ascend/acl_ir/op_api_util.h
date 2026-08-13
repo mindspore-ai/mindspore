@@ -37,11 +37,13 @@ typedef enum : int8_t {
   ALLOW_FP32_DOWN_PRECISION = 1,
   FORCE_FP16 = 2,
   FORCE_HF32 = 3,
+  USE_FP32_ADD = 4,
 } aclCubeMathType;
 
 class OPS_ASCEND_API OpApiUtil {
  public:
   static aclCubeMathType GetCubeMathType(bool use_hf32 = false);
+  static aclCubeMathType GetCubeMathTypeForAddOps(bool use_hf32 = false);
   static bool IsAllowMatmulHF32();
   static bool IsAllowConvHF32();
 

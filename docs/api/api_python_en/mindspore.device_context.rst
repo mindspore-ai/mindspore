@@ -42,6 +42,7 @@ Ascend Device Backend Management
     mindspore.device_context.ascend.device_count
     mindspore.device_context.ascend.is_available
     mindspore.device_context.ascend.op_precision.conv_allow_hf32
+    mindspore.device_context.ascend.op_precision.cube_math_type
     mindspore.device_context.ascend.op_precision.matmul_allow_hf32
     mindspore.device_context.ascend.op_precision.precision_mode
     mindspore.device_context.ascend.op_precision.op_precision_mode

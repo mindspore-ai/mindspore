@@ -43,10 +43,13 @@ class ASCEND_RES_MANAGER_EXPORT OpPrecisionConf {
   std::string matmul_allow_hf32() const;
   void set_conv_allow_hf32(const std::string &value) { conv_allow_hf32_ = value; }
   std::string conv_allow_hf32() const;
+  void set_cube_math_type(const std::string &value) { cube_math_type_ = value; }
+  std::string cube_math_type() const;
   bool IsPrecisionModeConfigured() const { return !precision_mode_.empty(); }
   bool IsOpPrecisionModeConfigured() const { return !op_precision_mode_.empty(); }
   bool IsMatmulAllowHf32Configured() const { return !matmul_allow_hf32_.empty(); }
   bool IsConvAllowHf32Configured() const { return !conv_allow_hf32_.empty(); }
+  bool IsCubeMathTypeConfigured() const { return !cube_math_type_.empty(); }
 
  private:
   static std::shared_ptr<OpPrecisionConf> inst_context_;
@@ -54,6 +57,7 @@ class ASCEND_RES_MANAGER_EXPORT OpPrecisionConf {
   std::string op_precision_mode_{""};
   std::string matmul_allow_hf32_{""};
   std::string conv_allow_hf32_{""};
+  std::string cube_math_type_{""};
 };
 
 ASCEND_RES_MANAGER_EXPORT void RegOpPrecisionConf(py::module *m);

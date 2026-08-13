@@ -18,25 +18,50 @@
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "view/broadcast_to_strides_calc.h"
 
 namespace mindspore {
 namespace kernel {
 namespace baddbmm {
+namespace {
+void SetBroadcastView(const KernelTensorPtr &kernel_tensor, const ShapeVector &target_shape) {
+  const auto &storage_info = kernel_tensor->tensor_storage_info();
+  const auto &strides =
+    storage_info == nullptr ? ops::GetOriStrides(kernel_tensor->GetShapeVector()) : storage_info->strides;
+  auto broadcast_storage =
+    ops::BroadCastToStrideCalc(kernel_tensor->GetShapeVector(), strides, storage_info, target_shape)[0];
+  kernel_tensor->SetShapeVector(target_shape);
+  kernel_tensor->set_tensor_storage_info(broadcast_storage);
+}
+}  // namespace
 
 void BaddbmmAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
   beta_ = device::ascend::ConvertKernelTensor<ScalarPtr>(inputs[kIndex3]);
   alpha_ = device::ascend::ConvertKernelTensor<ScalarPtr>(inputs[kIndex4]);
-  cube_math_type_ = OpApiUtil::GetCubeMathType(OpApiUtil::IsAllowMatmulHF32());
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], beta_, alpha_, outputs[kIndex0],
-                        cube_math_type_);
+  cube_math_type_ = OpApiUtil::GetCubeMathTypeForAddOps(OpApiUtil::IsAllowMatmulHF32());
+
+  auto input = inputs[kIndex0];
+  input_broadcast_ = nullptr;
+  const auto &output_shape = outputs[kIndex0]->GetShapeVector();
+  if (cube_math_type_ == device::ascend::USE_FP32_ADD && input->GetShapeVector() != output_shape) {
+    input_broadcast_ = input->CloneKernelTensor();
+    SetBroadcastView(input_broadcast_, output_shape);
+    input = input_broadcast_.get();
+  }
+  GetWorkspaceForResize(input, inputs[kIndex1], inputs[kIndex2], beta_, alpha_, outputs[kIndex0], cube_math_type_);
 }
 
 bool BaddbmmAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &workspace,
                                    const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], beta_, alpha_, outputs[kIndex0],
+  auto input = inputs[kIndex0];
+  if (input_broadcast_ != nullptr) {
+    input_broadcast_->set_device_ptr(input->device_ptr());
+    input = input_broadcast_.get();
+  }
+  RunOp(stream_ptr, workspace, input, inputs[kIndex1], inputs[kIndex2], beta_, alpha_, outputs[kIndex0],
         cube_math_type_);
   return true;
 }
