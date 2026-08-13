@@ -19,11 +19,11 @@ mindspore.train.History
         训练开始时，初始化History对象的epoch属性。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
+            - **run_context** (RunContext) - 包含模型的上下文环境。详情请参考 :class:`mindspore.train.RunContext`。
 
     .. py:method:: epoch_end(run_context)
 
-        epoch结束时，记录网络输出和评估指标的相关信息。
+        epoch结束时，记录网络输出的第一个元素和评估指标的相关信息。
 
         参数：
-            - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
+            - **run_context** (RunContext) - 包含模型的上下文环境。详情请参考 :class:`mindspore.train.RunContext`。

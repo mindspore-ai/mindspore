@@ -3,7 +3,7 @@ mindspore.amp.all_finite
 
 .. py:function:: mindspore.amp.all_finite(inputs)
 
-    检查输入是否有溢出，返回为True为溢出，False为无溢出。
+    返回一个标量Tensor，检查输入是否有溢出。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

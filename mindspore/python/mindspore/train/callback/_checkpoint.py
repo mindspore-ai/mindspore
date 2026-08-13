@@ -140,11 +140,11 @@ class CheckpointConfig:
                                     safetensors file, if True, the asynchronous thread is used by default. If the type
                                     is string, the method of asynchronous saving, it can be "process" or "thread".
                                     Default: ``False`` .
-        saved_network (Cell, optional): Network to be saved in checkpoint file. If the saved_network has no relation
-            with the network in training, the initial value of saved_network will be saved. Default: ``None`` .
+        saved_network (Cell, optional): Network to be saved in checkpoint file. If `saved_network` has not been trained,
+            the initial value of saved_network will be saved. Default: ``None`` .
         append_info (list, optional): The information save to checkpoint file. Support "epoch_num", "step_num" and
-            dict. The key of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor.
-            Default: ``None`` .
+            dict. The key of dict must be str, the value of dict must be one of int, float, bool, string,
+            Parameter or Tensor. Default: ``None`` .
         enc_key (Union[None, bytes], optional): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: ``None`` .
         enc_mode (str, optional): This parameter is valid only when enc_key is not set to None.

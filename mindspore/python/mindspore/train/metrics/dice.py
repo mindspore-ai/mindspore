@@ -25,7 +25,8 @@ class Dice(Metric):
     r"""
     The Dice coefficient is a set similarity metric. It is used to calculate the similarity between two samples. The
     value of the Dice coefficient is 1 when the segmentation result is the best and is 0 when the segmentation result
-    is the worst. The Dice coefficient indicates the ratio of the area between two objects to the total area.
+    is the worst. The Dice coefficient is the ratio of the intersection of the predicted values
+    and the true values to the union of the predicted values and the true values.
     The function is shown as follows:
 
     .. math::

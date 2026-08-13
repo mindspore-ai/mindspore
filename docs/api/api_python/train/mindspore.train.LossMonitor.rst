@@ -11,14 +11,14 @@ mindspore.train.LossMonitor
         如果 `per_print_times` 为0，则不打印loss。
 
     参数：
-        - **per_print_times** (int，可选) - 表示每隔多少个step打印一次loss。默认值： ``1`` 。
+        - **per_print_times** (int，可选) - 表示每隔多少个step打印一次loss。在sink模式下，按最接近的步长打印损失值。默认值： ``1`` 。
 
     异常：
         - **ValueError** - 当 `per_print_times` 不是整数或小于零。
 
     .. py:method:: on_train_epoch_end(run_context)
 
-        LossMonitor用于 :func:`mindspore.train.Model.fit`，即边训练边推理场景时，打印训练的loss和当前epoch推理的metrics。
+        LossMonitor用于 :func:`mindspore.train.Model.fit`，如果当前epoch需要进行评估，则在epoch结束时打印评估指标。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。

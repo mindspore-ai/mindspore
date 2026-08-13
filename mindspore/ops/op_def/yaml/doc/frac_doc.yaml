@@ -22,7 +22,6 @@ frac:
 
         Examples:
             >>> import mindspore
-            >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor([2, 4.2, -2.5], mindspore.float16)
             >>> output = ops.frac_ext(x)
