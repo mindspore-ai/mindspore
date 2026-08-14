@@ -26,6 +26,7 @@
 #include <iostream>
 #include <stack>
 #include <list>
+#include <limits>
 #include <set>
 #include <utility>
 #include <nlohmann/json.hpp>
@@ -53,12 +54,14 @@
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_utils.h"
 #include "utils/ms_utils_secure.h"
 #include "abstract/abstract_function.h"
 #include "load_mindir/infer_mindir.h"
 #include "proto/mind_ir.pb.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "utils/ms_context.h"
+#include "utils/shape_utils.h"
 #include "ops/scalar_graph_holder.h"
 #include "ir/func_graph_flag.h"
 
@@ -77,6 +80,9 @@ constexpr char kLegacyMindIRVersion[] = "0.1.1";
 static const int MAX_DIRECTORY_LENGTH = 1024;
 static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
+// Keep a malformed MindIR from amplifying a small protobuf into an excessive host allocation.
+constexpr int kMaxMindIRTensorRank = 32;
+constexpr int64_t kMaxMindIRTensorDim = INT32_MAX;
 
 inline std::string ErrnoToString(const int error_number) {
   std::ostringstream ret_info;
@@ -136,6 +142,115 @@ static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_STRING, kObjectTypeString},
   {mind_ir::TensorProto_DataType_COMPLEX64, kNumberTypeComplex64},
   {mind_ir::TensorProto_DataType_COMPLEX128, kNumberTypeComplex128}};
+
+bool HasAmbiguousTensorData(const mind_ir::TensorProto &tensor_proto) {
+  return tensor_proto.has_raw_data() && tensor_proto.has_external_data();
+}
+
+bool CalculateTensorBytes(TypeId type_id, const ShapeVector &shape, size_t *tensor_bytes) {
+  MS_EXCEPTION_IF_NULL(tensor_bytes);
+  const size_t item_size = abstract::TypeIdSize(type_id);
+  if (item_size == 0) {
+    MS_LOG(ERROR) << "Invalid item size 0 for MindIR TensorProto data type " << type_id << ".";
+    return false;
+  }
+
+  const size_t max_elements = std::numeric_limits<size_t>::max() / item_size;
+  size_t element_count = 1;
+  for (const auto dim : shape) {
+    if (dim == 0) {
+      *tensor_bytes = 0;
+      return true;
+    }
+    const size_t dim_size = static_cast<size_t>(dim);
+    if (element_count > max_elements / dim_size) {
+      MS_LOG(ERROR) << "MindIR TensorProto shape (" << ShapeVectorToString(shape)
+                    << ") exceeds the maximum representable tensor size.";
+      return false;
+    }
+    element_count *= dim_size;
+  }
+  *tensor_bytes = element_count * item_size;
+  return true;
+}
+
+bool ValidateUncompressedTensorDataSize(TypeId type_id, size_t serialized_data_size, size_t tensor_bytes) {
+  if (serialized_data_size == tensor_bytes) {
+    return true;
+  }
+  if (type_id == kObjectTypeString) {
+    MS_LOG(ERROR) << "MindIR STRING Tensor data layout cannot be inferred from shape: expected " << tensor_bytes
+                  << " bytes but got " << serialized_data_size << ".";
+    return false;
+  }
+  MS_LOG(ERROR) << "MindIR TensorProto data length " << serialized_data_size
+                << " does not match the byte size inferred from shape and data_type: " << tensor_bytes << ".";
+  return false;
+}
+
+bool ParseAndValidateTensorProto(const mind_ir::TensorProto &tensor_proto, ShapeVector *shape, TypeId *type_id,
+                                 size_t *serialized_data_size, size_t *tensor_bytes) {
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(type_id);
+  MS_EXCEPTION_IF_NULL(serialized_data_size);
+  MS_EXCEPTION_IF_NULL(tensor_bytes);
+  if (!tensor_proto.has_data_type()) {
+    MS_LOG(ERROR) << "MindIR TensorProto has no data_type.";
+    return false;
+  }
+  const auto type_iter = kDefaultValueSwitchMap.find(tensor_proto.data_type());
+  if (type_iter == kDefaultValueSwitchMap.end()) {
+    MS_LOG(ERROR) << "Unsupported MindIR TensorProto data_type: " << tensor_proto.data_type() << ".";
+    return false;
+  }
+  if (tensor_proto.dims_size() > kMaxMindIRTensorRank) {
+    MS_LOG(ERROR) << "MindIR TensorProto rank " << tensor_proto.dims_size() << " exceeds the limit "
+                  << kMaxMindIRTensorRank << ".";
+    return false;
+  }
+
+  shape->clear();
+  shape->reserve(LongToSize(tensor_proto.dims_size()));
+  for (int i = 0; i < tensor_proto.dims_size(); ++i) {
+    const int64_t dim = tensor_proto.dims(i);
+    if (dim < 0 || dim > kMaxMindIRTensorDim) {
+      MS_LOG(ERROR) << "Invalid MindIR TensorProto dimension " << dim << " at index " << i
+                    << ", the valid range is [0, " << kMaxMindIRTensorDim << "].";
+      return false;
+    }
+    shape->push_back(dim);
+  }
+
+  *type_id = type_iter->second;
+  if (!CalculateTensorBytes(*type_id, *shape, tensor_bytes)) {
+    return false;
+  }
+
+  const bool compressed = tensor_proto.has_compression_type() &&
+                          tensor_proto.compression_type() != mind_ir::TensorProto_CompressionType_NO_COMPRESSION;
+  if (HasAmbiguousTensorData(tensor_proto)) {
+    MS_LOG(ERROR) << "MindIR TensorProto cannot contain both raw_data and external_data.";
+    return false;
+  }
+  if (tensor_proto.has_raw_data()) {
+    *serialized_data_size = tensor_proto.raw_data().size();
+  } else if (tensor_proto.has_external_data()) {
+    const int64_t length = tensor_proto.external_data().length();
+    if (length < 0 || static_cast<uint64_t>(length) > std::numeric_limits<size_t>::max()) {
+      MS_LOG(ERROR) << "Invalid MindIR external data length " << length << ".";
+      return false;
+    }
+    *serialized_data_size = static_cast<size_t>(length);
+  } else {
+    *serialized_data_size = 0;
+  }
+
+  if (!compressed && (tensor_proto.has_raw_data() || tensor_proto.has_external_data()) &&
+      !ValidateUncompressedTensorDataSize(*type_id, *serialized_data_size, *tensor_bytes)) {
+    return false;
+  }
+  return true;
+}
 
 template <typename T, typename P>
 std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<string, P> &kv) {
@@ -468,7 +583,15 @@ class MSANFModelParser {
   abstract::AbstractSequencePtr BuildAbstractSequence(const mind_ir::AttributeProto &attr_proto);
   abstract::AbstractScalarPtr BuildAbstractScalar(const mind_ir::AttributeProto &attr_proto) const;
   bool SetValueForTopGraphParameter(const FuncGraphPtr &topGraph, const std::map<std::string, ValuePtr> &weights);
+  bool ValidateExternalDataSource(const mind_ir::TensorProto &tensor_proto);
   bool GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto, const tensor::TensorPtr &tensor_info);
+  bool GetTensorDataFromEncryptedFile(const mind_ir::TensorProto &tensor_proto, const std::string &file,
+                                      const tensor::TensorPtr &tensor_info);
+  bool GetTensorDataFromUnencryptedFile(const mind_ir::TensorProto &tensor_proto, const std::string &file,
+                                        const tensor::TensorPtr &tensor_info);
+  bool CopyExternalDataToTensor(int64_t offset, int64_t length, const unsigned char *data, size_t buffer_size,
+                                const tensor::TensorPtr &tensor_info);
+  bool ReserveTensorMemory(size_t tensor_bytes);
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
   abstract::AbstractTensorPtr GetAbsTensorFromTensorProto(const mind_ir::TensorProto &tensor_proto);
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::NodeProto &node_proto);
@@ -526,6 +649,7 @@ class MSANFModelParser {
   size_t mindir_dec_num_parallel_{0};
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::pair<std::unique_ptr<Byte[]>, size_t>> tenor_data_;
+  size_t planned_tensor_bytes_{0};
   bool is_kernel_graph_{false};
   std::list<std::pair<const AnfNodePtr, const mind_ir::AttributeProto *>> node_abstract_protos_;
 };
@@ -676,24 +800,28 @@ ValuePtr MSANFModelParser::GenerateScalarGraphHolderValue(const mind_ir::ScalarG
 
 tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_ir::TensorProto &attr_tensor) {
   ShapeVector shape;
-  const int attr_tensor_type = attr_tensor.data_type();
-  for (int i = 0; i < attr_tensor.dims_size(); ++i) {
-    shape.push_back(attr_tensor.dims(i));
+  TypeId type_id = kTypeUnknown;
+  size_t serialized_data_size = 0;
+  size_t tensor_bytes = 0;
+  if (!ParseAndValidateTensorProto(attr_tensor, &shape, &type_id, &serialized_data_size, &tensor_bytes)) {
+    return nullptr;
   }
+  if (attr_tensor.has_external_data() && !ValidateExternalDataSource(attr_tensor)) {
+    return nullptr;
+  }
+  const bool compressed = attr_tensor.has_compression_type() &&
+                          attr_tensor.compression_type() != mind_ir::TensorProto_CompressionType_NO_COMPRESSION;
+  const size_t allocation_bytes = compressed ? serialized_data_size : tensor_bytes;
+  if (!ReserveTensorMemory(allocation_bytes)) {
+    return nullptr;
+  }
+
   tensor::TensorPtr tensor = nullptr;
-  if (!attr_tensor.has_compression_type() ||
-      attr_tensor.compression_type() == mind_ir::TensorProto_CompressionType_NO_COMPRESSION) {
-    tensor = tensor::from_spec_fast(kDefaultValueSwitchMap[attr_tensor_type], shape, device::DeviceType::kCPU);
+  if (!compressed) {
+    tensor = tensor::from_spec_fast(type_id, shape, device::DeviceType::kCPU);
   } else {
     auto compression_type = static_cast<TensorCompressionType>(static_cast<int>(attr_tensor.compression_type()));
-    size_t data_size = 0;
-    if (!attr_tensor.has_external_data()) {
-      data_size = attr_tensor.raw_data().size();
-    } else {
-      data_size = LongToSize(attr_tensor.external_data().length());
-    }
-    tensor =
-      std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
+    tensor = std::make_shared<tensor::Tensor>(type_id, shape, serialized_data_size, compression_type);
   }
 
   auto quantization_param_vector = GenerateQuantizationParam(attr_tensor);
@@ -1146,95 +1274,67 @@ bool ValidateExternalDataBounds(int64_t offset, int64_t length, size_t buffer_si
   return true;
 }
 
-bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto,
-                                                 const tensor::TensorPtr &tensor_info) {
+bool MSANFModelParser::ReserveTensorMemory(size_t tensor_bytes) {
+  if (tensor_bytes > std::numeric_limits<size_t>::max() - planned_tensor_bytes_) {
+    MS_LOG(ERROR) << "MindIR model tensor allocation overflows size_t accounting.";
+    return false;
+  }
+  planned_tensor_bytes_ += tensor_bytes;
+  return true;
+}
+
+bool MSANFModelParser::ValidateExternalDataSource(const mind_ir::TensorProto &tensor_proto) {
   if (!tensor_proto.has_external_data()) {
     return false;
   }
-  const unsigned char *data = nullptr;
-  size_t buffer_size = 0;
   const auto &external_data = tensor_proto.external_data();
-  const auto offset = external_data.offset();
-  const auto length = external_data.length();
-  auto it = tenor_data_.find(external_data.location());
-  if (it != tenor_data_.end()) {
-    data = it->second.first.get();
-    buffer_size = it->second.second;
-  } else if (weight_buffer_.first != nullptr) {
-    if (mindir_dec_key_ != nullptr) {
-      MS_LOG(ERROR)
-        << "Currently, the external weight data doesn't support encryption if weight is passed by buffer not file.";
-      return false;
-    }
-    data = reinterpret_cast<const unsigned char *>(weight_buffer_.first);
-    buffer_size = weight_buffer_.second;
-  } else {
-    std::string file = ResolveExternalDataPath(mindir_path_, external_data.location());
-    if (file.empty()) {
-      return false;
-    }
-    if (mindir_dec_key_ != nullptr) {
-      size_t plain_len;
-      auto plain_data =
-        Decrypt(&plain_len, file, mindir_dec_key_, mindir_key_size_, mindir_dec_mode_, mindir_dec_num_parallel_);
-      if (plain_data == nullptr) {
-        MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
-        return false;
-      }
-      constexpr Byte is_little_endian = 1;
-      constexpr int byte_order_index = 0;
-      if ((plain_data[byte_order_index] == is_little_endian) ^ little_endian()) {
-        MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
-        return false;
-      }
-      buffer_size = plain_len;
-      data = plain_data.get();
-      (void)tenor_data_.emplace(external_data.location(), std::make_pair(std::move(plain_data), buffer_size));
-    } else {
-      // Read file
-      std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
-      if (!fid) {
-        MS_LOG(EXCEPTION) << "Open file '" << file << "' failed, please check the correct of the file.";
-      }
-      (void)fid.seekg(0, std::ios_base::end);
-      size_t file_size = static_cast<size_t>(fid.tellg());
-      fid.clear();
-      (void)fid.seekg(0);
-      std::unique_ptr<char[]> plain_data(new (std::nothrow) char[file_size]);
-      if (plain_data == nullptr) {
-        MS_LOG(ERROR) << "Failed to create file buffer, file size: " << file_size << " bytes";
-        return false;
-      }
-      constexpr Byte is_little_endian = 1;
-      constexpr int byte_order_index = 0;
-      (void)fid.read(plain_data.get(), SizeToLong(file_size));
-      fid.close();
-      // if byte order is not same return false
-      if ((plain_data[byte_order_index] == is_little_endian) ^ little_endian()) {
-        MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
-        return false;
-      }
-      buffer_size = file_size;
-      data = reinterpret_cast<const unsigned char *>(plain_data.get());
-      (void)tenor_data_.emplace(
-        external_data.location(),
-        std::make_pair(std::unique_ptr<Byte[]>(reinterpret_cast<Byte *>(plain_data.release())), buffer_size));
-    }
+  auto cached_data = tenor_data_.find(external_data.location());
+  if (cached_data != tenor_data_.end()) {
+    return ValidateExternalDataBounds(external_data.offset(), external_data.length(), cached_data->second.second);
+  }
+  if (weight_buffer_.first != nullptr) {
+    return ValidateExternalDataBounds(external_data.offset(), external_data.length(), weight_buffer_.second);
   }
 
+  const std::string file = ResolveExternalDataPath(mindir_path_, external_data.location());
+  if (file.empty()) {
+    return false;
+  }
+  std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary | std::ios::ate);
+  if (!fid) {
+    MS_LOG(ERROR) << "Open external data file '" << file << "' failed.";
+    return false;
+  }
+  const auto file_end = fid.tellg();
+  if (file_end <= 0) {
+    MS_LOG(ERROR) << "Invalid external data file size: " << file_end << ".";
+    return false;
+  }
+  const size_t file_size = static_cast<size_t>(file_end);
+  if (mindir_dec_key_ == nullptr) {
+    return ValidateExternalDataBounds(external_data.offset(), external_data.length(), file_size);
+  }
+  // Encrypted offsets refer to plaintext. Encryption does not shrink the source, so this rejects a small encrypted
+  // file claiming a much larger tensor before allocating the tensor or decrypt buffer.
+  if (LongToSize(external_data.length()) > file_size) {
+    MS_LOG(ERROR) << "Encrypted external data length " << external_data.length() << " exceeds file size " << file_size
+                  << ".";
+    return false;
+  }
+  return ReserveTensorMemory(file_size);
+}
+
+bool MSANFModelParser::CopyExternalDataToTensor(int64_t offset, int64_t length, const unsigned char *data,
+                                                size_t buffer_size, const tensor::TensorPtr &tensor_info) {
   if (!ValidateExternalDataBounds(offset, length, buffer_size)) {
     return false;
   }
-
+  if (tensor_info->DataNBytes() == 0 || length == 0) {
+    return true;
+  }
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   MS_EXCEPTION_IF_NULL(data);
-
-  if (tensor_info->DataNBytes() == 0 || length == 0) {
-    // no need to copy data
-    return true;
-  }
-
   const size_t offset_size = LongToSize(offset);
   const size_t length_size = LongToSize(length);
   auto ret = common::huge_memcpy(tensor_data_buf, tensor_info->DataNBytes(), data + offset_size, length_size);
@@ -1243,6 +1343,87 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
     return false;
   }
   return true;
+}
+
+bool MSANFModelParser::GetTensorDataFromEncryptedFile(const mind_ir::TensorProto &tensor_proto, const std::string &file,
+                                                      const tensor::TensorPtr &tensor_info) {
+  size_t plain_len;
+  auto plain_data =
+    Decrypt(&plain_len, file, mindir_dec_key_, mindir_key_size_, mindir_dec_mode_, mindir_dec_num_parallel_);
+  if (plain_data == nullptr) {
+    MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
+    return false;
+  }
+  constexpr Byte is_little_endian = 1;
+  if ((plain_data[0] == is_little_endian) ^ little_endian()) {
+    MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
+    return false;
+  }
+  (void)tenor_data_.emplace(tensor_proto.external_data().location(), std::make_pair(std::move(plain_data), plain_len));
+  const auto &cached_data = tenor_data_.at(tensor_proto.external_data().location());
+  return CopyExternalDataToTensor(tensor_proto.external_data().offset(), tensor_proto.external_data().length(),
+                                  cached_data.first.get(), cached_data.second, tensor_info);
+}
+
+bool MSANFModelParser::GetTensorDataFromUnencryptedFile(const mind_ir::TensorProto &tensor_proto,
+                                                        const std::string &file, const tensor::TensorPtr &tensor_info) {
+  std::basic_ifstream<char> fid(file, std::ios::in | std::ios::binary);
+  if (!fid) {
+    MS_LOG(ERROR) << "Open external data file '" << file << "' failed.";
+    return false;
+  }
+  constexpr Byte is_little_endian = 1;
+  Byte file_byte_order = 0;
+  (void)fid.read(reinterpret_cast<char *>(&file_byte_order), sizeof(file_byte_order));
+  if (!fid || ((file_byte_order == is_little_endian) ^ little_endian())) {
+    MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
+    return false;
+  }
+  const auto length = tensor_proto.external_data().length();
+  if (tensor_info->DataNBytes() == 0 || length == 0) {
+    return true;
+  }
+  auto *tensor_data_buf = reinterpret_cast<char *>(tensor_info->data_c());
+  MS_EXCEPTION_IF_NULL(tensor_data_buf);
+  fid.clear();
+  (void)fid.seekg(SizeToLong(LongToSize(tensor_proto.external_data().offset())), std::ios::beg);
+  (void)fid.read(tensor_data_buf, SizeToLong(LongToSize(length)));
+  if (!fid || LongToSize(fid.gcount()) != LongToSize(length)) {
+    MS_LOG(ERROR) << "Read external tensor data from '" << file << "' failed.";
+    return false;
+  }
+  return true;
+}
+
+bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto,
+                                                 const tensor::TensorPtr &tensor_info) {
+  if (!tensor_proto.has_external_data()) {
+    return false;
+  }
+  const auto &external_data = tensor_proto.external_data();
+  const auto cached_data = tenor_data_.find(external_data.location());
+  if (cached_data != tenor_data_.end()) {
+    return CopyExternalDataToTensor(external_data.offset(), external_data.length(), cached_data->second.first.get(),
+                                    cached_data->second.second, tensor_info);
+  }
+  if (weight_buffer_.first != nullptr) {
+    if (mindir_dec_key_ != nullptr) {
+      MS_LOG(ERROR)
+        << "Currently, the external weight data doesn't support encryption if weight is passed by buffer not file.";
+      return false;
+    }
+    return CopyExternalDataToTensor(external_data.offset(), external_data.length(),
+                                    reinterpret_cast<const unsigned char *>(weight_buffer_.first),
+                                    weight_buffer_.second, tensor_info);
+  }
+  const std::string file = ResolveExternalDataPath(mindir_path_, external_data.location());
+  if (file.empty()) {
+    return false;
+  }
+  if (mindir_dec_key_ != nullptr) {
+    return GetTensorDataFromEncryptedFile(tensor_proto, file, tensor_info);
+  }
+  return GetTensorDataFromUnencryptedFile(tensor_proto, file, tensor_info);
 }
 
 bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto) {
@@ -1628,32 +1809,9 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
                                                         const mind_ir::AttributeProto &attr_proto) {
   std::vector<tensor::TensorPtr> tensor_vec;
   for (int i = 0; i < attr_proto.tensors_size(); ++i) {
-    mind_ir::TensorProto attr_tensor = attr_proto.tensors(i);
-    const int attr_tensor_type = attr_tensor.data_type();
-    ShapeVector shape;
-    for (int j = 0; j < attr_tensor.dims_size(); ++j) {
-      shape.push_back(attr_tensor.dims(j));
-    }
-    tensor::TensorPtr tensor_info = nullptr;
-    if (!attr_tensor.has_compression_type() ||
-        attr_tensor.compression_type() == mind_ir::TensorProto_CompressionType_NO_COMPRESSION) {
-      tensor_info = tensor::from_spec_fast(kDefaultValueSwitchMap[attr_tensor_type], shape, device::DeviceType::kCPU);
-    } else {
-      auto compression_type = static_cast<TensorCompressionType>(static_cast<int>(attr_tensor.compression_type()));
-      size_t data_size = 0;
-      if (!attr_tensor.has_external_data()) {
-        data_size = attr_tensor.raw_data().size();
-      } else {
-        data_size = LongToSize(attr_tensor.external_data().length());
-      }
-      tensor_info =
-        std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape, data_size, compression_type);
-    }
-    const std::string &tensor_buf = attr_tensor.raw_data();
-    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-    errno_t ret = memcpy_s(tensor_data_buf, tensor_info->DataNBytes(), tensor_buf.data(), tensor_buf.size());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "Obtain ValueNode in TupleTensorForm occur memcpy_s error.";
+    auto tensor_info = GenerateTensorPtrFromTensorProto(attr_proto.tensors(i));
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "Failed to obtain Tensor at index " << i << " for TupleTensor ValueNode.";
       return false;
     }
     tensor_vec.push_back(tensor_info);

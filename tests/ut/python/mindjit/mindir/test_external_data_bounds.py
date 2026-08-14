@@ -24,6 +24,7 @@ import mindspore.ops as ops
 from mindspore import Tensor, Parameter, context
 from mindspore.train.serialization import export, load
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
+from mindspore.train.mind_ir_pb2 import TensorProto as mindir_tensor
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -47,6 +48,36 @@ def _export_mindir_with_external_data(prefix):
     finally:
         ms.train.serialization.TOTAL_SAVE = old_total_save
     return prefix + "_graph.mindir"
+
+
+def _tamper_tensor_shape(graph_file, dims):
+    """Rewrite the first external parameter shape in the MindIR protobuf."""
+    model = mindir_model()
+    with open(graph_file, "rb") as f:
+        model.ParseFromString(f.read())
+    params_with_external = [p for p in model.graph.parameter if p.HasField("external_data")]
+    assert params_with_external, "Exported model has no external data parameters"
+    param = params_with_external[0]
+    del param.dims[:]
+    param.dims.extend(dims)
+    tampered = graph_file.replace(".mindir", "_shape_tampered.mindir")
+    with open(tampered, "wb") as f:
+        f.write(model.SerializeToString())
+    return tampered
+
+
+def _tamper_tensor_data_type(graph_file, data_type):
+    """Rewrite the first external parameter data type in the MindIR protobuf."""
+    model = mindir_model()
+    with open(graph_file, "rb") as f:
+        model.ParseFromString(f.read())
+    params_with_external = [p for p in model.graph.parameter if p.HasField("external_data")]
+    assert params_with_external, "Exported model has no external data parameters"
+    params_with_external[0].data_type = data_type
+    tampered = graph_file.replace(".mindir", "_type_tampered.mindir")
+    with open(tampered, "wb") as f:
+        f.write(model.SerializeToString())
+    return tampered
 
 
 def _tamper_external_data(graph_file, offset, length):
@@ -99,6 +130,90 @@ def test_load_mindir_accepts_valid_external_data_bounds(tmp_path):
     os.chdir(tmp_path)
     try:
         graph_file = _export_mindir_with_external_data("external_bounds_valid")
+        graph = load(graph_file)
+        assert graph is not None
+    finally:
+        os.chdir(cwd)
+
+
+@pytest.mark.parametrize("dims", [
+    [-1],
+    [2 ** 63 - 1],
+    [2 ** 31 - 1] * 3,  # each dimension is valid but their product exceeds the byte budget
+    [300_000_000],  # declared shape is inconsistent with the short external data
+    [1] * 33,
+])
+def test_load_mindir_rejects_unsafe_tensor_shapes_before_allocation(tmp_path, dims):
+    """
+    Feature: MindIR TensorProto resource limits.
+    Description: Invalid, overflowing, or source-inconsistent shapes are rejected before allocating tensor memory.
+    Expectation: RuntimeError is raised without attempting a large allocation.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("tensor_shape_limits")
+        tampered_file = _tamper_tensor_shape(graph_file, dims)
+        with pytest.raises(RuntimeError, match="Load MindIR failed"):
+            load(tampered_file)
+    finally:
+        os.chdir(cwd)
+
+
+def test_load_mindir_rejects_external_length_shape_mismatch(tmp_path):
+    """
+    Feature: MindIR TensorProto data length validation.
+    Description: Load an uncompressed external tensor whose declared length mismatches its shape-derived byte size.
+    Expectation: RuntimeError is raised instead of loading a partially initialized tensor.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("tensor_length_mismatch")
+        tampered_file = _tamper_external_data(graph_file, 1, 8)
+        with pytest.raises(RuntimeError, match="Load MindIR failed"):
+            load(tampered_file)
+    finally:
+        os.chdir(cwd)
+
+
+def test_load_mindir_rejects_unsupported_string_tensor_layout(tmp_path):
+    """
+    Feature: MindIR STRING Tensor data layout validation.
+    Description: Load a STRING Tensor whose serialized length cannot be inferred from its shape.
+    Expectation: RuntimeError is raised before allocating or copying an incorrectly sized buffer.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("string_tensor_layout")
+        tampered_file = _tamper_tensor_data_type(graph_file, mindir_tensor.STRING)
+        with pytest.raises(RuntimeError, match="Load MindIR failed"):
+            load(tampered_file)
+    finally:
+        os.chdir(cwd)
+
+
+def test_load_mindir_reads_only_declared_external_segment(tmp_path):
+    """
+    Feature: MindIR external data streaming.
+    Description: Load a small Tensor from an external file with unrelated trailing data.
+    Expectation: The model loads without buffering the complete external file.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("external_segment")
+        model = mindir_model()
+        with open(graph_file, "rb") as f:
+            model.ParseFromString(f.read())
+        params_with_external = [p for p in model.graph.parameter if p.HasField("external_data")]
+        assert params_with_external, "Exported model has no external data parameters"
+        external_data_file = params_with_external[0].external_data.location
+        # MindIR export intentionally makes external data read-only; make the fixture writable before tampering.
+        os.chmod(external_data_file, 0o600)
+        with open(external_data_file, "ab") as f:
+            f.write(bytes(2 * 1024 * 1024))
         graph = load(graph_file)
         assert graph is not None
     finally:
