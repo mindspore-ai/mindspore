@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_OP_API_CACHE_H_
 
+#include <optional>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 
@@ -105,8 +106,19 @@ BACKEND_EXPORT void GatherInfo(const T &value) {
 }
 
 template <typename T>
-BACKEND_EXPORT void GatherInfo(std::optional<T> value) {
-  if (value.has_value()) {
+BACKEND_EXPORT void GatherInfo(const std::vector<T> &values) {
+  const size_t size = values.size();
+  MemcpyToBuf(&size, sizeof(size_t));
+  if (size != 0) {
+    MemcpyToBuf(values.data(), size * sizeof(T));
+  }
+}
+
+template <typename T>
+BACKEND_EXPORT void GatherInfo(const std::optional<T> &value) {
+  const bool has_value = value.has_value();
+  MemcpyToBuf(&has_value, sizeof(bool));
+  if (has_value) {
     GatherInfo(value.value());
   }
 }
@@ -121,12 +133,13 @@ BACKEND_EXPORT void GatherInfo(const TypePtr &);
 BACKEND_EXPORT void GatherInfo(const std::optional<TypePtr> &);
 
 template <typename T>
-BACKEND_EXPORT void GatherInfo(const std::vector<T> &values) {
-  MemcpyToBuf(values.data(), values.size() * sizeof(T));
+BACKEND_EXPORT void GatherInfo(const std::pair<std::vector<T>, bool> &p) {
+  GatherInfo(p.first);
+  MemcpyToBuf(&p.second, sizeof(bool));
 }
 
 template <typename T>
-BACKEND_EXPORT void GatherInfo(const std::pair<std::vector<T>, bool> &p) {
+BACKEND_EXPORT void GatherInfo(const std::pair<std::optional<std::vector<T>>, bool> &p) {
   GatherInfo(p.first);
   MemcpyToBuf(&p.second, sizeof(bool));
 }
