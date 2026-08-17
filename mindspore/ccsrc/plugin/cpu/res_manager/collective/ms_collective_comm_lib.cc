@@ -24,6 +24,7 @@
 #include "utils/ascend_soc_traits.h"
 #include "include/cluster/topology/constants.h"
 #include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "plugin/cpu/res_manager/collective/allreduce_impl.h"
 
 namespace mindspore {
@@ -63,13 +64,19 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
     MS_LOG(WARNING) << "Re-init Mindspore collective communication lib with group name: " << global_group_name_;
   }
 
+  const auto &mccl_disable_str = common::GetConfigValue(runtime::kRuntimeConf, runtime::kRuntimeMcclDisable);
+  const bool mccl_disable = (mccl_disable_str == "True" || mccl_disable_str == "true");
+  if (mccl_disable) {
+    MS_LOG(WARNING) << "The AllReduceLauncher is disabled by MS_DEV_RUNTIME_CONF=mccl_disable:true.";
+  }
+
   // Only use AllReduceLauncher when this is CPU backend.
   // Do not initialize AllReduceLauncher if this is a large-scale cluster.
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-      (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice &&
-       global_rank_size <= kClusterScaleBound) ||
-      MsContext::GetInstance()->AscendSocSupportsFeature(
-        ascend_soc::kAscendFeatureCpuCollectiveAllreduceLauncherInfer310p)) {
+  if (!mccl_disable && (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
+                        (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice &&
+                         global_rank_size <= kClusterScaleBound) ||
+                        MsContext::GetInstance()->AscendSocSupportsFeature(
+                          ascend_soc::kAscendFeatureCpuCollectiveAllreduceLauncherInfer310p))) {
     launcher_ = std::make_unique<AllReduceLauncher>();
     CHECK_IF_NULL(launcher_);
     if (!launcher_->Initialize()) {
