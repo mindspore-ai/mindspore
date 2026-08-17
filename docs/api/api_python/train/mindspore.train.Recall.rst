@@ -32,7 +32,7 @@ mindspore.train.Recall
 
     .. py:method:: update(*inputs)
 
-        使用预测值 `y_pred` 和真实标签 `y` 更新局部变量。
+        使用预测值 `y_pred` 和真实标签 `y` 更新内部评估结果。
 
         参数：
             - **inputs** - 输入 `y_pred` 和 `y`。 `y_pred` 和 `y` 支持Tensor、list或numpy.ndarray类型。

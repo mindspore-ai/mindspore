@@ -208,11 +208,11 @@ class MicroBatchInterleaved(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore.nn as nn
+        >>> from mindspore.parallel.nn import MicroBatchInterleaved
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> net = nn.MicroBatchInterleaved(net, 2)
+        >>> net = MicroBatchInterleaved(net, 2)
     """
     def __init__(self, network, interleave_num=2):
         super().__init__(auto_prefix=False)

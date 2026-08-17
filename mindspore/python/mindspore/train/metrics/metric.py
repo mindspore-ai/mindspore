@@ -97,6 +97,7 @@ class Metric(metaclass=ABCMeta):
         ...         self._abs_error_sum = 0
         ...         self._samples_num = 0
         ...
+        ...     @ms.train.rearrange_inputs
         ...     def update(self, *inputs):
         ...         y_pred = inputs[0].asnumpy()
         ...         y = inputs[1].asnumpy()
@@ -108,15 +109,15 @@ class Metric(metaclass=ABCMeta):
         ...         return self._abs_error_sum / self._samples_num
         >>>
         >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.6, 0.9], [0.1, 0.2, 0.6, 0.9]]), ms.float32)
-        >>> y = ms.Tensor(np.array([[0.1, 0.1, 0.1, 0.1], [0.1, 0.1, 0.1, 0.1]]), ms.float32)
-        >>> y2 = ms.Tensor(np.array([[0.1, 0.25, 0.7, 0.9], [0.1, 0.25, 0.7, 0.9]]), ms.float32)
+        >>> unused_y = ms.Tensor(np.array([[0.1, 0.1, 0.1, 0.1], [0.1, 0.1, 0.1, 0.1]]), ms.float32)
+        >>> y = ms.Tensor(np.array([[0.1, 0.25, 0.7, 0.9], [0.1, 0.25, 0.7, 0.9]]), ms.float32)
         >>> metric = MyMAE().set_indexes([0, 2])
         >>> metric.clear()
-        >>> # indexes is [0, 2], using x as logits, y2 as label.
-        >>> metric.update(x, y, y2)
+        >>> # indexes is [0, 2], using x as logits and y as label, while unused_y is ignored.
+        >>> metric.update(x, unused_y, y)
         >>> accuracy = metric.eval()
         >>> print(accuracy)
-        1.399999976158142
+        0.14999996
         >>> print(metric.indexes)
         [0, 2]
     """

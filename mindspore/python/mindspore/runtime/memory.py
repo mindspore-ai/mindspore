@@ -461,8 +461,8 @@ class PluggableAllocator():
 
 class MemPool():
     r"""
-    A MemPool warp a :class:`mindspore.runtime.PluggableAllocator`,
-    and pass it to :func:`mindspore.runtime.use_mem_pool`.
+    A MemPool warps a :class:`mindspore.runtime.PluggableAllocator`,
+    and passes it to :func:`mindspore.runtime.use_mem_pool`.
 
     Args:
         allocator(mindspore.runtime.PluggableAllocator): a mindspore.runtime.PluggableAllocator
@@ -494,7 +494,7 @@ def use_mem_pool(pool: MemPool):
           can be routed to the given pool.
 
     Args:
-        pool(mindspore.runtime.MemPool): a MemPool object that warp a PluggableAllocator.
+        pool(mindspore.runtime.MemPool): a MemPool object that wraps a PluggableAllocator.
 
     Supported Platforms:
         ``Ascend``

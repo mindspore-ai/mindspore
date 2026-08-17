@@ -72,7 +72,7 @@ class PipelineGradReducer(Cell):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
             Please see the `msrun startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_ for more details.
 
             This example should be run with multiple devices.
 
@@ -81,6 +81,7 @@ class PipelineGradReducer(Cell):
         >>> from mindspore import nn, ops, Tensor
         >>> from mindspore.communication import init
         >>> from mindspore.parallel.auto_parallel import AutoParallel
+        >>> from mindspore.parallel.nn import PipelineGradReducer
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> ms.reset_auto_parallel_context()
@@ -120,7 +121,7 @@ class PipelineGradReducer(Cell):
         ...     return loss
         >>>
         >>> grad_fn = ops.value_and_grad(forward_fn, None, net_with_loss.trainable_params())
-        >>> pp_grad_reducer = nn.PipelineGradReducer(optimizer.parameters)
+        >>> pp_grad_reducer = PipelineGradReducer(optimizer.parameters)
         >>>
         >>> @ms.jit
         >>> def train_one_step(inputs, target):

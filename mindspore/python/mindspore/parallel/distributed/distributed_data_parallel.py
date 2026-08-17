@@ -66,7 +66,7 @@ class DistributedDataParallel(nn.Cell):
     Args:
         module (nn.Cell): the module to be wrapped with DDP.
         init_sync (bool, optional): whether to sync params from rank0 of process_group when init. Default: ``True``.
-        process_group (str, optional): the comm group of data prallel. Default: ``None``.
+        process_group (str, optional): the comm group of data parallel. Default: ``None``.
         bucket_cap_mb (int, optional): size of bucket in MB, default is 25MB if not set. Default: ``None``.
         find_unused_parameters (bool, optional): whether to find unused params in the bucket. Default: ``False``.
         average_in_collective (bool, optional): True means allreduce sum within DP group firstly then scaling with
@@ -310,7 +310,7 @@ class DistributedDataParallel(nn.Cell):
         return output
 
     def zero_grad(self):
-        """DPP will accumulate grads automatically, it will zero grads when call zero_grad() manually."""
+        """DDP will accumulate grads automatically, it will zero grads when call zero_grad() manually."""
         if self.reducer_mode == "CppReducer":
             self.reducer.zero_grad()
         else:

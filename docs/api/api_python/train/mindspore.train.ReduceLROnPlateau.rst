@@ -13,7 +13,7 @@ mindspore.train.ReduceLROnPlateau
     参数：
         - **monitor** (str，可选) - 监控指标。如果是边训练边推理场景，配置值可以为 ``"loss"`` 、 ``"eval_loss"``，以及实例化 `Model` 时传入的metric名称；如果在训练时不做推理，配置值可以为 ``"loss"`` 。当 `monitor` 为 ``"loss"`` 时，如果训练网络有多个输出，默认取第一个值为训练损失值。默认值： ``"eval_loss"`` 。
         - **factor** (float，可选) - 学习率变化系数，范围在0-1之间。默认值： ``0.1`` 。
-        - **patience** (int，可选) - `monitor` 相对历史最优值变好超过 `min_delta` 时，视为当前epoch的模型效果有所改善。 `patience` 为等待的无改善epoch的数量，当内部等待的epoch数 `self.wait` 大于等于 `patience` 时，训练停止。默认值： ``10`` 。
+        - **patience** (int，可选) - `monitor` 值相对历史最优值改善超过 `min_delta` 时，视为当前epoch的模型效果有所改善。 `patience` 为等待的无改善epoch的数量，当内部等待的epoch数 `self.wait` 大于等于 `patience` 时，学习率降低。默认值： ``10`` 。
         - **verbose** (bool，可选) - 是否打印相关信息。默认值： ``False`` 。
         - **mode** (str，可选) - ``'auto'``、 ``'min'``、 ``'max'`` 中的一种。默认值： ``'auto'`` 。
 
@@ -27,8 +27,8 @@ mindspore.train.ReduceLROnPlateau
 
     异常：
         - **ValueError** - 当 `mode` 不在 `{'auto', 'min', 'max'}` 中。
-        - **ValueError** - 分组学习率场景，或动态学习率场景下，当获取到的学习率不是parameter类型。
         - **ValueError** - 当传入的 `monitor` 返回值不是标量。
+        - **ValueError** - 分组学习率场景，或动态学习率场景下，当获取到的学习率不是parameter类型。
 
     .. py:method:: on_train_begin(run_context)
 
