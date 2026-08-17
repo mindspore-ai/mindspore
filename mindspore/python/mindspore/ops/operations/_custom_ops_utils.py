@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ import json
 from mindspore import log as logger
 from mindspore.ops import CustomRegOp
 from mindspore._c_expression import MSContext
+
+# Wait timeout for build.lock in seconds. Values <= 0 mean wait indefinitely
+# (stale locks are still reclaimed).
+_BUILD_LOCK_TIMEOUT = 3600.0
+_MAX_BUILD_ATTEMPTS = 8
 
 OP_INFO_KEY_INPUT = "input"
 OP_INFO_KEY_OUTPUT = "output"
@@ -112,33 +117,155 @@ version_manager = VersionManager()
 
 
 class FileLocker:
-    """FileLocker"""
+    """Cross-process build lock with stale-lock recovery and wait timeout.
+
+    Lock file is created with O_CREAT | O_EXCL and stores the holder PID so that
+    crashed holders can be detected. Waiting processes log progress and use
+    _BUILD_LOCK_TIMEOUT by default (<= 0 waits indefinitely).
+    """
+
+    _POLL_INTERVAL = 0.5
+    _LOG_INTERVAL = 30.0
+    # Grace period for the holder to write its PID after creating the lock file.
+    _PID_WRITE_GRACE = 5.0
+    _STALE_REMOVE_RETRIES = 3
 
     def __init__(self, build_dir):
         """FileLocker"""
         self.lock_file_name = os.path.join(build_dir, 'build.lock')
         self.lock_fd = None
 
-    def try_lock(self):
-        """Acquire a file-based lock."""
-        try:
-            mode = stat.S_IRUSR | stat.S_IWUSR
-            self.lock_fd = os.open(self.lock_file_name, os.O_CREAT | os.O_EXCL, mode)
-            return True
-        except FileExistsError:
+    @staticmethod
+    def _is_pid_alive(pid):
+        """Return True if *pid* appears to be a live process."""
+        if pid <= 0:
             return False
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            # Process exists but we are not allowed to signal it.
+            return True
+        return True
+
+    def _read_holder_pid(self):
+        """Read holder PID from the lock file; return None if unavailable."""
+        try:
+            with open(self.lock_file_name, 'r', encoding='utf-8') as lock_file:
+                content = lock_file.read().strip()
+            if not content:
+                return None
+            return int(content.split()[0])
+        except (OSError, ValueError):
+            return None
+
+    def _lock_age_seconds(self):
+        """Return lock file age in seconds, or 0 if unavailable."""
+        try:
+            return time.time() - os.path.getmtime(self.lock_file_name)
+        except OSError:
+            return 0.0
+
+    def _try_remove_stale_lock(self):
+        """Remove lock file if the holder is dead or content is invalid past grace.
+
+        Returns:
+            bool True if the lock file was removed (or already gone).
+        """
+        if not os.path.exists(self.lock_file_name):
+            return True
+
+        pid = self._read_holder_pid()
+        age = self._lock_age_seconds()
+        if pid is None:
+            if age < self._PID_WRITE_GRACE:
+                return False
+            logger.warning(
+                f"Removing stale build lock {self.lock_file_name}: "
+                f"empty or invalid lock content (age={age:.1f}s)."
+            )
+        elif self._is_pid_alive(pid):
+            return False
+        else:
+            logger.warning(
+                f"Removing stale build lock {self.lock_file_name}: "
+                f"holder pid={pid} is not alive (age={age:.1f}s)."
+            )
+
+        try:
+            os.remove(self.lock_file_name)
+            return True
+        except FileNotFoundError:
+            return True
+        except OSError as err:
+            logger.warning(f"Failed to remove stale build lock {self.lock_file_name}: {err}")
+            return False
+
+    def try_lock(self):
+        """Acquire a file-based lock; reclaim stale locks when possible."""
+        mode = stat.S_IRUSR | stat.S_IWUSR
+        for _ in range(self._STALE_REMOVE_RETRIES):
+            try:
+                self.lock_fd = os.open(
+                    self.lock_file_name, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
+                payload = f"{os.getpid()}\n".encode('utf-8')
+                os.write(self.lock_fd, payload)
+                try:
+                    os.fsync(self.lock_fd)
+                except OSError:
+                    pass
+                return True
+            except FileExistsError:
+                if self._try_remove_stale_lock():
+                    continue
+                return False
+        return False
 
     def release_lock(self):
         """Release the file-based lock."""
         if self.lock_fd is not None:
-            os.close(self.lock_fd)
+            try:
+                os.close(self.lock_fd)
+            except OSError:
+                pass
             self.lock_fd = None
-        os.remove(self.lock_file_name)
+        try:
+            os.remove(self.lock_file_name)
+        except FileNotFoundError:
+            pass
+        except OSError as err:
+            logger.warning(f"Failed to release build lock {self.lock_file_name}: {err}")
 
-    def wait(self):
-        """Wait until lock is released."""
+    def wait(self, timeout=None):
+        """Wait until lock is released, reclaimed as stale, or timeout expires.
+
+        Args:
+            timeout (float, optional): Seconds to wait. Default: ``None``. None uses
+                _BUILD_LOCK_TIMEOUT. Values <= 0 disable the timeout (stale reclaim still runs).
+        """
+        timeout = _BUILD_LOCK_TIMEOUT if timeout is None else float(timeout)
+        start = time.time()
+        last_log = -self._LOG_INTERVAL
         while os.path.exists(self.lock_file_name):
-            time.sleep(0.5)
+            if self._try_remove_stale_lock():
+                return
+            elapsed = time.time() - start
+            if elapsed >= timeout > 0:
+                pid = self._read_holder_pid()
+                raise RuntimeError(
+                    f"Timeout waiting for custom op build lock '{self.lock_file_name}' "
+                    f"after {timeout:.0f}s (holder pid={pid}). "
+                    f"If no build is running, remove the lock file manually."
+                )
+            if elapsed - last_log >= self._LOG_INTERVAL:
+                pid = self._read_holder_pid()
+                logger.warning(
+                    f"Waiting for custom op build lock '{self.lock_file_name}' "
+                    f"(holder pid={pid}, waited={elapsed:.0f}s)."
+                )
+                last_log = elapsed
+            time.sleep(self._POLL_INTERVAL)
 
 
 class ExtensionBuilder:
@@ -148,17 +275,45 @@ class ExtensionBuilder:
         """ExtensionBuilder"""
         self.build_dir = build_dir
 
+    @staticmethod
+    def _so_ready(so_file):
+        """Return True if the shared library artifact looks usable."""
+        return os.path.isfile(so_file) and os.path.getsize(so_file) > 0
+
     def _compile(self, name, sources, cflags, ldflags, include_paths):
-        """Compile."""
-        if version_manager.check_version(name, sources, cflags, ldflags, include_paths, self.build_dir):
-            locker = FileLocker(self.build_dir)
+        """Compile with cross-process locking and artifact verification."""
+        if not version_manager.check_version(
+                name, sources, cflags, ldflags, include_paths, self.build_dir):
+            logger.info(f'Loading extension module {name}...')
+            return
+
+        so_file = os.path.join(self.build_dir, f"{name}.so")
+        locker = FileLocker(self.build_dir)
+        for attempt in range(1, _MAX_BUILD_ATTEMPTS + 1):
             if locker.try_lock():
                 try:
-                    self._write_ninja_file_and_build_library(name, sources, cflags, ldflags, include_paths)
+                    self._write_ninja_file_and_build_library(
+                        name, sources, cflags, ldflags, include_paths)
                 finally:
                     locker.release_lock()
-            else:
-                locker.wait()
+                break
+
+            logger.info(
+                f"Another process is building extension module {name}, waiting "
+                f"(attempt {attempt}/{_MAX_BUILD_ATTEMPTS})..."
+            )
+            locker.wait()
+            if self._so_ready(so_file):
+                break
+            logger.warning(
+                f"Build lock for {name} was released but '{so_file}' is missing or "
+                f"empty; retrying build."
+            )
+        else:
+            raise RuntimeError(
+                f"Failed to build or locate extension module '{name}' after "
+                f"{_MAX_BUILD_ATTEMPTS} attempts under '{self.build_dir}'."
+            )
         logger.info(f'Loading extension module {name}...')
 
     @staticmethod
