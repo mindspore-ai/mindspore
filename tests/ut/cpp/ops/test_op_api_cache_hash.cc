@@ -20,6 +20,9 @@
  * op_api_cache.h pulls Ascend ACL headers and cannot be included in CORE UT, so this
  * file mirrors only the POD GatherInfo overloads under test. Keep them in sync with:
  *   mindspore/ops/kernel/ascend/acl_ir/op_api_cache.h
+ *
+ * Overload order matters: vector must be declared before optional so the nested
+ * GatherInfo(value.value()) call can resolve to the vector overload (two-phase lookup).
  */
 #include <cstdint>
 #include <cstring>
@@ -56,21 +59,22 @@ void GatherInfo(const T &value) {
   MemcpyToBuf(&value, sizeof(T));
 }
 
-template <typename T>
-void GatherInfo(const std::optional<T> &value) {
-  const bool has_value = value.has_value();
-  MemcpyToBuf(&has_value, sizeof(bool));
-  if (has_value) {
-    GatherInfo(value.value());
-  }
-}
-
+// Must match production: vector before optional (two-phase name lookup).
 template <typename T>
 void GatherInfo(const std::vector<T> &values) {
   const size_t size = values.size();
   MemcpyToBuf(&size, sizeof(size_t));
   if (size != 0) {
     MemcpyToBuf(values.data(), size * sizeof(T));
+  }
+}
+
+template <typename T>
+void GatherInfo(const std::optional<T> &value) {
+  const bool has_value = value.has_value();
+  MemcpyToBuf(&has_value, sizeof(bool));
+  if (has_value) {
+    GatherInfo(value.value());
   }
 }
 
@@ -178,6 +182,39 @@ TEST_F(TestOpApiCacheHash, OptionalVectorPairContentSensitive) {
   OptionalIntArrayPair lhs = {std::vector<int64_t>{10, 20, 30}, true};
   OptionalIntArrayPair rhs = {std::vector<int64_t>{10, 20, 31}, true};
   EXPECT_NE(HashValue(lhs), HashValue(rhs));
+}
+
+/// Feature: aclnn cache hash nested optional-vector recursion.
+/// Description: Two independently allocated optional-vector pairs with identical element content.
+/// Expectation: hash payloads are equal (proves elements are hashed, not heap pointers).
+TEST_F(TestOpApiCacheHash, OptionalVectorPairSameContentDifferentAllocation) {
+  using OptionalIntArrayPair = std::pair<std::optional<std::vector<int64_t>>, bool>;
+  OptionalIntArrayPair lhs = {std::vector<int64_t>{10, 20, 30}, true};
+  OptionalIntArrayPair rhs = {std::vector<int64_t>{10, 20, 30}, true};
+  ASSERT_TRUE(lhs.first.has_value() && rhs.first.has_value());
+  ASSERT_NE(lhs.first->data(), rhs.first->data());
+  EXPECT_EQ(HashValue(lhs), HashValue(rhs));
+}
+
+/// Feature: aclnn cache hash nested optional-vector recursion.
+/// Description: Same optional-vector object; keep pointer/size/capacity, mutate one element in place.
+/// Expectation: hash payloads differ (catches hashing object representation instead of elements).
+TEST_F(TestOpApiCacheHash, OptionalVectorPairInPlaceElementMutation) {
+  using OptionalIntArrayPair = std::pair<std::optional<std::vector<int64_t>>, bool>;
+  OptionalIntArrayPair value = {std::vector<int64_t>{10, 20, 30}, true};
+  ASSERT_TRUE(value.first.has_value());
+  const auto *data_ptr = value.first->data();
+  const auto size_before = value.first->size();
+  const auto capacity_before = value.first->capacity();
+
+  const auto hash_before = HashValue(value);
+  (*value.first)[1] = 21;
+  ASSERT_EQ(value.first->data(), data_ptr);
+  ASSERT_EQ(value.first->size(), size_before);
+  ASSERT_EQ(value.first->capacity(), capacity_before);
+  const auto hash_after = HashValue(value);
+
+  EXPECT_NE(hash_before, hash_after);
 }
 }  // namespace ascend
 }  // namespace device
