@@ -106,6 +106,15 @@ BACKEND_EXPORT void GatherInfo(const T &value) {
 }
 
 template <typename T>
+BACKEND_EXPORT void GatherInfo(const std::vector<T> &values) {
+  const size_t size = values.size();
+  MemcpyToBuf(&size, sizeof(size_t));
+  if (size != 0) {
+    MemcpyToBuf(values.data(), size * sizeof(T));
+  }
+}
+
+template <typename T>
 BACKEND_EXPORT void GatherInfo(const std::optional<T> &value) {
   const bool has_value = value.has_value();
   MemcpyToBuf(&has_value, sizeof(bool));
@@ -122,15 +131,6 @@ BACKEND_EXPORT void GatherInfo(const std::optional<ScalarPtr> &);
 
 BACKEND_EXPORT void GatherInfo(const TypePtr &);
 BACKEND_EXPORT void GatherInfo(const std::optional<TypePtr> &);
-
-template <typename T>
-BACKEND_EXPORT void GatherInfo(const std::vector<T> &values) {
-  const size_t size = values.size();
-  MemcpyToBuf(&size, sizeof(size_t));
-  if (size != 0) {
-    MemcpyToBuf(values.data(), size * sizeof(T));
-  }
-}
 
 template <typename T>
 BACKEND_EXPORT void GatherInfo(const std::pair<std::vector<T>, bool> &p) {
