@@ -33,6 +33,21 @@ def test_hccl_mint_ops():
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
+def test_hccl_mint_ops_with_mccl_disable():
+    """
+    Feature: mpi run 8P case with AllReduceLauncher disabled.
+    Description: Verify HCCL communication succeeds with mccl_disable enabled.
+    Expectation: success.
+    """
+    return_code = os.system(
+        "export MS_DEV_RUNTIME_CONF=mccl_disable:true; "
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10666 --join=True "
+        "pytest -s test_distributed.py"
+    )
+    assert return_code == 0
+
+
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_test_gather_scatter_tensor():
     """
     Feature: mpi run 8P case
