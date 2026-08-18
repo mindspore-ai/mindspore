@@ -12,7 +12,7 @@
 
     .. math::
         out_i= \left\{
-        \begin{array}{align}
+        \begin{array}{ll}
             clip\_value\_max & \text{ if } x_i\ge  clip\_value\_max \\
             x_i & \text{ if } clip\_value\_min \lt x_i \lt clip\_value\_max \\
             clip\_value\_min & \text{ if } x_i \le clip\_value\_min \\

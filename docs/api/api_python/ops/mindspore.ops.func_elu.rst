@@ -13,7 +13,7 @@ mindspore.ops.elu
     .. math::
 
         \text{ELU}(x)= \left\{
-        \begin{array}{align}
+        \begin{array}{ll}
             \alpha(e^{x}  - 1) & \text{if } x \le 0\\
             x & \text{if } x \gt 0\\
         \end{array}\right.
