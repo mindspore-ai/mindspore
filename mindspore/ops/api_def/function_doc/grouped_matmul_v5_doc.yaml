@@ -1,0 +1,66 @@
+grouped_matmul_v5:
+  description: |
+    grouped_matmul_v5(x, weight, *, bias=None, scale=None, offset=None, antiquant_scale=None,
+    antiquant_offset=None, per_token_scale=None, group_list=None, activation_input=None,
+    activation_quant_scale=None, activation_quant_offset=None, split_item=0, group_type=-1,
+    group_list_type=0, act_type=0, tuning_config=None, output_dtype=None, scale_dtype=None,
+    per_token_scale_dtype=None) -> tuple[Tensor, ...]
+
+    Performs grouped matrix multiplication through ``aclnnGroupedMatmulV5``.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        x (tuple[Tensor] or list[Tensor]): Input tensors. Each tensor has at least two dimensions and
+            its last dimension is the reduction dimension.
+        weight (tuple[Tensor] or list[Tensor]): Weight tensors in ND format. A transposed view is
+            recognized from its runtime strides. FRACTAL_NZ weights are not supported by this API.
+
+    Keyword Args:
+        bias (tuple[Tensor] or list[Tensor], optional): Optional bias tensors. Default: ``None``.
+        scale (tuple[Tensor] or list[Tensor], optional): Optional quantization scales. Default: ``None``.
+        offset (tuple[Tensor] or list[Tensor], optional): Optional quantization offsets. Default: ``None``.
+        antiquant_scale (tuple[Tensor] or list[Tensor], optional): Optional antiquantization scales.
+            Default: ``None``.
+        antiquant_offset (tuple[Tensor] or list[Tensor], optional): Optional antiquantization offsets.
+            Default: ``None``.
+        per_token_scale (tuple[Tensor] or list[Tensor], optional): Optional per-token scales.
+            Default: ``None``.
+        group_list (Tensor, optional): Group metadata tensor of dtype ``int64``. For
+            ``group_list_type`` 0 or 1 it is one-dimensional. For type 2 its shape is ``(G, 2)`` and
+            each row is ``(grouped_index, grouped_size)``. Default: ``None``.
+        activation_input (tuple[Tensor] or list[Tensor], optional): Optional activation inputs.
+            Default: ``None``.
+        activation_quant_scale (tuple[Tensor] or list[Tensor], optional): Optional activation scales.
+            Default: ``None``.
+        activation_quant_offset (tuple[Tensor] or list[Tensor], optional): Optional activation offsets.
+            Default: ``None``.
+        split_item (int, optional): Output splitting mode. Values 0 and 1 return multiple tensors;
+            values 2 and 3 return one tensor. Default: ``0``.
+        group_type (int, optional): Grouped axis. Supported values are -1 (no grouping), 0 (M axis),
+            and 2 (K axis). Default: ``-1``.
+        group_list_type (int, optional): Group metadata format: 0 for cumulative sizes, 1 for explicit
+            sizes, and 2 for sparse ``(index, size)`` pairs. Default: ``0``.
+        act_type (int, optional): ACLNN activation type identifier. Default: ``0``.
+        tuning_config (tuple[int] or list[int], optional): ACLNN tuning values. Default: ``None``.
+        output_dtype (mindspore.dtype, optional): Output dtype. If omitted, the dtype of ``x[0]`` is
+            used. Unsupported dtype combinations are validated by ACLNN. Default: ``None``.
+        scale_dtype (mindspore.dtype, optional): Logical dtype used for every ``scale`` descriptor.
+            The only override is ``mindspore.float8_e8m0fnu``. It reinterprets existing storage and
+            does not cast or copy data. Default: ``None``.
+        per_token_scale_dtype (mindspore.dtype, optional): Logical dtype used for every
+            ``per_token_scale`` descriptor. The only override is ``mindspore.float8_e8m0fnu``. It
+            reinterprets existing storage and does not cast or copy data. Default: ``None``.
+
+    Returns:
+        tuple[Tensor], the primary grouped-matmul outputs. Modes 0 and 1 return multiple tensors;
+        modes 2 and 3 return a one-element tuple.
+
+    Raises:
+        TypeError: If ``group_list`` is not an ``int64`` Tensor or a dtype override is invalid.
+        ValueError: If the input sequences are empty, a structural rank is invalid, or a mode value
+            is outside its supported set.
+
+    Supported Platforms:
+        ``Ascend``

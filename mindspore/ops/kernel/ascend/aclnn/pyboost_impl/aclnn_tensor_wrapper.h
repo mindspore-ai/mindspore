@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_ACLNN_PYBOOST_IMPL_ACLNN_TENSOR_WRAPPER_H_
 #define MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_ACLNN_PYBOOST_IMPL_ACLNN_TENSOR_WRAPPER_H_
 
+#include <algorithm>
 #include <functional>
 #include <numeric>
 #include <optional>
@@ -26,6 +27,11 @@
 namespace mindspore::device::ascend {
 struct AclTensorWrapper {
   tensor::TensorPtr tensor;
+  aclDataType dtype;
+};
+
+struct AclTensorListWrapper {
+  std::vector<tensor::TensorPtr> tensors;
   aclDataType dtype;
 };
 
@@ -134,6 +140,18 @@ inline aclTensor *ConvertType(const std::optional<AclTensorWrapper> &wrapper) {
   return ConvertType(wrapper.value());
 }
 
+inline aclTensorList *ConvertType(const AclTensorListWrapper &wrapper) {
+  static const auto acl_create_tensor_list = GET_OP_API_FUNC(aclCreateTensorList);
+  if (acl_create_tensor_list == nullptr) {
+    return nullptr;
+  }
+  std::vector<aclTensor *> acl_tensors;
+  std::transform(
+    wrapper.tensors.begin(), wrapper.tensors.end(), std::back_inserter(acl_tensors),
+    [&wrapper](const tensor::TensorPtr &tensor) { return ConvertType(AclTensorWrapper{tensor, wrapper.dtype}); });
+  return acl_create_tensor_list(acl_tensors.data(), acl_tensors.size());
+}
+
 inline std::vector<void *> GetAddr(const AclTensorWrapper &wrapper) { return GetAddr(wrapper.tensor); }
 
 inline std::vector<void *> GetAddr(const std::optional<AclTensorWrapper> &wrapper) {
@@ -143,8 +161,15 @@ inline std::vector<void *> GetAddr(const std::optional<AclTensorWrapper> &wrappe
   return GetAddr(wrapper.value());
 }
 
+inline std::vector<void *> GetAddr(const AclTensorListWrapper &wrapper) { return GetAddr(wrapper.tensors); }
+
 inline void GatherInfo(const AclTensorWrapper &wrapper) {
   GatherInfo(wrapper.tensor);
+  MemcpyToBuf(&wrapper.dtype, sizeof(wrapper.dtype));
+}
+
+inline void GatherInfo(const AclTensorListWrapper &wrapper) {
+  GatherInfo(wrapper.tensors);
   MemcpyToBuf(&wrapper.dtype, sizeof(wrapper.dtype));
 }
 
@@ -153,11 +178,22 @@ inline void GatherHash(const AclTensorWrapper &wrapper) {
   GatherHash(wrapper.dtype);
 }
 
+inline void GatherHash(const AclTensorListWrapper &wrapper) {
+  GatherHash(wrapper.tensors);
+  GatherHash(wrapper.dtype);
+}
+
 inline void RefreshAddr(const AclTensorWrapper &wrapper) { RefreshAddr(wrapper.tensor); }
 
 inline void RefreshAddr(const std::optional<AclTensorWrapper> &wrapper) {
   if (wrapper.has_value()) {
     RefreshAddr(wrapper.value());
+  }
+}
+
+inline void RefreshAddr(const AclTensorListWrapper &wrapper) {
+  for (const auto &tensor : wrapper.tensors) {
+    RefreshAddr(tensor);
   }
 }
 }  // namespace mindspore::device::ascend

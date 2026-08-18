@@ -1,0 +1,37 @@
+grouped_dynamic_mx_quant:
+  description: |
+    grouped_dynamic_mx_quant(x, group_index, *, round_mode="rint", dst_type=23,
+    blocksize=32, scale_alg=0, dst_type_max=0.0) -> (Tensor, Tensor)
+
+    Performs grouped dynamic microscaling quantization.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        x (Tensor): A two-dimensional input Tensor of dtype ``float16`` or ``bfloat16``.
+        group_index (Tensor): A one-dimensional group-index Tensor of dtype ``int32``.
+
+    Keyword Args:
+        round_mode (str, optional): Rounding mode. Only ``"rint"`` is supported. Default: ``"rint"``.
+        dst_type (int, optional): Destination type identifier. Value 23 selects
+            ``float8_e5m2`` and value 24 selects ``float8_e4m3fn``. Default: ``23``.
+        blocksize (int, optional): Microscaling block size. Only 32 is supported. Default: ``32``.
+        scale_alg (int, optional): Scale algorithm identifier. Supported values are 0 and 1.
+            Default: ``0``.
+        dst_type_max (float, optional): Destination maximum passed to ACLNN V2. Default: ``0.0``.
+
+    Returns:
+        tuple[Tensor], a tuple containing ``y`` and ``mxscale``.
+
+        - ``y`` has the same shape as ``x`` and the selected native FP8 dtype.
+        - ``mxscale`` has dtype ``uint8`` and shape
+          ``(x.shape[0] // 64 + group_index.shape[0], x.shape[1], 2)``. Its storage is described to
+          ACLNN with logical E8M0 dtype without a numerical cast.
+
+    Raises:
+        TypeError: If ``x`` or ``group_index`` has an unsupported dtype.
+        ValueError: If an input rank, scalar option, or destination identifier is invalid.
+
+    Supported Platforms:
+        ``Ascend``
