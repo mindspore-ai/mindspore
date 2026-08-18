@@ -48,13 +48,13 @@ class RootMeanSquareDistance(Metric):
         \right | + \left | S(B) \right |}}
 
     Args:
-        distance_metric (str): Three measurement methods are supported:
-                ``"euclidean"`` (Euclidean Distance) , ``"chessboard"`` (Chessboard Distance, Chebyshev Distance)
-                or ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
-        symmetric (bool):  Whether to calculate the symmetric average root mean square distance between
+        symmetric (bool): Whether to calculate the symmetric average root mean square distance between
                 `y_pred` and `y`. If False, only calculates :math:`RmsSurDis(y\_pred, y)` surface distance,
                 otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
                 :math:`RmsSurDis(y\_pred \leftrightarrow y)` will be returned. Default: ``False`` .
+        distance_metric (str): Three measurement methods are supported:
+                ``"euclidean"`` (Euclidean Distance) , ``"chessboard"`` (Chessboard Distance, Chebyshev Distance)
+                or ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -122,8 +122,8 @@ class RootMeanSquareDistance(Metric):
 
         Args:
             inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are `Tensor`, list or numpy.ndarray.
-                    'y_pred' is the predicted binary image. 'y' is the actual binary image. 'label_idx', the data
-                    type of `label_idx` is int.
+                    'y_pred' is the predicted binary image. 'y' is the actual binary image. The data
+                    type of `label_idx` is int or float.
 
         Raises:
             ValueError: If the number of the inputs is not 3.

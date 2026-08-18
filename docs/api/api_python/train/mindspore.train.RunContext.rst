@@ -76,7 +76,7 @@ mindspore.train.RunContext
 
     .. py:method:: request_stop()
 
-        在训练期间设置停止请求。
+        在训练或推理期间设置停止请求。
 
         可以使用此函数请求停止训练。 `Model.train()` 会检查是否调用此函数。
 

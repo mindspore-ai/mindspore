@@ -102,8 +102,7 @@ class OcclusionSensitivity(Metric):
         Args:
             inputs: `y_pred` and `label` are a Tensor, list or numpy.ndarray.
                 `y_pred`: a batch of images to test, which could be 2D or 3D.
-                `label`: classification labels to check for changes. `label` is normally the true label, but
-                doesn't have to be.
+                `label`: classification labels to check for changes. `label` is normally the true label.
                 `model` is the neural network.
 
         Raises:

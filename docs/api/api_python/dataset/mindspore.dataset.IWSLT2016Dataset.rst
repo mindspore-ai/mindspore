@@ -81,12 +81,12 @@ mindspore.dataset.IWSLT2016Dataset
         @inproceedings{cettoloEtAl:EAMT2012,
         Address = {Trento, Italy},
         Author = {Mauro Cettolo and Christian Girardi and Marcello Federico},
-        Booktitle = {Proceedings of the 16$^{th}$ Conference of the European Association for Machine Translation
+        Booktitle = {Proceedings of the 16th Conference of the European Association for Machine Translation
                      (EAMT)},
         Date = {28-30},
         Month = {May},
         Pages = {261--268},
-        Title = {WIT$^3$: Web Inventory of Transcribed and Translated Talks},
+        Title = {WIT3: Web Inventory of Transcribed and Translated Talks},
         Year = {2012}}
 
 

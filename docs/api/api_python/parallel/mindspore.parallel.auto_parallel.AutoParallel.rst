@@ -60,7 +60,7 @@
 
     .. py:method:: disable_gradient_fp32_sync()
 
-        开启后，关闭梯度间的fp32通信。
+        在参数梯度allreduce前禁用fp16到fp32的转换。
 
 
     .. py:method:: disable_loss_repeated_mean()
@@ -78,10 +78,10 @@
         指定local norm值的保存路径。
 
         参数：
-            - **file_path** (str) - 保存路径，默认值为 `""`
+            - **file_path** (str) - 保存路径。
 
         异常：
-            - **TypeError** - 文件路径类型非字符串
+            - **TypeError** - 文件路径类型非字符串。
 
 
     .. py:method:: enable_device_local_norm()
@@ -241,8 +241,6 @@
               - **enable_communication_fusion** (bool): 为 ``True`` 时表示开启通信融合进行通信算子task数量优化。默认值： ``False`` 。
               - **grad_computation_allreduce_overlap** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖。注意在数据并行梯度通信和计算掩盖良好的情况下，开启该选项后性能不一定有提升，请根据实际场景确定是否开启。默认值： ``False`` 。
               - **computation_allgather_overlap** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖。注意在权重聚合通信和计算掩盖良好的情况下，开启该选项后性能不一定有提升，请根据实际场景确定是否开启。默认值： ``False`` 。
-              - **enable_concat_eliminate_opt** (bool): 为 ``True`` 时表示开启Concat消除优化，当前在开启细粒度双副本优化时有收益。默认值： ``False`` 。
-              - **enable_begin_end_inline_opt** (bool): 为 ``True`` 时表示开启首尾micro_batch子图的内联，用于半自动并行子图模式，流水线并行场景，一般需要和其他通信计算掩盖优化一起使用。默认值： ``False`` 。
               - **computation_communication_fusion_level** (int): 控制通算融合的级别，通算融合是融合通信任务和计算任务，在执行过程中计算和通信任务可以部分流水并行，以提升性能。默认值： ``0`` 。注：需要配套Ascend Training Solution 24.0.RC2以上版本使用。该参数属于实验性质参数，未来可能变更或移除。
 
                 - 0: 不启用通算融合。

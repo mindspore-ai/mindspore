@@ -29,7 +29,7 @@ mindspore.train.Precision
 
     .. py:method:: update(*inputs)
 
-        使用预测值 :math:`y\_pred` 和真实标签 :math:`y` 更新局部变量。在多标签情况下， :math:`y` 和 :math:`y\_pred` 的元素必须为0或1。
+        使用预测值 :math:`y\_pred` 和真实标签 :math:`y` 更新内部评估结果。在多标签情况下， :math:`y` 和 :math:`y\_pred` 的元素必须为0或1。
 
         参数：
             - **inputs** - 输入 :math:`y\_pred` 和 :math:`y`。 :math:`y\_pred` 和 :math:`y` 支持Tensor、list或numpy.ndarray类型。

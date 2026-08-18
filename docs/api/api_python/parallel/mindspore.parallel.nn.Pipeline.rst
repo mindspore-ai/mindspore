@@ -10,7 +10,7 @@ mindspore.parallel.nn.Pipeline
 
     参数：
         - **network** (Cell) - 将进行pp并行的网络。
-        - **micro_size** (int) - MicroBatchsize。
+        - **micro_size** (int) - MicroBatch size。
         - **stage_config** (dict，可选) - 流水线并行对于每个cell的stage配置。默认值： ``None``。
         - **segment_config** (dict，可选) - 流水线并行对于每个cell的segment配置。默认值： ``None``。
 

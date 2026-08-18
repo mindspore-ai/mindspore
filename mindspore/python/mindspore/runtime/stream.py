@@ -424,7 +424,7 @@ class StreamCtx(CtxBase):
         ctx_stream (Stream): selected stream. This manager is a no-op if it's ``None``.
 
     Raises:
-        TypeError: If 'stream' is neither a :class:`mindspore.runtime.Stream` nor a ``None``.
+        TypeError: If `ctx_stream` is neither a :class:`mindspore.runtime.Stream` nor a ``None``.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

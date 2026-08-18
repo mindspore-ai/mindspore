@@ -11,8 +11,8 @@ mindspore.parallel.load_distributed_checkpoint
     参数：
         - **network** (Cell) - 分布式预测网络，format为 `safetensors` 时，network入参可以不传递或传递为None，此时接口执行保存模式。
         - **checkpoint_filenames** (list[str]) - checkpoint文件的名称，按rank id顺序排列。默认值： ``None`` 。
-        - **predict_strategy** (Union[dict, str]) - 预测时参数的切分策略或者策略文件。默认值： ``None`` 。
-        - **train_strategy_filename** (str) - 训练策略proto文件名。默认值： ``None`` 。
+        - **predict_strategy** (Union[dict, str]) - 预测时参数的切分策略或者策略文件。当 `predict_strategy` 为 ``None`` 时表示使用单设备进行预测。默认值： ``None`` 。
+        - **train_strategy_filename** (str) - 训练策略proto文件名。若为 ``None`` ，则从 `context.get_auto_parallel_context("strategy_ckpt_load_file")` 获取，且两者须至少指定一个。默认值： ``None`` 。
         - **strict_load** (bool) - 表示是否严格加载参数到网络。如果值为 ``False`` ，则当checkpoint文件中参数名称的后缀与网络中的参数相同时，加载参数到网络。当类型不一致时，对相同类型的参数进行类型转换，如从float32到float16。默认值： ``False`` 。
         - **dec_key** (Union[None, bytes]) - 用于解密的字节类型key。如果value为 ``None`` ，则不需要解密。默认值： ``None`` 。
         - **dec_mode** (str) - 指定解密模式，目前支持 ``'AES-GCM'`` ， ``'AES-CBC'`` 和 ``'SM4-CBC'`` 。仅当 `dec_key` 不设为 ``None`` 时，该参数有效。默认值： ``'AES-GCM'`` 。

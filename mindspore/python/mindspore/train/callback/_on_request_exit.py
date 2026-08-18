@@ -49,10 +49,10 @@ class OnRequestExit(Callback):
             the checkpoint file add suffix '.ckpt', the mindir file add suffix '.mindir'. Default: ``'Net'`` .
         directory (str): The path to save files. It will generate a 'rank_{id}' path by rank_id
             to save checkpoint and mindir. Default: ``'./'`` .
-        sig (int): The user registered exit signal, it must be a capturable and negligible signal.
-            When the process receives the signal, exits the training or eval process. Default: ``signal.SIGTERM`` .
         config_file (str): A json config file used to exit training process gracefully. Key: ``{"GracefulExit": 1}`` .
             Default: ``None`` .
+        sig (int): The user registered exit signal, it must be a capturable and negligible signal.
+            When the process receives the signal, exits the training or eval process. Default: ``signal.SIGTERM`` .
 
     Raises:
         ValueError: If the 'save_ckpt' is not a bool.
