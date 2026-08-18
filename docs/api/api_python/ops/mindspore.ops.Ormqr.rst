@@ -17,7 +17,7 @@ mindspore.ops.Ormqr
 
     输入：
         - **x** (Tensor) - shape :math:`(*, mn, k)`，mn的值取决于 `left` ，当 `left` 为 ``True`` 时， mn的值等于m，否则mn的值等于n。 `*` 表示Tensor在轴0上的长度为0或者大于0的batch维。
-        - **tau** (Tensor) - shape :math:`(*, min(mn, k))`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0的batch维，其类型与 `x` 相同。
+        - **tau** (Tensor) - shape :math:`(*, \min(mn, k))`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0的batch维，其类型与 `x` 相同。
         - **other** (Tensor) - shape :math:`(*, m, n)`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0的batch维，其类型与 `x` 相同。
 
     输出：

@@ -10,7 +10,7 @@ mindspore.ops.SoftmaxCrossEntropyWithLogits
     .. math::
         \begin{array}{ll} \\
             p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)} \\
-            loss_{ij} = -\sum_j{Y_{ij} * ln(p_{ij})}
+            loss_{ij} = -\sum_j{Y_{ij} * \ln(p_{ij})}
         \end{array}
 
     其中 :math:`X` 代表 `logits` 。 :math:`Y` 代表 `labels` 。 :math:`loss` 代表 `output` 。

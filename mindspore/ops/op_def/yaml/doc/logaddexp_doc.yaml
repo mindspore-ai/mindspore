@@ -6,7 +6,7 @@ logaddexp:
 
         .. math::
 
-            out_i = \log(exp(input_i) + \exp(other_i))
+            out_i = \log(\exp(input_i) + \exp(other_i))
 
         .. warning::
             This is an experimental API that is subject to change or deletion.

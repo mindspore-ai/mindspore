@@ -3,7 +3,7 @@ mindspore.numpy.std
 
 .. py:function:: mindspore.numpy.std(x, axis=None, ddof=0, keepdims=False)
 
-    沿指定轴计算标准差。标准差是平方偏差平均值的平方根，即 :math:`std = sqrt(mean(abs(x - x.mean())**2))` 。
+    沿指定轴计算标准差。标准差是平方偏差平均值的平方根，即 :math:`std = \sqrt{\mathrm{mean}(abs(x - x.mean())**2)}` 。
 
     返回标准差，默认计算展平数组的标准差，否则在指定轴上计算。
 

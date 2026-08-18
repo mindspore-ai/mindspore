@@ -11,7 +11,7 @@ mindspore.ops.MatrixSetDiagV3
     如果某些对角线比 `max_diag_len` 短，则需要被填充，其中 `max_diag_len` 指对角线的最长长度。
     `diagonal` 的维度 :math:`shape[-2]` 必须等于对角线个数 `num_diags` ， :math:`num\_diags = k[1] - k[0] + 1`，
     `diagonal` 的维度 :math:`shape[-1]` 必须等于最长对角线值 `max_diag_len` ，
-    :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。
+    :math:`max\_diag\_len = \min(x.shape[-2] + \min(k[1], 0), x.shape[-1] + \min(-k[0], 0))` 。
 
     设 `x` 是一个n维Tensor，shape为： :math:`(d_1, d_2, ..., d_{n-2}, d_{n-1}, d_n)` 。
     当 `k` 是一个整数或 :math:`k[0] == k[1]` 时， `diagonal` 为n-1维Tensor，shape为 :math:`(d_1, d_2, ..., d_{n-2}, max\_diag\_len)` 。
@@ -57,4 +57,4 @@ mindspore.ops.MatrixSetDiagV3
           :math:`num\_diags = k[1] - k[0] + 1` 。
         - **ValueError** - `k` 的取值不在 :math:`(-x.shape[-2], x.shape[-1])` 范围内。
         - **ValueError** - 对角线 `diagonal` 的维度 :math:`shape[-1]` 不等于最长对角线长度 `max_diag_len`，
-          :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` 。
+          :math:`max\_diag\_len = \min(x.shape[-2] + \min(k[1], 0), x.shape[-1] + \min(-k[0], 0))` 。

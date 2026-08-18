@@ -9,8 +9,8 @@ mindspore.ops.cosine_embedding_loss
 
     .. math::
         loss(input1, input2, target) = \begin{cases}
-        1-cos(input1, input2), & \text{if } target = 1\\
-        max(0, cos(input1, input2)-margin), & \text{if } target = -1\\
+        1-\cos(input1, input2), & \text{if } target = 1\\
+        \max(0, \cos(input1, input2)-margin), & \text{if } target = -1\\
         \end{cases}
 
     参数：

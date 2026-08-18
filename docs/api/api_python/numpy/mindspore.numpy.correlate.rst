@@ -18,9 +18,9 @@ mindspore.numpy.correlate
         - **v** (Union[list, tuple, Tensor]) - 第二个输入序列。
         - **mode** (str, 可选) - 指定的填充模式。可选值： ``"same"`` 、 ``"valid"`` 、 ``"full"`` 。 默认值： ``"valid"`` 。
 
-          - ``"same"`` ：返回的输出长度为 :math:`max(M, N)` 。仍然可见边界效应。
+          - ``"same"`` ：返回的输出长度为 :math:`\max(M, N)` 。仍然可见边界效应。
 
-          - ``"valid"`` ：返回的输出长度为 :math:`max(M, N) - min(M, N) - 1` 。卷积乘积仅在信号完全重叠的点给出。 信号边界外的值不产生效果。
+          - ``"valid"`` ：返回的输出长度为 :math:`\max(M, N) - \min(M, N) + 1` 。卷积乘积仅在信号完全重叠的点给出。 信号边界外的值不产生效果。
 
           - ``"full"`` ：在每个重叠点返回卷积，输出的shape为 :math:`(N + M - 1)`。在卷积的端点，信号不完全重叠，可能会看到边界效应。
 

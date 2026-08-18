@@ -26,7 +26,7 @@ mindspore.scipy.linalg.lstsq
           否则返回空Tensor。
         - **rank** (Tensor)， `A` 的有效秩数。shape为 :math:`(*)`，其中 :math:`*` 等于 `A` 的Batch维度。当 `driver` 是
           (``"gelsy"``, ``"gelss"``, ``"gelsd"``)其中之一时才会计算，否则返回空Tensor 。
-        - **singular_values** (Tensor)， `A` 的奇异值，shape为 :math:`(*, min(M, N))`，其中 :math:`*` 等于 `A` 的Batch维度。
+        - **singular_values** (Tensor)， `A` 的奇异值，shape为 :math:`(*, \min(M, N))`，其中 :math:`*` 等于 `A` 的Batch维度。
           当 `driver` 是(``"gelss"``, ``"gelsd"``)其中之一时才会计算，否则返回空Tensor。
 
     异常：

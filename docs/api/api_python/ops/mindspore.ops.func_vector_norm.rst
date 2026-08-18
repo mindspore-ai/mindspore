@@ -11,10 +11,10 @@ mindspore.ops.vector_norm
     `ord`                向量范数
     =================   ==============================================
     ``2`` (默认值)        ``2`` -norm (参考最下方公式)
-    ``inf``              :math:`max(abs(x))`
-    ``-inf``             :math:`min(abs(x))`
-    ``0``                :math:`sum(x != 0)`
-    其余int或float值      :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ``inf``              :math:`\max(abs(x))`
+    ``-inf``             :math:`\min(abs(x))`
+    ``0``                :math:`\sum(x != 0)`
+    其余int或float值      :math:`\sum(abs(x)^{ord})^{(1 / ord)}`
     =================   ==============================================
 
     参数：

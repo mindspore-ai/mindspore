@@ -3555,7 +3555,7 @@ def fmin(input, other):
     Computes the minimum of input tensors element-wise.
 
     .. math::
-        output_i = min(input_i, other_i)
+        output_i = \min(input_i, other_i)
 
     Note:
         - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
@@ -3811,7 +3811,7 @@ def ormqr(input, tau, other, left=True, transpose=False):
     Args:
         input (Tensor): The input tensor, shape :math:`(*, mn, k)`, when `left` is True, mn is equal to m,
             otherwise, mn is equal to n.
-        tau (Tensor): The input tensor, shape :math:`(*, min(mn, k))` .
+        tau (Tensor): The input tensor, shape :math:`(*, \min(mn, k))` .
         other (Tensor): The input tensor, shape :math:`(*, m, n)` .
         left (bool, optional): The order of computation. Default ``True`` .
         transpose (bool, optional): Whether the matrix Q is conjugate transposed or not. Default ``False`` .
@@ -4011,7 +4011,7 @@ def logaddexp(input, other):
 
     .. math::
 
-        out_i = \log(exp(input_i) + \exp(other_i))
+        out_i = \log(\exp(input_i) + \exp(other_i))
 
     Args:
         input (Tensor): The input tensor.
@@ -7527,14 +7527,14 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     `None` (default)        Frobenius norm                   `2`-norm (see below)
     `'fro'`                 Frobenius norm                   -- not supported --
     `'nuc'`                 nuclear norm                     -- not supported --
-    `inf`                   :math:`max(sum(abs(x), dim=1))`  :math:`max(abs(x))`
-    `-inf`                  :math:`min(sum(abs(x), dim=1))`  :math:`min(abs(x))`
-    `0`                     -- not supported --              :math:`sum(x != 0)`
-    `1`                     :math:`max(sum(abs(x), dim=0))`  as below
-    `-1`                    :math:`min(sum(abs(x), dim=0))`  as below
+    `inf`                   :math:`\max(\sum(abs(x), dim=1))`  :math:`\max(abs(x))`
+    `-inf`                  :math:`\min(\sum(abs(x), dim=1))`  :math:`\min(abs(x))`
+    `0`                     -- not supported --              :math:`\sum(x != 0)`
+    `1`                     :math:`\max(\sum(abs(x), dim=0))`  as below
+    `-1`                    :math:`\min(\sum(abs(x), dim=0))`  as below
     `2`                     largest singular value           as below
     `-2`                    smallest singular value          as below
-    other `int` or `float`  -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    other `int` or `float`  -- not supported --              :math:`\sum(abs(x)^{ord})^{(1 / ord)}`
     ====================== ================================ ==========================================
 
     Args:
@@ -7680,10 +7680,10 @@ def vector_norm_ext(x, ord=2, dim=None, keepdim=False, *, dtype=None):
     `ord`                           norm for vectors
     ==========================      ==========================================
     ``2`` (Default)                 ``2``-norm (see below)
-    ``inf``                         :math:`max(abs(x))`
-    ``-inf``                        :math:`min(abs(x))`
-    ``0``                           :math:`sum(x!=0)`
-    other ``int`` or ``float``      :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ``inf``                         :math:`\max(abs(x))`
+    ``-inf``                        :math:`\min(abs(x))`
+    ``0``                           :math:`\sum(x!=0)`
+    other ``int`` or ``float``      :math:`\sum(abs(x)^{ord})^{(1 / ord)}`
     ==========================      ==========================================
 
     .. warning::
@@ -7760,10 +7760,10 @@ def matrix_norm_ext(A, ord='fro', dim=(-2, -1), keepdim=False, *, dtype=None):
     ====================== ================================
     ``'fro'`` (Default)    Frobenius norm
     ``'nuc'``              nuclear norm
-    ``inf``                :math:`max(sum(abs(x), dim=1))`
-    ``-inf``               :math:`min(sum(abs(x), dim=1))`
-    ``1``                  :math:`max(sum(abs(x), dim=0))`
-    ``-1``                 :math:`min(sum(abs(x), dim=0))`
+    ``inf``                :math:`\max(\sum(abs(x), dim=1))`
+    ``-inf``               :math:`\min(\sum(abs(x), dim=1))`
+    ``1``                  :math:`\max(\sum(abs(x), dim=0))`
+    ``-1``                 :math:`\min(\sum(abs(x), dim=0))`
     ``2``                  largest singular value
     ``-2``                 smallest singular value
     ====================== ================================
@@ -7961,7 +7961,7 @@ def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
     ====================== ================================ ==========================================
     `'fro'`                 Frobenius norm                   -- not supported --
     `'nuc'`                 nuclear norm                     -- not supported --
-    other `int` or `float`  -- not supported --              :math:`sum(abs(x)^{p})^{(1 / p)}`
+    other `int` or `float`  -- not supported --              :math:`\sum(abs(x)^{p})^{(1 / p)}`
     ====================== ================================ ==========================================
 
     Args:
@@ -8022,10 +8022,10 @@ def vector_norm(x, ord=2, axis=None, keepdims=False, *, dtype=None):
     `ord`                           norm for vectors
     ==========================      ==========================================
     ``2`` (Default)                 ``2``-norm (see below)
-    ``inf``                         :math:`max(abs(x))`
-    ``-inf``                        :math:`min(abs(x))`
-    ``0``                           :math:`sum(x!=0)`
-    other ``int`` or ``float``      :math:`sum(abs(x)^{ord})^{(1 / ord)}`
+    ``inf``                         :math:`\max(abs(x))`
+    ``-inf``                        :math:`\min(abs(x))`
+    ``0``                           :math:`\sum(x!=0)`
+    other ``int`` or ``float``      :math:`\sum(abs(x)^{ord})^{(1 / ord)}`
     ==========================      ===========================================
 
     Args:
@@ -8137,10 +8137,10 @@ def matrix_norm(A, ord='fro', axis=(-2, -1), keepdims=False, *, dtype=None):
     ====================== ================================
     ``'fro'`` (Default)    Frobenius norm
     ``'nuc'``              nuclear norm
-    ``inf``                :math:`max(sum(abs(x), dim=1))`
-    ``-inf``               :math:`min(sum(abs(x), dim=1))`
-    ``1``                  :math:`max(sum(abs(x), dim=0))`
-    ``-1``                 :math:`min(sum(abs(x), dim=0))`
+    ``inf``                :math:`\max(\sum(abs(x), dim=1))`
+    ``-inf``               :math:`\min(\sum(abs(x), dim=1))`
+    ``1``                  :math:`\max(\sum(abs(x), dim=0))`
+    ``-1``                 :math:`\min(\sum(abs(x), dim=0))`
     ``2``                  largest singular value
     ``-2``                 smallest singular value
     ====================== ================================
@@ -8232,7 +8232,7 @@ def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     Unpack the LU decomposition returned by :func:`mindspore.scipy.linalg.lu_factor` into the P, L, U matrices.
 
     .. note::
-        - `LU_data` of shape :math:`(*, M, N)` , `LU_pivots` of shape :math:`(*, min(M, N))` , where
+        - `LU_data` of shape :math:`(*, M, N)` , `LU_pivots` of shape :math:`(*, \min(M, N))` , where
           :math:`*` is batch dimensions.
 
     Args:
@@ -10294,7 +10294,7 @@ def igammac(input, other):
     where
 
     .. math::
-        Gamma(a, x) = \int_{x}^{\infty} t^{a-1} exp(-t) dt
+        Gamma(a, x) = \int_{x}^{\infty} t^{a-1} \exp(-t) dt
 
     is the upper incomplete Gamma function.
 
@@ -10790,7 +10790,7 @@ def tanhshrink(input):
 
     .. math::
 
-        Tanhshrink(x) = x - Tanh(x)
+        Tanhshrink(x) = x - \tanh(x)
 
     Args:
         input (Tensor): The input tensor.

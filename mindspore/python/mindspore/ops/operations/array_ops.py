@@ -763,14 +763,14 @@ class MatrixDiagV3(Primitive):
           A Tensor of type int32 with only one value. If `num_rows` is -1, indicating that the innermost
           matrix of the output Tensor is a square
           matrix, and the real number of rows will be derivated by other inputs. That is
-          :math:`num\_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
-          :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
+          :math:`num\_rows = x.shape[-1] - \min(k[1], 0)`. Otherwise, the value must be equal or greater than
+          :math:`x.shape[-1] - \min(k[1], 0)`. Default: -1.
         - **num_cols** (Union[int, Tensor], optional) - The number of columns of
           the output Tensor. A Tensor of type int32 with only one value.
           If `num_cols` is -1, indicating that the innermost matrix of the output
           Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
-          That is :math:`num\_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or
-          greater than :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
+          That is :math:`num\_cols = x.shape[-1] + \max(k[0], 0)`. Otherwise, the value must be equal or
+          greater than :math:`x.shape[-1] - \min(k[1], 0)`.  Default: -1.
         - **padding_value** (Union[int, float, Tensor], optional) - The number to fill the area outside the specified
           diagonal band. A Tensor with only one value. Have the same dtype as x. Default: ``0`` .
 
@@ -849,7 +849,7 @@ class MatrixDiagPartV3(Primitive):
     Outputs:
         A Tensor. Has the same type as `x`.
         Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
-        diagonals to be extracted, :math:`max\_diag\_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        diagonals to be extracted, :math:`max\_diag\_len = \min(M + \min(k[1], 0), N + \min(-k[0], 0))`
         Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
         If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
         Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
@@ -899,7 +899,7 @@ class MatrixSetDiagV3(Primitive):
     The dimension of `diagonal` is :math:`shape[-2]` must be equal to num_diags calculated by
     :math:`num\_diags = k[1] - k[0] + 1`.
     The dimension of `diagonal` is :math:`shape[-1]` must be equal to the longest diagonal value `max_diag_len`
-    calculated by :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))`.
+    calculated by :math:`max\_diag\_len = \min(x.shape[-2] + \min(k[1], 0), x.shape[-1] + \min(-k[0], 0))`.
 
     Assume `x` is an n-D Tensor with shape :math:`(d_1, d_2, ..., d_{n-2}, d_{n-1}, d_n)`.
     If `k` is an integer or :math:`k[0] == k[1]`, `diagonal` is an (n-1)-D Tensor with
@@ -961,7 +961,7 @@ class MatrixSetDiagV3(Primitive):
             :math:`num\_diags = k[1] - k[0] + 1` .
         ValueError: If the value of `k` is not in :math:`(-x.shape[-2], x.shape[-1])`.
         ValueError: If the diagonal :math:`shape[-1]` is not equal to the max_diag_len calculated by
-            :math:`max\_diag\_len = min(x.shape[-2] + min(k[1], 0), x.shape[-1] + min(-k[0], 0))` .
+            :math:`max\_diag\_len = \min(x.shape[-2] + \min(k[1], 0), x.shape[-1] + \min(-k[0], 0))` .
 
     Supported Platforms:
         Deprecated

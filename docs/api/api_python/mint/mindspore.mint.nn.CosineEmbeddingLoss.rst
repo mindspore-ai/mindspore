@@ -9,8 +9,8 @@ mindspore.mint.nn.CosineEmbeddingLoss
 
     .. math::
         loss(x_1, x_2, y) = \begin{cases}
-        1-cos(x_1, x_2), & \text{if } y = 1\\
-        \max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
+        1-\cos(x_1, x_2), & \text{if } y = 1\\
+        \max(0, \cos(x_1, x_2)-margin), & \text{if } y = -1\\
         \end{cases}
 
 

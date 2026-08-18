@@ -755,7 +755,7 @@ class Normal(Initializer):
     initialize a tensor.
 
     .. math::
-        f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
+        f(x) =  \frac{1} {\sqrt{2*π} * sigma} \exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     Args:
         sigma (float, optional): The standard deviation of Normal distribution. Default: ``0.01`` .

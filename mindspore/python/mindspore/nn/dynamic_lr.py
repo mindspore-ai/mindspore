@@ -203,6 +203,7 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
     """
+
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
     function = lambda x, y: x
@@ -213,7 +214,6 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
     for i in range(total_step):
         lr.append(learning_rate * math.e ** (-decay_rate * function(math.floor(i / step_per_epoch), decay_epoch)))
     return lr
-
 
 def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
     r"""
@@ -282,7 +282,7 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
 
     .. math::
         decayed\_learning\_rate[i] = min\_lr + 0.5 * (max\_lr - min\_lr) *
-        (1 + cos(\frac{current\_epoch}{decay\_epoch}\pi))
+        (1 + \cos(\frac{current\_epoch}{decay\_epoch}\pi))
 
     Where :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`.
 

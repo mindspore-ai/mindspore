@@ -25,9 +25,9 @@ mindspore.nn.GELU
     参数：
         - **approximate** (bool，可选) - 是否启用approximation。默认值： ``True`` 。如果approximate的值为 ``True`` ，则高斯误差线性激活函数为：
 
-          :math:`0.5 * x * (1 + tanh(\sqrt(2 / \pi) * (x + 0.044715 * x^3)))` 。
+          :math:`0.5 * x * (1 + \tanh(\sqrt{2 / \pi} * (x + 0.044715 * x^3)))` 。
 
-          否则为： :math:`x * P(X <= x) = 0.5 * x * (1 + erf(x / \sqrt(2)))`，其中 :math:`P(X) ~ N(0, 1)` 。
+          否则为： :math:`x * P(X <= x) = 0.5 * x * (1 + erf(x / \sqrt{2}))`，其中 :math:`P(X) ~ N(0, 1)` 。
 
     .. note::
         - 在计算gelu的输入梯度时，当输入为inf，Ascend与GPU在反向传播输出之间存在差异。

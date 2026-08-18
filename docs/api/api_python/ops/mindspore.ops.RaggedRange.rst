@@ -16,8 +16,8 @@ mindspore.ops.RaggedRange
     输出：
         - **rt_nested_splits** (Tensor) - 返回RaggedTensor的拆分索引，数据类型为 `Tsplits` 。shape等于输入 `starts` 的shape加1。
         - **rt_dense_values** (Tensor) - 返回RaggedTensor的密集值，其数据类型与输入 `starts` 相同。设输入 `starts` 、 `limits` 和 `deltas` 的大小为i。
-          - 如果 `starts` 、 `limits` 和 `deltas` 的数据类型为int32或int64，则输出 `rt_dense_values` 的shape等于 :math:`sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i]))` 。
-          - 如果 `starts` 、 `limits` 和 `deltas` 的数据类型为float32或者float64，则输出 `rt_dense_values` 的shape等于 :math:`sum(ceil(abs((limits[i] - starts[i]) / deltas[i])))` 。
+          - 如果 `starts` 、 `limits` 和 `deltas` 的数据类型为int32或int64，则输出 `rt_dense_values` 的shape等于 :math:`\sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i]))` 。
+          - 如果 `starts` 、 `limits` 和 `deltas` 的数据类型为float32或者float64，则输出 `rt_dense_values` 的shape等于 :math:`\sum(ceil(abs((limits[i] - starts[i]) / deltas[i])))` 。
 
     异常：
         - **TypeError** - 如任意一个输入不是Tensor。

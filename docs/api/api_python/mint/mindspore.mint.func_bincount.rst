@@ -18,7 +18,7 @@ mindspore.mint.bincount
         - **minlength** (int，可选) - 输出tensor的最小长度，应为非负数。默认值： ``0`` 。
 
     返回：
-        Tensor。如果输入为非空，输出shape为 :math:`(max(max(input)+1, minlength), )`，否则shape为 :math:`(0, )`。
+        Tensor。如果输入为非空，输出shape为 :math:`(\max(\max(input)+1, minlength), )`，否则shape为 :math:`(0, )`。
 
     异常：
         - **TypeError** - 如果 `input` 或 `weights` 不是Tensor。

@@ -8,7 +8,7 @@ mindspore.ops.logaddexp
 
     .. math::
 
-        out_i = \log(exp(input_i) + \exp(other_i))
+        out_i = \log(\exp(input_i) + \exp(other_i))
 
     参数：
         - **input** (Tensor) - 输入tensor。

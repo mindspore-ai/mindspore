@@ -3779,7 +3779,7 @@ class LuSolve(Primitive):
 
 
 class LuUnpack(Primitive):
-    """
+    r"""
     Converts `LU_data` and `LU_pivots` back into P, L and U matrices, where
     P is a permutation matrix, L is a lower triangular matrix, and U is an
     upper triangular matrix. Typically, `LU_data` and `LU_pivots` are generated
@@ -3800,7 +3800,7 @@ class LuUnpack(Primitive):
         - **LU_data** (Tensor) - The packed LU factorization data. The shape of a tensor is :math:`(*, M, N)`,
           where :math:`*` is batch dimensions, with data type int8, uint8, int16, int32, int64, float16,
           float32, float64. The dims of LU_data must be equal to or greater than 2.
-        - **LU_pivots** (Tensor) - The packed LU factorization pivots. The shape of a tensor is :math:`(*, min(M, N))`,
+        - **LU_pivots** (Tensor) - The packed LU factorization pivots. The shape of a tensor is :math:`(*, \min(M, N))`,
           where :math:`*` is batch dimensions, with data type int8, uint8, int16, int32, int64.
 
     Outputs:
@@ -3897,7 +3897,7 @@ class Digamma(Primitive):
     Computes the grad of the lgamma function on input.
 
     .. math::
-        P(x) = grad(ln(gamma(x)))
+        P(x) = grad(\ln(gamma(x)))
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -3983,7 +3983,7 @@ class Polygamma(Primitive):
 
 
 class RaggedRange(Primitive):
-    """
+    r"""
     Returns a `RaggedTensor` containing the specified sequences of numbers.
 
     Args:
@@ -4006,10 +4006,10 @@ class RaggedRange(Primitive):
 
           - if type of the input `starts`, input `limits` and input `deltas`
             are int32 or int64, shape of the output `rt_dense_values` is equal to
-            :math:`sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i]))`.
+            :math:`\sum(abs(limits[i] - starts[i]) + abs(deltas[i] - 1) / abs(deltas[i]))`.
           - if type of the input `starts`, input `limits` and input `deltas`
             are float32 or float64, shape of the output `rt_dense_values` is equal to
-            :math:`sum(ceil(abs((limits[i] - starts[i]) / deltas[i])))`.
+            :math:`\sum(ceil(abs((limits[i] - starts[i]) / deltas[i])))`.
 
     Raises:
         TypeError: If any input is not Tensor.
@@ -4869,7 +4869,7 @@ class Ormqr(Primitive):
         - **x** (Tensor) - Tensor of shape :math:`(*, mn, k)` where the value of mn depending on `left`,
           When `left` is ``True``, the value of mn is equal to m; otherwise, the value of mn is equal to n.
           and `*` is zero or more batch dimensions.
-        - **tau** (Tensor) - Tensor of shape :math:`(*, min(mn, k))` where `*` is zero or more batch dimensions,
+        - **tau** (Tensor) - Tensor of shape :math:`(*, \min(mn, k))` where `*` is zero or more batch dimensions,
           and its type is the same as `x`.
         - **other** (Tensor) - Tensor of shape :math:`(*, m, n)` where `*` is zero or more batch dimensions,
           and its type is the same as `x`.

@@ -50,7 +50,7 @@ mindspore.common.initializer
     生成一个服从正态分布 :math:`{N}(\text{sigma}, \text{mean})` 的随机数组用于初始化Tensor。
 
     .. math::
-        f(x) =  \frac{1} {\sqrt{2*π} * sigma}exp(-\frac{(x - mean)^2} {2*{sigma}^2})
+        f(x) =  \frac{1} {\sqrt{2*π} * sigma} \exp(-\frac{(x - mean)^2} {2*{sigma}^2})
 
     参数：
         - **sigma** (float, 可选) - 正态分布的标准差。默认值： ``0.01`` 。
