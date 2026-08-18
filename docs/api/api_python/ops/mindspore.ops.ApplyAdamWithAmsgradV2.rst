@@ -8,7 +8,7 @@
     更新公式如下：
 
     .. math::
-        \begin{array}{l1} \\
+        \begin{array}{ll} \\
             lr_t:=learning\_rate*\sqrt{1-\beta_2^t}/(1-\beta_1^t) \\
             m_t:=\beta_1*m_{t-1}+(1-\beta_1)*g \\
             v_t:=\beta_2*v_{t-1}+(1-\beta_2)*g*g \\

@@ -9,7 +9,7 @@ clamp:
     .. math::
     
         out_i= \left\{
-        \begin{array}{align}
+        \begin{array}{ll}
             max & \text{ if } input_i\ge max \\
             input_i & \text{ if } min \lt input_i \lt max \\
             min & \text{ if } input_i \le min \\
