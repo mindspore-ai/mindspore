@@ -3,11 +3,11 @@ mindspore.dataset.text.ToVectors
 
 .. py:class:: mindspore.dataset.text.ToVectors(vectors, unk_init=None, lower_case_backup=False)
 
-    根据输入向量表查找向量中的tokens。
+    根据输入向量表查找向量中的tokens，并返回其对应的向量。
 
     参数：
         - **vectors** (:class:`~.text.Vectors`) - 向量对象。
-        - **unk_init** (sequence, 可选) - 用于初始化向量外（OOV）令牌的序列。默认值： ``None`` ，用零向量初始化。
+        - **unk_init** (sequence, 可选) - 用于初始化词汇表外（OOV）标记向量的序列。默认值： ``None`` ，用零向量初始化。
         - **lower_case_backup** (bool, 可选) - 是否查找小写的token。如果为 ``False`` ，则将查找原始大小写中的每个token。
           如果为 ``True`` ，则将首先查找原始大小写中的每个token，如果在属性stoi（字符->索引映射）的键中找不到，则将查找小写中的token。默认值： ``False`` 。
 

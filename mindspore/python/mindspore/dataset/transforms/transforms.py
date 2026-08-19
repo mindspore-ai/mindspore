@@ -951,8 +951,7 @@ class RandomChoice(CompoundOperation):
         Execute method.
 
         Args:
-            img (PIL image): Image to be applied transformation.
-
+            img (PIL image): Image to which the transformation is applied .
 
         Returns:
             img (PIL image), Transformed image.
