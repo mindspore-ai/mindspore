@@ -2347,7 +2347,7 @@ class SquareSumAll(Primitive):
     .. math::
         \left\{\begin{matrix}out_{x} = {\textstyle \sum_{0}^{N}} (x_{i})^2
         \\out_{y} = {\textstyle \sum_{0}^{N}} (y_{i})^2
-        \end{matrix}\right
+        \end{matrix}\right.
 
     Note:
         SquareSumAll only supports float16 and float32 data type.
