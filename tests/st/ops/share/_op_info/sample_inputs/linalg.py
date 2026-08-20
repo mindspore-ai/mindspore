@@ -3366,3 +3366,48 @@ def error_sample_inputs_tensor_baddbmm(op_info, dtype=None, device=None, **kwarg
             op_error_type=(AttributeError, TypeError, RuntimeError),
             op_error_info=f'{op_info.name}: error params.'
         )
+
+def error_inputs_other_op_tensor_cross_func(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    error_cases = (
+        ((2, 2, 4), (2, 2, 4), None, ValueError, "None of the dim is 3"),
+        ((2, 3, 4), (2, 3, 4), 0, ValueError, "value of dimension is not 3"),
+        ((2, 3, 4), (2, 3, 5), 0, ValueError, "dimensions of input and other does not match"),
+    )
+    for x1, x2, dim, error_type, msg in error_cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_arg(shape=x1),
+                op_args=(make_arg(shape=x2),),
+                op_kwargs={"dim":dim},
+                sample_name=f"{op_info.name}"
+            ),
+            op_error_type=error_type,
+            op_error_info=msg
+        )
+
+def dynamic_sample_inputs_tensor_cross(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    # dynamic shape
+    yield OpDynamicInput(
+        op_compile_input=OpSampleInput(
+            op_input=ms.Tensor(shape=(3, None, None), dtype=dtype),
+            op_args=(ms.Tensor(shape=(3, None, None), dtype=dtype),),
+            op_kwargs={"dim": 1},
+            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+        ),
+        op_running_inputs=(
+            OpSampleInput(
+                op_input=make_func(shape=(3, 3, 2), ),
+                op_args=(make_func(shape=(3, 3, 2), ),),
+                op_kwargs={"dim": 1},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+            OpSampleInput(
+                op_input=make_func(shape=(3, 3, 5), ),
+                op_args=(make_func(shape=(3, 3, 5), ),),
+                op_kwargs={"dim": 1},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+        ),
+    )

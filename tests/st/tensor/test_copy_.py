@@ -104,7 +104,7 @@ def test_copy_cpu_inplace_feature():
         np.testing.assert_equal(expect, z.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard', mem_peak=2048.01)
 def test_copy_dynamic_shape():

@@ -3143,6 +3143,30 @@ def dynamic_sample_inputs_tensor_bitwise_xor(op_info:OpInfo, dtype=None, device=
             ),
         ),
     )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=dtype),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2, 3), ),
+                    op_args=(make_func(shape=(2, 2, 3), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 4, 5), ),
+                    op_args=(make_func(shape=(2, 4, 5), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
 
 def dynamic_sample_inputs_tensor_bitwise_not(op_info:OpInfo, dtype=None, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
@@ -3189,6 +3213,159 @@ def dynamic_sample_inputs_tensor_bitwise_not(op_info:OpInfo, dtype=None, device=
                 OpSampleInput(
                     op_input=make_func(shape=(2, 3, 4)),
                     op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def basic_reference_inputs_tensor_copysign(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    shapes = (
+        (M,),
+        (M, S),
+        (S, S, L),
+        (3, 1, 1),
+        (2, 1, 3, 2),
+        (2, 3, 4, 1, 2),
+        (2, 1, 2, 2, 1, 2),
+        (2, 1, 2, 2, 1, 2, 1),
+        (2, 1, 2, 2, 1, 2, 1, 2),
+    )
+    for input_shape in shapes:
+        yield OpSampleInput(
+             op_input=make_arg(input_shape),
+             op_args=(make_arg(input_shape),),
+             sample_name=f"{op_info.name}_{dtype}_{input_shape}",
+        )
+
+def extra_reference_inputs_tensor_copysign(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    yield OpSampleInput(
+        op_input=make_arg((256, 120, 10, 10)),
+        op_args=(make_arg((256, 120, 10, 10)),),
+        sample_name=f"{op_info.name}_{dtype}_input_with_big_input",
+    )
+    # case with small/large values
+    float_vals = dtypes_extra_values['_int_small_values'] + dtypes_extra_values['_int_large_values']
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice(float_vals, size=(6, 7, 8)), dtype=dtype),
+        op_args=(make_arg((6, 7, 8)),),
+        sample_name=f"{op_info.name}_{dtype}_small_large_values",
+    )
+    #case with inf/nan values
+    for t in [np.nan, np.inf, -np.inf]:
+        yield OpSampleInput(
+            op_input=ms.Tensor(np.full((6, 7, 8), t), dtype=dtype),
+            op_args=(make_arg((6, 7, 8)),),
+            sample_name=f"{op_info.name}_{dtype}_{t}",
+        )
+
+    #case with discontiguous values
+    for discontiguous in [True, False]:
+        yield OpSampleInput(
+            op_input=make_arg((6, 7, 8), discontiguous=discontiguous),
+            op_args=(make_arg((6, 7, 8)),),
+            sample_name=f"{op_info.name}_{dtype}_discontiguous_{discontiguous}",
+        )
+
+def dynamic_sample_inputs_tensor_copysign(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    # dynamic shape
+    yield OpDynamicInput(
+        op_compile_input=OpSampleInput(
+            op_input=ms.Tensor(shape=(2, None, None), dtype=dtype),
+            op_args=(ms.Tensor(shape=(2, None, None), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+        ),
+        op_running_inputs=(
+            OpSampleInput(
+                op_input=make_func(shape=(2, 2, 3), ),
+                op_args=(make_func(shape=(2, 2, 3), ),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+            OpSampleInput(
+                op_input=make_func(shape=(2, 4, 5), ),
+                op_args=(make_func(shape=(2, 4, 5), ),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+        ),
+    )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None, None), dtype=dtype),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2, 3), ),
+                    op_args=(make_func(shape=(2, 2, 3), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 4, 5), ),
+                    op_args=(make_func(shape=(2, 4, 5), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def dynamic_sample_inputs_tensor_copy_(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    # dynamic shape
+    yield OpDynamicInput(
+        op_compile_input=OpSampleInput(
+            op_input=ms.Tensor(shape=(2, None, None), dtype=dtype),
+            op_args=(ms.Tensor(shape=(2, None, None), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+        ),
+        op_running_inputs=(
+            OpSampleInput(
+                op_input=make_func(shape=(2, 2, 3), ),
+                op_args=(make_func(shape=(2, 2, 3), ),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+            OpSampleInput(
+                op_input=make_func(shape=(2, 4, 5), ),
+                op_args=(make_func(shape=(2, 4, 5), ),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+        ),
+    )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=dtype),),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2, 3), ),
+                    op_args=(make_func(shape=(2, 2, 3), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 4, 5), ),
+                    op_args=(make_func(shape=(2, 4, 5), ),),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),

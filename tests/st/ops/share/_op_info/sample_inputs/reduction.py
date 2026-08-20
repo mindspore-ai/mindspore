@@ -1250,3 +1250,62 @@ def dynamic_reference_inputs_tensor_amax_or_amin(op_info: OpInfo, dtype=None, de
     is_kbk = 'kbk' in op_info.name
     for sample_name in dynamic_inputs_reduction_op_common_func(op_info=op_info, dtype=dtype, device=device):
         yield from convert_params_name(sample_name, args_param=(is_kbk, ))
+
+def basic_sample_inputs_tensor_count_nonzero(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    shapes_and_axes = [
+        ((3, 4, 5), 0),
+        ((3, 4, 5), 1),
+        ((3, 4, 5), 2),
+        ((3, 4, 5), -1),
+        ((3, 4, 5), -3),
+        ((), 0),
+        ((), -1),
+        ((1,), 0),
+        ((1,), -1),
+    ]
+
+    for shape, axis in shapes_and_axes:
+        tensor = make_tensor(shape, dtype=dtype, device=device, low=None, high=None,)
+        yield OpSampleInput(tensor, op_args=(axis, ))
+
+def extra_sample_inputs_tensor_count_nonzero(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    extremal_cases = [
+        (0.0, 'zero'),
+        (1.0, 'one'),
+    ]
+    extremal_cases.extend([
+        (float('nan'), 'nan'),
+        (float('inf'), 'inf'),
+        (float('-inf'), 'neg_inf'),
+    ])
+
+    for extremal_val, name_suffix in extremal_cases:
+        t = make_func((5,))
+        t[2] = extremal_val
+        yield OpSampleInput(
+            op_input=t,
+            op_args=(0,),
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+        )
+
+    # Large input tests - numerical stability
+    LARGE_1D_SIZE = 2 ** 10
+    yield OpSampleInput(
+        op_input=make_func((LARGE_1D_SIZE,)),
+        op_args=(0,),
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
+    )
+
+def error_inputs_other_op_tensor_count_nonzero(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (1.0, -4)
+    for args in cases:
+        yield OpErrorInput(
+            OpSampleInput(
+                op_input=make_tensor(shape=(2, 3), dtype=ms.float32, device=device),
+                op_args=(args,),
+                sample_name=op_info.name,
+            ),
+            op_error_type=(ValueError, TypeError),
+            op_error_info="dim error",
+        )

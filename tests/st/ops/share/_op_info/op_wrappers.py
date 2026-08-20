@@ -2490,3 +2490,45 @@ def tensor_bincount_ms(op_input, weights=None, minlength=0):
 
 def tensor_bincount_torch(op_input, weights=None, minlength=0):
     return op_input.bincount(weights=weights, minlength=minlength)
+
+def tensor_clip_ms(op_input, min=None, max=None):
+    return op_input.clip(min=min, max=max)
+
+def tensor_clip_torch(op_input, min=None, max=None):
+    return op_input.clip(min=min, max=max)
+
+def tensor_conj_ms(op_input):
+    return op_input.conj()
+
+def tensor_conj_torch(op_input):
+    return op_input.conj()
+
+def tensor_copysign_ms(x, other):
+    return x.copysign(other)
+
+def tensor_copysign_torch(x, other):
+    return x.copysign(other)
+
+def tensor_cosh_ms(op_input):
+    return op_input.cosh()
+
+def tensor_cosh_torch(op_input):
+    return op_input.cosh()
+
+def tensor_copy__ms(op_input, src, non_blocking=False):
+    return op_input.copy_(src, non_blocking=non_blocking)
+
+def tensor_copy__torch(op_input, src, non_blocking=False):
+    return op_input.copy_(src, non_blocking=non_blocking)
+
+def tensor_count_nonzero_ms(op_input, dim):
+    return op_input.count_nonzero(dim)
+
+def tensor_count_nonzero_torch(op_input, dim):
+    return op_input.count_nonzero(dim)
+
+def tensor_cross_ms(op_input, other, dim=None):
+    return op_input.cross(other, dim=dim)
+
+def tensor_cross_torch(op_input, other, dim=None):
+    return op_input.cross(other, dim=dim)

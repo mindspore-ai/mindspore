@@ -869,3 +869,72 @@ def error_sample_inputs_mint_ones(op_info:OpInfo, dtype=None, device=None, **kwa
             op_error_type=(TypeError, ValueError),
             op_error_info='other ops mint.ones error values'
         )
+
+def basic_sample_inputs_tensor_copy_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype,)
+
+    shapes = (
+        (),
+        (S,),
+        (M, S),
+        (S, S, L),
+        (2, 1, 3, 2),
+        (2, 3, 4, 1, 2),
+        (2, 1, 2, 2, 1, 2),
+        (2, 1, 2, 2, 1, 2, 1),
+        (2, 1, 2, 2, 1, 2, 1, 2),
+    )
+
+    for non_blocking in [True, False]:
+        for input_shape in shapes:
+            _input = make_func(input_shape)
+            slen = len(input_shape)
+            yield OpSampleInput(
+                _input,
+                op_args=(_input,),
+                op_kwargs={'non_blocking': non_blocking},
+                sample_name=f"{op_info.name}_{dtype}_{slen}d",
+            )
+
+def extra_sample_inputs_tensor_copy_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype,)
+
+    #discontiguous/empty tensors/small medium large size
+    shapes = (
+        (0,),  # empty tensors
+        (1, 0, 4),  # empty tensors
+        (20,),  # 1D tensors with small size
+        (812,),  # 1D tensors with medium size
+        (1029, 918),  # 2D tensors with large size
+    )
+
+    for non_blocking in [True, False]:
+        for input_shape in shapes:
+            _input = make_func(input_shape)
+            slen = len(input_shape)
+            yield OpSampleInput(
+                _input,
+                op_args=(_input,),
+                op_kwargs={'non_blocking': non_blocking},
+                sample_name=f"{op_info.name}_{dtype}_{slen}d",
+            )
+    # +-inf nan
+    extremal_cases =([
+        (float('nan'), 'nan'),
+        (float('inf'), 'inf'),
+        (float('-inf'), 'neg_inf'),
+    ])
+    for non_blocking in [True, False]:
+        for extremal_val, name_suffix in extremal_cases:
+            t = make_func((5,))
+            t[2] = extremal_val
+            yield OpSampleInput(
+                op_input=t,
+                op_args=(t,),
+                op_kwargs={'non_blocking': non_blocking},
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+            )
