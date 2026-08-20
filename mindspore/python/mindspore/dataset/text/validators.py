@@ -337,7 +337,7 @@ def check_bert_tokenizer(method):
         [vocab, suffix_indicator, max_bytes_per_token, unknown_token, lower_case, keep_whitespace, _,
          preserve_unused_token, with_offsets], _ = parse_user_args(method, *args, **kwargs)
         if vocab is None:
-            raise ValueError("vacab is not provided.")
+            raise ValueError("vocab is not provided.")
         if not isinstance(vocab, text.Vocab):
             raise TypeError("Wrong input type for vocab, should be text.Vocab object.")
         if not isinstance(suffix_indicator, str):

@@ -404,7 +404,7 @@ class Vocab:
         """
         Build a Vocab from a given dataset.
 
-        The samples in the dataset are used as a corpus to create Vocab, in which the Tokens are arranged in ascending
+        The samples in the dataset are used as a corpus to create Vocab, in which the Tokens are arranged in descending
         order of Token frequency, and Tokens with the same frequency are arranged in alphabetical order.
 
         Args:
