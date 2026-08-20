@@ -18,6 +18,7 @@ Test OBSMindDataset operations
 
 import importlib
 import os
+import queue
 import sqlite3
 import sys
 import threading
@@ -831,44 +832,75 @@ def test_wait_remove_dataset_uses_runtime_config(monkeypatch):
     assert sleep_calls == [0.25]
 
 
-def test_mindrecord_from_obs_close_releases_owned_resources_in_order():
+def test_mindrecord_from_obs_close_waits_for_download_worker():
     """
     Feature: OBSMindDataset cleanup
-    Description: Close dataset-owned resources after stopping the download pool
-    Expectation: close() terminates the pool, shuts down the manager, then closes the runtime once
+    Description: Close waits for a blocked download worker before shutting down shared resources
+    Expectation: The manager observes that the worker has stopped before shutdown returns
     """
-    close_order = []
+    manager_worker_states = []
+    worker_started = threading.Event()
+    release_worker = threading.Event()
 
-    class FakePool:
-        def terminate(self):
-            close_order.append("pool")
+    class BlockingQueue:
+        """Queue adapter that models a worker blocked in a manager proxy call."""
+
+        def get(self, timeout=None):
+            worker_started.set()
+            if timeout is None:
+                release_worker.wait()
+            elif not release_worker.wait(timeout):
+                raise queue.Empty
+            raise RuntimeError("release blocked download worker")
 
     class FakeManager:
         def shutdown(self):
-            close_order.append("manager")
+            manager_worker_states.append(worker_thread.is_alive())
 
     class FakeRuntime:
+        config = types.SimpleNamespace(DISK_THRESHOLD=1.0)
+
+        def get_used_disk_per(self):
+            return 0.0
+
+        def try_load_from_obs(self, *_args):
+            raise AssertionError("the blocked worker should not start a download")
+
         def close(self):
-            close_order.append("runtime")
+            pass
 
     source = obs_mindrecord_dataset.MindRecordFromOBS.__new__(obs_mindrecord_dataset.MindRecordFromOBS)
-    source._pool = FakePool()  # pylint: disable=protected-access
-    source._manager = FakeManager()  # pylint: disable=protected-access
-    source._queue = object()  # pylint: disable=protected-access
-    source._cache = object()  # pylint: disable=protected-access
-    source._current_idx = object()  # pylint: disable=protected-access
-    source._obs_runtime = FakeRuntime()  # pylint: disable=protected-access
+    # pylint: disable=protected-access
+    source._stop_event = threading.Event()
+    source._pool = obs_mindrecord_dataset.ThreadPool(processes=1)
+    source._manager = FakeManager()
+    source._queue = BlockingQueue()
+    source._cache = object()
+    source._current_idx = object()
+    source._obs_runtime = FakeRuntime()
+    worker_thread = source._pool._pool[0]
+    source._worker = source._pool.apply_async(
+        obs_mindrecord_dataset._download_work,
+        (0, types.SimpleNamespace(value=0), "/tmp", {}, source._queue, source._obs_runtime, source._stop_event),
+    )
 
-    source.close()
-    source.close()
+    assert worker_started.wait(timeout=1)
+    try:
+        source.close()
+        source.close()
+    finally:
+        release_worker.set()
+        worker_thread.join(timeout=1)
 
-    assert close_order == ["pool", "manager", "runtime"]
-    assert source._pool is None  # pylint: disable=protected-access
-    assert source._manager is None  # pylint: disable=protected-access
-    assert source._queue is None  # pylint: disable=protected-access
-    assert source._cache is None  # pylint: disable=protected-access
-    assert source._current_idx is None  # pylint: disable=protected-access
-    assert source._obs_runtime is None  # pylint: disable=protected-access
+    assert manager_worker_states == [False]
+    assert not worker_thread.is_alive()
+    assert source._pool is None
+    assert source._manager is None
+    assert source._queue is None
+    assert source._cache is None
+    assert source._current_idx is None
+    assert source._obs_runtime is None
+    # pylint: enable=protected-access
 
 
 def test_obsminddataset_e2e_with_fake_obs_service(monkeypatch, tmp_path):
