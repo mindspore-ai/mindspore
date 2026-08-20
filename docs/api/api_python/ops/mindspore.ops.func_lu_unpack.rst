@@ -6,7 +6,7 @@ mindspore.ops.lu_unpack
     将 :func:`mindspore.scipy.linalg.lu_factor` 返回的LU分解结果解包为P、L、U矩阵。
 
     .. note::
-        - `LU_data` shape为 :math:`(*, M, N)` ， `LU_pivots` shape为 :math:`(*, min(M, N))`， :math:`*` 表示batch数量。
+        - `LU_data` shape为 :math:`(*, M, N)` ， `LU_pivots` shape为 :math:`(*, \min(M, N))`， :math:`*` 表示batch数量。
 
     参数：
         - **LU_data** (Tensor) - 打包的LU分解数据，秩大于等于2。

@@ -8,7 +8,7 @@ mindspore.mint.logaddexp
 
     .. math::
 
-        out_i = \log(exp(input_i) + \exp(other_i))
+        out_i = \log(\exp(input_i) + \exp(other_i))
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

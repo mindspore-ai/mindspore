@@ -616,7 +616,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
 
 def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
-    """
+    r"""
     Compute pivoted LU decomposition of a general matrix.
 
     The decomposition is:
@@ -647,12 +647,12 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
         **If permute_l == False**
 
         - Tensor, :math:`(M, M)` permutation matrix.
-        - Tensor, :math:`(M, K)` lower triangular or trapezoidal matrix with unit diagonal. :math:`K = min(M, N)`.
+        - Tensor, :math:`(M, K)` lower triangular or trapezoidal matrix with unit diagonal. :math:`K = \min(M, N)`.
         - Tensor, :math:`(K, N)` upper triangular or trapezoidal matrix.
 
         **If permute_l == True**
 
-        - Tensor, :math:`(M, K)` permuted L matrix. :math:`K = min(M, N)`.
+        - Tensor, :math:`(M, K)` permuted L matrix. :math:`K = \min(M, N)`.
         - Tensor, :math:`(K, N)` upper triangular or trapezoidal matrix.
 
     Supported Platforms:
@@ -890,7 +890,7 @@ def lstsq(A, B, rcond=None, driver=None):
         - **rank** (Tensor). Effective rank of `A`. It has shape :math:`(*)`, where :math:`*` is the same as batch
           dimensions of `A`. It is computed when `driver` is one of (``"gelsy"``, ``"gelss"``, ``"gelsd"``),
           otherwise it is an empty tensor.
-        - **singular_value** (Tensor). Singular values of `A`. It has shape :math:`(*, min(M, N))`, where :math:`*`
+        - **singular_value** (Tensor). Singular values of `A`. It has shape :math:`(*, \min(M, N))`, where :math:`*`
           is same as batch dimensions of `A`. It is computed when `driver` is one of (``"gelss"``, ``"gelsd"``),
           otherwise it is an empty tensor.
 

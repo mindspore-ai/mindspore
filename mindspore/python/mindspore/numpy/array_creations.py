@@ -744,7 +744,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
 
 
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
-    """
+    r"""
     Returns numbers spaced evenly on a log scale.
 
     In linear space, the sequence starts at base ** start (base to the power of
@@ -761,7 +761,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
         endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
             not included. Default: ``True`` .
         base (Union[int, float], optional): The base of the log space. The step size
-            between the elements in :math:`ln(samples) / ln(base)` (or :math:`log_{base}(samples)`)
+            between the elements in :math:`\ln(samples) / \ln(base)` (or :math:`log_{base}(samples)`)
             is uniform. Default: ``10.0`` .
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype.
             If `dtype` is None, infer the data type from other input arguments. Default: ``None`` .

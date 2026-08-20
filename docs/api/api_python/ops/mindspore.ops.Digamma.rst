@@ -6,7 +6,7 @@
     计算对数gamma函数在输入上的导数。
 
     .. math::
-        P(x) = grad(ln(gamma(x)))
+        P(x) = grad(\ln(gamma(x)))
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

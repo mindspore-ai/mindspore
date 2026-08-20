@@ -6,7 +6,7 @@ mindspore.ops.tanhshrink
     逐元素计算输入tensor的Tanhshrink激活函数值。
 
     .. math::
-        Tanhshrink(x) = x - Tanh(x)
+        Tanhshrink(x) = x - \tanh(x)
 
     参数：
         - **input** (Tensor) - 输入tensor。

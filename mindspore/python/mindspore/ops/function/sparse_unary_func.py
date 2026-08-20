@@ -1835,7 +1835,7 @@ def csr_tanh(x: CSRTensor) -> CSRTensor:
 
     .. math::
 
-        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+        \tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input CSRTensor.
 
@@ -1878,7 +1878,7 @@ def coo_tanh(x: COOTensor) -> COOTensor:
 
     .. math::
 
-        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+        \tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input COOTensor.
 

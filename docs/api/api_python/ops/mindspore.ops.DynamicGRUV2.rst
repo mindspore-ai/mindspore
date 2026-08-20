@@ -48,7 +48,7 @@ mindspore.ops.DynamicGRUV2
     输出：
         - **y** (Tensor) - Tensor，与 `bias_type` 数据类型相同。shape如下：
 
-          - :math:`(num\_step, batch\_size, min(hidden\_size, num\_proj))` ，如果 `num_proj` 大于0，
+          - :math:`(num\_step, batch\_size, \min(hidden\_size, num\_proj))` ，如果 `num_proj` 大于0，
           - :math:`(num\_step, batch\_size, hidden\_size)` ，如果 `num_proj` 等于0。
 
         - **output_h** (Tensor) - Tensor，shape： :math:`(\text{num_step}, \text{batch_size}, \text{hidden_size})` 。与 `bias_type` 数据类型相同。

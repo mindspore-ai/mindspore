@@ -15,9 +15,9 @@ mindspore.ops.pinv
     若x.shape为 :math:`(B, M, N)` ，atol或rtol的shape为 :math:`(K, B)` ，则输出shape为 :math:`(K, B, N, M)` 。
 
     当hermitian为True时，暂时仅支持实数域，默认输入x为实对称矩阵，因此不会在内部检查x，并且在计算中仅使用下三角部分。
-    当x的奇异值（或特征值范数，hermitian=True）小于阈值（ :math:`max(atol, \sigma \cdot rtol)` ， :math:`\sigma` 为最大奇异值或特征值）时，将其置为零，且在计算中不使用。
+    当x的奇异值（或特征值范数，hermitian=True）小于阈值（ :math:`\max(atol, \sigma \cdot rtol)` ， :math:`\sigma` 为最大奇异值或特征值）时，将其置为零，且在计算中不使用。
 
-    若rtol和atol均未指定并且x的shape(M, N)，则rtol设置为 :math:`rtol=max(M, N)*\varepsilon` ， :math:`\varepsilon` 为x.dtype的 `eps值 <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.Eps.html>`_ 。
+    若rtol和atol均未指定并且x的shape(M, N)，则rtol设置为 :math:`rtol=\max(M, N)*\varepsilon` ， :math:`\varepsilon` 为x.dtype的 `eps值 <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.Eps.html>`_ 。
     若rtol未指定且atol指定值大于零，则rtol设置为零。
 
     .. note::

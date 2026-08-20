@@ -1382,7 +1382,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         .. math::
 
-            tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+            \tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
         where :math:`x_i` is an element of the input Tensor.
 

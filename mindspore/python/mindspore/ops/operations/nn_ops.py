@@ -2055,7 +2055,7 @@ class SoftmaxCrossEntropyWithLogits(Primitive):
     .. math::
         \begin{array}{ll} \\
             p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)} \\
-            loss_{ij} = -\sum_j{Y_{ij} * ln(p_{ij})}
+            loss_{ij} = -\sum_j{Y_{ij} * \ln(p_{ij})}
         \end{array}
 
     where :math:`X` represents `logits`.
@@ -3014,7 +3014,7 @@ class SigmoidCrossEntropyWithLogits(Primitive):
 
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            loss_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
+            loss_{ij} = -[Y_{ij} * \ln(p_{ij}) + (1 - Y_{ij})\ln(1 - p_{ij})]
         \end{array}
 
     Inputs:
@@ -6083,7 +6083,7 @@ class DynamicGRUV2(Primitive):
     Outputs:
         - **y** (Tensor) - A Tensor of shape:
 
-          - y_shape = :math:`(num\_step, batch\_size, min(hidden\_size, num\_proj))`: `If num_proj > 0`,
+          - y_shape = :math:`(num\_step, batch\_size, \min(hidden\_size, num\_proj))`: `If num_proj > 0`,
           - y_shape = :math:`(num\_step, batch\_size, hidden\_size)`: `If num_proj = 0`.
 
           Has the same data type with input `bias_type`.

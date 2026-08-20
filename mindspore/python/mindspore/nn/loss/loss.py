@@ -1792,8 +1792,8 @@ class CosineEmbeddingLoss(LossBase):
 
     .. math::
         loss(x_1, x_2, y) = \begin{cases}
-        1-cos(x_1, x_2), & \text{if } y = 1\\
-        \max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
+        1-\cos(x_1, x_2), & \text{if } y = 1\\
+        \max(0, \cos(x_1, x_2)-margin), & \text{if } y = -1\\
         \end{cases}
 
     Args:
@@ -2853,7 +2853,7 @@ class GaussianNLLLoss(LossBase):
 
     Keyword Args:
         full (bool, optional): Whether include the constant term in the loss calculation. When :math:`full=True`,
-            the constant term `const.` will be :math:`0.5 * log(2\pi)`. Default: ``False`` .
+            the constant term `const.` will be :math:`0.5 * \log(2\pi)`. Default: ``False`` .
         eps (float, optional): Used to improve the stability of log function. Default: ``1e-6`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .

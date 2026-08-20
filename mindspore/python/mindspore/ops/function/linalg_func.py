@@ -47,14 +47,14 @@ def cond(A, p=None):
     ``None`` (default)          `2`-norm (see below)              `2`-norm (see below)
     ``'fro'``                   Frobenius norm                    -- not supported --
     ``'nuc'``                   nuclear norm                      -- not supported --
-    ``inf``                     :math:`max(sum(abs(x), dim=1))`   :math:`max(abs(x))`
-    ``-inf``                    :math:`min(sum(abs(x), dim=1))`   :math:`min(abs(x))`
-    ``0``                       -- not supported --               :math:`sum(x != 0)`
-    ``1``                       :math:`max(sum(abs(x), dim=0))`   as below
-    ``-1``                      :math:`min(sum(abs(x), dim=0))`   as below
+    ``inf``                     :math:`\max(\sum(abs(x), dim=1))`   :math:`\max(abs(x))`
+    ``-inf``                    :math:`\min(\sum(abs(x), dim=1))`   :math:`\min(abs(x))`
+    ``0``                       -- not supported --               :math:`\sum(x != 0)`
+    ``1``                       :math:`\max(\sum(abs(x), dim=0))`   as below
+    ``-1``                      :math:`\min(\sum(abs(x), dim=0))`   as below
     ``2``                       largest singular value            as below
     ``-2``                      smallest singular value           as below
-    other ``int`` or ``float``  -- not supported --               :math:`sum(abs(x)^{p})^{(1 / p)}`
+    other ``int`` or ``float``  -- not supported --               :math:`\sum(abs(x)^{p})^{(1 / p)}`
     ==========================  ================================ ==========================================
 
     Note:
@@ -243,10 +243,10 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     When the Hermitian is True, temporary support only real domain, x is treated as a real symmetric, so x is
     not checked internally, and only use the lower triangular part in the computations.
     When the singular value of x (or the norm of the eigenvalues when hermitian = True) that are below
-    threshold (:math:`max(atol, \sigma \cdot rtol)`, :math:`\sigma` as the largest singular value or
+    threshold (:math:`\max(atol, \sigma \cdot rtol)`, :math:`\sigma` as the largest singular value or
     characteristic value), it is set to zero, and is not used in the computations.
     If rtol is not specified and x is a matrix of dimensions (M, N), then rtol is set to
-    be :math:`rtol=max(M, N)*\varepsilon`, :math:`\varepsilon` is the
+    be :math:`rtol=\max(M, N)*\varepsilon`, :math:`\varepsilon` is the
     `eps <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.Eps.html>`_ value of x.dtype.
     If rtol is not specified and atol specifies a value larger than zero, rtol is set to zero.
 

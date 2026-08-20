@@ -19,7 +19,7 @@ bincount_ext:
         minlength (int, optional): The minimum length of output tensor. Should be non-negative. Default: ``0``.
 
     Returns:
-        Tensor. If input is non-empty, the output shape is :math:`(max(max(input)+1, minlength), )`,
+        Tensor. If input is non-empty, the output shape is :math:`(\max(\max(input)+1, minlength), )`,
         otherwise the shape is :math:`(0, )`.
 
     Raises:

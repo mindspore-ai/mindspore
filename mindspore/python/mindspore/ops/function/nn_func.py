@@ -1483,7 +1483,7 @@ def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None
 
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+            L_{ij} = -[Y_{ij}\log(p_{ij}) + (1 - Y_{ij})\log(1 - p_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
@@ -1510,7 +1510,7 @@ def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None
     .. math::
         \begin{array}{ll} \\
             p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
-            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+            L_{ij,c} = -[P_{c}Y_{ij,c} * \log(p_{ij,c}) + (1 - Y_{ij,c})\log(1 - p_{ij,c})]
         \end{array}
 
     where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
@@ -5374,8 +5374,8 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
 
     .. math::
         loss(input1, input2, target) = \begin{cases}
-        1-cos(input1, input2), & \text{if } target = 1\\
-        max(0, cos(input1, input2)-margin), & \text{if } target = -1\\
+        1-\cos(input1, input2), & \text{if } target = 1\\
+        \max(0, \cos(input1, input2)-margin), & \text{if } target = -1\\
         \end{cases}
 
     Args:
@@ -5748,7 +5748,7 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
             but with one dimension equal to 1, or same shape as the x but with one fewer dimension
             (to allow for broadcasting).
         full (bool, optional): Include the constant term in the loss calculation. When :math:`full=True`,
-            the constant term will be :math:`const = 0.5*log(2\pi)`. Default: ``False``.
+            the constant term will be :math:`const = 0.5*\log(2\pi)`. Default: ``False``.
         eps (float, optional): Used to improve the stability of log function. Must be greater than 0.
             Default: ``1e-6`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
@@ -9171,7 +9171,7 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
             input_layout is 'BSH'. Default: ``None``.
         block_table (Tensor, optional): The tensor with data type of int32. The shape is
             :math:`(B, max\_block\_num\_per\_seq)`,
-            where :math:`max\_block\_num\_per\_seq = ceil(\frac{max(actual\_seq\_length)}{block\_size} )`.
+            where :math:`max\_block\_num\_per\_seq = ceil(\frac{\max(actual\_seq\_length)}{block\_size} )`.
             Default: ``None``.
         num_heads (int, optional): The number of heads.  Default: ``1``.
         input_layout (str, optional): The data layout of the input qkv, support 'BSH' and 'BNSD'. Default ``'BSH'``.
@@ -9185,7 +9185,7 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
             ``0`` for high precision mode for float16 dtype. ``1`` for high performance mode.
             Default: ``1``.
         kv_padding_size (Tensor, optional): The tensor with data type of int64. The range of values is
-            :math:`0\le kv\_padding\_size \le  S-max(actual\_seq\_length)`. The shape is :math:`()` or :math:`(1,)`.
+            :math:`0\le kv\_padding\_size \le  S-\max(actual\_seq\_length)`. The shape is :math:`()` or :math:`(1,)`.
             Default: ``None``.
 
     Returns:

@@ -13,14 +13,14 @@ mindspore.ops.cond
     ``None`` (默认值)     `2`-norm (参考最下方公式)            `2`-norm (参考最下方公式)
     ``'fro'``             Frobenius norm                     不支持
     ``'nuc'``             nuclear norm                       不支持
-    ``inf``               :math:`max(sum(abs(x), dim=1))`    :math:`max(abs(x))`
-    ``-inf``              :math:`min(sum(abs(x), dim=1))`    :math:`min(abs(x))`
-    ``0``                 不支持                              :math:`sum(x != 0)`
-    ``1``                 :math:`max(sum(abs(x), dim=0))`    参考最下方公式
-    ``-1``                :math:`min(sum(abs(x), dim=0))`    参考最下方公式
+    ``inf``               :math:`\max(\sum(abs(x), dim=1))`    :math:`\max(abs(x))`
+    ``-inf``              :math:`\min(\sum(abs(x), dim=1))`    :math:`\min(abs(x))`
+    ``0``                 不支持                              :math:`\sum(x != 0)`
+    ``1``                 :math:`\max(\sum(abs(x), dim=0))`    参考最下方公式
+    ``-1``                :math:`\min(\sum(abs(x), dim=0))`    参考最下方公式
     ``2``                 最大奇异值                           参考最下方公式
     ``-2``                最小奇异值                           参考最下方公式
-    其余int或float值       不支持                              :math:`sum(abs(x)^{p})^{(1 / p)}`
+    其余int或float值       不支持                              :math:`\sum(abs(x)^{p})^{(1 / p)}`
     =================   ================================== ==============================================
 
     .. note::

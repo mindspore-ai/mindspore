@@ -9,7 +9,7 @@ mindspore.nn.cosine_decay_lr
 
     .. math::
         decayed\_learning\_rate[i] = min\_lr + 0.5 * (max\_lr - min\_lr) *
-        (1 + cos(\frac{current\_epoch}{decay\_epoch}\pi))
+        (1 + \cos(\frac{current\_epoch}{decay\_epoch}\pi))
 
     其中 :math:`current\_epoch=floor(\frac{i}{step\_per\_epoch})`。
 

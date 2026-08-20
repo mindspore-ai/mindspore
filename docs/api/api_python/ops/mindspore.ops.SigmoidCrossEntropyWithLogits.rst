@@ -12,7 +12,7 @@
     .. math::
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            loss_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
+            loss_{ij} = -[Y_{ij} * \ln(p_{ij}) + (1 - Y_{ij})\ln(1 - p_{ij})]
         \end{array}
 
     输入：

@@ -290,7 +290,7 @@ class CosineDecayLR(LearningRateSchedule):
 
     .. math::
         decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
-        &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
+        &(1 + \cos(\frac{current\_step}{decay\_steps}\pi))
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: this interface will be

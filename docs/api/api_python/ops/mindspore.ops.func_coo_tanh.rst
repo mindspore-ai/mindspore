@@ -6,7 +6,7 @@
     按元素计算COOTensor输入元素的双曲正切。Tanh函数定义为：
 
     .. math::
-        tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+        \tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     其中 :math:`x_i` 是输入COOTensor的元素。
 

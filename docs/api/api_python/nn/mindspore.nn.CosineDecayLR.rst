@@ -9,7 +9,7 @@ mindspore.nn.CosineDecayLR
 
     .. math::
         decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
-        &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
+        &(1 + \cos(\frac{current\_step}{decay\_steps}\pi))
 
     .. warning::
         2.9.0（不含）之后版本非兼容性变更：该接口将调整为调度器对象形式，而非按 `global_step` 调用。

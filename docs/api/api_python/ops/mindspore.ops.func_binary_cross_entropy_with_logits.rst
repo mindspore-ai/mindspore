@@ -13,7 +13,7 @@ mindspore.ops.binary_cross_entropy_with_logits
     .. math::
         \begin{array}{ll} \\
             p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
-            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+            L_{ij} = -[Y_{ij}\log(p_{ij}) + (1 - Y_{ij})\log(1 - p_{ij})]
         \end{array}
 
     :math:`i` 表示 :math:`i^{th}` 样例， :math:`j` 表示类别。则，
@@ -37,7 +37,7 @@ mindspore.ops.binary_cross_entropy_with_logits
     .. math::
         \begin{array}{ll} \\
             p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
-            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+            L_{ij,c} = -[P_{c}Y_{ij,c} * \log(p_{ij,c}) + (1 - Y_{ij,c})\log(1 - p_{ij,c})]
         \end{array}
 
     其中 c 是类别数目（c>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。

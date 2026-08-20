@@ -12,7 +12,7 @@ mindspore.ops.ormqr
 
     参数：
         - **input** (Tensor) - 输入tensor，shape :math:`(*, mn, k)`，当 `left` 为 ``True`` 时， mn的值等于m，否则mn的值等于n。
-        - **tau** (Tensor) - 输入tensor，shape :math:`(*, min(mn, k))` 。
+        - **tau** (Tensor) - 输入tensor，shape :math:`(*, \min(mn, k))` 。
         - **other** (Tensor) - 输入tensor，shape :math:`(*, m, n)` 。
         - **left** (bool, 可选) - 计算顺序。默认 ``True`` 。
         - **transpose** (bool, 可选) - 是否对矩阵Q进行共轭转置变换。默认 ``False`` 。

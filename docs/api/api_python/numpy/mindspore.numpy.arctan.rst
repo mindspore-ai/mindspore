@@ -4,7 +4,7 @@ mindspore.numpy.arctan
 .. py:function:: mindspore.numpy.arctan(x, dtype=None)
 
     逐元素计算反正切函数。
-    这是正切函数的反函数，如果 :math:`y=tan(x)` ，则 :math:`x=arctan(y)` 。
+    这是正切函数的反函数，如果 :math:`y=\tan(x)` ，则 :math:`x=\arctan(y)` 。
 
     .. note::
         不支持Numpy的 ``out`` 、 ``where`` 、 ``casting`` 、 ``order`` 、 ``subok`` 、 ``signature`` 和 ``extobj`` 参数。

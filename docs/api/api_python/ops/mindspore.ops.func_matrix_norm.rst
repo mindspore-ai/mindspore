@@ -12,10 +12,10 @@ mindspore.ops.matrix_norm
     =================   ==================================
     ``'fro'`` (默认值)    Frobenius norm
     ``'nuc'``            nuclear norm
-    ``inf``              :math:`max(sum(abs(x), dim=1))`
-    ``-inf``             :math:`min(sum(abs(x), dim=1))`
-    ``1``                :math:`max(sum(abs(x), dim=0))`
-    ``-1``               :math:`min(sum(abs(x), dim=0))`
+    ``inf``              :math:`\max(\sum(abs(x), dim=1))`
+    ``-inf``             :math:`\min(\sum(abs(x), dim=1))`
+    ``1``                :math:`\max(\sum(abs(x), dim=0))`
+    ``-1``               :math:`\min(\sum(abs(x), dim=0))`
     ``2``                最大奇异值
     ``-2``               最小奇异值
     =================   ==================================

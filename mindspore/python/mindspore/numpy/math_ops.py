@@ -881,10 +881,10 @@ def tensordot(a, b, axes=2):
 
 
 def std(x, axis=None, ddof=0, keepdims=False):
-    """
+    r"""
     Computes the standard deviation along the specified axis.
     The standard deviation is the square root of the average of the squared deviations
-    from the mean, i.e., :math:`std = sqrt(mean(abs(x - x.mean())**2))`.
+    from the mean, i.e., :math:`std = \sqrt{\mathrm{mean}(abs(x - x.mean())**2)}`.
 
     Returns the standard deviation, which is computed for the flattened array by default,
     otherwise over the specified axis.
@@ -3476,10 +3476,10 @@ def cos(x, dtype=None):
 
 
 def tan(x, dtype=None):
-    """
+    r"""
     Computes tangent element-wise.
 
-    Equivalent to :math:`np.sin(x)/np.cos(x)` element-wise.
+    Equivalent to :math:`np.\sin(x)/np.\cos(x)` element-wise.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
@@ -3580,7 +3580,7 @@ def arctan(x, dtype=None):
     """
     Trigonometric inverse tangent, element-wise.
 
-    The inverse of tan, so that if :math:`y = tan(x)` then :math:`x = arctan(y)`.
+    The inverse of tan, so that if :math:`y = \tan(x)` then :math:`x = \arctan(y)`.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
@@ -5580,7 +5580,7 @@ def norm(x, ord=None, axis=None, keepdims=False): # pylint: disable=redefined-bu
             `x` must be 1-D or 2-D, unless `ord` is None. If both `axis` and `ord` are None,
             the 2-norm of ``x.ravel`` will be returned.
         ord (Union[None, 'fro', 'nuc', inf, -inf, int, float], optional): Order of the norm.
-            inf means numpy’s inf object. Default: ``None`` .
+            inf means numpy's inf object. Default: ``None`` .
         axis (Union[int, 2-tuple(int), None], optional): If `axis` is an integer, it
             specifies the axis of `x` along which to compute the vector norms. If `axis` is
             a 2-tuple, it specifies the axes that hold 2-D matrices, and the matrix norms of
@@ -5815,10 +5815,10 @@ def correlate(a, v, mode='valid'):
         mode (str, optional): Specifies padding mode. The optional values are
             ``"same"`` , ``"valid"`` and ``"full"`` . Default: ``"valid"`` .
 
-            - ``"same"``: it returns output of length :math:`max(M, N)`. Boundary
+            - ``"same"``: it returns output of length :math:`\max(M, N)`. Boundary
               effects are still visible.
 
-            - ``"valid"``: it returns output of length :math:`max(M, N) - min(M, N) + 1`.
+            - ``"valid"``: it returns output of length :math:`\max(M, N) - \min(M, N) + 1`.
               The convolution product is only given for points where the signals overlap
               completely. Values outside the signal boundary have no effect.
 
