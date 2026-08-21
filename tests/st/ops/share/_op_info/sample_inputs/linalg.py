@@ -1744,6 +1744,7 @@ def basic_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
 
     case=(
+        (0,),
         (3,),
         (10,)
     )
@@ -1752,7 +1753,7 @@ def basic_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
             op_input=make_arg(shape),
             op_args=(make_arg(shape),),
             op_kwargs={},
-            sample_name=op_info.name,
+            sample_name=f'{op_info.name}_1d_length_{shape[0]}_{dtype}',
         )
 
 
@@ -1765,8 +1766,43 @@ def extra_sample_inputs_dot(op_info: OpInfo, dtype=None, device=None, **kwargs):
     yield from make_extra_tensor(op_info, (16, ), ((16, ),), {},
                                  dtype=dtype, device=device, exclude_value=(1e20,-1e20))
 
-    # yield from make_extra_tensor(op_info, (0,), ((0,),), {},
-    #                              dtype=dtype, device=device, empty_tensor=True)
+    yield  OpSampleInput(
+            op_input=make_tensor((512,), dtype=dtype),
+            op_args=(make_tensor((512,), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_large_dim',
+        )
+
+def dynamic_inputs_tensor_dot(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    yield OpDynamicInput(
+        op_compile_input=OpSampleInput(
+            op_input=ms.Tensor(shape=(None, ), dtype=dtype),
+            op_args=(ms.Tensor(shape=(None, ), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+        ),
+        op_running_inputs=(
+            OpSampleInput(
+                op_input=make_func(shape=(2, )),
+                op_args=(make_func(shape=(2, )), ),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+            OpSampleInput(
+                op_input=make_func(shape=(4, )),
+                op_args=(make_func(shape=(4, )), ),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            ),
+        ),
+    )
 
 def basic_sample_inputs_baddbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
@@ -3411,3 +3447,120 @@ def dynamic_sample_inputs_tensor_cross(op_info:OpInfo, dtype=None, device=None, 
             ),
         ),
     )
+
+def  basic_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    L = LARGE_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
+    S = SMALL_DIM_SIZE
+
+    cases = (
+        (S, S),
+        (M, M),
+        (L, L),
+        (3, 0, 0),
+        (3, S, S),
+        (5, 7, M, M),
+        (2, 6, 3 ,L, L),
+        (3, 1, 6, 1, 2, 1, S, S)
+    )
+
+    for input_shape in cases:
+
+        yield OpSampleInput(
+            op_input=make_func(input_shape),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def extra_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (3, 6, 6), (), {}, dtype=dtype, device=device)
+
+    yield OpSampleInput(
+            op_input=make_tensor((512, 512), dtype=dtype),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}__large_dim',
+        )
+
+def dynamic_sample_inputs_tensor_eigvals(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None,None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2 )),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 3, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def error_sample_inputs_tensor_eigvals(op_info: OpInfo, dtype, device=None, **kwargs):
+
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func((3, 4)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='x should be square(squares)'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func((3,)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='x should be square(squares)'
+    )
+

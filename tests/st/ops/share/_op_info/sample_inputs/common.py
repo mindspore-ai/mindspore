@@ -102,7 +102,7 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
                               isinstance(i, tuple) else i for i in op_args_shapes),
                 op_kwargs={k: shape_convert_to_tensor(v, discontiguous=True) if
                 isinstance(v, tuple) else v for k, v in op_kwargs.items()},
-                sample_name=op_info.name,
+                sample_name=f'{op_info.name}_discontiguous_{dtype}',
             )
 
     if empty_tensor:
@@ -112,7 +112,7 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
                            else make_arg(i) if  isinstance(i, tuple)  else i for i in op_args_shapes),
             op_kwargs={k: v[0]  if isinstance(v, tuple) and not _whether_to_tensor(v)
             else make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
-            sample_name=op_info.name + '_empty_tensor',
+            sample_name=f'{op_info.name}_empty_tensor_{dtype}',
         )
     elif support_multi_dim:
         yield OpSampleInput(
@@ -121,7 +121,7 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
                           else make_arg(i) if isinstance(i, tuple) else i for i in op_args_shapes),
             op_kwargs={k: v[0] if isinstance(v, tuple) and not _whether_to_tensor(v)
             else make_arg(v) if isinstance(v, tuple) else v for k, v in op_kwargs.items()},
-            sample_name=op_info.name + '_multi_dim',
+            sample_name=f'{op_info.name}_multi_dim_{dtype}',
         )
     else:
         data_dict={}
