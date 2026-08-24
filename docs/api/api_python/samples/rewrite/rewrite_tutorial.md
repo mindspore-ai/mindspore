@@ -2,7 +2,7 @@
 
 [![查看源文件](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg)](https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/rewrite/rewrite_tutorial.md)
 
-此指南展示了[mindspore.rewrite](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html)模块中API的各种用法。
+此指南展示了[mindspore.rewrite](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html)模块中API的各种用法。
 
 ## 功能介绍
 
@@ -14,11 +14,11 @@ ReWrite模块提供了一组新的接口，用户可以使用这组接口为一�
 ## 创建SymbolTree
 
 当用户需要使用ReWrite模块对一个网络进行修改时，首先需要基于该网络的实例创建一个SymbolTree，使用的接口
-是 [mindspore.rewrite.SymbolTree.create](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.create) 。
+是 [mindspore.rewrite.SymbolTree.create](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.create)。
 
-通过接口 [mindspore.rewrite.SymbolTree.get_code](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_code) 可以查看当前SymbolTree里存储的网络代码。
+通过接口 [mindspore.rewrite.SymbolTree.get_code](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_code) 可以查看当前SymbolTree里存储的网络代码。
 
-``` python
+```python
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree
 
@@ -66,10 +66,10 @@ class MyNetOpt(nn.Cell):
 
 新的网络还将当前工作目录保存到 ``sys.path`` 里，从而保证新网络运行时可以搜索到原网络依赖的模块。
 
-通过接口 [mindspore.rewrite.SymbolTree.print_node_tabulate](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.print_node_tabulate) 可以看到SymbolTree里存储的节点信息及节点拓扑关系。
+通过接口 [mindspore.rewrite.SymbolTree.print_node_tabulate](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.print_node_tabulate) 可以看到SymbolTree里存储的节点信息及节点拓扑关系。
 该接口依赖tabulate模块，安装指令为： ``pip install tabulate`` 。
 
-``` python
+```python
 stree.print_node_tabulate()
 ```
 
@@ -90,7 +90,7 @@ SymbolTree里记录了各个Node间的拓扑关系，即节点的某个输入来
 
 当前向计算过程中存在复杂语句时，创建SymbolTree的过程会将语句展开，然后再将展开后的每个语句转换为节点。
 
-``` python
+```python
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree
 
@@ -126,10 +126,10 @@ NodeType.Output    return      return x                      [[0, ('relu', 0)]] 
 
 ## 插入节点
 
-当需要在网络的前向计算过程中插入一行新的代码时，可以先使用接口 [mindspore.rewrite.Node.create_call_cell](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.create_call_cell) 创建一个新
-的节点，然后使用接口 [mindspore.rewrite.SymbolTree.insert](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) 将创建的节点插入到SymbolTree内。
+当需要在网络的前向计算过程中插入一行新的代码时，可以先使用接口 [mindspore.rewrite.Node.create_call_cell](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.create_call_cell) 创建一个新
+的节点，然后使用接口 [mindspore.rewrite.SymbolTree.insert](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) 将创建的节点插入到SymbolTree内。
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -144,8 +144,8 @@ stree.print_node_tabulate()
 在该样例中，插入节点的流程如下：
 
 1. 首先创建了一个新的节点，使用的Cell是 ``nn.ReLU()`` ，输入输出均为 ``"x"`` ，节点名是 ``"new_relu"`` 。
-2. 接着通过 [mindspore.rewrite.SymbolTree.get_node](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) 方法获取dense节点。
-3. 最后通过 [mindspore.rewrite.SymbolTree.insert](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) 方法将新创建的节点插入到dense节点后面。
+2. 接着通过 [mindspore.rewrite.SymbolTree.get_node](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) 方法获取dense节点。
+3. 最后通过 [mindspore.rewrite.SymbolTree.insert](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) 方法将新创建的节点插入到dense节点后面。
 
 运行结果如下：
 
@@ -163,20 +163,20 @@ NodeType.Output    return    return x              [[0, ('relu', 0)]]      []
 可以看到，新的new_relu节点插入到dense节点和relu节点间，节点的拓扑结构随着节点插入自动更新。
 其中，新节点对应代码里的 `self.new_relu` 定义在新网络的init函数里，使用传入的 `new_relu_cell` 作为实例。
 
-除了使用 [mindspore.rewrite.SymbolTree.get_node](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) 方法获取节点来指定插入位置，还可以通过 [mindspore.rewrite.SymbolTree.nodes](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.nodes) 来遍历节点，并使用 [mindspore.rewrite.Node.get_instance_type](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_instance_type) 基于节点对应实例的类型来获取节点，确定插入位置。
+除了使用 [mindspore.rewrite.SymbolTree.get_node](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) 方法获取节点来指定插入位置，还可以通过 [mindspore.rewrite.SymbolTree.nodes](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.nodes) 来遍历节点，并使用 [mindspore.rewrite.Node.get_instance_type](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_instance_type) 基于节点对应实例的类型来获取节点，确定插入位置。
 
-``` python
+```python
 for node in stree.nodes():
     if node.get_instance_type() == nn.Dense:
         stree.insert(stree.after(node), new_node)
 ```
 
-如果希望插入新代码的输出不复用原始网络里的变量，可以在创建节点时使用 [mindspore.rewrite.SymbolTree.unique_name](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.unique_name) 得
+如果希望插入新代码的输出不复用原始网络里的变量，可以在创建节点时使用 [mindspore.rewrite.SymbolTree.unique_name](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.unique_name) 得
 到一个SymbolTree内不重名的变量名，作为节点的输出。
 
-然后在插入节点前，通过使用 [mindspore.rewrite.Node.set_arg](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.set_arg) 修改节点输入变量名，设置哪些节点使用新的节点输出作为输入。
+然后在插入节点前，通过使用 [mindspore.rewrite.Node.set_arg](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.set_arg) 修改节点输入变量名，设置哪些节点使用新的节点输出作为输入。
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -209,7 +209,7 @@ NodeType.Output    return    return x                [[0, ('relu', 0)]]      []
 
 ## 删除节点
 
-当需要在网络的前向计算过程中删除一行代码时，可以使用接口 [mindspore.rewrite.SymbolTree.erase](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.erase)  来删除节点。
+当需要在网络的前向计算过程中删除一行代码时，可以使用接口 [mindspore.rewrite.SymbolTree.erase](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.erase) 来删除节点。
 
 节点删除后，符号树内剩余节点的拓扑关系会依据删除后的代码情况自动更新。
 因此，当待删除的节点的输出被别的节点使用时，节点删除后，需要注意剩余节点的拓扑关系是否符合设计预期。
@@ -217,7 +217,7 @@ NodeType.Output    return    return x                [[0, ('relu', 0)]]      []
 如果待删除节点的前面存在某个节点的输出名和待删除节点的输出名重名，删除节点后，后续使用该输出名作为输入的节点，自动使用前面那个节点
 的输出作为输入。拓扑关系会按照该策略更新。
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -237,12 +237,12 @@ NodeType.CallCell  dense    x = self.dense(x)  [[0, ('input_x', 0)]]  [[0, [('re
 NodeType.Output    return   return x           [[0, ('dense', 0)]]    []
 ```
 
-可以看到，因为dense结点的输出和relu结点的输出同名，删除relu节点后，返回值使用的是dense节点的输出。
+可以看到，因为dense节点的输出和relu节点的输出同名，删除relu节点后，返回值使用的是dense节点的输出。
 
 如果待删除节点的前面不存在和待删除节点同名的输出，则需要用户先修改后续使用该输出作为输入的节点，更新参数名，然后再
 删除节点，以避免删除节点后发生使用了未定义变量的错误。
 
-``` python
+```python
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree
 
@@ -266,7 +266,7 @@ stree.erase(relu_node)
 stree.print_node_tabulate()
 ```
 
-在该样例中，拿到relu节点后，先使用接口 [mindspore.rewrite.Node.get_users](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_users)  遍历使用relu节点的输出作为输入的节点，将这些
+在该样例中，拿到relu节点后，先使用接口 [mindspore.rewrite.Node.get_users](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_users)  遍历使用relu节点的输出作为输入的节点，将这些
 节点的输入都改为relu节点的输入，然后再删除relu节点。这样的话，后续使用了relu节点输出 ``z`` 的地方就都改为使用relu节点输入 ``y`` 了。
 
 具体的参数名修改策略取决于实际场景需求。
@@ -286,9 +286,9 @@ NodeType.Output    return   return y           [[0, ('dense', 0)]]    []
 
 ## 替换节点
 
-当需要在网络的前向计算过程中替换代码时，可以使用接口 [mindspore.rewrite.SymbolTree.replace](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.replace)  来替换节点。
+当需要在网络的前向计算过程中替换代码时，可以使用接口 [mindspore.rewrite.SymbolTree.replace](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.replace) 来替换节点。
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -315,7 +315,7 @@ NodeType.Output    return    return x              [[0, ('new_relu', 0)]]  []
 如果替换的新节点的输出和被替换节点的输出名不一致，需要注意维护好替换后的节点间的拓扑关系，即先修改后续使用了被替换节点的输出的节点，
 更新这些节点的参数名，然后再进行节点替换操作。
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -352,9 +352,9 @@ NodeType.Output    return      return y1                [[0, ('new_relu_1', 0)]]
 
 ## 返回新网络
 
-当对网络修改完毕后，就可以使用接口 [mindspore.rewrite.SymbolTree.get_network](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_network)  得到修改后的网络实例了。
+当对网络修改完毕后，就可以使用接口 [mindspore.rewrite.SymbolTree.get_network](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_network)  得到修改后的网络实例了。
 
-``` python
+```python
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import numpy as np
@@ -363,5 +363,5 @@ inputs = Tensor(np.ones([1, 1, 32, 32]), mstype.float32)
 outputs = new_net(inputs)
 ```
 
-调用该接口后，Rewrite模块会先在当前工作目录的rewritten_network文件夹下，生成修改后的网络对应的脚本文件，然后使用该脚本文件创建新的网络实例，
+调用该接口后，ReWrite模块会先在当前工作目录的rewritten_network文件夹下，生成修改后的网络对应的脚本文件，然后使用该脚本文件创建新的网络实例，
 原网络的实例作为参数使用。新的网络实例可以直接用于计算和训练。

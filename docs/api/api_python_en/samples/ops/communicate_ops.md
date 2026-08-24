@@ -4,7 +4,7 @@
 
 Distributed training involves communication operations such as `AllReduce`, `ReduceScatter`, `AllGather` and `Broadcast` for data transfer, and we will explain their meaning and sample code in the following sections.
 
-Examples of different communication operations by using 4 GPUs are given in each of the following sections. The output in the example comes from the results of the `rank0` program on card 0. The user needs to save each section code below as a separate communication.py. Because it involves a multi-card program, the user needs to go through the `mpirun` command to start communication.py. The `mpirun` commands requires the installation of OpenMPI as well as NCCL, and please refer to [here](https://www.mindspore.cn/tutorials/en/master/parallel/mpirun.html) for the corresponding installation.
+Examples of different communication operations by using 4 GPUs are given in each of the following sections. The output in the example comes from the results of the `Rank 0` program on card 0. The user needs to save each section code below as a separate communication.py. Because it involves a multi-card program, the user needs to go through the `mpirun` command to start communication.py. The `mpirun` command requires the installation of OpenMPI as well as NCCL, and please refer to [here](https://www.mindspore.cn/tutorials/en/master/parallel/mpirun.html) for the corresponding installation.
 
 ```bash
 mpirun -output-filename log -merge-stderr-to-stdout -np 4 python communication.py
@@ -31,7 +31,7 @@ init()
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.all_reduce_sum = ops.AllReduce(ops.ReduceOp.SUM, group="nccl_world_group")
+        self.all_reduce_sum = ops.AllReduce(ops.ReduceOp.SUM)
 
     def construct(self, x):
         return self.all_reduce_sum(x)
@@ -197,13 +197,13 @@ output = net(input_x, input_split_sizes)
 print(output)
 ```
 
-The output of the rank0 is:
+The output of the Rank 0 is:
 
 ```text
 [0. 2]
 ```
 
-The output of the rank1 is:
+The output of the Rank 1 is:
 
 ```text
 [4.]
@@ -213,7 +213,7 @@ The output of the rank1 is:
 
 ![image](../../../api_python/samples/ops/images/reduce.png)
 
-The `Reduce` operation first performs the specified reduction operation on the input of each card, and then send the output results to the specified cards. Taking op = ReduceOp.SUM as an example: First, sum the input tensors of each card, and then distribute the results to the specified cards. As shown in the figure above, the input of each card is a 1x4 Tensor. `ReduceScatter` first sums the input to obtain a Tensor of [0, 4, 8, 12], and then sends the result to the specified card (for example, card 1). The output result corresponding to card 1 is [0., 4., 8., 12.], and the output results of the other cards are [0.].
+The `Reduce` operation first performs the specified reduction operation on the input of each card, and then sends the output results to the specified cards. Taking op = ReduceOp.SUM as an example: First, sum the input tensors of each card, and then distribute the results to the specified cards. As shown in the figure above, the input of each card is a 1x4 Tensor. `Reduce` first sums the input to obtain a Tensor of [0, 4, 8, 12], and then sends the result to the specified card (for example, card 1). The output result corresponding to card 1 is [0., 4., 8., 12.], and the output results of the other cards are [0.].
 
 The sample code is as follows: We initialize the values of the input of the Reduce operator in each process. For each card, we apply for a 1x4-sized Tensor input with values [0, 1, 2, 3]. Then we call the Reduce operator to perform communication within the communication domain of cards `0-1-2-3` (the communication range of all cards, i.e., nccl_world_group), and print the output results.
 
@@ -291,7 +291,7 @@ The result of the run is as follows, with the output log path `log/1/rank.0`:
 
 ![image](../../../api_python/samples/ops/images/NeighborExchange.png)
 
-The `NeighborExchange` operation will provide a set of data to be sent to each of the other specific cards while receiving data from the specific card. For example, in the above figure, rank 0 sends a Tensor with shape [16,16] to rank 1 and receives a Tensor with shape [32,32] from rank 1. rank 1 sends a Tensor with shape [32,32] to rank 0 and receives a Tensor with shape [16,16] from rank 0. Finally, the rank 0 outputs the received Tensor with shape [32,32], and rank 1 outputs the received Tensor with [16,16].
+The `NeighborExchange` operation will provide a set of data to be sent to each of the other specific cards while receiving data from the specific card. For example, in the above figure, Rank 0 sends a Tensor with shape [16,16] to Rank 1 and receives a Tensor with shape [32,32] from Rank 1. Rank 1 sends a Tensor with shape [32,32] to Rank 0 and receives a Tensor with shape [16,16] from Rank 0. Finally, the Rank 0 outputs the received Tensor with shape [32,32], and Rank 1 outputs the received Tensor with [16,16].
 
 The example code as follows: we use the `NeighborExchange` operator for data exchange between card 0 and card 1, sending data from card 0 to card 1, and receiving data from card 1. Card 1 sends data to card 0 and receives data from card 0. Finally each card outputs the received data.
 
@@ -321,7 +321,7 @@ class Net1(nn.Cell):
         out = self.neighbor_exchange((x,))
         return out[0]
 
-ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
+ms.set_context(mode=ms.GRAPH_MODE)
 init()
 rank_id = int(os.getenv("RANK_ID"))
 if (rank_id % 2 == 0):
@@ -342,14 +342,14 @@ Use a shell script to start the 2-card script. The sample shell script is as fol
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 neighborexchange.py
 ```
 
-The results of rank0 are:
+The results of Rank 0 are:
 
 ```text
 [[2. 2.]
  [2. 2.]]
 ```
 
-The results of rank1 are:
+The results of Rank 1 are:
 
 ```text
 [[1. 1. 1.]
@@ -361,7 +361,7 @@ The results of rank1 are:
 
 ![image](../../../api_python/samples/ops/images/neighborexchangev2.png)
 
-The `NeighborExchangeV2` operation sends part of the data in the Tensor to the surrounding 8 cards according to the attribute settings, and receives data from the surrounding 8 cards and stitches them into a new Tensor, which is often used in scenarios where a large Tensor is sliced on multiple cards for distributed convolutional operations. Attributes send_rank_ids and recv_rank_ids are 8 numbers, respectively, indicating sending/receiving rank_id in 8 directions, and filling -1 means no send/no receive. As shown above, figure 2 indicates the order corresponding to the 8 directions. The attributes send_lens and recv_lens are four numbers that represent the send/receive lengths in the four directions [top, bottom, left, right], respectively. For example, in Figure 1 above, a 16-card example is shown, taking rank 10 as an example, setting send_rank_ids=[6,7,11,15,14,13,9,5], the data of rank 10 is sliced and sent to rank 5, 6, 7, 11, 15, 14, 13, 9 respectively, for example, red in Figure is sent to rank 5, red, yellow and blue to rank 6, blue to rank 7, etc. Setting recv_rank_ids=[6,7,11,15,14,13,9,5], at the same time rank10 receives some data from each of these cards stitched into the corresponding direction to form a new Tensor output, as shown in the figure with rank10 and the light green part.
+The `NeighborExchangeV2` operation sends part of the data in the Tensor to the surrounding 8 cards according to the attribute settings, and receives data from the surrounding 8 cards and stitches them into a new Tensor, which is often used in scenarios where a large Tensor is sliced on multiple cards for distributed convolutional operations. Attributes send_rank_ids and recv_rank_ids are 8 numbers, respectively, indicating sending/receiving rank_id in 8 directions, and filling -1 means no send/no receive. As shown above, figure 2 indicates the order corresponding to the 8 directions. The attributes send_lens and recv_lens are four numbers that represent the send/receive lengths in the four directions [top, bottom, left, right], respectively. For example, in Figure 1 above, a 16-card example is shown, taking Rank 10 as an example, setting send_rank_ids=[6,7,11,15,14,13,9,5], the data of Rank 10 is sliced and sent to Rank 5, 6, 7, 11, 15, 14, 13, 9 respectively, for example, red in Figure is sent to Rank 5, red, yellow and blue to Rank 6, blue to Rank 7, etc. Setting recv_rank_ids=[6,7,11,15,14,13,9,5], at the same time Rank 10 receives some data from each of these cards stitched into the corresponding direction to form a new Tensor output, as shown in the figure with Rank 10 and the light green part.
 
 The sample code is as follows: we use the `NeighborExchangeV2` operator for data exchange between card 0 and card 1, sending the data below card 0 to card 1 and receiving the data from card 1 stitched below. Card 1 sends the upper part of the data to card 0 and receives the data from card 0 stitched on top. Finally each card outputs the received data.
 
@@ -391,7 +391,7 @@ class Net1(nn.Cell):
         out = self.neighbor_exchangev2(x)
         return out
 
-ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
+ms.set_context(mode=ms.GRAPH_MODE)
 init()
 rank_id = int(os.getenv("RANK_ID"))
 if (rank_id % 2 == 0):
@@ -412,7 +412,7 @@ Use a shell script to start the 2-card script. The sample shell script is as fol
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 neighborexchangev2.py
 ```
 
-The results of rank0 are:
+The results of Rank 0 are:
 
 ```text
 [[[[1. 1.]
@@ -420,7 +420,7 @@ The results of rank0 are:
    [2. 2.]]]]
 ```
 
-The results of rank1 are:
+The results of Rank 1 are:
 
 ```text
 [[[[1. 1.]
@@ -453,7 +453,7 @@ class Net(nn.Cell):
         out = self.all_to_all(x)
         return out
 
-ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
+ms.set_context(mode=ms.GRAPH_MODE)
 init()
 net = Net()
 rank_id = int(os.getenv("RANK_ID"))
@@ -468,7 +468,7 @@ To start the 8-card script by using a shell script, the sample shell script is a
 msrun --worker_num=8 --local_worker_num=8 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoall.py
 ```
 
-The results of rank0 to rank7 are:
+The results of Rank 0 to Rank 7 are:
 
 ```text
 [[[[0. 1. 2. 3. 4. 5. 6. 7.]]]]
@@ -516,13 +516,13 @@ To start the 2-card script by using a shell script, the sample shell script is a
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoallv.py
 ```
 
-The results of rank0 is:
+The results of Rank 0 is:
 
 ```text
 [0. 3. 4.]
 ```
 
-The results of rank1 is:
+The results of Rank 1 is:
 
 ```text
 [1. 2. 5]
@@ -560,13 +560,13 @@ To start the 2-card script by using a shell script, the sample shell script is a
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoallvc.py
 ```
 
-The results of rank0 are:
+The results of Rank 0 are:
 
 ```text
 [0. 1. 2]
 ```
 
-The results of rank1 are:
+The results of Rank 1 are:
 
 ```text
 [0. 0. 0]
@@ -574,16 +574,16 @@ The results of rank1 are:
 
 ## CollectiveScatter
 
-![image](./images/collectscatter.png)
+![image](../../../api_python/samples/ops/images/collectscatter.png)
 
-`CollectiveScatter` operation scatters tensor evently across the processes in the specified communication group. For example，scatter a 2x2 Tensor on device 0 evenly to the two devices, and get the output Tensor:
+`CollectiveScatter` operation scatters tensor evenly across the processes in the specified communication group. For example, scatter a 4x2 Tensor on device 0 evenly to the two devices, and get the output Tensor:
 
 ```text
-rank_0 result:
+Rank 0 result:
 [[1,2],
  [3,4]]
 
-rank_1 result:
+Rank 1 result:
 [[5,6],
  [7,8]]
 ```
@@ -613,14 +613,14 @@ output = net(input)
 print(output)
 ```
 
-rank_0 result:
+Rank 0 result:
 
 ```text
 [[0. 1.]
  [2. 3.]]
 ```
 
-rank_1 result:
+Rank 1 result:
 
 ```text
 [[4. 5.]
@@ -629,22 +629,22 @@ rank_1 result:
 
 ## CollectiveGather
 
-![image](./images/collectgather.png)
+![image](../../../api_python/samples/ops/images/collectgather.png)
 
-`CollectiveGather` operation gathers tensors from the specified communication group. The operation will gather the tensor from processes according to dimension 0. For example，gather a 2x2 Tensor on device 0, and get the output Tensor:
+`CollectiveGather` operation gathers tensors from the specified communication group. The operation will gather the tensor from processes according to dimension 0. For example, gather a 2x2 Tensor on device 0, and get the output Tensor:
 
 ```text
-rank_0 result:
+Rank 0 result:
 [[0. 1.],
  [2. 3.],
  [0. 1.],
  [2. 3.]]
 
-rank_1 result:
+Rank 1 result:
 [0.]
 ```
 
-In the following example, set `dest_rank` as 0, and the operation will scatter the Tensor on device 0 to other devices.
+In the following example, set `dest_rank` as 0, and the operation will gather the Tensor from other devices to device 0.
 
 ```python
 import numpy as np
@@ -669,7 +669,7 @@ output = net(input)
 print(output)
 ```
 
-rank_0 result:
+Rank 0 result:
 
 ```text
 [[0. 1.],
@@ -678,7 +678,7 @@ rank_0 result:
  [2. 3.]]
 ```
 
-rank_1 result:
+Rank 1 result:
 
 ```text
 [0.]
@@ -686,7 +686,7 @@ rank_1 result:
 
 ## Barrier
 
-`Barrier` operation synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until all processes call this operation. After all processes finish calling the operations, the blocked processes will be weaken and continue their task.
+`Barrier` operation synchronizes all processes in the specified group. Once the process calls this operation, it will be blocked until all processes call this operation. After all processes finish calling the operation, the blocked processes will be woken up and continue their task.
 
 ```python
 import numpy as np

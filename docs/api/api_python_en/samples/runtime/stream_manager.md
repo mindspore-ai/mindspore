@@ -1,5 +1,7 @@
 # Illustration of stream management
 
+[![View Source on AtomGit](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source_en.svg)](https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python_en/samples/runtime/stream_manager.md)
+
 ## Device stream
 
 A device stream is a linear sequence of execution that belongs to a specific device. You normally do not need to create one explicitly: by default, each device uses its own "default" stream.
@@ -14,10 +16,9 @@ B = ops.matmul(A, A)
 with ms.runtime.StreamCtx(s):
     # sum() may start execution before matmul() finishes!
     C = ops.sum(B)
-
 ```
 
-When the `current stream` is the default stream, it is the user’s responsibility to ensure proper synchronization when switch to the non-default streams. The fixed version of this example is:
+When the `current stream` is the default stream, it is the user’s responsibility to ensure proper synchronization when switching to the non-default streams. The fixed version of this example is:
 
 ```python
 ...
@@ -124,4 +125,4 @@ ev.wait()
 add_1_s0 = add_s1 + 1
 ```
 
-Therefore, MindSpore has developed a mechanism to automatically extend the lifecycle of cross-streams device addresses. You don't need to manually execute the function like `record_stream()` to extend its lifetime. The general principle is as follows: MindSpore identifies the stream where the operator and input/output are located. After identifying the operator and input/output cross-streams(For example, `add_s0` is from stream0, and the operator is on stream1), an event will be inserted for the input or output address, and the address and event information is saved to the device memory pool. Then, if there is a "back-stream"(`record()` on stream1, `wait()` on stream0), the address and event information in the device memory pool will be removed. If there is no "back-stream" and the device memory pool fails to allocate, all events will be synchronized and the bound information is released.
+Therefore, MindSpore has developed a mechanism to automatically extend the lifecycle of cross-streams device addresses. You don't need to manually execute the function like `record_stream()` to extend its lifetime. The general principle is as follows: MindSpore identifies the stream where the operator and input/output are located. After identifying the operator and input/output cross-streams (For example, `add_s0` is from stream0, and the operator is on stream1), an event will be inserted for the input or output address, and the address and event information is saved to the device memory pool. Then, if there is a "back-stream"(`record()` on stream1, `wait()` on stream0), the address and event information in the device memory pool will be removed. If there is no "back-stream" and the device memory pool fails to allocate, all events will be synchronized and the bound information is released.
