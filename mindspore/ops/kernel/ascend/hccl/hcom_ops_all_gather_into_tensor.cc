@@ -44,11 +44,12 @@ int InnerCommAllGatherIntoTensorKernel::Resize(const std::vector<KernelTensor *>
   }
   comm_ = AscendCollectiveCommLib::GetInstance().GetHcomByGroup(group_);
   output_size_list_.clear();
-  size_t size = 0;
-  if (!HcomUtil::GetHcclOpSize(data_type_, input_shape, &size)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "GetHcclOpOutputSize failed";
-  }
   if (!outputs.empty()) {
+    auto output_shape = outputs[kIndex0]->GetDeviceShapeVector();
+    size_t size = 0;
+    if (!HcomUtil::GetHcclOpSize(data_type_, output_shape, &size)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "GetHcclOpOutputSize failed";
+    }
     output_size_list_.push_back(size);
   }
 
