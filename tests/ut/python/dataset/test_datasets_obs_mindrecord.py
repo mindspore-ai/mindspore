@@ -451,6 +451,60 @@ def test_get_obs_client_reuses_runtime_client(monkeypatch):
     }
 
 
+def test_get_obs_client_initializes_once_when_called_concurrently(monkeypatch):
+    """
+    Feature: OBS util
+    Description: Concurrent first access shares one client owned by the runtime
+    Expectation: Two callers receive the same client and only one client is created
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    created_clients = []
+    constructor_barrier = threading.Barrier(2, timeout=0.5)
+
+    class RecordingObsClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            created_clients.append(self)
+            try:
+                constructor_barrier.wait()
+            except threading.BrokenBarrierError:
+                pass
+
+        def close(self):
+            pass
+
+    explicit_config = create_obs_config()
+    explicit_config.AK = "instance-ak"
+    explicit_config.SK = "instance-sk"
+    explicit_config.SERVER = "https://instance-server"
+
+    monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
+
+    runtime = obs_util.OBSRuntime(explicit_config)
+    call_barrier = threading.Barrier(3)
+    clients = []
+    errors = []
+
+    def get_client():
+        try:
+            call_barrier.wait(timeout=1)
+            clients.append(runtime.get_obs_client())
+        except Exception as exc:  # pylint: disable=broad-except
+            errors.append(exc)
+
+    threads = [threading.Thread(target=get_client) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    call_barrier.wait(timeout=1)
+    for thread in threads:
+        thread.join(timeout=2)
+
+    assert not errors
+    assert all(not thread.is_alive() for thread in threads)
+    assert len(created_clients) == 1
+    assert clients[0] is clients[1]
+
+
 def test_obs_runtime_close_closes_cached_client(monkeypatch):
     """
     Feature: OBS util
@@ -481,6 +535,38 @@ def test_obs_runtime_close_closes_cached_client(monkeypatch):
 
     assert close_calls == [obs_client]
     assert runtime.obs_client is None
+
+
+def test_obs_runtime_does_not_recreate_client_after_close(monkeypatch):
+    """
+    Feature: OBS util
+    Description: A closed runtime cannot lazily create another client
+    Expectation: Access after close fails instead of reopening the runtime
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    created_clients = []
+
+    class RecordingObsClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            created_clients.append(self)
+
+        def close(self):
+            pass
+
+    explicit_config = create_obs_config()
+    explicit_config.AK = "instance-ak"
+    explicit_config.SK = "instance-sk"
+    explicit_config.SERVER = "https://instance-server"
+
+    monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
+
+    runtime = obs_util.OBSRuntime(explicit_config)
+    runtime.get_obs_client()
+    runtime.close()
+
+    with pytest.raises(RuntimeError, match="closed"):
+        runtime.get_obs_client()
+    assert len(created_clients) == 1
 
 
 def test_minddataset_normalizes_windows_list_paths(monkeypatch):
