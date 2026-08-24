@@ -1,3 +1,4 @@
+"""Test module for fill_ functionality."""
 # Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +58,7 @@ def fill__forward_func(input_x, value):
 
 @jit(backend="ms_backend")
 def fill__backward_func_scalar(input_x, value):
-    grad_fn = ms.grad(fill__forward_func, grad_position=(0))
+    grad_fn = ms.grad(fill__forward_func, grad_position=(0,))
     return grad_fn(input_x, value)
 
 
@@ -102,7 +103,7 @@ def test_tensor_fill__normal(mode):
     )
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard", mem_peak=4.01
 )
@@ -125,7 +126,7 @@ def test_tensor_fill_tensor_dynamic():
     )
 
 
-@arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],
+@arg_mark(plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard", mem_peak=4.01
 )

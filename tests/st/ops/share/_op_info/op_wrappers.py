@@ -88,6 +88,24 @@ def mint_one_hot_torch(op_input, *args, **kwargs):
 def tensor_tanh_ms(op_input):
     return op_input.tanh()
 
+def tensor_expm1_ms(op_input):
+    return op_input.expm1()
+
+def tensor_expm1_torch(op_input):
+    return op_input.expm1()
+
+def tensor_fliplr_ms(op_input):
+    return op_input.fliplr()
+
+def tensor_fliplr_torch(op_input):
+    return op_input.fliplr()
+
+def tensor_flipud_ms(op_input):
+    return op_input.flipud()
+
+def tensor_flipud_torch(op_input):
+    return op_input.flipud()
+
 def tensor_ceil_ms(op_input):
     return op_input.ceil()
 
@@ -890,13 +908,55 @@ def tensor_addmm_torch(op_input, mat1, mat2, beta=1, alpha=1):
 
 def tensor_addmm__ms(op_input, mat1, mat2, beta=1, alpha=1):
     cloned_input = op_input.clone()
-    result_ms = cloned_input.addmm_(mat1, mat2, beta=beta, alpha=alpha)
-    return result_ms
+    cloned_input.addmm_(mat1, mat2, beta=beta, alpha=alpha)
+    return cloned_input
 
 def tensor_addmm__torch(op_input, mat1, mat2, beta=1, alpha=1):
+    cloned_input_pt = op_input.clone()
+    cloned_input_pt.addmm_(mat1, mat2, beta=beta, alpha=alpha)
+    return cloned_input_pt
+
+def tensor_exponential__ms(op_input, lambd=1, generator=None):
     cloned_input = op_input.clone()
-    result_pt = cloned_input.addmm_(mat1, mat2, beta=beta, alpha=alpha)
-    return result_pt
+    cloned_input.exponential_(lambd=lambd, generator=generator)
+    return cloned_input
+
+def tensor_exponential__torch(op_input, lambd=1, generator=None):
+    cloned_input_pt = op_input.clone()
+    if generator is not None and not isinstance(generator, torch.Generator):
+        import mindspore as ms
+        if isinstance(generator, ms.Generator):
+            torch_gen = torch.Generator()
+            torch_gen.manual_seed(42)
+            generator = torch_gen
+    cloned_input_pt.exponential_(lambd=lambd, generator=generator)
+    return cloned_input_pt
+
+def tensor_fill__ms(op_input, value):
+    cloned_input = op_input.clone()
+    cloned_input.fill_(value)
+    return cloned_input
+
+def tensor_fill__torch(op_input, value):
+    cloned_input_pt = op_input.clone()
+    #only support scalar
+    if isinstance(value, torch.Tensor):
+        if value.dim() == 1:
+            value = value.item()
+        elif value.dim() == 0:
+            value = value.item()
+    cloned_input_pt.fill_(value)
+    return cloned_input_pt
+
+def tensor_fill_diagonal__ms(op_input, fill_value, wrap=False):
+    cloned_input = op_input.clone()
+    cloned_input.fill_diagonal_(fill_value, wrap=wrap)
+    return cloned_input
+
+def tensor_fill_diagonal__torch(op_input, fill_value, wrap=False):
+    cloned_input_pt = op_input.clone()
+    cloned_input_pt.fill_diagonal_(fill_value, wrap=wrap)
+    return cloned_input_pt
 
 def tensor_clamp__ms(op_input, min=None, max=None):
     cloned_input = op_input.clone()
@@ -911,6 +971,14 @@ def tensor_clamp__torch(op_input, min=None, max=None):
 def tensor_choose_ms(op_input, choices, mode="clip"):
     cloned_input = op_input.clone()
     return cloned_input.choose(choices, mode=mode)
+
+def tensor_expand_dims_ms(op_input, axis=0):
+    cloned_input = op_input.clone()
+    return cloned_input.expand_dims(axis=axis)
+
+def tensor_fill_diagonal_ms(op_input, fill_value, wrap=False):
+    cloned_input = op_input.clone()
+    return cloned_input.fill_diagonal(fill_value, wrap=wrap)
 
 def tensor_cholesky_solve_ms(op_input, input2, upper=False):
     return op_input.cholesky_solve(input2, upper=upper)
@@ -2151,6 +2219,12 @@ def ms_tensor_scatter(input, dim, index, src):
 
 def torch_tensor_scatter(input, dim, index, src):
     return input.scatter(dim, index, src)
+
+def ms_tensor_flip(op_input, dim):
+    return op_input.flip(dim)
+
+def torch_tensor_flip(op_input, dim):
+    return op_input.flip(dim)
 
 def mint_bernoulli(input, generator=None):
     return mint.bernoulli(input, generator=generator)

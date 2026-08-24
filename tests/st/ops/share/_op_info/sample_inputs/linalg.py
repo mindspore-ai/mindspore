@@ -3107,6 +3107,163 @@ def dynamic_sample_inputs_tensor_addmm(op_info: OpInfo, dtype=None, device=None,
                 ),
             ),
         )
+def basic_reference_inputs_tensor_exponential_func(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    """Yield typical shape cases for tensor.exponential_ ops.
+
+    Covers scalars, vectors, singleton dims, medium dims, and empty-dimension cases.
+
+    Args:
+        op_info: OpInfo object.
+        dtype: Data type of the tensors.
+        device: Device of the tensors.
+        kwargs: Additional keyword arguments.
+    Returns:
+        Generator of OpSampleInput objects.
+    """
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+    generator = ms.Generator()
+    generator.manual_seed(42)
+
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    base_shapes = (
+        ((S,), 1, None),
+        ((M, S), 1, generator),
+        ((S, S, L), 1.0, generator),
+        ((2, 0, 3, 2), 1.0, None),
+        ((2, 3, 4, 1, 2), 2.0, generator),
+        ((2, 1, 2, 2, 1, 2), 1.0, None),
+        ((2, 1, 2, 2, 1, 2, 1), 2.0, generator),
+    )
+    #0d < input <8d
+    for input_shape, lambd, generator in base_shapes:
+        _input = make_arg(input_shape)
+        slen = len(input_shape)
+        yield OpSampleInput(
+            op_input= _input,
+            op_args=(lambd,),
+            op_kwargs={"generator": generator},
+            sample_name=f"{op_info.name}_{dtype}_{slen}d",
+        )
+
+def extra_sample_inputs_tensor_exponential_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    '''
+    Generate extra sample inputs for tensor.exponential_
+    Covers: various padding modes, dilation, groups, small/large/extremal value
+            tensors, discontiguous tensors, type promotion.
+    Skips: scalar inputs (conv2d requires tensor inputs).
+    '''
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    cases = (
+        ((0,), 1, None),
+        ((20,), 1.0, None),
+        ((812,),1.0, None),
+        ((1029, 917), 1.0, None),
+    )
+    for input_shape, lambd, generator in cases:
+        yield OpSampleInput(
+            op_input=make_arg(shape=input_shape),
+            op_args=(lambd,),
+            op_kwargs={"generator": generator},
+            sample_name=f"{op_info.name}_{dtype}",
+        )
+
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_shape = (1, 1, len(_float_small_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(True,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_small",
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_shape=(1, 1, len(_large_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(1.0,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_large",
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(np.full((1, 1, 3), t), dtype=dtype, device=device),
+                    op_args=(1.0,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_inf",
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        yield OpSampleInput(
+            op_input=make_arg((2, 3, 4), discontiguous=discontiguous),
+            op_args=(1.0,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_inputs_other_op_tensor_exponential_func(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device, low=None, high=None)
+    shapes = (
+        (1.0, 1, None),#input is not tensor
+        (make_arg((2, 1)), "1", None),#lambd is str
+        (make_arg((2, 3, 4)), 1, True),#generator is bool
+        (make_arg((2, 1)), [1,2], None),  # lambd is list
+    )
+    for input_shape, lambd, generator in shapes:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(lambd,),
+                op_kwargs={'generator': generator,},
+                sample_name=op_info.name,
+            ),
+            op_error_type=(TypeError, ValueError, RuntimeError, AttributeError),
+            op_error_info='other ops tensor.exponential_ error values')
+
+def dynamic_sample_inputs_tensor_exponential_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    #mat1, mat2, input 2d
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(1, None,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input_",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(10, 3), dtype=dtype),
+                    op_args=(1, None,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 1, 2), dtype=dtype),
+                    op_args=(1, None,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
 
 def dynamic_sample_inputs_tensor_addbmm(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
