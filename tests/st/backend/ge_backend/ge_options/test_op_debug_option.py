@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test op debug option"""
 import os
 import pytest
 
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 @pytest.mark.parametrize('run_mode', [0, 1])
 def test_op_debug_option(run_mode):
     """
@@ -29,7 +30,7 @@ def test_op_debug_option(run_mode):
     self_path = os.path.split(os.path.realpath(__file__))[0]
     return_code = os.system(f"bash {self_path}/shell_run_test.sh {run_mode}")
     if return_code != 0:
-        os.system(f"echo '\n**************** Log ****************'")
+        os.system("echo '\n**************** Log ****************'")
         os.system(f"grep -E 'ERROR|Error|error' {self_path}/ms.log")
     os.system(f"rm -rf {self_path}/ms.log")
     assert return_code == 0

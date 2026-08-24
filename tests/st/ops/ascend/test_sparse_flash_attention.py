@@ -573,7 +573,7 @@ def _run_sparse_flash_attention_grad_cache_hit(context_mode):
         np.testing.assert_allclose(first_grad.asnumpy(), second_grad.asnumpy(), rtol=2e-3, atol=2e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 def test_sparse_flash_attention_grad_graph_cache_hit():
     """Feature: SparseFlashAttentionGrad executor cache in Graph mode.
@@ -584,7 +584,7 @@ def test_sparse_flash_attention_grad_graph_cache_hit():
     _run_sparse_flash_attention_grad_cache_hit(ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
           mem_peak=1250.0)
 def test_sparse_flash_attention_grad_pynative_cache_hit():
     """Feature: SparseFlashAttentionGrad executor cache in PyNative mode.
