@@ -16,12 +16,12 @@ network code, or a new network instance can be obtained.
 ## Creating A SymbolTree
 
 When we need to modify a network using the ReWrite module, we first need to create a SymbolTree based on the instance
-of the network, using the interface [mindspore.rewrite.SymbolTree.create](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.create) .
+of the network, using the interface [mindspore.rewrite.SymbolTree.create](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.create) .
 
-Through the use of the interface [mindspore.rewrite.SymbolTree.get_code](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_code), we can view the network code currently
+Through the use of the interface [mindspore.rewrite.SymbolTree.get_code](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_code), we can view the network code currently
 stored in SymbolTree.
 
-``` python
+```python
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree
 
@@ -73,11 +73,11 @@ the function.
 The new network also saves the current working directory to ``sys.path`` , ensuring that modules that the original network
 depends on can be searched for when running on the new network.
 
-By using the interface [mindspore.rewrite.SymbolTree.print_node_tabulate](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.print_node_tabulate) , we can see the node information and node
+By using the interface [mindspore.rewrite.SymbolTree.print_node_tabulate](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.print_node_tabulate) , we can see the node information and node
 topology relationships stored in the SymbolTree.
 This interface depends on the tabulate module, and the installation command is: ``pip install tabulate`` .
 
-``` python
+```python
 stree.print_node_tabulate()
 ```
 
@@ -101,7 +101,7 @@ from, and the output of a node is used by which input of which node.
 When there are complex statements in the forward computation process, the statements are expanded during the creation
 of SymbolTree, and then each expanded statement is converted to a node.
 
-``` python
+```python
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree
 
@@ -139,10 +139,10 @@ expanded into three lines of code and then converted into three corresponding no
 ## Inserting Nodes
 
 When we need to insert a new line of code during the forward computation of the network, we can first create a new node
-using interface [mindspore.rewrite.Node.create_call_cell](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.create_call_cell) , and then insert the created node into SymbolTree
-using interface [mindspore.rewrite.SymbolTree.insert](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) .
+using interface [mindspore.rewrite.Node.create_call_cell](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.create_call_cell) , and then insert the created node into SymbolTree
+using interface [mindspore.rewrite.SymbolTree.insert](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) .
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -157,8 +157,8 @@ stree.print_node_tabulate()
 In this example, the process for inserting a node is as follows:
 
 1. Firstly, a new node is created. The Cell used is ``nn.ReLU()`` , the input and output are ``"x"`` , and the node name is ``"new_relu"`` .
-2. Then the dense node is fetched by using [mindspore.rewrite.SymbolTree.get_node](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) .
-3. Finally, the newly created node is inserted after the dense node through [mindspore.rewrite.SymbolTree.insert](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) .
+2. Then the dense node is fetched by using [mindspore.rewrite.SymbolTree.get_node](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) .
+3. Finally, the newly created node is inserted after the dense node through [mindspore.rewrite.SymbolTree.insert](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.insert) .
 
 The results are as follows:
 
@@ -178,24 +178,24 @@ node is automatically updated with the node insertion.
 The definition of `self.new_relu` in the code of new node is saved in the init function of the new network, using
 parameter `new_relu_cell` as the instance.
 
-In addition to getting nodes using [mindspore.rewrite.SymbolTree.get_node](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) to specify the insertion location, we can
-also iterate through nodes by [mindspore.rewrite.SymbolTree.nodes](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.nodes) and use [mindspore.rewrite.Node.get_instance_type](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_instance_type)
+In addition to getting nodes using [mindspore.rewrite.SymbolTree.get_node](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_node) to specify the insertion location, we can
+also iterate through nodes by [mindspore.rewrite.SymbolTree.nodes](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.nodes) and use [mindspore.rewrite.Node.get_instance_type](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_instance_type)
 to get the node and determine the insertion position based on the type of corresponding instance of node.
 
-``` python
+```python
 for node in stree.nodes():
     if node.get_instance_type() == nn.Dense:
         stree.insert(stree.after(node), new_node)
 ```
 
-If we want the output of new code to be inserted does not reuse variables from the original network, we can
-use [mindspore.rewrite.SymbolTree.unique_name](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.unique_name) to get an variable name that are not duplicated in the SymbolTree
-as the output of node when creating nodes.
+If we do not want the output of the new code to be inserted to reuse variables from the original network, we can
+use [mindspore.rewrite.SymbolTree.unique_name](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.unique_name) to get a variable name that is not duplicated in the SymbolTree
+as the output of the node when creating nodes.
 
-Then, before inserting the node, we can modify the node input variable name by using [mindspore.rewrite.Node.set_arg](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.set_arg)
+Then, before inserting the node, we can modify the node input variable name by using [mindspore.rewrite.Node.set_arg](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.set_arg)
 to set which nodes use the new node output as input.
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -225,12 +225,12 @@ NodeType.CallCell  relu      x = self.relu(x_1)      [[0, ('new_relu', 0)]]  [[0
 NodeType.Output    return    return x                [[0, ('relu', 0)]]      []
 ```
 
-It can be seen that the output variable name of new node is an unnamed name ``x_1`` , and the old relu node uses ``x_1`` as input.
+It can be seen that the output variable name of the new node is a non-duplicated name ``x_1`` , and the old relu node uses ``x_1`` as input.
 
 ## Deleting Nodes
 
 When we need to delete a line of code during the forward computation of the network, we can use the interface
-[mindspore.rewrite.SymbolTree.erase](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.erase) to delete the node.
+[mindspore.rewrite.SymbolTree.erase](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.erase) to delete the node.
 
 After the node is deleted, the topological relationship of the remaining nodes in the symbol tree will be automatically
 updated according to the code of network after deletion.
@@ -241,7 +241,7 @@ If a node exists in front of the node to be deleted that has the same output nam
 is deleted, the output of the previous node is automatically used as input for the node that uses the output name as the input.
 The topology relationship is updated according to this policy.
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -265,10 +265,10 @@ It can be seen that because the output of dense node and the output of relu node
 the relu node, the return value uses the output of the dense node.
 
 If there is no node that has the same output name as the node to be deleted in front of the node to be deleted, we need
-to modify subsequent nodes that uses this output as input by updating the input names, and then delete the node, in order
+to modify subsequent nodes that use this output as input by updating the input names, and then delete the node, in order
 to avoid errors using undefined variables after deleting the node.
 
-``` python
+```python
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree
 
@@ -292,7 +292,7 @@ stree.erase(relu_node)
 stree.print_node_tabulate()
 ```
 
-In this example, after getting the relu node, first we use the interface [mindspore.rewrite.Node.get_users](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_users) to
+In this example, after getting the relu node, first we use the interface [mindspore.rewrite.Node.get_users](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.Node.get_users) to
 iterate through the nodes that use the output of relu node as input, change the input of these nodes to the input of relu
 node, and then delete the relu node. In this case, the subsequent use of the relu node output ``z`` will be changed to
 the relu node input ``y`` .
@@ -315,9 +315,9 @@ It can be seen that after deleting the relu node, the value of the last return n
 ## Replacing Nodes
 
 When we need to replace code during the forward computation of network, we can replace the node with the
-interface [mindspore.rewrite.SymbolTree.replace](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.replace) .
+interface [mindspore.rewrite.SymbolTree.replace](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.replace) .
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -343,9 +343,9 @@ NodeType.Output    return    return x              [[0, ('new_relu', 0)]]  []
 
 If the output name of the new node and the replaced node are inconsistent, we need to pay attention
 to maintaining the topological relationship between nodes after replacement, that is, first modify the subsequent nodes that
-uses the output of the replaced node, update the parameter names of these nodes, and then perform the node replacement operation.
+use the output of the replaced node, update the parameter names of these nodes, and then perform the node replacement operation.
 
-``` python
+```python
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 net = MyNet()
 stree = SymbolTree.create(net)
@@ -384,10 +384,10 @@ updated to the output of the first new node.
 
 ## Returning A New Network
 
-When the network is modified, we can use the interface [mindspore.rewrite.SymbolTree.get_network](https://mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_network) to get the
+When the network is modified, we can use the interface [mindspore.rewrite.SymbolTree.get_network](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html#mindspore.rewrite.SymbolTree.get_network) to get the
 modified network instance.
 
-``` python
+```python
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import numpy as np

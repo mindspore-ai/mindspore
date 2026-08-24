@@ -1,12 +1,14 @@
 # 流管理介绍
 
+[![查看源文件](https://mindspore-website.obs.cn-north-4.myhuaweicloud.com/website-images/master/resource/_static/logo_source.svg)](https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/runtime/stream_manager.md)
+
 ## 设备流
 
 设备流是属于特定设备的线性执行序列。默认情况下，每个设备都使用自己的“默认”流，不需要显式地创建一个设备流。
 
-每个流中的操作都按照它们创建的顺序执行，但是不同流中的操作可以以任何相对顺序并发执行，除非使用显式同步函数（如`synchrize()`或`wait_stream()`）。例如，下面的代码是不正确的：
+每个流中的操作都按照它们创建的顺序执行，但是不同流中的操作可以以任何相对顺序并发执行，除非使用显式同步函数（如`synchronize()`或`wait_stream()`）。例如，下面的代码是不正确的：
 
-``` python
+```python
 ...
 s = ms.runtime.Stream()  # Create a new stream.
 A = Tensor(np.random.randn(20, 20), ms.float32)
@@ -18,7 +20,7 @@ with ms.runtime.StreamCtx(s):
 
 当 `current stream` 是默认流，切换至非默认流时，用户有责任确保正确的同步。正确的示例为：
 
-``` python
+```python
 ...
 s = ms.runtime.Stream()  # Create a new stream.
 A = Tensor(np.random.randn(20, 20), ms.float32)
@@ -30,7 +32,7 @@ with ms.runtime.StreamCtx(s):
 
 由于申请和释放都需要开销，所以建议在同一个Cell或函数中使用同一个流，而不是每次使用前都申请一个流。不推荐的写法如下：
 
-``` python
+```python
 # The following cell formats are not recommended:
 class Net(nn.Cell):
     def __init__(self):
@@ -51,7 +53,7 @@ def func(A):
 
 推荐的写法如下：
 
-``` python
+```python
 # The following cell formats are recommended:
 class Net(nn.Cell):
     def __init__(self):
@@ -76,7 +78,7 @@ def func(A, s1):
 
 `ms.runtime.Event` 最常见的用法是 `record()` 和 `wait()` 的组合，以确保在多流网络中执行序能够满足用户的期望，如下所示：
 
-``` python
+```python
 s = ms.runtime.Stream()     # Create a new stream.
 ev1 = ms.runtime.Event()    # Create a new event.
 ev2 = ms.runtime.Event()    # Create a new event.
@@ -93,9 +95,9 @@ ev1.wait()      # Ensure 'C = ops.sum(B)' is complete.
 D = C + 1
 ```
 
-另外，由于Host算子的下发和设备算子的执行是异步的。在下面的例子中，Host上的 `add_s0` 持有的设备地址释放后，被 `mess_output` 申请到了，并将输出数据写入该设备地址。但是，此时设备可能会执行 `add_s1 = add_s0 + 1` ，但是 `add_s0` 的设备内存已经被其他算子使用了。最终导致精度不正确。
+另外，由于Host算子的下发和设备算子的执行是异步的，在下面的例子中，Host上的 `add_s0` 持有的设备地址释放后，被 `mess_output` 申请到了，并将输出数据写入该设备地址。此时设备可能会执行 `add_s1 = add_s0 + 1` ，但 `add_s0` 的设备内存已经被其他算子使用了。最终导致精度不正确。
 
-``` python
+```python
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor, ops
@@ -123,4 +125,4 @@ ev.wait()
 add_1_s0 = add_s1 + 1
 ```
 
-因此，MindSpore开发了一套自动延长跨流地址的生命周期的机制。你不需要手动执行类似 `record_stream()` 的函数来延长它的生命周期。总体原则是：MindSpore能够识别算子和输入输出所在的流，在识别出算子和输入输出跨流后（如 `add_s0` 来自stream0，算子在stream1上），对输入输出地址插入事件，并将地址和事件信息保存到显存池中。如果后续有“回流”（stream1上执行 `record()` ，stream0上执行 `wait()` )，则显存池中的地址和事件信息将被释放。如果没有“回流”，但是显存池分配失败，则所有事件将被同步并释放绑定的信息。
+因此，MindSpore开发了一套自动延长跨流地址的生命周期的机制。你不需要手动执行类似 `record_stream()` 的函数来延长它的生命周期。总体原则是：MindSpore能够识别算子和输入输出所在的流，在识别出算子和输入输出跨流后（如 `add_s0` 来自stream0，算子在stream1上），对输入输出地址插入事件，并将地址和事件信息保存到显存池中。如果后续有“回流”（stream1上执行 `record()` ，stream0上执行 `wait()` ），则显存池中的地址和事件信息将被释放。如果没有“回流”，但是显存池分配失败，则所有事件将被同步并释放绑定的信息。

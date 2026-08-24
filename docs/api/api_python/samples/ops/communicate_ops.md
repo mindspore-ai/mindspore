@@ -4,7 +4,7 @@
 
 在分布式训练中涉及例如`AllReduce`、`ReduceScatter`、`AllGather`和`Broadcast`等通信操作进行数据传输，我们将在下述的章节分别阐述其含义和示例代码。
 
-下述每个章节中给出了使用4张GPU进行不同通信操作的示例。示例中的输出来自于0号卡`rank0`程序的结果。用户需要将下述每个章节代码另存为communication.py。因为涉及到多卡程序，用户需要通过`mpirun`命令去启动communication.py。其中`mpirun`命令需要安装OpenMPI以及NCCL，对应的安装请参考[mpirun启动](https://www.mindspore.cn/tutorials/zh-CN/master/parallel/mpirun.html)。准备好communication.py后，在命令行中输入如下启动命令，即可启动多卡程序：
+下述每个章节中给出了使用4张GPU进行不同通信操作的示例。示例中的输出来自于0号卡`Rank 0`程序的结果。用户需要将下述每个章节代码另存为communication.py。因为涉及到多卡程序，用户需要通过`mpirun`命令去启动communication.py。其中`mpirun`命令需要安装OpenMPI以及NCCL，对应的安装请参考[mpirun启动](https://www.mindspore.cn/tutorials/zh-CN/master/parallel/mpirun.html)。准备好communication.py后，在命令行中输入如下启动命令，即可启动多卡程序：
 
 ```bash
 mpirun -output-filename log -merge-stderr-to-stdout -np 4 python communication.py
@@ -197,13 +197,13 @@ output = net(input_x, input_split_sizes)
 print(output)
 ```
 
-rank0的结果为：
+Rank 0的结果为：
 
 ```text
 [0. 2]
 ```
 
-rank1的结果为：
+Rank 1的结果为：
 
 ```text
 [4.]
@@ -213,7 +213,7 @@ rank1的结果为：
 
 ![image](./images/reduce.png)
 
-`Reduce`操作会将每张卡的输入先进行指定的归约操作，再将输出结果分发到指定的卡上。以op=ReduceOp.SUM为例：先对每张卡的输入张量进行求和，然后按将结果分发到指定的卡上。如上图所示，每卡的输入均为1x4的Tensor。`ReduceScatter`先对输入求和得到[0, 4, 8, 12]的Tensor，然后结果发送到指定的卡上(例如：卡1)，卡1对应的输出结果为[0., 4., 8., 12.], 其余各卡输出结果为[0.]。
+`Reduce`操作会将每张卡的输入先进行指定的归约操作，再将输出结果分发到指定的卡上。以op=ReduceOp.SUM为例：先对每张卡的输入张量进行求和，然后将结果分发到指定的卡上。如上图所示，每卡的输入均为1x4的Tensor。`Reduce`先对输入求和得到[0, 4, 8, 12]的Tensor，然后结果发送到指定的卡上(例如：卡1)，卡1对应的输出结果为[0., 4., 8., 12.], 其余各卡输出结果为[0.]。
 
 示例代码如下：我们初始化每个进程中`Reduce`算子输入的数值，对于每张卡，我们申请了一个1x4大小，数值为[0, 1, 2, 3]的Tensor输入。然后调用`Reduce`算子，在通信域为`0-1-2-3`的卡(所有卡的通信范围即nccl_world_group)中进行通信，并且打印输出结果。
 
@@ -293,7 +293,7 @@ print(output)
 
 ![image](./images/NeighborExchange.png)
 
-`NeighborExchange`操作会将提供一组数据分别发往其他特定的卡上，同时从特定的卡接收数据。例如上图中，rank 0 向rank 1发送shape为[16,16]的Tensor，并接收rank 1发送的shape为[32,32]的Tensor；rank 1 向rank 0发送shape为[32,32]的Tensor，并接收rank 0发送的shape为[16,16]的Tensor。最终rank 0输出了接收到的shape为[32,32]的Tensor，rank 1输出接收到的[16,16]的Tensor。
+`NeighborExchange`操作会将提供一组数据分别发往其他特定的卡上，同时从特定的卡接收数据。例如上图中，Rank 0向Rank 1发送shape为[16,16]的Tensor，并接收Rank 1发送的shape为[32,32]的Tensor；Rank 1向Rank 0发送shape为[32,32]的Tensor，并接收Rank 0发送的shape为[16,16]的Tensor。最终Rank 0输出了接收到的shape为[32,32]的Tensor，Rank 1输出接收到的[16,16]的Tensor。
 
 示例代码如下：我们使用`NeighborExchange`算子进行0号卡和1号卡之间的数据交换，将0号卡的数据发送到1号卡，并接收来自1号卡的数据；1号卡将数据发送到0号卡，并接收来自0号卡的数据；最终每张卡输出接收到的数据。
 
@@ -344,14 +344,14 @@ else:
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 neighborexchange.py
 ```
 
-rank0的结果为：
+Rank 0的结果为：
 
 ```text
 [[2. 2.]
  [2. 2.]]
 ```
 
-rank1的结果为：
+Rank 1的结果为：
 
 ```text
 [[1. 1. 1.]
@@ -363,7 +363,7 @@ rank1的结果为：
 
 ![image](./images/neighborexchangev2.png)
 
-`NeighborExchangeV2`操作会将Tensor中按照属性设置将部分数据发送给周边的8张卡，且从周边的8张卡中接收数据并拼接成新的Tensor，常用于将大Tensor切分在多卡上进行分布式卷积运算的场景。其中，属性send_rank_ids和recv_rank_ids分别为8个数字，表示8个方向上发送/接收的rank_id，填-1表示不发送/不接收，如上图图二表示对应8个方向上的顺序；属性send_lens和recv_lens分别为4个数字，表示[top, bottom, left, right] 四个方向上的发送/接收长度。例如上图图一中为一个16卡的示例，以图中rank 10为例，设定send_rank_ids=[6,7,11,15,14,13,9,5]，将rank10的数据进行切分后分别向rank 5、6、7、11、15、14、13、9发送了对应部分的数据，例如图中红色发给rank5，红色、黄色和蓝色发给rank6，蓝色发给rank7等；设定recv_rank_ids=[6,7,11,15,14,13,9,5]，则同时rank10从这些卡分别接收了一些数据拼接到对应方向上，组成了新的Tensor输出，例如图中的rank10和浅绿色部分所示。
+`NeighborExchangeV2`操作会将Tensor中按照属性设置将部分数据发送给周边的8张卡，且从周边的8张卡中接收数据并拼接成新的Tensor，常用于将大Tensor切分在多卡上进行分布式卷积运算的场景。其中，属性send_rank_ids和recv_rank_ids分别为8个数字，表示8个方向上发送/接收的rank_id，填-1表示不发送/不接收，如上图图二表示对应8个方向上的顺序；属性send_lens和recv_lens分别为4个数字，表示[top, bottom, left, right] 四个方向上的发送/接收长度。例如上图图一中为一个16卡的示例，以图中Rank 10为例，设定send_rank_ids=[6,7,11,15,14,13,9,5]，将Rank 10的数据进行切分后分别向Rank 5、6、7、11、15、14、13、9发送了对应部分的数据，例如图中红色发给Rank 5，红色、黄色和蓝色发给Rank 6，蓝色发给Rank 7等；设定recv_rank_ids=[6,7,11,15,14,13,9,5]，则同时Rank 10从这些卡分别接收了一些数据拼接到对应方向上，组成了新的Tensor输出，例如图中的Rank 10和浅绿色部分所示。
 
 示例代码如下：我们使用`NeighborExchangeV2`算子进行0号卡和1号卡之间的数据交换，将0号卡的下方的数据发送到1号卡，并接收来自1号卡的数据拼接在下方；1号卡将上方部分数据发送到0号卡，并接收来自0号卡的数据拼接在上方；最终每张卡输出接收到的数据。
 
@@ -414,7 +414,7 @@ else:
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 neighborexchangev2.py
 ```
 
-rank 0结果为：
+Rank 0的结果为：
 
 ```text
 [[[[1. 1.]
@@ -422,7 +422,7 @@ rank 0结果为：
    [2. 2.]]]]
 ```
 
-rank 1结果为：
+Rank 1的结果为：
 
 ```text
 [[[[1. 1.]
@@ -470,7 +470,7 @@ print(output)
 msrun --worker_num=8 --local_worker_num=8 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoall.py
 ```
 
-rank0~rank7的结果为：
+Rank 0~Rank 7的结果为：
 
 ```text
 [[[[0. 1. 2. 3. 4. 5. 6. 7.]]]]
@@ -518,13 +518,13 @@ print(output)
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoallv.py
 ```
 
-rank0的结果为：
+Rank 0的结果为：
 
 ```text
 [0. 3. 4.]
 ```
 
-rank1的结果为：
+Rank 1的结果为：
 
 ```text
 [1. 2. 5]
@@ -562,13 +562,13 @@ print(output)
 msrun --worker_num=2 --local_worker_num=2 --master_port=8118 --log_dir=msrun_log --join=True --cluster_time_out=300 alltoallvc.py
 ```
 
-rank0的结果为：
+Rank 0的结果为：
 
 ```text
 [0. 1. 2]
 ```
 
-rank1的结果为：
+Rank 1的结果为：
 
 ```text
 [0. 0. 0]
@@ -578,7 +578,7 @@ rank1的结果为：
 
 ![image](./images/collectscatter.png)
 
-`CollectiveScatter`操作是对输入数据的数据进行均匀散射到通信域的卡上。例如上图中，将0卡大小为4x2的Tensor进行均匀切分后转发到两张卡上，最终输出为：
+`CollectiveScatter`操作是对输入数据进行均匀散射到通信域的卡上。例如上图中，将0卡大小为4x2的Tensor进行均匀切分后转发到两张卡上，最终输出为：
 
 ```text
 Rank 0:
@@ -615,14 +615,14 @@ output = net(input)
 print(output)
 ```
 
-rank_0的结果为：
+Rank 0的结果为：
 
 ```text
 [[0. 1.]
  [2. 3.]]
 ```
 
-rank_1的结果为：
+Rank 1的结果为：
 
 ```text
 [[4. 5.]
@@ -646,7 +646,7 @@ Rank 1:
 [0.]
 ```
 
-示例代码如下：我们将`CollectiveGather`算子的根节点设置为0号卡，表示将从0号卡接受数据。
+示例代码如下：我们将`CollectiveGather`算子的根节点设置为0号卡，表示将从0号卡接收数据。
 
 ```python
 import numpy as np
@@ -671,7 +671,7 @@ output = net(input)
 print(output)
 ```
 
-rank_0的结果为：
+Rank 0的结果为：
 
 ```text
 [[0. 1.],
@@ -680,7 +680,7 @@ rank_0的结果为：
  [2. 3.]]
 ```
 
-rank_1的结果为：
+Rank 1的结果为：
 
 ```text
 [0.]
@@ -700,10 +700,10 @@ ms.set_context(mode=ms.GRAPH_MODE)
 init()
 class BarrierNet(nn.Cell):
     def __init__(self):
-    ​    super(BarrierNet, self).__init__()
-    ​    self.barrier = ops.Barrier()
+        super(BarrierNet, self).__init__()
+        self.barrier = ops.Barrier()
     def construct(self):
-    ​    self.barrier()
+        self.barrier()
 
 net = BarrierNet()
 net()
