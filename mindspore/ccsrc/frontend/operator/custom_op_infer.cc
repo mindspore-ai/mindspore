@@ -26,6 +26,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "utils/file_utils.h"
+#include "utils/ms_utils.h"
 #include "utils/custom_aot_extra.h"
 #include "mindspore/ops/infer/custom.h"
 #include "infer/ops_func_impl/custom_ext.h"
@@ -93,11 +94,11 @@ void GetInferFilePathAndFuncName(const PrimitivePtr &primitive, std::string *fil
     *file_path = real_path.value();
     *func_name = exec_info.substr(pos + 1);
     constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
-    const char *value = common::EnvHelper::GetInstance()->GetEnv(kWhiteList);
-    if (value != nullptr) {
-      auto white_list = FileUtils::GetRealPath(value);
+    const auto white_list_env = common::GetEnv(kWhiteList);
+    if (!white_list_env.empty()) {
+      auto white_list = FileUtils::GetRealPath(white_list_env.c_str());
       if (!white_list.has_value()) {
-        MS_LOG(EXCEPTION) << "Illegal white list path set in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
+        MS_LOG(EXCEPTION) << "Illegal white list path set in MS_CUSTOM_AOT_WHITE_LIST: " << white_list_env;
       }
       std::string wl = white_list.value();
       if (!wl.empty() && wl.back() != '/') {
