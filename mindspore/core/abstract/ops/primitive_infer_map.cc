@@ -117,17 +117,18 @@ std::set<int64_t> RectifyDependListFromDynamicInputAttr(const CNodePtr &cnode, c
 
   std::for_each(ori_depend_list.begin(), ori_depend_list.end(),
                 [&proto2real, &dyn_input_sizes, &primitive, &rec_depend_list](int64_t proto_idx) {
-                  if (proto_idx >= static_cast<int64_t>(dyn_input_sizes.size())) {
+                  if (proto_idx < 0 || proto_idx >= SizeToLong(dyn_input_sizes.size())) {
                     MS_LOG(EXCEPTION) << "The value depend index " << proto_idx << " of primitive " << primitive->name()
                                       << " is out of range [0, " << dyn_input_sizes.size() << ").";
                   }
+                  const auto real_idx = LongToSize(proto_idx);
                   // value depend input is a normal input
-                  if (dyn_input_sizes[proto_idx] < 0) {
-                    rec_depend_list.insert(proto2real[proto_idx]);
+                  if (dyn_input_sizes.at(real_idx) < 0) {
+                    rec_depend_list.insert(proto2real.at(real_idx));
                   }
                   // value depend input is is a dynamic input
-                  for (int64_t i = 0; i < dyn_input_sizes[proto_idx]; ++i) {
-                    rec_depend_list.insert(proto2real[proto_idx] + i);
+                  for (int64_t i = 0; i < dyn_input_sizes.at(real_idx); ++i) {
+                    rec_depend_list.insert(proto2real.at(real_idx) + i);
                   }
                 });
 
