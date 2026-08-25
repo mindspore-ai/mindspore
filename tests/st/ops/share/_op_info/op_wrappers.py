@@ -20,6 +20,7 @@ tensor/nn methods to a uniform call signature used by the OpInfo framework.
 """
 import numpy as np
 import mindspore as ms
+import numpy as np
 from mindspore import nn, mint
 from mindspore.common.parameter import Parameter
 from mindspore.experimental import optim
@@ -2606,3 +2607,76 @@ def tensor_cross_ms(op_input, other, dim=None):
 
 def tensor_cross_torch(op_input, other, dim=None):
     return op_input.cross(other, dim=dim)
+
+def tensor_divide_ms(input, other, rounding_mode=None):
+    return input.divide(other, rounding_mode=rounding_mode)
+
+def tensor_divide_torch(input, other, rounding_mode=None):
+    return input.divide(other, rounding_mode=rounding_mode)
+
+def tensor_dot_ms(input, other):
+    return input.dot(other)
+
+def tensor_dot_torch(input, other):
+    return input.dot(other)
+
+def tensor_dsplit_ms(input, indices_or_sections):
+    return input.dsplit(indices_or_sections)
+
+def tensor_dsplit_torch(input, indices_or_sections):
+    return input.dsplit(indices_or_sections)
+
+def tensor_dtype_ms(input):
+    return input.dtype
+
+def tensor_dtype_torch(input):
+    return input.dtype
+
+def tensor_expand_ms(input, size):
+    return input.expand(size)
+
+def tensor_expand_torch(input, size):
+    if isinstance(size, tuple):
+        return input.expand(size)
+    return input.expand(size.numpy().tolist())
+
+def tensor_exp__ms(input):
+    input = input + 0
+    return input.exp_()
+
+def tensor_exp__torch(input):
+    input = input+0
+    return input.exp_()
+
+def tensor_eigvals_ms(input):
+    result = ms.ops.eigvals(input).numpy()
+    return ms.Tensor(np.take_along_axis(result, np.argsort(np.round(result, 1), axis=-1), axis=-1),dtype=ms.complex64)
+
+def tensor_eigvals_torch(input):
+    result = torch.linalg.eigvals(input).numpy()
+    return torch.tensor(np.take_along_axis(result, np.argsort(np.round(result, 1), axis=-1), axis=-1), dtype=torch.complex64)
+
+def tensor_erf_ms(input):
+    return input.erf()
+
+def tensor_erf_torch(input):
+    return input.erf()
+
+def tensor_erfc_ms(input):
+    return input.erfc()
+
+def tensor_erfc_torch(input):
+    return input.erfc()
+
+def tensor_erfinv_ms(input):
+    return input.erfinv()
+
+def tensor_erfinv_torch(input):
+    return input.erfinv()
+
+def tensor_equal_ms(input, other):
+    return input.equal(other)
+
+def tensor_equal_torch(input, other):
+    return input.eq(other)
+

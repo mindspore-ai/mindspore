@@ -1,3 +1,6 @@
+"""
+Test for Tensor.divide
+"""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -22,7 +25,7 @@ class NetTrunc(nn.Cell):
         return x.divide(other, rounding_mode="trunc")
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',],
           level_mark='level2',
           card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

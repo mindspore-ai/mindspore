@@ -3233,7 +3233,7 @@ def basic_reference_inputs_tensor_copysign(op_info: OpInfo,  dtype=None, device=
         (2, 3, 4, 1, 2),
         (2, 1, 2, 2, 1, 2),
         (2, 1, 2, 2, 1, 2, 1),
-        (2, 1, 2, 2, 1, 2, 1, 2),
+        (1, 1, 2, 2, 1, 2, 1, 2),
     )
     for input_shape in shapes:
         yield OpSampleInput(
@@ -3371,3 +3371,33 @@ def dynamic_sample_inputs_tensor_copy_(op_info:OpInfo, dtype=None, device=None, 
                 ),
             ),
         )
+
+def basic_reference_inputs_binary_op_common_func_tensor_divide(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+
+    for rounding_mode in (None, 'floor', 'trunc'):
+        for sample_input in basic_reference_inputs_binary_op_common_func(op_info=op_info, dtype=dtype, device=device,
+                                                                         **kwargs):
+            sample_input.op_kwargs = {'rounding_mode': rounding_mode}
+            sample_input.sample_name = sample_input.sample_name + f'_rounding_mode_{rounding_mode}'
+            yield sample_input
+
+def extra_reference_inputs_binary_op_common_func_tensor_divide(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+    for rounding_mode in (None, 'floor', 'trunc'):
+        for sample_input in extra_reference_inputs_binary_op_common_func(op_info=op_info, dtype=dtype, device=device, **kwargs):
+            sample_input.op_kwargs = {'rounding_mode': rounding_mode}
+            sample_input.sample_name = sample_input.sample_name + f'_rounding_mode_{rounding_mode}'
+            yield sample_input
+
+def error_inputs_binary_op_tensor_divide(op_info:OpInfo, dtype=None, device=None, **kwargs):
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor(shape=(2, 3), dtype=ms.float32),
+            op_args=(make_tensor(shape=(2, 4), dtype=ms.float32), ),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='input and other must be equal or broadcasted',
+    )
+
