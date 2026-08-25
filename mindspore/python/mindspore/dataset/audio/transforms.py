@@ -66,7 +66,7 @@ class AllpassBiquad(AudioTensorOperation):
     .. math::
         H(s) = \frac{s^2 - \frac{s}{Q} + 1}{s^2 + \frac{s}{Q} + 1}
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -251,7 +251,7 @@ class BandBiquad(AudioTensorOperation):
     bandwidth gives the slope of the drop. The frequencies at band edge will be
     half of their original amplitudes.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -330,7 +330,7 @@ class BandpassBiquad(AudioTensorOperation):
             \frac{\frac{s}{Q}}{s^2 + \frac{s}{Q} + 1}, &\text{if const_skirt_gain=False}.
         \end{cases}
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -406,7 +406,7 @@ class BandrejectBiquad(AudioTensorOperation):
     .. math::
         H(s) = \frac{s^2 + 1}{s^2 + \frac{s}{Q} + 1}
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -475,7 +475,7 @@ class BassBiquad(AudioTensorOperation):
     .. math::
         H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -902,7 +902,7 @@ class DeemphBiquad(AudioTensorOperation):
     """
     Apply Compact Disc (IEC 60908) de-emphasis (a treble attenuation shelving filter) to the audio waveform.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, must be ``44100`` or ``48000`` (Hz).
@@ -1088,7 +1088,7 @@ class EqualizerBiquad(AudioTensorOperation):
     """
     Design biquad equalizer filter and perform filtering.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. ``44100`` (Hz), the value can't be 0.
@@ -1285,7 +1285,7 @@ class Flanger(AudioTensorOperation):
     """
     Apply a flanger effect to the audio.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -1582,7 +1582,7 @@ class HighpassBiquad(AudioTensorOperation):
     """
     Design biquad highpass filter and perform filtering.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be 0.
@@ -2004,7 +2004,7 @@ class LowpassBiquad(AudioTensorOperation):
     .. math::
         H(s) = \frac{1}{s^2 + \frac{s}{Q} + 1}
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -2649,7 +2649,7 @@ class Overdrive(AudioTensorOperation):
     """
     Apply an overdrive effect to the audio waveform.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         gain (float, optional): Desired gain at the boost (or attenuation) in dB, in range of [0, 100].
@@ -2707,7 +2707,7 @@ class Phaser(AudioTensorOperation):
     """
     Apply a phasing effect to the audio.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -2999,10 +2999,10 @@ class RiaaBiquad(AudioTensorOperation):
     """
     Apply RIAA vinyl playback equalization.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
-        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz),
             can only be one of 44100, 48000, 88200, 96000.
 
     Raises:
@@ -3418,7 +3418,7 @@ class TrebleBiquad(AudioTensorOperation):
     """
     Design a treble tone-control effect.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -3483,7 +3483,7 @@ class Vad(AudioTensorOperation):
 
     Attempt to trim silence and quiet background sounds from the ends of recordings of speech.
 
-    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
+    Similar to the `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of audio signal.
@@ -3647,7 +3647,7 @@ class Vol(AudioTensorOperation):
         >>> import mindspore.dataset.audio as audio
         >>>
         >>> # Use the transform in dataset pipeline mode
-        >>> waveform = np.random.random([5, 30])  # 5 sample
+        >>> waveform = np.random.random([5, 30])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Vol(gain=10, gain_type=audio.GainType.DB)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
