@@ -23,6 +23,7 @@ import queue
 import random
 import stat
 import sys
+import threading
 import time
 import traceback
 from multiprocessing.dummy import Pool as ThreadPool
@@ -196,13 +197,25 @@ def _init_shard_files(
     return shard_files, size_per_shard
 
 
-def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime):
+def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, stop_event=None):
     """daemon process in backend."""
     runtime_config = obs_runtime.config
     while True:
-        idx, dataset_file = q.get()
+        if stop_event is None:
+            idx, dataset_file = q.get()
+        else:
+            try:
+                idx, dataset_file = q.get(timeout=0.1)
+            except queue.Empty:
+                if stop_event.is_set():
+                    break
+                continue
+            if stop_event.is_set():
+                break
         used_disk = obs_runtime.get_used_disk_per()
         while used_disk > float(runtime_config.DISK_THRESHOLD):
+            if stop_event is not None and stop_event.is_set():
+                return
             logger.info(
                 f"[{_current_func_name()} FUNCTION] Used disk space is {used_disk * 100}%, "
                 f"and the disk threshold is {float(runtime_config.DISK_THRESHOLD) * 100}%."
@@ -219,6 +232,9 @@ def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime):
                 retry_cnt += 1
                 time.sleep(runtime_config.RETRY_DELTA_TIME)
             used_disk = obs_runtime.get_used_disk_per()
+
+        if stop_event is not None and stop_event.is_set():
+            return
 
         logger.info(f"[{_current_func_name()} FUNCTION] Shard: {shard_id} try to download: {dataset_file}.")
         # update cache
@@ -417,11 +433,20 @@ class MindRecordFromOBS:
         self._first_epoch = True
         self._iteration = None
         self._cache_miss_times = 0
+        self._stop_event = threading.Event()
 
         self._pool = ThreadPool(processes=1)
         self._worker = self._pool.apply_async(
             _download_work,
-            (self._shard_id, self._current_idx, self._local_path, self._cache, self._queue, self._obs_runtime),
+            (
+                self._shard_id,
+                self._current_idx,
+                self._local_path,
+                self._cache,
+                self._queue,
+                self._obs_runtime,
+                self._stop_event,
+            ),
         )
         _sync_for_obs_mindrecord_dataset(
             self._worker,
@@ -560,7 +585,9 @@ class MindRecordFromOBS:
     def close(self):
         """Release dataset-owned background and shared resources."""
         if hasattr(self, "_pool") and self._pool:
-            self._pool.terminate()
+            self._stop_event.set()
+            self._pool.close()
+            self._pool.join()
             self._pool = None
         if hasattr(self, "_manager") and self._manager:
             manager = self._manager

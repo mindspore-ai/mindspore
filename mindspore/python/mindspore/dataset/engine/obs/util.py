@@ -23,6 +23,7 @@ import sqlite3
 import stat
 import sys
 import tempfile
+import threading
 import time
 import traceback
 from functools import wraps
@@ -113,22 +114,32 @@ class OBSRuntime:
     def __init__(self, obs_config):
         self.config = obs_config
         self.obs_client = None
+        self._client_lock = threading.Lock()
+        self._closed = False
 
     def get_obs_client(self):
         """Create an OBS client for this runtime."""
-        if ObsClient is None:
-            raise RuntimeError("OBS SDK is not installed. Please install dependency 'obs'.")
-        if self.obs_client is None:
-            self.obs_client = ObsClient(
-                access_key_id=self.config.AK, secret_access_key=self.config.SK, server=self.config.SERVER
-            )
-        return self.obs_client
+        with self._client_lock:
+            if self._closed:
+                raise RuntimeError("OBS runtime has been closed.")
+            if ObsClient is None:
+                raise RuntimeError("OBS SDK is not installed. Please install dependency 'obs'.")
+            if self.obs_client is None:
+                self.obs_client = ObsClient(
+                    access_key_id=self.config.AK, secret_access_key=self.config.SK, server=self.config.SERVER
+                )
+            return self.obs_client
 
     def close(self):
         """Close the cached OBS client."""
-        if self.obs_client is not None:
-            self.obs_client.close()
+        with self._client_lock:
+            if self._closed:
+                return
+            self._closed = True
+            client = self.obs_client
             self.obs_client = None
+        if client is not None:
+            client.close()
 
     def __del__(self):
         self.close()
