@@ -619,9 +619,9 @@ class PartialUnusedArgsEliminate {
     return dead_node_at_all_partials;
   }
 
-  static bool ShouldReplaceForwardUMonad(bool added_forward_u, const AnfNodePtr &origin_para, size_t param_index,
-                                         size_t param_count) {
-    return added_forward_u && HasAbstractUMonad(origin_para) && param_index < param_count - 1;
+  static bool ShouldReplaceForwardUMonad(bool added_forward_u, bool no_user, const AnfNodePtr &origin_para,
+                                         size_t param_index, size_t param_count) {
+    return added_forward_u && !no_user && HasAbstractUMonad(origin_para) && param_index < param_count - 1;
   }
 
   static void CollectPartialUnusedParamUpdate(bool dead_node_only, bool no_user, bool dead_node_at_all_partials,
@@ -635,7 +635,7 @@ class PartialUnusedArgsEliminate {
       (void)unused_parameter_idx->emplace_back(param_index);
       return;
     }
-    if (ShouldReplaceForwardUMonad(added_forward_u, origin_para, param_index, param_count)) {
+    if (ShouldReplaceForwardUMonad(added_forward_u, no_user, origin_para, param_index, param_count)) {
       // The fv u monad from fprop should be replaced with the forward u added by pass
       // 'add_forward_monad_depend.h'.
       (void)unused_parameter_idx->emplace_back(param_index);
@@ -670,12 +670,22 @@ class PartialUnusedArgsEliminate {
     if (unused_parameter_idx.empty()) {
       return false;
     }
+    if (unused_arg_u != nullptr) {
+      const size_t replacement_index = origin_parameters.size() - 1;
+      const auto replacement_iter =
+        std::find(unused_parameter_idx.begin(), unused_parameter_idx.end(), replacement_index);
+      if (replacement_iter != unused_parameter_idx.end()) {
+        // The replacement target must remain in the FuncGraph parameter list and Partial inputs.
+        unused_parameter_idx.erase(replacement_iter);
+        (void)new_parameters.emplace_back(origin_parameters.back());
+      }
+    }
     mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
     if (!GetPartialRepl(partial_nodes, unused_parameter_idx, &repl)) {
       return false;
     }
     if (unused_arg_u != nullptr) {
-      (void)manager->Replace(unused_arg_u, origin_parameters[origin_parameters.size() - 1]);
+      (void)manager->Replace(unused_arg_u, origin_parameters.back());
     }
     fg->set_parameters(new_parameters);
     auto tr = manager->Transact();
