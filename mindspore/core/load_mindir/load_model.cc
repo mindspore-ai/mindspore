@@ -82,7 +82,6 @@ static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
 // Keep a malformed MindIR from amplifying a small protobuf into an excessive host allocation.
 constexpr int kMaxMindIRTensorRank = 32;
-constexpr int64_t kMaxMindIRTensorDim = INT32_MAX;
 
 inline std::string ErrnoToString(const int error_number) {
   std::ostringstream ret_info;
@@ -213,9 +212,10 @@ bool ParseAndValidateTensorProto(const mind_ir::TensorProto &tensor_proto, Shape
   shape->reserve(LongToSize(tensor_proto.dims_size()));
   for (int i = 0; i < tensor_proto.dims_size(); ++i) {
     const int64_t dim = tensor_proto.dims(i);
-    if (dim < 0 || dim > kMaxMindIRTensorDim) {
-      MS_LOG(ERROR) << "Invalid MindIR TensorProto dimension " << dim << " at index " << i
-                    << ", the valid range is [0, " << kMaxMindIRTensorDim << "].";
+    // Do not clamp dims to INT32_MAX: some converted MindIR models contain larger legal dims.
+    // Oversized allocations are still rejected by CalculateTensorBytes / length consistency checks.
+    if (dim < 0) {
+      MS_LOG(ERROR) << "Invalid negative MindIR TensorProto dimension " << dim << " at index " << i << ".";
       return false;
     }
     shape->push_back(dim);
@@ -832,7 +832,7 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   MS_EXCEPTION_IF_NULL(tensor);
   const std::string &tensor_buf = attr_tensor.raw_data();
   if (attr_tensor.has_raw_data() && tensor->DataNBytes() != 0) {
-    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor->data_c());
+    auto *tensor_data_buf = static_cast<uint8_t *>(tensor->data_c());
     errno_t ret = memcpy_s(tensor_data_buf, tensor->DataNBytes(), tensor_buf.data(), tensor_buf.size());
     if (ret != EOK) {
       MS_LOG(ERROR) << "Failed to copy data from tensor proto.";
@@ -1332,7 +1332,7 @@ bool MSANFModelParser::CopyExternalDataToTensor(int64_t offset, int64_t length, 
   if (tensor_info->DataNBytes() == 0 || length == 0) {
     return true;
   }
-  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+  auto *tensor_data_buf = static_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   MS_EXCEPTION_IF_NULL(data);
   const size_t offset_size = LongToSize(offset);
@@ -1374,8 +1374,19 @@ bool MSANFModelParser::GetTensorDataFromUnencryptedFile(const mind_ir::TensorPro
   }
   constexpr Byte is_little_endian = 1;
   Byte file_byte_order = 0;
-  (void)fid.read(reinterpret_cast<char *>(&file_byte_order), sizeof(file_byte_order));
-  if (!fid || ((file_byte_order == is_little_endian) ^ little_endian())) {
+  std::string byte_order_buffer(sizeof(file_byte_order), '\0');
+  (void)fid.read(byte_order_buffer.data(), static_cast<std::streamsize>(byte_order_buffer.size()));
+  if (!fid) {
+    MS_LOG(ERROR) << "Failed to read file byte order.";
+    return false;
+  }
+  errno_t memcpy_ret =
+    memcpy_s(&file_byte_order, sizeof(file_byte_order), byte_order_buffer.data(), byte_order_buffer.size());
+  if (memcpy_ret != EOK) {
+    MS_LOG(ERROR) << "Failed to copy file byte order.";
+    return false;
+  }
+  if ((file_byte_order == is_little_endian) ^ little_endian()) {
     MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
     return false;
   }
@@ -1383,11 +1394,11 @@ bool MSANFModelParser::GetTensorDataFromUnencryptedFile(const mind_ir::TensorPro
   if (tensor_info->DataNBytes() == 0 || length == 0) {
     return true;
   }
-  auto *tensor_data_buf = reinterpret_cast<char *>(tensor_info->data_c());
+  void *tensor_data_buf = tensor_info->data_c();
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   fid.clear();
   (void)fid.seekg(SizeToLong(LongToSize(tensor_proto.external_data().offset())), std::ios::beg);
-  (void)fid.read(tensor_data_buf, SizeToLong(LongToSize(length)));
+  (void)fid.read(static_cast<char *>(tensor_data_buf), SizeToLong(LongToSize(length)));
   if (!fid || LongToSize(fid.gcount()) != LongToSize(length)) {
     MS_LOG(ERROR) << "Read external tensor data from '" << file << "' failed.";
     return false;
@@ -1413,8 +1424,8 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       return false;
     }
     return CopyExternalDataToTensor(external_data.offset(), external_data.length(),
-                                    reinterpret_cast<const unsigned char *>(weight_buffer_.first),
-                                    weight_buffer_.second, tensor_info);
+                                    static_cast<const unsigned char *>(weight_buffer_.first), weight_buffer_.second,
+                                    tensor_info);
   }
   const std::string file = ResolveExternalDataPath(mindir_path_, external_data.location());
   if (file.empty()) {

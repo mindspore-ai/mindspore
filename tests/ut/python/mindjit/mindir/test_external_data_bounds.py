@@ -66,6 +66,23 @@ def _tamper_tensor_shape(graph_file, dims):
     return tampered
 
 
+def _tamper_tensor_shape_and_compression(graph_file, dims, compression_type):
+    """Rewrite shape and compression_type of the first external parameter."""
+    model = mindir_model()
+    with open(graph_file, "rb") as f:
+        model.ParseFromString(f.read())
+    params_with_external = [p for p in model.graph.parameter if p.HasField("external_data")]
+    assert params_with_external, "Exported model has no external data parameters"
+    param = params_with_external[0]
+    del param.dims[:]
+    param.dims.extend(dims)
+    param.compression_type = compression_type
+    tampered = graph_file.replace(".mindir", "_shape_compression_tampered.mindir")
+    with open(tampered, "wb") as f:
+        f.write(model.SerializeToString())
+    return tampered
+
+
 def _tamper_tensor_data_type(graph_file, data_type):
     """Rewrite the first external parameter data type in the MindIR protobuf."""
     model = mindir_model()
@@ -141,6 +158,7 @@ def test_load_mindir_accepts_valid_external_data_bounds(tmp_path):
     [2 ** 63 - 1],
     [2 ** 31 - 1] * 3,  # each dimension is valid but their product exceeds the byte budget
     [300_000_000],  # declared shape is inconsistent with the short external data
+    [9143673032],  # beyond INT32_MAX; uncompressed length still mismatches shape-derived bytes
     [1] * 33,
 ])
 def test_load_mindir_rejects_unsafe_tensor_shapes_before_allocation(tmp_path, dims):
@@ -156,6 +174,26 @@ def test_load_mindir_rejects_unsafe_tensor_shapes_before_allocation(tmp_path, di
         tampered_file = _tamper_tensor_shape(graph_file, dims)
         with pytest.raises(RuntimeError, match="Load MindIR failed"):
             load(tampered_file)
+    finally:
+        os.chdir(cwd)
+
+
+def test_load_mindir_accepts_dimension_beyond_int32_max(tmp_path):
+    """
+    Feature: MindIR TensorProto dimension limits.
+    Description: Some converted MindIR models declare dimensions larger than INT32_MAX. Mark the
+             tensor compressed so serialized length need not match shape-derived bytes.
+    Expectation: Loading succeeds instead of rejecting the dimension as out of the INT32 range.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("dim_beyond_int32")
+        # Dimension reported in org-issues/43203 for a converted Flux MindIR.
+        tampered_file = _tamper_tensor_shape_and_compression(
+            graph_file, [9143673032], mindir_tensor.INDEXING)
+        graph = load(tampered_file)
+        assert graph is not None
     finally:
         os.chdir(cwd)
 
