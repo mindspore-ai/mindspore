@@ -2929,3 +2929,33 @@ def tensor_is_complex_ms(input):
 
 def tensor_is_complex_torch(input):
     return input.is_complex()
+
+def tensor_float_power_ms(op_input, exponent):
+    return op_input.float_power(exponent)
+
+def tensor_float_power_torch(op_input, exponent):
+    return op_input.float_power(exponent)
+
+def tensor_floor__ms(op_input):
+    cloned_input = op_input.clone()
+    cloned_input.floor_()
+    return cloned_input
+
+def tensor_floor__torch(op_input):
+    cloned_input = op_input.clone()
+    cloned_input.floor_()
+    return cloned_input
+
+def tensor_floor_divide__ms(op_input, other):
+    cloned_input = op_input.clone()
+    return cloned_input.floor_divide_(other)
+
+def tensor_floor_divide__torch(op_input, other):
+    cloned_input = op_input.clone()
+    return cloned_input.floor_divide_(other)
+
+def tensor_fmod_ms(op_input, other):
+    return op_input.fmod(other)
+
+def tensor_fmod_torch(op_input, other):
+    return op_input.fmod(other)

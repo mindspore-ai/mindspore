@@ -2299,6 +2299,7 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_float_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=dtypes_as_torch,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_bitwise_not,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -3296,6 +3297,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
         disable_large_value_tensor_inputs=True,
         not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_bitwise_not,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7943,6 +7945,73 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_reference_inputs_tensor_isreal,
     ),
+    'Tensor.float_power': BinaryOpInfo(
+        name='Tensor.float_power',
+        op=tensor_float_power_ms,
+        ref=tensor_float_power_torch,
+        dtypes_ascend=(),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        supports_left_python_scalar=False,
+        supports_both_python_scalar=False,
+    ),
+    'Tensor.floor_': UnaryOpInfo(
+        name='Tensor.floor_',
+        op=tensor_floor__ms,
+        ref=tensor_floor__torch,
+        is_inplace_op=True,
+        is_differentiable=False,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bool_, ms.bfloat16]),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
+        disable_large_value_tensor_inputs=True,
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+        basic_reference_inputs_unary_op_common_func, ['_0d'], skip=True),
+        not_support_dtypes=(ms.bool_, ms.complex64, ms.complex128,),
+        op_dynamic_inputs_func=None,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'Tensor.floor_divide_': BinaryOpInfo(
+        name='Tensor.floor_divide_',
+        op=tensor_floor_divide__ms,
+        ref=tensor_floor_divide__torch,
+        is_differentiable=False,
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.complex64, ms.complex128, ]),
+        not_support_dtypes=(ms.complex64, ms.complex128,),
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_divide_,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_divide_,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+        supports_left_python_scalar=False,
+        supports_both_python_scalar=False,
+        exclude_value=((0,), (0,)),
+        support_tensor_type_promotion=False,
+        ascend910b_forward_loss_override={ms.float16: 0.1, ms.int8: 0.02, ms.float64: 0.01, ms.bfloat16: 0.007},
+        disable_extremal_value_tensor_inputs=True,
+    ),
+    'Tensor.fmod': BinaryOpInfo(
+        name='Tensor.fmod',
+        op=tensor_fmod_ms,
+        ref=tensor_fmod_torch,
+        dtypes_ascend=tuple(),
+        dtypes_ascend910b=(ms.int8, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64),
+        not_support_dtypes=(ms.int16, ms.bool_, ms.complex64, ms.complex128,),
+        exclude_value=(None, (0,)),
+        promotion_dtypes_exclude=(ms.uint8,),
+        ascend910b_backward_loss_override={ms.float16: 5.e-2},
+        ascend910b_forward_loss_override={ms.float16: 5.e-2},
+        dtypes_cpu=tuple(),
+        dtypes_gpu=tuple(),
+        op_basic_reference_inputs_func=basic_reference_inputs_binary_op_common_func,
+        op_extra_reference_inputs_func=extra_reference_inputs_binary_op_common_func,
+        op_dynamic_inputs_func=dynamic_inputs_binary_op_common_func,
+        supports_left_python_scalar=False,
+        supports_right_python_scalar=True,
+        supports_both_python_scalar=False,
+        disable_extremal_value_tensor_inputs=True,
+        disable_large_value_tensor_inputs=True,
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -8016,7 +8085,10 @@ binary_op_db = [
     'Tensor.gcd',
     'Tensor.ge',
     'Tensor.heaviside',
-    'Tensor.isclose'
+    'Tensor.isclose',
+    'Tensor.fmod',
+    'Tensor.floor_divide_',
+    'Tensor.float_power',
 ]
 
 unary_op_db = [
@@ -8179,6 +8251,7 @@ unary_op_db = [
     'Tensor.isneginf',
      'Tensor.isposinf',
     'Tensor.isreal',
+    'Tensor.floor_',
 ]
 
 other_op_db = [
@@ -8659,6 +8732,9 @@ binary_op_kbk_db = [
     'Tensor.gt',
     'Tensor.heaviside',
     'Tensor.isclose',
+    'Tensor.floor_divide_',
+    'Tensor.float_power',
+    'Tensor.floor_divide',
 ]
 
 unary_op_kbk_db = [
@@ -8718,6 +8794,8 @@ unary_op_kbk_db = [
     'Tensor.isneginf',
      'Tensor.isposinf',
     'Tensor.isreal',
+    'Tensor.floor',
+    'Tensor.float',
 ]
 
 # unary_op_kbk_db = [ o for o in unary_op_db if o not in ['mint.imag', 'mint.real'] ]

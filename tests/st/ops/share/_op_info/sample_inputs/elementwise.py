@@ -3808,3 +3808,58 @@ def basic_reference_inputs_tensor_isreal(op_info: OpInfo, dtype=None, device=Non
         sample_input.op_input[random_index] = ms.Tensor(1+0j, dtype=dtype)
 
         yield sample_input
+
+def basic_sample_inputs_tensor_divide_(op_info: BinaryOpInfo, dtype=None, device=None, **kwargs):
+    XS = EXTRA_SMALL_DIM_SIZE
+    S = EXTRA_SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+
+    make_func = functools.partial(
+        make_tensor,
+        device=device,
+        dtype=dtype,
+    )
+
+    shapes = (
+        ((), ()),
+        ((S,), ()),
+        ((S, 5), (S,)),
+        ((M, S), ()),
+        ((S, M, S), (M, S)),
+        ((S, M, S), (S, M, S)),
+        ((M, M, S), (M, S)),
+        ((M, M, S), (1, M, S)),
+        ((0, M, XS), (0, M, XS)),
+    )
+
+    for input_shape, other_shape in shapes:
+        _input = make_func(input_shape, low=op_info.input_low, high=op_info.input_high,
+                           exclude_value=op_info.input_exclude_value)
+        _other = make_func(other_shape, low=op_info.other_low, high=op_info.other_high,
+                           exclude_value=op_info.other_exclude_value)
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_other,),
+            sample_name=op_info.name,
+        )
+
+def extra_sample_inputs_tensor_divide_(op_info: BinaryOpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    shapes = (
+        ((2, 2, 3, 2), (2, 2, 3, 2)),
+        ((2, 2, 2, 3, 2), (2, 2, 2, 3, 2)),
+        ((3, 2, 2, 2, 2, 2), (3, 2, 2, 2, 2, 2)),
+        ((2, 2, 2, 2, 2, 2, 3), (2, 2, 2, 2, 2, 2, 3)),
+        ((2, 2, 2, 2, 2, 4, 2, 2), (2, 2, 2, 2, 2, 4, 2, 2)),
+    )
+    for input_shape, other_shape in shapes:
+        _input = make_func(input_shape, low=op_info.input_low, high=op_info.input_high,
+                           exclude_value=op_info.input_exclude_value)
+        _other = make_func(other_shape, low=op_info.other_low, high=op_info.other_high,
+                           exclude_value=op_info.other_exclude_value)
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_other,),
+            sample_name=op_info.name,
+        )
