@@ -3401,3 +3401,101 @@ def error_inputs_binary_op_tensor_divide(op_info:OpInfo, dtype=None, device=None
         op_error_info='input and other must be equal or broadcasted',
     )
 
+def error_inputs_tensor_digamma(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    # input shape is (0,)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(0,)),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_input_element_null",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'input shape (0,) is not supported for {op_info.name}',
+    )
+
+def error_inputs_tensor_div(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from error_inputs_binary_op_mint_div(op_info, dtype=dtype, device=device, **kwargs)
+    cases = (
+        # other is not tensor/number/bool
+        ((1, False), 'trunc'),
+        # rounding_mode is not None/floor/trunc
+        (1, 'trun'),
+    )
+    for other, rounding_mode in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_tensor(shape=(2,), dtype=ms.float32),
+                op_args=(other,),
+                op_kwargs={'rounding_mode': rounding_mode},
+                sample_name=f"{op_info.name}_params_error"
+            ),
+            op_error_type=(TypeError, ValueError),
+            op_error_info=f'error other {other} or rounding_mode {rounding_mode} not supported for {op_info.name} ',
+        )
+
+def basic_sample_inputs_tensor_div_(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    XS = EXTRA_SMALL_DIM_SIZE
+    S = EXTRA_SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype,)
+
+    shapes = (
+        ((), ()),
+        ((S,), ()),
+        ((S, 1), (1,)),
+        ((M, S), ()),
+        ((S, M, S), (M, S)),
+        ((S, M, S), (S, M, S)),
+        ((M, M, S), (M, S)),
+        ((M, 1, S), (1, 1, S)),
+        ((0, M, XS), (0, M, 1)),
+    )
+
+    for input_shape, other_shape in shapes:
+        _input = make_func(input_shape, low=op_info.input_low,
+                           high=op_info.input_high, exclude_value=op_info.input_exclude_value)
+        _other = make_func(other_shape, low=op_info.other_low,
+                           high=op_info.other_high, exclude_value=op_info.other_exclude_value)
+
+        _splice = "empty_" if 0 in _input.shape + _other.shape else ""
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_other,),
+            sample_name=f"{op_info.name}_{dtype}_{_splice}{len(_input.shape)}d_x_{len(_other.shape)}d",
+        )
+    # Add kwarg rounding_mode
+    _input = make_func((S, S), low=op_info.input_low,
+                       high=op_info.input_high, exclude_value=op_info.input_exclude_value)
+    _other = make_func((S, S), low=op_info.other_low,
+                       high=op_info.other_high, exclude_value=op_info.other_exclude_value)
+
+    others = [_other, 1, -0.93, 6.436]
+    rounding_mode = ['floor', 'trunc']
+    for other, rounding_mode in itertools.product(others, rounding_mode):
+        if not dtype.is_complex:
+            yield OpSampleInput(
+                op_input=_input,
+                op_args=(other,),
+                op_kwargs={'rounding_mode': rounding_mode},
+                sample_name=f"{op_info.name}_{dtype}_rounding_mode_{rounding_mode}"
+            )
+
+def extra_sample_inputs_tensor_div_(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    # tensors with many kinds of shapes
+    yield from _generate_binary_op_tensors_sample_inputs_func(op_info, dtype, device, **kwargs)
+    # tensors with small value
+    if not op_info.disable_small_value_tensor_inputs and dtype != ms.bool_:
+        yield from _generate_binary_op_small_value_tensor_inputs_func(op_info, dtype, device, **kwargs)
+    # tensors with large value
+    if not op_info.disable_large_value_tensor_inputs and dtype not in (ms.bool_, ms.uint8, ms.int8):
+        yield from _generate_binary_op_large_value_tensor_inputs_func(op_info, dtype, device, **kwargs)
+    # broadcasting tensors and contiguous or discontiguous tensors
+    if not op_info.disable_broadcasting_and_discontiguous_tensor_inputs:
+        yield from _generate_binary_inplace_op_broadcasting_and_discontiguous_tensor_inputs_func(
+            op_info, dtype, device, **kwargs)
+    # tensor with extremal value
+    if not op_info.disable_extremal_value_tensor_inputs and (dtype.is_floating_point or dtype.is_complex):
+        yield from _generate_binary_op_extremal_value_tensor_inputs_func(op_info, dtype, device, **kwargs)

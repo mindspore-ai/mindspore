@@ -360,7 +360,7 @@ def tensor_to_ms_overload2(op_input, device=None, dtype=None, non_blocking=False
 def tensor_to_torch_overload2(op_input, device=None, dtype=None, non_blocking=False, copy=False):
     return op_input.to(device=device, dtype=dtype, non_blocking=non_blocking, copy=copy)
 
-def tensor_div_ms(op_input, other, rounding_mode=None):
+def mint_div_ms(op_input, other, rounding_mode=None):
     return mint.div(op_input, other, rounding_mode=rounding_mode)
 
 # wrap method for empty
@@ -2680,3 +2680,96 @@ def tensor_equal_ms(input, other):
 def tensor_equal_torch(input, other):
     return input.eq(other)
 
+def tensor_cummax_ms(op_input, axis):
+    return op_input.cummax(axis=axis)
+
+def tensor_cummax_torch(op_input, axis):
+    return op_input.cummax(dim=axis)
+
+def tensor_cummin_ms(op_input, axis):
+    return op_input.cummin(axis=axis)
+
+def tensor_cummin_torch(op_input, axis):
+    return op_input.cummin(dim=axis)
+
+def tensor_cumprod_ms(op_input, dim, dtype=None):
+    return op_input.cumprod(dim, dtype=dtype)
+
+def tensor_cumprod_torch(op_input, dim, dtype=None):
+    return op_input.cumprod(dim, dtype=dtype)
+
+def tensor_cumsum_ms(op_input, dim, dtype=None):
+    return op_input.cumsum(dim=dim, dtype=dtype)
+
+def tensor_cumsum_torch(op_input, dim, dtype=None):
+    return op_input.cumsum(dim=dim, dtype=dtype)
+
+def tensor_cumsum_ms_overload(op_input, axis, dtype=None):
+    return op_input.cumsum(axis=axis, dtype=dtype)
+
+def tensor_cumsum_torch_overload(op_input, axis, dtype=None):
+    return op_input.cumsum(axis=axis, dtype=dtype)
+
+def tensor_data_ms(op_input):
+    return op_input.data
+
+def tensor_data_torch(op_input):
+    return op_input.data
+
+def tensor_deg2rad_ms(op_input):
+    return op_input.deg2rad()
+
+def tensor_deg2rad_torch(op_input):
+    return op_input.deg2rad()
+
+def tensor_diag_ms(op_input, diagonal=0):
+    return op_input.diag(diagonal=diagonal)
+
+def tensor_diag_torch(op_input, diagonal=0):
+    return op_input.diag(diagonal=diagonal)
+
+def tensor_diagflat_ms(op_input, offset=0):
+    return op_input.diagflat(offset=offset)
+
+def tensor_diagflat_torch(op_input, offset=0):
+    return op_input.diagflat(offset=offset)
+
+def tensor_diagonal_ms(op_input, offset=0, axis1=0, axis2=1):
+    return op_input.diagonal(offset=offset, axis1=axis1, axis2=axis2)
+
+def tensor_diagonal_torch(op_input, offset=0, axis1=0, axis2=1):
+    return op_input.diagonal(offset=offset, dim1=axis1, dim2=axis2)
+
+def tensor_diagonal_scatter_ms(op_input, src, offset=0, dim1=0, dim2=1):
+    return op_input.diagonal_scatter(src, offset=offset, dim1=dim1, dim2=dim2)
+
+def tensor_diagonal_scatter_torch(op_input, src, offset=0, dim1=0, dim2=1):
+    return op_input.diagonal_scatter(src, offset=offset, dim1=dim1, dim2=dim2)
+
+def tensor_diff_ms(op_input, n=1, axis=-1, prepend=None, append=None):
+    return op_input.diff(n=n, axis=axis, prepend=prepend, append=append)
+
+def tensor_diff_torch(op_input, n=1, axis=-1, prepend=None, append=None):
+    return op_input.diff(n=n, dim=axis, prepend=prepend, append=append)
+
+def tensor_digamma_ms(op_input):
+    return op_input.digamma()
+
+def tensor_digamma_torch(op_input):
+    return op_input.digamma()
+
+def tensor_div_ms(op_input, other, rounding_mode=None):
+    return op_input.div(other, rounding_mode=rounding_mode)
+
+def tensor_div_torch(op_input, other, rounding_mode=None):
+    return op_input.div(other, rounding_mode=rounding_mode)
+
+def tensor_div__ms(op_input, other, rounding_mode=None):
+    cloned_input = op_input.clone()
+    cloned_input.div_(other, rounding_mode=rounding_mode)
+    return cloned_input
+
+def tensor_div__torch(op_input, other, rounding_mode=None):
+    cloned_input = op_input.clone()
+    cloned_input.div_(other, rounding_mode=rounding_mode)
+    return cloned_input

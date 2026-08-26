@@ -24,7 +24,10 @@ import mindspore as ms
 from mindspore import mint, mutable
 from mindspore._c_expression import MSContext
 from tests.st.ops.share._op_info.op_info import OpInfo
-
+from tests.st.ops.share._op_info.op_info import (
+    basic_reference_inputs_unary_op_common_func,
+    extra_reference_inputs_unary_op_common_func,
+)
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
     make_tensor, make_tensor_with_np_array,
@@ -2621,8 +2624,6 @@ def extra_sample_inputs_mint_diag(op_info, dtype, device=None, **kwargs):
                 sample_name=f"{op_info.name}_{dtype}_{t}",
             )
 
-
-
 def error_inputs_mint_diag(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     cases = [
@@ -2640,7 +2641,7 @@ def error_inputs_mint_diag(op_info: OpInfo, dtype=None, device=None, **kwargs):
                 op_kwargs={},
                 sample_name=op_info.name,
             ),
-            op_error_type=(TypeError, ValueError, RuntimeError),
+            op_error_type=(TypeError, ValueError, RuntimeError, AttributeError),
             op_error_info='other ops mint.diag error values'
         )
 
@@ -2691,6 +2692,7 @@ def dynamic_sample_inputs_mint_diag(
                 op_input=ms.Tensor(shape=None, dtype=dtype),
                 op_args=(0,),
                 op_kwargs={},
+                grad_position=(),
                 sample_name=f'{op_info.name}_dynamic_rank_compile_input'
             ),
             op_running_inputs=(
@@ -2757,4 +2759,353 @@ def error_reference_inputs_tensor_argsort(op_info: OpInfo, dtype=None, device=No
             ),
             op_error_type=ValueError,
             op_error_info='dim error values'
+        )
+
+def basic_sample_inputs_tensor_diag(op_info: OpInfo, dtype=None, device=None):
+    yield from basic_sample_inputs_mint_diag(op_info, dtype, device)
+    make_input = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    cases = (
+        ((5, 0), (-2,)),
+    )
+    for shape, diagonal in cases:
+        yield OpSampleInput(
+            op_input=make_input(shape),
+            op_args=diagonal,
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_empty_tensor',
+        )
+
+def extra_sample_inputs_tensor_diagflat(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from extra_reference_inputs_unary_op_common_func(op_info, dtype, device, **kwargs)
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        ((5, 4, 7), 19),
+        ((7,), -4),
+        ((9, 5, 7, 4, 4), 10),
+        ((1024, 8), 0),
+    )
+
+    for input_shape, offset in cases:
+        yield OpSampleInput(
+            op_input=make_func(shape=input_shape),
+            op_args=(),
+            op_kwargs={'offset': offset},
+            sample_name=f"{op_info.name}_{dtype}_offset{offset}_{len(input_shape)}d_extra",
+        )
+
+def error_sample_inputs_tensor_diagflat(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = [
+        # input not tensor
+        (0, -3),
+        # offset is not int
+        (ms.Tensor(np.random.randn(7, 8), dtype=ms.float32), 1.7),
+        # case can pass
+        # (ms.Tensor(np.random.randn(7, 8), dtype=ms.float32), True),
+        (ms.Tensor(np.random.randn(9, 8), dtype=ms.float32), (1, 2)),
+    ]
+    for op_input, offset in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=op_input,
+                op_args=(),
+                op_kwargs={'offset': offset},
+                sample_name=f'{op_info.name}_error_param_values',
+            ),
+            op_error_type=(TypeError, AttributeError),
+            op_error_info=f'error param value for {op_info.name}'
+        )
+
+def basic_sample_inputs_tensor_diagonal(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info, dtype=dtype, device=device, **kwargs):
+        dim_len = len(sample_input.op_input.shape)
+        sample_input.op_kwargs.update({'offset': 0, 'axis1': (dim_len-2), 'axis2': (dim_len-1)})
+        yield sample_input
+
+def extra_sample_inputs_tensor_diagonal(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        ((9, 7, 5), 0, 2, 0),
+        ((10, 3, 7, 9, 9), -4, -5, -4),
+        ((2, 3, 4, 2, 3, 4, 6, 8), 19, 1, 0),
+        ((12, 687, 1, 13), -3, 3, 2),
+        ((512, 17, 17), 2, 0, 1),
+    )
+
+    for input_shape, offset, axis1, axis2 in cases:
+        _input = make_arg(input_shape)
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(),
+            op_kwargs={'offset': offset, 'axis1': axis1, 'axis2': axis2},
+            sample_name=f"{op_info.name}_{dtype}_offset{offset}_extra",
+        )
+    # large mix small values
+    values = small_large_values(dtype)
+    if values:
+        input_np_array = np.random.choice(values, size=(2, 3, 4, 5))
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(),
+                op_kwargs={'offset': -3, 'axis1': -4},
+                sample_name=f"{op_info.name}_{dtype}_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((4, 3, 5), t), dtype=dtype),
+                op_args=(),
+                op_kwargs={'axis2': 2},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def dynamic_sample_inputs_tensor_diagonal(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 2)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5, 2)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 4)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def error_sample_inputs_tensor_diagonal(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    cases = (
+        # input is 1D, dim is less than 2
+        ((1,), 0, 0, 1),
+        # offset is not int
+        ((1, 2), 1.0, 0, 1),
+        # axis1 is not int
+        ((1, 2), 0, 0.1, 1),
+        # axis2 is not int
+        ((1, 2), 0, 0, 1.0),
+        # axis1 = axis2
+        ((1, 2), 0, 1, 1),
+        # axis1 is not in [-len(input.shape), len(input.shape))
+        ((1, 2), 0, 2, 1),
+        # axis2 is not in [-len(input.shape), len(input.shape))
+        ((1, 2), 0, 0, -3),
+    )
+    for input_shape, offset, axis1, axis2 in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=input_shape),
+                op_args=(),
+                op_kwargs={'offset': offset, 'axis1': axis1, 'axis2': axis2},
+                sample_name=f"{op_info.name}_error_params",
+            ),
+            op_error_type=(ValueError, TypeError),
+            op_error_info=f'error values of input/offset/axis1/axis2 is not supported for {op_info.name}.',
+        )
+
+def basic_reference_inputs_tensor_diagonal_scatter(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    cases = (
+        ((5, 1), (1,), 0, 0, 1),
+        ((10, 5), (4,), 1, 0, 1),
+        ((5, 10, 5), (5, 5), 0, 1, 2),
+        ((10, 1, 5), (1, 5), -3, 0, 2),
+        ((10, 1, 5), (5, 0), 2, 0, 1),
+    )
+
+    for input_shape, other_shape, offset, dim1, dim2 in cases:
+        _input = make_func(input_shape)
+        _other = make_func(other_shape)
+        _splice = "empty_" if 0 in _input.shape+_other.shape else ""
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_other,),
+            op_kwargs={'offset': offset, 'dim1': dim1, 'dim2': dim2},
+            sample_name=f"{op_info.name}_{dtype}_{_splice}{len(_input.shape)}d_x_{len(_other.shape)}d_basic",
+        )
+
+def extra_reference_inputs_tensor_diagonal_scatter(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    def _cross_entropy_sample_loss(other_dtype):
+        # type promotion precision issue: large loss due to inconsistent result dtypes
+        if other_dtype == ms.float16:
+            return 3.5
+        if other_dtype == ms.float32:
+            return 0.32
+        if other_dtype == ms.float64:
+            return 0.24
+        if other_dtype in (ms.int8, ms.int16, ms.int32, ms.int64):
+            return 9
+        return None
+
+    # tensors with many kinds of shapes
+    cases = (
+        ((1, 0, 3), (1, 0), 1, 2, 1),  # empty tensors
+        ((3, 2), (2,), 0, 0, 1),
+        ((2, 1, 3), (3, 1), -1, 0, 1),
+        ((1029, 917), (917,), 0, 0, 1),  # 2D tensors with large size
+        ((7, 3, 5, 4), (7, 3, 4), 1, -1, 2),  # 4D tensors
+        ((4, 4, 7, 9, 9, 7), (4, 4, 7, 9, 2), 5, 4, -1),  # 6D tensors
+        ((5, 9, 9, 5, 4, 5, 5), (9, 9, 5, 5, 5, 1), 4, -3, 0),  # 7D tensors
+    )
+
+    for input_shape, other_shape, offset, dim1, dim2 in cases:
+        _input = make_tensor(
+            input_shape,
+            dtype,
+            device=device,
+        )
+        _other = make_tensor(
+            other_shape,
+            dtype,
+            device=device,
+        )
+        _splice = "empty_" if 0 in _input.shape else ""
+        yield OpSampleInput(
+            op_input=_input,
+            op_args=(_other,),
+            op_kwargs={'offset': offset, 'dim1': dim1, 'dim2': dim2},
+            sample_name=(f"{op_info.name}_{dtype}_{_splice}{len(_input.shape)}d_x_{len(_other.shape)}d_extra")
+        )
+    # large mix small values
+    values = small_large_values(dtype)
+    if values:
+        input_np_array = np.random.choice(values, size=(1, 2, 3))
+        np_array1 = np.random.choice(values, size=(1, 1))
+        for discontiguous in [True, False]:
+            _src = make_tensor_with_np_array(np_array1, dtype=dtype, discontiguous=discontiguous)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(_src,),
+                op_kwargs={'offset': -1, 'dim1': 1, 'dim2': 2},
+                sample_name=f"{op_info.name}_{dtype}_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            _src = make_tensor_with_np_array(np.full((1, 3), t), dtype=dtype)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((4, 3, 1), t), dtype=dtype),
+                op_args=(_src,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+    # type promotion precision issue
+    src_dtypes = (ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float16, ms.float32, ms.float64)
+    for src_dtype in src_dtypes:
+        sample_loss = _cross_entropy_sample_loss(src_dtype)
+        if dtype == src_dtype:
+            continue
+        yield OpSampleInput(
+            op_input=make_tensor(shape=(5, 5), dtype=dtype),
+            op_args=(make_tensor(shape=(5,), dtype=src_dtype),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_2d_x_{src_dtype}_1d_promotion",
+            loss=sample_loss,
+        )
+
+def dynamic_sample_inputs_tensor_diagonal_scatter(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if op_info.support_dynamic_shape and not kwargs.get("only_dynamic_rank", False):
+        # dyncamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None), dtype=dtype),),
+                op_kwargs={'offset': -3, 'dim1': -3, 'dim2': -2},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 9, 3)),
+                    op_args=(make_func(shape=(4, 1)),),
+                    op_kwargs={'offset': -2, 'dim1': -1, 'dim2': -2},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(9, 9, 8)),
+                    op_args=(make_func(shape=(8, 7)),),
+                    op_kwargs={'offset': 2, 'dim1': 1, 'dim2': 0},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+def error_sample_inputs_tensor_diagonal_scatter(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    cases = (
+        # input is 1D, dim is less than 2
+        ((1,), make_func(shape=(1,)), 0, 0, 1),
+        # src is not tensor
+        ((1, 2), 1, 0, 0, 1),
+        # the dimension of src is larger than 6D
+        ((5, 9, 9, 5, 4, 5, 5, 1), make_func(shape=(9, 9, 5, 4, 5, 1, 1)), 4, -3, 0),
+        # offset is not int
+        ((1, 2), make_func(shape=(1,)), 1.0, 0, 1),
+        # dim1 is not int
+        ((1, 2), make_func(shape=(1,)), 0, 0.1, 1),
+        # dim2 is not int
+        ((1, 2), make_func(shape=(1,)), 0, 0, 1.0),
+        # dim1 = dim2
+        ((1, 2), make_func(shape=(1,)), 0, 1, 1),
+        # dim1 is not in [-len(input.shape), len(input.shape))
+        ((1, 2), make_func(shape=(1,)), 0, 2, 1),
+        # dim2 is not in [-len(input.shape), len(input.shape))
+        ((1, 2), make_func(shape=(1,)), 0, 0, -3),
+        # the shape of src is not equal to input or cannot be broadcast
+        ((1, 2), make_func(shape=(3,)), 0, 0, 1),
+    )
+    for input_shape, src, offset, dim1, dim2 in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=make_func(shape=input_shape),
+                op_args=(src,),
+                op_kwargs={'offset': offset, 'dim1': dim1, 'dim2': dim2},
+                sample_name=f"{op_info.name}_error_params",
+            ),
+            op_error_type=(ValueError, TypeError),
+            op_error_info=f'error values of input/offset/dim1/dim2 is not supported for {op_info.name}.',
         )
