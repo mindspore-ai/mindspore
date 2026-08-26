@@ -226,6 +226,7 @@ void RegTyping(py::module *m) {
   m_sub.attr("kFloat8E4M3FN") = py::cast(kFloat8E4M3FN);
   m_sub.attr("kFloat8E5M2") = py::cast(kFloat8E5M2);
   m_sub.attr("kHiFloat8") = py::cast(kHiFloat8);
+  m_sub.attr("kFloat8E8M0FNU") = py::cast(kFloat8E8M0FNU);
   m_sub.attr("kBFloat16") = py::cast(kBFloat16);
   m_sub.attr("kInt") = py::cast(kInt);
   m_sub.attr("kUInt") = py::cast(kUInt);

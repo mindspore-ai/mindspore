@@ -25,6 +25,7 @@
 #include <limits>
 #include <functional>
 #include "mindapi/base/macros.h"
+#include "utils/log_adapter.h"
 
 // Implement HiFloat8 for mindspore  https://arxiv.org/abs/2409.16626
 namespace mindspore {

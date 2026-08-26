@@ -31,7 +31,7 @@ class TestFloat8e4m3 : public UT::Common {
 /// Expectation: No exception.
 TEST_F(TestFloat8e4m3, ZeroConversion) {
   Float8_e4m3fn num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(0.0f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in Float8_e4m3fn.
@@ -39,7 +39,7 @@ TEST_F(TestFloat8e4m3, ZeroConversion) {
 /// Expectation: No exception.
 TEST_F(TestFloat8e4m3, OneConversion) {
   Float8_e4m3fn num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(1.0f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in Float8_e4m3fn.
@@ -47,7 +47,7 @@ TEST_F(TestFloat8e4m3, OneConversion) {
 /// Expectation: No exception.
 TEST_F(TestFloat8e4m3, NegativeOneConversion) {
   Float8_e4m3fn num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(-1.0f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in Float8_e4m3fn.
@@ -55,13 +55,13 @@ TEST_F(TestFloat8e4m3, NegativeOneConversion) {
 /// Expectation: No exception.
 TEST_F(TestFloat8e4m3, NumberConversion) {
   Float8_e4m3fn num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(0.5f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
   num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(3.25f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
   num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(-2.75f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
   num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(96.0f));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
   num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(448.0f));
 }
 
@@ -71,7 +71,7 @@ TEST_F(TestFloat8e4m3, NumberConversion) {
 TEST_F(TestFloat8e4m3, NaNConversion) {
   float nan = std::numeric_limits<float>::quiet_NaN();
   Float8_e4m3fn num = Float8_e4m3fn::FromRaw(Float8_e4m3fn::FromFloat32(nan));
-  EXPECT_TRUE(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)) == num);
+  EXPECT_EQ(Float8_e4m3fn::FromFloat32(Float8_e4m3fn::ToFloat32(num)), num.int_value());
 }
 
 }  // namespace mindspore

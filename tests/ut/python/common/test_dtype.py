@@ -56,7 +56,7 @@ def test_dtype_methods():
 
         # itemsize
         if dtype in (mstype.bool, mstype.qint4x2, mstype.int8, mstype.uint8, mstype.float8_e4m3fn, mstype.float8_e5m2,
-                     mstype.hifloat8):
+                     mstype.hifloat8, mstype.float8_e8m0fnu):
             assert dtype.itemsize == 1
         elif dtype in (mstype.int16, mstype.uint16, mstype.float16, mstype.bfloat16):
             assert dtype.itemsize == 2

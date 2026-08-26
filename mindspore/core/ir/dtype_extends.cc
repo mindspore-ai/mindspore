@@ -77,6 +77,7 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kNumberTypeFloat8E5M2, kFloat8E5M2},
                                                                 {kNumberTypeFloat8E4M3FN, kFloat8E4M3FN},
                                                                 {kNumberTypeHiFloat8, kHiFloat8},
+                                                                {kNumberTypeFloat8E8M0FNU, kFloat8E8M0FNU},
                                                                 {kNumberTypeDouble, kFloat64},
                                                                 {kNumberTypeBFloat16, kBFloat16},
                                                                 {kNumberTypeComplex64, kComplex64},
@@ -157,6 +158,7 @@ size_t UnitSizeInBytes(TypeId id) {
     case kNumberTypeFloat8E5M2:
     case kNumberTypeFloat8E4M3FN:
     case kNumberTypeHiFloat8:
+    case kNumberTypeFloat8E8M0FNU:
       bytes = sizeof(int8_t);
       break;
     case kNumberTypeInt16:
@@ -219,6 +221,8 @@ TypePtr StringToNumberType(const std::string &type_name, const std::string &num_
       type = kFloat8E5M2;
     } else if (type_name == "HiFloat8" || type_name == "hifloat8") {
       type = kHiFloat8;
+    } else if (type_name == "Float8E8M0FNU" || type_name == "float8_e8m0fnu") {
+      type = kFloat8E8M0FNU;
     } else {
       auto bits = std::stoi(type_name.substr(num_type_name.size()));
       type = std::make_shared<T>(bits);

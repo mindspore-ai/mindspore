@@ -147,6 +147,9 @@ def test_float8():
     a = ms.Tensor(np.ones((2, 3)), ms.hifloat8)
     assert a.shape == (2, 3)
     assert a.dtype == ms.hifloat8
+    a = ms.Tensor(np.ones((2, 3)), ms.float8_e8m0fnu)
+    assert a.shape == (2, 3)
+    assert a.dtype == ms.float8_e8m0fnu
 
 
 def test_float8_value():
@@ -256,6 +259,16 @@ def test_float8_value():
     assert math.isclose(get_tensor_value(hif8_val), -256)
     hif8_val = ms.Tensor(math.pow(2, -15), ms.hifloat8)         # 0 11 1111 0
     assert math.isclose(get_tensor_value(hif8_val), math.pow(2, -15), abs_tol=1e-10)
+
+    # E8M0FNU tests: all values are powers of 2, unsigned, NaN=0xFF
+    e8m0_one = ms.Tensor(1.0, ms.float8_e8m0fnu)               # 2^0 = 1.0 (raw 0x7F)
+    assert math.isclose(get_tensor_value(e8m0_one), 1.0)
+    e8m0_two = ms.Tensor(2.0, ms.float8_e8m0fnu)               # 2^1 = 2.0 (raw 0x80)
+    assert math.isclose(get_tensor_value(e8m0_two), 2.0)
+    e8m0_half = ms.Tensor(0.5, ms.float8_e8m0fnu)              # 2^-1 = 0.5 (raw 0x7E)
+    assert math.isclose(get_tensor_value(e8m0_half), 0.5)
+    e8m0_nan = ms.Tensor(math.nan, ms.float8_e8m0fnu)
+    assert math.isnan(get_tensor_value(e8m0_nan))
 
 
 def test_tensor_method_sub():
@@ -372,12 +385,12 @@ def test_create_np_array_from_tensor():
     """
     n = np.array(ms.Tensor(0))
     assert n.dtype == np.int64
-    assert n.shape == ()
+    assert not n.shape
     assert np.allclose(n, np.array(0))
 
     n = np.array(ms.Tensor(0, ms.float32))
     assert n.dtype == np.float32
-    assert n.shape == ()
+    assert not n.shape
     assert np.allclose(n, np.array(0, np.float32))
 
     n = np.array(ms.Tensor([1, 2, 3], ms.float32))

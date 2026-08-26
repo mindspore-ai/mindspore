@@ -26,6 +26,7 @@ from mindspore._c_expression import typing
 from mindspore._c_expression.typing import Type
 from mindspore._c_expression.np_dtypes import np_dtype_valid
 
+np_bfloat16 = None
 if np_dtype_valid(False):
     from mindspore._c_expression.np_dtypes import bfloat16 as np_bfloat16
 
@@ -46,7 +47,7 @@ __dtype__ = [
     "complex64", "cfloat",
     "complex128", "cdouble",
     "qint4x2", "bfloat16",
-    "float8_e4m3fn", "float8_e5m2", "hifloat8",
+    "float8_e4m3fn", "float8_e5m2", "hifloat8", "float8_e8m0fnu",
     "int_", "uint", "float_",
     "list_", "tuple_", "string",
     "number", "tensor_type",
@@ -99,6 +100,7 @@ qint4x2 = typing.kInt4
 float8_e4m3fn = typing.kFloat8E4M3FN
 float8_e5m2 = typing.kFloat8E5M2
 hifloat8 = typing.kHiFloat8
+float8_e8m0fnu = typing.kFloat8E8M0FNU
 bfloat16 = typing.kBFloat16
 
 complex64 = typing.kComplex64
@@ -148,16 +150,16 @@ RefType = typing.RefType
 _NullType = typing.TypeNull
 
 number_type = (int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64, bfloat16, complex64,
-               complex128, qint4x2, float8_e4m3fn, float8_e5m2, hifloat8)
+               complex128, qint4x2, float8_e4m3fn, float8_e5m2, hifloat8, float8_e8m0fnu)
 
 int_type = (int8, int16, int32, int64,)
 uint_type = (uint8, uint16, uint32, uint64,)
-float_type = (float16, float32, float64, bfloat16, float8_e4m3fn, float8_e5m2, hifloat8)
+float_type = (float16, float32, float64, bfloat16, float8_e4m3fn, float8_e5m2, hifloat8, float8_e8m0fnu)
 signed_type = (int8, int16, int32, int64, float16, float32, float64, bfloat16, complex64, complex128, qint4x2,
                float8_e4m3fn, float8_e5m2, hifloat8)
 complex_type = (complex64, complex128,)
 all_types = (bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64, bfloat16,
-             complex64, complex128, qint4x2, float8_e4m3fn, float8_e5m2, hifloat8)
+             complex64, complex128, qint4x2, float8_e4m3fn, float8_e5m2, hifloat8, float8_e8m0fnu)
 
 _simple_types = {
     list: list_,

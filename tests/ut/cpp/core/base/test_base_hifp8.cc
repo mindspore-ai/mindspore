@@ -31,7 +31,7 @@ class TestHiFloat8 : public UT::Common {
 /// Expectation: No exception.
 TEST_F(TestHiFloat8, ZeroConversion) {
   HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(0.0f));
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in HiFloat8.
@@ -39,7 +39,7 @@ TEST_F(TestHiFloat8, ZeroConversion) {
 /// Expectation: No exception.
 TEST_F(TestHiFloat8, OneConversion) {
   HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(1.0f));
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in HiFloat8.
@@ -47,25 +47,25 @@ TEST_F(TestHiFloat8, OneConversion) {
 /// Expectation: No exception.
 TEST_F(TestHiFloat8, NegativeOneConversion) {
   HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-1.0f));
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in HiFloat8.
 /// Description: NumberConversion between HiFloat8 and Float32.
 /// Expectation: No exception.
 TEST_F(TestHiFloat8, NumberConversion) {
-  HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(0.5f))
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
-  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-2.5f))
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
-  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-8.0f))
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
-  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(96.0f))
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
-  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(768.0f))
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
-  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-8192.0f))
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
+  HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(0.5f));
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
+  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-2.5f));
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
+  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-8.0f));
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
+  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(96.0f));
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
+  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(768.0f));
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
+  num = HiFloat8::FromRaw(HiFloat8::FromFloat32(-8192.0f));
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in HiFloat8.
@@ -74,7 +74,7 @@ TEST_F(TestHiFloat8, NumberConversion) {
 TEST_F(TestHiFloat8, InfinityConversion) {
   float inf = std::numeric_limits<float>::infinity();
   HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(inf));
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
 }
 
 /// Feature: Data format conversion in HiFloat8.
@@ -83,7 +83,7 @@ TEST_F(TestHiFloat8, InfinityConversion) {
 TEST_F(TestHiFloat8, NaNConversion) {
   float nan = std::numeric_limits<float>::quiet_NaN();
   HiFloat8 num = HiFloat8::FromRaw(HiFloat8::FromFloat32(nan));
-  EXPECT_TRUE(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)) == num);
+  EXPECT_EQ(HiFloat8::FromFloat32(HiFloat8::ToFloat32(num)), num.int_value());
 }
 
 }  // namespace mindspore
