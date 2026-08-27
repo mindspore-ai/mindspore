@@ -2608,6 +2608,36 @@ def tensor_cross_ms(op_input, other, dim=None):
 def tensor_cross_torch(op_input, other, dim=None):
     return op_input.cross(other, dim=dim)
 
+def tensor_ms_item(input):
+    return input.item()
+
+def tensor_torch_item(input):
+    return input.item()
+
+def tensor_ms_itemsize(input):
+    return input.itemsize
+
+def tensor_torch_itemsize(input):
+    return input.itemsize
+
+def tensor_ms_lcm(input, other):
+    return input.lcm(other)
+
+def tensor_torch_lcm(input, other):
+    return input.lcm(other)
+
+def tensor_ms_ldexp(input, other):
+    return input.ldexp(other)
+
+def tensor_torch_ldexp(input, other):
+    return input.ldexp(other)
+
+def tensor_ms_lerp(input, other, weight):
+    return input.lerp(other, weight)
+
+def tensor_torch_lerp(input, other, weight):
+    return input.lerp(other, weight)
+
 def tensor_divide_ms(input, other, rounding_mode=None):
     return input.divide(other, rounding_mode=rounding_mode)
 
@@ -2773,3 +2803,4 @@ def tensor_div__torch(op_input, other, rounding_mode=None):
     cloned_input = op_input.clone()
     cloned_input.div_(other, rounding_mode=rounding_mode)
     return cloned_input
+
