@@ -60,6 +60,12 @@ def tensor_contiguous_ms(op_input):
 def tensor_contiguous_torch(op_input):
     return op_input.contiguous()
 
+def tensor_imag_ms(op_input):
+    return op_input.imag()
+
+def tensor_imag_torch(op_input):
+    return op_input.imag
+
 # wrap tensor method for is_contiguous
 def tensor_is_contiguous_ms(op_input):
     return op_input.is_contiguous()
@@ -567,6 +573,12 @@ def tensor_sub_ms(op_input, args):
 def tensor_sub_torch(op_input, args):
     return op_input.sub(args)
 
+def tensor_inner_ms(op_input, other):
+    return op_input.inner(other)
+
+def tensor_inner_torch(op_input, other):
+    return op_input.inner(other)
+
 # wrap tensor method for logical_and
 def tensor_logical_and_ms(op_input, args):
     return op_input.logical_and(args)
@@ -931,6 +943,68 @@ def tensor_exponential__torch(op_input, lambd=1, generator=None):
             torch_gen.manual_seed(42)
             generator = torch_gen
     cloned_input_pt.exponential_(lambd=lambd, generator=generator)
+    return cloned_input_pt
+
+def tensor_index_put_ms(op_input, indices, values, accumulate=False):
+    return op_input.index_put(indices, values, accumulate=accumulate)
+
+def tensor_index_put_torch(op_input, indices, values, accumulate=False):
+    return op_input.index_put(indices, values, accumulate=accumulate)
+
+def tensor_index_put__ms(op_input, indices, values, accumulate=False):
+    cloned_input = op_input.clone()
+    cloned_input.index_put_(indices, values, accumulate=accumulate)
+    return cloned_input
+
+def tensor_index_put__torch(op_input, indices, values, accumulate=False):
+    cloned_input_pt = op_input.clone()
+    cloned_input_pt.index_put_(indices, values, accumulate=accumulate)
+    return cloned_input_pt
+
+def tensor_index_copy__ms(op_input, dim, index, tensor):
+    cloned_input = op_input.clone()
+    cloned_input.index_copy_(dim, index, tensor)
+    return cloned_input
+
+def tensor_index_copy__torch(op_input, dim, index, tensor):
+    cloned_input_pt = op_input.clone()
+    cloned_input_pt.index_copy_(dim, index, tensor)
+    return cloned_input_pt
+
+def tensor_index_fill__ms(op_input, dim, index, value):
+    cloned_input = op_input.clone()
+    cloned_input.index_fill_(dim, index, value)
+    return cloned_input
+
+def tensor_index_fill__torch(op_input, dim, index, value):
+    cloned_input_pt = op_input.clone()
+    if index.dtype != torch.int64:
+        index = index.to(torch.int64)
+    cloned_input_pt.index_fill_(dim, index, value)
+    return cloned_input_pt
+
+def tensor_index_fill_ms(op_input, dim, index, value):
+    return op_input.index_fill(dim, index, value)
+
+def tensor_index_fill_torch(op_input, dim, index, value):
+    if index.dtype != torch.int64:
+        index = index.to(torch.int64)
+    return op_input.index_fill(dim, index, value)
+
+def tensor_index_add_ms(op_input, dim, index, source, alpha=1):
+    return op_input.index_add(dim, index, source, alpha=alpha)
+
+def tensor_index_add_torch(op_input, dim, index, source, alpha=1):
+    return op_input.index_add(dim, index, source, alpha=alpha)
+
+def tensor_index_add__ms(op_input, dim, index, source, alpha=1):
+    cloned_input = op_input.clone()
+    cloned_input.index_add_(dim, index, source, alpha=alpha)
+    return cloned_input
+
+def tensor_index_add__torch(op_input, dim, index, source, alpha=1):
+    cloned_input_pt = op_input.clone()
+    cloned_input_pt.index_add_(dim, index, source, alpha=alpha)
     return cloned_input_pt
 
 def tensor_fill__ms(op_input, value):

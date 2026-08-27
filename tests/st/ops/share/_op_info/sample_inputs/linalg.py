@@ -2333,24 +2333,8 @@ def error_inputs_mint_einsum(op_info: OpInfo, dtype=None, device=None, **kwargs)
             op_error_info='other ops mint.einsum error values',
         )
 
-def basic_reference_inputs_tensor_addr_func(
-    op_info: OpInfo,
-    dtype,
-    device=None,
-    **kwargs
-):
-    """Yield typical shape cases for tensor.addr ops.
+def basic_reference_inputs_tensor_addr_func(op_info: OpInfo, dtype, device=None, **kwargs):
 
-    Covers scalars, vectors, singleton dims, medium 2D/3D, and empty-dimension cases.
-
-    Args:
-        op_info: OpInfo object.
-        dtype: Data type of the tensors.
-        device: Device of the tensors.
-        kwargs: Additional keyword arguments.
-    Returns:
-        Generator of OpSampleInput objects.
-    """
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
     M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
     L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
@@ -2376,24 +2360,7 @@ def basic_reference_inputs_tensor_addr_func(
             sample_name=f"{op_info.name}_{dtype}_{slen}d",
         )
 
-def basic_reference_inputs_tensor_cholesky_solve_func(
-    op_info: OpInfo,
-    dtype,
-    device=None,
-    **kwargs
-):
-    """Yield typical shape cases for tensor.cholesky_solve ops.
-
-    medium 2D/3D, and empty-dimension cases.
-
-    Args:
-        op_info: OpInfo object.
-        dtype: Data type of the tensors.
-        device: Device of the tensors.
-        kwargs: Additional keyword arguments.
-    Returns:
-        Generator of OpSampleInput objects.
-    """
+def basic_reference_inputs_tensor_cholesky_solve_func(op_info: OpInfo, dtype, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
     M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
     L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
@@ -2445,24 +2412,7 @@ def basic_sample_inputs_tensor_addmm(op_info: OpInfo, dtype=None, device=None, *
             op_kwargs={'beta': 3.1, 'alpha': 8},
             sample_name=op_info.name)
 
-def basic_reference_inputs_tensor_addcdiv_func(
-    op_info: OpInfo,
-    dtype,
-    device=None,
-    **kwargs
-):
-    """Yield typical shape cases for tensor.addcdiv ops.
-
-    Covers scalars, vectors, singleton dims, medium 2D/3D, and empty-dimension cases.
-
-    Args:
-        op_info: OpInfo object.
-        dtype: Data type of the tensors.
-        device: Device of the tensors.
-        kwargs: Additional keyword arguments.
-    Returns:
-        Generator of OpSampleInput objects.
-    """
+def basic_reference_inputs_tensor_addcdiv_func(op_info: OpInfo, dtype, device=None,**kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
     M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
     L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
@@ -2504,24 +2454,7 @@ def basic_reference_inputs_tensor_addcdiv_func(
             sample_name=f"{op_info.name}_{dtype}_{slen}d",
         )
 
-def basic_reference_inputs_tensor_addmv_func(
-    op_info: OpInfo,
-    dtype,
-    device=None,
-    **kwargs
-):
-    """Yield typical shape cases for tensor.addmv ops.
-
-    Covers scalars, vectors, singleton dims, medium 2D/3D, and empty-dimension cases.
-
-    Args:
-        op_info: OpInfo object.
-        dtype: Data type of the tensors.
-        device: Device of the tensors.
-        kwargs: Additional keyword arguments.
-    Returns:
-        Generator of OpSampleInput objects.
-    """
+def basic_reference_inputs_tensor_addmv_func(op_info: OpInfo, dtype, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
     M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
     L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
@@ -2547,12 +2480,6 @@ def basic_reference_inputs_tensor_addmv_func(
         )
 
 def extra_sample_inputs_tensor_addr(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    '''
-    Generate extra sample inputs for tensor.addr
-    Covers: various padding modes, dilation, groups, small/large/extremal value
-            tensors, discontiguous tensors, type promotion.
-    Skips: scalar inputs (conv2d requires tensor inputs).
-    '''
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
     yield OpSampleInput(
         op_input=make_arg((1024, 1)),
@@ -2620,12 +2547,6 @@ def extra_sample_inputs_tensor_addr(op_info: OpInfo, dtype=None, device=None, **
         )
 
 def extra_sample_inputs_tensor_cholesky_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    '''
-    Generate extra sample inputs for tensor.cholesky_solve
-    Covers: various padding modes, dilation, groups, small/large/extremal value
-            tensors, discontiguous tensors, type promotion.
-    Skips: scalar inputs (conv2d requires tensor inputs).
-    '''
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
     # ---- small value tensors ----
     if dtype is not None and dtype.is_floating_point:
@@ -2681,12 +2602,6 @@ def extra_sample_inputs_tensor_cholesky_solve(op_info: OpInfo, dtype=None, devic
         )
 
 def extra_sample_inputs_tensor_addcdiv(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    '''
-    Generate extra sample inputs for tensor.addcdiv
-    Covers: various padding modes, dilation, groups, small/large/extremal value
-            tensors, discontiguous tensors, type promotion.
-    Skips: scalar inputs (conv2d requires tensor inputs).
-    '''
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=-9, high=0)
     yield OpSampleInput(
         op_input=make_arg((),),
@@ -2754,12 +2669,6 @@ def extra_sample_inputs_tensor_addcdiv(op_info: OpInfo, dtype=None, device=None,
         )
 
 def extra_sample_inputs_tensor_addmv(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    '''
-    Generate extra sample inputs for tensor.addmv
-    Covers: various padding modes, dilation, groups, small/large/extremal value
-            tensors, discontiguous tensors, type promotion.
-    Skips: scalar inputs (conv2d requires tensor inputs).
-    '''
     # input 1d, mat 2d, vec 1d
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
     # ---- small value tensors ----
@@ -3143,24 +3052,7 @@ def dynamic_sample_inputs_tensor_addmm(op_info: OpInfo, dtype=None, device=None,
                 ),
             ),
         )
-def basic_reference_inputs_tensor_exponential_func(
-    op_info: OpInfo,
-    dtype,
-    device=None,
-    **kwargs
-):
-    """Yield typical shape cases for tensor.exponential_ ops.
-
-    Covers scalars, vectors, singleton dims, medium dims, and empty-dimension cases.
-
-    Args:
-        op_info: OpInfo object.
-        dtype: Data type of the tensors.
-        device: Device of the tensors.
-        kwargs: Additional keyword arguments.
-    Returns:
-        Generator of OpSampleInput objects.
-    """
+def basic_reference_inputs_tensor_exponential_func(op_info: OpInfo, dtype, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
     M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
     L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
@@ -3189,12 +3081,6 @@ def basic_reference_inputs_tensor_exponential_func(
         )
 
 def extra_sample_inputs_tensor_exponential_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    '''
-    Generate extra sample inputs for tensor.exponential_
-    Covers: various padding modes, dilation, groups, small/large/extremal value
-            tensors, discontiguous tensors, type promotion.
-    Skips: scalar inputs (conv2d requires tensor inputs).
-    '''
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
     cases = (
         ((0,), 1, None),
@@ -3359,10 +3245,6 @@ def dynamic_sample_inputs_tensor_addcdiv(op_info: OpInfo, dtype=None, device=Non
         )
 
 def dynamic_sample_inputs_tensor_cholesky_solve(op_info: OpInfo, dtype=None, device=None, **kwargs):
-    """
-    Generate dynamic sample inputs for Tensor.cholesky_solve.
-    Consider both dynamic_shape and dynamic_rank.
-    """
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
 
     if not kwargs.get("only_dynamic_rank", False):
@@ -3558,6 +3440,68 @@ def error_sample_inputs_tensor_baddbmm(op_info, dtype=None, device=None, **kwarg
             ),
             op_error_type=(AttributeError, TypeError, RuntimeError),
             op_error_info=f'{op_info.name}: error params.'
+        )
+
+
+def extra_sample_inputs_tensor_inner(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
+    cases = (
+        (0,),
+        (1, 0, 3),
+        (),
+        (812,),
+    )
+    for input_shape in cases:
+        yield OpSampleInput(
+            op_input=make_arg(shape=input_shape),
+            op_args=(make_arg(shape=input_shape),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}",
+        )
+
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_shape = (1, len(_float_small_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(make_arg((len(_float_small_values),)),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_small",
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_shape = (1, len(_large_values))
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(make_arg((len(_large_values),)),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_large",
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(np.full((1, 3), t), dtype=dtype, device=device),
+                    op_args=(make_tensor_with_np_array(np.full((3,), t), dtype=dtype, device=device),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_inf",
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        yield OpSampleInput(
+            op_input=make_arg((2, 3, 4), discontiguous=discontiguous),
+            op_args=(make_arg((2, 3, 4), discontiguous=discontiguous),),
+            op_kwargs={},
+            sample_name=op_info.name,
         )
 
 def error_inputs_other_op_tensor_cross_func(op_info, dtype=None, device=None, **kwargs):
