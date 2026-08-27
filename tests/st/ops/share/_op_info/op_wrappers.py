@@ -2804,3 +2804,38 @@ def tensor_div__torch(op_input, other, rounding_mode=None):
     cloned_input.div_(other, rounding_mode=rounding_mode)
     return cloned_input
 
+def tensor_gcd_ms(op_input, other):
+    return op_input.gcd(other)
+
+def tensor_gcd_torch(op_input, other):
+    return op_input.gcd(other)
+
+def tensor_ge_ms(op_input, other):
+    return op_input.ge(other)
+
+def tensor_ge_torch(op_input, other):
+    return op_input.ge(other)
+
+def tensor_geqrf_ms(op_input):
+    return op_input.geqrf()
+
+def tensor_geqrf_torch(op_input):
+    return op_input.geqrf()
+
+def tensor_ger_ms(op_input, vec2):
+    return op_input.ger(vec2)
+
+def tensor_ger_torch(op_input, vec2):
+    return op_input.ger(vec2)
+
+def tensor_hardshrink_ms(op_input, lambd=0.5):
+    return op_input.hardshrink(lambd=lambd)
+
+def tensor_hardshrink_torch(op_input, lambd=0.5):
+    return op_input.hardshrink(lambd=lambd)
+
+def tensor_heaviside_ms(op_input, values):
+    return op_input.heaviside(values=values)
+
+def tensor_heaviside_torch(op_input, values):
+    return op_input.heaviside(values=values)

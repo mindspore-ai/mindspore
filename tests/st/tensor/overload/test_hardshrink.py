@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for Tensor.hardshrink.
+"""
 import numpy as np
 import pytest
 import mindspore as ms
@@ -43,7 +45,7 @@ def hardshrink_expect_forward_func(x, lambd=0.5):
     return result
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows',
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows',
     'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_hardshrink(mode):

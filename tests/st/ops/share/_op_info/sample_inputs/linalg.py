@@ -3721,3 +3721,261 @@ def error_sample_inputs_tensor_eigvals(op_info: OpInfo, dtype, device=None, **kw
         op_error_info='x should be square(squares)'
     )
 
+def basic_sample_inputs_tensor_ger(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    # input/vec2 must be 1D
+    cases = (
+        ((2,), (5,)),
+        ((10,), (3,)),
+        ((16,), (13,)),
+        ((0,), (2,)),
+    )
+
+    for input_shape, vec2_shape in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(make_arg(vec2_shape),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_basic",
+        )
+
+def extra_sample_inputs_tensor_ger(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        ((128,), (256,)),
+        ((512,), (128,)),
+        ((1024,), (1024,)),
+    )
+
+    for input_shape, vec2_shape in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(make_arg(vec2_shape),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_extra",
+        )
+    # large mix small values
+    values = small_large_values(dtype)
+    if values:
+        input_np_array = np.random.choice(values, size=(5,))
+        for discontiguous in [True, False]:
+            vec2 = make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(vec2,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            vec2 = make_tensor_with_np_array(np.full((4,), t), dtype=dtype)
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((6,), t), dtype=dtype),
+                op_args=(vec2,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def dynamic_sample_inputs_tensor_ger(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None,), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None,), dtype=dtype),),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2,)),
+                    op_args=(make_func(shape=(3,)),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(5,)),
+                    op_args=(make_func(shape=(6,)),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=dtype),),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5,)),
+                    op_args=(make_func(shape=(2,)),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3,)),
+                    op_args=(make_func(shape=(6,)),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_tensor_ger(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    cases = (
+        # input is not tensor
+        (2, make_arg((3,))),
+        # vec2 is not tensor
+        (make_arg((3,)), 1),
+        # input is not 1D tensor
+        (make_arg((1, 2, 1)), make_arg((3,))),
+        # vec2 is not 1D tensor
+        (make_arg((3,)), make_arg((2, 1))),
+        # the dtype of input and vec2 are not the same
+        (make_arg((3,)), ms.Tensor(shape=(3,), dtype=ms.float16)),
+    )
+    for input, vec2 in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(vec2,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_error_params",
+            ),
+            op_error_type=(AttributeError, TypeError, ValueError),
+            op_error_info=f'{op_info.name}: error params.'
+        )
+
+def basic_sample_inputs_tensor_geqrf(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    # input must be 2D
+    cases = (
+        (2, 5),
+        (10, 3),
+        (16, 13),
+        (0, 3),
+    )
+
+    for input_shape in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_basic",
+        )
+
+def extra_sample_inputs_tensor_geqrf(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+    cases = (
+        (128, 50),
+        (512, 100),
+        (1024, 104),
+    )
+
+    for input_shape in cases:
+        yield OpSampleInput(
+            op_input=make_arg(input_shape),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_extra",
+        )
+    # large mix small values
+    values = small_large_values(dtype, exclude_values=op_info.exclude_value)
+    if values:
+        input_np_array = np.random.choice(values, size=(5, 4))
+        for discontiguous in [True, False]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(input_np_array, dtype=dtype, discontiguous=discontiguous),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_large_mix_small_values_discontiguous_{discontiguous}",
+            )
+    # nan.inf/np.nan.inf
+    if dtype.is_floating_point or dtype.is_complex:
+        for t in [np.nan, np.inf, -np.inf]:
+            yield OpSampleInput(
+                op_input=make_tensor_with_np_array(np.full((6, 9), t), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{dtype}_{t}",
+            )
+
+def dynamic_sample_inputs_tensor_geqrf(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 9)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(15, 12)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 6)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_tensor_geqrf(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    cases = (
+        # input is not tensor
+        # input is not 2D tensor
+        2, make_arg((1, 2, 1)),
+    )
+    for input in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input,
+                op_args=(),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_error_input",
+            ),
+            op_error_type=(AttributeError, ValueError),
+            op_error_info=f'{op_info.name}: error input.'
+        )
