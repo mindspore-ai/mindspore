@@ -1,0 +1,28 @@
+# operator dynamic_mx_quant_with_dual_axis
+dynamic_mx_quant_with_dual_axis:
+  args:
+    input:
+      dtype: tensor
+    dst_type:
+      dtype: int
+    round_mode:
+      dtype: str
+      default: "'rint'"
+    scale_alg:
+      dtype: int
+      default: 0
+    dst_type_max:
+      dtype: float
+      default: 0.0
+  returns:
+    y1:
+      dtype: tensor
+    mxscale1:
+      dtype: tensor
+    y2:
+      dtype: tensor
+    mxscale2:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: DynamicMxQuantWithDualAxisAscend

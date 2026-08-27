@@ -1,0 +1,38 @@
+dynamic_mx_quant_with_dual_axis:
+    description: |
+        dynamic_mx_quant_with_dual_axis(input, *, dst_type, round_mode="rint", scale_alg=0, dst_type_max=0.0) -> (Tensor, Tensor, Tensor, Tensor)
+
+        Dynamically quantizes ``input`` along its last and second-to-last axes using blocks of 32.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Args:
+            input (Tensor): A 2-D to 7-D tensor of type ``float16`` or ``bfloat16``.
+
+        Keyword Args:
+            dst_type (int): Required destination data-type identifier. ``23`` and its alias ``291``
+                select FP8 E5M2; ``24`` and its alias ``292`` select FP8 E4M3FN.
+            round_mode (str, optional): Rounding mode. The runtime-tested value is ``"rint"``.
+                Default: ``"rint"``.
+            scale_alg (int, optional): Scale algorithm identifier. The runtime-tested values are
+                ``0`` and ``1``. Default: ``0``.
+            dst_type_max (float, optional): Destination maximum used by ACLNN scale algorithms that
+                support it. Default: ``0.0``.
+
+        Returns:
+            A tuple ``(y1, mxscale1, y2, mxscale2)``. ``y1`` and ``y2`` have the input shape and use
+            ``float8_e5m2`` for ``dst_type=23`` or ``291``, and ``float8_e4m3fn`` for
+            ``dst_type=24`` or ``292``.
+            Both scale tensors have dtype ``uint8`` and append a trailing dimension of size 2.
+            ``mxscale1`` replaces the last input dimension with
+            :math:`\lceil\lceil input.shape[-1] / 32\rceil / 2\rceil`; ``mxscale2`` replaces the
+            second-to-last input dimension by the same expression.
+
+        Raises:
+            TypeError: If the dtype of ``input`` is not ``float16`` or ``bfloat16``.
+            ValueError: If an argument is outside the documented runtime-tested subset or the rank
+                is invalid.
+
+        Supported Platforms:
+            ``Ascend``

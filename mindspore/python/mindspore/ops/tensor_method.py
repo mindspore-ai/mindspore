@@ -1998,6 +1998,18 @@ def tensor_quant_matmul(x1, x2, scale, *, offset=None, pertoken_scale=None, bias
     raise NotImplementedError('quant_matmul only supports Ascend.')
 
 
+def tensor_dynamic_mx_quant(input, *, dst_type, axis=-1, round_mode="rint", block_size=32, scale_alg=0,
+                            dst_type_max=0.0, max_low_bound=0.0):
+    r"""For details, please refer to :func:`mindspore.ops.auto_generate.dynamic_mx_quant`."""
+    raise NotImplementedError('dynamic_mx_quant only supports Ascend.')
+
+
+def tensor_dynamic_mx_quant_with_dual_axis(input, *, dst_type, round_mode="rint", scale_alg=0,
+                                           dst_type_max=0.0):
+    r"""For details, please refer to :func:`mindspore.ops.auto_generate.dynamic_mx_quant_with_dual_axis`."""
+    raise NotImplementedError('dynamic_mx_quant_with_dual_axis only supports Ascend.')
+
+
 def tensor_index(input, value):
     raise NotImplementedError("index only supports Ascend.")
 

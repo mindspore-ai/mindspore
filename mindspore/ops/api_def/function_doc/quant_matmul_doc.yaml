@@ -9,28 +9,47 @@ quant_matmul:
             Only support on David training series.
 
         Args:
-            x1 (Tensor): Tensor of shape :math:`(*, M, K)` . The dimension of `input` should be in [2, 6].
-            x2 (Tensor): Tensor of shape :math:`(*, K, N)` . The dimension of `input` should be in [2, 6].
-            scale (Tensor): Tensor of shape :math:`(T,)` . T should be equal to 1 or N, N is the last dimension of `x2`.
+            x1 (Tensor): Tensor of shape :math:`(*, M, K)` . The dimension of `x1` should be in [2, 6].
+                Native FP8 inputs support ``float8_e4m3fn`` and ``float8_e5m2``.
+            x2 (Tensor): Tensor of shape :math:`(*, K, N)` . The dimension of `x2` should be in [2, 6].
+                Its logical dtype must be compatible with ``x1``.
+            scale (Tensor): Quantization scale for ``x2``. The supported MXFP8 path uses public
+                ``uint8`` storage with ``scale_dtype=None``; its ACL descriptor is represented as
+                logical E8M0 without a numerical cast.
 
         Keyword Args:
-            offset (Tensor, optional): Tensor of shape :math:`(T,)` . T should be equal to 1 or N, N is the last dimension of `x2`. Default: ``None`` .
-            pertoken_scale (Tensor, optional): Tensor of shape :math:`(M,)` . M is second-to-last dimension of `x1`. Default: ``None`` .
-                A valid Tensor must deliver to `pertoken_scale` , ``None`` will cause unexpected error.
+            offset (Tensor, optional): Tensor of shape :math:`(T,)` . T should be equal to 1 or N, N is the last dimension of `x2`.
+                Its dtype can be ``float16`` or ``float32``. In the CANN 9.1.0 FP8 path, a non-None
+                `offset` requires an ``int64`` or ``uint64`` `scale`; it cannot be combined with an
+                E8M0 `scale`. Default: ``None`` .
+            pertoken_scale (Tensor, optional): E8M0 block-scale tensor for MX quantization. It must
+                not be ``None``. The runtime-tested path uses public ``uint8`` storage with
+                ``pertoken_scale_dtype=None``. The signature default remains ``None``, but omitting
+                this argument raises ``ValueError``. Default: ``None`` .
             bias (Tensor, optional): Tensor of shape :math:`(N,)` or :math:`(B, 1, N)` , N is the last dimension of `x2`.
-                If dimension of `output` is 2, 4, 5 or 6, `bias` must has shape :math:`(N,)` . Default: ``None`` .
-            output_dtype (:class:`mindspore.dtype`, optional): the dtype of `output`. Default: ``None`` .
-            x1_dtype (:class:`mindspore.dtype`, optional): Cast `x1` to `x1_dtype` before calculation. Default: ``None`` .
-            x2_dtype (:class:`mindspore.dtype`, optional): Cast `x2` to `x2_dtype` before calculation. Default: ``None`` .
-            pertoken_scale_dtype (:class:`mindspore.dtype`, optional): Cast `pertoken_scale` to `pertoken_scale_dtype` before calculation. Default: ``None`` .
-            scale_dtype (:class:`mindspore.dtype`, optional): Cast `scale` to `scale_dtype` before calculation. Default: ``None`` .
+                If dimension of `output` is 2, 4, 5 or 6, `bias` must have shape :math:`(N,)` . Its dtype
+                can be ``int32``, ``bfloat16``, ``float16``, or ``float32``. Default: ``None`` .
+            output_dtype (:class:`mindspore.dtype`, optional): The dtype of `output`. ``None``
+                selects ``int8``. The runtime-tested explicit values are ``float16``, ``bfloat16``,
+                ``float32``, and ``int32``; supported combinations are validated by ACLNN.
+                Default: ``None`` .
+            x1_dtype (:class:`mindspore.dtype`, optional): Logical ACL dtype override for `x1`. The
+                runtime-tested native-FP8 path requires ``None``. Default: ``None`` .
+            x2_dtype (:class:`mindspore.dtype`, optional): Logical ACL dtype override for `x2`. The
+                runtime-tested native-FP8 path requires ``None``. Default: ``None`` .
+            pertoken_scale_dtype (:class:`mindspore.dtype`, optional): Logical ACL dtype override for
+                `pertoken_scale`. Leave this argument as ``None`` for public ``uint8`` E8M0 storage.
+                Default: ``None`` .
+            scale_dtype (:class:`mindspore.dtype`, optional): Logical ACL dtype override for `scale`.
+                Leave this argument as ``None`` for public ``uint8`` E8M0 storage. Default: ``None`` .
             group_sizes (Union[tuple(int), list(int)], optional): A sequence of int elements. Must have 3 elements. Default: ``None`` .
 
         Returns:
             Tensor of shape :math:`(*, M, N)` .
 
         Raises:
-            ValueError: If dtype of `x1` is int8 or int32.
+            ValueError: If `pertoken_scale` is ``None``, `x1` has ``int8`` or ``int32`` dtype,
+                `offset` is not one-dimensional, or an input rank is invalid.
 
         Supported Platforms:
             ``Ascend``
@@ -39,12 +58,14 @@ quant_matmul:
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import ops, Tensor
-            >>> x1 = Tensor(np.random.randn(2, 3, 4), ms.float8_e4m3)
-            >>> x2 = Tensor(np.random.randn(2, 4, 5), ms.float8_e4m3)
-            >>> scale = Tensor(np.random.randn(1,), ms.float32)
-            >>> pertoken_scale = Tensor(np.random.randn(3,), ms.float32)
-            >>> output = ops.auto_generate.quant_matmul(x1, x2, scale, pertoken_scale=pertoken_scale, output_dtype=ms.bfloat16)
+            >>> x1 = Tensor(np.random.randn(16, 64), ms.float8_e4m3fn)
+            >>> x2 = Tensor(np.random.randn(64, 32), ms.float8_e4m3fn)
+            >>> scale = Tensor(np.full((1, 32, 2), 127, np.uint8))
+            >>> pertoken_scale = Tensor(np.full((16, 1, 2), 127, np.uint8))
+            >>> output = ops.auto_generate.quant_matmul(
+            ...     x1, x2, scale, pertoken_scale=pertoken_scale, output_dtype=ms.bfloat16,
+            ...     group_sizes=(1, 1, 32))
             >>> print(output.shape)
-            (2, 3, 5)
+            (16, 32)
             >>> print(output.dtype)
             BFloat16

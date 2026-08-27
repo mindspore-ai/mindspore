@@ -1,0 +1,33 @@
+# operator dynamic_mx_quant
+dynamic_mx_quant:
+  args:
+    input:
+      dtype: tensor
+    dst_type:
+      dtype: int
+    axis:
+      dtype: int
+      default: -1
+    round_mode:
+      dtype: str
+      default: "'rint'"
+    block_size:
+      dtype: int
+      default: 32
+    scale_alg:
+      dtype: int
+      default: 0
+    dst_type_max:
+      dtype: float
+      default: 0.0
+    max_low_bound:
+      dtype: float
+      default: 0.0
+  returns:
+    y:
+      dtype: tensor
+    mxscale:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: DynamicMxQuantAscend
