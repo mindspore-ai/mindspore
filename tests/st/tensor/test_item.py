@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tensor.item cases for all systems except Ascend
+"""
 import pytest
 from tests.mark_utils import arg_mark
 
@@ -23,7 +25,7 @@ from mindspore import context
 
 class Net(nn.Cell):
     def __init__(self, index=None):
-        super(Net, self).__init__()
+        super().__init__()
         self.index = index
 
     def construct(self, x):
@@ -32,7 +34,7 @@ class Net(nn.Cell):
         return x.item(self.index)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

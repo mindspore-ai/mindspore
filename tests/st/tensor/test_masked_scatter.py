@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tensor.masked_scatter cases for all systems except Ascend
+"""
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -20,9 +22,6 @@ from mindspore import Tensor
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.ops.test_tools.test_op import TEST_OP
-
-
-
 
 class Net(nn.Cell):
     def construct(self, x, mask, updates):

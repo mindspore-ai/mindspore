@@ -39,7 +39,7 @@ from tests.st.ops.share._op_info.op_info import (
     basic_reference_inputs_binary_op_common_func,
     basic_reference_inputs_unary_op_common_func,
     extra_reference_inputs_binary_op_common_func,
-    dynamic_inputs_unary_op_common_func,
+    dynamic_inputs_binary_op_common_func,
 )
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
@@ -3325,28 +3325,29 @@ def dynamic_sample_inputs_tensor_copysign(op_info:OpInfo, dtype=None, device=Non
 def dynamic_sample_inputs_tensor_copy_(op_info:OpInfo, dtype=None, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
     # dynamic shape
-    yield OpDynamicInput(
-        op_compile_input=OpSampleInput(
-            op_input=ms.Tensor(shape=(2, None, None), dtype=dtype),
-            op_args=(ms.Tensor(shape=(2, None, None), dtype=dtype),),
-            op_kwargs={},
-            sample_name=f"{op_info.name}_dynamic_shape_compile_input",
-        ),
-        op_running_inputs=(
-            OpSampleInput(
-                op_input=make_func(shape=(2, 2, 3), ),
-                op_args=(make_func(shape=(2, 2, 3), ),),
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(2, None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(2, None, None), dtype=dtype),),
                 op_kwargs={},
-                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
             ),
-            OpSampleInput(
-                op_input=make_func(shape=(2, 4, 5), ),
-                op_args=(make_func(shape=(2, 4, 5), ),),
-                op_kwargs={},
-                sample_name=f"{op_info.name}_dynamic_shape_running_input",
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 2, 3), ),
+                    op_args=(make_func(shape=(2, 2, 3), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 4, 5), ),
+                    op_args=(make_func(shape=(2, 4, 5), ),),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
             ),
-        ),
-    )
+        )
     if not kwargs.get("only_dynamic_shape", False):
         # dynamic rank
         yield OpDynamicInput(
@@ -3371,6 +3372,68 @@ def dynamic_sample_inputs_tensor_copy_(op_info:OpInfo, dtype=None, device=None, 
                 ),
             ),
         )
+
+def basic_reference_inputs_mint_polar(op_info, dtype=None, device=None, **kwargs):
+    for sample_input in basic_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs):
+        input_shape = sample_input.op_input.shape
+        other_shape = sample_input.op_args[0].shape
+        if input_shape != other_shape:
+            continue
+        yield sample_input
+
+def extra_reference_inputs_mint_polar(op_info, dtype=None, device=None, **kwargs):
+    for sample_input in extra_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs):
+        input_shape = sample_input.op_input.shape
+        other_shape = sample_input.op_args[0].shape
+        if input_shape != other_shape:
+            continue
+        yield sample_input
+
+def basic_reference_inputs_tensor_lerp(op_info, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device)
+    for sample_input in basic_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs):
+        input_shape = sample_input.op_input.shape
+        weight=(make_arg(input_shape, dtype=dtype), )
+        if dtype not in (ms.float16, ms.bfloat16,):
+            weight =weight + (-0.2, 0.8, )
+        if '_kbk' not in op_info.name:
+            weight = weight + (-10, 0, 2)
+        sample_input.op_args = sample_input.op_args + (random.choice(weight),)
+        yield sample_input
+
+def extra_reference_inputs_tensor_lerp(op_info, dtype=None, device=None, **kwargs):
+    values = small_large_values(dtype=dtype)
+    for sample_input in extra_reference_inputs_binary_op_common_func(op_info, dtype, device, **kwargs):
+        if dtype in (ms.float16, ms.bfloat16,):
+            sample_input.op_args = sample_input.op_args + (ms.Tensor(2, dtype=dtype), )
+        else:
+            if any(s in sample_input.sample_name for s in ('small', 'large',)):
+                sample_input.op_args = sample_input.op_args + (np.random.choice(values),)
+            else:
+                sample_input.op_args = sample_input.op_args + (0.5,)
+        yield sample_input
+
+def dynamic_reference_inputs_tensor_lerp(op_info, dtype=None, device=None, **kwargs):
+    for dynamic_input in dynamic_inputs_binary_op_common_func(op_info, dtype, device, **kwargs):
+        compile_input = dynamic_input.op_compile_input
+        compile_input.op_args = compile_input.op_args + (1.5, )
+        for running_input in dynamic_input.op_running_inputs:
+            running_input.op_args = running_input.op_args + (1.5,)
+        yield dynamic_input
+
+def error_reference_inputs_tensor_lerp(op_info, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    #shape not match
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func(shape=(2, )),
+            op_args=(make_func(shape=(3, )), 1.0),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_shape_not_match",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'shape not match',
+    )
 
 def basic_reference_inputs_binary_op_common_func_tensor_divide(op_info: OpInfo,  dtype=None, device=None, **kwargs):
 

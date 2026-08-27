@@ -783,3 +783,72 @@ def _generate_binary_inplace_op_broadcasting_and_discontiguous_tensor_inputs_fun
             sample_name=f"{op_info.name}_{dtype}_{len(_input_shape)}d_x"+
                         f"_{len(_other_shape)}d_broadcasting_and_discontiguous_{discontiguous}_tensor_inputs",
         )
+
+def basic_reference_inputs_tensor_item(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    yield OpSampleInput(
+        op_input=make_tensor((1,), dtype=dtype, device=device),
+        op_args=(),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_1d",
+    )
+    yield OpSampleInput(
+        op_input=make_tensor((), dtype=dtype, device=device),
+        op_args=(),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_scalar",
+    )
+
+def extra_reference_inputs_tensor_item(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    #small/large values
+    values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
+    for value in values:
+        yield OpSampleInput(
+            op_input=ms.Tensor([value], dtype=dtype),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_small_large_value",
+        )
+    #extremal values
+    for value in [np.inf, np.nan,-np.inf]:
+        yield OpSampleInput(
+            op_input=ms.Tensor([value], dtype=dtype),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_extremal_value",
+        )
+
+def error_reference_inputs_tensor_item(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    #1d with more than 1 elements
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=ms.Tensor([1, 2], dtype = ms.float32),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_double_eles",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f"{op_info.name}_double_eles",
+    )
+    # 1d with more than 1-d
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=ms.Tensor([[1], [2]], dtype=ms.float32),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_ambiguous_2d",
+        ),
+        op_error_type=ValueError,
+        op_error_info=f"{op_info.name}_ambiguous_2d",
+    )
