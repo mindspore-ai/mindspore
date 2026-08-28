@@ -2010,6 +2010,21 @@ def tensor_dynamic_mx_quant_with_dual_axis(input, *, dst_type, round_mode="rint"
     raise NotImplementedError('dynamic_mx_quant_with_dual_axis only supports Ascend.')
 
 
+def tensor_grouped_matmul_v5(x, weight, *, bias=None, scale=None, offset=None, antiquant_scale=None,
+                             antiquant_offset=None, per_token_scale=None, group_list=None, activation_input=None,
+                             activation_quant_scale=None, activation_quant_offset=None, split_item=0, group_type=-1,
+                             group_list_type=0, act_type=0, tuning_config=None, output_dtype=None, scale_dtype=None,
+                             per_token_scale_dtype=None):
+    r"""For details, please refer to :func:`mindspore.ops.auto_generate.grouped_matmul_v5`."""
+    raise NotImplementedError('grouped_matmul_v5 only supports Ascend.')
+
+
+def tensor_grouped_dynamic_mx_quant(x, group_index, *, round_mode="rint", dst_type=23, blocksize=32,
+                                    scale_alg=0, dst_type_max=0.0):
+    r"""For details, please refer to :func:`mindspore.ops.auto_generate.grouped_dynamic_mx_quant`."""
+    raise NotImplementedError('grouped_dynamic_mx_quant only supports Ascend.')
+
+
 def tensor_index(input, value):
     raise NotImplementedError("index only supports Ascend.")
 

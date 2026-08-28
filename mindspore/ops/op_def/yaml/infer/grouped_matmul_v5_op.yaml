@@ -1,0 +1,82 @@
+# operator grouped_matmul_v5
+grouped_matmul_v5:
+  args:
+    x:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    weight:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    bias:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    scale:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    offset:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    antiquant_scale:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    antiquant_offset:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    per_token_scale:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    group_list:
+      dtype: tensor
+      default: None
+    activation_input:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    activation_quant_scale:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    activation_quant_offset:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+      default: None
+    split_item:
+      dtype: int
+      default: 0
+    group_type:
+      dtype: int
+      default: -1
+    group_list_type:
+      dtype: int
+      default: 0
+    act_type:
+      dtype: int
+      default: 0
+    tuning_config:
+      dtype: tuple[int]
+      type_cast: list[int]
+      default: None
+    output_dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+    scale_dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+    per_token_scale_dtype:
+      dtype: TypeId
+      arg_handler: dtype_to_type_id
+      default: None
+  returns:
+    out:
+      dtype: tuple[tensor]
+  dispatch:
+    enable: True
+    Ascend: GroupedMatmulV5Ascend

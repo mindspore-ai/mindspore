@@ -1,0 +1,30 @@
+# operator grouped_dynamic_mx_quant
+grouped_dynamic_mx_quant:
+  args:
+    x:
+      dtype: tensor
+    group_index:
+      dtype: tensor
+    round_mode:
+      dtype: str
+      default: "'rint'"
+    dst_type:
+      dtype: int
+      default: 23
+    blocksize:
+      dtype: int
+      default: 32
+    scale_alg:
+      dtype: int
+      default: 0
+    dst_type_max:
+      dtype: float
+      default: 0.0
+  returns:
+    y:
+      dtype: tensor
+    mxscale:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: GroupedDynamicMxQuantAscend

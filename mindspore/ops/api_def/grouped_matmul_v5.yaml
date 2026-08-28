@@ -1,0 +1,8 @@
+grouped_matmul_v5:
+  op_yaml: grouped_matmul_v5_op.yaml
+  py_method: tensor_grouped_matmul_v5
+  kwonlyargs: bias, scale, offset, antiquant_scale, antiquant_offset, per_token_scale, group_list, activation_input, activation_quant_scale, activation_quant_offset, split_item, group_type, group_list_type, act_type, tuning_config, output_dtype, scale_dtype, per_token_scale_dtype
+  Ascend: pyboost
+  CPU: py_method
+  GPU: py_method
+  interface: function

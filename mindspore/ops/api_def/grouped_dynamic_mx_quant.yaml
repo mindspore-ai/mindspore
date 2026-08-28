@@ -1,0 +1,8 @@
+grouped_dynamic_mx_quant:
+  op_yaml: grouped_dynamic_mx_quant_op.yaml
+  py_method: tensor_grouped_dynamic_mx_quant
+  kwonlyargs: round_mode, dst_type, blocksize, scale_alg, dst_type_max
+  Ascend: pyboost
+  CPU: py_method
+  GPU: py_method
+  interface: function
