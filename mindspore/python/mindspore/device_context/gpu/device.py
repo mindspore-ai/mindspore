@@ -32,7 +32,7 @@ def device_count():
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.device_context.gpu.device.device_count()
+        >>> ms.device_context.gpu.device_count()
     """
     if not MSContext.get_instance().is_pkg_support_device("GPU") or not is_available():
         raise RuntimeError("Device_target GPU not exist.")
@@ -49,7 +49,7 @@ def is_available():
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.device_context.gpu.device.is_available()
+        >>> ms.device_context.gpu.is_available()
     """
     # MindSpore will try to load plugins in "import mindspore", and availability status will be stored.
     if not MSContext.get_instance().is_pkg_support_device("GPU"):

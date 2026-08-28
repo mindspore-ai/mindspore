@@ -23,7 +23,7 @@ mindspore.scipy.linalg.solve_triangular
           ========  =========
 
         - **lower** (bool, 可选) - `a` 是否为下三角矩阵，默认值： ``False`` 。
-        - **unit_diagonal** (bool, 可选) - 如果为 ``True``，那么 `a` 的对角线会被全部置为1，默认值： ``False`` 。
+        - **unit_diagonal** (bool, 可选) - 如果为 ``True``， `a` 的对角线元素为1且不引用，默认值： ``False`` 。
         - **overwrite_b** (bool, 可选) - 在MindSpore中，当前这个参数不起作用。默认值： ``False`` 。
         - **debug** (Any, 可选) - 在MindSpore中，当前这个参数不起作用。默认值： ``None`` 。
         - **check_finite** (bool, 可选) - 在MindSpore中，当前这个参数不起作用。默认值： ``True`` 。

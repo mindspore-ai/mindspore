@@ -18,6 +18,3 @@ mindspore.numpy.histogram2d
 
     返回：
         (Tensor, Tensor, Tensor)，双向直方图的值及其在第一和第二维度上的桶的边界。
-
-    异常：
-        - **ValueError** - 如果 `range` 的size不等于样本数量。

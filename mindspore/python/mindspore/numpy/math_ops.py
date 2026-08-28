@@ -656,7 +656,7 @@ def inner(a, b):
         Tensor or scalar.
 
     Raises:
-        ValueError: If ``x1.shape[-1] != x2.shape[-1]``.
+        ValueError: If ``a.shape[-1] != b.shape[-1]``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4705,7 +4705,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
         (Tensor, Tensor), the values of the histogram and the bin edges.
 
     Raises:
-        ValueError: If `x` and `weights` do not have the same size.
+        ValueError: If `a` and `weights` do not have the same size.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4817,9 +4817,6 @@ def histogramdd(sample, bins=10, range=None, weights=None, density=False): # pyl
     Returns:
         (Tensor, list of Tensor), the values of the histogram and the bin edges.
 
-    Raises:
-        ValueError: If `range` does not have the same size as the number of samples.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4924,9 +4921,6 @@ def histogram2d(x, y, bins=10, range=None, weights=None, density=False): # pylin
     Returns:
         (Tensor, Tensor, Tensor), the values of the bi-directional histogram and the bin edges
         along the first and second dimensions.
-
-    Raises:
-        ValueError: If `range` does not have the same size as the number of samples.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

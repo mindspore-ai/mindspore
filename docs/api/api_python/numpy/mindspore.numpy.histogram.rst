@@ -19,4 +19,4 @@ mindspore.numpy.histogram
         (Tensor, Tensor)，直方图的值和桶的边界。
 
     异常：
-        - **ValueError** - 如果 `x` 和 `weights` 的size不相同。
+        - **ValueError** - 如果 `a` 和 `weights` 的size不相同。

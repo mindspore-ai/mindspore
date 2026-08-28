@@ -130,7 +130,7 @@ def less(x1, x2, dtype=None):
 
 def greater_equal(x1, x2, dtype=None):
     """
-    Returns the truth value of ``(x1 >= x2)`` element-wise.
+    Returns the truth value of :math:`(x1 >= x2)` element-wise.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`,
@@ -138,7 +138,7 @@ def greater_equal(x1, x2, dtype=None):
 
     Args:
         x1 (Tensor): Input array.
-        x2 (Tensor): Input array. If ``x1.shape != x2.shape``, they must be
+        x2 (Tensor): Input array. If :math:`x1.shape != x2.shape`, they must be
             broadcastable to a common shape (which becomes the shape of the output).
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.

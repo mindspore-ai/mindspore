@@ -20,4 +20,4 @@ mindspore.numpy.inner
         Tensor或标量。
 
     异常：
-        - **ValueError** - 如果 ``x1.shape[-1] != x2.shape[-1]`` 。
+        - **ValueError** - 如果 ``a.shape[-1] != b.shape[-1]`` 。
