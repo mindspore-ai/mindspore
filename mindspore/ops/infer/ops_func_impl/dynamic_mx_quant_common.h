@@ -28,6 +28,7 @@ constexpr int64_t kDstTypeFp8E5M2Alias = 291;
 constexpr int64_t kDstTypeFp8E4M3Fn = 24;
 constexpr int64_t kDstTypeFp8E4M3FnAlias = 292;
 constexpr int64_t kMxBlockSize = 32;
+constexpr int64_t kMxScalePairSize = 2;
 
 void CheckInputType(TypeId input_type, const std::string &op_name);
 void CheckInputRank(const ShapeVector &input_shape, size_t min_rank, const std::string &op_name);

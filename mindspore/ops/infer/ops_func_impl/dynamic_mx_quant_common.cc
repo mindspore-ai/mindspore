@@ -30,7 +30,7 @@ int64_t InferScaleDim(int64_t dim, int64_t block_size) {
     return abstract::Shape::kShapeDimAny;
   }
   const auto block_count = (dim + block_size - 1) / block_size;
-  return (block_count + 1) / 2;
+  return (block_count + 1) / kMxScalePairSize;
 }
 }  // namespace
 
@@ -98,7 +98,7 @@ ShapeVector InferScaleShape(const ShapeVector &input_shape, const std::optional<
       block_size.has_value() ? InferScaleDim(scale_shape[LongToSize(normalized_axis)], block_size.value())
                              : abstract::Shape::kShapeDimAny;
   }
-  scale_shape.push_back(2);
+  scale_shape.push_back(kMxScalePairSize);
   return scale_shape;
 }
 

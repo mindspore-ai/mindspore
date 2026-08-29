@@ -36,39 +36,50 @@ struct AclTensorListWrapper {
 };
 
 namespace acl_tensor_wrapper {
+constexpr size_t kFirstDimension = 0;
+constexpr size_t kOneDimensionalRank = 1;
+constexpr size_t kLastDimensionOffset = 1;
+constexpr size_t kMinimumFourBitTensorRank = 2;
+constexpr size_t kPenultimateDimensionOffset = 2;
+constexpr size_t kNclRank = 3;
+constexpr size_t kNchwRank = 4;
+constexpr size_t kNcdhwRank = 5;
+constexpr int64_t kUnitStride = 1;
+constexpr int64_t kFourBitStorageExpansionFactor = 2;
+
 inline bool IsFourBitType(aclDataType dtype) { return dtype == ACL_FLOAT4_E2M1 || dtype == ACL_FLOAT4_E1M2; }
 
 inline void ExpandFourBitShapeAndStrides(ShapeVector *shape, std::vector<int64_t> *strides) {
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(strides);
   const auto rank = shape->size();
-  if (rank == 1) {
-    (*shape)[0] *= 2;
+  if (rank == kOneDimensionalRank) {
+    (*shape)[kFirstDimension] *= kFourBitStorageExpansionFactor;
     return;
   }
-  if (rank < 2) {
+  if (rank < kMinimumFourBitTensorRank) {
     MS_LOG(EXCEPTION) << "A logical 4-bit ACL tensor must have at least one dimension.";
   }
 
-  const auto last = rank - 1;
-  const auto penultimate = rank - 2;
-  if ((*strides)[last] == 1 && (*strides)[penultimate] == 1) {
-    if ((*shape)[last] == 1) {
-      (*strides)[penultimate] *= 2;
-      (*shape)[last] *= 2;
-    } else if ((*shape)[penultimate] == 1) {
-      (*strides)[last] *= 2;
-      (*shape)[penultimate] *= 2;
+  const auto last = rank - kLastDimensionOffset;
+  const auto penultimate = rank - kPenultimateDimensionOffset;
+  if ((*strides)[last] == kUnitStride && (*strides)[penultimate] == kUnitStride) {
+    if ((*shape)[last] == kUnitStride) {
+      (*strides)[penultimate] *= kFourBitStorageExpansionFactor;
+      (*shape)[last] *= kFourBitStorageExpansionFactor;
+    } else if ((*shape)[penultimate] == kUnitStride) {
+      (*strides)[last] *= kFourBitStorageExpansionFactor;
+      (*shape)[penultimate] *= kFourBitStorageExpansionFactor;
     }
-  } else if ((*strides)[last] == 1) {
-    (*strides)[penultimate] *= 2;
-    (*shape)[last] *= 2;
-  } else if ((*strides)[penultimate] == 1) {
-    (*strides)[last] *= 2;
-    (*shape)[penultimate] *= 2;
+  } else if ((*strides)[last] == kUnitStride) {
+    (*strides)[penultimate] *= kFourBitStorageExpansionFactor;
+    (*shape)[last] *= kFourBitStorageExpansionFactor;
+  } else if ((*strides)[penultimate] == kUnitStride) {
+    (*strides)[last] *= kFourBitStorageExpansionFactor;
+    (*shape)[penultimate] *= kFourBitStorageExpansionFactor;
   }
   for (size_t i = 0; i < penultimate; ++i) {
-    (*strides)[i] *= 2;
+    (*strides)[i] *= kFourBitStorageExpansionFactor;
   }
 }
 
@@ -88,13 +99,13 @@ inline aclTensor *ConvertType(const AclTensorWrapper &wrapper) {
   auto strides = wrapper.tensor->stride();
   auto format = ACL_FORMAT_ND;
   switch (shape.size()) {
-    case 3:
+    case acl_tensor_wrapper::kNclRank:
       format = ACL_FORMAT_NCL;
       break;
-    case 4:
+    case acl_tensor_wrapper::kNchwRank:
       format = ACL_FORMAT_NCHW;
       break;
-    case 5:
+    case acl_tensor_wrapper::kNcdhwRank:
       format = ACL_FORMAT_NCDHW;
       break;
     default:
@@ -116,9 +127,9 @@ inline aclTensor *ConvertType(const AclTensorWrapper &wrapper) {
 
   if (acl_tensor_wrapper::IsFourBitType(wrapper.dtype)) {
     if (format == ACL_FORMAT_FRACTAL_NZ) {
-      storage_shape.back() *= 2;
+      storage_shape.back() *= acl_tensor_wrapper::kFourBitStorageExpansionFactor;
     } else {
-      storage_shape[0] *= 2;
+      storage_shape[acl_tensor_wrapper::kFirstDimension] *= acl_tensor_wrapper::kFourBitStorageExpansionFactor;
     }
     acl_tensor_wrapper::ExpandFourBitShapeAndStrides(&shape, &strides);
   }

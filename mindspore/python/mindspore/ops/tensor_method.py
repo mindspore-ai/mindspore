@@ -1998,6 +1998,8 @@ def tensor_quant_matmul(x1, x2, scale, *, offset=None, pertoken_scale=None, bias
     raise NotImplementedError('quant_matmul only supports Ascend.')
 
 
+# Preserve the schema-defined ``input`` keyword for fallback dispatch.
+# pylint: disable=redefined-builtin
 def tensor_dynamic_mx_quant(input, *, dst_type, axis=-1, round_mode="rint", block_size=32, scale_alg=0,
                             dst_type_max=0.0, max_low_bound=0.0):
     r"""For details, please refer to :func:`mindspore.ops.auto_generate.dynamic_mx_quant`."""
@@ -2008,8 +2010,11 @@ def tensor_dynamic_mx_quant_with_dual_axis(input, *, dst_type, round_mode="rint"
                                            dst_type_max=0.0):
     r"""For details, please refer to :func:`mindspore.ops.auto_generate.dynamic_mx_quant_with_dual_axis`."""
     raise NotImplementedError('dynamic_mx_quant_with_dual_axis only supports Ascend.')
+# pylint: enable=redefined-builtin
 
 
+# The fallback must mirror the fixed public schema with 20 parameters.
+# pylint: disable=too-many-locals
 def tensor_grouped_matmul_v5(x, weight, *, bias=None, scale=None, offset=None, antiquant_scale=None,
                              antiquant_offset=None, per_token_scale=None, group_list=None, activation_input=None,
                              activation_quant_scale=None, activation_quant_offset=None, split_item=0, group_type=-1,
@@ -2017,6 +2022,7 @@ def tensor_grouped_matmul_v5(x, weight, *, bias=None, scale=None, offset=None, a
                              per_token_scale_dtype=None):
     r"""For details, please refer to :func:`mindspore.ops.auto_generate.grouped_matmul_v5`."""
     raise NotImplementedError('grouped_matmul_v5 only supports Ascend.')
+# pylint: enable=too-many-locals
 
 
 def tensor_grouped_dynamic_mx_quant(x, group_index, *, round_mode="rint", dst_type=23, blocksize=32,
