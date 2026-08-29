@@ -24,10 +24,11 @@
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
 
 namespace mindspore::kernel::pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-DynamicMxQuantWithDualAxisAscendCustomize(const tensor::TensorPtr &input, const Int64ImmPtr &dst_type,
-                                          const StringImmPtr &round_mode, const Int64ImmPtr &scale_alg,
-                                          const FP32ImmPtr &dst_type_max) {
+DynamicMxQuantWithDualAxisOutputs DynamicMxQuantWithDualAxisAscendCustomize(const tensor::TensorPtr &input,
+                                                                            const Int64ImmPtr &dst_type,
+                                                                            const StringImmPtr &round_mode,
+                                                                            const Int64ImmPtr &scale_alg,
+                                                                            const FP32ImmPtr &dst_type_max) {
   static const auto prim = std::make_shared<Primitive>("DynamicMxQuantWithDualAxis");
   auto outputs = InferOutput<4>(prim, input, dst_type, round_mode, scale_alg, dst_type_max);
 

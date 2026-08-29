@@ -206,33 +206,66 @@ ShapeArray InferMultiFromSeparate(const PrimitivePtr &primitive, const ShapeArra
   return outputs;
 }
 
-ShapeArray InferMultiFromGrouped(const PrimitivePtr &primitive, const InferInfoPtr &group_list, int64_t group_list_type,
-                                 const ShapeArray &x_shapes, const ShapeArray &weight_shapes,
-                                 const std::vector<InferInfoPtr> &weight_elements, bool single_weight) {
+void CheckGroupListForMultiOutput(const PrimitivePtr &primitive, const InferInfoPtr &group_list) {
   if (MS_UNLIKELY(group_list->IsNone())) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', group_list is required when split_item is 1.";
   }
+}
+
+void CheckMultiOutputXCount(const PrimitivePtr &primitive, const ShapeArray &x_shapes) {
   if (MS_UNLIKELY(x_shapes.size() != kIndex1)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "' with split_item=1, x must contain one tensor.";
   }
+}
+
+int64_t GetStaticGroupCountForMultiOutput(const PrimitivePtr &primitive, const InferInfoPtr &group_list,
+                                          int64_t group_list_type) {
   const auto group_count = GetGroupCount(primitive, group_list, group_list_type);
   if (MS_UNLIKELY(group_count == abstract::Shape::kShapeDimAny)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "' with split_item=1, group_list.shape[0] must be static because it determines the "
                                 "output tuple length.";
   }
+  return group_count;
+}
+
+void CheckMultiOutputWeightCount(const PrimitivePtr &primitive, const ShapeArray &weight_shapes, bool single_weight,
+                                 int64_t group_count) {
   if (!single_weight && SizeToLong(weight_shapes.size()) != group_count) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "' with split_item=1, weight must contain one tensor per group, but got "
                              << weight_shapes.size() << " weights and " << group_count << " groups.";
   }
-  const auto rows = GetKnownGroupRows(primitive, group_list, group_list_type, group_count);
+}
+
+ShapeArray MakeMultiGroupedOutputs(const PrimitivePtr &primitive, const ShapeArray &weight_shapes,
+                                   const std::vector<InferInfoPtr> &weight_elements, bool single_weight,
+                                   int64_t group_count, const std::optional<std::vector<int64_t>> &rows) {
   ShapeArray outputs;
   for (int64_t i = 0; i < group_count; ++i) {
     const auto m = rows.has_value() ? rows.value()[LongToSize(i)] : abstract::Shape::kShapeDimAny;
     outputs.push_back({m, GetWeightNAt(primitive, weight_shapes, weight_elements, single_weight, LongToSize(i))});
   }
   return outputs;
+}
+
+ShapeArray InferMultiFromGrouped(const PrimitivePtr &primitive, const InferInfoPtr &group_list, int64_t group_list_type,
+                                 const ShapeArray &x_shapes, const ShapeArray &weight_shapes,
+                                 const std::vector<InferInfoPtr> &weight_elements, bool single_weight) {
+  CheckGroupListForMultiOutput(primitive, group_list);
+  CheckMultiOutputXCount(primitive, x_shapes);
+  const auto group_count = GetStaticGroupCountForMultiOutput(primitive, group_list, group_list_type);
+  CheckMultiOutputWeightCount(primitive, weight_shapes, single_weight, group_count);
+  const auto rows = GetKnownGroupRows(primitive, group_list, group_list_type, group_count);
+  return MakeMultiGroupedOutputs(primitive, weight_shapes, weight_elements, single_weight, group_count, rows);
+}
+
+ShapeArray InferKGroupSingleOutput(const PrimitivePtr &primitive, const InferInfoPtr &group_list,
+                                   int64_t group_list_type, int64_t m, int64_t n) {
+  if (MS_UNLIKELY(group_list->IsNone())) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', group_list is required when group_type is 2.";
+  }
+  return {{GetGroupCount(primitive, group_list, group_list_type), m, n}};
 }
 
 ShapeArray InferSingleOutput(const PrimitivePtr &primitive, const InferInfoPtr &group_list, int64_t group_list_type,
@@ -243,10 +276,7 @@ ShapeArray InferSingleOutput(const PrimitivePtr &primitive, const InferInfoPtr &
   if (group_type != kKGroup) {
     return {{m, n}};
   }
-  if (MS_UNLIKELY(group_list->IsNone())) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', group_list is required when group_type is 2.";
-  }
-  return {{GetGroupCount(primitive, group_list, group_list_type), m, n}};
+  return InferKGroupSingleOutput(primitive, group_list, group_list_type, m, n);
 }
 }  // namespace
 

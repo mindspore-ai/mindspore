@@ -22,10 +22,14 @@
 #include "ir/tensor.h"
 
 namespace mindspore::kernel::pyboost {
-std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>
-DynamicMxQuantWithDualAxisAscendCustomize(const tensor::TensorPtr &input, const Int64ImmPtr &dst_type,
-                                          const StringImmPtr &round_mode, const Int64ImmPtr &scale_alg,
-                                          const FP32ImmPtr &dst_type_max);
+using DynamicMxQuantWithDualAxisOutputs =
+  std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>;
+
+DynamicMxQuantWithDualAxisOutputs DynamicMxQuantWithDualAxisAscendCustomize(const tensor::TensorPtr &input,
+                                                                            const Int64ImmPtr &dst_type,
+                                                                            const StringImmPtr &round_mode,
+                                                                            const Int64ImmPtr &scale_alg,
+                                                                            const FP32ImmPtr &dst_type_max);
 }  // namespace mindspore::kernel::pyboost
 
 #endif  // MINDSPORE_MINDSPORE_OPS_KERNEL_ASCEND_ACLNN_PYBOOST_IMPL_CUSTOMIZE_DYNAMIC_MX_QUANT_WITH_DUAL_AXIS_H_

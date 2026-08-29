@@ -123,47 +123,63 @@ std::vector<int64_t> ReadGroupRows(const TensorPtr &group_list, int64_t group_li
   return rows;
 }
 
-void SetRuntimeOutputShapes(const std::vector<TensorPtr> &x, const std::vector<TensorPtr> &weight,
-                            const std::optional<TensorPtr> &group_list, int64_t split_item, int64_t group_type,
-                            int64_t group_list_type, const std::vector<TensorPtr> &outputs) {
-  const bool single_weight = weight.size() == kIndex1 && weight[kIndex0]->shape().size() == kIndex3;
-  const auto WeightNAt = [&](size_t index) { return GetRuntimeWeightN(weight[single_weight ? kIndex0 : index]); };
+int64_t GetRuntimeWeightNAt(const std::vector<TensorPtr> &weight, bool single_weight, size_t index) {
+  return GetRuntimeWeightN(weight[single_weight ? kIndex0 : index]);
+}
 
-  if (split_item == kSplitMultiFromSeparate) {
-    for (size_t i = 0; i < outputs.size(); ++i) {
-      auto shape = x[i]->shape();
-      shape.back() = WeightNAt(i);
-      (void)outputs[i]->set_shape(shape);
-    }
-    return;
+void SetSeparateOutputShapes(const std::vector<TensorPtr> &x, const std::vector<TensorPtr> &weight, bool single_weight,
+                             const std::vector<TensorPtr> &outputs) {
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto shape = x[i]->shape();
+    shape.back() = GetRuntimeWeightNAt(weight, single_weight, i);
+    (void)outputs[i]->set_shape(shape);
   }
+}
 
-  if (split_item == kSplitMultiFromGrouped) {
-    if (!group_list.has_value()) {
-      MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', group_list is required when split_item is 1.";
-    }
-    const auto rows = ReadGroupRows(group_list.value(), group_list_type);
-    if (rows.size() != outputs.size()) {
-      MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', group count " << rows.size()
-                               << " does not match output count " << outputs.size() << ".";
-    }
-    for (size_t i = 0; i < outputs.size(); ++i) {
-      (void)outputs[i]->set_shape({rows[i], WeightNAt(i)});
-    }
-    return;
+void SetGroupedOutputShapes(const std::vector<TensorPtr> &weight, const std::optional<TensorPtr> &group_list,
+                            int64_t group_list_type, bool single_weight, const std::vector<TensorPtr> &outputs) {
+  if (!group_list.has_value()) {
+    MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', group_list is required when split_item is 1.";
   }
+  const auto rows = ReadGroupRows(group_list.value(), group_list_type);
+  if (rows.size() != outputs.size()) {
+    MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', group count " << rows.size() << " does not match output count "
+                             << outputs.size() << ".";
+  }
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    (void)outputs[i]->set_shape({rows[i], GetRuntimeWeightNAt(weight, single_weight, i)});
+  }
+}
 
+ShapeVector GetRuntimeSingleOutputShape(const std::vector<TensorPtr> &x, const std::vector<TensorPtr> &weight,
+                                        const std::optional<TensorPtr> &group_list, int64_t group_type,
+                                        bool single_weight) {
   const auto total_m = std::accumulate(x.begin(), x.end(), int64_t{0}, [](int64_t total, const TensorPtr &tensor) {
     return total + tensor->shape()[kIndex0];
   });
-  ShapeVector output_shape{total_m, WeightNAt(kIndex0)};
+  ShapeVector output_shape{total_m, GetRuntimeWeightNAt(weight, single_weight, kIndex0)};
   if (group_type == kKGroup) {
     if (!group_list.has_value()) {
       MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', group_list is required when group_type is 2.";
     }
     output_shape.insert(output_shape.begin(), group_list.value()->shape()[kIndex0]);
   }
-  (void)outputs[kIndex0]->set_shape(output_shape);
+  return output_shape;
+}
+
+void SetRuntimeOutputShapes(const std::vector<TensorPtr> &x, const std::vector<TensorPtr> &weight,
+                            const std::optional<TensorPtr> &group_list, int64_t split_item, int64_t group_type,
+                            int64_t group_list_type, const std::vector<TensorPtr> &outputs) {
+  const bool single_weight = weight.size() == kIndex1 && weight[kIndex0]->shape().size() == kIndex3;
+  if (split_item == kSplitMultiFromSeparate) {
+    SetSeparateOutputShapes(x, weight, single_weight, outputs);
+    return;
+  }
+  if (split_item == kSplitMultiFromGrouped) {
+    SetGroupedOutputShapes(weight, group_list, group_list_type, single_weight, outputs);
+    return;
+  }
+  (void)outputs[kIndex0]->set_shape(GetRuntimeSingleOutputShape(x, weight, group_list, group_type, single_weight));
 }
 
 void UnifyInt4WeightShape(const std::vector<TensorPtr> &weights, std::vector<TensorPtr> *new_weights) {

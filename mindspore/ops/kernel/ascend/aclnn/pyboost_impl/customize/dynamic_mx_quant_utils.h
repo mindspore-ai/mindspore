@@ -21,17 +21,24 @@
 #include "kernel/ascend/acl_ir/op_api_convert.h"
 
 namespace mindspore::kernel::pyboost::dynamic_mx_quant_utils {
+constexpr int64_t kDstTypeFp8E5M2 = 23;
+constexpr int64_t kDstTypeFp8E4M3Fn = 24;
+constexpr int64_t kDstTypeFp8E5M2Alias = 291;
+constexpr int64_t kDstTypeFp8E4M3FnAlias = 292;
+constexpr int64_t kDstTypeFp4E2M1 = 296;
+constexpr int64_t kDstTypeFp4E1M2 = 297;
+
 inline aclDataType ConvertDstType(int64_t dst_type) {
   switch (dst_type) {
-    case 23:
-    case 291:
+    case kDstTypeFp8E5M2:
+    case kDstTypeFp8E5M2Alias:
       return ACL_FLOAT8_E5M2;
-    case 24:
-    case 292:
+    case kDstTypeFp8E4M3Fn:
+    case kDstTypeFp8E4M3FnAlias:
       return ACL_FLOAT8_E4M3FN;
-    case 296:
+    case kDstTypeFp4E2M1:
       return ACL_FLOAT4_E2M1;
-    case 297:
+    case kDstTypeFp4E1M2:
       return ACL_FLOAT4_E1M2;
     default:
       MS_LOG(EXCEPTION) << "Unsupported dynamic MX quant destination type identifier: " << dst_type << ".";

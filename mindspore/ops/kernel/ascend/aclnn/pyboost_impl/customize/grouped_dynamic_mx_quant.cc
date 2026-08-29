@@ -26,6 +26,48 @@ namespace mindspore::kernel::pyboost {
 namespace {
 constexpr int64_t kDefaultScaleAlg = 0;
 constexpr double kDefaultDstTypeMax = 0.0;
+
+struct GroupedDynamicMxQuantAclParams {
+  std::string round_mode;
+  aclDataType acl_dst_type;
+  int64_t blocksize;
+  int64_t scale_alg;
+  double dst_type_max;
+};
+
+GroupedDynamicMxQuantAclParams GetGroupedDynamicMxQuantAclParams(const StringImmPtr &round_mode,
+                                                                 const Int64ImmPtr &dst_type,
+                                                                 const Int64ImmPtr &blocksize,
+                                                                 const Int64ImmPtr &scale_alg,
+                                                                 const FP32ImmPtr &dst_type_max) {
+  return {GetValue<std::string>(round_mode), dynamic_mx_quant_utils::ConvertDstType(GetValue<int64_t>(dst_type)),
+          GetValue<int64_t>(blocksize), GetValue<int64_t>(scale_alg),
+          static_cast<double>(GetValue<float>(dst_type_max))};
+}
+
+void DispatchGroupedDynamicMxQuant(const tensor::TensorPtr &x, const tensor::TensorPtr &group_index,
+                                   const GroupedDynamicMxQuantAclParams &params,
+                                   const device::ascend::AclTensorWrapper &y,
+                                   const device::ascend::AclTensorWrapper &mxscale) {
+  static const bool has_v2 = dynamic_mx_quant_utils::IsAclnnApiAvailable("aclnnGroupedDynamicMxQuantV2");
+  static const bool has_base = dynamic_mx_quant_utils::IsAclnnApiAvailable("aclnnGroupedDynamicMxQuant");
+  if (has_v2) {
+    DISPATCH_ACLNN(aclnnGroupedDynamicMxQuantV2, x, group_index, params.round_mode,
+                   static_cast<int64_t>(params.acl_dst_type), params.blocksize, params.scale_alg, params.dst_type_max,
+                   y, mxscale);
+  } else if (has_base) {
+    if (params.scale_alg != kDefaultScaleAlg || params.dst_type_max != kDefaultDstTypeMax) {
+      MS_EXCEPTION(ValueError)
+        << "For 'GroupedDynamicMxQuant', the installed CANN does not provide aclnnGroupedDynamicMxQuantV2, so "
+           "'scale_alg' and 'dst_type_max' must retain their default values 0 and 0.0.";
+    }
+    DISPATCH_ACLNN(aclnnGroupedDynamicMxQuant, x, group_index, params.round_mode,
+                   static_cast<int64_t>(params.acl_dst_type), params.blocksize, y, mxscale);
+  } else {
+    MS_LOG(EXCEPTION) << "For 'GroupedDynamicMxQuant', neither aclnnGroupedDynamicMxQuantV2 nor "
+                         "aclnnGroupedDynamicMxQuant is available in the installed CANN.";
+  }
+}
 }  // namespace
 
 std::tuple<tensor::TensorPtr, tensor::TensorPtr> GroupedDynamicMxQuantAscendCustomize(
@@ -34,36 +76,12 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> GroupedDynamicMxQuantAscendCust
   const FP32ImmPtr &dst_type_max) {
   static const auto prim = std::make_shared<Primitive>("GroupedDynamicMxQuant");
   auto outputs = InferOutput<2>(prim, x, group_index, round_mode, dst_type, blocksize, scale_alg, dst_type_max);
-
-  const auto round_mode_value = GetValue<std::string>(round_mode);
-  const auto acl_dst_type = dynamic_mx_quant_utils::ConvertDstType(GetValue<int64_t>(dst_type));
-  const auto acl_dst_type_value = static_cast<int64_t>(acl_dst_type);
-  const auto blocksize_value = GetValue<int64_t>(blocksize);
-  const auto scale_alg_value = GetValue<int64_t>(scale_alg);
-  const auto dst_type_max_value = static_cast<double>(GetValue<float>(dst_type_max));
-
+  const auto params = GetGroupedDynamicMxQuantAclParams(round_mode, dst_type, blocksize, scale_alg, dst_type_max);
   TensorToDevice(x, group_index);
   TensorMalloc(outputs);
-  const device::ascend::AclTensorWrapper y = {std::get<0>(outputs), acl_dst_type};
+  const device::ascend::AclTensorWrapper y = {std::get<0>(outputs), params.acl_dst_type};
   const device::ascend::AclTensorWrapper mxscale = {std::get<1>(outputs), ACL_FLOAT8_E8M0};
-
-  static const bool has_v2 = dynamic_mx_quant_utils::IsAclnnApiAvailable("aclnnGroupedDynamicMxQuantV2");
-  static const bool has_base = dynamic_mx_quant_utils::IsAclnnApiAvailable("aclnnGroupedDynamicMxQuant");
-  if (has_v2) {
-    DISPATCH_ACLNN(aclnnGroupedDynamicMxQuantV2, x, group_index, round_mode_value, acl_dst_type_value, blocksize_value,
-                   scale_alg_value, dst_type_max_value, y, mxscale);
-  } else if (has_base) {
-    if (scale_alg_value != kDefaultScaleAlg || dst_type_max_value != kDefaultDstTypeMax) {
-      MS_EXCEPTION(ValueError)
-        << "For 'GroupedDynamicMxQuant', the installed CANN does not provide aclnnGroupedDynamicMxQuantV2, so "
-           "'scale_alg' and 'dst_type_max' must retain their default values 0 and 0.0.";
-    }
-    DISPATCH_ACLNN(aclnnGroupedDynamicMxQuant, x, group_index, round_mode_value, acl_dst_type_value, blocksize_value, y,
-                   mxscale);
-  } else {
-    MS_LOG(EXCEPTION) << "For 'GroupedDynamicMxQuant', neither aclnnGroupedDynamicMxQuantV2 nor "
-                         "aclnnGroupedDynamicMxQuant is available in the installed CANN.";
-  }
+  DispatchGroupedDynamicMxQuant(x, group_index, params, y, mxscale);
   return outputs;
 }
 }  // namespace mindspore::kernel::pyboost

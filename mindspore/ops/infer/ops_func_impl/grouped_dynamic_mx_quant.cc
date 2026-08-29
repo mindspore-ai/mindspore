@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 
+#include "infer/ops_func_impl/dynamic_mx_quant_common.h"
 #include "ops_utils/op_constants.h"
 #include "ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -46,8 +47,9 @@ void CheckRank(const PrimitivePtr &primitive, const InferInfoPtr &input, size_t 
 }
 
 void CheckDstType(const PrimitivePtr &primitive, int64_t dst_type) {
-  static const std::set<int64_t> valid_dst_types = {23, 24};
-  if (MS_UNLIKELY(valid_dst_types.count(dst_type) == 0)) {
+  static const std::set<int64_t> kValidDstTypes = {dynamic_mx_quant::kDstTypeFp8E5M2,
+                                                   dynamic_mx_quant::kDstTypeFp8E4M3Fn};
+  if (MS_UNLIKELY(kValidDstTypes.count(dst_type) == 0)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'dst_type' must be 23 or 24, but got " << dst_type
                              << ".";
   }
@@ -55,7 +57,7 @@ void CheckDstType(const PrimitivePtr &primitive, int64_t dst_type) {
 
 TypeId InferOutputType(const PrimitivePtr &primitive, int64_t dst_type) {
   CheckDstType(primitive, dst_type);
-  if (dst_type == 23) {
+  if (dst_type == dynamic_mx_quant::kDstTypeFp8E5M2) {
     return kNumberTypeFloat8E5M2;
   }
   return kNumberTypeFloat8E4M3FN;
