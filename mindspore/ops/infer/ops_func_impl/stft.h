@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_STFT_EXT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_STFT_EXT_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_STFT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_STFT_H_
 
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class OPS_API STFTExtFuncImpl : public OpFuncImpl {
+OPS_API TypeId GetSTFTCommonDtype(TypeId input_type, TypeId window_type);
+
+class OPS_API STFTFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
@@ -29,4 +31,4 @@ class OPS_API STFTExtFuncImpl : public OpFuncImpl {
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_STFT_EXT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_STFT_H_

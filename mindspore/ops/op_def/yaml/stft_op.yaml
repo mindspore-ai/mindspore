@@ -1,5 +1,5 @@
-#operator stft_ext
-stft_ext:
+#operator stft
+stft:
   args:
     input:
       dtype: tensor
@@ -7,23 +7,29 @@ stft_ext:
       dtype: tensor
     n_fft:
       dtype: int
+      prim_init: True
     hop_length:
       dtype: int
+      prim_init: True
     win_length:
       dtype: int
+      prim_init: True
     normalized:
       dtype: bool
+      prim_init: True
     onesided:
       dtype: bool
+      prim_init: True
     return_complex:
       dtype: bool
+      prim_init: True
   returns:
     output:
       dtype: tensor
   class:
-      name: STFTExt
+      name: STFT
   function:
       disable: True
   dispatch:
     enable: True
-    Ascend: STFTExtAscend
+    Ascend: STFTAscend
