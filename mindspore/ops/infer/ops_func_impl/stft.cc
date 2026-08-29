@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "infer/ops_func_impl/stft_ext.h"
+#include "infer/ops_func_impl/stft.h"
 
 #include <utility>
 #include <vector>
@@ -44,25 +44,31 @@ bool IsRealOrComplexFloat(TypeId type_id) {
          type_id == kNumberTypeComplex128;
 }
 
-bool IsHighPrecision(TypeId type_id) {
-  return type_id == kNumberTypeFloat64 || type_id == kNumberTypeComplex128;
-}
+bool IsHighPrecision(TypeId type_id) { return type_id == kNumberTypeFloat64 || type_id == kNumberTypeComplex128; }
 
 bool IsComplex(TypeId type_id) { return type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128; }
 }  // namespace
 
-ShapeArray STFTExtFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
+TypeId GetSTFTCommonDtype(TypeId input_type, TypeId window_type) {
+  const bool high_precision = IsHighPrecision(input_type) || IsHighPrecision(window_type);
+  const bool complex = IsComplex(input_type) || IsComplex(window_type);
+  if (complex) {
+    return high_precision ? kNumberTypeComplex128 : kNumberTypeComplex64;
+  }
+  return high_precision ? kNumberTypeFloat64 : kNumberTypeFloat32;
+}
+
+ShapeArray STFTFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   auto &input_info = input_infos[kSTFTExtInputIdx];
-  auto &window_info = input_infos[kSTFTExtWindowIdx];
 
   if (input_info->IsDynamicRank()) {
     return {ShapeVector{abstract::Shape::kShapeRankAny}};
   }
   auto input_shape = input_info->GetShape();
   auto input_rank = SizeToLong(input_shape.size());
-  MS_CHECK_VALUE(input_rank == 1 || input_rank == kSTFTExtTwo,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>("rank of input", input_rank, kIncludeBoth, {1, 2},
-                                                                      primitive));
+  MS_CHECK_VALUE(
+    input_rank == 1 || input_rank == kSTFTExtTwo,
+    CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>("rank of input", input_rank, kIncludeBoth, {1, 2}, primitive));
 
   auto n_fft_opt = input_infos[kSTFTExtNFftIdx]->GetScalarValue<int64_t>();
   auto hop_length_opt = input_infos[kSTFTExtHopLengthIdx]->GetScalarValue<int64_t>();
@@ -82,14 +88,14 @@ ShapeArray STFTExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Infe
 
   int64_t len = input_shape.back();
   if (len > 0) {
-    MS_CHECK_VALUE(n_fft > 0 && n_fft <= len,
-                   CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>("n_fft", n_fft, kIncludeRight, {0, len},
-                                                                        primitive));
+    MS_CHECK_VALUE(n_fft > 0 && n_fft <= len, CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>(
+                                                "n_fft", n_fft, kIncludeRight, {0, len}, primitive));
   }
   MS_CHECK_VALUE(hop_length > 0,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("hop_length", hop_length, kGreaterThan, 0, primitive));
 
   if (win_length_opt.has_value()) {
+    const auto &window_info = input_infos[kSTFTExtWindowIdx];
     int64_t win_length = win_length_opt.value();
     MS_CHECK_VALUE(win_length > 0 && win_length <= n_fft,
                    CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>("win_length", win_length, kIncludeRight,
@@ -100,9 +106,8 @@ ShapeArray STFTExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Infe
                      CheckAndConvertUtils::FormatCheckIntegerMsg("rank of window", SizeToLong(window_shape.size()),
                                                                  kEqual, 1, primitive));
       if (window_shape[0] > 0) {
-        MS_CHECK_VALUE(window_shape[0] == win_length,
-                       CheckAndConvertUtils::FormatCheckIntegerMsg("window size", window_shape[0], kEqual, win_length,
-                                                                   primitive));
+        MS_CHECK_VALUE(window_shape[0] == win_length, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                                        "window size", window_shape[0], kEqual, win_length, primitive));
       }
     }
   }
@@ -124,8 +129,7 @@ ShapeArray STFTExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Infe
   return {out_shape};
 }
 
-std::vector<TypeId> STFTExtFuncImpl::InferType(const PrimitivePtr &primitive,
-                                               const InferInfoPtrList &input_infos) const {
+std::vector<TypeId> STFTFuncImpl::InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   const auto &op_name = primitive->name();
   auto input_type = input_infos[kSTFTExtInputIdx]->GetType();
   if (!IsRealOrComplexFloat(input_type)) {
@@ -151,10 +155,11 @@ std::vector<TypeId> STFTExtFuncImpl::InferType(const PrimitivePtr &primitive,
     }
   }
 
-  bool high_precision = IsHighPrecision(input_type) || IsHighPrecision(window_type);
+  const auto common_type = GetSTFTCommonDtype(input_type, window_type);
+  const bool high_precision = IsHighPrecision(common_type);
   auto return_complex_opt = input_infos[kSTFTExtReturnComplexIdx]->GetScalarValue<bool>();
-  bool return_complex = return_complex_opt.has_value() ? return_complex_opt.value()
-                                                       : (IsComplex(input_type) || IsComplex(window_type));
+  bool return_complex =
+    return_complex_opt.has_value() ? return_complex_opt.value() : (IsComplex(input_type) || IsComplex(window_type));
 
   TypeId out_type;
   if (high_precision) {
