@@ -88,10 +88,6 @@ class STFTCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<STF
   complex128 norm_coe_{1.0, 0};
   size_t parallel_num_{0};  // batches_ * w
 
-  complex128 temp_ = kSTFTComplexZero;
-  complex128 complex_w_ = kSTFTComplexZero;
-  complex128 complex_input_ = kSTFTComplexZero;
-
   // for vmap
   int64_t batch_rank_{0};
   int64_t vmap_batches_{1};

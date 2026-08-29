@@ -246,13 +246,12 @@ REG_ADPT_DESC(GetNext, prim::kPrimGetNext->name(), ADPT_DESC(GetNext))
 REG_ADPT_DESC(DynamicGetNextAscend, prim::kPrimDynamicGetNextAscend->name(), ADPT_DESC(GetNext))
 
 INPUT_MAP(STFT) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(window)}};
+INPUT_ATTR_MAP(STFT) = {
+  {3, ATTR_DESC(n_fft, AnyTraits<int64_t>())},      {4, ATTR_DESC(hop_length, AnyTraits<int64_t>())},
+  {5, ATTR_DESC(win_length, AnyTraits<int64_t>())}, {6, ATTR_DESC(normalized, AnyTraits<bool>())},
+  {7, ATTR_DESC(onesided, AnyTraits<bool>())},      {8, ATTR_DESC(return_complex, AnyTraits<bool>())}};
+ATTR_MAP(STFT) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(STFT) = {{0, OUTPUT_DESC(y)}};
-ATTR_MAP(STFT) = {{"hop_length", ATTR_DESC(hop_length, AnyTraits<int64_t>())},
-                  {"win_length", ATTR_DESC(win_length, AnyTraits<int64_t>())},
-                  {"normalized", ATTR_DESC(normalized, AnyTraits<bool>())},
-                  {"onesided", ATTR_DESC(onesided, AnyTraits<bool>())},
-                  {"return_complex", ATTR_DESC(return_complex, AnyTraits<bool>())},
-                  {"n_fft", ATTR_DESC(n_fft, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(STFT, prim::kPrimSTFT->name(), ADPT_DESC(STFT))
 
 // Complex
