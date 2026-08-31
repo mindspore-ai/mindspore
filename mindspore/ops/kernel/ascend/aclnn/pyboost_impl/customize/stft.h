@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_STFT_EXT_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_STFT_EXT_H_
+#ifndef MINDSPORE_OPS_KERNEL_ASCEND_ACLNN_PYBOOST_IMPL_CUSTOMIZE_STFT_H_
+#define MINDSPORE_OPS_KERNEL_ASCEND_ACLNN_PYBOOST_IMPL_CUSTOMIZE_STFT_H_
 
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "mindspore/ccsrc/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void STFTExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                            const TensorPtr &window_tensor, const Int64ImmPtr &n_fft,
-                            const Int64ImmPtr &hop_length, const Int64ImmPtr &win_length,
-                            const BoolImmPtr &normalized, const BoolImmPtr &onesided,
-                            const BoolImmPtr &return_complex);
+TensorPtr STFTAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+                              const TensorPtr &window_tensor, const Int64ImmPtr &n_fft, const Int64ImmPtr &hop_length,
+                              const Int64ImmPtr &win_length, const BoolImmPtr &normalized, const BoolImmPtr &onesided,
+                              const BoolImmPtr &return_complex);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_STFT_EXT_H_
+#endif  // MINDSPORE_OPS_KERNEL_ASCEND_ACLNN_PYBOOST_IMPL_CUSTOMIZE_STFT_H_

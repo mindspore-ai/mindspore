@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""STFT operator tests for Ascend."""
+
 import numpy as np
 import pytest
 
-import mindspore as ms
-import mindspore.context as context
+from mindspore import context
 from mindspore import Tensor
 from mindspore import ops
 from tests.mark_utils import arg_mark
@@ -32,30 +33,58 @@ def _run_stft(x_np, n_fft, hop_length=None, win_length=None, window_np=None,
     return out.asnumpy()
 
 
-def _stft_compare(x_np, n_fft, **kwargs):
-    """Run stft on CPU (legacy primitive) then on Ascend (aclnn pyboost) and compare."""
-    context.set_context(device_target="CPU")
-    cpu_out = _run_stft(x_np, n_fft, **kwargs)
+def _numpy_stft(x_np, n_fft, hop_length=None, win_length=None, window_np=None,
+                center=False, normalized=False, onesided=None, return_complex=None):
+    """Generate the STFT reference output without switching the MindSpore device target."""
+    if center:
+        raise ValueError("The NumPy reference only supports center=False in these tests.")
+    hop_length = n_fft // 4 if hop_length is None else hop_length
+    win_length = n_fft if win_length is None else win_length
+    window_np = np.ones(win_length, dtype=x_np.dtype) if window_np is None else window_np
+    common_dtype = np.result_type(x_np.dtype, window_np.dtype)
+    x_np = x_np.astype(common_dtype)
+    window_np = window_np.astype(common_dtype)
 
+    if win_length < n_fft:
+        left = (n_fft - win_length) // 2
+        window_np = np.pad(window_np, (left, n_fft - win_length - left))
+    frame_count = 1 + (x_np.shape[-1] - n_fft) // hop_length
+    frames = np.stack([x_np[..., i * hop_length:i * hop_length + n_fft]
+                       for i in range(frame_count)], axis=-2)
+    spectrum = np.fft.fft(frames * window_np, axis=-1, norm="ortho" if normalized else None)
+    if onesided:
+        spectrum = spectrum[..., :n_fft // 2 + 1]
+    spectrum = np.swapaxes(spectrum, -1, -2)
+
+    complex_dtype = np.complex128 if common_dtype in (np.float64, np.complex128) else np.complex64
+    spectrum = spectrum.astype(complex_dtype)
+    if return_complex:
+        return spectrum
+    return np.stack((spectrum.real, spectrum.imag), axis=-1)
+
+
+def _stft_compare(x_np, n_fft, **kwargs):
+    """Run STFT on Ascend and compare with the NumPy reference."""
+    expect = _numpy_stft(x_np, n_fft, **kwargs)
     context.set_context(device_target="Ascend")
     ascend_out = _run_stft(x_np, n_fft, **kwargs)
 
-    assert cpu_out.shape == ascend_out.shape, \
-        f"shape mismatch: cpu={cpu_out.shape} ascend={ascend_out.shape}"
-    assert cpu_out.dtype == ascend_out.dtype, \
-        f"dtype mismatch: cpu={cpu_out.dtype} ascend={ascend_out.dtype}"
-    np.testing.assert_allclose(ascend_out, cpu_out, rtol=1e-4, atol=1e-4)
+    assert expect.shape == ascend_out.shape, \
+        f"shape mismatch: expect={expect.shape} ascend={ascend_out.shape}"
+    assert expect.dtype == ascend_out.dtype, \
+        f"dtype mismatch: expect={expect.dtype} ascend={ascend_out.dtype}"
+    np.testing.assert_allclose(ascend_out, expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float32])
 def test_stft_real_2d(mode, dtype):
     """
     Feature: aclnn STFT on Ascend.
-    Description: 2D real input, default window, onesided real output, compared against CPU STFT.
-    Expectation: Ascend output matches CPU output.
+    Description: 2D real input, default window, onesided real output, compared against NumPy STFT.
+    Expectation: Ascend output matches NumPy output.
     """
     context.set_context(mode=mode)
     np.random.seed(0)
@@ -64,14 +93,14 @@ def test_stft_real_2d(mode, dtype):
                   onesided=True, return_complex=False)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_real_1d_with_window(mode):
     """
     Feature: aclnn STFT on Ascend.
-    Description: 1D real input with hann-like window, twosided complex output, compared against CPU.
-    Expectation: Ascend output matches CPU output.
+    Description: 1D real input with hann-like window, twosided complex output, compared against NumPy.
+    Expectation: Ascend output matches NumPy output.
     """
     context.set_context(mode=mode)
     np.random.seed(1)
@@ -82,14 +111,14 @@ def test_stft_real_1d_with_window(mode):
                   onesided=False, return_complex=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_normalized(mode):
     """
     Feature: aclnn STFT on Ascend.
-    Description: 2D real input, normalized=True, real output, compared against CPU STFT.
-    Expectation: Ascend output matches CPU output.
+    Description: 2D real input, normalized=True, real output, compared against NumPy STFT.
+    Expectation: Ascend output matches NumPy output.
     """
     context.set_context(mode=mode)
     np.random.seed(2)
@@ -98,14 +127,14 @@ def test_stft_normalized(mode):
                   normalized=True, onesided=True, return_complex=False)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_complex_input(mode):
     """
     Feature: aclnn STFT on Ascend.
-    Description: 2D complex64 input, return_complex=True, twosided, compared against CPU.
-    Expectation: Ascend output matches CPU output.
+    Description: 2D complex64 input, return_complex=True, twosided, compared against NumPy.
+    Expectation: Ascend output matches NumPy output.
     """
     context.set_context(mode=mode)
     np.random.seed(3)
@@ -116,14 +145,14 @@ def test_stft_complex_input(mode):
                   onesided=False, return_complex=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_real_input_complex_window(mode):
     """
     Feature: aclnn STFT on Ascend.
     Description: real input + complex window must promote to complex (not demote window to real).
-    Expectation: Ascend output matches CPU output dtype-for-dtype.
+    Expectation: Ascend output matches NumPy output dtype-for-dtype.
     """
     context.set_context(mode=mode)
     np.random.seed(4)
@@ -133,14 +162,14 @@ def test_stft_real_input_complex_window(mode):
                   onesided=False, return_complex=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_mixed_precision(mode):
     """
     Feature: aclnn STFT on Ascend.
     Description: float32 input + float64 window must promote to float64 (not demote window).
-    Expectation: Ascend output matches CPU output, both at float64 precision.
+    Expectation: Ascend output matches NumPy output at float64 precision.
     """
     context.set_context(mode=mode)
     np.random.seed(5)
@@ -150,7 +179,7 @@ def test_stft_mixed_precision(mode):
                   onesided=True, return_complex=False)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_onesided_with_complex_window_errors(mode):
@@ -168,7 +197,7 @@ def test_stft_onesided_with_complex_window_errors(mode):
                   onesided=True, return_complex=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_stft_known_constant(mode):
