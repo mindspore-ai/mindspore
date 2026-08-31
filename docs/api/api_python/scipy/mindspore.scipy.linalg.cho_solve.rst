@@ -9,6 +9,7 @@ mindspore.scipy.linalg.cho_solve
         A x = b
 
     .. note::
+        - `cho_solve` 不支持Windows平台。
         - 仅支持float32、float64、int32、int64类型的Tensor类型。
         - 如果Tensor是int32、int64类型，它将被强制转换为：mstype.float64类型。
 

@@ -17,6 +17,3 @@ mindspore.numpy.histogramdd
 
     返回：
         Tensor, 元素为Tensor的list， 直方图的值和桶边界。
-
-    异常：
-        - **ValueError** - 如果 `range` 的size不等于样本数量。

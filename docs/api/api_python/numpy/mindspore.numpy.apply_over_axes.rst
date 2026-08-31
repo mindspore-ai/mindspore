@@ -3,7 +3,7 @@ mindspore.numpy.apply_over_axes
 
 .. py:function:: mindspore.numpy.apply_over_axes(func, a, axes)
 
-    在多个轴上重复应用 ``func`` 函数。 ``res = func(a, axis)`` ，其中 ``axis`` 是 ``axes`` 的第一个元素。函数返回的结果 ``res`` 具有与 ``a`` 相同的维度或少一个维度。如果 ``res`` 比 ``a`` 少一个维度，则在 ``aixs`` 之前插入一个维度。然后将 ``res`` 作为 ``func`` 的第一个参数，对 ``axes`` 中的每个轴重复调用 ``func`` 。
+    在多个轴上重复应用 ``func`` 函数。 ``res = func(a, axis)`` ，其中 ``axis`` 是 ``axes`` 的第一个元素。函数返回的结果 ``res`` 具有与 ``a`` 相同的维度或少一个维度。如果 ``res`` 比 ``a`` 少一个维度，则在 ``axis`` 之前插入一个维度。然后将 ``res`` 作为 ``func`` 的第一个参数，对 ``axes`` 中的每个轴重复调用 ``func`` 。
 
     参数：
         - **func** (function) - 该函数必须有两个参数 ``a`` ， ``axis`` 。

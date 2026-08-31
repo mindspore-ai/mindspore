@@ -51,7 +51,7 @@ def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_
             ========  =========
 
         lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: ``False``.
-        unit_diagonal (bool, optional): If ``True``, diagonal elements of :math:`a` are assumed to be 1 and
+        unit_diagonal (bool, optional): If ``True``, diagonal elements of `a` are assumed to be 1 and
             will not be referenced. Default: ``False``.
         overwrite_b (bool, optional): Not implemented now. Default: ``False``.
         debug (Any, optional): Not implemented now. Default: ``None``.
