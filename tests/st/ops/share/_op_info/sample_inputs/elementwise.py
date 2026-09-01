@@ -3562,3 +3562,87 @@ def extra_sample_inputs_tensor_div_(op_info:OpInfo, dtype=None, device=None, **k
     # tensor with extremal value
     if not op_info.disable_extremal_value_tensor_inputs and (dtype.is_floating_point or dtype.is_complex):
         yield from _generate_binary_op_extremal_value_tensor_inputs_func(op_info, dtype, device, **kwargs)
+
+def error_sample_inputs_tensor_gcd(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.int64, device=device)
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((1, 2, 1)),
+            op_args=(2,),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_params_error"
+        ),
+        op_error_type=TypeError,
+        op_error_info=f'other not tensor not supported for {op_info.name}',
+    )
+
+def dynamic_sample_inputs_tensor_hardshrink(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={"lambd": mutable(input_data=1, dynamic_len=False)},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 8, 5)),
+                    op_args=(),
+                    op_kwargs={"lambd": mutable(input_data=2, dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 9, 4)),
+                    op_args=(),
+                    op_kwargs={"lambd": mutable(input_data=8, dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={"lambd": mutable(input_data=1.4, dynamic_len=False)},
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(9, 9, 8, 4)),
+                    op_args=(),
+                    op_kwargs={"lambd": mutable(input_data=1.1, dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(7, 7, 5)),
+                    op_args=(),
+                    op_kwargs={"lambd": mutable(input_data=0.4, dynamic_len=False)},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_tensor_heaviside(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device)
+    cases = (
+        # input is not tensor
+        (2, make_arg((1, 2, 1))),
+        # values is not tensor
+        (make_arg((1, 2, 1)), 2),
+    )
+    for _input, _values in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=_input,
+                op_args=(_values,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_params_error"
+            ),
+            op_error_type=(AttributeError, TypeError),
+            op_error_info=f'error values not supported for {op_info.name}',
+        )

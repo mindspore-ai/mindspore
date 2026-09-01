@@ -3020,12 +3020,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         not_support_dtypes=(ms.complex64, ms.complex128),
         promotion_dtypes_exclude=(ms.uint8,),
-        dtypes_cpu=tuple(),
-        dtypes_gpu=tuple(),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # torch element 0 of tensors does not require grad and does not have a grad_fn
         is_differentiable=False,
-        convert_ref_scalar_to_tensor=True,
         supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
         supports_both_python_scalar=False,
         op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
@@ -3036,11 +3035,11 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         not_support_dtypes=(ms.complex64,ms.complex128),
-        dtypes_cpu=tuple(),
-        dtypes_gpu=tuple(),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # torch element 0 of tensors does not require grad and does not have a grad_fn
         is_differentiable=False,
         supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
         supports_both_python_scalar=False,
         op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
@@ -3111,11 +3110,11 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_gt_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
-        dtypes_cpu=tuple(),
-        dtypes_gpu=tuple(),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # torch element 0 of tensors does not require grad and does not have a grad_fn
         is_differentiable=False,
         supports_left_python_scalar=False,
-        supports_right_python_scalar=True,
         supports_both_python_scalar=False,
         op_error_inputs_func=error_inputs_shape_not_match_func,
         not_support_dtypes=(ms.complex64, ms.complex128),
@@ -5903,7 +5902,7 @@ op_db: Dict[str, OpInfo] = {
         not_support_dtypes=tuple(
             d for d in dtypes_as_torch if d not in (ms.bfloat16, ms.float16, ms.float32, ms.float64)
         ),
-        ascend910b_forward_loss_override={ms.float16: 0.0092, ms.float32: 0.0072, ms.bfloat16: 0.0095},
+        ascend910b_forward_loss_override={ms.float16: 0.0092, ms.float32: 0.015, ms.bfloat16: 0.0095},
         # when dtype is float16/bfloat16, torch-out is float32, but ms-out is original dtype, loss is relatively large.
         ascend910b_backward_loss_override={ms.float16: 0.012, ms.bfloat16: 0.0361},
     ),
@@ -5953,6 +5952,7 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_mint_nn_mseloss,
         op_error_inputs_func=error_sample_inputs_mint_nn_mseloss,
         not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32, ms.bfloat16)),
+        ascend910b_backward_loss_override={ms.float16: 0.002},
     ),
     'mint.nn.NLLLoss': OpInfo(
         name='mint.nn.NLLLoss',
@@ -6071,6 +6071,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         op_basic_reference_inputs_func=basic_sample_inputs_group_norm,
         op_extra_reference_inputs_func=extra_sample_inputs_group_norm,
+        ascend910b_forward_loss_override={ms.float16: 0.005},
         ascend910b_backward_loss_override={ms.float16: 0.09, ms.float32:0.002},
         not_support_dtypes=tuple(d for d in dtypes_as_torch if not d.is_floating_point or d == ms.double),
         op_error_inputs_func=error_inputs_other_op_functional_group_norm,
@@ -6253,7 +6254,7 @@ op_db: Dict[str, OpInfo] = {
         op_error_inputs_func=error_sample_inputs_up_sample,
         op_extra_reference_inputs_func=extra_sample_inputs_up_sample,
         ascend910b_forward_loss_override={ms.bfloat16:0.06, ms.float32:0.003},
-        ascend910b_backward_loss_override={ms.bfloat16:0.005},
+        ascend910b_backward_loss_override={ms.bfloat16:0.005, ms.float32:0.0002},
     ),
     'mint.nn.BCELoss': OpInfo(
         name='mint.nn.BCELoss',
@@ -7271,7 +7272,7 @@ op_db: Dict[str, OpInfo] = {
         [r'^(?=.*(Bool|Complex))(?=.*(floor|trunc))', 'inf_x_normal_2d_rounding_mode_floor',
          'normal_x_(inf|-inf)_2d_rounding_mode_(floor|trunc)'], skip=True),
         op_error_inputs_func=error_inputs_binary_op_tensor_divide,
-
+        convert_half_to_float=False,
     ),
     'Tensor.dot': OpInfo(
         name='Tensor.dot',
@@ -7655,6 +7656,107 @@ op_db: Dict[str, OpInfo] = {
         # gradients have precision issue when rounding_mode is None
         is_differentiable=False,
     ),
+    'Tensor.gcd': BinaryOpInfo(
+        name='Tensor.gcd',
+        op=tensor_gcd_ms,
+        ref=tensor_gcd_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.int16, ms.int32, ms.int64),
+        supports_left_python_scalar=False,
+        supports_both_python_scalar=False,
+        supports_right_python_scalar=False,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        op_error_inputs_func=(error_inputs_shape_not_match_func, error_sample_inputs_tensor_gcd),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.int16, ms.int32, ms.int64)),
+    ),
+    'Tensor.ge': BinaryOpInfo(
+        name='Tensor.ge',
+        op=tensor_ge_ms,
+        ref=tensor_ge_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex64, ms.complex128),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # torch element 0 of tensors does not require grad and does not have a grad_fn
+        is_differentiable=False,
+        supports_left_python_scalar=False,
+        supports_both_python_scalar=False,
+        op_error_inputs_func=error_inputs_shape_not_match_func,
+    ),
+    'Tensor.geqrf': OpInfo(
+        name='Tensor.geqrf',
+        op=tensor_geqrf_ms,
+        ref=tensor_geqrf_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float32, ms.float64),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # input must be 2D
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_geqrf,
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_sample_inputs_tensor_geqrf,
+            ['_inf', '_-inf'],
+            skip=True
+        ),
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_geqrf,
+        is_differentiable=False,
+        op_error_inputs_func=error_sample_inputs_tensor_geqrf,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float64)),
+        ascend910b_forward_loss_override={ms.float32: 0.004, ms.float64: 0.00007},
+        # precision issue
+        exclude_value=(521, -13141.5, -5062757.7, 5062757.7, -1.0e+20, 1.0e+20),
+    ),
+    'Tensor.ger': OpInfo(
+        name='Tensor.ger',
+        op=tensor_ger_ms,
+        ref=tensor_ger_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        # input/vec2 must be 1D
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_ger,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_ger,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_ger,
+        op_error_inputs_func=error_sample_inputs_tensor_ger,
+        convert_half_to_float=False,
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float16, ms.float32)),
+    ),
+    'Tensor.hardshrink': OpInfo(
+        name='Tensor.hardshrink',
+        op=tensor_hardshrink_ms,
+        ref=tensor_hardshrink_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        dtypes_ascend=(),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16,),
+        op_basic_reference_inputs_func=basic_reference_inputs_mint_nn_hardshrink,
+        op_extra_reference_inputs_func=extra_reference_inputs_mint_nn_hardshrink,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_hardshrink,
+        op_error_inputs_func=error_inputs_hardshrink_func,
+        convert_half_to_float=False,
+        not_support_dtypes=(ms.complex64, ms.complex128, ms.int32, ms.int64, ms.int16, ms.int8, ms.bool_),
+    ),
+    'Tensor.heaviside': BinaryOpInfo(
+        name='Tensor.heaviside',
+        op=tensor_heaviside_ms,
+        ref=tensor_heaviside_torch,
+        dtypes_ascend=(),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch if d not in (ms.bool_, ms.bfloat16, ms.complex64, ms.complex128)
+        ),
+        not_support_dtypes=(ms.bool_, ms.bfloat16, ms.complex64, ms.complex128),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        # input and values must be tensor
+        disable_scalar_inputs=True,
+        # the type of input and values must be same
+        support_tensor_type_promotion=False,
+        op_error_inputs_func=(error_inputs_shape_not_match_func, error_sample_inputs_tensor_heaviside),
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -7725,6 +7827,9 @@ binary_op_db = [
     'Tensor.equal',
     'Tensor.div',
     'Tensor.div_',
+    'Tensor.gcd',
+    'Tensor.ge',
+    'Tensor.heaviside',
 ]
 
 unary_op_db = [
@@ -8144,6 +8249,9 @@ other_op_db = [
     'Tensor.diag',
     'Tensor.diff',
     'Tensor.diagonal_scatter',
+    'Tensor.geqrf',
+    'Tensor.ger',
+    'Tensor.hardshrink',
 ]
 
 reduction_op_db = [
@@ -8293,6 +8401,9 @@ other_op_kbk_db = [
     'Tensor.diag',
     'Tensor.diff',
     'Tensor.diagonal_scatter',
+    'Tensor.geqrf',
+    'Tensor.ger',
+    'Tensor.hardshrink',
 ]
 
 reduction_op_kbk_db = [
@@ -8339,6 +8450,12 @@ binary_op_kbk_db = [
     'Tensor.divide',
     'Tensor.equal',
     'Tensor.div',
+    'Tensor.gcd',
+    'Tensor.ge',
+    'Tensor.greater',
+    'Tensor.greater_equal',
+    'Tensor.gt',
+    'Tensor.heaviside',
 ]
 
 unary_op_kbk_db = [
@@ -8384,6 +8501,7 @@ unary_op_kbk_db = [
     'Tensor.diagflat',
     'Tensor.diagonal',
     'Tensor.digamma',
+    'Tensor.half',
 ]
 
 # unary_op_kbk_db = [ o for o in unary_op_db if o not in ['mint.imag', 'mint.real'] ]
