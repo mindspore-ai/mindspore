@@ -120,7 +120,10 @@ void MaxPool3DWithArgmaxCpuKernelMod::MaxPool3DWithArgmaxSingleCompute(
         INDICES_T *indzp = output_argmax + ti * oW * oH + i * oW + j;
 
         INDICES_T maxindex = start_t * iH * iW + start_h * iW + start_w;
-        DATA_T maxval = -std::numeric_limits<DATA_T>::infinity();
+        DATA_T maxval = std::numeric_limits<DATA_T>::lowest();
+        if constexpr (std::numeric_limits<DATA_T>::has_infinity) {
+          maxval = -std::numeric_limits<DATA_T>::infinity();
+        }
 
         for (int64_t z = start_t; z < end_t; z += dD) {
           for (int64_t y = start_h; y < end_h; y += dH) {
@@ -275,14 +278,14 @@ bool MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel(const std::vector<KernelTenso
   return true;
 }
 
+// clang-format off
 #define MAX_POOL3D_WITH_ARGMAX_ADD_KERNEL(x_dtype, shape_dtype, x_type, shape_type) \
-  {                                                                                 \
-    KernelAttr()                                                                    \
-      .AddInputAttr(kNumberType##x_dtype)                                           \
-      .AddOutputAttr(kNumberType##x_dtype)                                          \
-      .AddOutputAttr(kNumberType##shape_dtype),                                     \
-      &MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel<x_type, shape_type>            \
-  }
+  {KernelAttr()                                                                     \
+     .AddInputAttr(kNumberType##x_dtype)                                            \
+     .AddOutputAttr(kNumberType##x_dtype)                                           \
+     .AddOutputAttr(kNumberType##shape_dtype),                                      \
+    &MaxPool3DWithArgmaxCpuKernelMod::LaunchKernel<x_type, shape_type>}
+// clang-format on
 
 std::vector<std::pair<KernelAttr, MaxPool3DWithArgmaxCpuKernelMod::MaxPool3DWithArgmaxFunc>>
   MaxPool3DWithArgmaxCpuKernelMod::func_list_ = {MAX_POOL3D_WITH_ARGMAX_ADD_KERNEL(Float16, Int32, float16, int32_t),
