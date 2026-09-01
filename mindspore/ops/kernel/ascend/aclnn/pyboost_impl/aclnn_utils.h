@@ -125,7 +125,7 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
         };                                                                                                        \
         return std::make_tuple(ws_size, executor, cache, release_func, update_func);                              \
       } else {                                                                                                    \
-        MS_LOG(WARNING) << api_str << " cache is available, but hash id is 0, do not use cache.";                 \
+        MS_LOG(INFO) << api_str << " cache is available, but hash id is 0, do not use cache.";                    \
         MS_VLOG(mindspore::VLogLevel::VL_ACLNN_OP)                                                                \
           << api_str << " cache is available, but hash id is 0, do not use cache.";                               \
         std::function<void()> release_func = [cache]() -> void {                                                  \
