@@ -272,7 +272,7 @@ class PyboostOpCppGenerator:
     """
 
     # Ops that need the OpRunner (get_op()) passed to their Customize function.
-    # These ops access caller-provided primitive attributes at runtime.
+    # These ops use caller-provided OpRunner state in their Customize functions.
     OPS_NEED_OP_RUNNER = {'custom_ext'}
 
     def __init__(self, device):

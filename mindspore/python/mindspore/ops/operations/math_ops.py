@@ -43,7 +43,7 @@ from mindspore.ops.auto_generate import (
     Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky, Cross,
     FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
     CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy, Trunc, Sign, Polar,
-    IsInf, Lerp, LerpScalar)
+    IsInf, Lerp, LerpScalar, STFT)
 
 Betainc.__init__ = deprecated("2.10.0", None, False)(Betainc.__init__)
 
@@ -4345,60 +4345,6 @@ class Renorm(Primitive):
         validator.check_value_type("maxnorm", maxnorm, [float], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         self.add_prim_attr("p", float(p))
-
-
-class STFT(Primitive):
-    """
-    Applies Short-time Fourier transform (STFT) on input signal.
-
-    STFT segments the signal into narrow time intervals and takes the Fourier transform
-    of each segment to quantify the change of a nonstationary signal’s frequency
-    and phase content over time.
-
-    Refer to :func:`mindspore.ops.stft` for more details.
-
-    Args:
-        n_fft (int): The size of Fourier transform.
-        hop_length (int): The distance between neighboring sliding window frames.
-        win_length (int): the size of window frame and STFT filter.
-        normalized (bool): controls whether to return the normalized STFT results.
-        onesided (bool): controls whether to return half of results to
-            avoid redundancy for real inputs.
-        return_complex (bool): If ``True`` , return a complex tensor. If False, return
-            a real tensor with an extra last dimension for the real and imaginary components.
-
-    Inputs:
-        - **x** (Tensor) - Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
-        - **window** (Tensor) - the optional window function.
-
-    Outputs:
-        Tensor, containing the result after STFT.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> from mindspore.ops import STFT
-        >>> import numpy as np
-        >>> x = ms.Tensor(np.random.rand(2,7192), ms.float32)
-        >>> window = ms.Tensor(np.random.rand(64), ms.float32)
-        >>> stft = STFT(64, 16, 64, False, True, True)
-        >>> output = stft(x, window)
-        >>> print(output.shape)
-        (2, 33, 446)
-    """
-
-    @prim_attr_register
-    def __init__(self, n_fft, hop_length, win_length, normalized, onesided, return_complex):
-        """Initialize STFT."""
-        self.init_prim_io_names(inputs=['x', 'window'], outputs=['y'])
-        validator.check_value_type('n_fft', n_fft, [int], self.name)
-        validator.check_value_type('hop_length', hop_length, [int], self.name)
-        validator.check_value_type('win_length', win_length, [int], self.name)
-        validator.check_value_type('normalized', normalized, [bool], self.name)
-        validator.check_value_type('onesided', onesided, [bool], self.name)
-        validator.check_value_type('return_complex', return_complex, [bool], self.name)
 
 
 class CholeskySolve(Primitive):
