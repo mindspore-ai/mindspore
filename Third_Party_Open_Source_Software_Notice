@@ -12503,8 +12503,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
    limitations under the License.
 
-Software: openssl 3.5.4
-Copyright (c) 1998-2025 The OpenSSL Project Authors
+Software: openssl 3.5.8
+Copyright (c) 1998-2026 The OpenSSL Project Authors
 Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
 All rights reserved.
 Apache License
