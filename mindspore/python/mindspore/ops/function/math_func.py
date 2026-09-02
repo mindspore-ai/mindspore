@@ -24,7 +24,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import log as logger
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.common import dtype as mstype
 from mindspore.common.generator import default_generator
 from mindspore.ops import operations as P
@@ -36,10 +36,9 @@ from mindspore.ops.auto_generate import Cummin, BatchMatMul, BernoulliExt, lin_s
     BitwiseAndTensor, BitwiseOrScalar, BitwiseOrTensor, BitwiseXorScalar, BitwiseXorTensor, RemainderTensorTensor, \
     RemainderTensorScalar, RemainderScalarTensor, std_mean_op, var_mean_op, InplaceErfinv
 from mindspore.ops import auto_generate
-from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.auto_generate import addcmul_ext_op
-from mindspore.ops.auto_generate.pyboost_inner_prim import roll_impl, cross_impl
+from mindspore.ops.auto_generate.pyboost_inner_prim import roll_impl, cross_impl, stft_impl
 from mindspore.ops.auto_generate.pyboost_inner_prim import reduce_max_impl, reduce_min_impl
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.math_ops import DivMod
@@ -484,7 +483,7 @@ def bincount(input, weights=None, minlength=0):
     if not isinstance(minlength, int) or isinstance(minlength, bool):
         raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
     if rank_(input) != 1:
-        raise ValueError(f"For math function 'bincount', 'input' should be one-dimensional tensor.")
+        raise ValueError("For math function 'bincount', 'input' should be one-dimensional tensor.")
     if input.shape[0] == 0:
         return Tensor_([])
     if minlength < 0:
@@ -1523,7 +1522,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
     if input.ndim > 2:
         raise ValueError(f"For cov, the input must have two or fewer dimensions, but got {input.ndim} dimensions.")
     if input.dtype == mstype.bool_:
-        raise TypeError(f"For cov, the input dtype can not be bool.")
+        raise TypeError("For cov, the input dtype can not be bool.")
 
     # View input tensor as 2D
     input_x = input.view((1, -1)) if input.ndim < 2 else input
@@ -2105,7 +2104,7 @@ def bitwise_left_shift(input, other):
         Tensor(shape=[4], dtype=Int64, value= [ 2,  4,  8, 16])
     """
     if not isinstance(input, Tensor) and not isinstance(other, Tensor):
-        raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
+        raise TypeError("For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
 
     cast = ops.Cast()
     if isinstance(input, numbers.Number):
@@ -2148,7 +2147,7 @@ def bitwise_right_shift(input, other):
         Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 4])
     """
     if not isinstance(input, Tensor) and not isinstance(other, Tensor):
-        raise TypeError(f"For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
+        raise TypeError("For 'bitwise_left_shift', at least one of the inputs should be a Tensor.")
     cast = ops.Cast()
     if isinstance(input, numbers.Number):
         if not isinstance(input, int):
@@ -5387,7 +5386,7 @@ def _create_cummin_perm(axis, x_shape):
 
     len_axis = len(x_shape)
     _check(axis, len_axis)
-    prem = [i for i in range(len_axis)]
+    prem = list(range(len_axis))
     if axis < 0:
         axis = axis + len_axis
     prem[0], prem[axis] = axis, 0
@@ -5615,7 +5614,7 @@ def atleast_1d(inputs):
     for tensor in inputs:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For 'atleast_1d', each element of 'inputs' must be a tensor, but got {type(tensor)}")
-    return tuple([_expand(arr, 1) for arr in inputs])
+    return tuple(_expand(arr, 1) for arr in inputs)
 
 
 def dstack(tensors):
@@ -5653,7 +5652,7 @@ def dstack(tensors):
     if not isinstance(tensors, (tuple, list)):
         raise TypeError(f"For 'dstack', 'tensors' must be list or tuple of tensors, but got {type(tensors)}")
     if not tensors:
-        raise TypeError(f"For 'dstack', 'tensors' can not be empty.")
+        raise TypeError("For 'dstack', 'tensors' can not be empty.")
     trans_tensors = ()
     for tensor in tensors:
         if not isinstance(tensor, Tensor):
@@ -5739,7 +5738,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
     if x.ndim < 1:
         raise TypeError(f"For 'diff', the dimension 'x' must be at least 1, but got {x.ndim}")
     if 0 in x.shape:
-        raise ValueError(f"For 'diff', 'x' can not be an empty Tensor.")
+        raise ValueError("For 'diff', 'x' can not be an empty Tensor.")
     _check_is_int(n, 'n', 'diff')
     if n != 1:
         raise RuntimeError(f"For 'diff', 'n' must be 1, but got {n}")
@@ -5787,7 +5786,7 @@ def _diff_check(input, n, dim):
 def _diff_helper(input, n, dim):
     """calculate the forward difference"""
     out_len = input.shape[dim] - 1
-    is_bool = (input.dtype == mstype.bool_)
+    is_bool = input.dtype == mstype.bool_
     result = input
 
     for _ in range(n):  # pylint: disable=unused-variable
@@ -6004,7 +6003,7 @@ def atleast_2d(inputs):
         if not isinstance(tensor, Tensor):
             msg = "expect Tensor or list of tensors, but got " + f"{type(tensor)}"
             raise TypeError(msg)
-    return tuple([_expand(arr, 2) for arr in inputs])
+    return tuple(_expand(arr, 2) for arr in inputs)
 
 
 def cartesian_prod(*inputs):
@@ -6097,7 +6096,7 @@ def atleast_3d(inputs):
     for tensor in inputs:
         if not isinstance(tensor, Tensor):
             raise TypeError(f"For 'atleast_3d', each element of 'inputs' must be a tensor, but got {type(tensor)}")
-    return tuple([_expand3(arr) for arr in inputs])
+    return tuple(_expand3(arr) for arr in inputs)
 
 
 def view_as_real(input):
@@ -6185,7 +6184,7 @@ def vstack(inputs):
                 shape = (shape,)
             ndim_diff = 2 - len(shape)
             if ndim_diff > 0:
-                shape = [1] * ndim_diff + [i for i in shape]
+                shape = [1] * ndim_diff + list(shape)
             tensor = reshape_(tensor, tuple(shape))
         trans_tup += (tensor,)
     if not trans_tup:
@@ -7112,8 +7111,8 @@ def _normalize_axis_index(axis, ndim):
 
 @_primexpr
 def _get_perm_for_norm(x_ndim, source, destination):
-    destination = tuple([_normalize_axis_index(ax, x_ndim) for ax in destination])
-    source = tuple([_normalize_axis_index(ax, x_ndim) for ax in source])
+    destination = tuple(_normalize_axis_index(ax, x_ndim) for ax in destination)
+    source = tuple(_normalize_axis_index(ax, x_ndim) for ax in source)
     perm = [n for n in range(x_ndim) if n not in source]
     for dest, src in sorted(zip(destination, source)):
         perm.insert(dest, src)
@@ -7588,7 +7587,7 @@ def _check_linalg_norm_input(dim, ord, ndim):
         dim = (dim,)
     elif isinstance(dim, (list, tuple)):
         if len(dim) > 2:
-            raise ValueError(f"For `linalg.norm`, the length of `dim` must be 1 or 2 when dim is not None",
+            raise ValueError("For `linalg.norm`, the length of `dim` must be 1 or 2 when dim is not None",
                              f"but got {len(dim)}.")
     else:
         raise TypeError(f'For `linalg.norm`, the dim should be int, list of int or tuple of int, but got {type(dim)}')
@@ -7746,8 +7745,8 @@ def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
         return vector_norm_ext(input, p, dim, keepdim, dtype=dtype)
     if p == 'fro':
         if isinstance(dim, (list, tuple)) and len(dim) > 2:
-            raise ValueError(f"For `norm_ext`, the size of `dim` cannot be greater than 2 "
-                             f"when the norm mode is `fro`.")
+            raise ValueError("For `norm_ext`, the size of `dim` cannot be greater than 2 "
+                             "when the norm mode is `fro`.")
         return linalg_vector_norm_op(input, 2.0, dim, keepdim, dtype)
     if p == 'nuc':
         dim = tuple(range(input.ndim)) if dim is None else dim
@@ -8240,6 +8239,10 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
     return out
 
 
+def _is_stft_complex(x):
+    return dtype_(x) in (mstype.complex64, mstype.complex128)
+
+
 def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
          pad_mode="REFLECT", normalized=False, onesided=None, return_complex=None):
     r"""
@@ -8319,14 +8322,10 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
     hop_length = int(n_fft // 4) if hop_length is None else hop_length
     win_length = int(n_fft // 1) if win_length is None else win_length
     window = ops.ones(win_length, mstype.float32) if window is None else window
-
-    def _is_complex(x):
-        return dtype_(x) in [mstype.complex64, mstype.complex128]
-
     if onesided is None:
-        onesided = (not _is_complex(x)) and (not _is_complex(window))
+        onesided = (not _is_stft_complex(x)) and (not _is_stft_complex(window))
     if return_complex is None:
-        return_complex = _is_complex(x) or _is_complex(window)
+        return_complex = _is_stft_complex(x) or _is_stft_complex(window)
     if center:
         _check_attr_dtype("center", center, [bool], "stft")
         signal_dim = len(x.shape)
@@ -8338,9 +8337,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         else:
             raise ValueError(
                 f"Expected a 1-D tensor or a 2-D tensor, but got {signal_dim}")
-    stft_ = STFT(n_fft, hop_length, win_length,
-                 normalized, onesided, return_complex)
-    return stft_(x, window)
+    return stft_impl(x, window, n_fft, hop_length, win_length, normalized, onesided, return_complex)
 
 
 def _check_same_type(dtype1, dtype2):
@@ -8385,7 +8382,7 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    shape_out = list()
+    shape_out = []
     r_shape1 = shape1[:-2]
     r_shape2 = shape2[:-2]
     max_len = max(len(r_shape1), len(r_shape2))
@@ -9197,7 +9194,7 @@ def remainder_ext(input, other):
         return remainder_tensor_scalar_(input, other)
     if isinstance(input, (float, int, bool)) and isinstance(other, Tensor):
         return remainder_scalar_tensor_(input, other)
-    raise TypeError(f"For 'remainder', inputs should either be two tensors, or a tensor and a scalar.")
+    raise TypeError("For 'remainder', inputs should either be two tensors, or a tensor and a scalar.")
 
 
 def accumulate_n(x):
@@ -9283,7 +9280,7 @@ def _check_is_float(dtype):
 
 
 def _list_comprehensions(obj, item):
-    return tuple([item for _ in range(obj)])
+    return tuple(item for _ in range(obj))
 
 
 def _tuple_setitem(tup, idx, value):
@@ -9324,8 +9321,7 @@ def dotrapezoid_tensor(y, dx, dim):
 
 def add_padding_to_shape(curr_shape, target_n_dim):
     curr_size = len(curr_shape)
-    if curr_size >= target_n_dim:
-        target_n_dim = curr_size
+    target_n_dim = max(target_n_dim, curr_size)
     new_shape = [1 for _ in range(target_n_dim)]
     for i in range(curr_size):
         new_shape[target_n_dim - i - 1] = curr_shape[curr_size - i - 1]
@@ -10521,12 +10517,12 @@ def zeta(input, other):
     """
     if isinstance(input, (int, float)):
         if not isinstance(other, Tensor):
-            raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
+            raise TypeError("For 'zeta', at least one of the inputs should be Tensor.")
         _dtype = other.dtype
         input = cast_(input, _dtype)
     if isinstance(other, (int, float)):
         if not isinstance(input, Tensor):
-            raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
+            raise TypeError("For 'zeta', at least one of the inputs should be Tensor.")
         _dtype = input.dtype
         other = cast_(other, _dtype)
     if input.size < other.size:
@@ -10612,7 +10608,7 @@ def _canonicalize_fft_shape_and_dim(input, shape, dim):
         # check if dim is duplicated
         set_ret_dim = set(ret_dim)
         if len(set_ret_dim) != len(ret_dim):
-            raise ValueError(f"FFT dims must be unique.")
+            raise ValueError("FFT dims must be unique.")
 
     if shape is not None:
         if dim is not None and len(dim) != len(shape):
@@ -10789,6 +10785,8 @@ def _check_fftwithsize_input(input, s, dim, norm, fft_func_name):  # pylint: dis
     signal_ndim = len(ret_dim)
     batch_dims = input_dim - signal_ndim
     input_sizes = list(input.shape)
+    out_sizes = input.shape
+    dim_permute = tuple(range(input_dim))
 
     if fft_func_name in ('FFTN', 'IFFTN'):
         input = _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes)
@@ -11498,7 +11496,7 @@ def vecdot(x, y, *, axis=-1):
         raise TypeError(f"For vecdot, the dim should be int, but got {type(axis)}.")
     ndim = x.ndim if x.ndim > y.ndim else y.ndim
     if (axis < -ndim) or (axis >= ndim):
-        raise ValueError(f"For vecdot, the dim is out of range.")
+        raise ValueError("For vecdot, the dim is out of range.")
     if x.dtype in mstype.complex_type:
         x = x.conj()
     result = x * y
@@ -12050,10 +12048,10 @@ def rotated_iou(boxes, query_boxes, trans=False, mode=0, is_cross=True, v_thresh
     """
     origin_dtype = boxes.dtype
     if origin_dtype not in {mstype.float16, mstype.float32, mstype.bfloat16}:
-        raise ValueError(f"input boxes type is illegal.")
+        raise ValueError("input boxes type is illegal.")
 
     if query_boxes.dtype not in {mstype.float16, mstype.float32, mstype.bfloat16}:
-        raise ValueError(f"input query_boxes type is illegal.")
+        raise ValueError("input query_boxes type is illegal.")
 
     boxes_perm = (0, 2, 1)
     boxes_cp = permute(boxes, boxes_perm)
