@@ -48,6 +48,7 @@ from mindspore.ops._utils import arg_handler, arg_dtype_cast
 from mindspore import onnx
 from mindspore import graph
 from mindspore._c_expression import frombuffer
+from mindspore._c_expression import _save_tensor_to_buf, _load_tensor_from_buf
 
 __all__ = ["run_check"]
 __all__.extend(__version__)
