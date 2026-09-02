@@ -3605,7 +3605,7 @@ def dynamic_sample_inputs_tensor_cross(op_info:OpInfo, dtype=None, device=None, 
         ),
     )
 
-def  basic_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def basic_reference_inputs_tensor_square_matrix(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
 
     L = LARGE_DIM_SIZE
@@ -3616,12 +3616,15 @@ def  basic_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=N
         (S, S),
         (M, M),
         (L, L),
-        (3, 0, 0),
+        (0, 2, 2),
         (3, S, S),
         (5, 7, M, M),
         (2, 6, 3 ,L, L),
-        (3, 1, 6, 1, 2, 1, S, S)
+        (3, 1, 2, 1, S, S)
     )
+
+    # inverse not support 8d
+    cases = cases +  ((1, 2, 1, 3, 1, 4, M, M), ) if 'eigvals' in op_info.name else cases
 
     for input_shape in cases:
 
@@ -3632,9 +3635,10 @@ def  basic_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=N
             sample_name=op_info.name,
         )
 
-def extra_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=None, **kwargs):
+def extra_reference_inputs_tensor_square_matrix(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
-    yield from make_extra_tensor(op_info, (3, 6, 6), (), {}, dtype=dtype, device=device)
+    yield from make_extra_tensor(op_info, (3, 6, 6), (), {}, dtype=dtype, device=device,
+                                 exclude_value=(-1e20, 1e20) if 'inverse' in op_info.name else () )
 
     yield OpSampleInput(
             op_input=make_tensor((512, 512), dtype=dtype),
@@ -3643,7 +3647,7 @@ def extra_reference_inputs_tensor_eigvals(op_info: OpInfo, dtype=None, device=No
             sample_name=f'{op_info.name}_{dtype}__large_dim',
         )
 
-def dynamic_sample_inputs_tensor_eigvals(op_info: OpInfo, dtype, device=None, **kwargs):
+def dynamic_sample_inputs_tensor_square_matrix(op_info: OpInfo, dtype, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
 
     if not kwargs.get("only_dynamic_rank", False):
@@ -3696,7 +3700,7 @@ def dynamic_sample_inputs_tensor_eigvals(op_info: OpInfo, dtype, device=None, **
             ),
         )
 
-def error_sample_inputs_tensor_eigvals(op_info: OpInfo, dtype, device=None, **kwargs):
+def error_sample_inputs_tensor_square_matrix(op_info: OpInfo, dtype, device=None, **kwargs):
 
     make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
 
