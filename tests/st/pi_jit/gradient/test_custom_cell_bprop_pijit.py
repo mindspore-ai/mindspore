@@ -14,7 +14,6 @@
 # ============================================================================
 """test cell with bprop in PIJit and pynative mode"""
 import numpy as np
-import pytest 
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -64,20 +63,6 @@ class InlineMulADD(nn.Cell):
 
     def construct(self, x, y):
         return self.mul_add(x, y) + x + self.param * y
-
-
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_grad_inline_mul_add():
-    """
-    Feature: grad multiple add
-    Description: Get gradient for the network with tensor input and backward returns tuple.
-    Expectation: Get the correct output.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE)
-    inline_mul_add = InlineMulADD()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    assert grad_all(inline_mul_add)(x, y) == (3, 6)
 
 
 class WithNoBprop(nn.Cell):
@@ -745,48 +730,6 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     assert np.allclose(out[0][0].asnumpy(), expect_dx)
     assert np.allclose(out[0][1].asnumpy(), expect_dy)
     assert np.allclose(out[1][0].asnumpy(), expect_dz)
-
-
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_dde_self_define_cell_output_not_use():
-    """
-    Feature: Custom cell bprop
-    Description: Fprop output[1] only used by bprop, it should not erased by dde.
-    Expectation: Get the correct gradients.
-    """
-
-    class SelfDefineCell(ms.nn.Cell):
-        def construct(self, x):
-            return x + 1, x + 2
-
-        def bprop(self, x, out, dout):
-            return (out[1],)
-
-    class ForwardNet(ms.nn.Cell):
-        def __init__(self):
-            super(ForwardNet, self).__init__()
-            self.self_defined_cell = SelfDefineCell()
-
-        def construct(self, x):
-            # keep out1 not used in fprop.
-            out0, _ = self.self_defined_cell(x)
-            return out0
-
-    class TestNet(ms.nn.Cell):
-        def __init__(self):
-            super(TestNet, self).__init__()
-            self.forward_net = ForwardNet()
-            self.grad_op = ops.GradOperation(get_all=True)
-
-        def construct(self, x):
-            grad_out = self.grad_op(self.forward_net)(x)
-            return grad_out
-
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net = TestNet()
-    x_input = ms.Tensor([1])
-    out = net(x_input)
-    assert out[0] == ms.Tensor([3])
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')

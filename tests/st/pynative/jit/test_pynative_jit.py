@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-from-import,super-with-arguments
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -684,7 +685,7 @@ def test_pynative_jit_with_tuple_nested_tuple_output():
     jit_net = JitCell()
     grad = P.GradOperation(get_all=True, get_by_list=True, sens_param=False)
     for _ in range(2):
-        x = Tensor(np.ones([2, 2]), dtype=ms.int32)
+        x = Tensor(np.ones([2, 2]), dtype=ms.float32)
         out_grad = grad(jit_net)(x)
         assert np.allclose(out_grad[0][0].asnumpy(),
                            Tensor(np.array([[128, 128], [128, 128]])).astype(np.float32).asnumpy(), 0.001, 0.001)

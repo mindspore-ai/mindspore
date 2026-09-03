@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments
 """ test outermost net pass non_tensor inputs"""
 import numpy as np
 import pytest
@@ -193,35 +194,3 @@ class GradCellWithTupleOfParameter(nn.Cell):
 
     def construct(self, x):
         return self.grad(self.net, [self.param1, self.param2])(x)
-
-
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
-def test_grad_parameter_tuple(mode):
-    """
-    Feature: Input type with back propagate.
-    Description: Grad with Parameters as input type and fv. ParameterTuple as fv.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
-    GradCellWithParameterTuple(TestCell2(x1, x2))(y)
-    GradCellWithParameterTuple(TestCell2(x1, x2))(z)
-
-
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
-def test_grad_parameter_list_or_tuple(mode):
-    """
-    Feature: Input type with back propagate.
-    Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Tensor(np.array([[7, 8], [9, 0]]))
-    # Should not throw exception.
-    GradCellWithListOfParameter(TestCell2(x1, x2))(y)
-    GradCellWithTupleOfParameter(TestCell2(x1, x2))(y)

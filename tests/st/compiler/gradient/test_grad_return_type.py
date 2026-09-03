@@ -1131,28 +1131,6 @@ def test_grad_tuple_position_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_grad_tuple_position_and_no_param(mode):
-    """
-    Features: ops.grad.
-    Description: Test ops.grad without parameter when position is tuple.
-    Expectation: No exception.
-    """
-    class Net(nn.Cell):
-        def construct(self, x, y, z):
-            return 3 * x + 4 * y + z
-
-    ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    expect = ((Tensor([4], mstype.int32), Tensor([1], mstype.int32)), ())
-    net = Net()
-    out = grad(net, grad_position=(1, 2), weights=net.trainable_params())(x, y, z)
-    check_grad_result(out, expect)
-
-
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_grad_none_position_and_single_param(mode):

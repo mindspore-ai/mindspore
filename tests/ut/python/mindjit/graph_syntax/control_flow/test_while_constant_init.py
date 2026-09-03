@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 import os
 import numpy as np
 import mindspore as ms
-from mindspore import jit
 from mindspore import Tensor
 from mindspore import mutable
 
@@ -91,76 +91,6 @@ def test_initial_scalar_body_tensor3():
     net = Net()
 
     net(x_arg, y_arg)
-
-
-def test_initial_tensor_body_ref():
-    """
-    Feature: While specialize.
-    Description: Test constant tensor arg when first entry of while and set to RefTensor in body.
-    Expectation: No exception in infer process.
-    """
-
-    class Net(ms.nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.weight = ms.Parameter(Tensor([1]))
-
-        def construct(self, a, b):
-            y_param = Tensor([1])
-            while a < b:
-                y_param = self.weight
-                a += 1
-            out = y_param + b
-            return out
-
-    test_net = Net()
-    ms.context.set_context(mode=ms.context.GRAPH_MODE)
-    input_a = Tensor([2])
-    input_b = Tensor([6])
-    test_net(input_a, input_b)
-
-    @jit
-    def test_grad_net(a, b):
-        return ms.ops.grad(test_net)(a, b)
-
-    input_a = Tensor([2])
-    input_b = Tensor([6])
-    test_grad_net(input_a, input_b)
-
-
-def test_initial_ref_body_tensor():
-    """
-    Feature: While specialize.
-    Description: Test constant RefTensor arg when first entry of while and set to Tensor in body.
-    Expectation: No exception in infer process.
-    """
-
-    class Net(ms.nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.weight = ms.Parameter(Tensor([1]))
-
-        def construct(self, a, b):
-            y_param = self.weight
-            while a < b:
-                y_param = Tensor([1])
-                a += 1
-            out = y_param + b
-            return out
-
-    test_net = Net()
-    ms.context.set_context(mode=ms.context.GRAPH_MODE)
-    input_a = Tensor([2])
-    input_b = Tensor([6])
-    test_net(input_a, input_b)
-
-    @jit
-    def test_grad_net(a, b):
-        return ms.ops.grad(test_net)(a, b)
-
-    input_a = Tensor([2])
-    input_b = Tensor([6])
-    test_grad_net(input_a, input_b)
 
 
 def test_initial_emtpy_list_body_list():

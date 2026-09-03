@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments
 """ test_bprop """
 import numpy as np
 import pytest
@@ -285,49 +286,6 @@ def test_jit_network_with_list_output():
     grad_net = GradCell(list_net)
     output_grad = grad_net(input_y)
     assert np.allclose(output_grad.asnumpy(), output_y, 0.0001, 0.0001)
-
-
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
-def test_jit_network_with_list_inplace():
-    """
-    Feature: Test list in jit
-    Description: Net out is list in jit
-    Expectation: Success
-    """
-
-    class ListInplaceNet(nn.Cell):
-        @jit
-        def construct(self, input1, input2):
-            x1 = [[1], [2], [3], [4]]
-            for i in range(1, len(x1)):
-                y = x1[Tensor([i])]
-                y.extend([4])
-                x1.insert(1, [5])
-                x1.reverse()
-                z = x1[input1]
-                z.extend(input2[i])
-                x1.pop()
-            return x1
-
-    class ListInplaceGradCell(nn.Cell):
-        def __init__(self, network, get_all=False, get_by_list=False, sens_param=False):
-            super().__init__()
-            self.network = network
-            self.grad = C.GradOperation(get_all, get_by_list, sens_param)
-
-        def construct(self, *inputs):
-            grads = self.grad(self.network)(*inputs)
-            return grads
-
-    input1 = Tensor([2])
-    input2 = [Tensor([1]), Tensor([2]), Tensor([3]), Tensor([4])]
-    list_inplace_net = ListInplaceNet()
-    list_inplace_grad = ListInplaceGradCell(list_inplace_net)
-    out_grad = list_inplace_grad(input1, input2)
-    assert out_grad == 0
 
 
 @arg_mark(plat_marks=['cpu_linux'],
@@ -777,47 +735,6 @@ def test_grad_jit_with_dict_input():
     x = Tensor(2)
     out = GradOperation()(dict_net)({"a": x})
     assert np.allclose(out, 2.0, 0.001, 0.001)
-
-
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
-def test_grad_jit_with_multiple_output_contain_list():
-    """
-    Feature: Grad jit function has multiple output contain list
-    Description: Test jit function has multiple output contain list under pynative mode.
-    Expectation: No exception.
-    """
-
-    @ms.jit
-    def func(a):
-        x = [a + 1, a + 2]
-        return x, a + 1
-
-    x = ms.Tensor([1])
-    out = GradOperation()(func)(x)
-    assert out == 3
-
-
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
-def test_grad_jit_with_string_output():
-    """
-    Feature: Grad jit function has multiple output contain string
-    Description: Test jit function has multiple output contain string under pynative mode.
-    Expectation: No exception.
-    """
-
-    @jit
-    def func(x):
-        return "aaa", x + 1
-
-    x = Tensor([1])
-    grad1 = GradOperation()(func)(x)
-    assert grad1 == 1
 
 
 @arg_mark(plat_marks=['cpu_linux'],

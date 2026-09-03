@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments,unnecessary-comprehension
 """ test trace functions """
 
 import shutil
@@ -34,103 +35,6 @@ import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.train import Model
 from mindspore import ParameterTuple
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_trace_1():
-    """
-    Feature: JIT trace function
-    Description: JIT trace function
-    Expectation: No exception
-    """
-    class TraceNet(ms.nn.Cell):
-        def __init__(self):
-            super(TraceNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @ms.jit(capture_mode="trace")
-        def construct(self, x, y):
-            a = ms.Tensor(2)
-            z = x + a
-            z = z + self.x
-            z = z * y
-            return z
-
-    trace_net = TraceNet()
-    res1 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
-    res2 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
-    print(f'res1: {res1}, res2: {res2}')
-    assert res1 == res2
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_trace_2():
-    """
-    Feature: JIT trace function
-    Description: JIT trace function
-    Expectation: No exception
-    """
-    class TraceNet(ms.nn.Cell):
-        def __init__(self):
-            super(TraceNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @ms.jit(capture_mode="trace")
-        def construct(self, x, y):
-            a = ms.Tensor(2)
-            z = x + a
-            z = z + self.x
-            z = z * y
-            return z
-
-    class GradNet(ms.nn.Cell):
-        def __init__(self):
-            super(GradNet, self).__init__()
-            self.net = TraceNet()
-
-        def construct(self, x, y):
-            z1 = x * y
-            z2 = x + y
-            z3 = self.net(z1, z2)
-            return z3 * z3
-
-    grad_net = GradNet()
-    res1 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res2 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res3 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res4 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    print(f'res1: {res1}, res2: {res2}, res3: {res3}, res4: {res4}')
-    assert res1 == res2
-    assert res2 == res3
-    assert res3 == res4
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_trace_3():
-    """
-    Feature: JIT trace function
-    Description: JIT trace function
-    Expectation: No exception
-    """
-    class TraceNet(ms.nn.Cell):
-        def __init__(self):
-            super(TraceNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @ms.jit(capture_mode="trace")
-        def construct(self, x, y):
-            a = ms.Tensor(2)
-            z = x + a
-            z = z + self.x
-            z = z * y
-            return z
-
-    trace_net = TraceNet()
-    forward_res = trace_net(ms.Tensor(1), ms.Tensor(3))
-    res1 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
-    res2 = grad(trace_net)(ms.Tensor(1), ms.Tensor(3))
-    print(f'res1: {res1}, res2: {res2}, forward_res: {forward_res}')
-    assert res1 == res2
 
 
 GRADIENT_CLIP_TYPE = 1
@@ -311,105 +215,6 @@ def test_trace_train_2():
     if os.path.exists("./ir"):
         shutil.rmtree("./ir")
     context.set_context(save_graphs=False)
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_trace_4():
-    """
-    Feature: JIT trace function
-    Description: JIT trace function
-    Expectation: No exception
-    """
-    class TraceNet(ms.nn.Cell):
-        def __init__(self):
-            super(TraceNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @ms.jit(capture_mode="trace")
-        def construct(self, x):
-            a = ms.Tensor(2)
-            z = x[0] + a
-            z = z + self.x
-            z = z * x[1]
-            return z
-
-    class JitNet(ms.nn.Cell):
-        def __init__(self):
-            super(JitNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @jit
-        def construct(self, x):
-            a = ms.Tensor(2)
-            z = x[0] + a
-            z = z + self.x
-            z = z * x[1]
-            return z
-
-    trace_net = TraceNet()
-    jit_net = JitNet()
-    res1 = grad(trace_net)((ms.Tensor(1), ms.Tensor(3)))
-    res2 = grad(jit_net)((ms.Tensor(1), ms.Tensor(3)))
-    print(f'res1: {res1}, res2: {res2}')
-    assert res1 == res2
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_trace_5():
-    """
-    Feature: JIT trace function
-    Description: JIT trace function
-    Expectation: No exception
-    """
-    class TraceNet(ms.nn.Cell):
-        def __init__(self):
-            super(TraceNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @ms.jit(capture_mode="trace")
-        def construct(self, x, y):
-            a = ms.Tensor(2)
-            z = x + a
-            z = z + self.x
-            z = z * y
-            return z
-
-    class JitNet(ms.nn.Cell):
-        def __init__(self):
-            super(JitNet, self).__init__()
-            self.x = ms.Tensor(1)
-
-        @jit
-        def construct(self, x, y):
-            a = ms.Tensor(2)
-            z = x + a
-            z = z + self.x
-            z = z * y
-            return z
-
-    class GradNet(ms.nn.Cell):
-        def __init__(self, net):
-            super(GradNet, self).__init__()
-            self.net = net
-
-        def construct(self, x, y):
-            z1 = x * y
-            z2 = x + y
-            z3 = self.net(z1, z2)
-            return z3 * z3
-
-    trace_net = TraceNet()
-    jit_net = JitNet()
-    trace_grad_net = GradNet(trace_net)
-    jit_grad_net = GradNet(jit_net)
-    res1 = grad(trace_grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res2 = grad(trace_grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res3 = grad(trace_grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res4 = grad(jit_grad_net)(ms.Tensor(1), ms.Tensor(3))
-    print(f'res1: {res1}, res2: {res2}, res3: {res3}, res4: {res4}')
-    assert res1 == res2
-    assert res2 == res3
-    assert res3 == res4
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')

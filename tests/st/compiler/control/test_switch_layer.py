@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-from-import,super-with-arguments
 import numpy as np
 from tests.mark_utils import arg_mark
 
@@ -96,25 +97,6 @@ def test_switch_layer():
     true_value = relu(data)
     ret = np.allclose(value.asnumpy(), true_value.asnumpy())
     assert ret
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_cell_in_list():
-    """
-    Feature: Switch layer in while.
-    Description: test recursive switch layer.
-    Expectation: success if grad and output are correct.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    net = CellInList()
-    t = Tensor(10, mstype.int32)
-    x = Tensor(0, mstype.int32)
-    out = net(t, x)
-    grad_net = Grad(net)
-    grad_out = grad_net(t, x)
-
-    assert out == Tensor(160, mstype.int32)
-    assert grad_out == Tensor(16, mstype.int32)
 
 
 class TwoLayerRelU(nn.Cell):

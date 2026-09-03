@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,consider-using-from-import
 import numpy as np
 
 import mindspore.nn as nn
@@ -38,14 +39,14 @@ def test_custom_bprop():
     mul_add = MulAdd()
     mul_add.bprop_debug = True
     global bprop_debug
-    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
-    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
+    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.float32))
     grad_all(mul_add)(x, y)
     assert bprop_debug
     bprop_debug = False
     mul_add.set_inputs(Tensor(shape=[None], dtype=mindspore.float32), Tensor(shape=[None], dtype=mindspore.float32))
-    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
-    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
+    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+    y = Tensor(np.array([2, 3, 4]).astype(np.float32))
     grad_all(mul_add)(x, y)
     assert bprop_debug
 
@@ -53,10 +54,3 @@ def test_custom_bprop():
 class Net(nn.Cell):
     def construct(self, x, y):
         return 2 * x * x + y * y
-
-def test_grad_all():
-    net = Net()
-    x = Tensor(np.array([1, 2, 3]).astype(np.int32))
-    y = Tensor(np.array([2, 3, 4]).astype(np.int32))
-    res = grad_all(net)(x, y)
-    print(res)

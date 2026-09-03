@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import,super-with-arguments,useless-parent-delegation
 """ test dtype and shape as attr"""
 import numpy as np
 
@@ -70,11 +71,11 @@ def test_kw_grad():
             return self.grad_all_wit_sense(self.net)(x, y, *arg, **kwargs)
 
     kw_net = KwNet()
-    x = Tensor(np.ones([1, 2, 3], np.int32))
+    x = Tensor(np.ones([1, 2, 3], np.float32))
     y = Tensor(np.ones([1, 2, 3], np.float32))
     z = Tensor(np.ones([1, 2, 3], np.float64))
     u = Tensor(np.ones([1, 2, 3], np.float16))
-    v = Tensor(np.ones([1, 2, 3], np.int32))
+    v = Tensor(np.ones([1, 2, 3], np.float32))
     w = Tensor(np.ones([1, 2, 3], np.float64))
     sens = Tensor(np.ones([1, 2, 3], np.float64))
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -87,7 +88,7 @@ def test_kw_grad():
     ret_grad = grad_kw_net(x, y, z, u=u, v=v, w=w, sens=sens)
     assert len(ret_grad) == 6
     assert (ret_grad[0].asnumpy() == np.ones([1, 2, 3]) * 2).all()
-    assert ret_grad[0].dtype == mstype.int32
+    assert ret_grad[0].dtype == mstype.float32
     assert (ret_grad[1].asnumpy() == np.ones([1, 2, 3]) * 3).all()
     assert ret_grad[1].dtype == mstype.float32
     assert (ret_grad[2].asnumpy() == np.ones([1, 2, 3]) * 4).all()
@@ -95,7 +96,7 @@ def test_kw_grad():
     assert (ret_grad[3].asnumpy() == np.zeros([1, 2, 3])).all()
     assert ret_grad[3].dtype == mstype.float16
     assert (ret_grad[4].asnumpy() == np.ones([1, 2, 3]) * 5).all()
-    assert ret_grad[4].dtype == mstype.int32
+    assert ret_grad[4].dtype == mstype.float32
     assert (ret_grad[5].asnumpy() == np.zeros([1, 2, 3])).all()
     assert ret_grad[5].dtype == mstype.float64
 
@@ -118,7 +119,7 @@ def test_grad():
             return self.grad_all_wit_sense(self.net)(x, y, z, sens)
 
     net = Net()
-    x = Tensor(np.ones([1, 2, 3], np.int32))
+    x = Tensor(np.ones([1, 2, 3], np.float32))
     y = Tensor(np.ones([1, 2, 3], np.float32))
     z = Tensor(np.ones([1, 2, 3], np.float16))
     sens = Tensor(np.ones([1, 2, 3], np.float32))
@@ -132,7 +133,7 @@ def test_grad():
     ret_grad = grad_net(x, y, z, sens)
     assert len(ret_grad) == 3
     assert (ret_grad[0].asnumpy() == np.ones([1, 2, 3]) * 2).all()
-    assert ret_grad[0].dtype == mstype.int32
+    assert ret_grad[0].dtype == mstype.float32
     assert (ret_grad[1].asnumpy() == np.ones([1, 2, 3]) * 3).all()
     assert ret_grad[1].dtype == mstype.float32
     assert (ret_grad[2].asnumpy() == np.ones([1, 2, 3]) * 4).all()

@@ -141,6 +141,11 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
 
 void SetTensorGradMetaData(const ValuePtr &value, const BackwardNodePtr &grad_node, size_t index) {
   auto tensor = value->cast<tensor::TensorPtr>();
+  if (!autograd::impl::IsDifferentiable(tensor->Dtype()->type_id())) {
+    MS_LOG(DEBUG) << "Skip setting gradient metadata for non-differentiable output of op " << grad_node->name()
+                  << ", dtype: " << tensor->Dtype();
+    return;
+  }
   auto auto_grad_meta_data = tensor->auto_grad_meta_data();
   if (auto_grad_meta_data == nullptr) {
     MS_LOG(DEBUG) << "Tensor " << tensor->id() << " has no auto_grad_meta_data";

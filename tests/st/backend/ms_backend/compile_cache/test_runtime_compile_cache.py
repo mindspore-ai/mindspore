@@ -343,20 +343,6 @@ def test_compile_cache_simple_net_change_dir():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_compile_cache_partial_without_inputs():
-    """
-    Feature: Compile cache.
-    Description: Test whether the compile cache function can run successfully for the graph with a partial node
-                 without inputs.
-    Expectation: Run success.
-    """
-    fpath = os.path.realpath(os.path.dirname(os.getcwd()))
-    pypath = fpath + "/compile_cache/run_partial_without_input.py"
-    run_twice_with_same_network(pypath, "./partial_without_input", "partial_without_input_first.txt",
-                                "partial_without_input_second.txt", "twice")
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_compile_cache_if_any():
     """
     Feature: Compile cache.
@@ -370,44 +356,6 @@ def test_compile_cache_if_any():
     fpath = os.path.realpath(os.path.dirname(os.getcwd()))
     pypath = fpath + "/compile_cache/run_net_if_any.py"
     run_twice_with_same_network(pypath, "./if_any", "if_any_first.txt", "if_any_second.txt", "once")
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_compile_cache_for_n_while():
-    """
-    Feature: Compile cache.
-    Description: Test compile cache in control flow scenarios.
-    Expectation: Run success.
-    """
-    fpath = os.path.realpath(os.path.dirname(os.getcwd()))
-    pypath = fpath + "/compile_cache/run_net_for_n_while.py"
-    run_twice_with_same_network(pypath, "./for_n_while", "for_n_while_first.txt", "for_n_while_second.txt", "once")
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_compile_cache_for_for_while():
-    """
-    Feature: Compile cache.
-    Description: Test compile cache in control flow scenarios.
-    Expectation: Run success.
-    """
-    fpath = os.path.realpath(os.path.dirname(os.getcwd()))
-    pypath = fpath + "/compile_cache/run_net_for_for_while.py"
-    run_twice_with_same_network(pypath, "./for_for_while", "for_for_while_first.txt",
-                                "for_for_while_second.txt", "once")
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_compile_cache_for_after_for_in_if():
-    """
-    Feature: Compile cache.
-    Description: Test compile cache in control flow scenarios.
-    Expectation: Run success.
-    """
-    fpath = os.path.realpath(os.path.dirname(os.getcwd()))
-    pypath = fpath + "/compile_cache/run_net_for_after_for_in_if.py"
-    run_twice_with_same_network(pypath, "./for_after_for_in_if", "for_after_for_in_if_first.txt",
-                                "for_after_for_in_if_second.txt", "four_times")
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')

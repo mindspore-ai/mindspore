@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -73,22 +74,6 @@ def test_for_break_forward():
     assert graph_out == Tensor(np.array(3), mstype.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
-def test_for_break_backward():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
-    forward_net = ForBreakForwardNet(max_cycles=3)
-    backward_net = Grad(forward_net)
-    graph_grads = backward_net(x, y)
-    assert graph_grads == (Tensor(np.array(3), mstype.int32), Tensor(np.array(1), mstype.int32))
-
-
 class WhileBreakForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
         super(WhileBreakForwardNet, self).__init__()
@@ -125,22 +110,6 @@ def test_while_break_forward():
     forward_net = WhileBreakForwardNet(max_cycles=10)
     graph_mode_out = forward_net(x, y)
     assert graph_mode_out == Tensor(np.array(15))
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
-def test_while_break_backward():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
-    forward_net = WhileBreakForwardNet(max_cycles=10)
-    backward_net = Grad(forward_net)
-    graph_grads = backward_net(x, y)
-    assert graph_grads == (Tensor(np.array(15), mstype.int32), Tensor(np.array(5), mstype.int32))
 
 
 class IfAfterIfInWhileBreakForwardNet(nn.Cell):
@@ -190,116 +159,6 @@ def test_if_after_if_in_while_break_forward():
     assert graph_mode_out == Tensor(np.array(16), mstype.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-def test_if_after_if_in_while_break_backward():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
-    # Graph Mode
-    context.set_context(mode=context.GRAPH_MODE)
-    graph_forward_net = IfAfterIfInWhileBreakForwardNet(max_cycles=10)
-    graph_backward_net = Grad(graph_forward_net)
-    graph_mode_grads = graph_backward_net(x, y)
-
-    assert graph_mode_grads == (Tensor(np.array(15), mstype.int32), Tensor(np.array(5), mstype.int32))
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-def test_if_after_for_in_if_break():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    class IfAfterForInIfNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
-
-        def construct(self, x):
-            out = x + self.param_a
-            if self.param_a > self.param_b:
-                for _ in range(4):
-                    self.param_a += 1
-                    if self.param_b < 0:
-                        continue
-                    self.param_b -= 3
-                    if self.param_a > 6:
-                        break
-
-            self.param_b += 15
-            if x < self.param_b:
-                out -= self.param_b
-                return out
-            out = self.param_b + out
-            return out
-
-    x = Tensor(2, mstype.int32)
-
-    # graph mode
-    forward_net = IfAfterForInIfNet()
-    graph_forward_res = forward_net(x)
-
-    context.set_context(mode=context.GRAPH_MODE)
-    if_after_for_in_if_net = IfAfterForInIfNet()
-    net = Grad(if_after_for_in_if_net)
-    graph_backward_res = net(x)
-
-    assert graph_forward_res == Tensor(-6, mstype.int32)
-    assert graph_backward_res == (Tensor(1, mstype.int32),)
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
-def test_if_after_for_in_for_break():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    class IfAfterForInForNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
-
-        def construct(self, x):
-            out = x + self.param_a
-            for _ in range(0, 10):
-                x *= 2
-                if self.param_a % 2 == 0:
-                    self.param_a += 1
-                    continue
-                for _ in range(0, 5):
-                    self.param_a += 1
-                    x += self.param_b
-                    if x > 10:
-                        break
-                if x > 100:
-                    return x
-            if self.param_a > self.param_b:
-                out += x
-            return out
-
-    x = Tensor(2, mstype.int32)
-    # graph mode
-    forward_net = IfAfterForInForNet()
-    graph_forward_res = forward_net(x)
-
-    if_after_for_in_for_net = IfAfterForInForNet()
-    net = Grad(if_after_for_in_for_net)
-    graph_backward_res = net(x)
-
-    assert graph_forward_res == Tensor(106, mstype.int32)
-    assert graph_backward_res == (Tensor(16, mstype.int32),)
-
-
 class WhileAfterWhileInWhileBreakForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
         super(WhileAfterWhileInWhileBreakForwardNet, self).__init__()
@@ -342,24 +201,6 @@ def test_while_after_while_in_while_break_forward():
     graph_out = forward_net(x, y)
 
     assert graph_out == Tensor(np.array(54), mstype.int32)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-def test_while_after_while_in_while_break_backward():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
-    forward_net = WhileAfterWhileInWhileBreakForwardNet(max_cycles=3)
-    backward_net = Grad(forward_net)
-    graph_grads = backward_net(x, y)
-
-    assert graph_grads == (Tensor(np.array(54), mstype.int32), Tensor(np.array(18), mstype.int32))
 
 
 class TwoBreakDeadForwardNet(nn.Cell):
@@ -427,80 +268,6 @@ def test_for_in_for_break():
     forward_net = ForInFor2BreakForwardNet()
     graph_out = forward_net(x, y, z)
     print("test_for_in_for_break graph out:", graph_out)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-def test_while_true_break():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    class WhileTrueBreakNet(nn.Cell):
-        def __init__(self, t):
-            super(WhileTrueBreakNet, self).__init__()
-            self.add = P.Add()
-            self.mul = P.Mul()
-            self.para = Parameter(Tensor(t, mstype.int32), name="a")
-
-        def construct(self, x, y):
-            out = self.mul(y, self.para)
-            while True:
-                if x == 5:
-                    x = x - 3
-                    continue
-                if x == 2:
-                    break
-                out = self.add(out, out)
-            return out
-
-    t = np.array([1]).astype(np.int32)
-    y = Tensor([1], mstype.int32)
-    x = Tensor([5], mstype.int32)
-    net = WhileTrueBreakNet(t)
-    grad_net = Grad(net)
-    grad_out = grad_net(x, y)
-    print(grad_out)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
-def test_continue_stuck_in_vm():
-    """
-    Feature: Control flow
-    Description: Test control flow in graph mode.
-    Expectation: No exception.
-    """
-    class NetWork(nn.Cell):
-        def __init__(self, t):
-            super().__init__()
-            self.add = P.Add()
-            self.mul = P.Mul()
-            self.para = Parameter(Tensor(t, mstype.int32), name="a")
-
-        def construct(self, x, y):
-            out = self.mul(y, y)
-            while x != 3:
-                while self.para > 5:
-                    # self.param -= 1 if set after if_switch, which is wrong
-                    self.para -= 1
-                    x += 1
-                    if x > 3:
-                        self.para -= x
-                        return out
-                    out = self.add(out, y)
-                continue
-            out = self.mul(out, y)
-            return out
-
-    x = Tensor(2, mstype.int32)
-    t = 8
-    y = Tensor(1, mstype.int32)
-    net = NetWork(t)
-    grad_net = Grad(net)
-    grad = grad_net(x, y)
-    print(grad)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',

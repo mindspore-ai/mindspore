@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=superfluous-parens,consider-using-from-import
+# pylint: disable=super-with-arguments,global-variable-not-assigned
 """
 @File  : test_parse.py
 @Author:
@@ -303,14 +305,6 @@ class Assign(nn.Cell):
     def construct(self, x):
         self.cov_step = self.cov_step + x
         return self.cov_step
-
-
-def test_assign(enable_check_bprop):
-    context.set_context(mode=context.GRAPH_MODE)
-    net = Assign()
-    input_data = ms.Tensor(np.array(1).astype(np.int32))
-    net_back = GradNet(net)
-    net_back(input_data)
 
 
 class AssignCheck(nn.Cell):

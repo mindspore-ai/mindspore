@@ -1,7 +1,7 @@
 import numpy as np
 import pytest 
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter, ParameterTuple, jit
+from mindspore import Tensor, ParameterTuple, jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 import mindspore.ops as ops
@@ -90,25 +90,6 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
-def test_grad_parameter_input(mode):
-    """
-    Feature: Input type with back propagate.
-    Description: Grad with Parameter as input type.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
-    a = GradCell(TestCell(x))(y)
-    b = GradCell(TestCell(x))(z)
-    print(f'a: {a}')
-    print(f'b: {b}')
-    assert np.array_equal(a[0].asnumpy(), b[0].asnumpy())
-
-
 class TestCell2(nn.Cell):
     def __init__(self, param1, param2):
         super().__init__()
@@ -132,25 +113,3 @@ class GradCellWithParameterTuple(nn.Cell):
     @jit(capture_mode="bytecode")
     def construct(self, x):
         return self.grad(self.net, self.params)(x)
-
-
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
-def test_grad_parameter_as_input_and_fv2(mode):
-    """
-    Feature: Input type with back propagate.
-    Description: Grad with Parameters as input type and fv. ParameterTuple as fv.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
-    a = GradCellWithParameterTuple(TestCell2(x1, x2))(y)
-    b = GradCellWithParameterTuple(TestCell2(x1, x2))(z)
-    print(f'a: {a}')
-    print(f'b: {b}')
-    assert np.array_equal(a[0][0].asnumpy(), b[0][0].asnumpy())
-    assert np.array_equal(a[1][0].asnumpy(), b[1][0].asnumpy())
-    assert np.array_equal(a[1][1].asnumpy(), b[1][1].asnumpy())
