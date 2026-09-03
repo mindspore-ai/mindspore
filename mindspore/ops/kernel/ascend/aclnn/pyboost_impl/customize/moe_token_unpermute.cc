@@ -32,6 +32,9 @@ tensor::TensorPtr MoeTokenUnpermuteAscendCustomize(const tensor::TensorPtr &perm
   if (probs.has_value()) {
     auto target_dtype = probs.value()->data_type();
     auto origin_dtype = permuted_tokens->data_type();
+    if (target_dtype == origin_dtype) {
+      return inner_moe_token_unpermute(permuted_tokens, sorted_indices, probs, padded_mode, restore_shape);
+    }
     auto unpermute_token_casted = cast(permuted_tokens, std::make_shared<Int64Imm>(target_dtype));
     auto out = inner_moe_token_unpermute(unpermute_token_casted, sorted_indices, probs, padded_mode, restore_shape);
     out = cast(out, std::make_shared<Int64Imm>(origin_dtype));
