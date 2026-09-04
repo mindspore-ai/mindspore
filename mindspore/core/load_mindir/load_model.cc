@@ -252,6 +252,26 @@ bool ParseAndValidateTensorProto(const mind_ir::TensorProto &tensor_proto, Shape
   return true;
 }
 
+// Destination capacity for memcpy/read. DataNBytes() is logical shape × dtype (or
+// numel when a compressed tensor's CPU buffer reports Int8 itemsize) and is not the
+// allocated compression_data_size. DeviceAddress::GetSize() is the real buffer.
+size_t GetTensorBufferNBytes(const tensor::TensorPtr &tensor_info) {
+  MS_EXCEPTION_IF_NULL(tensor_info);
+  const auto &device_address = tensor_info->device_address();
+  if (device_address != nullptr) {
+    return device_address->GetSize();
+  }
+  return tensor_info->DataNBytes();
+}
+
+bool CheckLengthFitsTensorBuffer(size_t length, size_t dest_nbytes) {
+  if (length > dest_nbytes) {
+    MS_LOG(ERROR) << "Tensor data length " << length << " exceeds tensor buffer size " << dest_nbytes << ".";
+    return false;
+  }
+  return true;
+}
+
 template <typename T, typename P>
 std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<string, P> &kv) {
   std::stack<std::string> rules;
@@ -830,13 +850,20 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
   }
 
   MS_EXCEPTION_IF_NULL(tensor);
+  const size_t dest_nbytes = GetTensorBufferNBytes(tensor);
   const std::string &tensor_buf = attr_tensor.raw_data();
-  if (attr_tensor.has_raw_data() && tensor->DataNBytes() != 0) {
-    auto *tensor_data_buf = static_cast<uint8_t *>(tensor->data_c());
-    errno_t ret = memcpy_s(tensor_data_buf, tensor->DataNBytes(), tensor_buf.data(), tensor_buf.size());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "Failed to copy data from tensor proto.";
+  if (attr_tensor.has_raw_data()) {
+    if (!CheckLengthFitsTensorBuffer(tensor_buf.size(), dest_nbytes)) {
       return nullptr;
+    }
+    if (tensor_buf.size() != 0) {
+      auto *tensor_data_buf = static_cast<uint8_t *>(tensor->data_c());
+      MS_EXCEPTION_IF_NULL(tensor_data_buf);
+      errno_t ret = memcpy_s(tensor_data_buf, dest_nbytes, tensor_buf.data(), tensor_buf.size());
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "Failed to copy data from tensor proto.";
+        return nullptr;
+      }
     }
   } else if (attr_tensor.has_external_data()) {
     auto ret = GetTensorDataFromExternal(attr_tensor, tensor);
@@ -1329,15 +1356,19 @@ bool MSANFModelParser::CopyExternalDataToTensor(int64_t offset, int64_t length, 
   if (!ValidateExternalDataBounds(offset, length, buffer_size)) {
     return false;
   }
-  if (tensor_info->DataNBytes() == 0 || length == 0) {
+  if (length == 0) {
     return true;
+  }
+  const size_t dest_nbytes = GetTensorBufferNBytes(tensor_info);
+  const size_t length_size = LongToSize(length);
+  if (!CheckLengthFitsTensorBuffer(length_size, dest_nbytes)) {
+    return false;
   }
   auto *tensor_data_buf = static_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   MS_EXCEPTION_IF_NULL(data);
   const size_t offset_size = LongToSize(offset);
-  const size_t length_size = LongToSize(length);
-  auto ret = common::huge_memcpy(tensor_data_buf, tensor_info->DataNBytes(), data + offset_size, length_size);
+  auto ret = common::huge_memcpy(tensor_data_buf, dest_nbytes, data + offset_size, length_size);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
     return false;
@@ -1390,16 +1421,34 @@ bool MSANFModelParser::GetTensorDataFromUnencryptedFile(const mind_ir::TensorPro
     MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
     return false;
   }
+
+  fid.clear();
+  (void)fid.seekg(0, std::ios::end);
+  const auto file_end = fid.tellg();
+  if (file_end < 0) {
+    MS_LOG(ERROR) << "Invalid external data file size: " << file_end << ".";
+    return false;
+  }
+  const size_t file_size = static_cast<size_t>(file_end);
+  const auto offset = tensor_proto.external_data().offset();
   const auto length = tensor_proto.external_data().length();
-  if (tensor_info->DataNBytes() == 0 || length == 0) {
+  if (!ValidateExternalDataBounds(offset, length, file_size)) {
+    return false;
+  }
+  if (length == 0) {
     return true;
+  }
+  const size_t dest_nbytes = GetTensorBufferNBytes(tensor_info);
+  const size_t length_size = LongToSize(length);
+  if (!CheckLengthFitsTensorBuffer(length_size, dest_nbytes)) {
+    return false;
   }
   void *tensor_data_buf = tensor_info->data_c();
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
   fid.clear();
-  (void)fid.seekg(SizeToLong(LongToSize(tensor_proto.external_data().offset())), std::ios::beg);
-  (void)fid.read(static_cast<char *>(tensor_data_buf), SizeToLong(LongToSize(length)));
-  if (!fid || LongToSize(fid.gcount()) != LongToSize(length)) {
+  (void)fid.seekg(SizeToLong(LongToSize(offset)), std::ios::beg);
+  (void)fid.read(static_cast<char *>(tensor_data_buf), SizeToLong(length_size));
+  if (!fid || LongToSize(fid.gcount()) != length_size) {
     MS_LOG(ERROR) << "Read external tensor data from '" << file << "' failed.";
     return false;
   }
