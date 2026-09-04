@@ -46,6 +46,7 @@ mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/kernel_runner.c
 mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/kernel_runner.cc:mindspore::runtime::KernelRunner::ExecuteLaunchKernelTaskHP
 mindspore/mindspore/ccsrc/pybind_api/init.cc:PYBIND11_MODULE
 mindspore/mindspore/ccsrc/pybind_api/parallel/parallel_api.cc:mindspore::RegParallelModule
+mindspore/mindspore/ccsrc/pybind_api/pynative/pynative_api.cc:mindspore::RegPyNativeModule
 mindspore/mindspore/ccsrc/pybind_api/runtime/runtime_api.cc:mindspore::RegRuntimeModule
 mindspore/mindspore/ccsrc/frontend/jit/ps/parse/resolve.cc:mindspore::parse::Resolver::ResolveObjectToNode
 mindspore/mindspore/ccsrc/frontend/jit/ps/parse/parse.cc:mindspore::parse::Parser::ParseIf

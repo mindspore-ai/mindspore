@@ -49,6 +49,7 @@ from mindspore import onnx
 from mindspore import graph
 from mindspore import multiprocessing
 from mindspore._c_expression import frombuffer
+from mindspore._c_expression import _save_tensor_to_buf, _load_tensor_from_buf
 
 # Import the following modules to maintain compatibility
 import mindspore.graph._utils.check_jit_forbidden_api as _check_jit_forbidden_api
