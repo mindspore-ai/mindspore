@@ -27,7 +27,9 @@ if [ "${status}" != "0" ]; then
     exit 1
 fi
 
-need_str='aclrtCtxSetSysParamOpt, opt = 1, value = 1'
+# The 'opt' field is printed as a raw number in old CANN versions and as a
+# named enum (e.g. OPT_ENABLE_DEBUG_KERNEL(1)) in newer versions; match both.
+need_str='aclrtCtxSetSysParamOpt.*value = 1'
 result=$(cat ms.log | grep -E "${need_str}")
 
 if [ "$result" == "" ]; then
