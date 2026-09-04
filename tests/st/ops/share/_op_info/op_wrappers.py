@@ -2839,3 +2839,93 @@ def tensor_heaviside_ms(op_input, values):
 
 def tensor_heaviside_torch(op_input, values):
     return op_input.heaviside(values=values)
+
+def tensor_inv_ms(input):
+    return input.inv()
+
+def tensor_inv_torch(input):
+    return input.reciprocal()
+
+def tensor_inverse_ms(input):
+    return input.inverse()
+
+def tensor_inverse_torch(input):
+    return input.inverse()
+
+def tensor_isreal_ms(input):
+    return input.isreal()
+
+def tensor_isreal_torch(input):
+    return input.isreal()
+
+def tensor_isposinf_ms(input):
+    return input.isposinf()
+
+def tensor_isposinf_torch(input):
+    return input.isposinf()
+
+def tensor_isneginf_ms(input):
+    return input.isneginf()
+
+def tensor_isneginf_torch(input):
+    return input.isneginf()
+
+def tensor_isnan_ms(input):
+    return input.isnan()
+
+def tensor_isnan_torch(input):
+    return input.isnan()
+
+def tensor_isinf_ms(input):
+    return input.isinf()
+
+def tensor_isinf_torch(input):
+    return input.isinf()
+
+def tensor_isfinite_ms(input):
+    return input.isfinite()
+
+def tensor_isfinite_torch(input):
+    return input.isfinite()
+
+def tensor_isclose_ms(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
+    return input.isclose(other, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+def tensor_isclose_torch(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
+    return input.isclose(other, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+def tensor_is_signed_ms(input):
+    return input.is_signed()
+
+def tensor_is_signed_torch(input):
+    return input.is_signed()
+
+def tensor_is_meta_ms(input):
+    return input.is_meta
+
+def tensor_is_meta_torch(input):
+    return input.is_meta
+
+def tensor_is_pinned_ms(input):
+    return input.is_pinned()
+
+def tensor_is_pinned_torch(input):
+    return input.is_pinned()
+
+def tensor_is_shared_ms(input):
+    return input.is_shared()
+
+def tensor_is_shared_torch(input):
+    return input.is_shared()
+
+def tensor_is_floating_point_ms(input):
+    return input.is_floating_point()
+
+def tensor_is_floating_point_torch(input):
+    return input.is_floating_point()
+
+def tensor_is_complex_ms(input):
+    return input.is_complex()
+
+def tensor_is_complex_torch(input):
+    return input.is_complex()

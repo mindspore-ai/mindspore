@@ -151,6 +151,7 @@ class OpInfo:
     not_support_dtypes_check_in_op_error_func: Optional[bool] = False
     support_dynamic_shape: Optional[bool] = True
     support_dynamic_rank: Optional[bool] = True
+    disable_discontiguous_tensor_inputs: Optional[bool] = False
 
     def __post_init__(self):
         if not self.dtypes_intersection:

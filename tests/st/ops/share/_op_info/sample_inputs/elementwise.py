@@ -3646,3 +3646,165 @@ def error_sample_inputs_tensor_heaviside(op_info: OpInfo, dtype=None, device=Non
             op_error_type=(AttributeError, TypeError),
             op_error_info=f'error values not supported for {op_info.name}',
         )
+
+def _get_broadcast_index(input_idx, input_shape, other_shape):
+
+    max_len = max(len(other_shape),len(input_shape))
+
+    padded_input_shape = [1] * (max_len - len(input_shape)) + list(input_shape)
+    padded_other_shape = [1] * (max_len - len(other_shape)) + list(other_shape)
+
+    padded_input_index = [0] * (max_len - len(input_idx)) + list(input_idx)
+
+    other_idx=[]
+    for i in range(max_len):
+        if padded_other_shape[i] == 1:
+            other_idx.append(0)
+        elif padded_input_shape[i] == 1:
+            other_idx.append(random.randint(0, padded_input_shape[i]-1))
+        else:
+            other_idx.append(padded_input_index[i])
+    return tuple(other_idx[-len(other_shape):])
+
+def _generate_random_index(shape,):
+    random_index=[]
+
+    if len(shape) == 0:
+        return ()
+
+    for index in range(len(shape)):
+        random_index.append(random.randint(0, shape[index] - 1) if shape[index] > 1 else 0)
+
+    return tuple(random_index)
+
+def construnt_tensor_with_equal_values(input_tensor, other_tensor, input_revise_value, other_revise_value):
+    input_shape = input_tensor.shape
+    other_shape = other_tensor.shape
+
+    if 0 in input_shape:
+        return input_tensor, other_tensor
+
+    if len(input_shape) == 0:
+        input_tensor = input_tensor.fill(input_revise_value)
+        if len(other_shape) != 0:
+            other_tensor[_generate_random_index(other_shape)] = other_revise_value
+        else:
+            other_tensor = other_tensor.fill(other_revise_value)
+    else:
+        input_equal_index = _generate_random_index(input_shape)
+        input_tensor[input_equal_index] = input_revise_value
+        if len(other_shape) != 0:
+            other_tensor[_get_broadcast_index(input_equal_index, input_shape, other_shape)] = other_revise_value
+        else:
+            other_tensor = other_tensor.fill(other_revise_value)
+
+    return  input_tensor, other_tensor
+
+
+def basic_reference_inputs_tensor_isclose(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+    cases = (
+        (1e-05, 1e-08, 2, 2, False),
+        (1e-05, 1e-08, np.nan, np.nan, False),
+        (1e-05, 1e-08, np.nan, np.nan, True),
+    )
+
+    for rtol, atol, input_revise_value, other_revise_value, equal_nan in cases:
+
+        for sample_input in basic_reference_inputs_binary_op_common_func(op_info=op_info,  dtype=dtype, device=device, **kwargs):
+
+            if not (np.isnan(input_revise_value) and equal_nan and sample_input.op_input.shape != sample_input.op_args[0].shape):
+
+                input_tensor, other_tensor = construnt_tensor_with_equal_values(sample_input.op_input, sample_input.op_args[0], input_revise_value, other_revise_value)
+                sample_input.op_input = input_tensor
+                sample_input.op_args = (other_tensor, )
+                sample_input.op_kwargs = {'rtol': rtol, 'atol': atol, 'equal_nan': equal_nan}
+
+                yield sample_input
+
+def error_reference_inputs_tensor_isclose(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, dtype=ms.float32, device=device)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((2, 3)),
+            op_args=(make_arg((2, 5)), ),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_value_error"
+        ),
+        op_error_type=ValueError,
+        op_error_info=f'input.shape and other.shape should equal or broadcasted',
+    )
+
+def basic_reference_inputs_tensor_isnan(op_info: OpInfo,  dtype=None, device=None, **kwargs):
+
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info=op_info,  dtype=dtype, device=device, **kwargs):
+
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = np.nan
+
+        yield sample_input
+
+
+def basic_reference_inputs_tensor_isinf(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info=op_info, dtype=dtype, device=device,
+                                                                    **kwargs):
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = np.inf
+
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = -np.inf
+
+        yield sample_input
+
+def basic_reference_inputs_tensor_isneginf(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info=op_info, dtype=dtype, device=device,
+                                                                    **kwargs):
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = -np.inf
+
+        yield sample_input
+
+def basic_reference_inputs_tensor_isposinf(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info=op_info, dtype=dtype, device=device,
+                                                                    **kwargs):
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = np.inf
+
+        yield sample_input
+
+def basic_reference_inputs_tensor_isfinite(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info=op_info, dtype=dtype, device=device,
+                                                                    **kwargs):
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = np.inf
+
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = -np.inf
+
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = np.nan
+
+        yield sample_input
+
+def basic_reference_inputs_tensor_isreal(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    for sample_input in basic_reference_inputs_unary_op_common_func(op_info=op_info, dtype=dtype, device=device,
+                                                                    **kwargs):
+        random_index = _generate_random_index(sample_input.op_input.shape)
+
+        sample_input.op_input[random_index] = ms.Tensor(1+0j, dtype=dtype)
+
+        yield sample_input

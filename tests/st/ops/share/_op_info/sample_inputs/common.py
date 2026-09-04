@@ -151,8 +151,9 @@ def make_extra_tensor(op_info, op_input_shape, op_args_shapes, op_kwargs, dtype=
             yield  from _make_extra_op(data, op_input_shape, op_args_shapes, op_kwargs, data_title )
 
         # ---- discontiguous tensors ----
-        yield from _make_extra_op(op_input_shape=op_input_shape, op_args_shapes=op_args_shapes, op_kwargs=op_kwargs,
-                                  discontiguous=True,)
+        if not op_info.disable_discontiguous_tensor_inputs:
+            yield from _make_extra_op(op_input_shape=op_input_shape, op_args_shapes=op_args_shapes, op_kwargs=op_kwargs,
+                                      discontiguous=True,)
 
         if dtype_promotion:
             support_dtype = list(op_info.get_supported_dtypes(device))
