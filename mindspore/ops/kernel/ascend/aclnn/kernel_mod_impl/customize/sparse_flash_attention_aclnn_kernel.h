@@ -32,7 +32,11 @@ namespace sparse_flash_attention {
 
 class SparseFlashAttentionAscend : public AclnnKernelMod {
  public:
-  SparseFlashAttentionAscend() : AclnnKernelMod(std::move("aclnnSparseFlashAttention")) {}
+  // Disable the MindSpore-side executor cache on purpose. The cache refreshes tensor addresses by
+  // sequential executor indices (aclSetTensorAddr), which depends on the executor's internal tensor
+  // layout and is fragile across CANN versions (e.g. the optional `sinks` input added by newer CANN).
+  // Building an executor per call keeps this op robust regardless of the CANN tensor layout.
+  SparseFlashAttentionAscend() : AclnnKernelMod(std::move("aclnnSparseFlashAttention")) { capacity_ = 0; }
   ~SparseFlashAttentionAscend() = default;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

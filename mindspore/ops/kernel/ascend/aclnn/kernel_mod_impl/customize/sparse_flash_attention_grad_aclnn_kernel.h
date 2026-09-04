@@ -31,7 +31,11 @@ namespace sparse_flash_attention_grad {
 
 class SparseFlashAttentionGradAscend : public AclnnKernelMod {
  public:
-  SparseFlashAttentionGradAscend() : AclnnKernelMod(std::move("aclnnSparseFlashAttentionGrad")) {}
+  // Disable the MindSpore-side executor cache on purpose. The cache refreshes tensor addresses by
+  // sequential executor indices (aclSetTensorAddr), which depends on the executor's internal tensor
+  // layout and is fragile across CANN versions (e.g. the optional `sinks` input added by newer CANN).
+  // Building an executor per call keeps this op robust regardless of the CANN tensor layout.
+  SparseFlashAttentionGradAscend() : AclnnKernelMod(std::move("aclnnSparseFlashAttentionGrad")) { capacity_ = 0; }
   ~SparseFlashAttentionGradAscend() = default;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -46,6 +50,7 @@ class SparseFlashAttentionGradAscend : public AclnnKernelMod {
   int64_t next_tokens_ = 9223372036854775807;
   int64_t attention_mode_ = 0;
   bool deterministic_ = true;
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 
 }  // namespace sparse_flash_attention_grad

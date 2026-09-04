@@ -16,6 +16,8 @@
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/sparse_flash_attention.h"
 
+#include <functional>
+#include <memory>
 #include <string>
 
 #include "kernel/ascend/aclnn/pyboost_impl/pyboost_aclnn_utils.h"
@@ -27,6 +29,48 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+namespace {
+template <typename... Args>
+void LaunchSparseFlashAttention(const device::DeviceContext *device_context, uint32_t stream_id, const Args &...args) {
+  static const std::string aclnn_name = "aclnnSparseFlashAttention";
+  static const auto simulation = common::IsCompileSimulation();
+  if (simulation) {
+    return;
+  }
+
+  device_context->device_res_manager_->UseStreamResInCurrentThread(stream_id);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostLaunchAclnn,
+                                     aclnn_name, false);
+  auto stream_ptr = device_context->device_res_manager_->GetStream(stream_id);
+  // Do not keep a MindSpore-side executor cache and do not refresh tensor addresses while
+  // reusing an executor. Address refresh (aclSetTensorAddr) indexes the executor's internal
+  // tensor slots sequentially, which depends on the CANN tensor layout and breaks when a newer
+  // CANN inserts an input (e.g. the optional `sinks`) that MindSpore does not expose.
+  // GEN_EXECUTOR may still hit a CANN-internal executor cache when the CANN package provides one,
+  // but since MindSpore never updates addresses against a cached executor here, correctness never
+  // depends on the executor's internal tensor layout.
+  auto executor_info = GEN_EXECUTOR(aclnn_name, args...);
+  auto workspace_size = std::get<0>(executor_info);
+  auto executor = std::get<1>(executor_info);
+  auto release_function = std::get<3>(executor_info);
+  std::function<void()> update_function = nullptr;
+  if (workspace_size == 0) {
+    DISPATCH_LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor, stream_ptr, release_function, update_function);
+  } else {
+    auto workspace = std::make_shared<MemBlock>(device_context, workspace_size, stream_id);
+    DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, workspace->ptr_, workspace_size, executor, stream_ptr,
+                           release_function, update_function);
+  }
+  if (runtime::RuntimeConf::GetInstance()->launch_blocking()) {
+    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {
+      MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;
+    }
+  } else {
+    runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id, args...);
+  }
+}
+}  // namespace
+
 std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SparseFlashAttentionAscendCustomize(
   const TensorPtr &query, const TensorPtr &key, const TensorPtr &value, const TensorPtr &sparse_indices,
   const FP32ImmPtr &scale_value, const std::optional<TensorPtr> &block_table,
@@ -60,14 +104,18 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> SparseFlashA
                  query_rope, key_rope);
   TensorMalloc(outputs);
 
-  // Dispatch async run
-  DISPATCH_ACLNN(aclnnSparseFlashAttention, query, key, value, sparse_indices, scale_value_val,
-                 std::optional<TensorPtr>(block_table), std::optional<TensorPtr>(actual_seq_lengths_query),
-                 std::optional<TensorPtr>(actual_seq_lengths_kv), std::optional<TensorPtr>(query_rope),
-                 std::optional<TensorPtr>(key_rope), sparse_block_size_val, layout_query_val.c_str(),
-                 layout_kv_val.c_str(), sparse_mode_val, pre_tokens_val, next_tokens_val, attention_mode_val,
-                 return_softmax_lse_val, std::get<kOutputAttentionOut>(outputs), std::get<kOutputSoftmaxMax>(outputs),
-                 std::get<kOutputSoftmaxSum>(outputs));
+  auto device_context = CurrentDeviceContext::get();
+  auto stream_id = CurrentStream::id();
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([=]() {
+    LaunchSparseFlashAttention(device_context, stream_id, query, key, value, sparse_indices, scale_value_val,
+                               std::optional<TensorPtr>(block_table),
+                               std::optional<TensorPtr>(actual_seq_lengths_query),
+                               std::optional<TensorPtr>(actual_seq_lengths_kv), std::optional<TensorPtr>(query_rope),
+                               std::optional<TensorPtr>(key_rope), sparse_block_size_val, layout_query_val.c_str(),
+                               layout_kv_val.c_str(), sparse_mode_val, pre_tokens_val, next_tokens_val,
+                               attention_mode_val, return_softmax_lse_val, std::get<kOutputAttentionOut>(outputs),
+                               std::get<kOutputSoftmaxMax>(outputs), std::get<kOutputSoftmaxSum>(outputs));
+  }));
 
   MS_LOG(DEBUG) << "Launch aclnnSparseFlashAttention end";
   return outputs;
