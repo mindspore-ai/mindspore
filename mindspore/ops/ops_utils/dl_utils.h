@@ -51,4 +51,24 @@
 #define DL_ERROR() dlerror()
 #endif
 
+#if defined(_WIN32) || (!defined(_WIN32) && !defined(_WIN64))
+namespace mindspore {
+class DynamicLibraryGuard {
+ public:
+  explicit DynamicLibraryGuard(void *handle) : handle_(handle) {}
+  ~DynamicLibraryGuard() {
+    if (handle_ != nullptr) {
+      (void)DL_CLOSE(handle_);
+    }
+  }
+  void *get() const { return handle_; }
+  DynamicLibraryGuard(const DynamicLibraryGuard &) = delete;
+  DynamicLibraryGuard &operator=(const DynamicLibraryGuard &) = delete;
+
+ private:
+  void *handle_;
+};
+}  // namespace mindspore
+#endif
+
 #endif  // MINDSPORE_OPS_OPS_UTILS_DL_UTILS_H
