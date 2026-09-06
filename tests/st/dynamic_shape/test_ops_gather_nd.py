@@ -73,7 +73,7 @@ def test_gather_nd_backward_1d(mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    input_x = Tensor(np.array([1, 2]), ms.int64)
+    input_x = Tensor(np.array([1, 2]), ms.float32)
     indices = Tensor(np.array([[1], [0]]), ms.int32)
     output = gather_nd_backward_func(input_x, indices)
     expect = [1, 1]

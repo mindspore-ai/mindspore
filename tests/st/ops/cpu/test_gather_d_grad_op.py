@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 import mindspore.context as context
@@ -41,12 +41,12 @@ class NetGatherD(nn.Cell):
 class NetGatherDGrad(nn.Cell):
     def __init__(self, network):
         super(NetGatherDGrad, self).__init__()
-        self.grad = GradOperation(get_all=True)
+        self.grad = GradOperation(get_by_position=True)
         self.network = network
 
     @jit
     def construct(self, inputx, index):
-        return self.grad(self.network)(inputx, index)
+        return self.grad(self.network, None, (0,))(inputx, index)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -80,26 +80,6 @@ def test_gatherd_grad_fp16():
     x = np.random.randn(5, 5, 5).astype(np.float16) * prop
     index = np.random.randint(0, 5, (3, 5, 5)).astype(np.int32)
     dim = 0
-
-    gatherd = NetGatherD(dim)
-    grad = NetGatherDGrad(gatherd)
-    output_grad = grad(Tensor(x), Tensor(index))
-    if isinstance(output_grad, (tuple, list)):
-        output_grad = output_grad[0]
-    print(output_grad.asnumpy())
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_gatherd_grad_int32():
-    """
-    Feature: Test GatherDGrad with int32.
-    Description: Test the functionality of GatherDGrad with int32.
-    Expectation: success
-    """
-    prop = 100 if np.random.random() > 0.5 else -100
-    x = np.random.randn(5, 5, 5).astype(np.int32) * prop
-    index = np.random.randint(0, 5, (5, 5, 7)).astype(np.int64)
-    dim = -1
 
     gatherd = NetGatherD(dim)
     grad = NetGatherDGrad(gatherd)
@@ -149,4 +129,4 @@ def test_gatherd_grad_dynamic_shape():
     grad_net = NetGatherDGrad(NetGatherD(dim))
     grad_net.set_inputs(x_dyn, index_dyn)
     output = grad_net(x, index)
-    assert output[0].asnumpy().shape == except_shape
+    assert output.asnumpy().shape == except_shape

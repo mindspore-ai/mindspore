@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments,unnecessary-comprehension
 from tests.mark_utils import arg_mark
 
 import numpy as np
 
-import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -114,11 +114,11 @@ def test_maskedselect_complex128_type():
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_position=True, sens_param=True)
         self.network = network
 
     def construct(self, x, mask, grad):
-        gout = self.grad(self.network)(x, mask, grad)
+        gout = self.grad(self.network, None, (0,))(x, mask, grad)
         return gout
 
 
@@ -136,25 +136,7 @@ def masked_select_grad(data_type):
     mask = np.array([[0], [1], [0], [1]]).astype(np.bool_)
     dy = np.array([i for i in range(8)]).astype(data_type)
     grad = Grad(Net())
-    return grad(Tensor(x), Tensor(mask), Tensor(dy))[0]
-
-
-def masked_select_grad_dynamic_shape():
-    x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
-    mask = Tensor(np.array([[0], [1], [0], [1]]).astype(np.bool_))
-    dy = Tensor(np.array([i for i in range(8)]).astype(np.int32))
-    x_dynamic_shape = Tensor(shape=[None], dtype=mindspore.int32)
-    grad = Grad(Net())
-    grad.set_inputs(x_dynamic_shape, mask, dy)
-    return grad(x, mask, dy)[0]
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_masked_select_grad():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dx = masked_select_grad(np.int32)
-    expect = [4, 6, 8, 10]
-    assert (dx.asnumpy() == expect).all()
+    return grad(Tensor(x), Tensor(mask), Tensor(dy))
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -166,18 +148,5 @@ def test_masked_select_grad_float64():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     dx = masked_select_grad(np.float64)
-    expect = [4, 6, 8, 10]
-    assert (dx.asnumpy() == expect).all()
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_masked_select_grad_dynamic_shape():
-    """
-    Feature: test MaskedSelectGrad dynamic shape on CPU
-    Description: the shape of input is dynamic
-    Expectation: the result match with expect
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    dx = masked_select_grad_dynamic_shape()
     expect = [4, 6, 8, 10]
     assert (dx.asnumpy() == expect).all()

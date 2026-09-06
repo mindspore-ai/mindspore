@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments
 """test cell with bprop in PIJit and pynative mode"""
 import numpy as np
-import pytest 
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -28,7 +28,7 @@ from mindspore import ops
 from mindspore._extends import cell_attr_register
 from tests.mark_utils import arg_mark
 
-        
+
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -50,9 +50,9 @@ def test_grad_mul_add():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     mul_add = MulAdd()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    assert grad_all(mul_add)(x, y) == (2, 4)
+    x = Tensor(1, dtype=ms.float32)
+    y = Tensor(2, dtype=ms.float32)
+    assert grad_all(mul_add)(x, y) == (2., 4.)
 
 
 #TODO: fix result not match
@@ -95,9 +95,9 @@ def test_with_no_bprop():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     with_no_bprop = WithNoBprop()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    assert grad_all(with_no_bprop)(x, y) == (2, 1)
+    x = Tensor(1, dtype=ms.float32)
+    y = Tensor(2, dtype=ms.float32)
+    assert grad_all(with_no_bprop)(x, y) == (2., 1.)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')

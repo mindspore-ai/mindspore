@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -61,12 +62,12 @@ class GradOfAllInputsAndParams(nn.Cell):
     def __init__(self, network, sens_param):
         super().__init__()
         self.grad = c.GradOperation(
-            get_all=True, get_by_list=True, sens_param=sens_param)
+            get_by_position=True, get_by_list=True, sens_param=sens_param)
         self.network = network
         self.params = ParameterTuple(self.network.trainable_params())
 
     def construct(self, *inputs):
-        gout = self.grad(self.network, self.params)(*inputs)
+        gout = self.grad(self.network, self.params, (0, 1))(*inputs)
         return gout
 
 

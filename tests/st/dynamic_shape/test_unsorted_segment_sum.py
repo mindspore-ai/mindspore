@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=line-too-long,ungrouped-imports,missing-module-docstring
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
@@ -29,7 +30,7 @@ def unsorted_segment_forward_func(x, y, z):
 
 @test_utils.run_with_cell
 def unsorted_segment_backward_func(x, y, z):
-    return ops.grad(unsorted_segment_forward_func, (0, 1, 2))(x, y, z)
+    return ops.grad(unsorted_segment_forward_func, (0,))(x, y, z)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
@@ -64,4 +65,4 @@ def test_unsorted_segment_backward(mode):
     num_segments = 4
     dx = unsorted_segment_backward_func(x, segment_ids, num_segments)
     except_dvariable = np.asarray([1., 1., 1., 1.]).astype(np.float32)
-    np.testing.assert_array_almost_equal(dx[0].asnumpy(), except_dvariable, decimal=4)
+    np.testing.assert_array_almost_equal(dx.asnumpy(), except_dvariable, decimal=4)

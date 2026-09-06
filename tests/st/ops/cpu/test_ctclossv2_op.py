@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 from tests.mark_utils import arg_mark
 
 import pytest
@@ -38,11 +39,11 @@ class Net(nn.Cell):
 class GradData(nn.Cell):
     def __init__(self, network):
         super(GradData, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=False)
+        self.grad = GradOperation(get_by_position=True, sens_param=False)
         self.network = network
 
     def construct(self, probs, indices, labels, input_lengths):
-        return self.grad(self.network)(probs, indices, labels, input_lengths)[0]
+        return self.grad(self.network, None, (0,))(probs, indices, labels, input_lengths)
 
 
 def logsumexp(a, b):

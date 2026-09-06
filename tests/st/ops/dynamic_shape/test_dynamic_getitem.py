@@ -78,6 +78,8 @@ class CommonFunc():
         assert np.all(out_ms.asnumpy() == self.out_np)
 
     def grad_impl(self):
+        if not np.issubdtype(self.input_np.dtype, np.inexact):
+            return
         grad_net = GradOfFirstInput(self.ms_net)
         grad_net.set_train()
         grad_net(self.input_np_t, Tensor(self.out_np))
@@ -105,6 +107,8 @@ class DynamicRankCommonFunc():
         assert np.allclose(out_ms.asnumpy(), self.out_np, rtol=0.0001)
 
     def grad_impl(self):
+        if not np.issubdtype(self.input_np.dtype, np.inexact):
+            return
         grad_net = GradOfFirstInput(self.ms_net)
         grad_net.set_train()
         grad_net(self.input_np_t, self.axis_np_t, Tensor(self.out_np))

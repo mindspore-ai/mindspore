@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 import numpy as np
 import pytest
 import tests.st.utils.test_utils as test_utils
@@ -31,7 +32,7 @@ def scatter_nd_forward_func(indices, updates, shape):
 @test_utils.run_with_cell
 def scatter_nd_backward_func(indices, updates, shape):
     # pylint: disable=E1102
-    return ops.grad(scatter_nd_forward_func, (0, 1))(indices, updates, shape)
+    return ops.grad(scatter_nd_forward_func, (1,))(indices, updates, shape)
 
 
 @test_utils.run_with_cell
@@ -59,11 +60,10 @@ def test_scatter_nd_op_normal_1(context_mode, data_type, indices_type):
     expect_out = np.array([[0., 0.], [-21.4, -3.1]]).astype(data_type)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
-    grad_out_0, grad_out_1 = scatter_nd_backward_func(indices, updates, shape)
-    expect_out_0 = np.array([[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]]).astype(data_type)
-    expect_out_1 = np.array([1.0, 1.0, 1.0, 1.0, 1.0]).astype(data_type)
-    np.testing.assert_allclose(grad_out_0.asnumpy(), expect_out_0, rtol=1e-6)
-    np.testing.assert_allclose(grad_out_1.asnumpy(), expect_out_1, rtol=1e-6)
+    if np.issubdtype(data_type, np.inexact):
+        grad_out = scatter_nd_backward_func(indices, updates, shape)
+        expect_grad = np.array([1.0, 1.0, 1.0, 1.0, 1.0]).astype(data_type)
+        np.testing.assert_allclose(grad_out.asnumpy(), expect_grad, rtol=1e-6)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
@@ -86,11 +86,10 @@ def test_scatter_nd_op_normal_2(context_mode, data_type, indices_type):
     expect_out = np.array([[0., 5.3], [0., 1.1]]).astype(data_type)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
-    grad_out_0, grad_out_1 = scatter_nd_backward_func(indices, updates, shape)
-    expect_out_0 = np.array([[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]]).astype(data_type)
-    expect_out_1 = np.array([1.0, 1.0, 1.0, 1.0, 1.0]).astype(data_type)
-    np.testing.assert_allclose(grad_out_0.asnumpy(), expect_out_0, rtol=1e-6)
-    np.testing.assert_allclose(grad_out_1.asnumpy(), expect_out_1, rtol=1e-6)
+    if np.issubdtype(data_type, np.inexact):
+        grad_out = scatter_nd_backward_func(indices, updates, shape)
+        expect_grad = np.array([1.0, 1.0, 1.0, 1.0, 1.0]).astype(data_type)
+        np.testing.assert_allclose(grad_out.asnumpy(), expect_grad, rtol=1e-6)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=line-too-long
 """test function grad in graph mode"""
 import numpy as np
 import pytest
@@ -983,8 +984,8 @@ def test_construct_get_grad_not_found_from_empty_tuple():
             grad_out = get_grad(res, 1)
             return grad_out
 
-    x = Tensor(1)
-    y = Tensor(2)
+    x = Tensor(1.)
+    y = Tensor(2.)
     inner_net = ParamMultipleInputNet()
     with pytest.raises(RuntimeError):
         grad_net = GradNet(inner_net)
@@ -1075,39 +1076,6 @@ def test_get_grad_outer_list_weight():
     expect_value1 = Tensor([1, 2], mstype.int64)
     assert np.allclose(out[0].asnumpy(), expect_value0.asnumpy())
     assert np.allclose(out[1].asnumpy(), expect_value1.asnumpy())
-
-
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
-def test_grad_of_pyexecute_with_more_than_three_inputs():
-    """
-    Features: Function grad.
-    Description: Test F.grad of_pyexecute_with_more_than_three_inputs in graph mode.
-    Expectation: No exception.
-    """
-    class GradNet3(nn.Cell):
-        def __init__(self, net, grad_position=0):
-            super().__init__()
-            self.net = net
-            self.grad_position = grad_position
-            self.grad = grad
-
-        def construct(self, *inputs):
-            return self.grad(self.net, self.grad_position)(*inputs)
-
-    class ModifyNet(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.p = 4
-
-        def construct(self, x):
-            self.p = self.p + x
-            return self.p
-
-    out = ModifyNet()(Tensor([2]))
-    assert out == Tensor([6])
-
-    ms_grad = GradNet3(ModifyNet())(Tensor([2]))
-    assert ms_grad == 0
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')

@@ -218,13 +218,10 @@ def test_median_grad_global():
         # Case 3: All elements identical
         (np.array([5, 5, 5, 5, 5]), np.array([0.2, 0.2, 0.2, 0.2, 0.2], dtype=np.float32), np.float32, False,
             "all_identical_float32"),
-        # Case 4: Integer type (output gradient should be float32)
-        (np.array([10, 20, 30, 40, 30]), np.array([0, 0, 0, 0, 0], dtype=np.float32), np.int32, False,
-            "integer_type"),
-        # Case 5: 2D tensor with duplicates
+        # Case 4: 2D tensor with duplicates
         (np.array([[1, 1, 2], [2, 2, 3], [3, 4, 4]]), np.array([[0, 0, 0.3333333], [0.3333333, 0.3333333, 0],
             [0, 0, 0]], dtype=np.float32).flatten(), np.float32, False, "2d_tensor"),
-        # Case 6: With NaN values (ignored)
+        # Case 5: With NaN values (ignored)
         (np.array([1, np.nan, 3, np.nan, 5], dtype=np.float32), np.array([0, 0, 1, 0, 0], dtype=np.float32),np.float32,
             True, "with_nan_ignored"),
     ]

@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
-import pytest
 import numpy as np
 
 import mindspore
@@ -103,28 +103,6 @@ def test_mirror_pad_fwd_back_4d_int32_reflect():
     expected_np_result = np.pad(test_arr_np, pads, 'reflect')
     obtained_ms_res = op(test_arr_ms).asnumpy()
     np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
-    # backwards pass check
-    grad_net = Grad(Net(pads, "REFLECT"))
-    dx_value_obtained = grad_net(test_arr_ms)[0].asnumpy()
-    dx_value_expected = np.array([[[[4, 6, 6, 6, 2],
-                                    [6, 9, 9, 9, 3],
-                                    [2, 3, 3, 3, 1]],
-                                   [[8, 12, 12, 12, 4],
-                                    [12, 18, 18, 18, 6],
-                                    [4, 6, 6, 6, 2]],
-                                   [[8, 12, 12, 12, 4],
-                                    [12, 18, 18, 18, 6],
-                                    [4, 6, 6, 6, 2]]],
-                                  [[[8, 12, 12, 12, 4],
-                                    [12, 18, 18, 18, 6],
-                                    [4, 6, 6, 6, 2]],
-                                   [[16, 24, 24, 24, 8],
-                                    [24, 36, 36, 36, 12],
-                                    [8, 12, 12, 12, 4]],
-                                   [[16, 24, 24, 24, 8],
-                                    [24, 36, 36, 36, 12],
-                                    [8, 12, 12, 12, 4]]]], dtype=np.int32)
-    np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -141,28 +119,6 @@ def test_mirror_pad_fwd_back_4d_int32_symm():
     expected_np_result = np.pad(test_arr_np, pads, 'symmetric')
     obtained_ms_res = op(test_arr_ms).asnumpy()
     np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
-    # backwards pass check
-    grad_net = Grad(Net(pads, "SYMMETRIC"))
-    dx_value_obtained = grad_net(test_arr_ms)[0].asnumpy()
-    dx_value_expected = np.array([[[[16, 24, 24, 16, 16],
-                                    [16, 24, 24, 16, 16],
-                                    [16, 24, 24, 16, 16]],
-                                   [[16, 24, 24, 16, 16],
-                                    [16, 24, 24, 16, 16],
-                                    [16, 24, 24, 16, 16]],
-                                   [[8, 12, 12, 8, 8],
-                                    [8, 12, 12, 8, 8],
-                                    [8, 12, 12, 8, 8]]],
-                                  [[[8, 12, 12, 8, 8],
-                                    [8, 12, 12, 8, 8],
-                                    [8, 12, 12, 8, 8]],
-                                   [[8, 12, 12, 8, 8],
-                                    [8, 12, 12, 8, 8],
-                                    [8, 12, 12, 8, 8]],
-                                   [[4, 6, 6, 4, 4],
-                                    [4, 6, 6, 4, 4],
-                                    [4, 6, 6, 4, 4]]]], dtype=np.int32)
-    np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')

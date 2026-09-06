@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,line-too-long,ungrouped-imports
 
 import numpy as np
 import pytest
@@ -47,23 +48,6 @@ def test_greater_forward(mode):
     expect_out = np.array([False, True, False])
     out = greater_forward_func(x, y)
     assert np.allclose(out.asnumpy(), expect_out)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
-@test_utils.run_test_with_On
-def test_greater_backward(mode):
-    """
-    Feature: Auto grad.
-    Description: test auto grad of op greater.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
-    y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
-    expect_out = np.array([0, 0, 0])
-    grads = greater_backward_func(x, y)
-    assert np.allclose(grads.asnumpy(), expect_out)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)

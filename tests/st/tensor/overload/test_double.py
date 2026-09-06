@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -58,6 +59,6 @@ def test_tensor_double_grad(mode):
     Expectation: success
     """
     ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
-    x = Tensor(np.ones([2, 2]), ms.int32)
+    x = Tensor(np.ones([2, 2]), ms.float32)
     output = tensor_double_grad_func(x)
     assert np.allclose(output.asnumpy(), np.ones([2, 2]))

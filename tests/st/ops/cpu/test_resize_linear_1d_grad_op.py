@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -45,12 +46,12 @@ class ResizeLinear1DGradNet(nn.Cell):
     def __init__(self, forward_cpu_net):
         """Init."""
         super(ResizeLinear1DGradNet, self).__init__()
-        self.resize_grad = C.GradOperation(get_all=True, sens_param=True)
+        self.resize_grad = C.GradOperation(get_by_position=True, sens_param=True)
         self.forward_cpu_net = forward_cpu_net
 
     def construct(self, grad_output, input_x, size):
         """Construct."""
-        gout = self.resize_grad(self.forward_cpu_net)(
+        gout = self.resize_grad(self.forward_cpu_net, None, (0,))(
             input_x, size, grad_output)
         return gout
 

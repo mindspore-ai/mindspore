@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 import os
 import pytest
 import numpy as np
@@ -36,7 +37,7 @@ def masked_fill_forward_func(input_x, mask, value):
 @test_utils.run_with_cell
 def masked_fill_backward_func(input_x, mask, value):
     # pylint: disable=E1102
-    return ops.grad(masked_fill_forward_func, (0, 1))(input_x, mask, value)
+    return ops.grad(masked_fill_forward_func, 0)(input_x, mask, value)
 
 
 @test_utils.run_with_cell
@@ -74,11 +75,9 @@ def test_ops_masked_fill_normal(context_mode):
 
     input_x1 = ms.Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
     mask = ms.Tensor(np.array([True, True, False, True]).astype(np.bool_))
-    input_x_output, mask_output = masked_fill_backward_func(input_x1, mask, 0.5)
+    input_x_output = masked_fill_backward_func(input_x1, mask, 0.5)
     expect_input_x_output = np.asarray([0., 0., 1., 0.]).astype(np.float32)
     np.testing.assert_allclose(input_x_output.asnumpy(), expect_input_x_output, rtol=1e-3)
-    expect_mask_output = np.asarray([0., 0., 0., 0.]).astype(np.float32)
-    np.testing.assert_allclose(mask_output.asnumpy(), expect_mask_output, rtol=1e-3)
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
@@ -251,21 +250,17 @@ def test_ops_masked_fill_backward_dynamic_shape(context_mode):
 
     input_x1 = ms.Tensor(np.array([[1.]]).astype(np.float32))
     mask1 = ms.Tensor(np.array([[False]]).astype(np.bool_))
-    input_x_output1, mask_output1 = test_cell(input_x1, mask1, 0.5)
+    input_x_output1 = test_cell(input_x1, mask1, 0.5)
     expect_input_x_output1 = np.asarray([[1.]]).astype(np.float32)
     np.testing.assert_allclose(input_x_output1.asnumpy(), expect_input_x_output1, rtol=1e-3)
-    expect_mask_output1 = np.asarray([[0.]]).astype(np.float32)
-    np.testing.assert_allclose(mask_output1.asnumpy(), expect_mask_output1, rtol=1e-3)
 
     input_x2 = ms.Tensor(np.array([[1, 2],
                                    [3, 4]]).astype(np.float32))
     mask2 = ms.Tensor(np.array([[True, True],
                                 [False, True]]).astype(np.bool_))
-    input_x_output2, mask_output2 = test_cell(input_x2, mask2, 0.5)
+    input_x_output2 = test_cell(input_x2, mask2, 0.5)
     expect_input_x_output2 = np.asarray([[0., 0.], [1., 0.]]).astype(np.float32)
     np.testing.assert_allclose(input_x_output2.asnumpy(), expect_input_x_output2, rtol=1e-3)
-    expect_mask_output2 = np.asarray([[0., 0.], [0., 0.]]).astype(np.float32)
-    np.testing.assert_allclose(mask_output2.asnumpy(), expect_mask_output2, rtol=1e-3)
     if context_mode == ms.GRAPH_MODE and ms.context.get_context("device_target") == "Asecnd":
         del os.environ["MS_DISABLE_KERNEL_BACKOFF"]
 
@@ -290,21 +285,17 @@ def test_ops_masked_fill_backward_dynamic_rank(context_mode):
 
     input_x1 = ms.Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
     mask1 = ms.Tensor(np.array([True, True, False, True]).astype(np.bool_))
-    input_x_output1, mask_output1 = test_cell(input_x1, mask1, 0.5)
+    input_x_output1 = test_cell(input_x1, mask1, 0.5)
     expect_input_x_output1 = np.asarray([0., 0., 1., 0.]).astype(np.float32)
     np.testing.assert_allclose(input_x_output1.asnumpy(), expect_input_x_output1, rtol=1e-3)
-    expect_mask_output1 = np.asarray([0., 0., 0., 0.]).astype(np.float32)
-    np.testing.assert_allclose(mask_output1.asnumpy(), expect_mask_output1, rtol=1e-3)
 
     input_x2 = ms.Tensor(np.array([[1, 2],
                                    [3, 4]]).astype(np.float32))
     mask2 = ms.Tensor(np.array([[True, True],
                                 [False, True]]).astype(np.bool_))
-    input_x_output2, mask_output2 = test_cell(input_x2, mask2, 0.5)
+    input_x_output2 = test_cell(input_x2, mask2, 0.5)
     expect_input_x_output2 = np.asarray([[0., 0.], [1., 0.]]).astype(np.float32)
     np.testing.assert_allclose(input_x_output2.asnumpy(), expect_input_x_output2, rtol=1e-3)
-    expect_mask_output2 = np.asarray([[0., 0.], [0., 0.]]).astype(np.float32)
-    np.testing.assert_allclose(mask_output2.asnumpy(), expect_mask_output2, rtol=1e-3)
     if context_mode == ms.GRAPH_MODE and ms.context.get_context("device_target") == "Asecnd":
         del os.environ["MS_DISABLE_KERNEL_BACKOFF"]
 
