@@ -1,3 +1,4 @@
+# pylint: disable=missing-module-docstring,super-with-arguments
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import composite as C
@@ -39,9 +40,9 @@ def test_single_for_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
-    y = Tensor([5], mstype.int32)
-    z = Tensor([4], mstype.int32)
+    x = Tensor([2.], mstype.float32)
+    y = Tensor([5.], mstype.float32)
+    z = Tensor([4.], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)

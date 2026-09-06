@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,unnecessary-negation
 import pytest
 import numpy as np
 from mindspore import Tensor, context, ParameterTuple
@@ -224,6 +225,6 @@ def test_min_grad_dynamic_rank():
     net = Net()
     grad_net = GradOfFirstInput(net)
     grad_net.set_train()
-    input_value = Tensor(np.ones((5)).astype(np.int64))
-    dout = Tensor(np.array(1).astype(np.int64))
-    assert np.all(grad_net(input_value, dout).asnumpy() == [0, 0, 0, 0, 0])
+    input_value = Tensor(np.ones((5)).astype(np.float32))
+    dout = Tensor(np.array(1).astype(np.float32))
+    assert np.allclose(grad_net(input_value, dout).asnumpy(), np.full((5,), 0.2))

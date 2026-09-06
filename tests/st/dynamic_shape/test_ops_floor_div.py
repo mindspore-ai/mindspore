@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,line-too-long
 
 import pytest
 import numpy as np
@@ -45,23 +46,6 @@ def test_floor_div_forward(mode):
     y = Tensor(3.0, ms.float32)
     output = floor_div_forward_func(x, y)
     expect = 1.0
-    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_with_On
-def test_floor_div_backward(mode):
-    """
-    Feature: Auto grad.
-    Description: test auto grad of op floor_div.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = Tensor(np.array([2, 4, -1]), ms.int32)
-    y = Tensor(np.array([3, 3, 3]), ms.int32)
-    output = floor_div_backward_func(x, y)
-    expect = [0, 0, 0]
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 

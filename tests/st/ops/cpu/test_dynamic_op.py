@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import sys
 import numpy as np
-import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -154,13 +154,13 @@ class ReduceMeanNet(nn.Cell):
 class GradReduceMean(nn.Cell):
     def __init__(self, network):
         super().__init__()
-        self.grad = GradOperation(get_all=True)
+        self.grad = GradOperation(get_by_position=True)
         self.network = network
         self.reshape = P.Reshape()
         self.unique = P.Unique()
 
     def construct(self, input_x, shape):
-        return self.grad(self.network)(input_x, shape)
+        return self.grad(self.network, None, (0,))(input_x, shape)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -194,4 +194,4 @@ def test_reducemean_dynamic_grad_cpu():
     reduce_mean = GradReduceMean(ReduceMeanNet())
     out = reduce_mean(x, x2)
     expect = np.array([[0.5, 0.5, 0.5, 0.5]])
-    assert (out[0].asnumpy() == expect).all()
+    assert (out.asnumpy() == expect).all()

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,line-too-long
 
 import numpy as np
 import pytest
@@ -47,11 +48,6 @@ def test_reduce_all(mode):
     out = reduce_all_forward_func(x)
     expect_out = np.array([[False, True, False]])
     assert (out.asnumpy() == expect_out).all()
-
-    grad = reduce_all_backward_func(x)
-    expect_grad = np.array([[0, 0, 0], [0, 0, 0]])
-    assert (grad.asnumpy() == expect_grad).all()
-
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

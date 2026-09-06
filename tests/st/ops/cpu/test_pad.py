@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 import mindspore.context as context
 import mindspore.nn as nn
 import numpy as np
@@ -190,16 +191,6 @@ def test_pad_3d_backprop():
     dx = net(x_test, Tensor(dy))
     dx = dx[0].asnumpy()
     np.testing.assert_array_equal(dx, expected_dx)
-
-    # int32
-    test_arr = np.random.randint(1, 3000, (5, 3, 30, 30)).astype(np.int32)
-    x_test = Tensor(test_arr, dtype=mindspore.int32)
-    dy = np.random.randn(*padded_shape).astype(np.int32)
-    expected_dx = dy[:, 4:-3, 1:-1, :-2]
-    dx = net(x_test, Tensor(dy))
-    dx = dx[0].asnumpy()
-    np.testing.assert_array_equal(dx, expected_dx)
-
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pad_error_cases():

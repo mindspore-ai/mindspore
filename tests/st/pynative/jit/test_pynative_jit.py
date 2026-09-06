@@ -569,14 +569,14 @@ def test_control_flow_for_in_while_return_in_for_param():
                 x = self.add(x, self.param)
             return x
 
-    x = 1
-    t = -4
+    x = 1.
+    t = -4.
     net = CtrlForReturnInWhileP(t)
     grad = GradOfDefault(net)
     ms_fwd = net(Tensor(x))
     ms_grad = grad(Tensor(x))
-    expect_out = 2
-    expect_grad = 1
+    expect_out = 2.
+    expect_grad = 1.
     assert expect_out == ms_fwd
     assert expect_grad == ms_grad
 

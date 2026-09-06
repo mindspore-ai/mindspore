@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -41,11 +41,11 @@ class Net(nn.Cell):
 class GradData(nn.Cell):
     def __init__(self, network):
         super(GradData, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=False)
+        self.grad = GradOperation(get_by_position=True, sens_param=False)
         self.network = network
 
     def construct(self, probs, indices, labels, input_lengths):
-        return self.grad(self.network)(probs, indices, labels, input_lengths)
+        return self.grad(self.network, None, (0,))(probs, indices, labels, input_lengths)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')

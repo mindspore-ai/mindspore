@@ -651,7 +651,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
 
     net_ms = Net()
     net_np = NumpyNet()
-    input_np = np.arange(3 * 6 * 5 * 5 * 5).reshape(3, 6, 5, 5, 5).astype(np.int64)
+    input_np = np.arange(3 * 6 * 5 * 5 * 5).reshape(3, 6, 5, 5, 5).astype(np.float32)
     axis_np = np.array([0])
 
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -687,7 +687,7 @@ def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
 
     net_ms = Net()
     net_np = NumpyNet()
-    input_np = np.ones((3, 6, 5, 5, 5)).astype(np.int64)
+    input_np = np.ones((3, 6, 5, 5, 5)).astype(np.float32)
     axis_np = np.array([0])
 
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -724,7 +724,7 @@ def test_dynamic_rank_setitem_with_list_index():
 
     net_ms = Net()
     net_np = NumpyNet()
-    input_np = np.ones((3, 3, 3, 4)).astype(np.int64)
+    input_np = np.ones((3, 3, 3, 4)).astype(np.float32)
     axis_np = np.array([0, 1])
 
     context.set_context(mode=context.GRAPH_MODE)

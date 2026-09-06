@@ -43,7 +43,7 @@ def test_while_tensor_as_condition_forward_and_backward():
                 x += 1
             return out
 
-    x = Tensor(-2, dtype=mstype.int32)
+    x = Tensor(-2., dtype=mstype.float32)
     y = get_csr_tensor()
     net = Net()
 
@@ -121,7 +121,7 @@ def test_control_flow_for_while_return_in_while_no():
                 x += 1
             return out
 
-    x = Tensor(-2, dtype=mstype.int32)
+    x = Tensor(-2., dtype=mstype.float32)
     y = get_csr_tensor()
     net = Net()
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 import numpy as np
 import pytest
 
@@ -62,8 +63,9 @@ def test_abs(dtype):
     net = Net()
     out = net(Tensor(x))
     assert (out.asnumpy() == y_expect).all()
-    sens = np.random.randn(2, 3, 3, 4).astype(dtype)
-    backword_net = Grad(Net())
-    output = backword_net(Tensor(x), Tensor(sens))
-    print(len(output))
-    print(output[0].asnumpy())
+    if np.issubdtype(dtype, np.inexact):
+        sens = np.random.randn(2, 3, 3, 4).astype(dtype)
+        backword_net = Grad(Net())
+        output = backword_net(Tensor(x), Tensor(sens))
+        print(len(output))
+        print(output[0].asnumpy())

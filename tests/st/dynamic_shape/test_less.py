@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,line-too-long
 
 import numpy as np
 import pytest
@@ -65,25 +66,6 @@ def test_less_forward(mode):
     out = less_forward_func(x, y)
     expect = np.array([False, False, True], dtype=np.bool_)
     assert np.allclose(out.asnumpy(), expect)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
-@pytest.mark.parametrize('mode',
-                         [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_less_backward(mode):
-    """
-    Feature: Auto grad.
-    Description: test auto grad of op less.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
-    y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
-    grad_x, grad_y = less_backward_func(x, y)
-    expect_grad_x = np.array([0, 0, 0], np.int32)
-    expect_grad_y = np.array([0, 0, 0], np.int32)
-    assert np.allclose(grad_x.asnumpy(), expect_grad_x)
-    assert np.allclose(grad_y.asnumpy(), expect_grad_y)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.25)

@@ -56,7 +56,7 @@ inline bool IsFloatType(TypeId type_id) {
          type_id == TypeId::kNumberTypeFloat32 || type_id == TypeId::kNumberTypeFloat64 ||
          type_id == TypeId::kNumberTypeBFloat16 || type_id == TypeId::kNumberTypeFloat8E4M3FN ||
          type_id == TypeId::kNumberTypeFloat8E5M2 || type_id == TypeId::kNumberTypeHiFloat8 ||
-         type_id == TypeId::kNumberTypeDouble;
+         type_id == TypeId::kNumberTypeFloat8E8M0FNU || type_id == TypeId::kNumberTypeDouble;
 }
 
 inline bool IsComplexType(TypeId type_id) {

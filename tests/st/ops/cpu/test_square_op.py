@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -62,8 +63,9 @@ def test_net(dtype):
     err = np.ones(shape=y_expect.shape) * 1.0e-5
     assert np.all(diff < err)
     assert out.shape == y_expect.shape
-    sens = np.random.randn(2, 3, 3, 4).astype(dtype)
-    backword_net = Grad(Net())
-    output = backword_net(Tensor(x), Tensor(sens))
-    print(len(output))
-    print(output[0].asnumpy())
+    if np.issubdtype(dtype, np.inexact):
+        sens = np.random.randn(2, 3, 3, 4).astype(dtype)
+        backword_net = Grad(Net())
+        output = backword_net(Tensor(x), Tensor(sens))
+        print(len(output))
+        print(output[0].asnumpy())

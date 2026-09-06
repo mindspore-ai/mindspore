@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 ''' test context option '''
-import pytest 
 import numpy as np
 import mindspore.ops.functional as F
 from mindspore import dtype as mstype
@@ -43,8 +42,8 @@ def test_vmap_with_tuple_input():
 
     shape = (2, 3)
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = F.ones(shape, mstype.int32)
-    b = F.ones(shape, mstype.int32) * 2
+    a = F.ones(shape, mstype.float32)
+    b = F.ones(shape, mstype.float32) * 2
     res = foo(real_fn)(a, b)
 
     assert isinstance(res, tuple)

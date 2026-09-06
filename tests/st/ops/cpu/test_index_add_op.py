@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -128,12 +129,12 @@ def test_index_add_uint8():
 class IndexAddGradNet(nn.Cell):
     def __init__(self, network):
         super(IndexAddGradNet, self).__init__()
-        self.grad = ops.GradOperation(get_all=True, sens_param=True, get_by_list=True)
+        self.grad = ops.GradOperation(get_by_position=True, sens_param=True, get_by_list=True)
         self.network = network
         self.params = ParameterTuple(network.trainable_params())
 
     def construct(self, idx, y, dout):
-        out = self.grad(self.network, self.params)(idx, y, dout)
+        out = self.grad(self.network, self.params, (1,))(idx, y, dout)
         return out
 
 
@@ -149,7 +150,7 @@ def index_add_grad_with_type(nptype):
                             [75., 76., 77.]]).astype(nptype))
     index = Tensor(np.array([1]), dtype=mindspore.int32)
     output = grad_net(index, y, dout)
-    ygrad = output[0][1]
+    ygrad = output[0]
     xgrad = output[1][0]
     expect_xgrad = np.array([[63., 64., 65.],
                              [66., 67., 68.],
@@ -202,58 +203,6 @@ def test_index_add_grad_float16():
     index_add_grad_with_type(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     index_add_grad_with_type(np.float16)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_index_add_grad_int32():
-    """
-    Feature: test IndexAdd backward.
-    Description: test int32 inputs.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    index_add_grad_with_type(np.int32)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    index_add_grad_with_type(np.int32)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_index_add_grad_int16():
-    """
-    Feature: test IndexAdd backward.
-    Description: test int16 inputs.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    index_add_grad_with_type(np.int16)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    index_add_grad_with_type(np.int16)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_index_add_grad_int8():
-    """
-    Feature: test IndexAdd backward.
-    Description: test int8 inputs.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    index_add_grad_with_type(np.int8)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    index_add_grad_with_type(np.int8)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_index_add_grad_uint8():
-    """
-    Feature: test IndexAdd backward.
-    Description: test uint8 inputs.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    index_add_grad_with_type(np.uint8)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    index_add_grad_with_type(np.uint8)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')

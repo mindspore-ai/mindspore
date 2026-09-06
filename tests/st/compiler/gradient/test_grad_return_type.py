@@ -166,10 +166,10 @@ def test_grad_operation_default_single_input(mode):
             return self.w * x + self.b
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = Tensor([6], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = Tensor([6], mstype.float32)
     out = GradOperationNet(Net(w, b))(x)
     check_grad_result(out, expect)
 
@@ -192,10 +192,10 @@ def test_grad_operation_with_invalid_ones_like_output(mode):
             return self.w * x + self.b, "a", None, slice(x, 1, 2)
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = Tensor([6], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = Tensor([6], mstype.float32)
     out = GradOperationNet(Net(w, b))(x)
     check_grad_result(out, expect)
 
@@ -218,11 +218,11 @@ def test_grad_operation_default_multiple_inputs(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = Tensor([6], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = Tensor([6], mstype.float32)
     out = GradOperationNet(Net(w, b))(x, y)
     check_grad_result(out, expect)
 
@@ -245,8 +245,8 @@ def test_grad_operation_default_no_input(mode):
             return self.w + self.b
 
     ms.set_context(mode=mode)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
     expect = ()
     out = GradOperationNet(Net(w, b))()
     check_grad_result(out, expect)
@@ -270,10 +270,10 @@ def test_grad_operation_single_input(mode):
             return self.w * x + self.b
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([6], mstype.int32),)
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([6], mstype.float32),)
     out = GradOperationNet(Net(w, b), get_all=True)(x)
     check_grad_result(out, expect)
 
@@ -296,11 +296,11 @@ def test_grad_operation_multiple_inputs(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([6], mstype.int32), Tensor([2], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([6], mstype.float32), Tensor([2], mstype.float32))
     out = GradOperationNet(Net(w, b), get_all=True)(x, y)
     check_grad_result(out, expect)
 
@@ -323,8 +323,8 @@ def test_grad_operation_no_input(mode):
             return self.w + self.b
 
     ms.set_context(mode=mode)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
     expect = ()
     out = GradOperationNet(Net(w, b), get_all=True)()
     check_grad_result(out, expect)
@@ -348,10 +348,10 @@ def test_grad_operation_single_param(mode):
             return self.w * x + self.b
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect_graph = Tensor([10], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect_graph = Tensor([10], mstype.float32)
     out = GradOperationNetWrtParameter(Net(w, b), get_by_list=True)(x)
     check_grad_result(out, expect_graph)
 
@@ -373,9 +373,9 @@ def test_grad_operation_single_param_tuple(mode):
             return self.w * x
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = (Tensor([10], mstype.int32),)
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = (Tensor([10], mstype.float32),)
     out = GradOperationNetWrtParameterTuple(Net(w), get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -398,10 +398,10 @@ def test_grad_operation_multiple_params(mode):
             return self.w * x + self.b
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([10], mstype.int32), Tensor([1], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([10], mstype.float32), Tensor([1], mstype.float32))
     out = GradOperationNetWrtParameterTuple(Net(w, b), get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -419,7 +419,7 @@ def test_grad_operation_no_param(mode):
             return 6 * x
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
+    x = Tensor([10], mstype.float32)
     expect = ()
     out = GradOperationNetWrtParameterTuple(Net(), get_by_list=True)(x)
     check_grad_result(out, expect)
@@ -443,10 +443,10 @@ def test_grad_operation_single_input_and_single_param(mode):
             return self.w * x + self.b
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((Tensor([6], mstype.int32),), Tensor([10], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((Tensor([6], mstype.float32),), Tensor([10], mstype.float32))
     out = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -468,9 +468,9 @@ def test_grad_operation_single_input_and_single_param_tuple(mode):
             return self.w * x
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = ((Tensor([6], mstype.int32),), (Tensor([10], mstype.int32),))
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = ((Tensor([6], mstype.float32),), (Tensor([10], mstype.float32),))
     out = GradOperationNetWrtParameterTuple(Net(w), get_all=True, get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -493,10 +493,10 @@ def test_grad_operation_single_input_and_multiple_params(mode):
             return self.w * x + self.b
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((Tensor([6], mstype.int32),), (Tensor([10], mstype.int32), Tensor([1], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((Tensor([6], mstype.float32),), (Tensor([10], mstype.float32), Tensor([1], mstype.float32)))
     out = GradOperationNetWrtParameterTuple(Net(w, b), get_all=True, get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -519,11 +519,11 @@ def test_grad_operation_multiple_inputs_and_single_param(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((Tensor([6], mstype.int32), Tensor([2], mstype.int32)), Tensor([10], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((Tensor([6], mstype.float32), Tensor([2], mstype.float32)), Tensor([10], mstype.float32))
     out = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)(x, y)
     check_grad_result(out, expect)
 
@@ -545,10 +545,10 @@ def test_grad_operation_multiple_inputs_and_single_param_tuple(mode):
             return self.w * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = ((Tensor([6], mstype.int32), Tensor([1], mstype.int32)), (Tensor([10], mstype.int32),))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = ((Tensor([6], mstype.float32), Tensor([1], mstype.float32)), (Tensor([10], mstype.float32),))
     out = GradOperationNetWrtParameterTuple(Net(w), get_all=True, get_by_list=True)(x, y)
     check_grad_result(out, expect)
 
@@ -571,12 +571,12 @@ def test_grad_operation_multiple_inputs_and_multiple_params(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((Tensor([6], mstype.int32), Tensor([2], mstype.int32)),
-              (Tensor([10], mstype.int32), Tensor([20], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((Tensor([6], mstype.float32), Tensor([2], mstype.float32)),
+              (Tensor([10], mstype.float32), Tensor([20], mstype.float32)))
     out = GradOperationNetWrtParameterTuple(Net(w, b), get_all=True, get_by_list=True)(x, y)
     check_grad_result(out, expect)
 
@@ -599,9 +599,9 @@ def test_grad_operation_no_input_and_single_param(mode):
             return self.w + self.b
 
     ms.set_context(mode=mode)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((), Tensor([1], mstype.int32))
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((), Tensor([1], mstype.float32))
     out = GradOperationNetWrtParameter(Net(w, b), get_all=True, get_by_list=True)()
     check_grad_result(out, expect)
 
@@ -623,8 +623,8 @@ def test_grad_operation_no_input_and_single_param_tuple(mode):
             return self.w
 
     ms.set_context(mode=mode)
-    w = Tensor([6], mstype.int32)
-    expect = ((), (Tensor([1], mstype.int32),))
+    w = Tensor([6], mstype.float32)
+    expect = ((), (Tensor([1], mstype.float32),))
     out = GradOperationNetWrtParameterTuple(Net(w), get_all=True, get_by_list=True)()
     check_grad_result(out, expect)
 
@@ -647,9 +647,9 @@ def test_grad_operation_no_input_and_multiple_params(mode):
             return self.w + self.b
 
     ms.set_context(mode=mode)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((), (Tensor([1], mstype.int32), Tensor([1], mstype.int32)))
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((), (Tensor([1], mstype.float32), Tensor([1], mstype.float32)))
     out = GradOperationNetWrtParameterTuple(Net(w, b), get_all=True, get_by_list=True)()
     check_grad_result(out, expect)
 
@@ -667,8 +667,8 @@ def test_grad_operation_single_input_and_no_param(mode):
             return 3 * x
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    expect = ((Tensor([3], mstype.int32),), ())
+    x = Tensor([10], mstype.float32)
+    expect = ((Tensor([3], mstype.float32),), ())
     out = GradOperationNetWrtParameterTuple(Net(), get_all=True, get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -686,9 +686,9 @@ def test_grad_operation_multiple_inputs_and_no_param(mode):
             return 3 * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    expect = ((Tensor([3], mstype.int32), Tensor([1], mstype.int32)), ())
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    expect = ((Tensor([3], mstype.float32), Tensor([1], mstype.float32)), ())
     out = GradOperationNetWrtParameterTuple(Net(), get_all=True, get_by_list=True)(x, y)
     check_grad_result(out, expect)
 
@@ -724,8 +724,8 @@ def test_grad_operation_single_input_and_none_param(mode):
             return 3 * x
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    expect = ((Tensor([3], mstype.int32),), ())
+    x = Tensor([10], mstype.float32)
+    expect = ((Tensor([3], mstype.float32),), ())
     out = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x)
     check_grad_result(out, expect)
 
@@ -743,9 +743,9 @@ def test_grad_operation_multiple_inputs_and_none_param(mode):
             return 3 * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    expect = ((Tensor([3], mstype.int32), Tensor([1], mstype.int32)), ())
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    expect = ((Tensor([3], mstype.float32), Tensor([1], mstype.float32)), ())
     out = GradOperationNetWrtParameterNone(Net(), get_all=True, get_by_list=True)(x, y)
     check_grad_result(out, expect)
 
@@ -786,11 +786,11 @@ def test_grad_int_position(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = Tensor([6], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = Tensor([6], mstype.float32)
     out = grad(Net(w, b), grad_position=0, weights=None)(x, y)
     check_grad_result(out, expect)
 
@@ -813,12 +813,12 @@ def test_grad_tuple_position(mode):
             return self.w * x + self.b * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([2], mstype.int32), Tensor([1], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([2], mstype.float32), Tensor([1], mstype.float32))
     out = grad(Net(w, b), grad_position=(1, 2), weights=None)(x, y, z)
     check_grad_result(out, expect)
 
@@ -840,9 +840,9 @@ def test_grad_none_position(mode):
             return self.w * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
     with pytest.raises(ValueError):
         grad(Net(w), grad_position=None, weights=None)(x, y)
         _pynative_executor.sync()
@@ -864,8 +864,8 @@ def test_grad_int_position_no_input():
         def construct(self):
             return self.w + self.b
 
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
 
     ms.set_context(mode=ms.GRAPH_MODE)
     with pytest.raises(IndexError):
@@ -889,8 +889,8 @@ def test_grad_tuple_position_no_input():
         def construct(self):
             return self.w + self.b
 
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
 
     ms.set_context(mode=ms.GRAPH_MODE)
     with pytest.raises(IndexError):
@@ -914,9 +914,9 @@ def test_grad_tuple_position_single_input():
         def construct(self, x):
             return self.w * x + self.b
 
-    x = Tensor([10], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
 
     ms.set_context(mode=ms.GRAPH_MODE)
     with pytest.raises(IndexError):
@@ -960,11 +960,11 @@ def test_grad_int_position_and_single_param(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([6], mstype.int32), Tensor([10], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([6], mstype.float32), Tensor([10], mstype.float32))
     net = Net(w, b)
     out = grad(net, grad_position=0, weights=net.trainable_params()[0])(x, y)
     check_grad_result(out, expect)
@@ -987,10 +987,10 @@ def test_grad_int_position_and_single_param_tuple(mode):
             return self.w * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = (Tensor([6], mstype.int32), (Tensor([10], mstype.int32),))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = (Tensor([6], mstype.float32), (Tensor([10], mstype.float32),))
     net = Net(w)
     out = grad(net, grad_position=0, weights=net.trainable_params())(x, y)
     check_grad_result(out, expect)
@@ -1014,11 +1014,11 @@ def test_grad_int_position_and_multiple_params(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([6], mstype.int32), (Tensor([10], mstype.int32), Tensor([20], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([6], mstype.float32), (Tensor([10], mstype.float32), Tensor([20], mstype.float32)))
     net = Net(w, b)
     out = grad(net, grad_position=0, weights=net.trainable_params())(x, y)
     check_grad_result(out, expect)
@@ -1037,9 +1037,9 @@ def test_grad_int_position_and_no_param(mode):
             return 3 * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    expect = (Tensor([3], mstype.int32), ())
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    expect = (Tensor([3], mstype.float32), ())
     net = Net()
     out = grad(net, grad_position=0, weights=net.trainable_params())(x, y)
     check_grad_result(out, expect)
@@ -1063,12 +1063,12 @@ def test_grad_tuple_position_and_single_param(mode):
             return self.w * x + self.b * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((Tensor([2], mstype.int32), Tensor([1], mstype.int32)), Tensor([10], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((Tensor([2], mstype.float32), Tensor([1], mstype.float32)), Tensor([10], mstype.float32))
     net = Net(w, b)
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params()[0])(x, y, z)
     check_grad_result(out, expect)
@@ -1091,11 +1091,11 @@ def test_grad_tuple_position_and_single_param_tuple(mode):
             return self.w * x + 3 * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = ((Tensor([3], mstype.int32), Tensor([1], mstype.int32)), (Tensor([10], mstype.int32),))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = ((Tensor([3], mstype.float32), Tensor([1], mstype.float32)), (Tensor([10], mstype.float32),))
     net = Net(w)
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params())(x, y, z)
     check_grad_result(out, expect)
@@ -1119,13 +1119,13 @@ def test_grad_tuple_position_and_multiple_params(mode):
             return self.w * x + self.b * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((Tensor([2], mstype.int32), Tensor([1], mstype.int32)),
-              (Tensor([10], mstype.int32), Tensor([20], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((Tensor([2], mstype.float32), Tensor([1], mstype.float32)),
+              (Tensor([10], mstype.float32), Tensor([20], mstype.float32)))
     net = Net(w, b)
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params())(x, y, z)
     check_grad_result(out, expect)
@@ -1171,11 +1171,11 @@ def test_grad_none_position_and_single_param(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = Tensor([10], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = Tensor([10], mstype.float32)
     net = Net(w, b)
     out = grad(net, grad_position=None, weights=net.trainable_params()[0])(x, y)
     check_grad_result(out, expect)
@@ -1198,10 +1198,10 @@ def test_grad_none_position_and_single_param_tuple(mode):
             return self.w * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = (Tensor([10], mstype.int32),)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = (Tensor([10], mstype.float32),)
     net = Net(w)
     out = grad(net, grad_position=None, weights=net.trainable_params())(x, y)
     check_grad_result(out, expect)
@@ -1225,11 +1225,11 @@ def test_grad_none_position_and_multiple_params(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (Tensor([10], mstype.int32), Tensor([20], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (Tensor([10], mstype.float32), Tensor([20], mstype.float32))
     net = Net(w, b)
     out = grad(net, grad_position=None, weights=net.trainable_params())(x, y)
     check_grad_result(out, expect)
@@ -1248,8 +1248,8 @@ def test_grad_none_position_and_no_param(mode):
             return 3 * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
     expect = ()
     net = Net()
     out = grad(net, grad_position=None, weights=net.trainable_params())(x, y)
@@ -1274,10 +1274,10 @@ def test_grad_empty_position_and_single_param(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
     with pytest.raises(RuntimeError):
         net = Net(w, b)
         grad(net, grad_position=(), weights=net.trainable_params()[0])(x, y)
@@ -1301,9 +1301,9 @@ def test_grad_empty_position_and_single_param_tuple(mode):
             return self.w * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
     with pytest.raises(RuntimeError):
         net = Net(w)
         grad(net, grad_position=(), weights=net.trainable_params())(x, y)
@@ -1328,10 +1328,10 @@ def test_grad_empty_position_and_multiple_params(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
     with pytest.raises(RuntimeError):
         net = Net(w, b)
         grad(net, grad_position=(), weights=net.trainable_params())(x, y)
@@ -1351,8 +1351,8 @@ def test_grad_empty_position_and_no_param(mode):
             return 3 * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
     with pytest.raises(RuntimeError):
         net = Net()
         grad(net, grad_position=(), weights=net.trainable_params())(x, y)
@@ -1383,10 +1383,10 @@ def test_grad_operation_hypermap_control_flow(mode):
             return self.hyper_map((x, y), ((z, x), (y, z)))
 
     ms.set_context(mode=mode)
-    x = Tensor(2, mstype.int32)
-    y = Tensor(-3, mstype.int32)
-    z = Tensor(0, mstype.int32)
-    expect = (Tensor(0, mstype.int32), Tensor(0, mstype.int32), Tensor(2, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(-3, mstype.float32)
+    z = Tensor(0, mstype.float32)
+    expect = (Tensor(0, mstype.float32), Tensor(0, mstype.float32), Tensor(2, mstype.float32))
     out = GradOperationNet(Net(ctrl), get_all=True)(x, y, z)
     check_grad_result(out, expect)
 
@@ -1408,8 +1408,8 @@ def test_grad_operation_dynamic_shape(mode):
             return self.dynamicshape(inputx)
 
     ms.set_context(mode=mode)
-    x = Tensor(np.random.randn(8,).astype(np.int32))
-    expect = (Tensor(np.array([0, 0, 0, 0, 0, 0, 0, 0]).astype(np.int32)),)
+    x = Tensor(np.random.randn(8,).astype(np.float32))
+    expect = (Tensor(np.array([0, 0, 0, 0, 0, 0, 0, 0]).astype(np.float32)),)
     net = DynamicShape()
     forward_graph = net(x)
     out = GradOperationNet(DynamicShape(), get_all=True, get_by_list=False, sens_param=True)(x, forward_graph)
@@ -1434,11 +1434,11 @@ def test_grad_int_position_with_ids(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (0, Tensor([6], mstype.int32))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (0, Tensor([6], mstype.float32))
     out = grad(Net(w, b), grad_position=0, weights=None, return_ids=True)(x, y)
     check_grad_with_ids_result(out, expect)
 
@@ -1461,12 +1461,12 @@ def test_grad_tuple_position_with_ids(mode):
             return self.w * x + self.b * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((1, Tensor([2], mstype.int32)), (2, Tensor([1], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((1, Tensor([2], mstype.float32)), (2, Tensor([1], mstype.float32)))
     out = grad(Net(w, b), grad_position=(1, 2), weights=None, return_ids=True)(x, y, z)
     check_grad_with_ids_result(out, expect)
 
@@ -1507,11 +1507,11 @@ def test_grad_int_position_and_single_param_with_ids(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((0, Tensor([6], mstype.int32)), ("w", Tensor([10], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((0, Tensor([6], mstype.float32)), ("w", Tensor([10], mstype.float32)))
     net = Net(w, b)
     out = grad(net, grad_position=0, weights=net.trainable_params()[0], return_ids=True)(x, y)
     check_grad_with_ids_result(out, expect)
@@ -1534,10 +1534,10 @@ def test_grad_int_position_and_single_param_tuple_with_ids(mode):
             return self.w * x + y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = ((0, Tensor([6], mstype.int32)), (("w", Tensor([10], mstype.int32)),))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = ((0, Tensor([6], mstype.float32)), (("w", Tensor([10], mstype.float32)),))
     net = Net(w)
     out = grad(net, grad_position=0, weights=net.trainable_params(), return_ids=True)(x, y)
     check_grad_with_ids_result(out, expect)
@@ -1561,12 +1561,12 @@ def test_grad_int_position_and_multiple_params_with_ids(mode):
             return self.w * x + self.b * y
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = ((0, Tensor([6], mstype.int32)), (("w", Tensor(
-        [10], mstype.int32)), ("b", Tensor([20], mstype.int32))))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = ((0, Tensor([6], mstype.float32)), (("w", Tensor(
+        [10], mstype.float32)), ("b", Tensor([20], mstype.float32))))
     net = Net(w, b)
     out = grad(net, grad_position=0, weights=net.trainable_params(), return_ids=True)(x, y)
     check_grad_with_ids_result(out, expect)
@@ -1590,13 +1590,13 @@ def test_grad_tuple_position_and_single_param_with_ids(mode):
             return self.w * x + self.b * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (((1, Tensor([2], mstype.int32)), (2, Tensor(
-        [1], mstype.int32))), ("w", Tensor([10], mstype.int32)))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (((1, Tensor([2], mstype.float32)), (2, Tensor(
+        [1], mstype.float32))), ("w", Tensor([10], mstype.float32)))
     net = Net(w, b)
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params()[0], return_ids=True)(x, y, z)
     check_grad_with_ids_result(out, expect)
@@ -1619,12 +1619,12 @@ def test_grad_tuple_position_and_single_param_tuple_with_ids(mode):
             return self.w * x + 3 * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    expect = (((1, Tensor([3], mstype.int32)), (2, Tensor(
-        [1], mstype.int32))), (("w", Tensor([10], mstype.int32)),))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    expect = (((1, Tensor([3], mstype.float32)), (2, Tensor(
+        [1], mstype.float32))), (("w", Tensor([10], mstype.float32)),))
     net = Net(w)
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params(), return_ids=True)(x, y, z)
     check_grad_with_ids_result(out, expect)
@@ -1648,13 +1648,13 @@ def test_grad_tuple_position_and_multiple_params_with_ids(mode):
             return self.w * x + self.b * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    w = Tensor([6], mstype.int32)
-    b = Tensor([2], mstype.int32)
-    expect = (((1, Tensor([2], mstype.int32)), (2, Tensor([1], mstype.int32))),
-              (("w", Tensor([10], mstype.int32)), ("b", Tensor([20], mstype.int32))))
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    w = Tensor([6], mstype.float32)
+    b = Tensor([2], mstype.float32)
+    expect = (((1, Tensor([2], mstype.float32)), (2, Tensor([1], mstype.float32))),
+              (("w", Tensor([10], mstype.float32)), ("b", Tensor([20], mstype.float32))))
     net = Net(w, b)
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params(), return_ids=True)(x, y, z)
     check_grad_with_ids_result(out, expect)
