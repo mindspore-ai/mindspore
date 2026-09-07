@@ -22,6 +22,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/func_graph_flag.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/manager.h"
 #include "ir/tensor_new.h"
@@ -695,6 +696,47 @@ TEST_F(TestOptLib, test_partial_unused_args_eliminate) {
   auto opt = opt::irpass::PartialUnusedArgsEliminate();
   opt(before_fg);
   ASSERT_TRUE(Isomorphic(before_fg, after_fg, &equiv_graph, &equiv_node));
+}
+
+// Feature: Replace every live forward UMonad parameter eliminated from a Partial.
+// Description: A called graph has two live forward UMonad parameters before the retained replacement UMonad.
+// Expectation: Both removed parameters are replaced and the replacement parameter and Partial argument are retained.
+TEST_F(TestOptLib, test_partial_unused_args_eliminate_multiple_forward_u_monads) {
+  auto called_fg = std::make_shared<FuncGraph>();
+  auto forward_u0 = called_fg->add_parameter();
+  auto forward_u1 = called_fg->add_parameter();
+  auto replacement_u = called_fg->add_parameter();
+  forward_u0->set_abstract(kUMonad->ToAbstract());
+  forward_u1->set_abstract(kUMonad->ToAbstract());
+  replacement_u->set_abstract(kUMonad->ToAbstract());
+  auto make_tuple =
+    called_fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), forward_u0, forward_u1, replacement_u});
+  called_fg->set_output(make_tuple);
+  called_fg->set_flag(kFuncGraphFlagAddedForwardU, true);
+
+  auto top_fg = std::make_shared<FuncGraph>();
+  auto arg0 = NewValueNode(kUMonad);
+  auto arg1 = NewValueNode(kUMonad);
+  auto replacement_arg = NewValueNode(kUMonad);
+  auto partial = top_fg->NewCNode(
+    {NewValueNode(prim::kPrimPartial), NewValueNode(called_fg), arg0, arg1, replacement_arg});
+  top_fg->set_output(partial);
+
+  auto manager = Manage(top_fg, true);
+  ASSERT_NE(manager, nullptr);
+  auto opt = opt::irpass::PartialUnusedArgsEliminate();
+  ASSERT_TRUE(opt(top_fg));
+
+  ASSERT_EQ(called_fg->parameters().size(), 1);
+  EXPECT_EQ(called_fg->parameters().front(), replacement_u);
+  EXPECT_EQ(make_tuple->input(1), replacement_u);
+  EXPECT_EQ(make_tuple->input(2), replacement_u);
+  EXPECT_EQ(make_tuple->input(3), replacement_u);
+
+  auto result_partial = top_fg->output()->cast<CNodePtr>();
+  ASSERT_NE(result_partial, nullptr);
+  ASSERT_EQ(result_partial->size(), 3);
+  EXPECT_EQ(result_partial->input(2), replacement_arg);
 }
 
 // Feature: Eliminate unused function parameters when Partial passes DeadNode placeholder.

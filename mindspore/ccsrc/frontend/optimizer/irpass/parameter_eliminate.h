@@ -627,10 +627,11 @@ class PartialUnusedArgsEliminate {
   static void CollectPartialUnusedParamUpdate(bool dead_node_only, bool no_user, bool dead_node_at_all_partials,
                                               bool added_forward_u, const AnfNodePtr &origin_para, size_t param_index,
                                               size_t param_count, std::vector<size_t> *unused_parameter_idx,
-                                              std::vector<AnfNodePtr> *new_parameters, AnfNodePtr *unused_arg_u) {
+                                              std::vector<AnfNodePtr> *new_parameters,
+                                              std::vector<AnfNodePtr> *unused_args_u) {
     MS_EXCEPTION_IF_NULL(unused_parameter_idx);
     MS_EXCEPTION_IF_NULL(new_parameters);
-    MS_EXCEPTION_IF_NULL(unused_arg_u);
+    MS_EXCEPTION_IF_NULL(unused_args_u);
     if (ShouldEliminateUnusedPartialParam(dead_node_only, no_user, dead_node_at_all_partials, origin_para)) {
       (void)unused_parameter_idx->emplace_back(param_index);
       return;
@@ -639,7 +640,7 @@ class PartialUnusedArgsEliminate {
       // The fv u monad from fprop should be replaced with the forward u added by pass
       // 'add_forward_monad_depend.h'.
       (void)unused_parameter_idx->emplace_back(param_index);
-      *unused_arg_u = origin_para;
+      (void)unused_args_u->emplace_back(origin_para);
       return;
     }
     (void)new_parameters->emplace_back(origin_para);
@@ -657,7 +658,7 @@ class PartialUnusedArgsEliminate {
     const auto &node_users = manager->node_users();
     const auto &origin_parameters = fg->parameters();
     const bool added_forward_u = fg->has_flag(kFuncGraphFlagAddedForwardU);
-    AnfNodePtr unused_arg_u = nullptr;
+    std::vector<AnfNodePtr> unused_args_u;
     for (size_t i = 0; i < origin_parameters.size(); ++i) {
       auto origin_para = origin_parameters[i];
       auto iter = node_users.find(origin_para);
@@ -665,12 +666,12 @@ class PartialUnusedArgsEliminate {
       const bool dead_node_at_all_partials = IsDeadNodePlaceholderAtAllPartials(partial_nodes, i);
       CollectPartialUnusedParamUpdate(dead_node_only_, no_user, dead_node_at_all_partials, added_forward_u, origin_para,
                                       i, origin_parameters.size(), &unused_parameter_idx, &new_parameters,
-                                      &unused_arg_u);
+                                      &unused_args_u);
     }
     if (unused_parameter_idx.empty()) {
       return false;
     }
-    if (unused_arg_u != nullptr) {
+    if (!unused_args_u.empty()) {
       const size_t replacement_index = origin_parameters.size() - 1;
       const auto replacement_iter =
         std::find(unused_parameter_idx.begin(), unused_parameter_idx.end(), replacement_index);
@@ -684,7 +685,7 @@ class PartialUnusedArgsEliminate {
     if (!GetPartialRepl(partial_nodes, unused_parameter_idx, &repl)) {
       return false;
     }
-    if (unused_arg_u != nullptr) {
+    for (const auto &unused_arg_u : unused_args_u) {
       (void)manager->Replace(unused_arg_u, origin_parameters.back());
     }
     fg->set_parameters(new_parameters);
