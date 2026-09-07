@@ -28,6 +28,7 @@
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 #include "utils/custom_aot_extra.h"
+#include "ops_utils/dl_utils.h"
 #include "mindspore/ops/infer/custom.h"
 #include "infer/ops_func_impl/custom_ext.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
@@ -204,6 +205,7 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', dlopen file under path" << file_path
                       << "throw the error: " << dlerror();
   }
+  DynamicLibraryGuard handle_guard(handle);
 
   std::vector<abstract::BaseShapePtr> shape_vector;
   if (IsMultiOutput(primitive)) {
@@ -234,8 +236,6 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
     res_shape = std::make_shared<abstract::Shape>(ret);
   }
 
-  (void)dlclose(handle);
-  attrs.DestructKernelData();
   return res_shape;
 }
 
@@ -257,6 +257,8 @@ TypePtr CustomInferTypeByCPP(const PrimitivePtr &primitive, const std::vector<Ab
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', dlopen file under path" << file_path
                       << "throw the error: " << dlerror();
   }
+  DynamicLibraryGuard handle_guard(handle);
+
   TypePtr res_type = nullptr;
   if (IsMultiOutput(primitive)) {
     std::vector<TypePtr> dtype_vector;
@@ -284,8 +286,6 @@ TypePtr CustomInferTypeByCPP(const PrimitivePtr &primitive, const std::vector<Ab
     res_type = TypeIdToType(ret);
   }
 
-  (void)dlclose(handle);
-  attrs.DestructKernelData();
   return res_type;
 }
 
