@@ -88,8 +88,10 @@ int64_t GetRuntimeWeightN(const TensorPtr &weight) {
   if (shape.size() < kIndex2) {
     MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', weight must have at least two dimensions, but got " << shape;
   }
-  const auto n = IsTransposedWeight(weight) ? shape[shape.size() - kIndex2] : shape.back();
-  return weight->data_type() == kNumberTypeInt4 && !IsTransposedWeight(weight) ? n * kSizeTwo : n;
+  if (weight->data_type() == kNumberTypeInt4) {
+    return shape.back() * kSizeTwo;
+  }
+  return IsTransposedWeight(weight) ? shape[shape.size() - kIndex2] : shape.back();
 }
 
 std::vector<int64_t> ReadGroupRows(const TensorPtr &group_list, int64_t group_list_type) {
@@ -170,6 +172,11 @@ ShapeVector GetRuntimeSingleOutputShape(const std::vector<TensorPtr> &x, const s
 void SetRuntimeOutputShapes(const std::vector<TensorPtr> &x, const std::vector<TensorPtr> &weight,
                             const std::optional<TensorPtr> &group_list, int64_t split_item, int64_t group_type,
                             int64_t group_list_type, const std::vector<TensorPtr> &outputs) {
+  for (const auto &tensor : weight) {
+    if (tensor->data_type() == kNumberTypeInt4 && !tensor->is_contiguous()) {
+      MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', noncontiguous int4 weight is not supported.";
+    }
+  }
   const bool single_weight = weight.size() == kIndex1 && weight[kIndex0]->shape().size() == kIndex3;
   if (split_item == kSplitMultiFromSeparate) {
     SetSeparateOutputShapes(x, weight, single_weight, outputs);
@@ -188,10 +195,6 @@ void UnifyInt4WeightShape(const std::vector<TensorPtr> &weights, std::vector<Ten
     if (weight->data_type() != kNumberTypeInt4) {
       new_weights->push_back(weight);
       continue;
-    }
-    const auto &storage_info = weight->storage_info();
-    if (storage_info != nullptr && !storage_info->is_contiguous) {
-      MS_EXCEPTION(ValueError) << "For 'GroupedMatmulV5', noncontiguous int4 weight is not supported.";
     }
     auto unified_weight = std::make_shared<Tensor>(*weight);
     auto shape = weight->shape();
