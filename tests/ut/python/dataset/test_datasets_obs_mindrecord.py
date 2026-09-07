@@ -16,6 +16,7 @@
 Test OBSMindDataset operations
 """
 
+from contextlib import contextmanager
 import importlib
 import os
 import queue
@@ -204,7 +205,9 @@ def _setup_fake_obs_e2e_env(monkeypatch, tmp_path, service):
 
     fake_client_cls = service.build_client_class()
     monkeypatch.setattr(obs_util, "ObsClient", fake_client_cls)
-    monkeypatch.setitem(obs_mindrecord_dataset.OBSRuntime.get_obs_client.__globals__, "ObsClient", fake_client_cls)
+    monkeypatch.setitem(
+        obs_mindrecord_dataset.OBSRuntime.use_obs_client.__wrapped__.__globals__, "ObsClient", fake_client_cls
+    )
     monkeypatch.setenv("DATASET_LOCAL_PATH", str(tmp_path / "dataset_local"))
     monkeypatch.setenv("WORKING_PATH", str(tmp_path / "work"))
     monkeypatch.setenv("WAIT_STEP_TIME", "0")
@@ -380,10 +383,11 @@ def test_obs_util_import_does_not_require_global_obs_credentials(monkeypatch):
     assert hasattr(obs_util, "OBSRuntime")
     runtime = obs_util.OBSRuntime(create_obs_config())
     with pytest.raises(RuntimeError, match="Variable AK can not be found"):
-        runtime.get_obs_client()
+        with runtime.use_obs_client():
+            pass
 
 
-def test_get_obs_client_uses_explicit_obs_config(monkeypatch):
+def test_use_obs_client_uses_explicit_obs_config(monkeypatch):
     """
     Feature: OBS util
     Description: Build the OBS client from an explicit config object instead of module-global secrets
@@ -407,14 +411,15 @@ def test_get_obs_client_uses_explicit_obs_config(monkeypatch):
     monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
 
     runtime = obs_util.OBSRuntime(explicit_config)
-    runtime.get_obs_client()
+    with runtime.use_obs_client():
+        pass
 
     assert created_clients == [
         {"access_key_id": "instance-ak", "secret_access_key": "instance-sk", "server": "https://instance-server"}
     ]
 
 
-def test_get_obs_client_reuses_runtime_client(monkeypatch):
+def test_use_obs_client_reuses_runtime_client(monkeypatch):
     """
     Feature: OBS util
     Description: Reuse the OBS client owned by one OBSRuntime instance
@@ -439,10 +444,10 @@ def test_get_obs_client_reuses_runtime_client(monkeypatch):
     monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
 
     runtime = obs_util.OBSRuntime(explicit_config)
-    first_client = runtime.get_obs_client()
-    second_client = runtime.get_obs_client()
+    with runtime.use_obs_client() as first_client:
+        with runtime.use_obs_client() as second_client:
+            assert first_client is second_client
 
-    assert first_client is second_client
     assert created_clients == [first_client]
     assert first_client.kwargs == {
         "access_key_id": "instance-ak",
@@ -451,7 +456,7 @@ def test_get_obs_client_reuses_runtime_client(monkeypatch):
     }
 
 
-def test_get_obs_client_initializes_once_when_called_concurrently(monkeypatch):
+def test_use_obs_client_initializes_once_when_called_concurrently(monkeypatch):
     """
     Feature: OBS util
     Description: Concurrent first access shares one client owned by the runtime
@@ -488,7 +493,8 @@ def test_get_obs_client_initializes_once_when_called_concurrently(monkeypatch):
     def get_client():
         try:
             call_barrier.wait(timeout=1)
-            clients.append(runtime.get_obs_client())
+            with runtime.use_obs_client() as client:
+                clients.append(client)
         except Exception as exc:  # pylint: disable=broad-except
             errors.append(exc)
 
@@ -529,7 +535,8 @@ def test_obs_runtime_close_closes_cached_client(monkeypatch):
     monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
 
     runtime = obs_util.OBSRuntime(explicit_config)
-    obs_client = runtime.get_obs_client()
+    with runtime.use_obs_client() as obs_client:
+        pass
     runtime.close()
     runtime.close()
 
@@ -561,12 +568,85 @@ def test_obs_runtime_does_not_recreate_client_after_close(monkeypatch):
     monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
 
     runtime = obs_util.OBSRuntime(explicit_config)
-    runtime.get_obs_client()
+    with runtime.use_obs_client():
+        pass
     runtime.close()
 
     with pytest.raises(RuntimeError, match="closed"):
-        runtime.get_obs_client()
+        with runtime.use_obs_client():
+            pass
     assert len(created_clients) == 1
+
+
+def test_obs_runtime_close_waits_for_inflight_client_use(monkeypatch):
+    """
+    Feature: OBS util
+    Description: Closing an OBS runtime waits for an in-flight client request
+    Expectation: The cached client is closed only after the request completes
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    request_started = threading.Event()
+    release_request = threading.Event()
+    close_returned = threading.Event()
+    close_calls = []
+    request_errors = []
+    request_closed_during_call = []
+
+    class BlockingObsClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.closed = False
+
+        def getObjectMetadata(self, *_args):
+            request_started.set()
+            release_request.wait(timeout=1)
+            request_closed_during_call.append(self.closed)
+            return types.SimpleNamespace(status=200, requestId="request-id")
+
+        def close(self):
+            self.closed = True
+            close_calls.append(self)
+
+    explicit_config = create_obs_config()
+    explicit_config.AK = "instance-ak"
+    explicit_config.SK = "instance-sk"
+    explicit_config.SERVER = "https://instance-server"
+    explicit_config.MAX_RETRY = 1
+    explicit_config.RETRY_DELTA_TIME = 0.01
+    monkeypatch.setattr(obs_util, "ObsClient", BlockingObsClient)
+
+    runtime = obs_util.OBSRuntime(explicit_config)
+
+    def request_metadata():
+        try:
+            # pylint: disable=protected-access
+            runtime._check_file_exists_in_obs("s3://bucket/file")
+            # pylint: enable=protected-access
+        except Exception as exc:  # pylint: disable=broad-except
+            request_errors.append(exc)
+
+    request_thread = threading.Thread(target=request_metadata)
+    request_thread.start()
+    assert request_started.wait(timeout=1)
+
+    def close_runtime():
+        runtime.close()
+        close_returned.set()
+
+    close_thread = threading.Thread(target=close_runtime)
+    close_thread.start()
+    try:
+        assert not close_returned.wait(timeout=0.1)
+    finally:
+        release_request.set()
+        request_thread.join(timeout=1)
+        close_thread.join(timeout=1)
+
+    assert not request_thread.is_alive()
+    assert not close_thread.is_alive()
+    assert not request_errors
+    assert request_closed_during_call == [False]
+    assert len(close_calls) == 1
 
 
 def test_minddataset_normalizes_windows_list_paths(monkeypatch):
@@ -809,9 +889,10 @@ def test_sync_wait_for_dataset_uses_instance_config(monkeypatch):
         def __init__(self, runtime_config):
             self.config = runtime_config
 
-        def get_obs_client(self):
+        @contextmanager
+        def use_obs_client(self):
             captured["runtime"] = self
-            return RecordingClient()
+            yield RecordingClient()
 
     runtime = DummyRuntime(obs_config)
     monkeypatch.setattr(obs_mindrecord_dataset.time, "sleep", lambda *_args, **_kwargs: None)
@@ -822,6 +903,76 @@ def test_sync_wait_for_dataset_uses_instance_config(monkeypatch):
     assert captured["runtime"] is runtime
     assert captured["bucket_name"] == "bucket"
     assert captured["prefix"] == "sync_dir/job-1/3/"
+
+
+def test_sync_wait_for_dataset_exits_when_runtime_is_closed(monkeypatch):
+    """
+    Feature: OBSMindDataset
+    Description: Sync polling stops after its OBS runtime is closed
+    Expectation: A closed runtime does not leave the polling loop running forever
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    request_started = threading.Event()
+    release_request = threading.Event()
+    allow_closed_request = threading.Event()
+    sync_returned = threading.Event()
+    close_returned = threading.Event()
+
+    class BlockingClient:  # pylint: disable=too-few-public-methods
+        def __init__(self, **kwargs):
+            self.closed = False
+
+        def listObjects(self, _bucket_name, prefix):
+            if not request_started.is_set():
+                request_started.set()
+                release_request.wait(timeout=1)
+            if self.closed and not allow_closed_request.is_set():
+                raise RuntimeError("client is closed")
+            contents = []
+            if allow_closed_request.is_set():
+                contents = [types.SimpleNamespace(key=prefix + "ready_0.txt")]
+            return types.SimpleNamespace(status=200, body=types.SimpleNamespace(contents=contents))
+
+        def close(self):
+            self.closed = True
+
+    explicit_config = create_obs_config()
+    explicit_config.AK = "instance-ak"
+    explicit_config.SK = "instance-sk"
+    explicit_config.SERVER = "https://instance-server"
+    explicit_config.SYNC_OBS_PATH = "s3://bucket/sync_dir"
+    explicit_config.RETRY_DELTA_TIME = 0.01
+    monkeypatch.setattr(obs_util, "ObsClient", BlockingClient)
+    monkeypatch.setenv("BATCH_JOB_ID", "job-1")
+
+    runtime = obs_util.OBSRuntime(explicit_config)
+
+    def wait_for_sync():
+        obs_mindrecord_dataset.sync_wait_for_dataset(0, 1, 3, obs_runtime=runtime)
+        sync_returned.set()
+
+    sync_thread = threading.Thread(target=wait_for_sync)
+    sync_thread.start()
+    assert request_started.wait(timeout=1)
+
+    def close_runtime():
+        runtime.close()
+        close_returned.set()
+
+    close_thread = threading.Thread(target=close_runtime)
+    close_thread.start()
+    try:
+        release_request.set()
+        assert close_returned.wait(timeout=1)
+        assert sync_returned.wait(timeout=1)
+    finally:
+        allow_closed_request.set()
+        release_request.set()
+        sync_thread.join(timeout=1)
+        close_thread.join(timeout=1)
+
+    assert not sync_thread.is_alive()
+    assert not close_thread.is_alive()
 
 
 def test_sync_wait_for_dataset_requires_initialized_runtime():
@@ -986,6 +1137,101 @@ def test_mindrecord_from_obs_close_waits_for_download_worker():
     assert source._cache is None
     assert source._current_idx is None
     assert source._obs_runtime is None
+    # pylint: enable=protected-access
+
+
+def test_mindrecord_from_obs_close_stops_disk_cleanup_retry(monkeypatch):
+    """
+    Feature: OBSMindDataset cleanup
+    Description: Close stops a worker retrying disk cleanup without a deletable dataset
+    Expectation: Close returns after setting the stop event and cleanup runs after the worker exits
+    """
+    manager_worker_states = []
+    delete_attempted = threading.Event()
+    release_delete = threading.Event()
+    close_returned = threading.Event()
+
+    class QueueAdapter:
+        """Queue adapter that provides one download task to the worker."""
+
+        def __init__(self):
+            self.task_sent = False
+
+        def get(self, timeout=None):
+            if not self.task_sent:
+                self.task_sent = True
+                return 0, "dataset"
+            if timeout is not None:
+                raise queue.Empty
+            release_delete.wait()
+            raise queue.Empty
+
+        def put(self, *_args):
+            pass
+
+    class FakeManager:
+        def shutdown(self):
+            manager_worker_states.append(worker_thread.is_alive())
+
+    class FakeRuntime:
+        config = types.SimpleNamespace(DISK_THRESHOLD=0.5, MAX_RETRY=0, RETRY_DELTA_TIME=0.01)
+
+        def __init__(self):
+            self.closed = False
+
+        def get_used_disk_per(self):
+            return 1.0
+
+        def try_load_from_obs(self, *_args):
+            raise AssertionError("the worker should stop before starting a download")
+
+        def close(self):
+            self.closed = True
+
+    def delete_candidate(*_args):
+        delete_attempted.set()
+        return release_delete.is_set()
+
+    monkeypatch.setattr(obs_mindrecord_dataset, "_delete_candidate_datasets", delete_candidate)
+
+    source = obs_mindrecord_dataset.MindRecordFromOBS.__new__(obs_mindrecord_dataset.MindRecordFromOBS)
+    # pylint: disable=protected-access
+    source._stop_event = threading.Event()
+    source._pool = obs_mindrecord_dataset.ThreadPool(processes=1)
+    source._queue = QueueAdapter()
+    source._cache = {}
+    source._current_idx = types.SimpleNamespace(value=0)
+    source._obs_runtime = FakeRuntime()
+    runtime = source._obs_runtime
+    source._manager = FakeManager()
+    worker_thread = source._pool._pool[0]
+    source._worker = source._pool.apply_async(
+        obs_mindrecord_dataset._download_work,
+        (0, source._current_idx, "/tmp", source._cache, source._queue, source._obs_runtime, source._stop_event),
+    )
+
+    assert delete_attempted.wait(timeout=1)
+
+    def close_source():
+        source.close()
+        close_returned.set()
+
+    close_thread = threading.Thread(target=close_source)
+    close_thread.start()
+    try:
+        assert close_returned.wait(timeout=1)
+    finally:
+        release_delete.set()
+        close_thread.join(timeout=1)
+        worker_thread.join(timeout=1)
+
+    assert not close_thread.is_alive()
+    assert not worker_thread.is_alive()
+    assert manager_worker_states == [False]
+    assert source._pool is None
+    assert source._manager is None
+    assert source._obs_runtime is None
+    assert runtime.closed
     # pylint: enable=protected-access
 
 

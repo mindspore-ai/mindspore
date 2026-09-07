@@ -223,6 +223,8 @@ def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, sto
             retry_cnt = 0
             has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path)
             while not has_deleted:
+                if stop_event is not None and stop_event.is_set():
+                    return
                 if retry_cnt > runtime_config.MAX_RETRY:
                     logger.warning(
                         f"Delete operation retries times {retry_cnt} has exceeded threshold "
@@ -230,7 +232,10 @@ def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, sto
                     )
                 has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path)
                 retry_cnt += 1
-                time.sleep(runtime_config.RETRY_DELTA_TIME)
+                if stop_event is None:
+                    time.sleep(runtime_config.RETRY_DELTA_TIME)
+                elif stop_event.wait(runtime_config.RETRY_DELTA_TIME):
+                    return
             used_disk = obs_runtime.get_used_disk_per()
 
         if stop_event is not None and stop_event.is_set():
@@ -327,8 +332,6 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch, obs_runtime):
 
     runtime_config = obs_runtime.config
     bucket_name, object_key = get_bucket_and_key(runtime_config.SYNC_OBS_PATH)
-    obs_client = obs_runtime.get_obs_client()
-
     job_id = os.environ.get("BATCH_JOB_ID", "unknown")
     ready_dir = os.path.join(object_key, job_id, str(current_epoch) + "/")
 
@@ -339,7 +342,8 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch, obs_runtime):
             break
         try:
             # no guarantee that the dir is included.
-            resp = obs_client.listObjects(bucket_name, prefix=ready_dir)
+            with obs_runtime.use_obs_client() as obs_client:
+                resp = obs_client.listObjects(bucket_name, prefix=ready_dir)
             if resp.status < 300:
                 ready_num = 0
                 for content in resp.body.contents:
@@ -352,6 +356,11 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch, obs_runtime):
                     f"[{_current_func_name()} FUNCTION] OBS SDK errorCode:{resp.errorCode}, "
                     f"errMsg: {resp.errorMessage}."
                 )
+        except RuntimeError as exc:
+            if str(exc) == "OBS runtime has been closed.":
+                logger.info(f"[{_current_func_name()} FUNCTION] OBS runtime was closed during synchronization.")
+                return
+            logger.error(traceback.format_exc())
         except Exception:  # pylint: disable=W0703
             logger.error(traceback.format_exc())
         time.sleep(runtime_config.RETRY_DELTA_TIME)
