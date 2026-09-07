@@ -82,6 +82,8 @@ static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
 // Keep a malformed MindIR from amplifying a small protobuf into an excessive host allocation.
 constexpr int kMaxMindIRTensorRank = 32;
+constexpr size_t kMaxMindIRTensorBytes = 64ULL * 1024 * 1024 * 1024;
+constexpr size_t kMaxMindIRModelBytes = 128ULL * 1024 * 1024 * 1024;
 
 inline std::string ErrnoToString(const int error_number) {
   std::ostringstream ret_info;
@@ -213,7 +215,8 @@ bool ParseAndValidateTensorProto(const mind_ir::TensorProto &tensor_proto, Shape
   for (int i = 0; i < tensor_proto.dims_size(); ++i) {
     const int64_t dim = tensor_proto.dims(i);
     // Do not clamp dims to INT32_MAX: some converted MindIR models contain larger legal dims.
-    // Oversized allocations are still rejected by CalculateTensorBytes / length consistency checks.
+    // Oversized allocations are still rejected by CalculateTensorBytes, length consistency checks,
+    // and ReserveTensorMemory (kMaxMindIRTensorBytes / kMaxMindIRModelBytes).
     if (dim < 0) {
       MS_LOG(ERROR) << "Invalid negative MindIR TensorProto dimension " << dim << " at index " << i << ".";
       return false;
@@ -1302,10 +1305,17 @@ bool ValidateExternalDataBounds(int64_t offset, int64_t length, size_t buffer_si
 }
 
 bool MSANFModelParser::ReserveTensorMemory(size_t tensor_bytes) {
-  if (tensor_bytes > std::numeric_limits<size_t>::max() - planned_tensor_bytes_) {
-    MS_LOG(ERROR) << "MindIR model tensor allocation overflows size_t accounting.";
+  if (tensor_bytes > kMaxMindIRTensorBytes) {
+    MS_LOG(ERROR) << "MindIR tensor allocation exceeds the maximum allowed size: " << tensor_bytes
+                  << " bytes, limit is " << kMaxMindIRTensorBytes << " bytes.";
     return false;
   }
+
+  if (planned_tensor_bytes_ > kMaxMindIRModelBytes || tensor_bytes > kMaxMindIRModelBytes - planned_tensor_bytes_) {
+    MS_LOG(ERROR) << "MindIR model tensor allocation exceeds the maximum allowed size.";
+    return false;
+  }
+
   planned_tensor_bytes_ += tensor_bytes;
   return true;
 }
