@@ -87,7 +87,7 @@ MindSpore提供跨多个后端的构建选项：
 1. 请从[MindSpore下载页面](https://www.mindspore.cn/versions)下载并安装whl包。
 
     ```bash
-    pip install mindspore==2.7.1 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
+    pip install mindspore==2.10.0 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
     ```
 
 2. 执行以下命令，验证安装结果。
@@ -157,9 +157,10 @@ MindSpore的版本有以下几种维护阶段：
 
 | **版本名** | **当前状态** | **上线时间**          | **后续状态**                           |**EOL 日期**|
 |------------|--------------|----------------------|----------------------------------------|------------|
+| **r2.10**  | Maintained   | 2026-07-31           | Unmaintained <br> 2027-07-31 estimated | 2027-07-31 |
 | **r2.9**   | Maintained   | 2026-04-29           | Unmaintained <br> 2027-04-29 estimated | 2027-04-29 |
 | **r2.8**   | Maintained   | 2026-01-28           | Unmaintained <br> 2027-01-28 estimated | 2027-01-28 |
-| **r2.7**   | Maintained   | 2025-08-08           | Unmaintained <br> 2026-08-08 estimated | 2026-08-08 |
+| **r2.7**   | End Of Life  | 2025-08-08           |                                        | 2026-08-08 |
 | **r2.6**   | End Of Life  | 2025-05-19           |                                        | 2026-05-19 |
 | **r2.5**   | End Of Life  | 2025-02-08           |                                        | 2026-02-08 |
 | **r2.4**   | End Of Life  | 2024-10-30           |                                        | 2025-10-30 |
