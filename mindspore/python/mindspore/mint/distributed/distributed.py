@@ -654,6 +654,8 @@ def destroy_process_group(group=None):
         _finalize_collective()
         _ExistingGroup.ITEMS.clear()
         _ExistingGroup.GROUP_RANKS.clear()
+        _GROUP_SIZE_CACHE.clear()
+        _GROUP_RANK_CACHE.clear()
     elif not isinstance(group, str):
         raise TypeError(
             "For 'destroy_group', the argument 'group' must be type of string or None, "
@@ -661,6 +663,8 @@ def destroy_process_group(group=None):
         )
     else:
         _destroy_group_helper(group)
+        _GROUP_SIZE_CACHE.pop(group, None)
+        _GROUP_RANK_CACHE.pop(group, None)
 
 
 def get_rank(group=None):
