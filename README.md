@@ -90,7 +90,7 @@ For installation using `pip`, take `CPU` and `Linux-x86` build version as an exa
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
     ```bash
-    pip install mindspore==2.7.1 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
+    pip install mindspore==2.10.0 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
     ```
 
 2. Run the following command to verify the install.

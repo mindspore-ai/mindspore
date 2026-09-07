@@ -87,7 +87,7 @@ MindSpore提供跨多个后端的构建选项：
 1. 请从[MindSpore下载页面](https://www.mindspore.cn/versions)下载并安装whl包。
 
     ```bash
-    pip install mindspore==2.7.1 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
+    pip install mindspore==2.10.0 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
     ```
 
 2. 执行以下命令，验证安装结果。
