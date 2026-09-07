@@ -178,6 +178,25 @@ def test_load_mindir_rejects_unsafe_tensor_shapes_before_allocation(tmp_path, di
         os.chdir(cwd)
 
 
+def test_load_mindir_accepts_compressed_external_tensor(tmp_path):
+    """
+    Feature: MindIR compressed external tensor buffer size.
+    Description: A float32 parameter has 4 elements (16 payload bytes). Mark it compressed so
+             DataNBytes() becomes numel (4) while the allocated buffer stays 16 bytes.
+    Expectation: Loading succeeds using the allocated buffer size rather than DataNBytes().
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("compressed_external")
+        tampered_file = _tamper_tensor_shape_and_compression(
+            graph_file, [4], mindir_tensor.INDEXING)
+        graph = load(tampered_file)
+        assert graph is not None
+    finally:
+        os.chdir(cwd)
+
+
 def test_load_mindir_accepts_dimension_beyond_int32_max(tmp_path):
     """
     Feature: MindIR TensorProto dimension limits.
