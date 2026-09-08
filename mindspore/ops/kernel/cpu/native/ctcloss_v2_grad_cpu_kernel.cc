@@ -165,8 +165,20 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTen
   NdTensorIterator<kDim3> log_alpha_it(batch_size_, T_, target_mul * max_target_length_ + 1);
   NdTensorIterator<kDim3> log_beta_it(batch_size_, T_, target_mul * max_target_length_ + 1);
   for (int64_t b = 0; b < batch_size_; b++) {
+    int64_t input_length = input_lengths[b];
+    int64_t target_length = target_lengths[b];
+    int64_t tg_batch_offset = max_target_length_ * b;
+    bool inf_loss = true;
+    if (input_length > 0) {
+      scalar_t l1 = log_alpha[log_alpha_it(b, input_length - 1, target_mul * target_length)];
+      scalar_t l2 = l1;
+      if (target_length > 0) {
+        l2 = log_alpha[log_alpha_it(b, input_length - 1, target_mul * target_length - 1)];
+      }
+      inf_loss = (std::isinf(l1) && std::signbit(l1) && std::isinf(l2) && std::signbit(l2));
+    }
     scalar_t nll = neg_log_likelihood[b];
-    if (zero_infinity_ && std::isinf(nll) && !std::signbit(nll)) {
+    if (zero_infinity_ && inf_loss) {
       for (int t = 0; t < T_; t++) {
         for (int c = 0; c < num_labels_; c++) {
           grad[grad_it(t, b, c)] = 0;
@@ -174,9 +186,6 @@ bool CTCLossV2GradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTen
       }
       continue;
     }
-    int64_t input_length = input_lengths[b];
-    int64_t target_length = target_lengths[b];
-    int64_t tg_batch_offset = max_target_length_ * b;
     if (input_length > 0) {
       for (size_t s = 0; s < LongToSize(target_mul * max_target_length_ + 1); s++) {
         log_beta[log_beta_it(b, input_length - 1, s)] = neginf;

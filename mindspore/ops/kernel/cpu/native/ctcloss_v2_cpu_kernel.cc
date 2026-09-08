@@ -34,6 +34,7 @@ bool CTCLossV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   blank_ = GetValue<int64_t>(primitive_->GetAttr(kAttrBlank));
+  zero_infinity_ = GetValue<bool>(primitive_->GetAttr(kAttrZeroInfinity));
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
@@ -183,6 +184,9 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
         m = ((std::isinf(m) && std::signbit(m)) ? 0 : m);
         S log_likelihood = std::log(std::exp(l1 - m) + std::exp(l2 - m)) + m;
         neg_log_p[b] = -log_likelihood;
+      }
+      if (zero_infinity_ && std::isinf(neg_log_p[b]) && !std::signbit(neg_log_p[b])) {
+        neg_log_p[b] = 0;
       }
     }
   };

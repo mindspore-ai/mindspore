@@ -69,6 +69,7 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   bool IndexProcessing(const T *in_len_p, const T *tar_len_p, std::vector<int64_t> *target_offsets);
   // Variables for the operator itself
   int64_t blank_{0};
+  bool zero_infinity_{false};
   // Stands for T
   int64_t time_series_{0};
   // Stands for N
