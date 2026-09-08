@@ -347,8 +347,8 @@ class MINDRECORD_API ShardReader {
   std::mutex shard_locker_;                                // locker of shard
 
   // flags
-  bool all_in_index_ = true;  // if all columns are stored in index-table
-  bool interrupt_ = false;    // reader interrupted
+  bool all_in_index_ = true;            // if all columns are stored in index-table
+  std::atomic<bool> interrupt_{false};  // reader interrupted
 
   int64_t num_padded_;  // number of padding samples
 
