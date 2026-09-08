@@ -15,7 +15,9 @@
 
 """compile custom kernel with ninja"""
 
+import errno
 import os
+import platform
 import re
 import shlex
 import subprocess
@@ -27,8 +29,15 @@ from mindspore import log as logger
 from mindspore.ops import CustomRegOp
 from mindspore._c_expression import MSContext
 
-# Wait timeout for build.lock in seconds. Values <= 0 mean wait indefinitely
-# (stale locks are still reclaimed).
+# fcntl is Unix-only; Windows uses msvcrt byte-range locking instead.
+if platform.system() != "Windows":
+    import fcntl
+    msvcrt = None
+else:
+    import msvcrt
+    fcntl = None
+
+# Wait timeout for build.lock in seconds. Values <= 0 mean wait indefinitely.
 _BUILD_LOCK_TIMEOUT = 3600.0
 _MAX_BUILD_ATTEMPTS = 8
 
@@ -117,152 +126,124 @@ version_manager = VersionManager()
 
 
 class FileLocker:
-    """Cross-process build lock with stale-lock recovery and wait timeout.
+    """Cross-process build lock with wait timeout.
 
-    Lock file is created with O_CREAT | O_EXCL and stores the holder PID so that
-    crashed holders can be detected. Waiting processes log progress and use
-    _BUILD_LOCK_TIMEOUT by default (<= 0 waits indefinitely).
+    On POSIX platforms the lock is held via fcntl.flock on an open file
+    description; on Windows a one-byte region lock via msvcrt.locking is used.
+    In both cases the OS releases the lock when the holder closes the fd or
+    exits, so crashed holders never leave a stale lock behind. The lock file is
+    never removed, which rules out deleting a lock that another process has
+    just acquired, and no PID liveness check is needed (PID checks are
+    unreliable on shared filesystems anyway).
+
+    fcntl.flock is used instead of fcntl.lockf on purpose: flock locks are bound
+    to the open file description, so two lockers in the same process still
+    exclude each other.
     """
 
     _POLL_INTERVAL = 0.5
     _LOG_INTERVAL = 30.0
-    # Grace period for the holder to write its PID after creating the lock file.
-    _PID_WRITE_GRACE = 5.0
-    _STALE_REMOVE_RETRIES = 3
 
     def __init__(self, build_dir):
         """FileLocker"""
         self.lock_file_name = os.path.join(build_dir, 'build.lock')
         self.lock_fd = None
 
-    @staticmethod
-    def _is_pid_alive(pid):
-        """Return True if *pid* appears to be a live process."""
-        if pid <= 0:
-            return False
+    def _open_lock_file(self):
+        """Open the lock file, creating it if needed."""
+        return os.open(self.lock_file_name, os.O_CREAT | os.O_RDWR,
+                       stat.S_IRUSR | stat.S_IWUSR)
+
+    def _record_holder_pid(self):
+        """Best-effort write of the holder PID into the lock file for diagnostics."""
         try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-            # Process exists but we are not allowed to signal it.
+            os.ftruncate(self.lock_fd, 0)
+            os.write(self.lock_fd, f"{os.getpid()}\n".encode('utf-8'))
+        except OSError as err:
+            logger.warning(f"Failed to record holder PID in {self.lock_file_name}: {err}")
+
+    @staticmethod
+    def _try_lock_fd(fd):
+        """Try to lock the open file; return False if another process holds the lock."""
+        if platform.system() != "Windows":
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return False
             return True
+        # Windows: lock one byte at offset 0. The locked region may extend beyond
+        # the end of the file, and the OS releases it on close or process exit.
+        os.lseek(fd, 0, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        except OSError as err:
+            if err.errno in (errno.EDEADLK, errno.EACCES, errno.EAGAIN):
+                return False
+            raise
         return True
 
-    def _read_holder_pid(self):
-        """Read holder PID from the lock file; return None if unavailable."""
-        try:
-            with open(self.lock_file_name, 'r', encoding='utf-8') as lock_file:
-                content = lock_file.read().strip()
-            if not content:
-                return None
-            return int(content.split()[0])
-        except (OSError, ValueError):
-            return None
-
-    def _lock_age_seconds(self):
-        """Return lock file age in seconds, or 0 if unavailable."""
-        try:
-            return time.time() - os.path.getmtime(self.lock_file_name)
-        except OSError:
-            return 0.0
-
-    def _try_remove_stale_lock(self):
-        """Remove lock file if the holder is dead or content is invalid past grace.
-
-        Returns:
-            bool True if the lock file was removed (or already gone).
-        """
-        if not os.path.exists(self.lock_file_name):
-            return True
-
-        pid = self._read_holder_pid()
-        age = self._lock_age_seconds()
-        if pid is None:
-            if age < self._PID_WRITE_GRACE:
-                return False
-            logger.warning(
-                f"Removing stale build lock {self.lock_file_name}: "
-                f"empty or invalid lock content (age={age:.1f}s)."
-            )
-        elif self._is_pid_alive(pid):
-            return False
-        else:
-            logger.warning(
-                f"Removing stale build lock {self.lock_file_name}: "
-                f"holder pid={pid} is not alive (age={age:.1f}s)."
-            )
-
-        try:
-            os.remove(self.lock_file_name)
-            return True
-        except FileNotFoundError:
-            return True
-        except OSError as err:
-            logger.warning(f"Failed to remove stale build lock {self.lock_file_name}: {err}")
-            return False
-
     def try_lock(self):
-        """Acquire a file-based lock; reclaim stale locks when possible."""
-        mode = stat.S_IRUSR | stat.S_IWUSR
-        for _ in range(self._STALE_REMOVE_RETRIES):
-            try:
-                self.lock_fd = os.open(
-                    self.lock_file_name, os.O_CREAT | os.O_EXCL | os.O_RDWR, mode)
-                payload = f"{os.getpid()}\n".encode('utf-8')
-                os.write(self.lock_fd, payload)
-                try:
-                    os.fsync(self.lock_fd)
-                except OSError:
-                    pass
-                return True
-            except FileExistsError:
-                if self._try_remove_stale_lock():
-                    continue
-                return False
-        return False
+        """Try to acquire the build lock; return False if another process holds it."""
+        fd = self._open_lock_file()
+        try:
+            acquired = self._try_lock_fd(fd)
+        except OSError:
+            os.close(fd)
+            raise
+        if not acquired:
+            os.close(fd)
+            return False
+        self.lock_fd = fd
+        self._record_holder_pid()
+        return True
 
     def release_lock(self):
-        """Release the file-based lock."""
-        if self.lock_fd is not None:
+        """Release the build lock. The lock file itself is kept on disk."""
+        if self.lock_fd is None:
+            return
+        if platform.system() == "Windows":
+            # Byte-range locks should be unlocked explicitly before closing.
             try:
-                os.close(self.lock_fd)
+                os.lseek(self.lock_fd, 0, os.SEEK_SET)
+                msvcrt.locking(self.lock_fd, msvcrt.LK_UNLCK, 1)
             except OSError:
                 pass
-            self.lock_fd = None
         try:
-            os.remove(self.lock_file_name)
-        except FileNotFoundError:
+            os.close(self.lock_fd)  # Closing the fd also releases the lock.
+        except OSError:
             pass
-        except OSError as err:
-            logger.warning(f"Failed to release build lock {self.lock_file_name}: {err}")
+        self.lock_fd = None
 
     def wait(self, timeout=None):
-        """Wait until lock is released, reclaimed as stale, or timeout expires.
+        """Wait until the current holder releases the lock, or timeout expires.
 
         Args:
             timeout (float, optional): Seconds to wait. Default: ``None``. None uses
-                _BUILD_LOCK_TIMEOUT. Values <= 0 disable the timeout (stale reclaim still runs).
+                _BUILD_LOCK_TIMEOUT. Values <= 0 disable the timeout.
         """
         timeout = _BUILD_LOCK_TIMEOUT if timeout is None else float(timeout)
         start = time.time()
         last_log = -self._LOG_INTERVAL
-        while os.path.exists(self.lock_file_name):
-            if self._try_remove_stale_lock():
+        while True:
+            fd = self._open_lock_file()
+            try:
+                acquired = self._try_lock_fd(fd)
+            finally:
+                # Closing the fd releases a lock acquired in this probe.
+                os.close(fd)
+            if acquired:
                 return
             elapsed = time.time() - start
             if elapsed >= timeout > 0:
-                pid = self._read_holder_pid()
                 raise RuntimeError(
                     f"Timeout waiting for custom op build lock '{self.lock_file_name}' "
-                    f"after {timeout:.0f}s (holder pid={pid}). "
-                    f"If no build is running, remove the lock file manually."
+                    f"after {timeout:.0f}s. A build process is still holding the "
+                    f"lock; check for a hung build."
                 )
             if elapsed - last_log >= self._LOG_INTERVAL:
-                pid = self._read_holder_pid()
                 logger.warning(
                     f"Waiting for custom op build lock '{self.lock_file_name}' "
-                    f"(holder pid={pid}, waited={elapsed:.0f}s)."
+                    f"(waited={elapsed:.0f}s)."
                 )
                 last_log = elapsed
             time.sleep(self._POLL_INTERVAL)
@@ -278,7 +259,13 @@ class ExtensionBuilder:
     @staticmethod
     def _so_ready(so_file):
         """Return True if the shared library artifact looks usable."""
-        return os.path.isfile(so_file) and os.path.getsize(so_file) > 0
+        try:
+            if os.path.getsize(so_file) == 0:
+                return False
+            with open(so_file, 'rb') as file:
+                return file.read(4) == b'\x7fELF'
+        except OSError:
+            return False
 
     def _compile(self, name, sources, cflags, ldflags, include_paths):
         """Compile with cross-process locking and artifact verification."""
@@ -339,6 +326,9 @@ class ExtensionBuilder:
 
         logger.info(f'Building extension module {module_name}.')
         self._run_ninja_build(module_name)
+        # Publish atomically so concurrent processes never observe a partially linked library.
+        os.replace(os.path.join(self.build_dir, f"{module_name}.so.tmp"),
+                   os.path.join(self.build_dir, f"{module_name}.so"))
 
     @staticmethod
     def _write_ninja_file(fname, name, sources, extra_cflags, extra_ldflags, extra_include_paths):
@@ -355,7 +345,8 @@ class ExtensionBuilder:
         objs = [os.path.splitext(os.path.basename(src))[0] + ".o" for src in sources]
         sources = [os.path.abspath(file) for file in sources]
         ldflags = [flag.strip() for flag in extra_ldflags]
-        target = name + '.so'
+        # The link target is renamed to the final name only after a successful build.
+        target = name + '.so.tmp'
 
         config = ['ninja_required_version = 1.3']
         config.append('cxx = ' + os.environ.get('CXX', 'g++'))
@@ -402,10 +393,11 @@ class ExtensionBuilder:
             msg = f"Error building extension '{module_name}': {full_output}"
 
             # In multi-card situation, only one process build the library.
-            # When building failed, the old extension library should be removed.
-            so_file = os.path.join(self.build_dir, f"{module_name}.so")
-            if os.path.exists(so_file):
-                os.remove(so_file)
+            # When building failed, the stale artifacts should be removed.
+            for artifact in (f"{module_name}.so.tmp", f"{module_name}.so"):
+                artifact_path = os.path.join(self.build_dir, artifact)
+                if os.path.exists(artifact_path):
+                    os.remove(artifact_path)
             logger.error(msg)
             raise RuntimeError(msg) from e
 
