@@ -7,7 +7,7 @@ mindspore.dataset.vision.PadToSize
 
     参数：
         - **size** (Union[int, Sequence[int, int]]) - 要填充的目标大小。
-          若输入整型，则将图像填充为(size, size)大小；如果提供了序列[int, int]，则将图像填充为(高度, 宽度)大小。
+          若输入整型，则将图像填充为[size, size]大小；如果提供了序列[int, int]，则将图像填充为[高度, 宽度]大小。
         - **offset** (Union[int, Sequence[int, int]], 可选) - 顶部和左侧要填充的长度。
           如果输入整型，使用此值填充图像上侧和左侧。
           如果提供了序列[int, int]，则应按[top, left]的顺序排列，填充图像上侧和左侧。

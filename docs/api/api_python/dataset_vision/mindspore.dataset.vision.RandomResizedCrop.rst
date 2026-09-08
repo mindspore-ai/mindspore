@@ -8,7 +8,7 @@ mindspore.dataset.vision.RandomResizedCrop
     .. note:: 如果输入图像不止一张，需要保证输入的多张图像尺寸大小一致。
 
     参数：
-        - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
+        - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。尺寸数值必须为正数。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
         - **scale** (Union[list, tuple], 可选) - 裁剪子图的尺寸大小相对原图比例的随机选取范围，需要在[min, max)区间。默认值： ``(0.08, 1.0)`` 。
         - **ratio** (Union[list, tuple], 可选) - 裁剪子图的宽高比的随机选取范围，需要在[min, max)区间。默认值： ``(3. / 4., 4. / 3.)`` 。
         - **interpolation** (:class:`~.vision.Inter`, 可选) - 图像插值方法。可选值详见 :class:`mindspore.dataset.vision.Inter` 。
