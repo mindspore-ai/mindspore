@@ -41,10 +41,10 @@ void FlattenOutputs(const ValuePtr &value, std::vector<TensorPtr> *outputs) {
   }
 }
 
-PyObject *TransformVectorOutput(const std::vector<TensorWrapper> &py_output) {
+PyObject *TransformVectorOutput(std::vector<TensorWrapper> &py_output) {
   PyObject *py_tuple = PyTuple_New(py_output.size());
   for (size_t i = 0; i < py_output.size(); i++) {
-    PyTuple_SET_ITEM(py_tuple, i, py_output[i].value());
+    PyTuple_SET_ITEM(py_tuple, i, py_output[i].release());
   }
   return py_tuple;
 }
