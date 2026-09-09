@@ -6,9 +6,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ops/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
-if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
-    include_directories($ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME}/shmem/shmem/include)
-endif()
+
 set(MS_OPS_KERNEL_DIR "${CMAKE_SOURCE_DIR}/mindspore/ops/kernel")
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)

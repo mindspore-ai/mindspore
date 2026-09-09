@@ -51,7 +51,6 @@
 #include "kernel/ascend/hccl/hccl_kernel_build.h"
 #include "kernel/ascend/simu/kernel_mod_impl/simu_kernel_build.h"
 #include "kernel/ascend/internal/internal_kernel_build.h"
-#include "kernel/ascend/symmetric_memory/symmetric_memory_kernel_build.h"
 #include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_build.h"
 #include "runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/kernel_packet/kernel_packet_infer_functor.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
@@ -161,8 +160,6 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       kernel_mod_ptr = kernel::RtOpBuild(kernel);
     } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
       kernel_mod_ptr = kernel::InternalKernelBuild(kernel);
-    } else if (kernel_type == KernelType::SYMMETRIC_MEMORY_KERNEL) {
-      kernel_mod_ptr = kernel::SymmetricMemoryKernelBuild(kernel);
     } else if (kernel_type == KernelType::ATB_KERNEL) {
       kernel_mod_ptr = kernel::AtbKernelBuild(kernel);
     } else if (kernel_type == KernelType::CUSTOM_KERNEL) {
@@ -315,10 +312,8 @@ void SelectKernel(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *
 }
 
 inline void PrintOpSelectedNum(const std::vector<size_t> &op_selected_num) {
-  MS_LOG(INFO) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, "
-               << "HCCL_KERNEL, HOST_KERNEL, SYMMETRIC_MEMORY_KERNEL:";
-  MS_VLOG(VL_FLOW) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, "
-                   << "HCCL_KERNEL, HOST_KERNEL, SYMMETRIC_MEMORY_KERNEL:";
+  MS_LOG(INFO) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, HCCL_KERNEL, HOST_KERNEL:";
+  MS_VLOG(VL_FLOW) << "Number of INTERNAL_KERNEL, OPAPI_KERNEL, ACL_KERNEL, ATB_KERNEL, HCCL_KERNEL, HOST_KERNEL:";
   std::stringstream ss;
   for (const auto num : op_selected_num) {
     ss << num << " ";

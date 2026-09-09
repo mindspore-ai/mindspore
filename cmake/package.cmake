@@ -258,14 +258,6 @@ if(ENABLE_D)
                     COMPONENT mindspore
             )
         endif()
-        if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
-            install(
-                    TARGETS mindspore_symmetric_memory_kernels LIBRARY
-                    DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
-                    COMPONENT mindspore
-                    NAMELINK_SKIP
-            )
-        endif()
     endif()
 endif()
 
@@ -425,14 +417,6 @@ if(ENABLE_D)
         set(_MS_INTERNAL_KERNEL_HOME $ENV{MS_INTERNAL_KERNEL_HOME})
         install(
             DIRECTORY ${_MS_INTERNAL_KERNEL_HOME}
-            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
-            COMPONENT mindspore
-        )
-    endif()
-    if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
-        set(_MS_SYMMETRIC_MEMORY_KERNEL_HOME $ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
-        install(
-            DIRECTORY ${_MS_SYMMETRIC_MEMORY_KERNEL_HOME}
             DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
             COMPONENT mindspore
         )

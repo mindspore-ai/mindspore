@@ -40,7 +40,7 @@ struct Slot {
   size_t length_{0};
 };
 
-class BACKEND_EXPORT TilingMemPool {
+class TilingMemPool {
  public:
   TilingMemPool(size_t block_size, size_t block_num);
   virtual ~TilingMemPool() = default;
@@ -87,7 +87,7 @@ class BACKEND_EXPORT TilingMemPool {
   std::string name_;
 };
 
-class BACKEND_EXPORT TilingMemPoolHost : public TilingMemPool {
+class TilingMemPoolHost : public TilingMemPool {
  public:
   TilingMemPoolHost(size_t block_size, size_t block_num);
   ~TilingMemPoolHost() override { FreeMemPtrs(); }
@@ -97,7 +97,7 @@ class BACKEND_EXPORT TilingMemPoolHost : public TilingMemPool {
   void FreeInner(void *addr) override;
 };
 
-class BACKEND_EXPORT TilingMemPoolDevice : public TilingMemPool {
+class TilingMemPoolDevice : public TilingMemPool {
  public:
   TilingMemPoolDevice(size_t block_size, size_t block_num);
   ~TilingMemPoolDevice() override { FreeMemPtrs(); }
@@ -107,7 +107,7 @@ class BACKEND_EXPORT TilingMemPoolDevice : public TilingMemPool {
   void FreeInner(void *addr) override;
 };
 
-class BACKEND_EXPORT TilingMemMgr {
+class TilingMemMgr {
  public:
   TilingMemMgr();
   ~TilingMemMgr() = default;

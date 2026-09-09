@@ -338,7 +338,6 @@ class RUNTIME_HARDWARE_EXPORT DeviceResManager {
   virtual std::shared_ptr<AddressAllocator> pin_mem_allocator() const { return nullptr; }
 
   virtual std::shared_ptr<AddressAllocator> shared_mem_allocator() const { return nullptr; }
-  virtual std::shared_ptr<AddressAllocator> symmetric_memory_allocator() const { return nullptr; }
 
   virtual std::pair<std::vector<size_t>, std::vector<size_t>> AllocDeviceMemoryForTensorList(
     const std::vector<tensor::TensorPtr> &tensor_list, bool enable_mem_align) {

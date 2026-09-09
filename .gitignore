@@ -8,7 +8,6 @@ kernel_meta/
 somas_meta/
 trace_code_graph_*
 ms_kernels_internal/
-ms_kernels_symmetric_memory/
 
 # mindspore lite java
 mindspore/lite/java/.gradle/
@@ -139,10 +138,8 @@ custom_workspace
 # leftover internal kernel files after extraction
 mindspore/ops/kernel/ascend/internal/prebuild/aarch64/*ms_kernels_internal
 mindspore/ops/kernel/ascend/internal/prebuild/aarch64/*ms_kernels_dependency
-mindspore/ops/kernel/ascend/symmetric_memory/prebuild/aarch64/*ms_kernels_symmetric_memory
 mindspore/ops/kernel/ascend/internal/prebuild/x86_64/*ms_kernels_internal
 mindspore/ops/kernel/ascend/internal/prebuild/x86_64/*ms_kernels_dependency
-mindspore/ops/kernel/ascend/symmetric_memory/prebuild/x86_64/*ms_kernels_symmetric_memory
 
 # tools
 .cursorignore

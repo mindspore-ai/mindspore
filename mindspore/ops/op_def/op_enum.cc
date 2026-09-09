@@ -219,13 +219,6 @@ REG_STRING_TO_ENUM_COMMON(mask_mode, StrToEnumMap{{"MASK_DEFAULT", PagedAttentio
                                                   {"MASK_ALIBI", MLAMode::MASK_ALIBI},
                                                   {"MASK_SPEC", MLAMode::MASK_SPEC},
                                                   {"MASK_FREE", MLAMode::MASK_FREE}})
-// CompareOp
-REG_STRING_TO_ENUM_COMMON(compare_op,
-                          StrToEnumMap{
-                            {"EQ", CompareOp::EQUAL}, {"GT", CompareOp::GREATER_THAN}, {"LT", CompareOp::LESS_THAN}})
-
-// SignalOp
-REG_STRING_TO_ENUM_COMMON(signal_op, StrToEnumMap{{"SET", SignalOpMode::SET}, {"ADD", SignalOpMode::ADD}})
 
 // ErrorMode
 REG_STRING_TO_ENUM_SPECIAL(error_mode, StrToEnumMap{{"CYCLE", ErrorMode::CYCLE}, {"SPECIFIC", ErrorMode::SPECIFIC}});
