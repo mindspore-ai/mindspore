@@ -18,7 +18,6 @@
 
 #include "primitive/math_ops.h"
 
-#include "mindspore/ops/infer/stft.h"
 #include "kernel/cpu/cpu_kernel.h"
 #include "ops_utils/op_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
@@ -27,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace stft_cpu {
 namespace {
-const size_t kSTFTInputsNum = 2;
+const size_t kSTFTInputsNum = 8;
 const size_t kSTFTOutputsNum = 1;
 const int64_t kSTFTInputMaxDim = 2;
 const int64_t kSTFTInputMinDim = 1;
@@ -83,39 +82,24 @@ struct Trans2R {
     *index += 1;
   }
 };
+
+size_t GetWindowWorkspaceSize(TypeId window_type, int64_t n_fft) {
+  switch (window_type) {
+    case kNumberTypeFloat32:
+      return sizeof(float) * n_fft;
+    case kNumberTypeFloat64:
+      return sizeof(double) * n_fft;
+    case kNumberTypeComplex64:
+      return sizeof(complex64) * n_fft;
+    case kNumberTypeComplex128:
+      return sizeof(complex128) * n_fft;
+    default:
+      return 0;
+  }
+}
 }  // namespace
 
 bool STFTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = ops::get_batch_rank(primitive_);
-  n_fft_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNFft));
-  hop_length_ = GetValue<int64_t>(primitive_->GetAttr(ops::kHopLength));
-  if (hop_length_ <= 0) {
-    MS_LOG(ERROR) << "For" << kernel_name_ << ", expected hop_length > 0, but got hop_length=" << hop_length_ << ".";
-    return false;
-  }
-  win_length_ = GetValue<int64_t>(primitive_->GetAttr(ops::kWinLength));
-  if (win_length_ <= 0 || win_length_ > n_fft_) {
-    MS_LOG(ERROR) << "For" << kernel_name_ << ", expected 0 < win_length <= n_fft_, but got win_length=" << win_length_
-                  << ".";
-    return false;
-  }
-  if (win_length_ < n_fft_) {
-    pad_window_ = true;
-  }
-  normalized_ = GetValue<bool>(primitive_->GetAttr(ops::kNormalized));
-  if (normalized_) {
-    norm_coe_.real(static_cast<double>(1.0 / std::sqrt(n_fft_)));
-  } else {
-    norm_coe_.real(1.0);
-  }
-  onesided_ = GetValue<bool>(primitive_->GetAttr(ops::kOnesided));
-  if (onesided_) {
-    fft_length_ = n_fft_ / kSTFTNum2 + kSTFTNum1;
-  } else {
-    fft_length_ = n_fft_;
-  }
-  return_complex_ = GetValue<bool>(primitive_->GetAttr(ops::kReturnComplex));
-
   if (inputs.size() != kSTFTInputsNum || outputs.size() != kSTFTOutputsNum) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ": input and output size should be " << kSTFTInputsNum << " and "
                   << kSTFTOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -143,6 +127,25 @@ int STFTCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
   MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  n_fft_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+  hop_length_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
+  if (hop_length_ <= 0) {
+    MS_LOG(ERROR) << "For" << kernel_name_ << ", expected hop_length > 0, but got hop_length=" << hop_length_ << ".";
+    return KRET_RESIZE_FAILED;
+  }
+  win_length_ = inputs[kIndex4]->GetValueWithCheck<int64_t>();
+  if (win_length_ <= 0 || win_length_ > n_fft_) {
+    MS_LOG(ERROR) << "For" << kernel_name_ << ", expected 0 < win_length <= n_fft_, but got win_length=" << win_length_
+                  << ".";
+    return KRET_RESIZE_FAILED;
+  }
+  normalized_ = inputs[kIndex5]->GetValueWithCheck<bool>();
+  onesided_ = inputs[kIndex6]->GetValueWithCheck<bool>();
+  return_complex_ = inputs[kIndex7]->GetValueWithCheck<bool>();
+
+  pad_window_ = win_length_ < n_fft_;
+  vmap_batches_ = 1;
   input_shape_1_ = inputs[kIndex0]->GetShapeVector();
   input_shape_2_ = inputs[kIndex1]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
@@ -193,24 +196,15 @@ int STFTCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
                   << ".";
     return KRET_RESIZE_FAILED;
   }
+  norm_coe_.real(normalized_ ? static_cast<double>(1.0 / std::sqrt(n_fft_)) : 1.0);
+  fft_length_ = onesided_ ? n_fft_ / kSTFTNum2 + kSTFTNum1 : n_fft_;
   // for window padding
-  switch (input_type_2_) {
-    case kNumberTypeFloat32:
-      (void)workspace_size_list_.emplace_back((sizeof(float) * n_fft_));
-      break;
-    case kNumberTypeFloat64:
-      (void)workspace_size_list_.emplace_back((sizeof(double) * n_fft_));
-      break;
-    case kNumberTypeComplex64:
-      (void)workspace_size_list_.emplace_back((sizeof(complex64) * n_fft_));
-      break;
-    case kNumberTypeComplex128:
-      (void)workspace_size_list_.emplace_back((sizeof(complex128) * n_fft_));
-      break;
-    default:
-      MS_LOG(ERROR) << "STFT kernel does not support " << TypeIdToString(input_type_2_);
-      return KRET_RESIZE_FAILED;
+  auto workspace_size = GetWindowWorkspaceSize(input_type_2_, n_fft_);
+  if (workspace_size == 0) {
+    MS_LOG(ERROR) << "STFT kernel does not support " << TypeIdToString(input_type_2_);
+    return KRET_RESIZE_FAILED;
   }
+  (void)workspace_size_list_.emplace_back(workspace_size);
 
   n_frames_ = 1 + (input_len_ - n_fft_) / hop_length_;
   window_left_ = (n_fft_ - win_length_) / kSTFTNum2;
@@ -266,17 +260,16 @@ bool STFTCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &i
         int64_t input_index_start = batch_index * this->input_len_;
         int64_t output_index = i * this->w_skip_;
         for (int64_t m = 0; m < this->n_frames_; m++) {
-          this->temp_ = kSTFTComplexZero;
+          complex128 temp = kSTFTComplexZero;
           for (int64_t k = 0; k < this->n_fft_; k++) {
-            this->complex_w_ = kSTFTComplexZero;
-            this->complex_input_ = kSTFTComplexZero;
-            input_d_f(input1[input_index_start + m * this->hop_length_ + k], &this->complex_input_);
-            win_d_f(window_paded[k], &this->complex_w_);
-            this->temp_ +=
-              this->complex_w_ * this->complex_input_ * exp(kSTFTNegI * (2.0 * KSTFTPI * w * k / this->n_fft_));
+            complex128 complex_w = kSTFTComplexZero;
+            complex128 complex_input = kSTFTComplexZero;
+            input_d_f(input1[input_index_start + m * this->hop_length_ + k], &complex_input);
+            win_d_f(window_paded[k], &complex_w);
+            temp += complex_w * complex_input * exp(kSTFTNegI * (2.0 * KSTFTPI * w * k / this->n_fft_));
           }
-          this->temp_ *= this->norm_coe_;
-          output_d_f(output, &output_index, this->temp_);
+          temp *= this->norm_coe_;
+          output_d_f(output, &output_index, temp);
         }
       }
     };
@@ -290,7 +283,16 @@ bool STFTCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &i
 }
 
 #define STFT_CPU_MATCH(MS_T, MS_S, MS_R, T, S, R, DataFT, DataFS, DataFR) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_R), \
+  KernelAttr()                                                            \
+    .AddInputAttr(MS_T)                                                   \
+    .AddInputAttr(MS_S)                                                   \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)                     \
+    .AddOutputAttr(MS_R),                                                 \
     &STFTCpuKernelMod::LaunchKernel<T, S, R, DataFT<T>, DataFS<S>, DataFR<R>>
 
 const std::vector<std::pair<KernelAttr, STFTCpuKernelMod::KernelRunFunc>> &STFTCpuKernelMod::GetFuncList() const {

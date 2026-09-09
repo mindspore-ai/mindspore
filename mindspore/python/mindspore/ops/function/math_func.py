@@ -41,10 +41,9 @@ from mindspore.ops.auto_generate import Cummin, BatchMatMul, BernoulliExt, lin_s
     BitwiseAndTensor, BitwiseOrScalar, BitwiseOrTensor, BitwiseXorScalar, BitwiseXorTensor, RemainderTensorTensor, \
     RemainderTensorScalar, RemainderScalarTensor, std_mean_op, var_mean_op, InplaceErfinv
 from mindspore.ops import auto_generate
-from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.auto_generate import addcmul_ext_op
-from mindspore.ops.auto_generate.pyboost_inner_prim import roll_impl, cross_impl
+from mindspore.ops.auto_generate.pyboost_inner_prim import roll_impl, cross_impl, stft_impl
 from mindspore.ops.auto_generate.pyboost_inner_prim import reduce_max_impl, reduce_min_impl
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.math_ops import DivMod
@@ -8586,9 +8585,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         else:
             raise ValueError(
                 f"Expected a 1-D tensor or a 2-D tensor, but got {signal_dim}")
-    stft_ = STFT(n_fft, hop_length, win_length,
-                 normalized, onesided, return_complex)
-    return stft_(x, window)
+    return stft_impl(x, window, n_fft, hop_length, win_length, normalized, onesided, return_complex)
 
 
 def _check_same_type(dtype1, dtype2):
