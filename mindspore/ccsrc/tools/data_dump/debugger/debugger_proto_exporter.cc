@@ -171,8 +171,20 @@ void DebuggerProtoExporter::SetValueToProto(const ValuePtr &val, debugger::Value
     for (auto &elem : tensor_ptr->shape()) {
       tensor_proto->add_dims(elem);
     }
-    // todo: check
-    tensor_proto->set_tensor_content(tensor_ptr->data_c(), tensor_ptr->DataNBytes());
+    // Check the consistency between shape and the underlying buffer, since the buffer size of a Tensor
+    // may not update when the shape is changed (e.g. in dynamic shape scene), which could result in
+    // out-of-bounds read here.
+    auto device_address = tensor_ptr->device_address();
+    auto nbytes = tensor_ptr->DataNBytes();
+    if (device_address == nullptr) {
+      MS_LOG(EXCEPTION) << "Cannot access uninitialized tensor data.";
+    }
+    if (nbytes > device_address->GetSize()) {
+      MS_LOG(WARNING) << "Tensor data size " << nbytes << " exceeds the buffer size " << device_address->GetSize()
+                      << ", skip dumping the tensor content.";
+      return;
+    }
+    tensor_proto->set_tensor_content(tensor_ptr->data_c(), nbytes);
   } else if (val->isa<TensorType>()) {
     value_proto->set_dtype(debugger::DT_TYPE);
 
