@@ -5,7 +5,7 @@ mindspore.dataset.vision.RandomCrop
 
     对输入图像进行随机区域的裁剪。如果输入图像尺寸小于输出尺寸，输入图像将在裁剪前被填充。
 
-    .. note:: 如果在多个数据列上应用此处理，则需要确保每个数据列图像的shape相同。
+    .. note:: 若输入多张图像，请确保图像尺寸一致。
 
     参数：
         - **size** (Union[int, Sequence[int]]) - 裁剪图像的输出尺寸大小。值必须为正。

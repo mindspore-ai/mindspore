@@ -1831,7 +1831,7 @@ class Decode(ImageTensorOperation, PyTensorOperation):
 
 class DecodeVideo(VideoTensorOperation):
     """
-    Decode the input raw video bytes.
+    Decode the input raw video and audio bytes.
 
     Supported video formats: AVI, H264, H265, MOV, MP4, WMV.
 
@@ -3017,8 +3017,8 @@ class Normalize(ImageTensorOperation):
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
         TypeError: If `is_hwc` is not of type bool.
-        ValueError: If `mean` is not in range [0.0, 255.0].
-        ValueError: If `std` is not in range (0.0, 255.0].
+        ValueError: If `mean` is not in the range [0.0, 255.0].
+        ValueError: If `std` is not in the range (0.0, 255.0].
         RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
@@ -3342,8 +3342,9 @@ class PadToSize(ImageTensorOperation):
             Default: ``None``, means to pad symmetrically, keeping the original image in center.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel value used to pad the borders,
             only valid when `padding_mode` is ``Border.CONSTANT``.
-            If int is provided, it will be used for all RGB channels.
             If tuple[int, int, int] is provided, it will be used for R, G, B channels respectively.
+            If int is provided, it will be used for all RGB channels.
+            Must be in [0, 255].
             Default: ``0``.
         padding_mode (Border, optional): Method of padding. It can be ``Border.CONSTANT``, ``Border.EDGE``,
             ``Border.REFLECT`` or ``Border.SYMMETRIC``. Default: ``Border.CONSTANT``.
@@ -3817,7 +3818,8 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         scale (sequence, optional): Scaling factor interval, which must be non-negative.
             Default: ``None``, original scale is used.
         shear (Union[float, Sequence[float, float], Sequence[float, float, float, float]], optional):
-            Range of shear factor to select from. Default: ``None``, means no shearing.
+            Random range for the image shear factor. Must be positive.
+            Default: ``None``, means no shearing.
 
             - If float is provided, a shearing parallel to X axis with a factor selected from
               (-shear, shear) will be applied.
@@ -3956,7 +3958,7 @@ class RandomAutoContrast(ImageTensorOperation):
 
     Args:
         cutoff (float, optional): Percent of the lightest and darkest pixels to be cut off from
-            the histogram of the input image. The value must be in range [0.0, 50.0]. Default: ``0.0``.
+            the histogram of the input image. The value must be in range [0.0, 50.0). Default: ``0.0``.
         ignore (Union[int, sequence], optional): The background pixel values to be ignored, each of
             which must be in range [0, 255]. Default: ``None``.
         prob (float, optional): Probability of the image being automatically contrasted, which
@@ -3966,9 +3968,9 @@ class RandomAutoContrast(ImageTensorOperation):
         TypeError: If `cutoff` is not of type float.
         TypeError: If `ignore` is not of type integer or sequence of integer.
         TypeError: If `prob` is not of type float.
-        ValueError: If `cutoff` is not in range [0.0, 50.0).
-        ValueError: If `ignore` is not in range [0, 255].
-        ValueError: If `prob` is not in range [0.0, 1.0].
+        ValueError: If `cutoff` is not in the range [0.0, 50.0).
+        ValueError: If `ignore` is not in the range [0, 255].
+        ValueError: If `prob` is not in the range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -5133,9 +5135,6 @@ class RandomPerspective(PyTensorOperation):
 
 class RandomPosterize(ImageTensorOperation):
     """
-    Reduce the bit depth of the color channels of the image with a given probability
-    to create a high contrast and vivid color image.
-
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
@@ -5541,7 +5540,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
     Args:
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
-            If `degrees` is a sequence, it should be (min, max).
+            If `degrees` is a 2‑element sequence, it should be (min, max).
         resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         expand (bool, optional):  Optional expansion flag. Default: ``False``. If set to ``True``,
