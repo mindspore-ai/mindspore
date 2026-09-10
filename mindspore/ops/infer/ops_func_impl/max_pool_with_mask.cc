@@ -76,11 +76,8 @@ inline void MaskCheckPositiveVector(const string &arg_name, const ArrayValue<int
   }
 }
 }  // namespace
-TypeIdList MaxPoolWithMaskFuncImpl::InferType(const PrimitivePtr &primitive,
-                                              const InferInfoPtrList &input_infos) const {
+TypeIdList MaxPoolWithMaskFuncImpl::InferType(const PrimitivePtr &, const InferInfoPtrList &input_infos) const {
   auto input_type = input_infos[kIndex0]->GetType();
-  CheckAndConvertUtils::CheckTypeIdValid("input", input_type, {kNumberTypeFloat16, kNumberTypeFloat32},
-                                         primitive->name());
   return {input_type, kNumberTypeInt8};
 }
 
