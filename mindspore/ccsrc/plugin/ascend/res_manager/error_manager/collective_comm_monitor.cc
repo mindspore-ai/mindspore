@@ -21,6 +21,7 @@
 #include <fstream>
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "utils/ms_utils.h"
+#include "utils/distributed_meta.h"
 #include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/callback.h"
@@ -326,7 +327,7 @@ void HcclWatchDogHandler::WatchDogProcess() {
   }
   if (exception_ && WatchDogCallback::GetInstance().is_enable_watch_dog_) {
     MS_LOG(ERROR) << "[HcclWatchDog] Try to kill this process by SIGTERM. Node:"
-                  << common::GetEnv(distributed::kEnvWorkerIp);
+                  << DistributedMeta::GetInstance()->worker_ip();
     (void)killpg(getpid(), SIGTERM);
   }
   exit_.store(true, std::memory_order_acq_rel);
@@ -367,7 +368,7 @@ void HcclWatchDogHandler::RecordHcclStatus(bool is_end) {
   std::lock_guard<std::mutex> lock(status_map_mutex_);
   static auto cur_record_time = GetCurrentTime();
   static auto scheduler_host = common::GetEnv("MS_SCHED_HOST", "127.0.0.1");
-  static auto node_ip = common::GetEnv(distributed::kEnvWorkerIp);
+  static auto node_ip = DistributedMeta::GetInstance()->worker_ip();
   static std::string record_file = SavePath() + "/" + "ms_status_record_" + std::to_string(rank_id_) + "_" +
                                    scheduler_host + "_" + std::to_string(device_id_) + "_" +
                                    std::to_string(rank_size_) + "_" + std::to_string(getpid()) + "_" +

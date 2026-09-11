@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <mutex>
 #include "mindapi/base/macros.h"
 
 namespace mindspore {
@@ -45,6 +46,16 @@ class MS_CORE_API DistributedMeta {
   void set_local_rank_size(uint32_t rank_size) { local_rank_size_ = rank_size; }
   uint32_t local_rank_size() const { return local_rank_size_; }
 
+  void set_worker_ip(const std::string &worker_ip) {
+    std::lock_guard<std::mutex> lock(worker_ip_mutex_);
+    worker_ip_ = worker_ip;
+  }
+
+  std::string worker_ip() const {
+    std::lock_guard<std::mutex> lock(worker_ip_mutex_);
+    return worker_ip_;
+  }
+
   // Set whether enable cross cluster communication.
   void set_enable_cross_cluster(bool enable_cross_cluster) { enable_cross_cluster_ = enable_cross_cluster; }
   // Return whether enable cross cluster communication.
@@ -57,6 +68,8 @@ class MS_CORE_API DistributedMeta {
   uint32_t global_rank_size_{1};
   uint32_t local_rank_id_{0};
   uint32_t local_rank_size_{1};
+  mutable std::mutex worker_ip_mutex_;
+  std::string worker_ip_;
   // Indicate whether enable cross cluster communication.
   bool enable_cross_cluster_{false};
 };

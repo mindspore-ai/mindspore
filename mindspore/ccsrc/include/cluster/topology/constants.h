@@ -58,9 +58,6 @@ constexpr char kEnvRoleOfClient[] = "MS_CLIENT";
 const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfPServer, kEnvRoleOfWorker,
                                               kEnvRoleOfScheduler};
 
-// Denote which ip address is used for cluster building.
-constexpr char kEnvWorkerIp[] = "MS_WORKER_IP";
-
 // Used in parameter server embedding cache scenarios to identify the same Parameter between Worker and Server.
 constexpr char kParameterKey[] = "parameter_key";
 // Embedding cache lookup operation.

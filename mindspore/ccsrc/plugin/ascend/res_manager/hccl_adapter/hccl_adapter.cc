@@ -29,6 +29,7 @@
 #include "hccl/hcom.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "utils/distributed_meta.h"
 #include "utils/ms_context.h"
 #include "include/cluster/topology/constants.h"
 #include "include/utils/parallel_context.h"
@@ -772,7 +773,7 @@ void HcclAdapter::AddCMEnvToHcclOption(std::map<std::string, std::string> *hccl_
   hccl_opt_map->emplace(ge::OPTION_EXEC_CM_CHIEF_DEVICE, GenerateCMChiefWorkDevice());
   hccl_opt_map->emplace(ge::OPTION_EXEC_CM_WORKER_SIZE,
                         mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerNum));
-  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_WORKER_IP, mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerIp));
+  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_WORKER_IP, DistributedMeta::GetInstance()->worker_ip());
   MS_LOG(INFO) << "Set CM options to hccl. OPTION_EXEC_CM_CHIEF_IP: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_CHIEF_IP)
                << ", OPTION_EXEC_CM_CHIEF_PORT: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_CHIEF_PORT)
                << ", OPTION_EXEC_CM_CHIEF_DEVICE: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_CHIEF_DEVICE)

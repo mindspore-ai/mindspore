@@ -17,6 +17,7 @@
 #include "include/cluster/rpc/abstract_node.h"
 
 #include "include/utils/common.h"
+#include "utils/distributed_meta.h"
 
 namespace mindspore {
 namespace {
@@ -309,9 +310,9 @@ void AbstractNode::InitNodeNum() {
 void AbstractNode::CreateTcpServer(const std::pair<uint32_t, uint32_t> &port_range) {
   MS_EXCEPTION_IF_NULL(config_);
   std::string interface;
-  std::string server_ip = common::GetEnv("MS_WORKER_IP");
+  std::string server_ip = DistributedMeta::GetInstance()->worker_ip();
   if (server_ip.empty()) {
-    MS_LOG(INFO) << "'MS_WORKER_IP' env is not set, so get first available network interface.";
+    MS_LOG(INFO) << "Worker IP is empty, so get first available network interface.";
     CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   }
 
