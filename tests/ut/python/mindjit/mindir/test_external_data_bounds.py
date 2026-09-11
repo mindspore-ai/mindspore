@@ -66,6 +66,23 @@ def _tamper_tensor_shape(graph_file, dims):
     return tampered
 
 
+def _tamper_tensor_shape_without_data(graph_file, dims):
+    """Rewrite the first external parameter shape and remove its backing data."""
+    model = mindir_model()
+    with open(graph_file, "rb") as f:
+        model.ParseFromString(f.read())
+    params_with_external = [p for p in model.graph.parameter if p.HasField("external_data")]
+    assert params_with_external, "Exported model has no external data parameters"
+    param = params_with_external[0]
+    del param.dims[:]
+    param.dims.extend(dims)
+    param.ClearField("external_data")
+    tampered = graph_file.replace(".mindir", "_unbacked_shape_tampered.mindir")
+    with open(tampered, "wb") as f:
+        f.write(model.SerializeToString())
+    return tampered
+
+
 def _tamper_tensor_shape_and_compression(graph_file, dims, compression_type):
     """Rewrite shape and compression_type of the first external parameter."""
     model = mindir_model()
@@ -174,6 +191,41 @@ def test_load_mindir_rejects_unsafe_tensor_shapes_before_allocation(tmp_path, di
         tampered_file = _tamper_tensor_shape(graph_file, dims)
         with pytest.raises(RuntimeError, match="Load MindIR failed"):
             load(tampered_file)
+    finally:
+        os.chdir(cwd)
+
+
+def test_load_mindir_rejects_oversized_tensor_without_data(tmp_path):
+    """
+    Feature: MindIR TensorProto resource limits.
+    Description: A TensorProto without raw or external data declares ~67GiB of float32 storage.
+    Expectation: RuntimeError is raised by the allocation budget before malloc.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("unbacked_tensor_limit")
+        # 18e9 * 4 bytes > kMaxMindIRTensorBytes (64GiB); dim is also beyond INT32_MAX.
+        tampered_file = _tamper_tensor_shape_without_data(graph_file, [18_000_000_000])
+        with pytest.raises(RuntimeError, match="Load MindIR failed"):
+            load(tampered_file)
+    finally:
+        os.chdir(cwd)
+
+
+def test_load_mindir_accepts_small_tensor_without_data(tmp_path):
+    """
+    Feature: MindIR TensorProto resource limits.
+    Description: A small Parameter TensorProto with backing data removed still fits the budget.
+    Expectation: Loading succeeds without treating every unbacked tensor as invalid.
+    """
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        graph_file = _export_mindir_with_external_data("unbacked_tensor_small")
+        tampered_file = _tamper_tensor_shape_without_data(graph_file, [4])
+        graph = load(tampered_file)
+        assert graph is not None
     finally:
         os.chdir(cwd)
 
