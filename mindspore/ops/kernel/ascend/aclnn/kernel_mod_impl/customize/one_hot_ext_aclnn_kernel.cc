@@ -71,6 +71,24 @@ device::DeviceContext *GetAscendDeviceContext() {
   return device::DeviceContextManager::GetInstance().GetDeviceContext("Ascend").get();
 }
 
+// The temporary device memory used to hold the max value is released when the Launch scope exits, so the device
+// pointer kept by the member kernel tensor must be cleared at the same time. Otherwise the member would keep a
+// released device pointer, and any later reader would access released device memory.
+class MaxOutputDevicePtrGuard {
+ public:
+  explicit MaxOutputDevicePtrGuard(KernelTensor *tensor) : tensor_(tensor) {}
+  ~MaxOutputDevicePtrGuard() {
+    if (tensor_ != nullptr) {
+      tensor_->set_device_ptr(nullptr);
+    }
+  }
+  MaxOutputDevicePtrGuard(const MaxOutputDevicePtrGuard &) = delete;
+  MaxOutputDevicePtrGuard &operator=(const MaxOutputDevicePtrGuard &) = delete;
+
+ private:
+  KernelTensor *tensor_;
+};
+
 void EnsureOutputDeviceMemory(KernelTensor *tensor, device::DeviceContext *device_context, void *stream_ptr,
                               size_t previous_size) {
   MS_EXCEPTION_IF_NULL(tensor);
@@ -83,6 +101,16 @@ void EnsureOutputDeviceMemory(KernelTensor *tensor, device::DeviceContext *devic
   }
 
   if (device_address->GetPtr() != nullptr) {
+    // The output is allocated by the runtime with the placeholder depth, while the real depth is data dependent, so
+    // this kernel mod has to reallocate the output in place. Freeing the device address is only safe when this kernel
+    // mod owns it exclusively, otherwise it would release device memory that is still referenced by other tensors.
+    auto device_pointer_holders = device_address->device_pointer().use_count();
+    if (tensor->managed_by_somas() || tensor->is_ptr_persisted() || device_pointer_holders != 1) {
+      MS_LOG(EXCEPTION) << "For 'OneHotExt', the output device address is shared and can not be reallocated in the "
+                           "kernel mod, managed by somas: "
+                        << tensor->managed_by_somas() << ", pointer persisted: " << tensor->is_ptr_persisted()
+                        << ", device pointer holders: " << device_pointer_holders << ".";
+    }
     device_context->device_res_manager_->FreeMemory(device_address.get());
   }
   auto stream_id = device::ascend::AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
@@ -158,6 +186,7 @@ bool OneHotExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const st
   auto max_output_mem =
     std::make_shared<kernel::MemBlock>(output_device_context, max_output_tensor_->size(), stream_ptr);
   max_output_tensor_->set_device_ptr(max_output_mem->ptr_);
+  MaxOutputDevicePtrGuard max_output_device_ptr_guard(max_output_tensor_.get());
   RunOpDoMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_.get());
   const auto max_value = GetValueFromTensorToInt64(max_output_tensor_.get());
   depth_ = std::max(max_value + 1, kMinDepth);
