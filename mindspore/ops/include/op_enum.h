@@ -88,9 +88,6 @@ enum Device : int64_t {
 
 enum QuantMode : int64_t { STATIC = 0, DYNAMIC = 1 };
 
-enum CompareOp : int64_t { EQUAL = 0, GREATER_THAN = 1, LESS_THAN = 2 };
-
-enum SignalOpMode : int64_t { SET = 0, ADD = 1 };
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_OPS_OP_ENUM_H_

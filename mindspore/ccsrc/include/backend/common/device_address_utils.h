@@ -26,7 +26,6 @@
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "mindapi/base/type_traits.h"
-#include "ir/anf.h"
 
 template <typename T>
 struct is_optional : public std::false_type {};
@@ -61,8 +60,6 @@ class BACKEND_COMMON_EXPORT DeviceAddressUtils {
   static KernelTensorPtr CloneEmptyKernelTensor(const KernelTensorPtr &old_kernel_tensor,
                                                 const DeviceContext *device_context);
   static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
-  static void SetSymmetricMemoryAllocator(const CNodePtr &kernel, const device::DeviceAddressPtr &device_address,
-                                          const DeviceContext *device_context);
   static size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node,
                                     const ShapeVector &shape, const string &format, TypeId dtype, size_t output_index);
 

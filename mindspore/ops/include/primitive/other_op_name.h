@@ -87,13 +87,6 @@ constexpr auto kTransposeViewOpName = "TransposeView";
 constexpr auto kReshapeViewOpName = "ReshapeView";
 constexpr auto kSplitViewOpName = "SplitView";
 constexpr auto kConcatViewOpName = "ConcatView";
-// share memory op
-constexpr auto kCreateSymmetricMemoryOpName = "CreateSymmetricMemory";
-constexpr auto kPutMemOpName = "PutMem";
-constexpr auto kGetMemOpName = "GetMem";
-constexpr auto kSignalOpOpName = "SignalOp";
-constexpr auto kPutMemSignalOpName = "PutMemSignal";
-constexpr auto kSignalWaitUntilOpName = "SignalWaitUntil";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_OPS_PRIMITIVE_OTHER_OP_NAME_H_

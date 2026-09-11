@@ -20,8 +20,6 @@
 #include <unordered_map>
 #include <memory>
 #include <set>
-#include <string>
-#include <utility>
 #include "primitive/array_ops.h"
 #include "primitive/nn_ops.h"
 #include "kernel/ascend/hccl/hccl_kernel_metadata.h"
@@ -33,7 +31,6 @@
 #include "mindspore/ops/kernel/host/host_kernel_build.h"
 #include "plugin/ascend/kernel_executor/host/host_kernel_metadata.h"
 #include "kernel/ascend/internal/internal_kernel_build.h"
-#include "kernel/ascend/symmetric_memory/symmetric_memory_kernel_build.h"
 #include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_build.h"
 #include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
@@ -566,16 +563,6 @@ std::tuple<bool, size_t> GetFormatInfoByKernelType(const CNodePtr &kernel, const
     output_reshape_types->assign(output_num, "");
 
     kernel::GetValidKernelBuildInfoWithInternalFormat(kernel, input_formats, output_formats);
-  } else if (kernel_type == KernelType::SYMMETRIC_MEMORY_KERNEL) {
-    input_formats->clear();
-    output_formats->clear();
-    input_reshape_types->clear();
-    output_reshape_types->clear();
-    input_formats->assign(input_num, kOpFormat_DEFAULT);
-    output_formats->assign(output_num, kOpFormat_DEFAULT);
-    input_reshape_types->assign(input_num, "");
-    output_reshape_types->assign(output_num, "");
-    kernel::GetValidKernelBuildInfoWithSymmetricMemoryFormat(kernel, input_formats, output_formats);
   } else if (kernel_type == KernelType::CUSTOM_KERNEL) {
     input_formats->clear();
     output_formats->clear();
@@ -832,12 +819,6 @@ std::tuple<bool, std::string, ExceptionType, bool> SelectKernelInfoWithMsg(const
     kernel::HcclMetadataInfo(node, &kernel_info_list);
     GenerateKernelBuildInfo(node, kernel_type);
     CollectOpSelectedType(op_name, SelectedKernelType::HCCL_KERNEL, op_selected_num, &op_selected_type);
-    return result;
-  }
-
-  if (kernel::IsEnableSymmetricMemoryNode(node)) {
-    GenerateKernelBuildInfo(node, KernelType::SYMMETRIC_MEMORY_KERNEL);
-    CollectOpSelectedType(op_name, SelectedKernelType::SYMMETRIC_MEMORY_KERNEL, op_selected_num, &op_selected_type);
     return result;
   }
 
