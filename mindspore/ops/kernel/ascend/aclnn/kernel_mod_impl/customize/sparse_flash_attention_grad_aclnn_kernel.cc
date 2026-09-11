@@ -87,6 +87,22 @@ bool SparseFlashAttentionGradAscend::Launch(const std::vector<KernelTensor *> &i
   MS_EXCEPTION_IF_NULL(stream_ptr);
   MS_LOG(DEBUG) << "Run aclnnSparseFlashAttentionGrad in kernel_mod_impl";
 
+  // Validate the workspace before RunOp() creates the ACLNN executor. RunOp()/GetExecutor() calls
+  // GEN_EXECUTOR_BOOST first and checks the workspace afterwards, so an exception raised there would leak the
+  // executor and its converted acl parameters (aclTensor/aclIntArray). Checking earlier keeps that error path clean.
+  // When capacity_ == 0 with a dynamic shape, RunOp() allocates the workspace itself and the framework workspace
+  // vector is unused, so the check is skipped to keep that path intact.
+  if (!(capacity_ == 0 && is_dynamic_) && !workspace_size_list_.empty()) {
+    if (workspace.empty()) {
+      MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
+    }
+    MS_EXCEPTION_IF_NULL(workspace[0]);
+    if (workspace[0]->size() != workspace_size_list_[0]) {
+      MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
+                        << workspace_size_list_[0] << ", but get " << workspace[0]->size();
+    }
+  }
+
   const char *layout_ptr = layout_.c_str();
 
   RunOp(stream_ptr, workspace, inputs[kInputQueryIndex], inputs[kInputKeyIndex], inputs[kInputValueIndex],
