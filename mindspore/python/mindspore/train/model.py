@@ -2023,7 +2023,7 @@ class Model:
         if backend == "lite" and self._lite_infer:
             # pylint: disable=broad-except
             try:
-                return self._predict_lite(*predict_data, config=config)
+                result = self._predict_lite(*predict_data, config=config)
             except RuntimeError:
                 self._lite_infer = False
                 logger.warning("Lite inference failed, fallback to original inference!")
@@ -2033,6 +2033,9 @@ class Model:
             except BaseException as e:
                 self._lite_infer = False
                 logger.warning(f"Lite inference failed, {e.__str__()}, fallback to original inference!")
+            else:
+                _clear_auto_parallel_context(self._network)
+                return result
         _clear_auto_parallel_context(self._network)
 
         def _check_input_data():
