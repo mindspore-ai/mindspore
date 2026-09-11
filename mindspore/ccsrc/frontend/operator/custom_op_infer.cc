@@ -192,7 +192,7 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
   BaseShapePtr res_shape = nullptr;
   PrepareInferShapeParams(kernel_name, input_args, &ndims, &shape_list);
   (void)std::transform(std::begin(shape_list), std::end(shape_list), std::back_inserter(input_shapes),
-                       [](auto &v) { return &v[0]; });
+                       [](auto &v) { return v.empty() ? nullptr : v.data(); });
 
   AotExtraImpl attrs;
   attrs.SetKernelPrim(primitive);
@@ -218,7 +218,7 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
                         << ". Add the cpp version of the infer shape function to support dynamic shape.";
     }
     std::vector<std::vector<int64_t>> ret;
-    RUN_INFER_FUNC(kernel_name, &ndims[0], &input_shapes[0], (&attrs));
+    RUN_INFER_FUNC(kernel_name, ndims.data(), input_shapes.data(), (&attrs));
 
     std::transform(ret.begin(), ret.end(), std::back_inserter(shape_vector),
                    [](const auto &item) { return std::make_shared<abstract::Shape>(item); });
@@ -232,7 +232,7 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
                         << ". Add the cpp version of the infer shape function to support dynamic shape.";
     }
     std::vector<int64_t> ret;
-    RUN_INFER_FUNC(kernel_name, &ndims[0], &input_shapes[0], (&attrs));
+    RUN_INFER_FUNC(kernel_name, ndims.data(), input_shapes.data(), (&attrs));
     res_shape = std::make_shared<abstract::Shape>(ret);
   }
 
