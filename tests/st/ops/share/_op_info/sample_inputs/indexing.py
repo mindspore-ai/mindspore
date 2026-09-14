@@ -1247,6 +1247,297 @@ def extra_sample_inputs_mint_searchsorted(op_info: OpInfo, dtype=None, device=No
                 sample_name=f"{op_info.name}_{dtype}_repeats_large_mix_small_values_discontiguous_{discontiguous}",
             )
 
+def basic_sample_inputs_masked_fill_tensor(op_info: OpInfo, dtype=None, device=None):
+    cases = (
+        (ms.Tensor(np.random.randn(8,), dtype=dtype), ms.Tensor(np.random.randn(1,), dtype=ms.bool_),
+         ms.Tensor(np.random.randn(), dtype=dtype)),
+        (ms.Tensor(np.random.randn(), dtype=dtype), ms.Tensor(np.random.randn(), dtype=ms.bool_), 0.4),
+        (ms.Tensor(np.random.randn(9, 3), dtype=dtype), ms.Tensor(np.random.randn(1, 3), dtype=ms.bool_),
+         ms.Tensor(np.random.randn(), dtype=dtype)),
+        (ms.Tensor(np.random.randn(4, 5, 9), dtype=dtype), ms.Tensor(np.random.randn(1, 5, 9), dtype=ms.bool_), -3),
+        (ms.Tensor(np.random.randn(7, 7, 8, 4, 9), dtype=dtype),
+         ms.Tensor(np.random.randn(7, 7, 8, 4, 1), dtype=ms.bool_),
+         ms.Tensor(np.random.randn(), dtype=dtype)),
+        (ms.Tensor(np.random.randn(8, 9, 3, 3, 8, 9), dtype=dtype),
+         ms.Tensor(np.random.randn(8, 9, 3, 3, 1, 9), dtype=ms.bool_), -2.0),
+        (ms.Tensor(np.random.randn(5, 4, 4, 9, 4, 5, 5), dtype=dtype),
+         ms.Tensor(np.random.randn(5, 4, 4, 9, 4, 1, 5), dtype=ms.bool_), 0.4),
+        (ms.Tensor(np.random.randn(9, 3, 7, 7, 7, 7, 9, 4), dtype=dtype),
+         ms.Tensor(np.random.randn(9, 3, 7, 7, 1, 7, 9, 4), dtype=ms.bool_), ms.Tensor(np.random.randn(), dtype=dtype)),
+    )
+    for input_shape, masks, values in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(masks, values,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def extra_sample_inputs_masked_fill_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, low=0, high=1)
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_values = np.array(_float_small_values).reshape((1, len(_float_small_values), 1))
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(input_values, dtype=ms.bool_, device=device),
+                     ms.Tensor(np.random.randn(), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_small_value',
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_values = np.array(_large_values).reshape((1, len(_large_values), 1))
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(input_values, dtype=ms.bool_, device=device),
+                     ms.Tensor(np.random.randn(), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_large_value',
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                input_values = np.full((3, 1), t)
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+                    op_args=(make_tensor_with_np_array(input_values, dtype=ms.bool_, device=device),
+                             ms.Tensor(np.random.randn(), dtype=dtype),),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_{dtype}_default_extremal_{t}',
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        input_x = make_arg(shape=(2, 2), dtype=dtype, discontiguous=discontiguous)
+        yield OpSampleInput(
+            op_input=input_x,
+            op_args=(make_arg(shape=(2, 2), dtype=ms.bool_, discontiguous=discontiguous),
+                     ms.Tensor(np.random.randn(), dtype=dtype),),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_non_contiguous',
+        )
+
+def error_inputs_masked_fill_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = ((ms.Tensor(np.random.randn(4, 5, 9), dtype=dtype),
+              ms.Tensor(np.random.randn(1, 5, 9), dtype=ms.bool_), "-3"),#value not int
+             (ms.Tensor(np.random.randn(4, 5, 9), dtype=dtype),
+              ms.Tensor(np.random.randn(1, 5, 9), dtype=ms.int32), -3),  # mask not bool
+             ([ms.Tensor(np.random.randn(4, 5, 9), dtype=dtype)],
+              ms.Tensor(np.random.randn(1, 5, 9), dtype=ms.bool_), -3),  # input list tensor
+             (1, ms.Tensor(np.random.randn(1, 5, 9), dtype=ms.bool_), -3),  # input not tensor
+             )
+
+    for input_shape, masks, values in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(masks, values,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_params_value_error",
+            ),
+            op_error_type=(ValueError, TypeError, AttributeError, RuntimeError),
+            op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+
+def dynamic_sample_inputs_masked_fill_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=9)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, 8, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None, None), dtype=ms.bool_), -1),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(7, 8, 5)),
+                    op_args=(ms.Tensor(shape=(7, 1, 5), dtype=ms.bool_), -1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 8, 9)),
+                    op_args=(ms.Tensor(shape=(3, 1, 9), dtype=ms.bool_), -1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=ms.bool_), -1),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(9, 4, 7, 7)),
+                    op_args=(ms.Tensor(shape=(9, 4, 7, 1), dtype=ms.bool_), -1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 8, 4, 7, 3, 4, 9)),
+                    op_args=(ms.Tensor(shape=(4, 8, 1, 7, 3, 4, 9), dtype=ms.bool_), -1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=ms.bool_), -1),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input_groups2",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5)),
+                    op_args=(ms.Tensor(shape=(4, 1), dtype=ms.bool_), -1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input_groups2",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3,)),
+                    op_args=(ms.Tensor(shape=(1,), dtype=ms.bool_), -1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input_groups2",
+                ),
+            ),
+        )
+
+def generate_data(min_d, max_d, shape, low_bound=-300, high_bound=300):
+    rand_data = np.random.uniform(low_bound, high_bound, shape)
+    np.place(rand_data, rand_data > max_d * 0.8, float('inf'))
+    np.place(rand_data, rand_data < -max_d * 0.8, float('-inf'))
+    mask = (rand_data > min_d * 0.1) == (rand_data < max_d * 0.1)
+    rand_data[mask] = np.nan
+    input_x = np.array(rand_data)
+    return input_x
+
+def basic_sample_inputs_nan_to_num_tensor(op_info: OpInfo, dtype=None, device=None):
+    cases = (
+        (ms.Tensor(generate_data(-100, 100, (8,)), dtype=dtype), -2.0, -1.0, -3.0),
+        (ms.Tensor(generate_data(-100, 100, (3, 4)), dtype=dtype), -0.0, -1.0, -1.4),
+        (ms.Tensor(generate_data(-5, 5, (7, 3, 8)), dtype=dtype), 12.3, None, 1.3),
+        (ms.Tensor(generate_data(-10, 20, (4, 5, 9, 9)), dtype=dtype), 6, 0, None),
+        (ms.Tensor(generate_data(-100, 200, (9, 7, 7, 3, 8)), dtype=dtype), -3, -2, 3),
+        (ms.Tensor(generate_data(-100, 200, (5, 9, 4, 7, 4, 5)), dtype=dtype), 0, 6, 0),
+        (ms.Tensor(generate_data(-10, 20, (8, 8, 5, 8, 9, 7, 8)), dtype=dtype), None, 2.0, -2.0),
+        (ms.Tensor(generate_data(0, 10, (3, 4, 3, 5, 7, 4, 3, 4)), dtype=dtype), 0.4, 1.4, -0.4),
+        (ms.Tensor(generate_data(-10, 20, ()), dtype=dtype), -2.3, 2.3, 12.3),
+    )
+    for input_shape, nan, posinf, neginf in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(nan, posinf, neginf,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_inputs_nan_to_num_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = ((ms.Tensor(generate_data(-100, 100, (8,)), dtype=dtype), True, -1.0, -3.0),#nan not number
+             (ms.Tensor(generate_data(-100, 100, (8,)), dtype=dtype), -2.0, [-1.0], -3.0),# posinf not num
+             (ms.Tensor(generate_data(-100, 100, (8,)), dtype=dtype), -2.0, -1.0, "-3.0"),# neginf not num
+             ([ms.Tensor(generate_data(-100, 100, (8,)), dtype=dtype)], -2.0, -1.0, -3.0),# input notTensor
+             )
+
+    for input_shape, nan, posinf, neginf in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(nan, posinf, neginf,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_params_value_error",
+            ),
+            op_error_type=(ValueError, TypeError, AttributeError, RuntimeError),
+            op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+
+def dynamic_sample_inputs_nan_to_num_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, 8), dtype=dtype),
+                op_args=(12.3, None, 1.3,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=ms.Tensor(generate_data(-5, 5, (7, 3, 8)), dtype=dtype),
+                    op_args=(12.3, None, 1.3,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=ms.Tensor(generate_data(-5, 5, (2, 4, 8)), dtype=dtype),
+                    op_args=(12.3, None, 1.3,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(-3, -2, 3),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=ms.Tensor(generate_data(-10, 20, (4, 5, 9, 9)), dtype=dtype),
+                    op_args=(-3, -2, 3),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=ms.Tensor(generate_data(-100, 200, (9, 7, 7, 3, 8)), dtype=dtype),
+                    op_args=(-3, -2, 3),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+
+def extra_sample_inputs_nan_to_num_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (
+        (ms.Tensor(generate_data(-100, 200, (2, 3, 4, 5)), dtype=dtype), -3.0, 3.0, -3.0),
+        (ms.Tensor(generate_data(-100, 100, (2, 0, 4)), dtype=dtype), -3.0, 3.0, -3.0),
+    )
+    for input_shape, nan, posinf, neginf in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(nan, posinf, neginf,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    raw2 = ms.Tensor(generate_data(-100, 200, (8, 4)), dtype=dtype)
+    yield OpSampleInput(
+        op_input=raw2[::2, :],
+        op_args=(-2.0, 2.0, -2.0),
+        op_kwargs={},
+        sample_name=op_info.name,
+    )
+
 # sample inputs functions for chunk
 def basic_sample_inputs_mint_masked_select(op_info: OpInfo, dtype=None, device=None):
     """
@@ -1771,6 +2062,191 @@ def error_sample_inputs_mint_scatter(op_info: OpInfo, dtype=None, device=None, *
         op_error_type=RuntimeError,
         op_error_info='src has bigger shape than index'
     )
+
+def basic_sample_inputs_tensor_nd_gather(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE
+    make_x = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    # index helper: default int64, low=0; call with shape=..., high=extent
+    make_index = functools.partial(make_tensor, device=device, low=0, dtype=ms.int64)
+    test_cases = (
+        (make_x((S,)), make_index(shape=(S, 1, 1, 1, 1), high=S)),
+        (make_x((S, S)), make_index(shape=(S, S, 1, 1, 1), high=S)),
+        (make_x((1,)), make_index(shape=(1,), high=1)),
+        (make_x((2, 3, 4)), make_index(shape=(2, 2, 4, 1), high=4)),
+        (make_x((2, 2, 3, 2)), make_index(shape=(2, 2, 2, 1, 1), high=2)),
+        (make_x((2, 2, 2, 3, 2)), make_index(shape=(2, 2, 2, 2, 2), high=3)),
+        (make_x((2, 0)), make_index(shape=(2, 0), high=2)),
+        (ms.Tensor(np.random.randn(3, 3, 5, 6, 5, 6, 9), dtype=dtype),
+         ms.Tensor(np.random.randint(0, min(3, 3, 5, 6, 5, 6, 9), (10, 3, 10, 10, 4, 2, 7))),)
+    )
+
+    for input_shape, indices in test_cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(indices,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def extra_sample_inputs_tensor_nd_gather(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, low=0, high=1)
+    # ---- small value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        _float_small_values = dtypes_extra_values['_float_small_values']
+        input_values = np.array(_float_small_values).reshape((1, len(_float_small_values), 1))
+        index = make_arg(shape=(1, 2, 1), dtype=ms.int64)
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+            op_args=(index,),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_small_value',
+        )
+
+    # ---- large value tensors ----
+    if dtype is not None and dtype.is_floating_point:
+        if dtype == ms.float16:
+            _large_values = dtypes_extra_values['_fp16_large_values']
+        else:
+            _large_values = dtypes_extra_values['_fp32_large_values']
+        input_values = np.array(_large_values).reshape((1, len(_large_values), 1))
+        index = make_arg(shape=(1, len(_large_values), 1), dtype=ms.int64)
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+            op_args=(index,),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_default_extremal_large_value',
+        )
+
+    # ---- extremal value tensors (inf, -inf, nan) ----
+    if dtype is not None and dtype.is_floating_point:
+        if device != 'ascend' or MSContext.get_instance().get_ascend_soc_version() != 'ascend910':
+            for t in [np.inf, -np.inf, np.nan]:
+                input_values = np.full((3, 1), t)
+                index = ms.Tensor(np.random.randint(0, 3, (3, 1)), dtype=ms.int64)
+                yield OpSampleInput(
+                    op_input=make_tensor_with_np_array(input_values, dtype=dtype, device=device),
+                    op_args=(index,),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_{dtype}_default_extremal_{t}',
+                )
+
+    # ---- discontiguous tensors ----
+    for discontiguous in (True,):
+        input_x = make_arg(shape=(2, 2), dtype=dtype, discontiguous=discontiguous)
+        index = make_arg(shape=(2, 2), dtype=ms.int64, discontiguous=discontiguous)
+        yield OpSampleInput(
+            op_input=input_x,
+            op_args=(index,),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_non_contiguous',
+        )
+
+def error_inputs_tensor_nd_gather(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_input = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    make_index = functools.partial(make_tensor, device=device, dtype=ms.int32)
+    # input_shape, index_shape
+    cases = ((1.0, make_index(shape=(3,), low=0, high=2),),#input not tensor
+             (make_input((4, 4, 3)), 1.0),#indices not tensor
+             (make_input((3, 3)), make_index(shape=(2, 3, 3), low=-2, high=2)),
+             (make_input((2, 3)), make_index(shape=(4, 6), low=-2, high=2)),#indices shape -1 > input dim
+             )
+    # index is not int32 or int64
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_input((2, 9)),
+            op_args=(make_index(shape=(0,), dtype=ms.float32),),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_index_type_error",
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info=f'index error type is not supported for {op_info.name}',
+    )
+    for input_shape, index_shape in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(index_shape,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_params_value_error",
+            ),
+            op_error_type=(ValueError, TypeError, AttributeError),
+            op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+
+def dynamic_sample_inputs_tensor_nd_gather(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(5, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(5, None), dtype=ms.int64)),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input_A",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 6)),
+                    op_args=(make_tensor(shape=(5, 1), dtype=ms.int64, device=device, low=0, high=6)),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_A",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 8)),
+                    op_args=(make_tensor(shape=(5, 1), dtype=ms.int64, device=device, low=0, high=8)),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_A",
+                ),
+            ),
+        )
+
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(6, None, 2), dtype=dtype),  # dim axis static
+                op_args=(ms.Tensor(shape=(None, 2, 2), dtype=ms.int64)),  # index dim-axis length dynamic
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input_B",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 3, 2)),
+                    op_args=(make_tensor(shape=(3, 2, 2), dtype=ms.int64, device=device, low=0, high=6)),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_B",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 5, 2)),
+                    op_args=(make_tensor(shape=(4, 2, 2), dtype=ms.int64, device=device, low=0, high=6)),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input_B",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=ms.int64)),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(3,)),
+                    op_args=(make_tensor(shape=(2,), dtype=ms.int64, device=device, low=0, high=3)),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(make_tensor(shape=(2, 3), dtype=ms.int64, device=device, low=0, high=2)),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
 
 # sample inputs functions for gather
 def basic_sample_inputs_mint_gather(op_info: OpInfo, dtype=None, device=None, **kwargs):
@@ -3150,7 +3626,7 @@ def error_inputs_other_op_mint_narrow_func(op_info:OpInfo, dtype=None, device=No
                 op_kwargs={},
                 sample_name=op_info.name,
             ),
-            op_error_type=(TypeError, ValueError),
+            op_error_type=(TypeError, ValueError, AttributeError),
             op_error_info='other ops mint.narrow error values'
         )
 

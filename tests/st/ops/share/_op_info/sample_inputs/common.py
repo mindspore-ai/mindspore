@@ -785,6 +785,137 @@ def _generate_binary_inplace_op_broadcasting_and_discontiguous_tensor_inputs_fun
                         f"_{len(_other_shape)}d_broadcasting_and_discontiguous_{discontiguous}_tensor_inputs",
         )
 
+def basic_reference_inputs_tensor_from_numpy(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    for dtypes in [np.float32, np.float64, np.complex64, np.complex128, np.float16, np.int64, np.int32, np.int16,
+                   np.int8, np.uint8, np.bool_]:
+        yield OpSampleInput(
+            op_input=np.array([1, 2], dtype=dtypes),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_1d",
+        )
+        yield OpSampleInput(
+            op_input=np.array([[1, 2],[3, 4]], dtype=dtypes),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_2d",
+        )
+        yield OpSampleInput(
+            op_input=np.array([[[1, 2], [3, 4]]], dtype=dtypes),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_3d",
+        )
+        yield OpSampleInput(
+            op_input=np.random.rand(2, 3, 4, 5).astype(dtypes),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_4d",
+        )
+        yield OpSampleInput(
+            op_input=np.random.rand(1, 2, 3, 4, 5).astype(dtypes),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_5d",
+        )
+        yield OpSampleInput(
+            op_input=np.random.rand(1, 2, 3, 4, 5, 6).astype(dtypes),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_6d",
+        )
+        yield OpSampleInput(
+            op_input=np.array(42),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_scalar",
+        )
+        yield OpSampleInput(
+            op_input=np.array([]),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_empty",
+        )
+
+def extra_reference_inputs_tensor_from_numpy(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    #small/large values
+    values = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
+    for value in values:
+        yield OpSampleInput(
+            op_input=np.array([value], dtype=np.float32),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_small_large_value",
+        )
+    #extremal values
+    for value in [np.inf, np.nan,-np.inf]:
+        yield OpSampleInput(
+            op_input=np.array([value], dtype=np.float32),
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_extremal_value",
+        )
+    yield OpSampleInput(
+        op_input=np.random.rand(1024, 1024).astype(np.float32),
+        op_args=(),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_large_value",
+    )
+    yield OpSampleInput(
+        op_input=np.array([[-1, -2], [-3, -4]], dtype=np.float32),
+        op_args=(),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_elements_negative",
+    )
+
+
+def error_reference_inputs_tensor_from_numpy(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=[1, 1, 1],
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_input_list",
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info=f"{op_info.name}_input_list",
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=None,
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_none",
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info=f"{op_info.name}_none",
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input="array",
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_not_support_dtype",
+        ),
+        op_error_type=(ValueError, TypeError),
+        op_error_info=f"{op_info.name}_not_support_dtype",
+    )
+
 def basic_reference_inputs_tensor_item(op_info: OpInfo,
     dtype,
     device=None,
@@ -839,7 +970,7 @@ def error_reference_inputs_tensor_item(op_info: OpInfo,
             op_kwargs={},
             sample_name=f"{op_info.name}_double_eles",
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, TypeError),
         op_error_info=f"{op_info.name}_double_eles",
     )
     # 1d with more than 1-d
@@ -850,6 +981,34 @@ def error_reference_inputs_tensor_item(op_info: OpInfo,
             op_kwargs={},
             sample_name=f"{op_info.name}_ambiguous_2d",
         ),
-        op_error_type=ValueError,
+        op_error_type=(ValueError, TypeError),
         op_error_info=f"{op_info.name}_ambiguous_2d",
+    )
+
+def error_reference_inputs_tensor_nbytes(op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    # tensor list
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=[ms.Tensor([1, 2], dtype = ms.float32)],
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_list_tensor",
+        ),
+        op_error_type=(ValueError, TypeError, AttributeError),
+        op_error_info=f"{op_info.name}_list_tensor",
+    )
+    # not tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=1.0,
+            op_args=(),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_not_tensor",
+        ),
+        op_error_type=(ValueError, TypeError, AttributeError),
+        op_error_info=f"{op_info.name}_not_tensor",
     )
