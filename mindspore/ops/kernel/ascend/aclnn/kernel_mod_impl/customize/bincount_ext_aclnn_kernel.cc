@@ -73,6 +73,24 @@ void SetKernelTensorSize(KernelTensor *tensor) {
   tensor->set_size(size);
 }
 
+// The temporary device memory used to hold the min/max value is released when the Launch scope exits, so the device
+// pointer kept by the member kernel tensor must be cleared at the same time. Otherwise the member would keep a
+// released device pointer, and any later reader would access released device memory.
+class TempOutputDevicePtrGuard {
+ public:
+  explicit TempOutputDevicePtrGuard(KernelTensor *tensor) : tensor_(tensor) {}
+  ~TempOutputDevicePtrGuard() {
+    if (tensor_ != nullptr) {
+      tensor_->set_device_ptr(nullptr);
+    }
+  }
+  TempOutputDevicePtrGuard(const TempOutputDevicePtrGuard &) = delete;
+  TempOutputDevicePtrGuard &operator=(const TempOutputDevicePtrGuard &) = delete;
+
+ private:
+  KernelTensor *tensor_;
+};
+
 void EnsureOutputDeviceMemory(KernelTensor *tensor, device::DeviceContext *device_context, void *stream_ptr,
                               size_t previous_size) {
   MS_EXCEPTION_IF_NULL(tensor);
@@ -85,6 +103,16 @@ void EnsureOutputDeviceMemory(KernelTensor *tensor, device::DeviceContext *devic
   }
 
   if (device_address->GetPtr() != nullptr) {
+    // The output is allocated by the runtime with the placeholder size, while the real size is data dependent, so this
+    // kernel mod has to reallocate the output in place. Freeing the device address is only safe when this kernel mod
+    // owns it exclusively, otherwise it would release device memory that is still referenced by other tensors.
+    auto device_pointer_holders = device_address->device_pointer().use_count();
+    if (tensor->managed_by_somas() || tensor->is_ptr_persisted() || device_pointer_holders != 1) {
+      MS_LOG(EXCEPTION) << "For 'BincountExt', the output device address is shared and can not be reallocated in the "
+                           "kernel mod, managed by somas: "
+                        << tensor->managed_by_somas() << ", pointer persisted: " << tensor->is_ptr_persisted()
+                        << ", device pointer holders: " << device_pointer_holders << ".";
+    }
     device_context->device_res_manager_->FreeMemory(device_address.get());
   }
   auto stream_id = device::ascend::AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
@@ -133,6 +161,7 @@ bool BincountExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
     // Calculate min value to avoid negative integer
     auto min_output_mem = std::make_shared<kernel::MemBlock>(device_context, min_output_tensor_->size(), stream_ptr);
     min_output_tensor_->set_device_ptr(min_output_mem->ptr_);
+    TempOutputDevicePtrGuard min_output_device_ptr_guard(min_output_tensor_.get());
     RunOpMin(stream_ptr, workspace, inputs[kIndex0], min_output_tensor_.get());
     auto min_value = GetValueFromTensorToInt64(min_output_tensor_.get());
     if (min_value < 0) {
@@ -142,6 +171,7 @@ bool BincountExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
     // Calculate max value for output shape
     auto max_output_mem = std::make_shared<kernel::MemBlock>(device_context, max_output_tensor_->size(), stream_ptr);
     max_output_tensor_->set_device_ptr(max_output_mem->ptr_);
+    TempOutputDevicePtrGuard max_output_device_ptr_guard(max_output_tensor_.get());
     RunOpMax(stream_ptr, workspace, inputs[kIndex0], max_output_tensor_.get());
     auto max_value = GetValueFromTensorToInt64(max_output_tensor_.get());
 
