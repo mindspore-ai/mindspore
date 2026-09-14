@@ -182,6 +182,14 @@ ShapeVector ComputeOutShapeStaticWithOutputSize(const PrimitivePtr &primitive, c
                              std::move(out_shape), static_cast<size_t>(last_dim));
   out_shape = cal_out[0];
   const auto &strides_out = cal_out[1];
+  // kernel_size / stride / padding are not statically known, so CalOutShape returns an empty stride vector and the
+  // (min, max) range used to validate output_size cannot be derived. Trust the supplied output_size directly.
+  if (strides_out.size() < kDim2) {
+    const auto output_size_rank = output_size.size();
+    out_shape[last_dim - kDim1] = output_size[output_size_rank - kDim2];
+    out_shape[last_dim] = output_size[output_size_rank - kDim1];
+    return out_shape;
+  }
   const auto min_size_h = out_shape[last_dim - kDim1] - strides_out[kInputIndex0];
   const auto max_size_h = out_shape[last_dim - kDim1] + strides_out[kInputIndex0];
   const auto min_size_w = out_shape[last_dim] - strides_out[kInputIndex1];
@@ -208,14 +216,18 @@ ShapeArray MaxUnpool2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   const int64_t input_num_dims = SizeToLong(in_shape.size());
   const auto last_dim = input_num_dims - 1;
-  ShapeVector out_shape = input_infos[kInputIndex0]->IsDynamic() ? input_infos[kInputIndex1]->GetShape() : in_shape;
-  // The spatial dims below are written with the index of input0's last dim, so the shape vector
-  // taken from `indices` has to have the same rank as the input. `indices` may however carry an
-  // unknown rank (dynamic rank) or a different rank than the input, in which case writing through
-  // that index overruns the vector. Fall back to input0's shape instead of writing out of bounds.
-  if (out_shape.size() != in_shape.size()) {
-    out_shape = in_shape;
+  // The spatial dims below are written with the index of input0's last dim, so the shape vector taken from `indices`
+  // has to have the same rank as the input. `indices` may carry a different rank, which is invalid and is rejected
+  // here, or an unknown rank (dynamic rank), in which case input0's shape is used as the base instead of writing
+  // through that index out of bounds.
+  const auto indices_shape = input_infos[kInputIndex1]->GetShape();
+  const bool indices_rank_known = !input_infos[kInputIndex1]->IsDynamicRank();
+  if (indices_rank_known && indices_shape.size() != in_shape.size()) {
+    MS_EXCEPTION(ValueError) << "For Primitive[" << primitive->name()
+                             << "], the rank of 'indices' must be the same as 'input', but got " << indices_shape.size()
+                             << " and " << in_shape.size() << ".";
   }
+  ShapeVector out_shape = (input_infos[kInputIndex0]->IsDynamic() && indices_rank_known) ? indices_shape : in_shape;
   CheckAndConvertUtils::CheckInRange("dim of input", input_num_dims, kIncludeBoth, {3, 4}, primitive->name());
   CheckMaxUnpool2DExtAttr(primitive, "kernel_size", input_infos[kInputIndex2], false);
   CheckMaxUnpool2DExtAttr(primitive, "stride", input_infos[kInputIndex3], false);

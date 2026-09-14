@@ -92,7 +92,9 @@ ShapeArray MaxPoolWithMaskFuncImpl::InferShape(const PrimitivePtr &primitive,
   const auto &x_info = input_infos[kIndex0];
   auto x_shape = x_info->GetShape();
   if (MS_UNLIKELY(x_info->IsDynamicRank())) {
-    std::vector<int64_t> shape(kIndex4, abstract::Shape::kShapeDimAny);
+    // The output rank depends on the input rank (3D and 4D inputs map to different output ranks), so keep the
+    // output rank unknown instead of guessing 4D here.
+    ShapeVector shape{abstract::Shape::kShapeRankAny};
     return {shape, shape};
   }
 
@@ -117,7 +119,9 @@ ShapeArray MaxPoolWithMaskFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto ceil_mode_scalar_opt = input_infos[kIndex5]->GetScalarValue<bool>();
   if (!kernel_size_array_opt.has_value() || !strides_array_opt.has_value() || !pads_array_opt.has_value() ||
       !dilation_array_opt.has_value() || !ceil_mode_scalar_opt.has_value()) {
-    ShapeVector dyn_output{batch, channel, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
+    ShapeVector dyn_output =
+      has_batch_dim ? ShapeVector{batch, channel, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}
+                    : ShapeVector{channel, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
     return {dyn_output, dyn_output};
   }
 

@@ -68,6 +68,13 @@ BaseShapePtr ConstantPadNDFuncImpl::InferShape(const PrimitivePtr &primitive,
       (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     } else {
       auto new_dim = x_shape[l_diff + i] + paddings[pad_idx] + paddings[pad_idx + 1];
+      if (new_dim < 0) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', the padding is too large to crop the input, the output dimension should be "
+                                    "non-negative, but got "
+                                 << new_dim << " for the input dimension " << x_shape[l_diff + i] << " with padding ("
+                                 << paddings[pad_idx] << ", " << paddings[pad_idx + 1] << ").";
+      }
       (void)out_shape.emplace_back(new_dim);
     }
   }

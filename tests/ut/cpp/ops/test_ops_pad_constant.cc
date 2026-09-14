@@ -30,6 +30,7 @@ struct ConstantPadNDParams {
   ValuePtr constant_value;
   ShapeVector output_shape;
   TypePtr output_dtype;
+  bool expect_throw{false};
 };
 
 class TestConstantPadND : public TestOps, public testing::WithParamInterface<ConstantPadNDParams> {};
@@ -45,6 +46,12 @@ TEST_P(TestConstantPadND, dyn_shape) {
 
   auto expect_shape = std::make_shared<abstract::Shape>(param.output_shape);
   auto expect_type = std::make_shared<TensorType>(param.output_dtype);
+  if (param.expect_throw) {
+    auto infer_impl = std::make_shared<ConstantPadNDFuncImpl>();
+    auto prim = std::make_shared<Primitive>(kNameConstantPadND);
+    EXPECT_THROW(infer_impl->InferShape(prim, {x, padding, constant_value}), std::runtime_error);
+    return;
+  }
   DoFuncImplInferAndCompare<ConstantPadNDFuncImpl>(kNameConstantPadND, {x, padding, constant_value}, expect_shape,
                                                    expect_type);
 }
@@ -64,7 +71,10 @@ static std::vector<ConstantPadNDParams> GetCases() {
                         CreatePyIntTuple({dyn_dim, 1}),
                         CreateScalar(1),
                         {4, dyn_dim, dyn_dim},
-                        kFloat32}};
+                        kFloat32},
+    // Negative padding crops the input, but a negative output dimension is invalid.
+    ConstantPadNDParams{{2, 3}, kFloat32, CreatePyIntTuple({-8, -8}), CreateScalar(1), {}, kFloat32, true},
+    ConstantPadNDParams{{2, 3}, kFloat32, CreatePyIntTuple({0, -4}), CreateScalar(1), {}, kFloat32, true}};
   return cases;
 }
 

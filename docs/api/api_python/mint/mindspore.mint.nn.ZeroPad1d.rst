@@ -20,5 +20,5 @@ mindspore.mint.nn.ZeroPad1d
         Tensor，填充后的tensor。
 
     异常：
-        - **ValueError** - `padding` 含有负数。
-        - **ValueError** - `padding` 是tuple或list，且形状与tensor不匹配。
+        - **ValueError** - `padding` 计算出的输出维度为负数。
+        - **ValueError** - `padding` 是tuple或list，且长度和tensor的维度不匹配。

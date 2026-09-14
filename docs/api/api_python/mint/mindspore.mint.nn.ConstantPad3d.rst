@@ -22,3 +22,7 @@ mindspore.mint.nn.ConstantPad3d
 
     输出：
         Tensor，填充后的tensor。
+
+    异常：
+        - **ValueError** - `padding` 计算出的输出维度为负数。
+        - **ValueError** - `padding` 是tuple或list，且长度和tensor的维度不匹配。

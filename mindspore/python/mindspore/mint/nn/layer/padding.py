@@ -77,6 +77,10 @@ class ConstantPad1d(ConstantPadNd_):
     Outputs:
         Tensor, the padded tensor.
 
+    Raises:
+        ValueError: If the output dimension computed by `padding` is negative.
+        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+
     Supported Platforms:
         ``Ascend``
 
@@ -143,6 +147,10 @@ class ConstantPad2d(ConstantPadNd_):
     Outputs:
         Tensor, the tensor after padding.
 
+    Raises:
+        ValueError: If the output dimension computed by `padding` is negative.
+        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+
     Supported Platforms:
         ``Ascend``
 
@@ -194,6 +202,10 @@ class ConstantPad3d(ConstantPadNd_):
 
     Outputs:
         Tensor, the tensor after padding.
+
+    Raises:
+        ValueError: If the output dimension computed by `padding` is negative.
+        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
         ``Ascend``
@@ -253,7 +265,7 @@ class ZeroPad1d(ZeroPadNd_):
         Tensor, the tensor after padding.
 
     Raises:
-        ValueError: If `padding` contains negative value.
+        ValueError: If the output dimension computed by `padding` is negative.
         ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
@@ -312,7 +324,7 @@ class ZeroPad2d(ZeroPadNd_):
         Tensor, the tensor after padding.
 
     Raises:
-        ValueError: If `padding` contains negative value.
+        ValueError: If the output dimension computed by `padding` is negative.
         ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
@@ -357,8 +369,8 @@ class ZeroPad3d(ZeroPadNd_):
         Tensor, the tensor after padding.
 
     Raises:
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor shape.
+        ValueError: If the output dimension computed by `padding` is negative.
+        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
         ``Ascend``
