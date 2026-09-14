@@ -131,8 +131,8 @@ void CheckMaxUnpool2DExtOutputSize(const PrimitivePtr &primitive, const InferInf
 }
 
 inline void SetSpatialDimsUnknown(ShapeVector *out_shape, int64_t last_dim) {
-  (*out_shape)[last_dim - kDim1] = -1;
-  (*out_shape)[last_dim] = -1;
+  (*out_shape).at(last_dim - kDim1) = -1;
+  (*out_shape).at(last_dim) = -1;
 }
 
 // Output spatial dims when `output_size` is absent (None or empty): derive from
@@ -209,6 +209,13 @@ ShapeArray MaxUnpool2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   const int64_t input_num_dims = SizeToLong(in_shape.size());
   const auto last_dim = input_num_dims - 1;
   ShapeVector out_shape = input_infos[kInputIndex0]->IsDynamic() ? input_infos[kInputIndex1]->GetShape() : in_shape;
+  // The spatial dims below are written with the index of input0's last dim, so the shape vector
+  // taken from `indices` has to have the same rank as the input. `indices` may however carry an
+  // unknown rank (dynamic rank) or a different rank than the input, in which case writing through
+  // that index overruns the vector. Fall back to input0's shape instead of writing out of bounds.
+  if (out_shape.size() != in_shape.size()) {
+    out_shape = in_shape;
+  }
   CheckAndConvertUtils::CheckInRange("dim of input", input_num_dims, kIncludeBoth, {3, 4}, primitive->name());
   CheckMaxUnpool2DExtAttr(primitive, "kernel_size", input_infos[kInputIndex2], false);
   CheckMaxUnpool2DExtAttr(primitive, "stride", input_infos[kInputIndex3], false);
