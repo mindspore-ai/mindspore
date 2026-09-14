@@ -26,6 +26,7 @@ import tempfile
 import threading
 import time
 import traceback
+from contextlib import contextmanager
 from functools import wraps
 
 from mindspore import log as logger
@@ -114,30 +115,46 @@ class OBSRuntime:
     def __init__(self, obs_config):
         self.config = obs_config
         self.obs_client = None
-        self._client_lock = threading.Lock()
+        self._client_condition = threading.Condition()
+        self._active_client_users = 0
         self._closed = False
 
-    def get_obs_client(self):
-        """Create an OBS client for this runtime."""
-        with self._client_lock:
-            if self._closed:
-                raise RuntimeError("OBS runtime has been closed.")
-            if ObsClient is None:
-                raise RuntimeError("OBS SDK is not installed. Please install dependency 'obs'.")
-            if self.obs_client is None:
-                self.obs_client = ObsClient(
-                    access_key_id=self.config.AK, secret_access_key=self.config.SK, server=self.config.SERVER
-                )
-            return self.obs_client
+    def _get_obs_client_locked(self):
+        """Create an OBS client while the client condition is held."""
+        if self._closed:
+            raise RuntimeError("OBS runtime has been closed.")
+        if ObsClient is None:
+            raise RuntimeError("OBS SDK is not installed. Please install dependency 'obs'.")
+        if self.obs_client is None:
+            self.obs_client = ObsClient(
+                access_key_id=self.config.AK, secret_access_key=self.config.SK, server=self.config.SERVER
+            )
+        return self.obs_client
+
+    @contextmanager
+    def use_obs_client(self):
+        """Borrow the OBS client until the caller finishes using it."""
+        with self._client_condition:
+            client = self._get_obs_client_locked()
+            self._active_client_users += 1
+        try:
+            yield client
+        finally:
+            with self._client_condition:
+                self._active_client_users -= 1
+                if self._active_client_users == 0:
+                    self._client_condition.notify_all()
 
     def close(self):
-        """Close the cached OBS client."""
-        with self._client_lock:
+        """Close the OBS client after all borrowed uses have finished."""
+        with self._client_condition:
             if self._closed:
                 return
             self._closed = True
             client = self.obs_client
             self.obs_client = None
+            while self._active_client_users:
+                self._client_condition.wait()
         if client is not None:
             client.close()
 
@@ -194,9 +211,8 @@ class OBSRuntime:
     def file_upload_to_obs(self, obs_path, sync_dir, ready_file_name):
         """Upload one synchronization file to OBS."""
         bucket_name, object_key = get_bucket_and_key(obs_path)
-        obs_client = self.get_obs_client()
 
-        def _upload():
+        def _upload(obs_client):
             if not object_key:
                 resp = obs_client.headBucket(bucket_name)
             else:
@@ -225,14 +241,19 @@ class OBSRuntime:
             else:
                 raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
 
-        return _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "file_upload_to_obs", _upload)
+        with self.use_obs_client() as obs_client:
+            return _retry_execute(
+                self.config.MAX_RETRY,
+                self.config.RETRY_DELTA_TIME,
+                "file_upload_to_obs",
+                lambda: _upload(obs_client),
+            )
 
     def _check_file_exists_in_obs(self, obs_path):
         """Detect that file exists in OBS."""
         bucket_name, object_key = get_bucket_and_key(obs_path)
-        obs_client = self.get_obs_client()
 
-        def _check():
+        def _check(obs_client):
             try:
                 resp = obs_client.getObjectMetadata(bucket_name, object_key)
             except ConnectionRefusedError as exc:
@@ -251,14 +272,19 @@ class OBSRuntime:
                 logger.error(err_msg)
                 raise RuntimeError(err_msg)
 
-        return _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_check_file_exists_in_obs", _check)
+        with self.use_obs_client() as obs_client:
+            return _retry_execute(
+                self.config.MAX_RETRY,
+                self.config.RETRY_DELTA_TIME,
+                "_check_file_exists_in_obs",
+                lambda: _check(obs_client),
+            )
 
     def _file_download_from_obs(self, obs_path, local_path):
         """Download one file from OBS."""
         bucket_name, object_key = get_bucket_and_key(obs_path)
-        obs_client = self.get_obs_client()
 
-        def _download():
+        def _download(obs_client):
             resp = obs_client.downloadFile(
                 bucket_name, object_key, local_path, self.config.PART_SIZE, self.config.TASK_NUM, True
             )
@@ -267,7 +293,13 @@ class OBSRuntime:
             else:
                 raise Exception(f"OBS SDK errorCode:{resp.errorCode}, errMsg: {resp.errorMessage}.")
 
-        return _retry_execute(self.config.MAX_RETRY, self.config.RETRY_DELTA_TIME, "_file_download_from_obs", _download)
+        with self.use_obs_client() as obs_client:
+            return _retry_execute(
+                self.config.MAX_RETRY,
+                self.config.RETRY_DELTA_TIME,
+                "_file_download_from_obs",
+                lambda: _download(obs_client),
+            )
 
     @exclusive_lock
     def _download_file(self, remote_path, object_name, des_path, lock_file="tmp"):
