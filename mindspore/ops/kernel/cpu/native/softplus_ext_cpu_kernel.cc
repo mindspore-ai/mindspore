@@ -17,11 +17,10 @@
 #include "kernel/cpu/native/softplus_ext_cpu_kernel.h"
 #include <cmath>
 #include <cstdint>
-#include <functional>
-#include <numeric>
 #include <type_traits>
 #include "kernel/cpu/nnacl/errorcode.h"
 #include "kernel/cpu/nnacl/fp32/activation_fp32.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -57,8 +56,11 @@ int SoftplusExtCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
+  // KernelMod::Resize rejects output shapes that contain negative dimensions, so the element count of the input is
+  // well defined here. SizeOf() is used instead of accumulating the int64_t dimensions into a size_t accumulator,
+  // which would silently overflow into a huge value if a dynamic dimension (-1/-2) ever reached this point.
   const auto &input_shape = inputs[kIndex0]->GetShapeVector();
-  size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t{1}, std::multiplies<size_t>());
+  size_ = SizeOf(input_shape);
   return KRET_OK;
 }
 
@@ -69,6 +71,12 @@ bool SoftplusExtCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   using ComputeT = std::conditional_t<std::is_same_v<T, double>, double, float>;
   auto *input = reinterpret_cast<T *>(inputs[kIndex0]->device_ptr());
   auto *output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output);
+  // SoftplusExt is an elementwise op, so the output buffer must be able to hold all elements computed from the
+  // input shape.
+  MS_EXCEPTION_IF_CHECK_FAIL(size_ * sizeof(T) <= outputs[kIndex0]->size(),
+                             "For '" + kernel_name_ + "', the output buffer is smaller than the input element count.");
   const ComputeT beta = static_cast<ComputeT>(inputs[kIndex1]->GetValueWithCheck<TBeta>());
   const ComputeT threshold = static_cast<ComputeT>(inputs[kIndex2]->GetValueWithCheck<TThreshold>());
 
