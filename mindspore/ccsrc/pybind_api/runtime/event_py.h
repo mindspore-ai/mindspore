@@ -35,6 +35,9 @@ class PYBIND_EXPORT EventPy : public Event {
   explicit EventPy(bool enable_timing, bool blocking) : Event(enable_timing, blocking) {}
   ~EventPy() override;
 
+  // Return the time elapsed in milliseconds after this event was recorded and before the other_event was recorded.
+  float ElapsedTime(const EventPyPtr &other_event) { return Event::ElapsedTime(other_event); }
+
  protected:
   void DispatchRecordEventTask(const StreamPyPtr &stream) override;
   void DispatchWaitEventTask(const StreamPyPtr &stream) override;
