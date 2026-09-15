@@ -222,8 +222,11 @@ class FuseMatMul : public FusePattern {
   }
 
   bool IsSmallMatMulNKMK(const AreaPtr &dom, const DShape &output_shape) const {
+    if (dom == nullptr) {
+      return false;
+    }
     const auto &dom_node = dom->dom();
-    if (dom_node->inputs().empty()) {
+    if (dom_node == nullptr || dom_node->inputs().empty()) {
       return false;
     }
     if (dom_node->op() != kMatMulOpName && dom_node->op() != kBatchMatMulOpName) {
