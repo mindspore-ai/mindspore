@@ -375,12 +375,40 @@ Status ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const std
   }
   auto blob_id = blob_column_id_[column_name_[column_id]];
 
+  // Each column in the blob is prefixed by its byte length of kInt64Len bytes. Walk over
+  // the columns in front of the requested one and make sure every read stays inside the
+  // blob, otherwise the reading and the following length accumulation go out of the range.
+  const uint64_t blob_size = columns_blob.size();
+  uint64_t cur_shift = *shift_idx;
   for (int32_t i = 0; i < blob_id; i++) {
-    *shift_idx += kInt64Len + BytesBigToUInt64(columns_blob, *shift_idx, kInt64Type);
+    if (cur_shift > blob_size || kInt64Len > blob_size - cur_shift) {
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] The size prefix of column " + std::to_string(column_id) +
+                                  " is out of range, shift_idx: " + std::to_string(cur_shift) +
+                                  ", blob size: " + std::to_string(blob_size) + ".");
+    }
+    const uint64_t column_len = BytesBigToUInt64(columns_blob, cur_shift, kInt64Type);
+    if (column_len > blob_size - cur_shift - kInt64Len) {
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] The data length of column " + std::to_string(column_id) +
+                                  " is out of range, shift_idx: " + std::to_string(cur_shift) +
+                                  ", blob size: " + std::to_string(blob_size) + ".");
+    }
+    cur_shift += kInt64Len + column_len;
   }
-  *num_bytes = BytesBigToUInt64(columns_blob, *shift_idx, kInt64Type);
 
-  (*shift_idx) += kInt64Len;
+  if (cur_shift > blob_size || kInt64Len > blob_size - cur_shift) {
+    RETURN_STATUS_UNEXPECTED_MR(
+      "[Internal ERROR] The size prefix of the requested column " + std::to_string(column_id) +
+      " is out of range, shift_idx: " + std::to_string(cur_shift) + ", blob size: " + std::to_string(blob_size) + ".");
+  }
+  *num_bytes = BytesBigToUInt64(columns_blob, cur_shift, kInt64Type);
+  if (*num_bytes > blob_size - cur_shift - kInt64Len) {
+    RETURN_STATUS_UNEXPECTED_MR(
+      "[Internal ERROR] The data length of the requested column " + std::to_string(column_id) +
+      " is out of range, shift_idx: " + std::to_string(cur_shift) + ", blob size: " + std::to_string(blob_size) + ".");
+  }
+
+  cur_shift += kInt64Len;
+  *shift_idx = cur_shift;
 
   return Status::OK();
 }
@@ -390,12 +418,39 @@ Status ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<uns
                                   const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes, uint64_t shift_idx) {
   RETURN_UNEXPECTED_IF_NULL_MR(data_ptr);
   RETURN_UNEXPECTED_IF_NULL_MR(num_bytes);
-  auto num_elements = BytesBigToUInt64(columns_blob, shift_idx, kInt32Type);
+
+  const uint64_t blob_size = columns_blob.size();
+  // The 4-byte element-count prefix must be fully contained in the blob.
+  if (shift_idx > blob_size || kBytesOfColumnLen > blob_size - shift_idx) {
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] The size prefix of column " + std::to_string(column_id) +
+                                " is out of range, shift_idx: " + std::to_string(shift_idx) +
+                                ", blob size: " + std::to_string(blob_size) + ".");
+  }
+  const uint64_t num_elements = BytesBigToUInt64(columns_blob, shift_idx, kInt32Type);
+
+  // The bit map, recording the actual stored byte width of each element, is placed right
+  // after the size prefix and takes one byte for every kNumDataOfByte elements.
+  const uint64_t bitmap_len = (num_elements + kNumDataOfByte - 1) / kNumDataOfByte;
+  const uint64_t data_offset = shift_idx + kBytesOfColumnLen + bitmap_len;
+  if (data_offset > blob_size) {
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] The bit map of column " + std::to_string(column_id) +
+                                " is out of range, num_elements: " + std::to_string(num_elements) +
+                                ", blob size: " + std::to_string(blob_size) + ".");
+  }
+  // Each element occupies at most kInt64Len bytes, so the data region needs at most
+  // num_elements * kInt64Len bytes. Make sure the worst case stays inside the blob,
+  // otherwise the reading below would go beyond the boundary.
+  if (num_elements > blob_size - data_offset) {
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] The data of column " + std::to_string(column_id) +
+                                " is out of range, num_elements: " + std::to_string(num_elements) +
+                                ", blob size: " + std::to_string(blob_size) + ".");
+  }
+
   *num_bytes = sizeof(T) * num_elements;
+  auto array_data = std::make_unique<T[]>(num_elements);
 
   // Parse integer array
-  uint64_t i_source = shift_idx + kBytesOfColumnLen + (num_elements + kNumDataOfByte - 1) / kNumDataOfByte;
-  auto array_data = std::make_unique<T[]>(num_elements);
+  uint64_t i_source = data_offset;
 
   for (uint64_t i = 0; i < num_elements; i++) {
     uint8_t iBitMap = columns_blob[shift_idx + kBytesOfColumnLen + i / kNumDataOfByte];

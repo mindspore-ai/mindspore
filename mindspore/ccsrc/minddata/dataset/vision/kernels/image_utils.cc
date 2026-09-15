@@ -2844,10 +2844,11 @@ Status CheckUnsupportedImage(const std::shared_ptr<Tensor> &image) {
     image_ptr = image->GetMutableBuffer();
   }
 
-  if (memcmp(image_ptr, kGifMagic, kGifMagicLen) == 0) {  // unsupported
+  if (image->SizeInBytes() >= kGifMagicLen && memcmp(image_ptr, kGifMagic, kGifMagicLen) == 0) {  // unsupported
     file_suffix = "gif";
     unsupport_flag = true;
-  } else if (memcmp(image_ptr + 7, kWebpMagic, kWebpMagicLen) == 0) {  // unsupported: skip the 7 bytes
+  } else if (image->SizeInBytes() >= 7 + kWebpMagicLen &&
+             memcmp(image_ptr + 7, kWebpMagic, kWebpMagicLen) == 0) {  // unsupported: skip the 7 bytes
     file_suffix = "webp";
     unsupport_flag = true;
   }

@@ -334,9 +334,15 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
   auto &cookie = rq->buf_data(BufDataIndex::kCookie);
   // Second piece of data is the address where we can find the serialized data
   auto addr = strtoll(rq->buf_data(BufDataIndex::kAddr).data(), nullptr, kDecimal);
-  auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
   // Third piece of data is the size of the serialized data that we need to transfer
   auto sz = strtoll(rq->buf_data(BufDataIndex::kSize).data(), nullptr, kDecimal);
+  // Both the offset (addr) and the size are supplied by the client over IPC, so validate that
+  // the range [addr, addr+sz) stays within the shared memory before reading from the buffer.
+  // Otherwise a forged offset/size would let us read arbitrary memory and then cache it.
+  const int64_t shm_size = static_cast<int64_t>(shared_memory_sz_in_gb_) << 30;
+  CHECK_FAIL_RETURN_UNEXPECTED(addr >= 0 && addr < shm_size, "Invalid shared memory offset: " + std::to_string(addr));
+  CHECK_FAIL_RETURN_UNEXPECTED(sz >= 0 && sz <= shm_size - addr, "Invalid shared memory size: " + std::to_string(sz));
+  auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
   // Successful or not, we need to free the memory on exit.
   Status rc;
   if (cs == nullptr) {
@@ -399,6 +405,7 @@ Status CacheServer::InternalCacheRow(CacheRequest *rq, CacheReply *reply) {
 }
 
 Status CacheServer::InternalFetchRow(CacheRequest *rq) {
+  RETURN_UNEXPECTED_IF_NULL(rq);
   auto connection_id = rq->connection_id();
   SharedLock lck(&rwLock_);
   CacheService *cs = GetService(connection_id);
@@ -500,6 +507,11 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
     RETURN_UNEXPECTED_IF_NULL(p);
     std::vector<row_id_type> row_id;
     auto sz = p->row_id()->size();
+    // The number of row ids is supplied by the client. Cap it to prevent an oversized
+    // row_id.reserve() allocation and out-of-bounds reads inside the untrusted flatbuffer.
+    constexpr uint32_t kMaxBatchFetchRows = 1 << 16;
+    CHECK_FAIL_RETURN_UNEXPECTED(sz <= kMaxBatchFetchRows,
+                                 "Invalid batch fetch request, too many row ids: " + std::to_string(sz));
     row_id.reserve(sz);
     for (uint32_t i = 0; i < sz; ++i) {
       row_id.push_back(p->row_id()->Get(i));
@@ -511,13 +523,23 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
     lck.Unlock();
     auto locator = flatbuffers::GetRoot<BatchDataLocatorMsg>(fbb->GetBufferPointer());
     int64_t mem_sz = sizeof(int64_t) * (sz + 1);
+    auto shm_size = static_cast<int64_t>(shared_memory_sz_in_gb_) << 30;
     for (auto i = 0; i < sz; ++i) {
       auto row_sz = locator->rows()->Get(i)->size();
       // row_sz is the size of the cached data. Later we will spawn multiple threads
       // each of which will copy the data into either shared memory or protobuf concurrently but
       // to different region.
       // To avoid false sharing, we will bump up row_sz to be a multiple of 4k, i.e. 4096 bytes
+      if (row_sz < 0) {
+        RETURN_STATUS_UNEXPECTED("Invalid batch fetch request, negative row size.");
+      }
       row_sz = round_up_4K(row_sz);
+      // Guard the accumulation so that mem_sz neither overflows nor exceeds what the
+      // shared memory (or the reply buffer) can hold, which would otherwise lead to
+      // memory exhaustion.
+      if (row_sz > shm_size - mem_sz) {
+        RETURN_STATUS_UNEXPECTED("Invalid batch fetch request, total result size exceeds the upper limit.");
+      }
       mem_sz += row_sz;
     }
     auto client_flag = rq->flag();
@@ -768,9 +790,19 @@ Status CacheServer::BatchCacheRows(CacheRequest *rq) {
     int32_t num_elem;
     auto *base = SharedMemoryBaseAddr();
     offset_addr = strtoll(rq->buf_data(BufDataIndex::kAddr).data(), nullptr, kDecimal);
-    auto p = reinterpret_cast<char *>(reinterpret_cast<int64_t>(base) + offset_addr);
     num_elem = static_cast<int32_t>(strtol(rq->buf_data(BufDataIndex::kSize).data(), nullptr, kDecimal));
+    // A non-positive element count would push nothing and make batch_wait->Wait() block forever,
+    // so reject it up front before creating the waiter.
+    CHECK_FAIL_RETURN_UNEXPECTED(num_elem > 0, "Invalid batch element count: " + std::to_string(num_elem));
     auto batch_wait = std::make_shared<BatchWait>(num_elem);
+    // The shared memory offset is supplied by the client, so validate that the resulting
+    // address stays within the shared memory before dereferencing it.
+    const int64_t shm_size = static_cast<int64_t>(shared_memory_sz_in_gb_) << 30;
+    const int64_t base_addr = reinterpret_cast<int64_t>(base);
+    const int64_t p_addr = base_addr + offset_addr;
+    CHECK_FAIL_RETURN_UNEXPECTED(offset_addr >= 0 && p_addr < base_addr + shm_size,
+                                 "Invalid shared memory offset: " + std::to_string(offset_addr));
+    auto p = reinterpret_cast<char *>(p_addr);
     // Get a set of free request and push into the queues.
     for (auto i = 0; i < num_elem; ++i) {
       auto start = reinterpret_cast<int64_t>(p);
