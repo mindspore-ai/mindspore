@@ -39,11 +39,11 @@ class NLLLossGrad(nn.Cell):
     def __init__(self, forward, sens):
         super().__init__()
         self.forward = forward
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_position=True, sens_param=True)
         self.sens = sens
 
     def construct(self, x, t, w):
-        return self.grad(self.forward)(x, t, w, self.sens)
+        return self.grad(self.forward, None, (0, 2))(x, t, w, self.sens)
 
 
 np_type = np.float32
@@ -74,8 +74,7 @@ def test_nllloss_cpu_none_dynamic_shape():
     nllloss_grad.set_inputs(logits_dyn, target_dyn, weight_dyn)
     expect_grad = nllloss_grad(logits, target, weight)
     assert expect_grad[0].asnumpy().shape == logits.asnumpy().shape
-    assert expect_grad[1].asnumpy().shape == target.asnumpy().shape
-    assert expect_grad[2].asnumpy().shape == weight.asnumpy().shape
+    assert expect_grad[1].asnumpy().shape == weight.asnumpy().shape
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -98,5 +97,4 @@ def test_nllloss_cpu_mean_dynamic_shape():
     nllloss_grad.set_inputs(logits_dyn, target_dyn, weight_dyn)
     expect_grad = nllloss_grad(logits, target, weight)
     assert expect_grad[0].asnumpy().shape == logits.asnumpy().shape
-    assert expect_grad[1].asnumpy().shape == target.asnumpy().shape
-    assert expect_grad[2].asnumpy().shape == weight.asnumpy().shape
+    assert expect_grad[1].asnumpy().shape == weight.asnumpy().shape

@@ -1,3 +1,4 @@
+# pylint: disable=super-with-arguments,missing-module-docstring,no-else-break
 import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import dtype as ms
@@ -10,7 +11,7 @@ from mindspore.common.parameter import Parameter
 from ..share.utils import match_array
 from tests.mark_utils import arg_mark
 
-        
+
 grad_all = C.GradOperation(get_all=True)
 
 class Grad(nn.Cell):
@@ -36,7 +37,7 @@ def test_while_true_break():
             super(WhileTrueBreakNet, self).__init__()
             self.add = P.Add()
             self.mul = P.Mul()
-            self.para = Parameter(Tensor(t, ms.int32), name="a")
+            self.para = Parameter(Tensor(t, ms.float32), name="a")
 
         @jit(capture_mode="bytecode")
         def construct(self, x, y):
@@ -51,13 +52,13 @@ def test_while_true_break():
             return out
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    t = np.array([1]).astype(np.int32)
-    y = Tensor([1], ms.int32)
-    x = Tensor([5], ms.int32)
+    t = np.array([1]).astype(np.float32)
+    y = Tensor([1.], ms.float32)
+    x = Tensor([5.], ms.float32)
     net = WhileTrueBreakNet(t)
     grad_net = Grad(net)
     grad_out = grad_net(x, y)
-    expect = (Tensor([0], ms.int32), Tensor([1], ms.int32))
+    expect = (Tensor([0.], ms.float32), Tensor([1.], ms.float32))
     assert expect == grad_out
 
 

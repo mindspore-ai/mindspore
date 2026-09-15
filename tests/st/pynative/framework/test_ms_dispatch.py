@@ -880,7 +880,7 @@ def test_ms_dispatch_mode_guard_with_grad():
     """
     global RUN_OPS
     RUN_OPS = []
-    x = Tensor([1, 1, 1])
+    x = Tensor([1., 1., 1.])
     with TestMsDispatchMode():
         def forward_fn(x):
             out = x.sin()
@@ -899,7 +899,7 @@ def test_ms_dispatch_nested_mode_guard_with_grad():
     RUN_OPS = []
     with TestNestedMsDispatchMode.MsDispatchMode1():
         with TestNestedMsDispatchMode.MsDispatchMode2():
-            x = Tensor([1, 1, 1])
+            x = Tensor([1., 1., 1.])
             def forward_fn(x):
                 return x.sin()
             ms.value_and_grad(forward_fn)(x)
@@ -919,7 +919,7 @@ def test_ms_dispatch_nested_mode_guard_and_dtensor_with_grad():
     RUN_OPS = []
     with TestNestedMsDispatchMode.MsDispatchMode1():
         with TestNestedMsDispatchMode.MsDispatchMode2():
-            x = _make_base_dtensor([1, 1, 1])
+            x = _make_base_dtensor([1., 1., 1.])
             def forward_fn(x):
                 out = x.sin()
                 assert isinstance(out, DTensor)

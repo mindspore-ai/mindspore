@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -40,11 +40,11 @@ class GradNet(nn.Cell):
 
     def __init__(self, network):
         super(GradNet, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=False)
+        self.grad = C.GradOperation(get_by_position=True, sens_param=False)
         self.network = network
 
     def construct(self, indices, values, dens_shape, dense):
-        return self.grad(self.network)(indices, values, dens_shape, dense)
+        return self.grad(self.network, None, (1, 3))(indices, values, dens_shape, dense)
 
 
 def judge_result_correct(result, expect):
@@ -99,11 +99,11 @@ def test_sparse_tensor_dense_matmul_no_transpose():
     grad_net = GradNet(sparse_dense_matmul_net)
     grad_ms = grad_net(indices, values, dense_shape, dense)
     expect_values_grad = np.array([3., 12., 21., 30.], dtype=np.float16)
-    judge_result_correct(grad_ms[1].asnumpy(), expect_values_grad)
+    judge_result_correct(grad_ms[0].asnumpy(), expect_values_grad)
     expect_dense_grad = np.array(
         [[2., 2., 2.], [3., 3., 3.], [4., 4., 4.], [5., 5., 5.]],
         dtype=np.float16)
-    judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
+    judge_result_correct(grad_ms[1].asnumpy(), expect_dense_grad)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -130,11 +130,11 @@ def test_sparse_tensor_dense_matmul_transpose_a():
     grad_ms = grad_net(indices, values, dense_shape, dense)
     expect_values_grad = np.array([3., 12., 21., 21., 30., 30.],
                                   dtype=np.float64)
-    judge_result_correct(grad_ms[1].asnumpy(), expect_values_grad)
+    judge_result_correct(grad_ms[0].asnumpy(), expect_values_grad)
     expect_dense_grad = np.array(
         [[1., 1., 1.], [2., 2., 2.], [7., 7., 7.], [11., 11., 11.]],
         dtype=np.float64)
-    judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
+    judge_result_correct(grad_ms[1].asnumpy(), expect_dense_grad)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -157,14 +157,6 @@ def test_sparse_tensor_dense_matmul_transpose_b():
     out_np = np.matmul(sparse_np, np.transpose(dense_np, perm))
     judge_result_correct(out_ms.asnumpy(), out_np)
 
-    grad_net = GradNet(sparse_dense_matmul_net)
-    grad_ms = grad_net(indices, values, dense_shape, dense)
-    expect_values_grad = np.array([18., 22., 18., 26., 22., 26.],
-                                  dtype=np.int32)
-    judge_result_correct(grad_ms[1].asnumpy(), expect_values_grad)
-    expect_dense_grad = np.array(
-        [[4, 7, 10], [4, 7, 10], [4, 7, 10], [4, 7, 10]], dtype=np.int32)
-    judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -187,11 +179,3 @@ def test_sparse_tensor_dense_matmul_transpose_all():
     out_np = np.matmul(np.transpose(sparse_np, perm),
                        np.transpose(dense_np, perm))
     judge_result_correct(out_ms.asnumpy(), out_np)
-
-    grad_net = GradNet(sparse_dense_matmul_net)
-    grad_ms = grad_net(indices, values, dense_shape, dense)
-    expect_values_grad = np.array([18, 22, 26, 26], dtype=np.int64)
-    judge_result_correct(grad_ms[1].asnumpy(), expect_values_grad)
-    expect_dense_grad = np.array([[2, 3, 9], [2, 3, 9], [2, 3, 9], [2, 3, 9]],
-                                 dtype=np.int64)
-    judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)

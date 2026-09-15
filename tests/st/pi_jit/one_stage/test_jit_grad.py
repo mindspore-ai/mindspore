@@ -40,10 +40,10 @@ def test_jit_grad_with_grad_tensor_in_tuple():
         return inner_func((x,), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -67,10 +67,10 @@ def test_jit_grad_with_grad_tensor_in_tuple_2():
         return inner_func(((x,), y))
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -94,10 +94,10 @@ def test_jit_grad_with_grad_tensor_in_list():
         return inner_func([x,], y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -121,10 +121,10 @@ def test_jit_grad_with_grad_tensor_in_list_2():
         return inner_func([[x,], y])
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -148,10 +148,10 @@ def test_jit_grad_with_grad_tensor_in_dict():
         return inner_func({"x": x, "y": y})
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -175,10 +175,10 @@ def test_jit_grad_with_grad_tensor_in_dict_2():
         return inner_func({"x": (x,), "y": y})
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -202,10 +202,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs():
         return inner_func((x,), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -229,10 +229,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_vargs_2():
         return inner_func(((x,),), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -256,10 +256,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs():
         return inner_func(m=(x,), n=y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -283,10 +283,10 @@ def test_jit_grad_with_grad_tensor_in_sequence_with_kwargs_2():
         return inner_func(m=([x,],), n=y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -308,10 +308,10 @@ def test_jit_grad_with_invalid_input():
         return inner_func({"x": (x, "a"), "y": y})
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2., 3.])
+    b = Tensor([1., 1., 1.])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0
@@ -333,10 +333,10 @@ def test_jit_grad_with_invalid_input_2():
         return inner_func((x, None), y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    a = Tensor([1, 2, 3])
-    b = Tensor([1, 1, 1])
+    a = Tensor([1., 2, 3])
+    b = Tensor([1., 1, 1])
     ret = GradOperation()(func)(a, b)
-    assert np.all(ret.asnumpy() == np.array([6, 6, 6]))
+    assert np.allclose(ret.asnumpy(), np.array([6, 6, 6]))
     jcr = get_code_extra(inner_func.__wrapped__)
     assert jcr["break_count_"] == 0
     assert jcr["code"]["call_count_"] > 0

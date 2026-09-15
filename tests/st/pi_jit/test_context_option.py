@@ -29,10 +29,10 @@ def test_initial_tensor_body_ref():
     class Net(ms.nn.Cell):
         def __init__(self):
             super().__init__()
-            self.weight = ms.Parameter(Tensor([1]))
+            self.weight = ms.Parameter(Tensor([1.], ms.float32))
 
         def construct(self, a, b):
-            y_param = Tensor([1])
+            y_param = Tensor([1.], ms.float32)
             while a < b:
                 y_param = self.weight
                 a += 1
@@ -43,16 +43,16 @@ def test_initial_tensor_body_ref():
     reserved_env = os.getenv('MS_DEV_PRECOMPILE_ONLY')
     os.environ['MS_DEV_PRECOMPILE_ONLY'] = '1'
     ms.context.set_context(mode=ms.context.GRAPH_MODE)
-    input_a = Tensor([2])
-    input_b = Tensor([6])
+    input_a = Tensor([2.], ms.float32)
+    input_b = Tensor([6.], ms.float32)
     test_net(input_a, input_b)
 
     @jit(capture_mode="bytecode")
     def func(a, b):
         return ms.ops.grad(test_net)(a, b)
 
-    input_a = Tensor([2])
-    input_b = Tensor([6])
+    input_a = Tensor([2.], ms.float32)
+    input_b = Tensor([6.], ms.float32)
     res = jit(function=func, capture_mode="bytecode")(input_a, input_b)
     except_res = jit(function=func, capture_mode="ast")(input_a, input_b)
 

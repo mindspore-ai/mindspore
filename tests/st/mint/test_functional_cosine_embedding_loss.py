@@ -27,7 +27,7 @@ from mindspore.common import dtype as mstype
 from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
-from tests.st.pynative.utils import GradOfAllInputs, allclose_nparray
+from tests.st.pynative.utils import GradByPositionWithSens, allclose_nparray
 from tests.st.utils.test_utils import double_golden_compare, OpTypes
 from tests.st.ops.test_tools.test_op import TEST_OP
 
@@ -107,9 +107,8 @@ class TestFunctionalCELModule:
         else:
             ms_output_grad = Tensor(self.out_grad_np, out.dtype)
         net = FunctionalCELNet(self.margin, self.reduction)
-        grad_net = GradOfAllInputs(net)
-        grad_net.set_train()
-        gx, gy, _ = grad_net(self.input1, self.input2, self.target, ms_output_grad)
+        grad_net = GradByPositionWithSens(net, (0, 1))
+        gx, gy = grad_net(self.input1, self.input2, self.target, ms_output_grad)
         if self.ms_dtype == mstype.bfloat16 and not keep_original_dtype:
             return gx.astype(mstype.float32), gy.astype(mstype.float32)
         return gx, gy
@@ -191,7 +190,8 @@ def _set_mode(mode):
         context.set_context(mode=ms.PYNATIVE_MODE, device_target='Ascend')
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
+          card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize('data_type', [
     mstype.bool_, mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
     mstype.float16, mstype.float32, mstype.float64

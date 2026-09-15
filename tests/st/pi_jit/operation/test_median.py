@@ -29,7 +29,6 @@ def test_p_median_input_4d_int16():
     fact = MedianFactory(input_shape=(10, 8, 3, 2), global_median=False, axis=0,
                          keep_dims=True, dtype=np.int16)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -42,7 +41,6 @@ def test_p_median_input_3d_int32():
     fact = MedianFactory(input_shape=(10, 9, 3), global_median=False, axis=1,
                          keep_dims=True, dtype=np.int32)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -55,7 +53,6 @@ def test_p_median_input_5d_int64():
     fact = MedianFactory(input_shape=(12, 2, 3, 4, 2), global_median=False, axis=0,
                          keep_dims=True, dtype=np.int64)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')

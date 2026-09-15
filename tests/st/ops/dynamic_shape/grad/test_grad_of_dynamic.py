@@ -12,23 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 import numpy as np
 
 from mindspore import ops, nn, context, Tensor
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import functional as F
+from mindspore.ops.composite.base import _is_differentiable_type
 
 
 class GradNet(nn.Cell):
     """Get gradient net by forward network."""
 
-    def __init__(self, network):
+    def __init__(self, network, grad_position):
         super(GradNet, self).__init__()
-        self.grad = ops.GradOperation(get_all=True)
+        self.grad = ops.GradOperation(get_by_position=True)
         self.net = network
+        self.grad_position = grad_position
 
     def construct(self, *args):
-        return self.grad(self.net)(*args)
+        return self.grad(self.net, None, self.grad_position)(*args)
 
 
 class NetConvertForward(nn.Cell):
@@ -60,9 +63,11 @@ class NetConvertForward(nn.Cell):
 class DynamicGradNet(nn.Cell):
     """Get gradient net for dynamic-shape or dynamic-rank case by forward network."""
 
-    def __init__(self, network, is_dynamic_rank=False, skip_convert_in_ids=None, skip_convet_out_ids=None):
+    def __init__(self, network, grad_position, is_dynamic_rank=False, skip_convert_in_ids=None,
+                 skip_convet_out_ids=None):
         super(DynamicGradNet, self).__init__()
-        self.grad = ops.GradOperation(get_all=True)
+        self.grad = ops.GradOperation(get_by_position=True)
+        self.grad_position = grad_position
         self.skip_convert_in_ids = skip_convert_in_ids if skip_convert_in_ids else []
         self.skip_convet_out_ids = skip_convet_out_ids if skip_convet_out_ids else []
         self.net = NetConvertForward(network, is_dynamic_rank, skip_convet_out_ids)
@@ -82,7 +87,7 @@ class DynamicGradNet(nn.Cell):
                 new_args.append(arg)
 
         args_tuple = tuple(new_args)
-        return self.grad(self.net)(*args_tuple)
+        return self.grad(self.net, None, self.grad_position)(*args_tuple)
 
 
 def output_compare(outputs, expects):
@@ -107,7 +112,6 @@ class TestDynamicGrad:
 
     def __init__(self, network, skip_convert_out_ids=None):
         self.net = network
-        self.grad_net = GradNet(network)
         self.skip_convert_in_ids = []
         self.skip_convert_out_ids = skip_convert_out_ids if skip_convert_out_ids else []
 
@@ -122,13 +126,18 @@ class TestDynamicGrad:
         Raises:
             RuntimeError when check fail; Assert error when compare fail.
         """
+        if not isinstance(inputs, (list, tuple)):
+            inputs = [inputs]
         for i, inp in enumerate(inputs):
             if not isinstance(inp, Tensor):
                 self.skip_convert_in_ids.append(i)
 
-        if not isinstance(inputs, (list, tuple)):
-            inputs = [inputs]
-        static_outs = self.grad_net(*inputs)
+        grad_position = tuple(
+            i for i, inp in enumerate(inputs)
+            if isinstance(inp, Tensor) and _is_differentiable_type(inp.dtype)
+        )
+        grad_net = GradNet(self.net, grad_position)
+        static_outs = grad_net(*inputs)
 
         print("Static gradient case done.")
 
@@ -137,7 +146,8 @@ class TestDynamicGrad:
             context.set_context(save_graphs=True)
             context.set_context(save_graphs_path="./{}_graphs".format(graphs_dir))
 
-        dyn_grad_net = DynamicGradNet(self.net, is_dynamic_rank, self.skip_convert_in_ids, self.skip_convert_out_ids)
+        dyn_grad_net = DynamicGradNet(
+            self.net, grad_position, is_dynamic_rank, self.skip_convert_in_ids, self.skip_convert_out_ids)
         dyn_outs = dyn_grad_net(*inputs)
         print("Dynamic gradient case done.")
 

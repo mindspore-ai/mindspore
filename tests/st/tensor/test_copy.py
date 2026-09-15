@@ -87,6 +87,7 @@ def tensor_copy_limits_testcase(mode, shape, dtypes=None):
 
     if dtypes is None:
         dtypes = msdtype.all_types
+    grad_supported_types = msdtype.float_type + msdtype.complex_type
 
     set_mode(mode)
     all_result = True
@@ -100,7 +101,7 @@ def tensor_copy_limits_testcase(mode, shape, dtypes=None):
             dst = copy_forward_func(src)
             assert get_md5(dst) == get_md5(src)
 
-            if dtype not in (ms.uint16, ms.uint32, ms.uint64):
+            if dtype in grad_supported_types:
                 grad = copy_backward_func(src)
                 expect_grad = ms.Tensor(np.ones(shape), dtype=dtype)
                 assert get_md5(grad) == get_md5(expect_grad)
@@ -146,7 +147,7 @@ def test_tensor_copy_empty_tensor(mode, shape, dtype):
     assert dst.dtype == src.dtype
     np.testing.assert_equal(dst.asnumpy(), src.asnumpy())
 
-    if dtype not in (ms.uint32, ms.uint64):
+    if dtype in (msdtype.float_type + msdtype.complex_type):
         grad = copy_backward_func(src)
         expect_grad = ms.Tensor(np.ones(shape), dtype=dtype)
         assert grad.shape == expect_grad.shape

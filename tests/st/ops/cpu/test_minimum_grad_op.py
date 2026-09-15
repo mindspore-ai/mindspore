@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
 
 import mindspore.context as context
 from mindspore import Tensor
@@ -321,8 +321,7 @@ def test_broadcast_grad_cpu_type():
     input_y = np.arange(88, 2 * 3 * 2 + 88).reshape((2, 3, 2))
     input_dout = np.maximum(input_x, input_y)
     net = GradWrap(MinNetMe())
-    dtypes = (np.int16, np.int32, np.int64, np.float16,
-              np.float32, np.float64, np.uint16, np.uint32)
+    dtypes = (np.float16, np.float32, np.float64)
     for dtype in dtypes:
         result = net(Tensor(input_x.astype(dtype)), Tensor(input_y.astype(dtype)),
                      Tensor(input_dout.astype(dtype)))

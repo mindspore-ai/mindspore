@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" test_side_effect_bprop_custom_assign.py """
+
 import os
 import re
 import shutil
 import mindspore as ms
 import mindspore.ops.operations as P
-import mindspore.ops as ops
-import mindspore.nn as nn
+from mindspore import ops
+from mindspore import nn
 from mindspore import context, Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import functional as F
@@ -48,7 +50,7 @@ def get_bprop_custom_assign_add(self):
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.op = CustomAssign()
 
     def construct(self, x, y):
@@ -57,7 +59,7 @@ class Net(nn.Cell):
 
 class GradNet(nn.Cell):
     def __init__(self, net):
-        super(GradNet, self).__init__()
+        super().__init__()
         self.net = net
         self.grad_op = ops.GradOperation(get_all=True)
 
@@ -83,7 +85,7 @@ def find_newest_validateir_file(folder_path):
 
 def read_file(save_path):
     filename = find_newest_validateir_file(save_path)
-    with open((os.path.join(filename)), 'r') as f:
+    with open((os.path.join(filename)), 'r', encoding='utf-8') as f:
         content = f.read()
     clean_all_ir_files(save_path)
     return content
@@ -98,8 +100,8 @@ def test_side_effect_bprop():
     save_path = "./test_side_effect_bprop"
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path=save_path)
 
-    x = Parameter(Tensor(1, dtype=ms.int32), name='para')
-    y = ms.Tensor(2, dtype=ms.int32)
+    x = Parameter(Tensor(1, dtype=ms.float32), name='para')
+    y = ms.Tensor(2, dtype=ms.float32)
     out = GradNet(Net())(x, y)
     print("out:", out)
 

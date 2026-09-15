@@ -95,7 +95,8 @@ def test_initial_scalar_body_tensor1():
     test_net(input_me_x, input_me_a, input_me_b)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', mem_peak=4.00)
 def test_fallback_assign_validation():
     """
     Feature: Support augassign inplace fallback with different input types
@@ -198,7 +199,7 @@ def test_grad_validation():
         x *= y
         return x, y
 
-    x = Tensor(1)
+    x = Tensor(1.)
     y = -2.5
     grad(foo)(x, y)
 

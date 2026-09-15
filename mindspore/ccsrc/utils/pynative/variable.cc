@@ -52,6 +52,20 @@ bool IsOutputPlaceHolder(const ValuePtr &output) {
 }
 
 thread_local AutoDiffInterfacePtr local_auto_diff_engine{nullptr};
+
+inline bool IsFloatType(TypeId type_id) {
+  return type_id == TypeId::kNumberTypeFloat || type_id == TypeId::kNumberTypeFloat16 ||
+         type_id == TypeId::kNumberTypeFloat32 || type_id == TypeId::kNumberTypeFloat64 ||
+         type_id == TypeId::kNumberTypeBFloat16 || type_id == TypeId::kNumberTypeFloat8E4M3FN ||
+         type_id == TypeId::kNumberTypeFloat8E5M2 || type_id == TypeId::kNumberTypeHiFloat8 ||
+         type_id == TypeId::kNumberTypeDouble;
+}
+
+inline bool IsComplexType(TypeId type_id) {
+  return type_id == TypeId::kNumberTypeComplex || type_id == TypeId::kNumberTypeComplex64 ||
+         type_id == TypeId::kNumberTypeComplex128;
+}
+
 }  // namespace
 
 ValuePtr SavedNode::Unwrap(BackwardNodePtr grad_node, bool only_tensor) {
@@ -222,6 +236,11 @@ AutoDiffGuard::~AutoDiffGuard() {
 namespace impl {
 void SetTensorGradMetaData(const TensorPtr &tensor, const BackwardNodePtr &grad_node, size_t index) {
   MS_EXCEPTION_IF_NULL(tensor);
+  if (!autograd::impl::IsDifferentiable(tensor->Dtype()->type_id())) {
+    (void)grad_node->mutable_metadata().emplace_back();
+    MS_LOG(DEBUG) << "For op " << grad_node->name() << ", which scalar type is " << tensor->Dtype();
+    return;
+  }
   auto auto_grad_meta_data = tensor->auto_grad_meta_data();
   if (auto_grad_meta_data == nullptr) {
     MS_LOG(DEBUG) << "Tensor " << tensor->id() << " has no auto_grad_meta_data";
@@ -292,5 +311,6 @@ AutoDiffInterfacePtr CurrentAutoDiffEngine() { return local_auto_diff_engine; }
 
 void SetCurrentAutoDiffEngine(const AutoDiffInterfacePtr &auto_diff) { local_auto_diff_engine = auto_diff; }
 
+bool IsDifferentiable(TypeId type_id) { return IsFloatType(type_id) || IsComplexType(type_id); }
 }  // namespace impl
 }  // namespace mindspore::pynative::autograd

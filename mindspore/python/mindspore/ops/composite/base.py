@@ -153,6 +153,13 @@ def _pynative_func_grad_backward(fn, grad_op, weights, grad_position, has_aux, *
     return out
 
 
+def _is_differentiable_type(dtype):
+    """check dtype is differentiable"""
+    if dtype in (mstype.float_type + mstype.complex_type):
+        return True
+    return False
+
+
 class GradOperation(GradOperation_):
     """
     A higher-order function which is used to generate the gradient function for the input function.
@@ -253,6 +260,7 @@ class GradOperation(GradOperation_):
             If the `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
             through the positional parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
+        get_by_position(bool): Whether get the gradients by position array.
 
     Returns:
         The higher-order function which takes a function as argument and returns gradient function for it.
@@ -374,7 +382,7 @@ class GradOperation(GradOperation_):
          [ 1.29020004e+01]),))
     """
 
-    def __init__(self, get_all=False, get_by_list=False, sens_param=False):
+    def __init__(self, get_all=False, get_by_list=False, sens_param=False, get_by_position=False):
         """Initialize GradOperation."""
         if not isinstance(get_all, bool):
             raise TypeError(f"For 'GradOperation', the 'get_all' should be bool, but got {type(get_all).__name__}")
@@ -384,24 +392,29 @@ class GradOperation(GradOperation_):
         if not isinstance(sens_param, bool):
             raise TypeError(f"For 'GradOperation', the 'sens_param' should be bool, "
                             f"but got {type(sens_param).__name__}")
+        if not isinstance(get_by_position, bool):
+            raise TypeError(f"For 'GradOperation', the 'sens_param' should be bool, "
+                            f"but got {type(get_by_position).__name__}")
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False, False, False, False, False)
+        self.get_by_position = get_by_position
+        GradOperation_.__init__(
+            self, 'grad', get_all, get_by_list, sens_param, get_by_position, False, False, False, False)
         self.grad_fn = None
         self.fn = None
         self.weights_id = None
         self.pynative_ = False
         self.grad_position = (0,)
 
-    def __call__(self, fn, weights=None):
+    def __call__(self, fn, weights=None, grad_position=(0,)):
         weights_id = ''
         mode = context._get_mode()
         if mode == context.GRAPH_MODE:
             weights_id = _get_grad_weights_id(weights)
             if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
                 return self.grad_fn
-        grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
+        grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param, self.get_by_position)
         # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
@@ -410,7 +423,11 @@ class GradOperation(GradOperation_):
         if mode == context.GRAPH_MODE:
             if isinstance(fn, ms.nn.Cell):
                 fn.grad_ops_label = True
-            if self.get_by_list:
+            if self.get_by_position:
+                @jit
+                def after_grad(*args):
+                    return grad_(fn, weights, grad_position)(*args)
+            elif self.get_by_list:
                 @jit
                 def after_grad(*args, **kwargs):
                     return grad_(fn, weights)(*args, **kwargs)
@@ -425,7 +442,7 @@ class GradOperation(GradOperation_):
             @_wrap_func
             def after_grad(*args, **kwargs):
                 run_args, _ = _pynative_forward_run(fn, self.sens_param, *args, **kwargs)
-                out = _pynative_func_grad_backward(fn, grad_, weights, self.grad_position, False, *run_args)
+                out = _pynative_func_grad_backward(fn, grad_, weights, grad_position, False, *run_args)
                 return out
         else:
             MSContext.get_instance()._set_not_convert_jit(True)
@@ -433,7 +450,10 @@ class GradOperation(GradOperation_):
             if not _pynative_executor.enable_grad():
                 raise RuntimeError("In no_grad context, you can not calculate gradient")
             # after_grad of this branch can't use @jit, just directly call grad_
-            if self.get_by_list:
+            if self.get_by_position:
+                def after_grad(*args, **kwargs):
+                    return grad_(fn, weights, grad_position)(*args, **kwargs)
+            elif self.get_by_list:
                 def after_grad(*args, **kwargs):
                     return grad_(fn, weights)(*args, **kwargs)
             else:
@@ -443,6 +463,7 @@ class GradOperation(GradOperation_):
         if mode == context.GRAPH_MODE:
             self.grad_fn = after_grad
             self.fn = fn
+            self.grad_position = grad_position
             self.weights_id = weights_id
             return self.grad_fn
         return after_grad

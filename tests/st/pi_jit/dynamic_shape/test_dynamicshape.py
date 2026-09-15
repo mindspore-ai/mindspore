@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=line-too-long,unused-variable,superfluous-parens
 """run dynamic shape test"""
 import pytest
 import numpy as np
@@ -353,10 +354,10 @@ def test_dynamic_shape_scale_dtype_variation():
 
         match_array(jit_output, pynative_output)
 
-        sens = Tensor(np.random.randn(*pynative_output.shape).astype(np.float32))
-        pynative_grad = _compute_grad_of_net_inputs(pynative_net, x)
-        jit_grad = _compute_grad_of_net_inputs(jit_net, x)
-        assert_equal(jit_grad, pynative_grad, decimal=5)
+        if dtype != ms.int32:
+            pynative_grad = _compute_grad_of_net_inputs(pynative_net, x)
+            jit_grad = _compute_grad_of_net_inputs(jit_net, x)
+            assert_equal(jit_grad, pynative_grad, decimal=5)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
