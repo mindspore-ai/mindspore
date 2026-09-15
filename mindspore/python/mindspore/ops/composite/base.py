@@ -260,7 +260,7 @@ class GradOperation(GradOperation_):
             If the `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
             through the positional parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
-        get_by_position(bool): Whether get the gradients by position array.
+        get_by_position (bool): Whether to get the gradients by position array. Default: ``False`` .
 
     Returns:
         The higher-order function which takes a function as argument and returns gradient function for it.
@@ -393,7 +393,7 @@ class GradOperation(GradOperation_):
             raise TypeError(f"For 'GradOperation', the 'sens_param' should be bool, "
                             f"but got {type(sens_param).__name__}")
         if not isinstance(get_by_position, bool):
-            raise TypeError(f"For 'GradOperation', the 'sens_param' should be bool, "
+            raise TypeError(f"For 'GradOperation', the 'get_by_position' should be bool, "
                             f"but got {type(get_by_position).__name__}")
         self.get_all = get_all
         self.get_by_list = get_by_list
