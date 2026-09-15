@@ -79,6 +79,19 @@ else()
             PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2025-9951.patch
             PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-30997.patch
             PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-40962.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-64833.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-64834.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-64835.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-65703.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-65704.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-66038.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-66039.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-70628.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-70629.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-70630.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-70631.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-70632.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2026-75146.patch
             CONFIGURE_COMMAND ./configure ${FFMPEG_FLAGS}
             )
 
