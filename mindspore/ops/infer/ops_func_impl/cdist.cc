@@ -52,7 +52,7 @@ ShapeArray CdistFuncImpl::InferShape(const PrimitivePtr &primitive, const InferI
                              << ", rank of input_y: " << y_size << ".";
   }
   if (batch_rank == 0) {
-    CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "CdistGrad");
+    CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, prim_name);
   }
   if (x_size < kCdistInputDimsMin) {
     MS_EXCEPTION(ValueError) << "For Primitive[" << prim_name << "], rank of input must be greater than "
