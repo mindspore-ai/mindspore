@@ -72,7 +72,7 @@ void RegEvent(py::module *m) {
     .def("synchronize", &EventPy::Synchronize)
     .def("wait", &Event::Wait)
     .def("record", &Event::Record)
-    .def("elapsed_time", &Event::ElapsedTime)
+    .def("elapsed_time", &EventPy::ElapsedTime)
     .def("__repr__", &EventPy::ToStringRepr);
 }
 
