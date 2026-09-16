@@ -113,6 +113,7 @@
 "mindspore/mindspore/ops/view/chunk_strides_calc.cc"                                  "zerodivcond"
 "mindspore/mindspore/ccsrc/pynative/utils/pyboost/pyboost_utils.cc"                                  "useStlAlgorithm"
 "mindspore/mindspore/ops/kernel/ascend/aclnn/pyboost_impl/customize/concat.cc"                       "containerOutOfBounds"
+"mindspore/mindspore/ops/kernel/ascend/aclnn/pyboost_impl/customize/index.cc"                        "containerOutOfBounds"
 "mindspore/mindspore/ops/kernel/ascend/dvm/kernel_mod_impl/dvm_kernel_build.cc"        "knownConditionTrueFalse"
 "mindspore/mindspore/ops/view/split_strides_calc.cc"                                                 "zerodivcond"
 

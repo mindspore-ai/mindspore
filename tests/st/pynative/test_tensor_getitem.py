@@ -146,6 +146,58 @@ def test_step_negative():
     assert "slice step must be positive" in str(ex.value)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+def test_index_with_too_many_expanded_indices():
+    """
+    Feature: Test the index op with more mask dimensions than the input rank.
+    Description: A bool or uint8 mask consumes as many dimensions as its rank, so a rank 2 mask followed by a
+        rank 1 mask already covers three dimensions of a rank 2 tensor. The op must report the invalid index
+        count instead of reading the input shape out of bounds.
+    Expectation: ValueError is raised and mentions the dimension of the input.
+    """
+    input_np = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
+    input_ms = Tensor(input_np)
+    with pytest.raises(ValueError) as ex:
+        input_ms.index((Tensor(np.ones((2, 3), dtype=np.bool_)), Tensor(np.ones((3,), dtype=np.bool_))))
+        _pynative_executor.sync()
+    assert "too many indices for tensor of dimension 2" in str(ex.value)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+def test_index_with_zero_dim_bool_index():
+    """
+    Feature: Test the index op with a 0-dim bool index.
+    Description: A 0-dim mask cannot be expanded to integer coordinates, so it is reported explicitly.
+    Expectation: ValueError is raised instead of silently dropping the index.
+    """
+    input_np = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
+    input_ms = Tensor(input_np)
+    with pytest.raises(ValueError) as ex:
+        input_ms.index((Tensor(True),))
+        _pynative_executor.sync()
+    assert "0-dim bool or uint8 index is not supported" in str(ex.value)
+
+    with pytest.raises(ValueError) as ex:
+        input_ms.index((Tensor(True), Tensor(False)))
+        _pynative_executor.sync()
+    assert "0-dim bool or uint8 index is not supported" in str(ex.value)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+def test_index_with_zero_dim_index_and_mask():
+    """
+    Feature: Test the index op that mixes a 0-dim index with a mask.
+    Description: A 0-dim mask consumes no dimension of the input, so it is ignored and the remaining mask selects
+        the elements.
+    Expectation: The elements selected by the mask are returned.
+    """
+    input_np = np.arange(2 * 3, dtype=np.float32).reshape(2, 3)
+    input_ms = Tensor(input_np)
+    output = input_ms.index((Tensor(True), Tensor(np.ones((2, 3), dtype=np.bool_))))
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output.asnumpy(), np.arange(2 * 3, dtype=np.float32))
+
+
 class TensorGetItemByThreeTensors(Cell):
     def __init__(self):
         super().__init__()
