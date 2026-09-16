@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,line-too-long
 """ test outermost net pass non_tensor inputs"""
 import numpy as np
 import pytest
@@ -178,9 +179,9 @@ def test_grad_parameter_input(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
+    x = Parameter(Tensor(np.array([[1, 2], [3, 4]], np.float32)), name='input_x')
+    y = Parameter(Tensor(np.array([[7, 8], [9, 0]], np.float32)), name='input_y')
+    z = Tensor(np.array([[7, 8], [9, 0]], np.float32))
     a = GradCell(TestCell(x))(y)
     b = GradCell(TestCell(x))(z)
     print(f'a: {a}')
@@ -199,9 +200,9 @@ def test_grad_parameter_as_input_and_fv(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
+    x = Parameter(Tensor(np.array([[1, 2], [3, 4]], np.float32)), name='input_x')
+    y = Parameter(Tensor(np.array([[7, 8], [9, 0]], np.float32)), name='input_y')
+    z = Tensor(np.array([[7, 8], [9, 0]], np.float32))
     a = GradCellWithParameter(TestCell(x))(y)
     b = GradCellWithParameter(TestCell(x))(z)
     print(f'a: {a}')
@@ -221,8 +222,8 @@ def test_grad_same_parameter_both_input_and_fv(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Tensor(np.array([[1, 2], [3, 4]]))
+    x = Parameter(Tensor(np.array([[1, 2], [3, 4]], np.float32)), name='input_x')
+    y = Tensor(np.array([[1, 2], [3, 4]], np.float32))
     a = GradCellWithParameter(TestCell(x))(x)
     b = GradCellWithParameter(TestCell(x))(y)
     print(f'a: {a}')
@@ -249,7 +250,7 @@ def test_same_arg_parameter_assign(mode):
 class TestCell2(nn.Cell):
     def __init__(self, param1, param2):
         super().__init__()
-        self.a = Tensor(np.array([[1, 2], [3, 4]]))
+        self.a = Tensor(np.array([[1, 2], [3, 4]], np.float32))
         self.param1 = param1
         self.param2 = param2
 
@@ -279,10 +280,10 @@ def test_grad_parameter_as_input_and_fv2(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
+    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]], np.float32)), name='input_x1')
+    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]], np.float32)), name='input_x2')
+    y = Parameter(Tensor(np.array([[7, 8], [9, 0]], np.float32)), name='input_y')
+    z = Tensor(np.array([[7, 8], [9, 0]], np.float32))
     a = GradCellWithParameterTuple(TestCell2(x1, x2))(y)
     b = GradCellWithParameterTuple(TestCell2(x1, x2))(z)
     print(f'a: {a}')
@@ -336,7 +337,7 @@ def test_cell_mixed_arguments_with_grad():
 
     context.set_context(mode=context.GRAPH_MODE)
     grad_net = GNet(FNet())
-    assert grad_net(Tensor([1]), Tensor([2]), Tensor([3]), d=Tensor([4]), e=Tensor([5])).asnumpy() == [1]
+    assert grad_net(Tensor([1.]), Tensor([2.]), Tensor([3.]), d=Tensor([4.]), e=Tensor([5.])).asnumpy() == [1]
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')

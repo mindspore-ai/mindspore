@@ -11,17 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" test_auto_parallel_onehot.py """
 
 import numpy as np
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -35,12 +35,10 @@ def setup_function():
 
 context.set_context(mode=context.GRAPH_MODE)
 
-grad_all = C.GradOperation(get_all=True)
-
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
-        super(Dataset, self).__init__(size=length)
+        super().__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0
@@ -61,7 +59,7 @@ class Dataset(MindData):
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -71,12 +69,13 @@ class NetWithLoss(nn.Cell):
 
 
 class GradWrap(nn.Cell):
-    def __init__(self, network):
-        super(GradWrap, self).__init__()
+    def __init__(self, network, grad_position):
+        super().__init__()
         self.network = network
+        self.grad = ms.grad(network, grad_position=grad_position)
 
     def construct(self, x, y, b):
-        return grad_all(self.network)(x, y, b)
+        return self.grad(x, y, b)
 
 
 def test_auto_parallel_arithmetic():
@@ -102,7 +101,7 @@ def test_auto_parallel_arithmetic():
             return out2
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    net = GradWrap(NetWithLoss(Net()))
+    net = GradWrap(NetWithLoss(Net()), (0, 1))
     context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="sharding_propagation")
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)

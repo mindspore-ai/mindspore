@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 
 import numpy as np
 from tests.mark_utils import arg_mark
@@ -117,9 +118,9 @@ def test_nested_10_layer():
         out = ops.ReLU()(out)
         return out
 
-    x = Tensor(2, mstype.int32)
-    y = Tensor(4, mstype.int32)
-    z = Tensor(np.random.randn(4, 4, 4), mstype.int32)
+    x = Tensor(2, mstype.float32)
+    y = Tensor(4, mstype.float32)
+    z = Tensor(np.random.randn(4, 4, 4), mstype.float32)
     out_jit = jit(func)(x, y, z)
     out_expect = func(x, y, z)
     assert np.all(out_jit.asnumpy() == out_expect.asnumpy())

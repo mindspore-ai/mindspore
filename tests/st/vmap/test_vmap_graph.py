@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments
 """test vmap in graph mode"""
 import platform
 import numpy as np
@@ -353,8 +354,8 @@ def test_vmap_with_tuple_input():
         return wrapped
 
     shape = (2, 3)
-    a = F.ones(shape, mstype.int32)
-    b = F.ones(shape, mstype.int32) * 2
+    a = F.ones(shape, mstype.float32)
+    b = F.ones(shape, mstype.float32) * 2
     res = foo(real_fn)(a, b)
 
     assert isinstance(res, tuple)

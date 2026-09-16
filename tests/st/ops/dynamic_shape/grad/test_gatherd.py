@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore
@@ -44,7 +45,7 @@ def test_gatherd_dynamic_shape():
                          [923, 210, 480, 696, 482, 761],
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
-                         [122, 676, 714, 261, 19, 936]]), mindspore.int32)
+                         [122, 676, 714, 261, 19, 936]]), mindspore.float32)
     dim = 0
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],
@@ -68,7 +69,7 @@ def test_gatherd_dynamic_rank():
                          [923, 210, 480, 696, 482, 761],
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
-                         [122, 676, 714, 261, 19, 936]]), mindspore.int64)
+                         [122, 676, 714, 261, 19, 936]]), mindspore.float32)
     dim = 1
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],
@@ -92,7 +93,7 @@ def test_gatherd_int_dim_dynamic_rank():
                          [923, 210, 480, 696, 482, 761],
                          [465, 904, 521, 824, 607, 669],
                          [156, 539, 56, 159, 916, 566],
-                         [122, 676, 714, 261, 19, 936]]), mindspore.int64)
+                         [122, 676, 714, 261, 19, 936]]), mindspore.float32)
     dim = 1
     index = Tensor(np.array([[0, 1, 0, 1, 0, -4],
                              [0, 2, 0, 2, 0, -3],

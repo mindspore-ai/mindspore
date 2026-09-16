@@ -725,12 +725,12 @@ def test_pynative_hook_diff_hook():
     ms_net.conv.register_backward_hook(ms_net.ms_record_hook)
     ms_net.relu.register_backward_hook(ms_net.ms_change_grad_double_hook)
     input_ms = Tensor(input_np)
-    out_ms = ms_net(input_ms, Tensor(1))
-    assert_jit_net(ms_net, out_ms, input_ms, Tensor(1))
+    out_ms = ms_net(input_ms, Tensor(1.))
+    assert_jit_net(ms_net, out_ms, input_ms, Tensor(1.))
     grad_net = GradOfAllInputs(ms_net)
     grad_net.set_train()
-    grad = grad_net(input_ms, Tensor(1), out_ms)
-    assert_jit_grad_net_by_grad_of_all_inputs(ms_net, grad, input_ms, Tensor(1), out_ms)
+    grad = grad_net(input_ms, Tensor(1.), out_ms)
+    assert_jit_grad_net_by_grad_of_all_inputs(ms_net, grad, input_ms, Tensor(1.), out_ms)
 
 
 def test_pynative_hook_outermost_cell_not_change_grad():

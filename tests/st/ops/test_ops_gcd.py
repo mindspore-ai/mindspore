@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test ops gcd operations."""
+
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops, context, Tensor
-from mindspore.graph.api import _pynative_executor
 
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
@@ -27,11 +28,6 @@ from tests.st.ops.test_tools.ops_binary_cases import ops_binary_cases, OpsBinary
 @test_utils.run_with_cell
 def gcd_forward_func(x1, x2):
     return ops.gcd(x1, x2)
-
-
-@test_utils.run_with_cell
-def gcd_backward_func(x1, x2):
-    return ms.grad(gcd_forward_func, (0, 1))(x1, x2)
 
 
 def generate_random_input(shape, dtype):
@@ -72,10 +68,6 @@ def ops_gcd_binary_compare(input_binary_data, output_binary_data, loss, mode):
 
     output = gcd_forward_func(input_x, other)
     allclose_nparray(output.asnumpy(), output_binary_data[0], loss, loss)
-
-    with pytest.raises(RuntimeError):
-        gcd_backward_func(input_x, other)
-        _pynative_executor.sync()
 
 
 @ops_binary_cases(
@@ -123,9 +115,6 @@ def test_gcd_normal_cpu(mode):
     expect_out = np.array([7, 2, 3])
     out = gcd_forward_func(x1, x2)
     assert np.allclose(out.asnumpy(), expect_out)
-    with pytest.raises(RuntimeError):
-        gcd_backward_func(x1, x2)
-        _pynative_executor.sync()
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu", "cpu_linux"],

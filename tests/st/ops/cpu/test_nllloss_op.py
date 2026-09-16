@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments
 """test NLLLoss forward and backward"""
 
 from tests.mark_utils import arg_mark
@@ -41,11 +42,11 @@ class NLLLossGrad(nn.Cell):
     def __init__(self, forward, sens):
         super(NLLLossGrad, self).__init__()
         self.forward = forward
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_position=True, sens_param=True)
         self.sens = sens
 
     def construct(self, x, t, w):
-        return self.grad(self.forward)(x, t, w, self.sens)
+        return self.grad(self.forward, None, (0, 2))(x, t, w, self.sens)
 
 
 np_type = np.float32

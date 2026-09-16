@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 from mindspore import nn
 from mindspore.ops import operations as P
 from mindspore import Tensor
@@ -43,7 +43,7 @@ def test_dynamic_shape_index_fill():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     dim_type = np.int64
-    data_type = np.int32
+    data_type = np.float32
     dim = Tensor(np.array(1, dtype=dim_type))
     value = Tensor(np.array(-10, dtype=data_type))
     x_np = np.random.random(size=(5, 5, 5)).astype(data_type)
@@ -63,7 +63,7 @@ def test_dynamic_rank_index_fill():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     dim_type = np.int64
-    data_type = np.int32
+    data_type = np.float32
     dim = Tensor(np.array(1, dtype=dim_type))
     value = Tensor(np.array(-10, dtype=data_type))
     x_np = np.random.random(size=(5, 5, 5)).astype(data_type)

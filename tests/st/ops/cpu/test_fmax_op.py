@@ -60,8 +60,9 @@ def test_fmax_cpu_broadcast_shape(dtype, context_mode):
     y = fmax(x1, x2)
     expect = np.array([[4, 4, 4, 4], [5, 6, 7, 8]]).astype(dtype)
     assert (y.asnumpy() == expect).all()
-    fmax_grad = FmaxGrad(FmaxForward())
-    out_grad = fmax_grad(x1, x2)
-    expect_grad = np.array([[0, 0, 0, 1],
-                            [1, 1, 1, 1]]).astype(dtype)
-    assert np.allclose(out_grad[0].asnumpy(), expect_grad)
+    if np.issubdtype(dtype, np.inexact):
+        fmax_grad = FmaxGrad(FmaxForward())
+        out_grad = fmax_grad(x1, x2)
+        expect_grad = np.array([[0, 0, 0, 1],
+                                [1, 1, 1, 1]]).astype(dtype)
+        assert np.allclose(out_grad[0].asnumpy(), expect_grad)

@@ -1,9 +1,11 @@
+# pylint: disable=missing-module-docstring
 import time
 import stat
 import os
 from mindspore.nn import Cell
 from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
+from mindspore.ops.composite.base import _is_differentiable_type
 from mindspore.common import ParameterTuple
 
 
@@ -74,6 +76,18 @@ class GradOfAllInputs(_Grad):
                          network=network, real_inputs_count=real_inputs_count)
 
 
+class GradByPositionWithSens(Cell):
+    """Get gradients of differentiable inputs by position."""
+    def __init__(self, network, grad_position):
+        super().__init__()
+        self.network = network
+        self.grad_position = grad_position
+        self.grad = GradOperation(get_by_position=True, sens_param=True)  # pylint: disable=unexpected-keyword-arg
+
+    def construct(self, *inputs):
+        return self.grad(self.network, None, self.grad_position)(*inputs)
+
+
 class GradOfAllParams(_Grad):
     """
     get grads of all params
@@ -110,7 +124,10 @@ class HighGrad(Cell):
 
 
 def compute_grad_of_net_inputs(net: Cell, *inputs, sens: Tensor):
-    grad_op = GradOfFirstInput if len(inputs) == 1 else GradOfAllInputs
-    grad_net = grad_op(net, sens_param=True)
+    grad_position = tuple(
+        index for index, input_value in enumerate(inputs)
+        if isinstance(input_value, Tensor) and _is_differentiable_type(input_value.dtype)
+    )
+    grad_net = GradByPositionWithSens(net, grad_position)
     grad_net.set_train()
     return grad_net(*inputs, sens)

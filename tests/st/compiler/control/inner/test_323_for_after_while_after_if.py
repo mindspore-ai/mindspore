@@ -27,7 +27,7 @@ def test_for_after_while_after_if():
     Description: Nested control flow (for-after-while-after-if) in jit.
     Expectation: Executes correctly and gradients are computable.
     """
-    i = Tensor(16, ms.int32)
+    i = Tensor(16, ms.float32)
 
     def net(x, y):
         if x > y:
@@ -40,18 +40,18 @@ def test_for_after_while_after_if():
             return x - y
         return x
 
-    input_x = Tensor(4, ms.int32)
-    input_y = Tensor(2, ms.int32)
+    input_x = Tensor(4, ms.float32)
+    input_y = Tensor(2, ms.float32)
 
     # input_x > input_y
     res = ms.jit(net)(input_x, input_y)
-    assert res == Tensor(12, ms.int32)
+    assert res == Tensor(12, ms.float32)
     grad_res = ms.jit(ops.GradOperation(get_all=True)(net))(input_x, input_y)
     assert len(grad_res) == 2
 
     # input_x < input_y
-    input_y = Tensor(6, ms.int32)
+    input_y = Tensor(6, ms.float32)
     res = ms.jit(net)(input_x, input_y)
-    assert res == Tensor(4, ms.int32)
+    assert res == Tensor(4, ms.float32)
     grad_res = ms.jit(ops.GradOperation(get_all=True)(net))(input_x, input_y)
     assert len(grad_res) == 2

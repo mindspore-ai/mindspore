@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+""" test_onehot.py """
 import numpy as np
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
@@ -35,7 +35,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3, strategy4, axis):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.one_hot = P.OneHot(axis=axis).shard(strategy3)
         self.on_value = Tensor(2.0, ms.float32)
         self.off_value = Tensor(1.0, ms.float32)
@@ -49,12 +49,14 @@ class NetWithLoss(nn.Cell):
 
 
 class GradWrap(nn.Cell):
-    def __init__(self, network):
-        super(GradWrap, self).__init__()
+    def __init__(self, network, grad_position):
+        super().__init__()
         self.network = network
+        self.grad_position = grad_position
+        self.grad = ms.grad(self.network, grad_position=self.grad_position)
 
     def construct(self, x, y, b):
-        return grad_all(self.network)(x, y, b)
+        return self.grad(x, y, b)
 
 
 class Net(nn.Cell):
@@ -70,7 +72,6 @@ class Net(nn.Cell):
 
 
 def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot_axis=-1):
-    net = GradWrap(_VirtualDatasetCell(NetWithLoss(Net(strategy1, strategy2), strategy3, strategy4, axis=onthot_axis)))
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="sharding_propagation")
     else:
@@ -79,6 +80,8 @@ def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64]), dtype=ms.int32)
+    net = GradWrap(_VirtualDatasetCell(NetWithLoss(Net(strategy1, strategy2), strategy3, strategy4, axis=onthot_axis)),
+                   (0, 1))
     net.set_train()
     _cell_graph_executor.compile(net, x, y, b)
 

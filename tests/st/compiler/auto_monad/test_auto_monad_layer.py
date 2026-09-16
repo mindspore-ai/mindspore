@@ -291,7 +291,9 @@ def test_side_effect_switch_layer_pos_i_nine_layer_func():
     assert np.allclose(goodout.asnumpy(), netout.asnumpy(), 0.001, 0.001)
 
     grad_ys = Tensor([18.0], ms.float32)
-    back_net = GradOfAllInputsAndParams(net)
+    back_net = GradOperation(
+        get_all=False, get_by_list=True, sens_param=True, get_by_position=True)(
+        net, net.trainable_params(), (1,))
     back_out = back_net(i, input_x, grad_ys)
 
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -300,9 +302,9 @@ def test_side_effect_switch_layer_pos_i_nine_layer_func():
     back_net_good = GradOfAllInputsAndParams(func1)
     back_out_good = back_net_good(input_x, grad_ys)
     assert np.allclose(goodout.asnumpy(), netout.asnumpy(), 0.001, 0.001)
-    assert len(back_out[0]) == 2
+    assert len(back_out[0]) == 1
     assert len(back_out[1]) == 12
-    assert np.allclose(back_out[0][1].asnumpy(), back_out_good[0][0].asnumpy(), 0.001, 0.001)
+    assert np.allclose(back_out[0][0].asnumpy(), back_out_good[0][0].asnumpy(), 0.001, 0.001)
     assert np.allclose(back_out[1][0].asnumpy(), back_out_good[1][0].asnumpy(), 0.001, 0.001)
     assert np.allclose(back_out[1][1].asnumpy(), back_out_good[1][1].asnumpy(), 0.001, 0.001)
 

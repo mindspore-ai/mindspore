@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
 
 import numpy as np
-import pytest
 
 from mindspore import ops
 import mindspore as ms
@@ -45,22 +45,6 @@ def test_greater_forward():
     expect_out = np.array([False, True, False])
     out = greater_forward_func(x, y)
     assert np.allclose(out.asnumpy(), expect_out)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
-          level_mark='level1',
-          card_mark='onecard', mem_peak=0.01)
-def test_greater_backward():
-    """
-    Feature: Auto grad.
-    Description: test auto grad of op greater.
-    Expectation: expect correct result.
-    """
-    x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
-    y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
-    expect_out = np.array([0, 0, 0])
-    grads = greater_backward_func(x, y)
-    assert np.allclose(grads.asnumpy(), expect_out)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],

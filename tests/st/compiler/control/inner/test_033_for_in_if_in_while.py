@@ -28,7 +28,7 @@ def test_for_in_if_in_while():
     Expectation: Executes correctly and gradients are computable.
     """
 
-    i = Tensor(16, ms.int32)
+    i = Tensor(16, ms.float32)
 
     def net(x, y):
         while y != i:
@@ -41,11 +41,11 @@ def test_for_in_if_in_while():
             continue
         return x, y
 
-    input_x = Tensor(4, ms.int32)
-    input_y = Tensor(2, ms.int32)
+    input_x = Tensor(4, ms.float32)
+    input_y = Tensor(2, ms.float32)
 
     ret_x, ret_y = ms.jit(net)(input_x, input_y)
-    assert ret_x == Tensor(16, ms.int32)
-    assert ret_y == Tensor(16, ms.int32)
+    assert ret_x == Tensor(16, ms.float32)
+    assert ret_y == Tensor(16, ms.float32)
     grad_res = ms.jit(ops.GradOperation(get_all=True)(net))(input_x, input_y)
     assert len(grad_res) == 2

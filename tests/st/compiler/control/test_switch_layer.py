@@ -18,10 +18,9 @@
 import pytest
 import numpy as np
 from tests.mark_utils import arg_mark
-
 import mindspore as ms
 from mindspore import context
-from mindspore import Tensor, nn, jit
+from mindspore import Tensor, nn, jit, ops
 from mindspore.common import dtype as mstype
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
@@ -119,17 +118,12 @@ def test_cell_in_list():
     """
     context.set_context(mode=context.GRAPH_MODE)
     net = CellInList()
-    t = Tensor(10, mstype.int32)
-    x = Tensor(0, mstype.int32)
-    out = net(t, x)
-
-    t1 = Tensor(10, mstype.int32)
+    t1 = Tensor(10, mstype.float32)
     x1 = Tensor(0, mstype.int32)
-    grad_net = Grad(net)
-    grad_out = grad_net(t1, x1)
-
-    assert out == Tensor(160, mstype.int32)
-    assert grad_out == Tensor(16, mstype.int32)
+    grad_net = ms.value_and_grad(net, grad_position=(0,))
+    out, grad_out = grad_net(t1, x1)
+    assert np.allclose(out.asnumpy(), Tensor(160, mstype.float32))
+    assert np.allclose(grad_out.asnumpy(), Tensor(16, mstype.float32))
 
 
 class TwoLayerReLU(nn.Cell):
@@ -346,7 +340,6 @@ def test_switch_layer_bprop():
     net = BpropNet(funcs)
     x = Tensor(np.ones([2, 2]).astype(np.float32))
     i = Tensor(1, mstype.int32)
-    grad_net = Grad(net, True)
-    out_grad = grad_net(i, x)
+    out_grad = ops.grad(net, grad_position=1)(i, x)
     expect_grad = TwoLayerReLU()(x)
-    np.allclose(out_grad[1].asnumpy(), expect_grad.asnumpy(), 0.001, 0.001)
+    np.allclose(out_grad.asnumpy(), expect_grad.asnumpy(), 0.001, 0.001)

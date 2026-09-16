@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 
 import numpy as np
 import mindspore.context as context
@@ -69,8 +70,7 @@ def test_broadcast_grad_cpu_type():
     input_y = np.arange(88, 2 * 3 * 2 + 88).reshape((2, 3, 2))
     input_dout = np.maximum(input_x, input_y)
     net = MaxmumGradNet()
-    dtypes = (np.int16, np.int32, np.int64, np.float16,
-              np.float32, np.float64, np.uint16, np.uint32)
+    dtypes = (np.float16, np.float32, np.float64)
     for dtype in dtypes:
         result = net(Tensor(input_x.astype(dtype)), Tensor(input_y.astype(dtype)),
                      Tensor(input_dout.astype(dtype)))

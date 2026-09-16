@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring,super-with-arguments
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 import mindspore.context as context
@@ -41,11 +41,11 @@ class GradNet(nn.Cell):
 
     def __init__(self, network):
         super(GradNet, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_position=True, sens_param=True)
         self.network = network
 
     def construct(self, indices, values, sparse_shape, sense):
-        return self.grad(self.network)(indices, values, sparse_shape, sense)
+        return self.grad(self.network, None, (1,))(indices, values, sparse_shape, sense)
 
 
 def judge_result_correct(result, expect):
@@ -64,12 +64,6 @@ def sparse_to_dense_int(i_type, v_type):
                                       [0, 0, 0]]).astype(v_type)
     judge_result_correct(forward_output.asnumpy(), expect_forward_output)
 
-    grad_net = GradNet(forward_net)
-    sense = Tensor(np.arange(9).reshape((3, 3)).astype(v_type))
-    grad_output = grad_net(Tensor(indices), Tensor(values), sparse_shape,
-                           sense)
-    expect_grad_output = np.array([1, 5]).astype(v_type)
-    judge_result_correct(grad_output[1].asnumpy(), expect_grad_output)
 
 
 def sparse_to_dense_float(i_type, v_type):
@@ -93,7 +87,7 @@ def sparse_to_dense_float(i_type, v_type):
     grad_output = grad_net(Tensor(indices), Tensor(values), sparse_shape,
                            sense)
     expect_grad_output = np.array([4.8, 25.8, 46.8, 11.8]).astype(v_type)
-    judge_result_correct(grad_output[1].asnumpy(), expect_grad_output)
+    judge_result_correct(grad_output.asnumpy(), expect_grad_output)
 
 
 def sparse_to_dense_1D(i_type, v_type):
@@ -111,7 +105,7 @@ def sparse_to_dense_1D(i_type, v_type):
     grad_output = grad_net(Tensor(indices), Tensor(values), sparse_shape,
                            sense)
     expect_grad_output = np.array([8.8, 2.8, 6.8, 4.8]).astype(v_type)
-    judge_result_correct(grad_output[1].asnumpy(), expect_grad_output)
+    judge_result_correct(grad_output.asnumpy(), expect_grad_output)
 
 
 indices_types = (np.int32, np.int64)

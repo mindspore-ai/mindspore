@@ -72,7 +72,7 @@ def test_non_tensor_inputs(mode):
 class TestCell(nn.Cell):
     def __init__(self, param):
         super().__init__()
-        self.a = Tensor(np.array([[1, 2], [3, 4]]))
+        self.a = Tensor(np.array([[1., 2], [3, 4]]))
         self.param = param
 
     def construct(self, x):
@@ -99,9 +99,9 @@ def test_grad_parameter_input(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
+    x = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x')
+    y = Parameter(Tensor(np.array([[7., 8], [9, 0]])), name='input_y')
+    z = Tensor(np.array([[7., 8], [9, 0]]))
     a = GradCell(TestCell(x))(y)
     b = GradCell(TestCell(x))(z)
     print(f'a: {a}')
@@ -143,10 +143,10 @@ def test_grad_parameter_as_input_and_fv2(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
-    x1 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x1')
-    x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
+    x1 = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x1')
+    x2 = Parameter(Tensor(np.array([[1., 2], [3, 4]])), name='input_x2')
+    y = Parameter(Tensor(np.array([[7., 8], [9, 0]])), name='input_y')
+    z = Tensor(np.array([[7., 8], [9, 0]]))
     a = GradCellWithParameterTuple(TestCell2(x1, x2))(y)
     b = GradCellWithParameterTuple(TestCell2(x1, x2))(z)
     print(f'a: {a}')

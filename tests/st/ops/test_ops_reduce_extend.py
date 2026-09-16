@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=super-with-arguments,missing-module-docstring
 import pytest
 import numpy as np
 import mindspore as ms
@@ -281,9 +282,6 @@ def test_sum_default_dtype(axis, in_dtype, context_mode):
     output = sum_forward_func(Tensor(x), axis, False, None)
     np.testing.assert_equal(output.dtype, mstype.int64)
 
-    x1 = generate_random_input((3, 4, 5), mstype._dtype_to_nptype(in_dtype))  # pylint:disable=protected-access
-    grads = sum_backward_func(Tensor(x1), axis, False, None)
-    np.testing.assert_equal(grads.dtype, in_dtype)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
@@ -453,9 +451,6 @@ def test_prod_default_dtype(axis, in_dtype, context_mode):
     output = ProdNet(axis, None)(Tensor(x), False)
     np.testing.assert_equal(output.dtype, mstype.int64)
 
-    x1 = generate_random_input((3, 4, 5), mstype._dtype_to_nptype(in_dtype))  # pylint:disable=protected-access
-    grads = ProdGradNet(ProdNet(axis, None))(Tensor(x1), False)
-    np.testing.assert_equal(grads.dtype, in_dtype)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
