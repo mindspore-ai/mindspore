@@ -98,7 +98,12 @@ std::unique_ptr<Byte[]> Decrypt(size_t *, const Byte *, size_t, const Byte *, si
 #else
 bool ParseEncryptData(const Byte *encrypt_data, size_t encrypt_len, std::vector<Byte> *iv,
                       std::vector<Byte> *cipher_data) {
-  // encrypt_data is organized in order to iv_len, iv, cipher_len, cipher_data
+  // encrypt_data is organized in order to iv_len, iv, cipher_len, cipher_data; min header = two int32_t fields + iv
+  constexpr size_t min_encrypt_len = 2 * sizeof(int32_t) + AES_BLOCK_SIZE;
+  if (encrypt_len < min_encrypt_len) {
+    MS_LOG(ERROR) << "The encrypt_len must be at least " << min_encrypt_len << ", but got: " << encrypt_len;
+    return false;
+  }
   std::vector<Byte> int_buf(sizeof(int32_t));
   int_buf.assign(encrypt_data, encrypt_data + sizeof(int32_t));
   auto iv_len = ByteToInt(int_buf.data(), int_buf.size());
@@ -593,6 +598,19 @@ bool CheckDecMode(const std::string &dec_mode, unsigned int cipher_flag, const s
   return true;
 }
 
+bool CheckCipherFileSize(size_t file_size, const std::string &file_path) {
+  if (file_size == 0) {
+    MS_LOG(ERROR) << "File '" << file_path << "' is empty and cannot be decrypted.";
+    return false;
+  }
+  if (file_size > MAX_DECRYPT_FILE_SIZE) {
+    MS_LOG(ERROR) << "Size of file '" << file_path << "' is " << file_size << ", exceeds the maximum supported size "
+                  << MAX_DECRYPT_FILE_SIZE << ".";
+    return false;
+  }
+  return true;
+}
+
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
                                 size_t key_len, const std::string &dec_mode, size_t num_threads) {
   if (num_threads <= 1) {
@@ -617,6 +635,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
   size_t file_size = static_cast<size_t>(fid.tellg());
   fid.clear();
   fid.seekg(0);
+  if (!CheckCipherFileSize(file_size, encrypt_data_path)) {
+    return nullptr;
+  }
   *decrypt_len = 0;
   auto decrypt_data = std::make_unique<Byte[]>(file_size);
   std::vector<std::vector<char> > block_bufs;
@@ -697,6 +718,9 @@ std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_
   size_t file_size = static_cast<size_t>(fid.tellg());
   fid.clear();
   fid.seekg(0);
+  if (!CheckCipherFileSize(file_size, encrypt_data_path)) {
+    return nullptr;
+  }
 
   std::vector<char> block_buf(DECRYPT_BLOCK_BUF_SIZE);
   std::vector<char> int_buf(sizeof(int32_t));

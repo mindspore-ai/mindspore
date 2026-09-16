@@ -559,6 +559,50 @@ bool IsPathContained(const std::string &parent, const std::string &child) {
   return IsPathSeparator(parent.back()) || IsPathSeparator(child[parent.size()]);
 }
 
+// Directory entry classification, determined with a single no-follow stat so that the
+// symlink check and the type check cannot be bypassed by a TOCTOU race.
+enum class DirEntryType { kError, kSymlink, kDir, kFile, kOther };
+
+DirEntryType GetDirEntryType(const std::string &path) {
+#ifdef _WIN32
+  DWORD attrs = GetFileAttributesA(path.c_str());
+  if (attrs == INVALID_FILE_ATTRIBUTES) {
+    return DirEntryType::kError;
+  }
+  if ((attrs & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+    return DirEntryType::kSymlink;
+  }
+  if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+    return DirEntryType::kDir;
+  }
+  return DirEntryType::kFile;
+#else
+  struct stat st;
+  if (lstat(path.c_str(), &st) != 0) {
+    return DirEntryType::kError;
+  }
+  if (S_ISLNK(st.st_mode)) {
+    return DirEntryType::kSymlink;
+  }
+  if (S_ISDIR(st.st_mode)) {
+    return DirEntryType::kDir;
+  }
+  if (S_ISREG(st.st_mode)) {
+    return DirEntryType::kFile;
+  }
+  return DirEntryType::kOther;
+#endif
+}
+
+// A TENSORS-type AttributeProto must carry at least one tensor.
+bool CheckAttrHasTensor(const mind_ir::AttributeProto &attr_proto) {
+  if (attr_proto.tensors_size() > 0) {
+    return true;
+  }
+  MS_LOG(ERROR) << "Attr '" << attr_proto.name() << "' is of TENSORS type but contains no tensor.";
+  return false;
+}
+
 class MSANFModelParser {
  public:
   MSANFModelParser() = default;
@@ -709,6 +753,9 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
   auto attr_name = attr_proto.name();
   switch (attr_proto.type()) {
     case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      if (!CheckAttrHasTensor(attr_proto)) {
+        return nullptr;
+      }
       mind_ir::TensorProto tensor_proto = attr_proto.tensors(0);
       return GenerateTensorValue(tensor_proto);
     }
@@ -786,6 +833,10 @@ ValuePtr MSANFModelParser::GenerateFunctorValue(const mind_ir::FunctorProto &fun
       return nullptr;
     }
     auto functor = creator();
+    if (functor_proto.values_size() == 0) {
+      MS_LOG(ERROR) << "Functor '" << name << "' has no value.";
+      return nullptr;
+    }
     auto values = GetValueFromAttributeProto(functor_proto.values(0));
     functor->FromValue(values);
     return functor;
@@ -907,6 +958,9 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
   const mind_ir::AttributeProto &attr_proto) {
   switch (attr_proto.type()) {
     case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      if (!CheckAttrHasTensor(attr_proto)) {
+        return nullptr;
+      }
       const mind_ir::TensorProto &attr_tensor = attr_proto.tensors(0);
       return GetAbsTensorFromTensorProto(attr_tensor);
     }
@@ -1142,6 +1196,9 @@ abstract::AbstractMapTensorPtr MSANFModelParser::BuildAbstractMapTensorFromAttrP
 }
 
 abstract::AbstractScalarPtr MSANFModelParser::BuildAbstractScalar(const mind_ir::AttributeProto &attr_proto) const {
+  if (!CheckAttrHasTensor(attr_proto)) {
+    return nullptr;
+  }
   const mind_ir::TensorProto &attr_tensor = attr_proto.tensors(0);
   auto iter = kDefaultValueSwitchMap.find(attr_tensor.data_type());
   if (iter == kDefaultValueSwitchMap.end()) {
@@ -1613,6 +1670,9 @@ bool MSANFModelParser::ImportMapParametersForGraph(const FuncGraphPtr &outputFun
 
 bool MSANFModelParser::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const mind_ir::AttributeProto &attr_proto) {
   MS_EXCEPTION_IF_NULL(prim);
+  if (!CheckAttrHasTensor(attr_proto)) {
+    return false;
+  }
   const int attr_tensor_type = attr_proto.tensors(0).data_type();
   if (kDefaultValueSwitchMap.find(attr_tensor_type) == kDefaultValueSwitchMap.end()) {
     MS_LOG(ERROR) << "Obtain attr in type-form has not support input type:" << attr_tensor_type;
@@ -1746,6 +1806,9 @@ ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::Attr
 bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
                                                    const mind_ir::AttributeProto &attr_proto) {
   MS_EXCEPTION_IF_NULL(prim);
+  if (!CheckAttrHasTensor(attr_proto)) {
+    return false;
+  }
   const mind_ir::TensorProto attr_tensor = attr_proto.tensors(0);
   auto tensor_info = GenerateTensorPtrFromTensorProto(attr_tensor);
   if (tensor_info == nullptr) {
@@ -1954,6 +2017,9 @@ ValuePtr MSANFModelParser::ObtainValueInDictionaryForm(const mind_ir::AttributeP
     auto &value = values[0];
     switch (value.type()) {
       case mind_ir::AttributeProto_AttributeType_TENSORS: {
+        if (!CheckAttrHasTensor(value)) {
+          return nullptr;
+        }
         const mind_ir::TensorProto &tensor_proto = value.tensors(0);
         if (tensor_proto.has_raw_data()) {
           // For real tensor.
@@ -2014,6 +2080,9 @@ ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributePro
     mind_ir::AttributeProto elem_attr_proto = attr_proto.values(i);
     switch (elem_attr_proto.type()) {
       case mind_ir::AttributeProto_AttributeType_TENSORS: {
+        if (!CheckAttrHasTensor(elem_attr_proto)) {
+          return nullptr;
+        }
         mind_ir::TensorProto tensor_proto = elem_attr_proto.tensors(0);
         if (tensor_proto.has_raw_data()) {
           // For real tensor.
@@ -2086,6 +2155,9 @@ ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributePro
 ValuePtr MSANFModelParser::BuildValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto) {
   switch (attr_proto.type()) {
     case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      if (!CheckAttrHasTensor(attr_proto)) {
+        return nullptr;
+      }
       const auto &tensor_proto = attr_proto.tensors(0);
       if (tensor_proto.has_raw_data()) {
         // For real tensor.
@@ -2168,6 +2240,9 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
   mindspore::HashMap<std::string, ValuePtr> multi_value_map;
   switch (type) {
     case FORM_PARSE_TYPE: {
+      if (!CheckAttrHasTensor(attr_proto)) {
+        return false;
+      }
       (void)ObtainValueNodeInTypeForm(value_node_name, attr_proto.tensors(0));
       break;
     }
@@ -2199,6 +2274,9 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       break;
     }
     case FORM_PARSE_TENSOR: {
+      if (!CheckAttrHasTensor(attr_proto)) {
+        return false;
+      }
       (void)ObtainValueNodeInTensorForm(value_node_name, attr_proto.tensors(0));
       break;
     }
@@ -2245,6 +2323,10 @@ bool MSANFModelParser::BuildValueNodeForFuncGraph(const mind_ir::NodeProto &node
     return false;
   }
   const std::string &value_node_name = node_proto.output(0);
+  if (node_proto.attribute_size() == 0) {
+    MS_LOG(ERROR) << "The value node '" << value_node_name << "' has no attribute.";
+    return false;
+  }
   const mind_ir::AttributeProto &attr_proto = node_proto.attribute(0);
   if (attr_proto.has_ref_attr_name()) {
     return GetAttrValueForValueNode(value_node_name, attr_proto);
@@ -2475,7 +2557,7 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
   CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
     const mind_ir::NodeProto &node_proto = importProto.node(i);
-    if (is_kernel_graph_ && anfnode_build_map_.count(node_proto.output(0)) > 0) {
+    if (is_kernel_graph_ && node_proto.output_size() > 0 && anfnode_build_map_.count(node_proto.output(0)) > 0) {
       continue;
     }
     const std::string &node_type = node_proto.op_type();
@@ -2822,7 +2904,8 @@ bool MSANFModelParser::BuildValueNodes(const mind_ir::ModelProto &model_proto) {
   for (int i = 0; i < proto.node_size(); ++i) {
     const mind_ir::NodeProto &node_proto = proto.node(i);
     if (node_proto.op_type() == kConstantValueNode && !BuildValueNodeForFuncGraph(node_proto)) {
-      MS_LOG(ERROR) << "Build value node failed for " << node_proto.output(0);
+      MS_LOG(ERROR) << "Build value node failed for "
+                    << (node_proto.output_size() > 0 ? node_proto.output(0) : "node index " + std::to_string(i));
       return false;
     }
   }
@@ -2835,7 +2918,8 @@ bool MSANFModelParser::BuildValueNodes(const mind_ir::ModelProto &model_proto) {
     for (int j = 0; j < graph_proto.node_size(); ++j) {
       const mind_ir::NodeProto &node_proto = graph_proto.node(j);
       if (node_proto.op_type() == kConstantValueNode && !BuildValueNodeForFuncGraph(node_proto)) {
-        MS_LOG(WARNING) << "Build value node failed for " << node_proto.output(0);
+        MS_LOG(WARNING) << "Build value node failed for "
+                        << (node_proto.output_size() > 0 ? node_proto.output(0) : "node index " + std::to_string(j));
       }
     }
   }
@@ -3203,24 +3287,25 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files, s
       continue;
     }
     std::string name = dir_in + std::string("/") + std::string(p->d_name);
-    if (IsSymlink(name)) {
+    // One no-follow call classifies the entry; separate IsSymlink() + stat() calls leave
+    // a TOCTOU window where an entry swapped to a symlink in between can pass both checks.
+    auto entry_type = GetDirEntryType(name);
+    if (entry_type == DirEntryType::kSymlink) {
       MS_LOG(WARNING) << "Skip symbolic link in variables directory: " << name;
       continue;
     }
-    struct stat st;
-    ret = stat(name.c_str(), &st);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "stat error, ret is : " << ret;
+    if (entry_type == DirEntryType::kError) {
+      MS_LOG(ERROR) << "stat error, dir: " << name;
       closedir(open_dir);
       return false;
     }
-    if (S_ISDIR(st.st_mode)) {
+    if (entry_type == DirEntryType::kDir) {
       if (!get_all_files(name, files, depth + 1)) {
-        MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
+        MS_LOG(ERROR) << "Get files failed, dir: " << name;
         closedir(open_dir);
         return false;
       }
-    } else if (S_ISREG(st.st_mode)) {
+    } else if (entry_type == DirEntryType::kFile) {
       files->push_back(name);
     }
   }

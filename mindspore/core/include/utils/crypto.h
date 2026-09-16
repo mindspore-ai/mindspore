@@ -49,6 +49,7 @@ struct CryptoInfo {
 constexpr size_t MAX_DEC_THREAD_NUM = 64;            // maximum number of threads can launch during dec
 constexpr size_t MAX_BLOCK_SIZE = 64 * 1024 * 1024;  // Maximum ciphertext segment, units is Byte
 constexpr size_t RESERVED_BYTE_PER_BLOCK = 50;       // Reserved byte per block to save addition info
+constexpr size_t MAX_DECRYPT_FILE_SIZE = 100ULL * 1024 * 1024 * 1024;  // Maximum cipher file size, units is Byte
 constexpr size_t DECRYPT_BLOCK_BUF_SIZE = MAX_BLOCK_SIZE + RESERVED_BYTE_PER_BLOCK;  // maximum length of decrypt block
 constexpr unsigned int GCM_MAGIC_NUM = 0x7F3A5ED8;                                   // Magic number
 constexpr unsigned int CBC_MAGIC_NUM = 0x7F3A5ED9;                                   // Magic number
