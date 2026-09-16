@@ -32,8 +32,8 @@ max_pool_with_mask:
             Default: ``mstype.int64`` . [Disabled in Ascend.]
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float16
-          and float32 in Ascend.
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of float16,
+          float32 and bfloat16 in Ascend.
 
     Outputs:
         Tuple of 2 Tensors, representing the maxpool result and mask are generated.

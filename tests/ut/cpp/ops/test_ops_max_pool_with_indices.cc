@@ -33,7 +33,7 @@ std::vector<GeneralInferParam> prepare_params() {
                       ValuePtrList{CreateScalar<int64_t>(2), CreateScalar<int64_t>(2)}},
        InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(static_cast<int64_t>(kNumberTypeInt64))}})
-    .FeedExpectedOutput({{-1, -1, -1, -1}, {-1, -1, -1, -1}}, {kNumberTypeFloat16, kNumberTypeInt64});
+    .FeedExpectedOutput({{-2}, {-2}}, {kNumberTypeFloat16, kNumberTypeInt64});
 
   generator
     .FeedInputArgs(
@@ -79,6 +79,20 @@ std::vector<GeneralInferParam> prepare_params() {
        InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(true)},
        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(static_cast<int64_t>(kNumberTypeInt64))}})
     .FeedExpectedOutput({{1, 1, 3, 3}, {1, 1, 3, 3}}, {kNumberTypeFloat16, kNumberTypeInt64});
+
+  // 3D (C, H, W) with kernel_size not known at infer time -> fallback branch, rank must stay 3.
+  generator
+    .FeedInputArgs(
+      {InferInfoParam{ShapeVector{3, 8, 8}, kNumberTypeFloat16},
+       InferInfoParam{ShapeVector{}, kNumberTypeInt64, kValueAny},
+       InferInfoParam{ShapeVector{}, kMetaTypeNone, mindspore::kNone},
+       InferInfoParam{ShapeArray{{}, {}}, TypeIdList{kNumberTypeInt64, kNumberTypeInt64},
+                      ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+       InferInfoParam{ShapeArray{{}, {}}, TypeIdList{kNumberTypeInt64, kNumberTypeInt64},
+                      ValuePtrList{CreateScalar<int64_t>(2), CreateScalar<int64_t>(2)}},
+       InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
+       InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(static_cast<int64_t>(kNumberTypeInt64))}})
+    .FeedExpectedOutput({{3, -1, -1}, {3, -1, -1}}, {kNumberTypeFloat16, kNumberTypeInt64});
 
   return generator.Generate();
 }

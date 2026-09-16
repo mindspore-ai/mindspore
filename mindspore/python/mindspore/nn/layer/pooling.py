@@ -643,7 +643,8 @@ class MaxPool2dExt(Cell):
             used to increase the receptive field of the pooling operation. If it is a tuple, it must contain one or two
             integers. Default: ``1`` .
         return_indices (bool): If ``True`` , the function will return both the result of max pooling and the indices of
-            the max elements. Default: ``False`` .
+            the max elements. Default: ``False`` . When it is set to ``True``, the backward does not support
+            bfloat16 in Ascend.
         ceil_mode (bool): If ``True`` , use ceil to compute the output shape instead of floor. Default: ``False`` .
 
     Inputs:

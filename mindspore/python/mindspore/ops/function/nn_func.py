@@ -8809,6 +8809,7 @@ def max_pool2d_ext(input, kernel_size, stride=None, padding=0, dilation=1, ceil_
         dilation (Union[int, tuple[int]], optional): Control the stride of elements in the kernel. Default: ``1`` .
         ceil_mode (bool, optional): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
         return_indices (bool, optional): Whether to output the indices of max value. Default: ``False`` .
+            When it is set to ``True``, the backward does not support bfloat16 in Ascend.
 
     Returns:
         If `return_indices` is ``False`` , returns a Tensor `output`. Otherwise returns a tuple (`output`, `argmax`).
