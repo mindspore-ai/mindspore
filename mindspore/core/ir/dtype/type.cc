@@ -75,6 +75,7 @@ static mindspore::HashMap<TypeId, std::string> g_type_2_lable{{kTypeUnknown, "Un
                                                               {kNumberTypeFloat32, "Float32"},
                                                               {kNumberTypeFloat64, "Float64"},
                                                               {kNumberTypeBFloat16, "BFloat16"},
+                                                              {kNumberTypeFloat8E8M0FNU, "Float8E8M0FNU"},
                                                               {kNumberTypeComplex, "Complex"},
                                                               {kNumberTypeComplex64, "Complex64"},
                                                               {kNumberTypeComplex128, "Complex128"},

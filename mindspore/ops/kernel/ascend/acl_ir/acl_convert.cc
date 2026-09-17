@@ -52,6 +52,7 @@ static const std::map<TypeId, aclDataType> kDataTypeToAclDataTypeTable = {{kNumb
                                                                           {kNumberTypeFloat8E4M3FN, ACL_FLOAT8_E4M3FN},
                                                                           {kNumberTypeFloat8E5M2, ACL_FLOAT8_E5M2},
                                                                           {kNumberTypeHiFloat8, ACL_HIFLOAT8},
+                                                                          {kNumberTypeFloat8E8M0FNU, ACL_FLOAT8_E8M0},
                                                                           {kNumberTypeDouble, ACL_DOUBLE},
                                                                           {kNumberTypeComplex, ACL_DT_UNDEFINED},
                                                                           {kNumberTypeComplex64, ACL_COMPLEX64},
@@ -91,6 +92,7 @@ static const std::map<aclDataType, std::string> kAclDatatypeToStr = {
   {ACL_HIFLOAT8, "hifloat8"},
   {ACL_FLOAT8_E5M2, "float8_e5m2"},
   {ACL_FLOAT8_E4M3FN, "float8_e4m3fn"},
+  {ACL_FLOAT8_E8M0, "float8_e8m0fnu"},
 };
 
 static const std::map<aclFormat, std::string> kAclFormatToStr = {
@@ -981,7 +983,7 @@ aclDataType AclConverter::ConvertType(TypeId type) {
   if (type == kObjectTypeString) {
     return ACL_STRING;
   }
-  if (type <= kNumberTypeBegin || type >= kNumberTypeEnd) {
+  if (!IsNumberTypeId(type)) {
     MS_LOG(EXCEPTION) << "Invalid datatype:" << type;
   }
   auto iter = kDataTypeToAclDataTypeTable.find(type);
