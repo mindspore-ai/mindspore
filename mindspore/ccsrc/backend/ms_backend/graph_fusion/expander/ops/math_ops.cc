@@ -19,7 +19,6 @@
 #include "backend/ms_backend/graph_fusion/expander/base/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "include/op_enum.h"
-#include "ops_utils/op_utils.h"
 #include "utils/value_utils.h"
 
 namespace mindspore::graphkernel::expander {
@@ -460,26 +459,20 @@ REG_EXPANDER_FUNC("Muls").SetBody(BODYFUNC(ib) {
   auto scalar = ib->input(kIndex1);
   auto input_type = input->GetDtype();
   auto scalar_type = scalar->GetDtype();
-  if (scalar_type->type_id() == kNumberTypeFloat64) {
-    return {};
-  }
   auto scalar_value = scalar->GetValue();
   if (scalar_value == nullptr || !IsValueKnown(scalar_value)) {
     MS_LOG(DEBUG) << "scalar is not const value and the data type of it is not supported: "
                   << TypeIdToString(scalar_type->type_id());
     return {};
   }
-  auto output_type = ops::PromoteTensorScalarType(input_type->type_id(), scalar_type->type_id());
-  auto dst_type = TypeToLevel(input_type->type_id()) >= TypeToLevel(scalar_type->type_id()) ? input_type : scalar_type;
-  scalar = ib->ScalarToTensor(scalar, dst_type);
-  if (input_type != dst_type) {
-    input = ib->Cast(input, dst_type);
+  if (input_type->type_id() == kNumberTypeBFloat16) {
+    auto fp32 = TypeIdToType(kNumberTypeFloat32);
+    input = ib->Cast(input, fp32);
+    scalar = ib->ScalarToTensor(scalar, fp32);
+    return {ib->Cast(ib->Mul(input, scalar), input_type)};
   }
-  auto result = ib->Mul(input, scalar);
-  if (result->GetDtype()->type_id() != output_type) {
-    result = ib->Cast(result, output_type);
-  }
-  return {result};
+  scalar = ib->ScalarToTensor(scalar, input_type);
+  return {ib->Mul(input, scalar)};
 });
 
 REG_EXPANDER_FUNC("TanhGrad").SetBody(BODYFUNC(ib) {
