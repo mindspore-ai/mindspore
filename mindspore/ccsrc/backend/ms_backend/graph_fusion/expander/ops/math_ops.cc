@@ -22,32 +22,6 @@
 #include "utils/value_utils.h"
 
 namespace mindspore::graphkernel::expander {
-constexpr int typeLevelBool = 0;
-constexpr int typeLevelInt = 1;
-constexpr int typeLevelReducedFloat = 2;
-constexpr int typeLevelFloat = 3;
-constexpr int typeLevelComplex = 4;
-
-static inline int TypeToLevel(TypeId t) {
-  static const std::unordered_map<TypeId, int> type_level_map = {
-    {kNumberTypeBool, typeLevelBool},
-    {kNumberTypeInt8, typeLevelInt},
-    {kNumberTypeInt16, typeLevelInt},
-    {kNumberTypeInt32, typeLevelInt},
-    {kNumberTypeInt64, typeLevelInt},
-    {kNumberTypeUInt8, typeLevelInt},
-    {kNumberTypeUInt16, typeLevelInt},
-    {kNumberTypeUInt32, typeLevelInt},
-    {kNumberTypeUInt64, typeLevelInt},
-    {kNumberTypeFloat16, typeLevelReducedFloat},
-    {kNumberTypeBFloat16, typeLevelReducedFloat},
-    {kNumberTypeFloat32, typeLevelFloat},
-    {kNumberTypeFloat64, typeLevelFloat},
-  };
-  const auto it = type_level_map.find(t);
-  return it != type_level_map.end() ? it->second : typeLevelComplex;
-}
-
 REG_EXPANDER_FUNC("AddN").SetBody(BODYFUNC(ib) {
   if (!CheckAllFormatsSame(ib, FormatDefaultNchwSame)) {
     return {};
