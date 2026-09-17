@@ -169,12 +169,12 @@ class TestScatterFuncGradNet(nn.Cell):
     def __init__(self, network):
         super(TestScatterFuncGradNet, self).__init__()
         self.grad = ops.GradOperation(
-            get_all=True, sens_param=True, get_by_list=True)
+            get_by_position=True, sens_param=True, get_by_list=True)
         self.network = network
         self.params = ParameterTuple(network.trainable_params())
 
     def construct(self, indices, updates, dout):
-        out = self.grad(self.network, self.params)(indices, updates, dout)
+        out = self.grad(self.network, self.params, (1,))(indices, updates, dout)
         return out
 
 
@@ -185,8 +185,6 @@ def scatter_func_grad(nptype):
     updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(nptype))
     dout = Tensor(np.flip(np.arange(0, 12).reshape((3, 4)).astype(nptype)))
 
-    indices_expected = np.array(
-        [[[0, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0]]]).astype(nptype)
     updates_expected = np.array(
         [
             [
@@ -202,17 +200,13 @@ def scatter_func_grad(nptype):
     # scatter_max
     net = TestScatterFuncGradNet(TestScatterFuncNet("max", inputx))
     output = net(indices, updates, dout)
-    indices_grad = output[0][0]
-    updates_grad = output[0][1]
-    np.testing.assert_array_almost_equal(indices_grad, indices_expected)
+    updates_grad = output[0]
     np.testing.assert_array_almost_equal(updates_grad, updates_expected)
 
     # scatter_min
     net = TestScatterFuncGradNet(TestScatterFuncNet("min", inputx))
     output = net(indices, updates, dout)
-    indices_grad = output[0][0]
-    updates_grad = output[0][1]
-    np.testing.assert_array_almost_equal(indices_grad, indices_expected)
+    updates_grad = output[0]
     np.testing.assert_array_almost_equal(updates_grad, updates_expected)
 
     # scatter_update
@@ -220,9 +214,7 @@ def scatter_func_grad(nptype):
         return
     net = TestScatterFuncGradNet(TestScatterFuncNet("update", inputx))
     output = net(indices, updates, dout)
-    indices_grad = output[0][0]
-    updates_grad = output[0][1]
-    np.testing.assert_array_almost_equal(indices_grad, indices_expected)
+    updates_grad = output[0]
     np.testing.assert_array_almost_equal(updates_grad, updates_expected)
 
 
@@ -411,15 +403,13 @@ def test_scatter_func_grad_float32():
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_scatter_func_grad_int32():
-    """
-    Feature: test scatter_func grad.
-    Description: test int32 inputs.
-    Expectation: the result match with numpy result
-    """
+    """Verify that scatter functions reject gradients with int32 data tensors."""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    scatter_func_grad(np.int32)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        scatter_func_grad(np.int32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    scatter_func_grad(np.int32)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        scatter_func_grad(np.int32)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=16.01)

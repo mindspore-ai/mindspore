@@ -29,9 +29,9 @@ class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
         super(ForwardNet, self).__init__()
         self.max_cycles = max_cycles
-        self.i = Tensor(np.array(0), mstype.int32)
-        self.zero = Tensor(np.array(0), mstype.int32)
-        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
+        self.i = Tensor(np.array(0), mstype.float32)
+        self.zero = Tensor(np.array(0), mstype.float32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.float32))
 
     def construct(self, x, y):
         i = self.i
@@ -66,14 +66,14 @@ def test_forward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(3), mstype.int32)
-    y = Tensor(np.array(5), mstype.int32)
+    x = Tensor(np.array(3), mstype.float32)
+    y = Tensor(np.array(5), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNet(max_cycles=3)
     graph_mode_out = graph_forward_net(x, y)
 
-    assert graph_mode_out == (Tensor(np.array(60), mstype.int32), Tensor(np.array(10), mstype.int32))
+    assert graph_mode_out == (Tensor(np.array(60), mstype.float32), Tensor(np.array(10), mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -83,23 +83,23 @@ def test_backward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(3), mstype.int32)
-    y = Tensor(np.array(5), mstype.int32)
+    x = Tensor(np.array(3), mstype.float32)
+    y = Tensor(np.array(5), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNet(max_cycles=3)
     graph_backward_net = BackwardNet(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)
 
-    assert graph_mode_grads == (Tensor(np.array(10), mstype.int32), Tensor(np.array(6), mstype.int32))
+    assert graph_mode_grads == (Tensor(np.array(10), mstype.float32), Tensor(np.array(6), mstype.float32))
 
 class ForwardNetNoAssign(nn.Cell):
     def __init__(self, max_cycles=10):
         super(ForwardNetNoAssign, self).__init__()
         self.max_cycles = max_cycles
-        self.i = Tensor(np.array(0), mstype.int32)
-        self.zero = Tensor(np.array(0), mstype.int32)
-        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
+        self.i = Tensor(np.array(0), mstype.float32)
+        self.zero = Tensor(np.array(0), mstype.float32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.float32))
 
     def construct(self, x, y):
         i = self.i
@@ -130,12 +130,12 @@ def test_backward_no_assign():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(3), mstype.int32)
-    y = Tensor(np.array(5), mstype.int32)
+    x = Tensor(np.array(3), mstype.float32)
+    y = Tensor(np.array(5), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNetNoAssign(max_cycles=3)
     graph_backward_net = BackwardNetNoAssign(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)
 
-    assert graph_mode_grads == (Tensor(np.array(10), mstype.int32), Tensor(np.array(6), mstype.int32))
+    assert graph_mode_grads == (Tensor(np.array(10), mstype.float32), Tensor(np.array(6), mstype.float32))

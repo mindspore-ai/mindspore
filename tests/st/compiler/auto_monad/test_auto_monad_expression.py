@@ -506,8 +506,8 @@ def test_control_while_for_if_break_parameter():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net30()
-    ms_grad = ops.GradOperation(get_all=True, get_by_list=True, sens_param=False)
-    ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))
+    ms_grad = ops.GradOperation(get_by_position=True, get_by_list=True, sens_param=False)
+    ms_grad(net, grad_position=(2,))(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)

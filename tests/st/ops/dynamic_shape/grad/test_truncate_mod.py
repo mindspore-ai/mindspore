@@ -33,15 +33,15 @@ class TruncateModNet(nn.Cell):
 
 def run_dynamic_shape():
     test_dynamic = TestDynamicGrad(TruncateModNet())
-    x = Tensor(np.array([2, 4, -1]), ms.int32)
-    y = Tensor(np.array([3, 3, 3]), ms.int32)
+    x = Tensor(np.array([2., 4., -1.]), ms.float32)
+    y = Tensor(np.array([3., 3., 3.]), ms.float32)
     test_dynamic.test_dynamic_grad_net([x, y])
 
 
 def run_dynamic_rank():
     test_dynamic = TestDynamicGrad(TruncateModNet())
-    x = Tensor(np.array([2, 4, -1]), ms.int32)
-    y = Tensor(np.array([3, 3, 3]), ms.int32)
+    x = Tensor(np.array([2., 4., -1.]), ms.float32)
+    y = Tensor(np.array([3., 3., 3.]), ms.float32)
     test_dynamic.test_dynamic_grad_net([x, y], True)
 
 

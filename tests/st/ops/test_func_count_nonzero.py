@@ -57,12 +57,9 @@ def test_mint_count_nonzero_normal(context_mode):
     """
     set_mode(context_mode)
     x = generate_random_input((2, 3, 4), np.bool_)
-    output = count_nonzero_forward_func(ms.Tensor(x), dim=(1))
-    backward_output = count_nonzero_backward_func(ms.Tensor(x), dim=(1))
+    output = count_nonzero_forward_func(ms.Tensor(x), dim=1)
     assert output.asnumpy().dtype == "int64"
     assert output.asnumpy().shape == (2, 4)
-    assert backward_output.asnumpy().dtype == "bool"
-    assert backward_output.asnumpy().shape == (2, 3, 4)
 
 
 @arg_mark(plat_marks=["platform_ascend"],

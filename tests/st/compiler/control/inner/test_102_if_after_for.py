@@ -65,7 +65,7 @@ def test_if_after_for_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([7], mstype.int32)
+    x = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -77,7 +77,7 @@ def test_if_after_for_01():
     graph_backward_res = net(x)
 
     assert graph_forward_res == Tensor([39], mstype.float32)
-    assert graph_backward_res == (Tensor([13], mstype.int32),)
+    assert graph_backward_res == (Tensor([13], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_gpu',], level_mark='level1', card_mark='onecard')
@@ -95,8 +95,8 @@ def test_if_after_for_02():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(11, mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(11, mstype.float32), name='b')
 
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
@@ -120,7 +120,7 @@ def test_if_after_for_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([7], mstype.int32)
+    x = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -131,5 +131,5 @@ def test_if_after_for_02():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor([195], mstype.int32)
-    assert graph_backward_res == (Tensor([0], mstype.int32),)
+    assert graph_forward_res == Tensor([195], mstype.float32)
+    assert graph_backward_res == (Tensor([0], mstype.float32),)

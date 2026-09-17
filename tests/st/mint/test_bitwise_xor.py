@@ -68,26 +68,10 @@ def test_bitwise_xor_forward_backward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-3)
 
-    x, y, _ = generate_random_input((2, 3, 4, 5), np.int32)
-    expect = np.zeros((2, 3, 4, 5))
-    y2 = 6
-    x = Tensor(x, dtype=ms.int32)
-    y = Tensor(y, dtype=ms.int32)
-    if mode == 'pynative':
-        context.set_context(mode=ms.PYNATIVE_MODE)
-        grad = bitwise_xor_backward_func(x, y)
-        grad2 = bitwise_xor_backward_func(x, y2)
-    elif mode == 'KBK':
-        context.set_context(mode=ms.GRAPH_MODE)
-        grad = (jit(bitwise_xor_backward_func, backend="ms_backend", jit_level="O0"))(x, y)
-        grad2 = (jit(bitwise_xor_backward_func, backend="ms_backend", jit_level="O0"))(x, y2)
-    else:
-        context.set_context(mode=ms.GRAPH_MODE)
-        grad = bitwise_xor_backward_func(x, y)
-        grad2 = bitwise_xor_backward_func(x, y2)
-    assert np.allclose(grad.asnumpy(), expect)
-    assert np.allclose(grad2.asnumpy(), expect)
-
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        bitwise_xor_backward_func(x, y)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        bitwise_xor_backward_func(x, y2)
 
 @pytest.mark.level1
 @pytest.mark.env_onecard

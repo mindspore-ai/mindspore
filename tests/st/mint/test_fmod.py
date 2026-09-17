@@ -73,13 +73,10 @@ def test_fmod_forward_backward(mode):
     np.testing.assert_allclose(grad2[0].asnumpy(), expect_backward_2, rtol=1e-3)
 
     x_i = x.astype(ms.int64)
-    y_f = 3.0
-    output_i = fmod_forward_func(x_i, y_f)
-    grad_i = fmod_backward_func(x_i, y_f)
+    output_i = fmod_forward_func(x_i, y2)
     np.testing.assert_allclose(output_i.asnumpy(), expect2, rtol=1e-3)
-    expect_backward_i = [1, 1, 1]
-    np.testing.assert_allclose(grad_i[0].asnumpy(), expect_backward_i, rtol=1e-3)
-
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        fmod_backward_func(x_i, y2)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
         card_mark='onecard', mem_peak=0.01)

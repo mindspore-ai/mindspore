@@ -79,10 +79,10 @@ def test_single_if():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(13, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32), Tensor(1, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(13, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32), Tensor(1, mstype.float32))
     control_flow_single_if(SingleIfNet, x, y, expect1, expect2)
 
 
@@ -93,10 +93,10 @@ def test_single_if_01():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(26, mstype.int32)
-    expect2 = (Tensor(2, mstype.int32), Tensor(2, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(26, mstype.float32)
+    expect2 = (Tensor(2, mstype.float32), Tensor(2, mstype.float32))
     control_flow_single_if(SingleIfNet1, x, y, expect1, expect2)
 
 
@@ -151,7 +151,7 @@ def test_tensor_bool():
                 out = out + 2 * x
             return out
 
-    x = Tensor([1], mstype.int32)
+    x = Tensor([1], mstype.float32)
     out = Net()(x)
     assert out == 3
 
@@ -163,7 +163,7 @@ def test_single_if_condition():
     Description: Test if condition.
     Expectation: No exception.
     """
-    x = Tensor(1, mstype.int32)
+    x = Tensor(1, mstype.float32)
 
     @jit
     def func(cond):

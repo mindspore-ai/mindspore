@@ -75,8 +75,8 @@ def test_for_after_for_in_while_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([11], mstype.int32)
-    y = Tensor([7], mstype.int32)
+    x = Tensor([11], mstype.float32)
+    y = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -87,8 +87,8 @@ def test_for_after_for_in_while_01():
     graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
-    assert graph_forward_res == Tensor([1], mstype.int32)
-    assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([0], mstype.int32))
+    assert graph_forward_res == Tensor([1], mstype.float32)
+    assert graph_backward_res == (Tensor([0], mstype.float32), Tensor([0], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
@@ -105,9 +105,9 @@ def test_for_after_for_in_while_02():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
-            self.param_c = Parameter(Tensor(-10, mstype.int32), name='c')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(2, mstype.float32), name='b')
+            self.param_c = Parameter(Tensor(-10, mstype.float32), name='c')
 
         def construct(self, x, y):
             while self.param_c > x:
@@ -129,8 +129,8 @@ def test_for_after_for_in_while_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([11], mstype.int32)
-    y = Tensor([7], mstype.int32)
+    x = Tensor([11], mstype.float32)
+    y = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -141,5 +141,5 @@ def test_for_after_for_in_while_02():
     graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
-    assert graph_forward_res == Tensor([-13], mstype.int32)
-    assert graph_backward_res == (Tensor([-1], mstype.int32), Tensor([-1], mstype.int32))
+    assert graph_forward_res == Tensor([-13], mstype.float32)
+    assert graph_backward_res == (Tensor([-1], mstype.float32), Tensor([-1], mstype.float32))

@@ -29,8 +29,8 @@ class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
         super(ForwardNet, self).__init__()
         self.max_cycles = max_cycles
-        self.zero = Tensor(np.array(0), mstype.int32)
-        self.i = Tensor(np.array(0), mstype.int32)
+        self.zero = Tensor(np.array(0), mstype.float32)
+        self.i = Tensor(np.array(0), mstype.float32)
 
     def construct(self, x, y):
         out = self.zero
@@ -62,12 +62,12 @@ def test_forward():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=3)
     graph_out = forward_net(x, y)
 
-    assert graph_out == Tensor(np.array(18), mstype.int32)
+    assert graph_out == Tensor(np.array(18), mstype.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -78,15 +78,15 @@ def test_backward():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=3)
     backward_net = BackwardNet(forward_net)
     graph_grads = backward_net(x, y)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=3)
     backward_net = BackwardNet(forward_net)
     pynative_grads = backward_net(x, y)

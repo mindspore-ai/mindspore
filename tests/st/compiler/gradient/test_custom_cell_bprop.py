@@ -49,8 +49,8 @@ class MulAdd(nn.Cell):
         card_mark='onecard', mem_peak=1024.01)
 def test_grad_mul_add():
     mul_add = MulAdd()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
     assert grad_all(mul_add)(x, y) == (2, 4)
 
 
@@ -68,8 +68,8 @@ class InlineMulADD(nn.Cell):
         card_mark='onecard', mem_peak=1024.01)
 def test_grad_inline_mul_add():
     inline_mul_add = InlineMulADD()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
     assert grad_all(inline_mul_add)(x, y) == (3, 6)
 
 
@@ -104,8 +104,8 @@ class WithNoBprop(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
     assert grad_all(with_no_bprop)(x, y) == (2, 1)
 
 

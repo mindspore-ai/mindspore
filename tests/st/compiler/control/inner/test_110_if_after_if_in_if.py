@@ -26,8 +26,8 @@ grad_all = C.GradOperation(get_all=True)
 class IfAfterIfInIfNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         out = x + self.param_b
@@ -44,8 +44,8 @@ class IfAfterIfInIfNet(nn.Cell):
 class IfAfterIfInIfNet1(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         out = x + self.param_b
@@ -66,8 +66,8 @@ class IfAfterIfInIfNet1(nn.Cell):
 class IfAfterIfInIfNet2(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
         self.tensor_true = Tensor([True])
         self.tensor_false = Tensor([False])
 
@@ -95,8 +95,8 @@ class IfAfterIfInIfNet2(nn.Cell):
 class IfAfterIfInIfNet3(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         out = x + self.param_b
@@ -151,9 +151,9 @@ def test_if_after_if_in_if():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(14, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(14, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet, x, expect1, expect2)
 
 
@@ -164,9 +164,9 @@ def test_if_after_if_in_if_01():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(14, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(14, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet1, x, expect1, expect2)
 
 
@@ -177,9 +177,9 @@ def test_if_after_if_in_if_02():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(12, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(12, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
 
@@ -190,9 +190,9 @@ def test_if_after_if_in_if_02_ascend():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(12, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(12, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
 
@@ -203,7 +203,7 @@ def test_if_after_if_in_if_03():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(6, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(6, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_after_if_in_if(IfAfterIfInIfNet3, x, expect1, expect2)

@@ -29,8 +29,8 @@ class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
         super(ForwardNet, self).__init__()
         self.max_cycles = max_cycles
-        self.zero = Tensor(np.array(0), mstype.int32)
-        self.i = Tensor(np.array(0), mstype.int32)
+        self.zero = Tensor(np.array(0), mstype.float32)
+        self.i = Tensor(np.array(0), mstype.float32)
 
     def construct(self, x, y):
         out = self.zero
@@ -64,11 +64,11 @@ def test_forward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=3)
     out = forward_net(x, y)
-    expect_forward_res = Tensor([36], mstype.int32)
+    expect_forward_res = Tensor([36], mstype.float32)
     assert out == expect_forward_res
 
 
@@ -79,10 +79,10 @@ def test_backward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=3)
     backward_net = BackwardNet(forward_net)
     grads = backward_net(x, y)
-    expect_backward_res = (Tensor([36], mstype.int32), Tensor([12], mstype.int32))
+    expect_backward_res = (Tensor([36], mstype.float32), Tensor([12], mstype.float32))
     assert grads == expect_backward_res

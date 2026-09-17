@@ -871,8 +871,8 @@ def test_get_item_with_string_input_grad():
         a = {'a': x}
         return a[input_str]
 
-    x = Tensor(2)
-    out = ops.grad(dict_net, grad_position=(0, 1))(x, "a")  # pylint: disable=not-callable
+    x = Tensor(2.0)
+    out = ops.grad(dict_net, grad_position=0)(x, "a")  # pylint: disable=not-callable
     assert out == Tensor(1)
 
 
@@ -905,8 +905,8 @@ def test_return_dict_with_string_input_grad():
     def dict_net(x, input_str):
         return {input_str: x}
 
-    x = Tensor(2)
-    out = ops.grad(dict_net, grad_position=(0, 1))(x, "a")  # pylint: disable=not-callable
+    x = Tensor(2.0)
+    out = ops.grad(dict_net, grad_position=0)(x, "a")  # pylint: disable=not-callable
     assert out == Tensor(1)
 
 
@@ -1043,7 +1043,7 @@ def test_pynative_jit_dict_grad_2():
 
     ms.set_context(mode=ms.PYNATIVE_MODE)
     grad = ops.GradOperation()
-    out = grad(dict_net)(ms.Tensor([1]))
+    out = grad(dict_net)(ms.Tensor([1.0]))
     assert out == 1
     ms.set_context(mode=ms.GRAPH_MODE)
 
@@ -1085,7 +1085,7 @@ def test_jitclass_grad():
     ms.set_context(mode=ms.PYNATIVE_MODE)
     ms_net = ModNet()
     x_before = obj.x
-    y = Tensor(16)
+    y = Tensor(16.0)
     ms_out = ms_net(y)
     ms_out2 = ms_net(y)
     ms_grad = GradNet(ms_net)(y)

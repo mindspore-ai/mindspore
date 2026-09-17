@@ -28,6 +28,7 @@ from mindspore.ops import operations as P
 context.set_context(jit_config={"jit_level": "O0"})
 grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
+grad_by_position = C.GradOperation(get_by_position=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -56,7 +57,7 @@ def test_while_grad():
             self.net = net
 
         def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
+            return grad_by_position(self.net, grad_position=(2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
@@ -69,11 +70,8 @@ def test_while_grad():
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
 
-    expect_zero = np.array([0], dtype=np.float32)
     expect_two = input_x
-    assert np.allclose(graph_output[0].asnumpy(), expect_zero, 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect_zero, 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
+    assert np.allclose(graph_output.asnumpy(), expect_two, 0.0001, 0.0001)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -337,7 +335,7 @@ def test_while_opt_endless():
             self.net = net
 
         def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
+            return grad_by_position(self.net, grad_position=(2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
@@ -348,13 +346,9 @@ def test_while_opt_endless():
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
 
-    expect1 = 0
-    expect2 = 0
     expect3 = np.array([[[16, 16], [16, 16]],
                         [[16, 16], [16, 16]]]).astype(np.float32)
-    assert np.allclose(graph_output[0].asnumpy(), expect1, 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
+    assert np.allclose(graph_output.asnumpy(), expect3, 0.0001, 0.0001)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -932,7 +926,7 @@ def test_with_param_if_by_if_grad_inputs():
             self.net = net
 
         def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
+            return grad_by_position(self.net, grad_position=(2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)
@@ -942,13 +936,9 @@ def test_with_param_if_by_if_grad_inputs():
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     graph_output = net(idx, end, x)
-    expect1 = Tensor(np.array(0), dtype=ms.int32)
-    expect2 = Tensor(np.array(0), dtype=ms.int32)
     expect3 = np.array([[[3, 3], [3, 3]],
                         [[3, 3], [3, 3]]]).astype(np.float32)
-    assert np.allclose(graph_output[0].asnumpy(), expect1.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect2.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
+    assert np.allclose(graph_output.asnumpy(), expect3, 0.0001, 0.0001)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)

@@ -23,7 +23,7 @@ from mindspore.ops.operations import _inner_ops
 from mindspore import Tensor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-grad = C.GradOperation(get_all=True)
+grad = C.GradOperation(get_by_position=True)
 
 
 class Net(nn.Cell):
@@ -67,7 +67,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, data, shape):
-        gout = grad(self.network)(data, shape)
+        gout = grad(self.network, grad_position=(0,))(data, shape)
         return gout
 
 
@@ -79,14 +79,12 @@ def test_dynamic_broadcast_to_net():
     Description: The input shape is not dynamic.
     Expectation: Assert that results is right.
     """
-    data = Tensor(np.array([1, 2, 3]), mindspore.int64)
+    data = Tensor(np.array([1., 2., 3.]), mindspore.float32)
     shape = Tensor(np.zeros((2, 3)), mindspore.int64)
     grad_net = GradWrap(NetWrap())
     output = grad_net(data, shape)
     expected_0 = [2, 2, 2]
-    expected_1 = [[0, 0, 0], [0, 0, 0]]
-    assert np.array_equal(output[0].asnumpy(), expected_0)
-    assert np.array_equal(output[1].asnumpy(), expected_1)
+    assert np.array_equal(output.asnumpy(), expected_0)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
@@ -98,7 +96,7 @@ def test_dynamic_broadcast_to_net_dyn():
     Expectation: Assert that results is right.
     """
     context.set_context(jit_level='O0')
-    data = Tensor(np.array([1, 2, 3]), mindspore.int64)
+    data = Tensor(np.array([1., 2., 3.]), mindspore.float32)
     shape = Tensor(np.zeros((2, 3)), mindspore.int64)
     grad_net = GradWrap(NetWrap())
 
@@ -112,6 +110,4 @@ def test_dynamic_broadcast_to_net_dyn():
 
     output = grad_net(data, shape)
     expected_0 = [2, 2, 2]
-    expected_1 = [[0, 0, 0], [0, 0, 0]]
-    assert np.array_equal(output[0].asnumpy(), expected_0)
-    assert np.array_equal(output[1].asnumpy(), expected_1)
+    assert np.array_equal(output.asnumpy(), expected_0)

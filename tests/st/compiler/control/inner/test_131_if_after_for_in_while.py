@@ -33,8 +33,8 @@ def test_if_after_for_in_while():
     class IfAfterForInWhileNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(2, mstype.float32), name='b')
 
         def construct(self, x):
             out = x + self.param_a
@@ -55,7 +55,7 @@ def test_if_after_for_in_while():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor(2, mstype.int32)
+    x = Tensor(2, mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -66,7 +66,7 @@ def test_if_after_for_in_while():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    expect_forward_res = Tensor([-463], mstype.int32)
-    expect_backward_res = (Tensor([1], mstype.int32),)
+    expect_forward_res = Tensor([-463], mstype.float32)
+    expect_backward_res = (Tensor([1], mstype.float32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res

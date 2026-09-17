@@ -55,9 +55,9 @@ def test_single_for_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
-    y = Tensor([5], mstype.int32)
-    z = Tensor([4], mstype.int32)
+    x = Tensor([2], mstype.float32)
+    y = Tensor([5], mstype.float32)
+    z = Tensor([4], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -68,8 +68,8 @@ def test_single_for_01():
     net = GradNet(for_net)
     graph_backward_res = net(x, y, z)
 
-    assert graph_forward_res == Tensor([125], mstype.int32)
-    assert graph_backward_res == (Tensor([15], mstype.int32), Tensor([40], mstype.int32), Tensor([5], mstype.int32))
+    assert graph_forward_res == Tensor([125], mstype.float32)
+    assert graph_backward_res == (Tensor([15], mstype.float32), Tensor([40], mstype.float32), Tensor([5], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -100,9 +100,9 @@ def test_single_for_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
-    y = Tensor([5], mstype.int32)
-    z = Tensor([4], mstype.int32)
+    x = Tensor([2], mstype.float32)
+    y = Tensor([5], mstype.float32)
+    z = Tensor([4], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -113,8 +113,8 @@ def test_single_for_02():
     graph_forward_res = for_net_forward(x, y, z)
     graph_backward_res = net(x, y, z)
 
-    assert graph_forward_res == Tensor([195], mstype.int32)
-    assert graph_backward_res == (Tensor([25], mstype.int32), Tensor([64], mstype.int32), Tensor([5], mstype.int32))
+    assert graph_forward_res == Tensor([195], mstype.float32)
+    assert graph_backward_res == (Tensor([25], mstype.float32), Tensor([64], mstype.float32), Tensor([5], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
@@ -131,8 +131,8 @@ def test_single_for_03():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor([5], dtype=mstype.int32), name='a')
-            self.param_b = Parameter(Tensor([2], dtype=mstype.int32), name='b')
+            self.param_a = Parameter(Tensor([5], dtype=mstype.float32), name='a')
+            self.param_b = Parameter(Tensor([2], dtype=mstype.float32), name='b')
 
         def func(self, x):
             x = self.mul(x, 2)
@@ -155,8 +155,8 @@ def test_single_for_03():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
-    y = Tensor([5], mstype.int32)
+    x = Tensor([2], mstype.float32)
+    y = Tensor([5], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -167,8 +167,8 @@ def test_single_for_03():
     graph_forward_res = for_net_forward(x, y)
     graph_backward_res = net(x, y)
 
-    assert graph_forward_res == (Tensor([133], mstype.int32), Tensor([7], mstype.int32))
-    assert graph_backward_res == (Tensor([64], mstype.int32), Tensor([1], mstype.int32))
+    assert graph_forward_res == (Tensor([133], mstype.float32), Tensor([7], mstype.float32))
+    assert graph_backward_res == (Tensor([64], mstype.float32), Tensor([1], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
@@ -185,8 +185,8 @@ def test_single_for_04():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor([5], dtype=mstype.int32), name='a')
-            self.param_b = Parameter(Tensor([2], dtype=mstype.int32), name='b')
+            self.param_a = Parameter(Tensor([5], dtype=mstype.float32), name='a')
+            self.param_b = Parameter(Tensor([2], dtype=mstype.float32), name='b')
 
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
@@ -202,7 +202,7 @@ def test_single_for_04():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
+    x = Tensor([2], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -213,8 +213,8 @@ def test_single_for_04():
     graph_forward_res = for_net_forward(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor([-5], mstype.int32)
-    assert graph_backward_res == (Tensor([0], mstype.int32),)
+    assert graph_forward_res == Tensor([-5], mstype.float32)
+    assert graph_backward_res == (Tensor([0], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -231,8 +231,8 @@ def test_single_for_05():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor(np.array(5), mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(np.array(2), mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(np.array(5), mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(np.array(2), mstype.float32), name='b')
 
         def construct(self, x):
             self.assign(self.param_a, x + self.param_a)
@@ -248,7 +248,7 @@ def test_single_for_05():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([6], mstype.int32)
+    x = Tensor([6], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -259,8 +259,8 @@ def test_single_for_05():
     graph_forward_res = for_net_forward(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor([6], mstype.int32)
-    assert graph_backward_res == (Tensor([1], mstype.int32),)
+    assert graph_forward_res == Tensor([6], mstype.float32)
+    assert graph_backward_res == (Tensor([1], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
@@ -280,8 +280,8 @@ def test_single_for():
         return y
 
     with pytest.raises(RuntimeError, match="The 'for...else...' statement is not supported now."):
-        input_x = Tensor([0], mstype.int32)
-        input_y = Tensor([2], mstype.int32)
+        input_x = Tensor([0], mstype.float32)
+        input_y = Tensor([2], mstype.float32)
         res = control_flow_for(input_x, input_y)
         print("res:", res)
 

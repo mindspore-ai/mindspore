@@ -28,8 +28,8 @@ class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
         super(ForwardNet, self).__init__()
         self.max_cycles = max_cycles
-        self.i = Tensor(np.array(0), mstype.int32)
-        self.zero = Tensor(np.array(0), mstype.int32)
+        self.i = Tensor(np.array(0), mstype.float32)
+        self.zero = Tensor(np.array(0), mstype.float32)
 
     def construct(self, x, y):
         i = self.i
@@ -57,8 +57,8 @@ class ForwardNetReplaceBreak(nn.Cell):
     def __init__(self, max_cycles=10):
         super(ForwardNetReplaceBreak, self).__init__()
         self.max_cycles = max_cycles
-        self.i = Tensor(np.array(0), mstype.int32)
-        self.zero = Tensor(np.array(0), mstype.int32)
+        self.i = Tensor(np.array(0), mstype.float32)
+        self.zero = Tensor(np.array(0), mstype.float32)
 
     def construct(self, x, y):
         i = self.i
@@ -88,12 +88,12 @@ def test_forward():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=10)
     graph_mode_out = forward_net(x, y)
 
-    assert graph_mode_out == Tensor(np.array(21), mstype.int32)
+    assert graph_mode_out == Tensor(np.array(21), mstype.float32)
 
 
 # Problem: Exceed function call depth limit 1000.
@@ -105,13 +105,13 @@ def test_backward():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNet(max_cycles=10)
     backward_net = BackwardNet(forward_net)
     graph_grads = backward_net(x, y)
 
-    assert graph_grads == Tensor(np.array(21), mstype.int32)
+    assert graph_grads == Tensor(np.array(21), mstype.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
@@ -122,12 +122,12 @@ def test_forward_replace_break():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNetReplaceBreak(max_cycles=10)
     graph_out = forward_net(x, y)
 
-    assert graph_out == Tensor(np.array(21), mstype.int32)
+    assert graph_out == Tensor(np.array(21), mstype.float32)
 
 
 # Problem: Exceed function call depth limit 1000.
@@ -139,13 +139,13 @@ def test_backward_replace_break():
     Expectation: No exception.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     forward_net = ForwardNetReplaceBreak(max_cycles=10)
     backward_net = BackwardNetReplaceBreak(forward_net)
     graph_grads = backward_net(x, y)
 
-    assert graph_grads == Tensor(np.array(21), mstype.int32)
+    assert graph_grads == Tensor(np.array(21), mstype.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -159,12 +159,12 @@ def test_forward_if_elif_elif_else_break():
         def __init__(self, max_cycles):
             super().__init__()
             self.max_cycles = max_cycles
-            self.i = Tensor(np.array(0), mstype.int32)
-            self.zero = Tensor(np.array(0), mstype.int32)
-            self.seg1 = Tensor(np.array(10), mstype.int32)
-            self.seg2 = Tensor(np.array(20), mstype.int32)
-            self.seg3 = Tensor(np.array(30), mstype.int32)
-            self.step = Tensor(np.array(10), mstype.int32)
+            self.i = Tensor(np.array(0), mstype.float32)
+            self.zero = Tensor(np.array(0), mstype.float32)
+            self.seg1 = Tensor(np.array(10), mstype.float32)
+            self.seg2 = Tensor(np.array(20), mstype.float32)
+            self.seg3 = Tensor(np.array(30), mstype.float32)
+            self.step = Tensor(np.array(10), mstype.float32)
 
         def construct(self):
             i = self.i
@@ -186,7 +186,7 @@ def test_forward_if_elif_elif_else_break():
     forward_net = MyNet(max_cycles=4)
     graph_mode_out = forward_net()
 
-    assert graph_mode_out == Tensor(np.array(80), mstype.int32)
+    assert graph_mode_out == Tensor(np.array(80), mstype.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -200,12 +200,12 @@ def test_forward_if_elif_elif_break_else():
         def __init__(self, max_cycles):
             super().__init__()
             self.max_cycles = max_cycles
-            self.i = Tensor(np.array(0), mstype.int32)
-            self.zero = Tensor(np.array(0), mstype.int32)
-            self.seg1 = Tensor(np.array(10), mstype.int32)
-            self.seg2 = Tensor(np.array(20), mstype.int32)
-            self.seg3 = Tensor(np.array(30), mstype.int32)
-            self.step = Tensor(np.array(10), mstype.int32)
+            self.i = Tensor(np.array(0), mstype.float32)
+            self.zero = Tensor(np.array(0), mstype.float32)
+            self.seg1 = Tensor(np.array(10), mstype.float32)
+            self.seg2 = Tensor(np.array(20), mstype.float32)
+            self.seg3 = Tensor(np.array(30), mstype.float32)
+            self.step = Tensor(np.array(10), mstype.float32)
 
         def construct(self):
             i = self.i
@@ -227,7 +227,7 @@ def test_forward_if_elif_elif_break_else():
     forward_net = MyNet(max_cycles=5)
     graph_mode_out = forward_net()
 
-    assert graph_mode_out == Tensor(np.array(100), mstype.int32)
+    assert graph_mode_out == Tensor(np.array(100), mstype.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -241,12 +241,12 @@ def test_forward_if_elif_elif_else_continue():
         def __init__(self, max_cycles):
             super().__init__()
             self.max_cycles = max_cycles
-            self.i = Tensor(np.array(0), mstype.int32)
-            self.zero = Tensor(np.array(0), mstype.int32)
-            self.seg1 = Tensor(np.array(10), mstype.int32)
-            self.seg2 = Tensor(np.array(20), mstype.int32)
-            self.seg3 = Tensor(np.array(30), mstype.int32)
-            self.step = Tensor(np.array(10), mstype.int32)
+            self.i = Tensor(np.array(0), mstype.float32)
+            self.zero = Tensor(np.array(0), mstype.float32)
+            self.seg1 = Tensor(np.array(10), mstype.float32)
+            self.seg2 = Tensor(np.array(20), mstype.float32)
+            self.seg3 = Tensor(np.array(30), mstype.float32)
+            self.step = Tensor(np.array(10), mstype.float32)
 
         def construct(self):
             i = self.i
@@ -268,7 +268,7 @@ def test_forward_if_elif_elif_else_continue():
     forward_net = MyNet(max_cycles=4)
     graph_mode_out = forward_net()
 
-    assert graph_mode_out == Tensor(np.array(100), mstype.int32)
+    assert graph_mode_out == Tensor(np.array(100), mstype.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
@@ -282,12 +282,12 @@ def test_forward_if_elif_elif_continue_else():
         def __init__(self, max_cycles):
             super().__init__()
             self.max_cycles = max_cycles
-            self.i = Tensor(np.array(0), mstype.int32)
-            self.zero = Tensor(np.array(0), mstype.int32)
-            self.seg1 = Tensor(np.array(10), mstype.int32)
-            self.seg2 = Tensor(np.array(20), mstype.int32)
-            self.seg3 = Tensor(np.array(30), mstype.int32)
-            self.step = Tensor(np.array(10), mstype.int32)
+            self.i = Tensor(np.array(0), mstype.float32)
+            self.zero = Tensor(np.array(0), mstype.float32)
+            self.seg1 = Tensor(np.array(10), mstype.float32)
+            self.seg2 = Tensor(np.array(20), mstype.float32)
+            self.seg3 = Tensor(np.array(30), mstype.float32)
+            self.step = Tensor(np.array(10), mstype.float32)
 
         def construct(self):
             i = self.i
@@ -309,4 +309,4 @@ def test_forward_if_elif_elif_continue_else():
     forward_net = MyNet(max_cycles=4)
     graph_mode_out = forward_net()
 
-    assert graph_mode_out == Tensor(np.array(100), mstype.int32)
+    assert graph_mode_out == Tensor(np.array(100), mstype.float32)

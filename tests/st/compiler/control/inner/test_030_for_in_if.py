@@ -58,7 +58,7 @@ def test_for_in_if_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([10], mstype.int32)
+    x = Tensor([10], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -69,8 +69,8 @@ def test_for_in_if_01():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor([640], mstype.int32)
-    assert graph_backward_res == (Tensor([64], mstype.int32),)
+    assert graph_forward_res == Tensor([640], mstype.float32)
+    assert graph_backward_res == (Tensor([64], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
@@ -188,8 +188,8 @@ def test_for_in_if_04():
     class ForInIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
         def construct(self, x):
             out = self.param_a
@@ -213,7 +213,7 @@ def test_for_in_if_04():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor(5, mstype.int32)
+    x = Tensor(5, mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -222,8 +222,8 @@ def test_for_in_if_04():
     forward_net = ForInIfNet()
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
-    assert graph_forward_res == Tensor([45], mstype.int32)
-    assert graph_backward_res == (Tensor([9], mstype.int32),)
+    assert graph_forward_res == Tensor([45], mstype.float32)
+    assert graph_backward_res == (Tensor([9], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
@@ -236,8 +236,8 @@ def test_for_in_if_05():
     class ForInIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
             self.assign = P.Assign()
 
         def construct(self, x):
@@ -263,7 +263,7 @@ def test_for_in_if_05():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor(5, mstype.int32)
+    x = Tensor(5, mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -274,8 +274,8 @@ def test_for_in_if_05():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor([-91], mstype.int32)
-    assert graph_backward_res == (Tensor([13], mstype.int32),)
+    assert graph_forward_res == Tensor([-91], mstype.float32)
+    assert graph_backward_res == (Tensor([13], mstype.float32),)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
@@ -288,8 +288,8 @@ def test_for_in_if_tuple_getitem():
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.w = Parameter(Tensor([(- 1)], mstype.int32), name='weight')
-            self.b = Parameter(Tensor([(- 5)], mstype.int32), name='bias')
+            self.w = Parameter(Tensor([(- 1)], mstype.float32), name='weight')
+            self.b = Parameter(Tensor([(- 5)], mstype.float32), name='bias')
 
         @jit
         def construct(self, x, y):
@@ -309,4 +309,4 @@ def test_for_in_if_tuple_getitem():
     y = np.array([1], np.int32)
     net = Net()
     out = net(Tensor(x), Tensor(y))
-    assert out == Tensor([3], mstype.int32)
+    assert out == Tensor([3], mstype.float32)

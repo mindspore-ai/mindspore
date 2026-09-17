@@ -23,7 +23,6 @@ import mindspore.context as context
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 
-from tests.st.pynative.utils import GradOfAllInputs
 from tests.mark_utils import arg_mark
 
 context.set_context(jit_level='O0')
@@ -70,10 +69,8 @@ def test_fold_functional_api():
     # grad
     out_grad_ms = Tensor(forward_out)
     out_net = Fold(kernel_size, dilation, padding, stride)
-    grad_net = GradOfAllInputs(out_net)
-    grad_net.set_train()
-    grad = grad_net(input_x, output_size, out_grad_ms)
-    grad_ms = grad[0].asnumpy()
+    grad_net = ops.GradOperation(get_by_position=True, sens_param=True)
+    grad_ms = grad_net(out_net, grad_position=(0,))(input_x, output_size, out_grad_ms).asnumpy()
     expect_grad = np.array([[[-0.8044583, 0.32093155, -0.02548288, 0.6443238],
                              [-0.3007967, 0.38947454, -0.10743731, -0.47998306],
                              [0.5950355, -0.46466753, 0.6672813, -0.8061156],

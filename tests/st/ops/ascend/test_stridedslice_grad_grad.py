@@ -38,10 +38,10 @@ class NetGradGrad(nn.Cell):
     def __init__(self, forward_net):
         super(NetGradGrad, self).__init__()
         self.forward_net = forward_net
-        self.grad_ops = C.GradOperation(get_all=True, sens_param=True)
+        self.grad_ops = C.GradOperation(get_by_position=True, sens_param=True)
 
     def construct(self, dy, shapex, begin, end, strides, dout):
-        backward_net = self.grad_ops(self.forward_net)
+        backward_net = self.grad_ops(self.forward_net, grad_position=(0, 5))
         return backward_net(dy, shapex, begin, end, strides, dout)
 
 

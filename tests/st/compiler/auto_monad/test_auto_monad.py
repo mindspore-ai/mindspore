@@ -1828,15 +1828,16 @@ def test_bprop_print_func():
 
     cap = Capture()
     with capture(cap):
-        x = ms.Tensor([1], dtype=ms.int32)
-        y = ms.Tensor([2], dtype=ms.int32)
+        x = ms.Tensor([1.], dtype=ms.float32)
+        y = ms.Tensor([2.], dtype=ms.float32)
         out = GradNet(Net())(x, y)
         assert out[0] == (x + 1)
         assert out[1] == (y + 1)
         sys.stdout.flush()
         time.sleep(2.0)
 
-    patterns = {'Tensor(shape=[1], dtype=Int32, value=[1])\nTensor(shape=[1], dtype=Int32, value=[2])'}
+    patterns = {'Tensor(shape=[1], dtype=Float32, value= [ 1.00000000e+00])\n'
+                'Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00])'}
     check_output(cap.output, patterns)
 
 

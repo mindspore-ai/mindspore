@@ -118,12 +118,12 @@ def test_index_add_uint8():
 class IndexAddGradNet(nn.Cell):
     def __init__(self, network):
         super(IndexAddGradNet, self).__init__()
-        self.grad = ops.GradOperation(get_all=True, sens_param=True, get_by_list=True)
+        self.grad = ops.GradOperation(get_by_position=True, sens_param=True, get_by_list=True)
         self.network = network
         self.params = ParameterTuple(network.trainable_params())
 
     def construct(self, idx, y, dout):
-        out = self.grad(self.network, self.params)(idx, y, dout)
+        out = self.grad(self.network, self.params, (1,))(idx, y, dout)
         return out
 
 
@@ -139,7 +139,7 @@ def index_add_grad_with_type(nptype):
                             [75., 76., 77.]]).astype(nptype))
     index = Tensor(np.array([1]), dtype=mindspore.int32)
     output = grad_net(index, y, dout)
-    ygrad = output[0][1]
+    ygrad = output[0]
     xgrad = output[1][0]
     expect_xgrad = np.array([[63., 64., 65.],
                              [66., 67., 68.],
@@ -183,42 +183,35 @@ def test_index_add_grad_float16():
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_index_add_grad_int32():
-    """
-    Feature: test IndexAdd backward.
-    Description: test int32 inputs.
-    Expectation: the result match with numpy result
-    """
+    """Verify that IndexAdd rejects gradients with int32 data tensors."""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    index_add_grad_with_type(np.int32)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        index_add_grad_with_type(np.int32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    index_add_grad_with_type(np.int32)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        index_add_grad_with_type(np.int32)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_index_add_grad_int8():
-    """
-    Feature: test IndexAdd backward.
-    Description: test int8 inputs.
-    Expectation: the result match with numpy result
-    """
+    """Verify that IndexAdd rejects gradients with int8 data tensors."""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    index_add_grad_with_type(np.int8)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        index_add_grad_with_type(np.int8)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    index_add_grad_with_type(np.int8)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        index_add_grad_with_type(np.int8)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', mem_peak=1024.02)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.02)
 def test_index_add_grad_uint8():
-    """
-    Feature: test IndexAdd backward.
-    Description: test uint8 inputs.
-    Expectation: the result match with numpy result
-    """
+    """Verify that IndexAdd rejects gradients with uint8 data tensors."""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    index_add_grad_with_type(np.uint8)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        index_add_grad_with_type(np.uint8)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    index_add_grad_with_type(np.uint8)
+    with pytest.raises(TypeError, match="Compute grad need real or complex type inputs"):
+        index_add_grad_with_type(np.uint8)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',

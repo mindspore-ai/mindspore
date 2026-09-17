@@ -33,8 +33,8 @@ def test_for_after_if():
     class ForAfterIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
         def construct(self, x):
             out = self.param_a
@@ -54,7 +54,7 @@ def test_for_after_if():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor(2, mstype.int32)
+    x = Tensor(2, mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -65,5 +65,5 @@ def test_for_after_if():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor(150, mstype.int32)
-    assert graph_backward_res == (Tensor(5, mstype.int32),)
+    assert graph_forward_res == Tensor(150, mstype.float32)
+    assert graph_backward_res == (Tensor(5, mstype.float32),)

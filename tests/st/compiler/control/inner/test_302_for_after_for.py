@@ -67,7 +67,7 @@ def test_for_after_for_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([7], mstype.int32)
+    x = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -79,7 +79,7 @@ def test_for_after_for_01():
     graph_backward_res = net(x)
 
     assert graph_forward_res == Tensor([8], mstype.float32)
-    assert graph_backward_res == (Tensor([4], mstype.int32),)
+    assert graph_backward_res == (Tensor([4], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.00)
@@ -121,7 +121,7 @@ def test_for_after_for_02():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([7], mstype.int32)
+    x = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -133,5 +133,5 @@ def test_for_after_for_02():
     graph_backward_res = net(x)
 
     # pynative mode
-    assert graph_forward_res == Tensor([1620], mstype.int32)
-    assert graph_backward_res == (Tensor([20], mstype.int32),)
+    assert graph_forward_res == Tensor([1620], mstype.float32)
+    assert graph_backward_res == (Tensor([20], mstype.float32),)

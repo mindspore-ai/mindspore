@@ -44,7 +44,7 @@ def where_forward_func(condition, x, y):
 
 @test_utils.run_with_cell
 def where_backward_func(condition, x, y):
-    return ms.grad(where_forward_func, (0, 1, 2))(condition, x, y)
+    return ms.grad(where_forward_func, (1, 2))(condition, x, y)
 
 
 @test_utils.run_with_cell
@@ -99,12 +99,11 @@ def test_where_normal(mode):
     cond = x > 0
 
     if mode == 'pynative':
-        ms_cond, ms_x, ms_y = where_backward_func(cond, x, y)
+        ms_x, ms_y = where_backward_func(cond, x, y)
     else:
-        ms_cond, ms_x, ms_y = (
+        ms_x, ms_y = (
             jit(where_backward_func, jit_config=JitConfig(jit_level="O0")))(cond, x, y)
-    expect_cond, expect_x, expect_y = generate_expect_backward_output(
+    _, expect_x, expect_y = generate_expect_backward_output(
         cond.asnumpy())
-    assert np.allclose(ms_cond.asnumpy(), expect_cond, rtol=1e-4)
     assert np.allclose(ms_x.asnumpy(), expect_x, rtol=1e-4)
     assert np.allclose(ms_y.asnumpy(), expect_y, rtol=1e-4)

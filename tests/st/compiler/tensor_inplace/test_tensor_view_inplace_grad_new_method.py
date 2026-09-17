@@ -147,9 +147,9 @@ def test_tensor_view_inplace_grad():
             return x
 
     net = Net()
-    out_expect = grad(net)(Tensor([3, 4]))
+    out_expect = grad(net)(Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net)(Tensor([3, 4]))
+    out_jit = grad(net)(Tensor([3., 4.]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 
@@ -173,9 +173,9 @@ def test_view_and_inplace_grad_change_same_area1():
             return input_tensor1
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor(3), Tensor([[1, 2], [3, 4]]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor(3.), Tensor([[1., 2.], [3., 4.]]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor(3), Tensor([[1, 2], [3, 4]]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor(3.), Tensor([[1., 2.], [3., 4.]]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -198,9 +198,9 @@ def test_view_and_inplace_grad_change_same_area2():
             return input_tensor1
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor(3), Tensor([[1, 2], [3, 4]]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor(3.), Tensor([[1., 2.], [3., 4.]]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor(3), Tensor([[1, 2], [3, 4]]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor(3.), Tensor([[1., 2.], [3., 4.]]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -223,9 +223,9 @@ def test_view_and_inplace_grad_change_same_area3():
             return input_tensor1
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor([1, 1]), Tensor([[1, 2], [3, 4]]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor([1., 1.]), Tensor([[1., 2.], [3., 4.]]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor([1, 1]), Tensor([[1, 2], [3, 4]]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor([1., 1.]), Tensor([[1., 2.], [3., 4.]]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -249,9 +249,9 @@ def test_tensor_view_inplace_grad_check1():
             return z
 
     net = Net()
-    out_expect = grad(net)(Tensor([[1, 2], [3, 4]]))
+    out_expect = grad(net)(Tensor([[1., 2.], [3., 4.]]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net)(Tensor([[1, 2], [3, 4]]))
+    out_jit = grad(net)(Tensor([[1., 2.], [3., 4.]]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 
@@ -273,9 +273,9 @@ def test_tensor_view_inplace_grad_check2():
             return z
 
     net = Net()
-    out_expect = grad(net)(Tensor([1, 2]))
+    out_expect = grad(net)(Tensor([1., 2.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net)(Tensor([1, 2]))
+    out_jit = grad(net)(Tensor([1., 2.]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 
@@ -300,9 +300,9 @@ def test_tensor_view_inplace_grad_check3():
             return z
 
     net = Net()
-    out_expect = grad(net)(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net)(Tensor([1., 2.]), Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net)(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net)(Tensor([1., 2.]), Tensor([3., 4.]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 
@@ -325,9 +325,9 @@ def test_tensor_view_inplace_grad_check5():
             return x, y
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor([1., 2.]), Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor([1., 2.]), Tensor([3., 4.]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -388,9 +388,9 @@ def test_tensor_view_inplace_grad_check7():
             return input_tensor1_1 + z
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor([1., 2.]), Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor([1., 2.]), Tensor([3., 4.]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -421,9 +421,9 @@ def test_tensor_view_inplace_grad_check8():
             return z + 1
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor([1., 2.]), Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor([1., 2.]), Tensor([3., 4.]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -543,9 +543,9 @@ def test_view_inplace_gradient():
             return input_tensor2_1
 
     net = Net()
-    out_expect = grad(net, grad_position=1)(Tensor([3, 4]), Tensor([1, 2]))
+    out_expect = grad(net, grad_position=1)(Tensor([3., 4.]), Tensor([1., 2.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=1)(Tensor([3, 4]), Tensor([1, 2]))
+    out_jit = grad(net, grad_position=1)(Tensor([3., 4.]), Tensor([1., 2.]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 
@@ -998,7 +998,7 @@ def test_tensor_inplace_grad_with_return_same_out():
             return out
 
     input_np = np.random.randn(3, 4, 5).astype(np.float32)
-    x = Tensor(1)
+    x = Tensor(1.0)
     t = Tensor(input_np)
     y = Tensor(input_np)
     net = CtrlForbyIfBR(t)
