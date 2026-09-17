@@ -138,6 +138,19 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
     // First thing we need to extract the type from the incoming request.
     // When this object was first created (i.e. STATE::CREATE), we set the type to UNKNOWN.
     type_ = static_cast<RequestType>(rq_.type());
+    // The internal request types (kInternalCacheRow / kInternalFetchRow) carry an in-process pointer to a
+    // BatchWait object that only exists inside the cache server. They are only created by the server itself
+    // during batch processing (see BatchCacheRows / BatchFetch) and never go through the RPC path.
+    // A client can forge such a type to make the worker dereference an arbitrary address, so reject them
+    // at the RPC boundary and reply with an error before doing any work.
+    if (type_ == BaseRequest::RequestType::kInternalCacheRow || type_ == BaseRequest::RequestType::kInternalFetchRow) {
+      st_ = CacheServerRequest::STATE::FINISH;
+      Status2CacheReply(
+        STATUS_ERROR(StatusCode::kMDUnexpectedError, "Internal request types are not allowed in an RPC request."),
+        &reply_);
+      responder_.Finish(reply_, grpc::Status::OK, this);
+      return Status::OK();
+    }
     // Now we pass the address of this instance to CacheServer's main loop.
     MS_LOG(DEBUG) << "Handle request " << *this;
     // We will distribute the request evenly (or randomly) over all the numa nodes.

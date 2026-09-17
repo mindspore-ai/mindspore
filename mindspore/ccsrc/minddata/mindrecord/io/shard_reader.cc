@@ -493,12 +493,21 @@ Status ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string
         std::vector<uint64_t>{static_cast<uint64_t>(shard_id), group_id, offset_start, offset_end});
       if (!all_in_index_) {
         int raw_page_id = std::stoi(labels[i][3]);
-        uint64_t label_start = std::stoull(labels[i][4]) + kInt64Len;
+        CHECK_FAIL_RETURN_UNEXPECTED_MR(raw_page_id >= 0, "The sample's raw page id, " + std::to_string(raw_page_id) +
+                                                            ", should be non-negative, check fail.");
+        uint64_t label_offset = std::stoull(labels[i][4]);
+        CHECK_FAIL_RETURN_UNEXPECTED_MR(label_offset <= std::numeric_limits<uint64_t>::max() - kInt64Len,
+                                        "The sample's start offset, " + std::to_string(label_offset) +
+                                          ", is too large to add " + std::to_string(kInt64Len) + ", check fail.");
+        uint64_t label_start = label_offset + kInt64Len;
         uint64_t label_end = std::stoull(labels[i][5]);
         CHECK_FAIL_RETURN_UNEXPECTED_MR(label_end >= label_start,
                                         "The sample's end offset: " + std::to_string(label_end) +
                                           " should >= start offset: " + std::to_string(label_start) + ", check fail.");
         auto len = label_end - label_start;
+        CHECK_FAIL_RETURN_UNEXPECTED_MR(len <= page_size_, "The length of label data, " + std::to_string(len) +
+                                                             ", exceeds the page size, " + std::to_string(page_size_) +
+                                                             ", the label data may be corrupted, check fail.");
         auto label_raw = std::vector<uint8_t>(len);
         auto &io_seekg = fs->seekg(page_size_ * raw_page_id + header_size_ + label_start, std::ios::beg);
         if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
@@ -970,13 +979,22 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
       RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] 'labelOffset' size should be less than 3 but got: " +
                                   std::to_string(labelOffset.size()) + ".");
     }
-    uint64_t label_start = std::stoull(labelOffset[1]) + kInt64Len;
+    int raw_page_id = std::stoi(labelOffset[0]);
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(raw_page_id >= 0, "The sample's raw page id, " + std::to_string(raw_page_id) +
+                                                        ", should be non-negative, check fail.");
+    uint64_t label_offset = std::stoull(labelOffset[1]);
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(label_offset <= std::numeric_limits<uint64_t>::max() - kInt64Len,
+                                    "The sample's start offset, " + std::to_string(label_offset) +
+                                      ", is too large to add " + std::to_string(kInt64Len) + ", check fail.");
+    uint64_t label_start = label_offset + kInt64Len;
     uint64_t label_end = std::stoull(labelOffset[2]);
     CHECK_FAIL_RETURN_UNEXPECTED_MR(label_end >= label_start,
                                     "The sample's end offset: " + std::to_string(label_end) +
                                       " should >= start offset: " + std::to_string(label_start) + ", check fail.");
-    int raw_page_id = std::stoi(labelOffset[0]);
     auto len = label_end - label_start;
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(len <= page_size_, "The length of label data, " + std::to_string(len) +
+                                                         ", exceeds the page size, " + std::to_string(page_size_) +
+                                                         ", the label data may be corrupted, check fail.");
     auto label_raw = std::vector<uint8_t>(len);
     auto &io_seekg = fs->seekg(page_size_ * raw_page_id + header_size_ + label_start, std::ios::beg);
     if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {

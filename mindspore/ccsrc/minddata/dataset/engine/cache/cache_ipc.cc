@@ -57,9 +57,17 @@ Status SharedMessage::SendStatus(const Status &rc) {
     1,
   };
   msg.body.status.err_code = static_cast<int32_t>(rc.StatusCode());
-  auto err = memcpy_s(msg.body.status.err_msg, kSharedMessageSize, rc.ToString().data(), rc.ToString().size());
+  std::string err_msg = rc.ToString();
+  auto err_msg_sz = err_msg.size();
+  auto err = memcpy_s(msg.body.status.err_msg, kSharedMessageSize, err_msg.data(), err_msg_sz);
   CHECK_FAIL_RETURN_UNEXPECTED(err == EOK, "memcpy_s failed. err = " + std::to_string(err));
-  msg.body.status.err_msg[rc.ToString().size()] = '\0';
+  // memcpy_s only fails when the source is strictly larger than the destination. When the source
+  // exactly fills the buffer (err_msg_sz == kSharedMessageSize) it still succeeds but leaves no
+  // room for the terminator, so clamp the index to keep the write inside err_msg.
+  if (err_msg_sz >= kSharedMessageSize) {
+    err_msg_sz = kSharedMessageSize - 1;
+  }
+  msg.body.status.err_msg[err_msg_sz] = '\0';
   err = msgsnd(msg_qid_, reinterpret_cast<void *>(&msg), sizeof(msg.body.status), IPC_NOWAIT);
   if (err == -1) {
     std::string errMsg = "Failed to call msgsnd. Errno = " + std::to_string(errno);

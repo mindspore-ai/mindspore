@@ -235,6 +235,10 @@ Status ShardHeader::InitByFiles(const std::vector<std::string> &file_paths) {
 Status ShardHeader::ParseIndexFields(const json &index_fields) {
   std::vector<std::pair<uint64_t, std::string>> parsed_index_fields;
   for (auto &index_field : index_fields) {
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(index_field.find("schema_id") != index_field.end() &&
+                                      index_field.find("index_field") != index_field.end() &&
+                                      index_field["schema_id"].is_number() && index_field["index_field"].is_string(),
+                                    "[Internal ERROR] Failed to deserialize index_field: " + index_fields.dump());
     auto schema_id = index_field["schema_id"].get<uint64_t>();
     std::string field_name = index_field["index_field"].get<std::string>();
     std::pair<uint64_t, std::string> parsed_index_field(schema_id, field_name);
@@ -251,6 +255,9 @@ Status ShardHeader::ParsePage(const json &pages, int shard_index, bool load_data
   }
 
   for (auto &page : pages) {
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      page.find("shard_id") != page.end() && page["shard_id"].is_number(),
+      "[Internal ERROR] Failed to deserialize page, missing or invalid 'shard_id': " + pages.dump());
     int page_id = page["page_id"];
     int shard_id = page["shard_id"];
     std::string page_type = page["page_type"];
@@ -267,6 +274,9 @@ Status ShardHeader::ParsePage(const json &pages, int shard_index, bool load_data
     std::shared_ptr<Page> parsed_page = std::make_shared<Page>(page_id, shard_id, page_type, page_type_id, start_row_id,
                                                                end_row_id, row_group_ids, page_size);
     if (load_dataset == true) {
+      CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_id >= 0 && shard_id < static_cast<int>(pages_.size()),
+                                      "[Internal ERROR] 'shard_id': " + std::to_string(shard_id) +
+                                        " is out of range, 'pages_' size: " + std::to_string(pages_.size()));
       pages_[shard_id].push_back(std::move(parsed_page));
     } else {
       pages_[shard_index].push_back(std::move(parsed_page));
@@ -293,7 +303,8 @@ Status ShardHeader::ParseSchema(const json &schemas) {
   for (auto &schema : schemas) {
     // change how we get schemaBody once design is finalized
     CHECK_FAIL_RETURN_UNEXPECTED_MR(schema.find("desc") != schema.end() && schema.find("blob_fields") != schema.end() &&
-                                      schema.find("schema") != schema.end(),
+                                      schema.find("schema") != schema.end() && schema["desc"].is_string() &&
+                                      schema["blob_fields"].is_array(),
                                     "[Internal ERROR] Failed to deserialize schema: " + schema.dump());
     std::string schema_description = schema["desc"].get<std::string>();
     std::vector<std::string> blob_fields = schema["blob_fields"].get<std::vector<std::string>>();

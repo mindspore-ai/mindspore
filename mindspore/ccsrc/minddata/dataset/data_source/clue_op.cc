@@ -58,7 +58,6 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
       RETURN_STATUS_UNEXPECTED("Invalid json file, in given JSON file, failed to find key: " + key_chain[i]);
     }
   }
-  std::string final_str = key_chain.back();
   switch (cursor.type()) {
     case nlohmann::detail::value_t::string:
       RETURN_IF_NOT_OK(Tensor::CreateScalar(cursor.get<std::string>(), t));
@@ -76,7 +75,8 @@ Status ClueOp::GetValue(const nlohmann::json &js, std::vector<std::string> key_c
       RETURN_IF_NOT_OK(Tensor::CreateFromVector(cursor.get<std::vector<std::string>>(), t));
       break;
     default:
-      break;
+      RETURN_STATUS_UNEXPECTED("Invalid json file, column '" + key_chain.back() +
+                               "' has an unsupported json value type: " + cursor.type_name());
   }
   return Status::OK();
 }
