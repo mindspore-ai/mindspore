@@ -271,7 +271,15 @@ ShapeArray ConvBaseFunImpl::InferShape(const PrimitivePtr &primitive, const Infe
 
 std::vector<TypeId> ConvBaseFunImpl::InferType(const PrimitivePtr &primitive,
                                                const InferInfoPtrList &input_infos) const {
-  return {input_infos[kIndex0]->GetType()};
+  const auto input_type = input_infos[idxes_.input_idx]->GetType();
+  const auto weight_type = input_infos[idxes_.weight_idx]->GetType();
+  if (MS_UNLIKELY(input_type != weight_type)) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', the dtype of 'input' should be the same as 'weight', but got 'input' with dtype "
+                            << TypeIdToString(input_type) << " and 'weight' with dtype " << TypeIdToString(weight_type)
+                            << ".";
+  }
+  return {input_type};
 }
 }  // namespace ops
 }  // namespace mindspore

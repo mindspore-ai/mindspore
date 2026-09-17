@@ -176,6 +176,22 @@ std::vector<GeneralInferParam> prepare_params() {
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)}})
     .FeedExpectedOutput({{2, 3, 7, 7}}, {kNumberTypeFloat32});
 
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{2, 3, 8, 8}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{3, 3, 2, 2}, kNumberTypeFloat16},
+                    InferInfoParam{ShapeVector{3}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                   ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+                    InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                   ValuePtrList{CreateScalar<int64_t>(0), CreateScalar<int64_t>(0)}},
+                    InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                   ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+                    InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
+                    InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                   ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)}})
+    .CaseShouldThrow();
+
   return generator.Generate();
 }
 }  // namespace
