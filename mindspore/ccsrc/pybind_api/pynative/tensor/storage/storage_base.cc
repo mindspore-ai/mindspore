@@ -97,8 +97,9 @@ void StorageBase::InplaceReSize(int64_t size) {
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "ResizeStorage", memory::mem_pool::MemType::kOther, size,
                                                  device_data_.get());
   device_ptr = host_context->device_res_manager_->AllocateMemory(size, CurrentStream::id());
-  if (!device_ptr) {
-    return;
+  if (device_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "ResizeStorage failed: out of memory, unable to allocate " << size << " bytes on "
+                      << device::GetDeviceNameByType(device_data_->GetDeviceType());
   }
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, device_data_.get(), device_ptr);
   device_data_->set_ptr(device_ptr);
