@@ -1762,7 +1762,7 @@ void AutoDiff::BackPropagate() {
     if (gradient_out.size() < fn->next_edges().size()) {
       MS_LOG(EXCEPTION) << "Fn gradient size should larger than next edges size, but got " << gradient_out.size()
                         << " vs " << fn->next_edges().size()
-                        << ". This may because your network has self defined bprop function which args of construct "
+                        << ". This may  because your network has self defined bprop function which args of construct "
                            "function not same as bprop function outputs, please check it";
     }
     CallBackwardNodePostHooks(fn, &gradient_out, gradient_in);
