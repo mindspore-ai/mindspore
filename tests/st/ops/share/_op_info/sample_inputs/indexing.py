@@ -620,23 +620,37 @@ def dynamic_sample_inputs_tensor_index_add(op_info: OpInfo, dtype=None, device=N
             )
         )
 
+
+def _make_unique_index(length, dim_size, device=None):
+    """
+    Create an int64 index tensor whose values are unique and in the range [0, dim_size).
+
+    `Tensor.index_copy_` copies the elements of the source in the order given by `index`. When
+    `index` contains duplicate entries, which element finally stays at a position depends on the
+    copy order, and PyTorch documents this as nondeterministic. The reference comparison therefore
+    must use unique indices, otherwise the case result is flaky rather than a real mismatch.
+    """
+    length = min(length, dim_size)
+    index = np.random.permutation(dim_size)[:length].astype(np.int64)
+    return make_tensor_with_np_array(index, dtype=ms.int64, device=device)
+
+
 def basic_reference_inputs_tensor_index_copy_func(op_info: OpInfo, dtype, device=None, **kwargs):
     S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
     M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
     L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
 
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
-    make_arg_index = functools.partial(make_tensor, dtype=ms.int64, device=device, low=None, high=None)
     shapes = (
-        ((S,), 0, make_arg_index((M,), low=0, high=3), make_arg((M,))),
-        ((M, S), 0, make_arg_index((S,), low=0, high=3), make_arg((S, S))),
-        ((S, S, S), -1, make_arg_index((1,), low=0, high=3), make_arg((S, S, 1))),
-        ((2, 2, 2, 2), -2, make_arg_index((1,), low=0, high=2), make_arg((2, 2, 1, 2))),
-        ((3, 3, 3, 3), -1, make_arg_index((1,), low=0, high=3), make_arg((3, 3, 3, 1))),
-        ((L, L, L, L, L), 2, make_arg_index((1,), low=0, high=3), make_arg((L, L, 1, L, L))),
-        ((1, 1, 1, 1, 1, 1), -2, make_arg_index((2,), low=0, high=1), make_arg((1, 1, 1, 1, 2, 1))),
-        ((2, 2, 2, 2, 2, 2, 2), -2, make_arg_index((1,), low=0, high=2), make_arg((2, 2, 2, 2, 2, 1, 2))),
-        ((4, 4, 4, 4, 4, 4, 4, 4), 3, make_arg_index((2,), low=0, high=3), make_arg((4, 4, 4, 2, 4, 4, 4, 4))),
+        ((M,), 0, _make_unique_index(M, M, device), make_arg((M,))),
+        ((M, S), 0, _make_unique_index(S, M, device), make_arg((S, S))),
+        ((S, S, S), -1, _make_unique_index(1, S, device), make_arg((S, S, 1))),
+        ((2, 2, 2, 2), -2, _make_unique_index(1, 2, device), make_arg((2, 2, 1, 2))),
+        ((3, 3, 3, 3), -1, _make_unique_index(1, 3, device), make_arg((3, 3, 3, 1))),
+        ((L, L, L, L, L), 2, _make_unique_index(1, L, device), make_arg((L, L, 1, L, L))),
+        ((1, 1, 1, 1, 1, 1), -2, _make_unique_index(1, 1, device), make_arg((1, 1, 1, 1, 1, 1))),
+        ((2, 2, 2, 2, 2, 2, 2), -2, _make_unique_index(1, 2, device), make_arg((2, 2, 2, 2, 2, 1, 2))),
+        ((4, 4, 4, 4, 4, 4, 4, 4), 3, _make_unique_index(2, 4, device), make_arg((4, 4, 4, 2, 4, 4, 4, 4))),
     )
 
     for input_shape, dims, indexes, tensors in shapes:
@@ -652,7 +666,7 @@ def extra_sample_inputs_tensor_index_copy(op_info: OpInfo, dtype=None, device=No
     make_arg = functools.partial(make_tensor, dtype=dtype, device=device, low=None, high=None)
     cases = (
         ((0,), 0, make_arg((0,), dtype=ms.int64,), make_arg((0,))),
-        ((1029, 917), 1,  make_arg((1,), dtype=ms.int64, low=0, high=2), make_arg((1029, 1))),
+        ((1029, 917), 1,  _make_unique_index(1, 917, device), make_arg((1029, 1))),
     )
     for input_shape, dims, indexes, tensors in cases:
         yield OpSampleInput(
@@ -668,7 +682,7 @@ def extra_sample_inputs_tensor_index_copy(op_info: OpInfo, dtype=None, device=No
         input_shape = (1, 1, len(_float_small_values))
         yield OpSampleInput(
             op_input=make_arg(input_shape),
-            op_args=(2, make_arg((2,), dtype=ms.int64, low=0, high=2),
+            op_args=(2, _make_unique_index(2, len(_float_small_values), device),
                      make_arg((1, 1, 2)),),
             op_kwargs={},
             sample_name=f"{op_info.name}_small",
@@ -683,7 +697,7 @@ def extra_sample_inputs_tensor_index_copy(op_info: OpInfo, dtype=None, device=No
         input_shape = (1, 1, len(_large_values))
         yield OpSampleInput(
             op_input=make_arg(input_shape),
-            op_args=(2, make_arg((2,), dtype=ms.int64, low=0, high=1), make_arg((1, 1, 2)),),
+            op_args=(2, _make_unique_index(2, len(_large_values), device), make_arg((1, 1, 2)),),
             op_kwargs={},
             sample_name=f"{op_info.name}_large",
         )
@@ -694,7 +708,7 @@ def extra_sample_inputs_tensor_index_copy(op_info: OpInfo, dtype=None, device=No
             for t in [np.inf, -np.inf, np.nan]:
                 yield OpSampleInput(
                     op_input=make_tensor_with_np_array(np.full((1, 1, 3), t), dtype=dtype, device=device),
-                    op_args=(1, make_arg((2,), dtype=ms.int64, low=0, high=1), make_arg((1, 2, 3)),),
+                    op_args=(1, _make_unique_index(1, 1, device), make_arg((1, 1, 3)),),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_inf",
                 )
@@ -703,7 +717,7 @@ def extra_sample_inputs_tensor_index_copy(op_info: OpInfo, dtype=None, device=No
     for discontiguous in (True,):
         yield OpSampleInput(
             op_input=make_arg((2, 3, 4), discontiguous=discontiguous),
-            op_args=(0, make_arg((1,), dtype=ms.int64, low=0, high=1), make_arg((1, 3, 4)),),
+            op_args=(0, _make_unique_index(1, 2, device), make_arg((1, 3, 4)),),
             op_kwargs={},
             sample_name=op_info.name,
         )
