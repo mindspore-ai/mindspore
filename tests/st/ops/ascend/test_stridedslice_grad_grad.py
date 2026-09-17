@@ -14,7 +14,6 @@
 # ============================================================================
 from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
 import mindspore.context as context
 from mindspore import nn
 from mindspore import Tensor
