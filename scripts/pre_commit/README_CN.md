@@ -205,7 +205,7 @@ Linux的发行版本众多，无法兼容所有的发行版本，本文以CentOS
 
    ```bash
    cd /tmp
-   wget https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz --no-check-certificate
+   wget https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz
    ```
 
    （2）解压安装shellcheck工具：
