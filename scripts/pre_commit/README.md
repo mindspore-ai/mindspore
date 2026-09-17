@@ -205,7 +205,7 @@ There are too many Linux distributions to be fully compatible. The following use
 
    ```bash
    cd /tmp
-   wget https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz --no-check-certificate
+   wget https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz
    ```
 
    (2) Decompress the shellcheck tool and install it.

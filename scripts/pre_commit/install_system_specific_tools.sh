@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -64,9 +64,9 @@ check_prerequisites() {
 download_file() {
     local url="$1" output="$2"
     if command_exists wget; then
-        wget --progress=dot:giga --no-check-certificate -O "$output" "$url" 2>&1 && return 0 || return 1
+        wget --progress=dot:giga -O "$output" "$url" 2>&1 && return 0 || return 1
     elif command_exists curl; then
-        curl --ssl-no-revoke -k -f -L -o "$output" "$url" 2>&1 && return 0 || return 1
+        curl -f -L -o "$output" "$url" 2>&1 && return 0 || return 1
     else
         log_error "Neither curl nor wget is available"
         return 1
@@ -118,7 +118,7 @@ download_shellcheck_package() {
     local version="$1" filename="$2" output="$3"
     local github_base="https://github.com/koalaman/shellcheck/releases"
     local github_url="${github_base}/download/${version}/${filename}"
-    local internal_base="http://tools.mindspore.cn/tools/check/shellcheck"
+    local internal_base="https://tools.mindspore.cn/tools/check/shellcheck"
     local internal_url="${internal_base}/shellcheck-${version}/${filename}"
 
     log_info "Trying to download from official GitHub repository..."
@@ -189,7 +189,7 @@ install_linux_codecheck_tool() {
     install_shellcheck "$SHELLCHECK_VERSION" "$install_dir"
     if command_exists gem && [[ "$INSTALL_GEMS" == "true" ]]; then
         log_info "Installing Ruby gems..."
-        gem sources --add https://gems.ruby-china.com/ --remove https://rubygems.org/
+        gem sources --add https://mirrors.huaweicloud.com/repository/rubygems/ --remove https://rubygems.org/
         gem install chef-utils -v 16.6.14
         gem install mdl
         log_success "Ruby gems installed successfully"
@@ -205,7 +205,7 @@ install_windows_codecheck_tools() {
     log_warning "================================================================"
     if command_exists gem && [[ "$INSTALL_GEMS" == "true" ]]; then
         log_info "Installing Ruby gems..."
-        gem sources --add https://gems.ruby-china.com/ --remove https://rubygems.org/
+        gem sources --add https://mirrors.huaweicloud.com/repository/rubygems/ --remove https://rubygems.org/
         gem install chef-utils -v 16.6.14
         gem install mdl
         log_success "Ruby gems installed successfully"

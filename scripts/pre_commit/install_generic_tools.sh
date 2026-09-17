@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,9 +20,7 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 readonly SUPPORTED_PYTHON_VERSIONS=("3.9" "3.10" "3.11" "3.12")
 readonly PYPI_MIRRORS=(
-    "https://pypi.tuna.tsinghua.edu.cn/simple"
-    "http://mirrors.aliyun.com/pypi/simple"
-    "https://mirrors.cloud.tencent.com/pypi/simple"
+    "https://repo.huaweicloud.com/repository/pypi/simple"
 )
 
 detect_architecture() {
@@ -98,9 +96,21 @@ compare_versions() {
 
 check_network() {
     log_info "Checking network connectivity to PyPI..."
-    local endpoints=("https://pypi.org" "https://python.org" "https://google.com")
+    local endpoints=(
+        "https://pypi.org"
+        "https://repo.huaweicloud.com"
+    )
     for endpoint in "${endpoints[@]}"; do
-        if $PYTHON_CMD -c "import urllib.request, ssl; context=ssl._create_unverified_context(); urllib.request.urlopen('$endpoint', timeout=10, context=context); print('SUCCESS')" 2>/dev/null | grep -q "SUCCESS"; then
+        if $PYTHON_CMD -c "
+import urllib.request
+import ssl
+context = ssl.create_default_context()
+try:
+    urllib.request.urlopen('$endpoint', timeout=10, context=context)
+    print('SUCCESS')
+except Exception:
+    pass
+" 2>/dev/null | grep -q "SUCCESS"; then
             log_success "Network connectivity confirmed"
             return 0
         fi
@@ -152,7 +162,7 @@ check_pip() {
     PIP_CMD=$(find_pip "$PYTHON_CMD")
     if [[ -z "$PIP_CMD" ]]; then
         log_error "pip is not installed. Please install pip first"
-        log_info "You can install pip with: curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && $PYTHON_CMD get-pip.py"
+        log_info "Please install pip from the official Python packaging documentation."
         return 1
     fi
     if [[ "$PIP_CMD" == "pip3" ]] || [[ "$PIP_CMD" == "pip" ]] || [[ "$PIP_CMD" =~ ^pip[0-9.]+$ ]]; then
@@ -264,7 +274,7 @@ install_with_retry() {
                 log_info "Trying installation with PyPI mirrors..."
                 for mirror in "${PYPI_MIRRORS[@]}"; do
                     log_info "Attempting with mirror: $(echo "$mirror" | cut -d'/' -f3)"
-                    if execute_pip install -i "$mirror" --trusted-host "$(echo "$mirror" | cut -d'/' -f3)" "$package_spec" 2>/dev/null; then return 0; fi
+                    if execute_pip install -i "$mirror" "$package_spec" 2>/dev/null; then return 0; fi
                 done ;;
             3)
                 log_info "Trying installation without dependencies..."
@@ -312,7 +322,7 @@ install_package() {
         else
             log_info "=== General Troubleshooting ==="
             log_info "1. Check network/proxy settings"
-            log_info "2. Configure pip proxy: pip config set global.proxy http://proxy:port"
+            log_info "2. Configure pip proxy according to your network environment."
             log_info "3. Use virtual environment"
         fi
         return 1
@@ -625,7 +635,7 @@ main() {
     log_info "3. pre-push does not need to be executed manually. Each \`git push\` operation will automatically trigger pre-push to scan the code being pushed."
     log_info ""
     log_info "For technical support, please refer to the documentation or contact the technical support team."
-    log_info "https://atomgit.com/mindspore/mindspore/blob/master/scripts/pre_commit/README_CN.md"
+    log_info "Please refer to scripts/pre_commit/README_CN.md for technical support."
     log_info "========================================"
     return $failed_installations
 }
