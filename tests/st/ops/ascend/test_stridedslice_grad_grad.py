@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
+"""Tests for the StridedSlice gradient-of-gradient operation."""
+
 import numpy as np
 import mindspore.context as context
 from mindspore import nn
@@ -20,13 +21,14 @@ from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(device_target="Ascend")
 
 
 class NetGrad(nn.Cell):
     def __init__(self):
-        super(NetGrad, self).__init__()
+        super().__init__()
         self.grad = G.StridedSliceGrad()
 
     def construct(self, x, begin, end, strides, dout):
@@ -35,7 +37,7 @@ class NetGrad(nn.Cell):
 
 class NetGradGrad(nn.Cell):
     def __init__(self, forward_net):
-        super(NetGradGrad, self).__init__()
+        super().__init__()
         self.forward_net = forward_net
         self.grad_ops = C.GradOperation(get_by_position=True, sens_param=True)
 
