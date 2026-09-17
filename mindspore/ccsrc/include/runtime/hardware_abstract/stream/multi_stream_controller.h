@@ -71,6 +71,9 @@ class RUNTIME_HARDWARE_EXPORT MultiStreamController {
   bool WaitEventByUserStream(int64_t task_id_on_stream, uint32_t user_stream_id);
   bool DispatchRecordWaitEvent(uint32_t user_stream_id, uint32_t memory_stream_id);
 
+  // Refresh the allocation-stream dependency only if its task watermark has advanced.
+  bool DispatchRecordWaitEventForMemoryReuse(uint32_t user_stream_id, uint32_t memory_stream_id);
+
   /// \brief Dispatch a record event on the specified stream
   /// \param[in] stream_id The stream ID where the event will be recorded
   /// \return DeviceEventPtr The created event pointer

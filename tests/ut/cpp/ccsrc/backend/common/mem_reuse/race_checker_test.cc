@@ -125,6 +125,55 @@ TEST_F(TestRaceChecker, CascadeEvent) {
   EXPECT_FALSE(checker.CheckWrite(0x1000, 0x2000, 2));
 }
 
+/// Feature: Cross-graph communication buffer reuse (issue 43315).
+/// Description: Another graph writes and reads a buffer after the static send event,
+///              then communication reuses the buffer on stream 6 after its host-side free.
+/// Expectation: The static event does not protect the communication output write.
+TEST_F(TestRaceChecker, StaticEventDoesNotProtectInterleavedBufferReuse) {
+  constexpr uintptr_t start = 0x1000;
+  constexpr uintptr_t end = start + 512 - 1;
+  RaceChecker checker({start, end}, 7);
+  checker.RecordEvent(0, "static_event");
+  EXPECT_FALSE(checker.CheckWrite(start, end, 0));  // Add-op63.
+  checker.WaitEvent(6, "static_event");
+  EXPECT_FALSE(checker.CheckRead(start, end, 0));  // Add-op64.
+  // Free/allocate on the host does not establish device-side synchronization.
+  EXPECT_TRUE(checker.CheckWrite(start, end, 6));  // AllReduce output.
+}
+
+/// Feature: Cross-graph communication buffer reuse (issue 43315).
+/// Description: Refreshing the event before the last reader completes the writer dependency only.
+/// Expectation: Communication still races with the last reader of the reused buffer.
+TEST_F(TestRaceChecker, RefreshedEventBeforeLastReaderDoesNotProtectBufferReuse) {
+  constexpr uintptr_t start = 0x1000;
+  constexpr uintptr_t end = start + 512 - 1;
+  RaceChecker checker({start, end}, 7);
+  checker.RecordEvent(0, "static_event");
+  EXPECT_FALSE(checker.CheckWrite(start, end, 0));
+  checker.WaitEvent(6, "static_event");
+  checker.RecordEvent(0, "allocation_event");
+  checker.WaitEvent(6, "allocation_event");
+  EXPECT_FALSE(checker.CheckRead(start, end, 0));
+  EXPECT_TRUE(checker.CheckWrite(start, end, 6));
+}
+
+/// Feature: Cross-graph communication buffer reuse (issue 43315).
+/// Description: Record on the allocation stream after the old buffer's last reader,
+///              and wait on the communication stream before writing the reused allocation.
+/// Expectation: The additional runtime event protects the communication output write.
+TEST_F(TestRaceChecker, RuntimeEventProtectsInterleavedBufferReuse) {
+  constexpr uintptr_t start = 0x1000;
+  constexpr uintptr_t end = start + 512 - 1;
+  RaceChecker checker({start, end}, 7);
+  checker.RecordEvent(0, "static_event");
+  EXPECT_FALSE(checker.CheckWrite(start, end, 0));
+  checker.WaitEvent(6, "static_event");
+  EXPECT_FALSE(checker.CheckRead(start, end, 0));
+  checker.RecordEvent(0, "allocation_event");
+  checker.WaitEvent(6, "allocation_event");
+  EXPECT_FALSE(checker.CheckWrite(start, end, 6));
+}
+
 /// Feature: RaceChecker
 /// Description: test illegal event.
 /// Expectation: throw exception when input is invalid.

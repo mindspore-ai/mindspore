@@ -350,6 +350,8 @@ void KernelRunner::Init() {
 
 void KernelRunner::InitMultiStreamInfo() {
   auto device_context = device_contexts_[0];
+  is_auto_assigned_comm_ = kernel_info_->stream_id() != kDefaultStreamIndex && !kernel_->HasAttr(kAttrStreamId) &&
+                           common::AnfAlgo::IsCommunicationOp(kernel_);
   // cpu kernel does not need multi stream process, and gpu kernel has not adapt it currently.
   if (device_context->GetDeviceType() == device::DeviceType::kCPU ||
       device_context->GetDeviceType() == device::DeviceType::kGPU) {
@@ -1841,6 +1843,15 @@ void KernelRunner::ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> 
                                              memory_stream_id);
     WaitCrossStreamEvents(multi_stream_controller, memory_stream_id);
     return;
+  }
+
+  // Refresh the default-stream dependency before communication memory reuse.
+  if (is_auto_assigned_comm_ &&
+      std::any_of(memory_alloc_list_.begin(), memory_alloc_list_.end(), [](const auto &tensor) {
+        return tensor->alloc_stream_id() == kDefaultStreamIndex && !tensor->managed_by_somas() &&
+               tensor->device_ptr() != nullptr && tensor->size() != 0;
+      })) {
+    (void)multi_stream_controller->DispatchRecordWaitEventForMemoryReuse(stream_id, kDefaultStreamIndex);
   }
 
   // Process inputs.
