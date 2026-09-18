@@ -73,9 +73,11 @@ class DeviceCtx:
             is_default = True
         if not _is_same_device(device_info, self.name, self.device_id):
             _wait_pipeline()
-        _DEVICE_STACK.push(device_info)
         MSContext.get_instance().set_device_target_inner(self.name)
         DeviceManagerConf.get_instance().set_device(self.name, self.device_id, is_default)
+        # Push only after the device is switched, otherwise a failed __enter__ would leave a stale entry behind
+        # and __exit__ of an enclosing context would restore the wrong device.
+        _DEVICE_STACK.push(device_info)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
