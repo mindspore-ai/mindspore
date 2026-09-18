@@ -189,7 +189,7 @@ std::string Location::GetStartLineSourceCode(SourceLineTip tip) {
   std::stringstream debug_info_ss;
   char *file_out;
   constexpr int kLineStrSize = 4096;
-  char line[kLineStrSize];
+  char line[kLineStrSize] = {0};
 
   // Use line_str_ as cache.
   if (!line_str_.empty()) {
@@ -222,6 +222,10 @@ std::string Location::GetStartLineSourceCode(SourceLineTip tip) {
     }
   }
   fclose(file);
+
+  if (file_out == nullptr) {
+    return debug_info_ss.str();
+  }
 
   debug_info_ss << HighlightLine(line, column_, column_end_, line_end_ == line_, tip);
   return debug_info_ss.str();
