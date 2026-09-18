@@ -290,3 +290,10 @@ foreach(comp ${ALL_UT_COMPS})
     target_link_libraries(ut_${comp}_tests PRIVATE mindspore::glog)
     target_link_libraries(ut_${comp}_tests PRIVATE mindspore::securec)
 endforeach()
+
+# MindIR tests use protobuf directly, while mindspore_core links it privately.
+if(ENABLE_NATIVE_PROTOBUF)
+    target_link_libraries(ut_CORE_tests PRIVATE ${PROTOBUF_LIB})
+else()
+    target_link_libraries(ut_CORE_tests PRIVATE mindspore::protobuf)
+endif()
