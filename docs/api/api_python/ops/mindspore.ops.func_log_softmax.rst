@@ -15,7 +15,7 @@ mindspore.ops.log_softmax
 
     参数：
         - **logits** (Tensor) - 输入Tensor，上述公式中的 :math:`x` ，shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型为float16或float32。
-        - **axis** (int) - 指定进行运算的轴。默认 ``-1`` 。
+        - **axis** (int) - 用于执行LogSoftmax函数运算的轴。默认 ``-1`` 。
 
     返回：
         Tensor，数据类型和shape与 `logits` 相同。

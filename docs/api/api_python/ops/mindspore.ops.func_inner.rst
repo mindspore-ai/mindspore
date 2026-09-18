@@ -3,7 +3,7 @@ mindspore.ops.inner
 
 .. py:function:: mindspore.ops.inner(input, other)
 
-    计算两个一维tensor的点积。
+    返回两个一维tensor的点积。
 
     对于更高的维度，返回最后一个轴上逐元素乘积后的和。
 

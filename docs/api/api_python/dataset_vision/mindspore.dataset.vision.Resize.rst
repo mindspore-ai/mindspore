@@ -8,7 +8,7 @@ mindspore.dataset.vision.Resize
     支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
 
     参数：
-        - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，将调整图像的较短边长度为 `size` ，且保持图像的宽高比不变；若输入是2元素组成的序列，其输入格式需要是 (高度, 宽度) 。
+        - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小，`size` 大小必须为正数。若输入整型，将调整图像的较短边长度为 `size` ，且保持图像的宽高比不变；若输入是2元素组成的序列，其输入格式需要是 (高度, 宽度) 。
 
           - **CPU模式**：通过 `.device("CPU")` 设定执行设备为 CPU 时，`size` 取值范围：[1, 16777216]。
           - **Ascend模式**：通过 `.device("Ascend")` 设定执行设备为 Ascend 时，`size` 取值范围：[6, 32768]。
