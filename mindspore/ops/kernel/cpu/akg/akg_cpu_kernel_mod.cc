@@ -94,7 +94,7 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   std::string fn_so;
   std::string fn_kernel;
   GetFunctionAndKernelName(fn, kernel_name, &fn_so, &fn_kernel);
-  auto realfile = FileUtils::GetRealPath(fn_so.c_str());
+  auto realfile = GetValidKernelFilePath(KernelMeta::GetInstance()->kernel_meta_path(), fn + ".so");
   if (!realfile.has_value()) {
     MS_LOG(ERROR) << "Invalid file path " << fn_so << " kernel: " << kernel_name;
     return nullptr;
@@ -112,6 +112,7 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   auto launch_func = dlsym(handle, fn_kernel.c_str());
   if (launch_func == nullptr) {
     MS_LOG(ERROR) << "Undefined symbol " << fn_kernel << " in " << fn_so;
+    (void)dlclose(handle);
     return nullptr;
   }
   cpu_func_map_[kernel_name] = std::make_pair(launch_func, handle);

@@ -16,6 +16,7 @@
 
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <set>
 #include <utility>
@@ -44,7 +45,73 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+bool IsPathSeparator(char c) { return c == '/' || c == '\\'; }
+
+bool PathCharEqual(char lhs, char rhs) {
+#if defined(_WIN32) || defined(_WIN64)
+  if (IsPathSeparator(lhs) && IsPathSeparator(rhs)) {
+    return true;
+  }
+  return std::tolower(static_cast<unsigned char>(lhs)) == std::tolower(static_cast<unsigned char>(rhs));
+#else
+  return lhs == rhs;
+#endif
+}
+
+// Both paths must be canonical. Only direct children are accepted so that a symlink cannot redirect the load to a
+// nested or external directory.
+bool IsDirectChildPath(const std::string &directory, const std::string &file_path) {
+  if (directory.empty() || file_path.size() <= directory.size() ||
+      !std::equal(directory.begin(), directory.end(), file_path.begin(), PathCharEqual)) {
+    return false;
+  }
+  size_t relative_pos = directory.size();
+  if (!IsPathSeparator(directory.back())) {
+    if (!IsPathSeparator(file_path[relative_pos])) {
+      return false;
+    }
+    ++relative_pos;
+  }
+  if (relative_pos >= file_path.size()) {
+    return false;
+  }
+  return std::none_of(file_path.begin() + relative_pos, file_path.end(), IsPathSeparator);
+}
+}  // namespace
+
 std::string GetCompilerCachePath() { return CompileCacheContext::GetInstance().GetUserDefineCachePath(); }
+
+std::optional<std::string> GetValidKernelFilePath(const std::string &kernel_meta_path, const std::string &file_name) {
+  if (!Common::IsFilenameValid(file_name, MAX_OS_FILENAME_LENGTH, "Invalid AKG kernel file name.")) {
+    return std::nullopt;
+  }
+  auto real_kernel_meta_path = FileUtils::GetRealPath(kernel_meta_path.c_str());
+  if (!real_kernel_meta_path.has_value()) {
+    MS_LOG(ERROR) << "Invalid AKG kernel meta path: " << kernel_meta_path;
+    return std::nullopt;
+  }
+  std::string candidate_path = kernel_meta_path;
+  if (!candidate_path.empty() && !IsPathSeparator(candidate_path.back())) {
+    candidate_path += '/';
+  }
+  candidate_path += file_name;
+  auto real_file_path = FileUtils::GetRealPath(candidate_path.c_str());
+  if (!real_file_path.has_value()) {
+    MS_LOG(ERROR) << "Invalid AKG kernel file path: " << candidate_path;
+    return std::nullopt;
+  }
+  if (!IsDirectChildPath(real_kernel_meta_path.value(), real_file_path.value())) {
+    MS_LOG(ERROR) << "AKG kernel file is outside the kernel meta directory: " << real_file_path.value();
+    return std::nullopt;
+  }
+  struct stat file_stat {};
+  if (stat(real_file_path->c_str(), &file_stat) != 0 || !S_ISREG(file_stat.st_mode)) {
+    MS_LOG(ERROR) << "AKG kernel file is not a regular file: " << real_file_path.value();
+    return std::nullopt;
+  }
+  return real_file_path;
+}
 
 void KernelMeta::Initialize(const std::string &backend) {
   auto config_path = GetCompilerCachePath();

@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <optional>
 #include <utility>
 #include <unordered_map>
 #include "ir/dtype/tensor_type.h"
@@ -62,6 +63,11 @@ class RUNTIME_HARDWARE_EXPORT KernelMeta {
 };
 
 RUNTIME_HARDWARE_EXPORT std::string GetCompilerCachePath();
+
+// Resolve an existing kernel file and ensure that it is a direct child of kernel_meta_path.
+// file_name must be a basename containing only ASCII letters, digits, '_', '-', and '.'.
+RUNTIME_HARDWARE_EXPORT std::optional<std::string> GetValidKernelFilePath(const std::string &kernel_meta_path,
+                                                                          const std::string &file_name);
 
 RUNTIME_HARDWARE_EXPORT void SaveJsonInfo(const std::string &json_name, const std::string &info,
                                           const std::string &base_path);
