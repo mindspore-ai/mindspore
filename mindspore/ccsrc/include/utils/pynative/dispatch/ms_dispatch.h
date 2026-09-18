@@ -145,7 +145,9 @@ py::object InvokeGuardChain(CppCallbackWrapper cpp_callback, const py::args &arg
 
   auto op_func =
     MakeOpFunc(op_name, py::cpp_function([cb = std::move(cpp_callback), op_name](const py::args &inner_args) mutable {
-                 return InvokeGuardChain(std::move(cb), inner_args, op_name);
+                 // Copy the callback for every invocation: a guard may call func more than once (retry, benchmark)
+                 // and moving it would leave the second call with an empty callback and an empty operator name.
+                 return InvokeGuardChain(cb, inner_args, op_name);
                }));
   MS_LOG(DEBUG) << "Invoke guard: " << op_name;
   return handler(op_func, args);

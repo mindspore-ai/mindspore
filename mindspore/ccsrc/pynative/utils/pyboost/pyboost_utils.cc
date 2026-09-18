@@ -229,9 +229,9 @@ kernel::KernelModPtr PyBoostUtils::CreateKernelMod(const PrimitivePtr &prim, con
       PyboostKernelExtraFuncFactory::GetInstance().SetThreadPool(device::GetDeviceTypeByName(device_name), kernel_mod);
       return kernel_mod;
     }
+    // The kernel mod whose init failed must not be cached or registered for the thread pool, otherwise the next
+    // dispatch of this op would reuse an uninitialized kernel mod instead of reporting the failure again.
     op_plugin_init_failed = true;
-    cache_helper.SetCache(key, kernel_mod);
-    PyboostKernelExtraFuncFactory::GetInstance().SetThreadPool(device::GetDeviceTypeByName(device_name), kernel_mod);
   }
 
   kernel_mod = device_context->GetKernelExecutor()->CreateKernelMod(op_name);
