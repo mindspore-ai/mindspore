@@ -1425,3 +1425,89 @@ def error_inputs_tensor_diff(op_info, dtype, device=None, **kwargs):
             op_error_type=(AttributeError, ValueError, RuntimeError, TypeError, IndexError),
             op_error_info=f'{op_info.name} error params',
         )
+
+def basic_reference_inputs_tensor_logcumsumexp(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    S = SMALL_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
+    L = LARGE_DIM_SIZE
+    cases=(
+        (S, ),
+        (0, ),
+        (2, M),
+        (512, 512),
+        (1, 0, S),
+        (3, L, S),
+        (2, 1, M, L),
+        (S, 1, 2, L, M),
+        (1, 2, 3, L, 1, 1, 2, S)
+    )
+    for input_shape in cases:
+        yield OpSampleInput(
+            op_input=make_func(input_shape),
+            op_args=(random.choice(tuple(range(-len(input_shape), len(input_shape) ) ) ),),
+            sample_name=f'{op_info.name}_{dtype}_basic'
+        )
+
+def extra_reference_inputs_tensor_logcumsumexp(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    yield from make_extra_tensor(op_info,(2, 3, 4),(-1, ), {}, dtype=dtype, device=device, **kwargs)
+
+def dynamic_sample_inputs_tensor_logcumsumexp(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        # Dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(1, ),
+                sample_name=f'{op_info.name}_{dtype}_dynamic_shape_compile'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 7, 9)),
+                    op_args=(1, ),
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_1'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4, 5)),
+                    op_args=(1, ),
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_shape_running_2'
+                ),
+            )
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        # Dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(0, ),
+                sample_name=f'{op_info.name}_{dtype}_dynamic_rank_compile'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 7)),
+                    op_args=(0,),
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_1'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 4, 5)),
+                    op_args=(0,),
+                    sample_name=f'{op_info.name}_{dtype}_dynamic_rank_running_2'
+                ),
+            )
+        )
+
+def error_sample_inputs_tensor_logcumsumexp(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield OpErrorInput(
+        OpSampleInput(
+            op_input=make_tensor(shape=(), dtype=ms.float32, device=device),
+            op_args=(0, ),
+            sample_name=f'{op_info.name}_{dtype}_error',
+        ),
+        op_error_type=ValueError,
+        op_error_info="input shape len must >=1",
+    )

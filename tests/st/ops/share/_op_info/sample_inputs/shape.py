@@ -3868,3 +3868,91 @@ def error_reference_inputs_tensor_expand(op_info: OpInfo, dtype=None, device=Non
         op_error_type=ValueError,
         op_error_info='if the dim of  input is not 1, the corresponding dim of params size must be equal or -1 '
     )
+
+def error_reference_inputs_matrix(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func((3, )),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        ),
+        op_error_type=ValueError,
+        op_error_info='dim should > 1 '
+    )
+
+def basic_reference_inputs_tensor_movedim(op_info:OpInfo, dtype=None, device=None, **kwargs):
+    make_input = functools.partial(make_tensor, device=device, dtype=dtype)
+
+    L = LARGE_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
+    S = SMALL_DIM_SIZE
+
+    case=(
+        (S, ),
+        (0, ),
+        (S, M),
+        (0, S, L),
+        (S, L, M),
+        (1, S, L , M),
+        (S, S, L, M ,S),
+        (S, 1, 1, 1, M, 1, 1, L)
+    )
+
+    for shape in case:
+        index_tuple = tuple(range(-len(shape), len(shape)))
+
+        yield OpSampleInput(
+            op_input=make_input(shape),
+            op_args=(random.choice(index_tuple), random.choice(index_tuple) ),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_basic',
+        )
+
+def extra_reference_inputs_tensor_movedim(op_info:OpInfo, dtype=None, device=None, **kwargs):
+
+    yield from make_extra_tensor(op_info, (10, 1, 3), (0, -1), {}, dtype=dtype, device=device)
+
+def dynamic_sample_inputs_tensor_movedim(op_info: OpInfo, dtype, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(0, 0),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(0, 1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5)),
+                    op_args=(0, 1),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+def error_sample_inputs_tensor_movedim(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=ms.float32, device=device)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_func((3, )),
+            op_args=(1, 2),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_error',
+        ),
+        op_error_type=ValueError,
+        op_error_info='the value of source and destination shoulde range(-len(op_input.shape),  len(op_input.shape))'
+    )

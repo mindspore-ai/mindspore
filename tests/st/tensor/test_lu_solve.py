@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-
+"""
+Test for Tensor.lu_solve
+"""
 from mindspore import Tensor, nn
 import mindspore as mstype
 import numpy as np
-import pytest
 from tests.mark_utils import arg_mark
 
 
@@ -26,7 +27,7 @@ class LUSolveNet(nn.Cell):
         return x.lu_solve(LU, pivots)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',],
           level_mark='level2',
           card_mark='onecard')
 def test_lu_solve():

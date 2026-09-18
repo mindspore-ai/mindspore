@@ -1681,3 +1681,125 @@ def error_sample_inputs_tensor_bernoulli_(op_info:OpInfo, dtype=None, device=Non
             op_error_type=RuntimeError,
             op_error_info=f'tensor p error dtype {p_dtype} is not supported for {op_info.name}',
         )
+
+def basic_sample_inputs_tensor_multinomial(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (
+        ([1, 0], 6, True),
+        ([[1, 0], [0, 1]], 10, True),
+        ([0, 1], 2, False),
+        ([9, 1, 0], 1000, True),
+    )
+    for input_data, num_samples, replacement in cases:
+
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_data,dtype=dtype, device=device),
+            op_args=(num_samples,),
+            op_kwargs={'replacement': replacement},
+            sample_name=f'{op_info.name}_basic'
+        )
+
+def extra_sample_inputs_tensor_multinomial(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = (
+        ([1, np.inf], 8, True),
+        ([-np.inf, 2], 10, True),
+        ([3, np.nan], 2, False),
+        ([np.inf, -np.inf, np.nan], 12, True),
+        ([np.nan, np.inf, -np.inf], 3, False),
+    )
+
+    for input_data, num_samples, replacement in cases:
+
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(input_data,dtype=dtype, device=device),
+            op_args=(num_samples,),
+            op_kwargs={'replacement': replacement},
+            sample_name=f'{op_info.name}_extra_extremum'
+        )
+
+    yield OpSampleInput(
+        op_input=make_tensor_with_np_array([[1, 0], [0, 1]], dtype=dtype, device=device, discontiguous=True),
+        op_args=(8, ),
+        op_kwargs={'replacement': True},
+        sample_name=f'{op_info.name}_extra_discontiguous'
+    )
+
+def error_sample_inputs_tensor_multinomial(op_info: OpInfo, dtype=None, device=None, **kwargs):
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor_with_np_array([90, 0, 10], dtype=ms.float32, device=device),
+            op_args=(4, ),
+            op_kwargs={'replacement': False},
+            sample_name=f"{op_info.name}_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info='the num_samples must be less than the last dimension of input without replacement',
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_tensor((2, 3, 4), dtype=ms.float32, device=device),
+            op_args=(4, ),
+            op_kwargs={'replacement': True},
+            sample_name=f"{op_info.name}_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info='the dimension of inputs must be 1d or 2d',
+    )
+
+def dynamic_sample_inputs_tensor_multinomial(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor_with_np_array, dtype=dtype, device=device,)
+    #dynamic shape
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None,), dtype=dtype),
+                op_args=(8, ),
+                op_kwargs={'replacement': True},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func([[1, 0]]),
+                    op_args=(8, ),
+                    op_kwargs={'replacement': True},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func([[1, 0],[0, 1]]),
+                    op_args=(8, ),
+                    op_kwargs={'replacement': True},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func([[1, 0],[0, 1],[1, 0]]),
+                    op_args=(8, ),
+                    op_kwargs={'replacement': True},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    #dynamic rank
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(8, ),
+                op_kwargs={'replacement': True},
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func([1, 0]),
+                    op_args=(8, ),
+                    op_kwargs={'replacement': True},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func([[0, 1]]),
+                    op_args=(8, ),
+                    op_kwargs={'replacement': True},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            ),
+        )
