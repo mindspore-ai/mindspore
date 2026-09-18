@@ -34,6 +34,8 @@ float GetScalarValueToFloat(const std::shared_ptr<Scalar> &scalar, const string 
     return static_cast<float>(GetValue<double>(scalar));
   } else if (scalar->isa<FP32Imm>()) {
     return GetValue<float>(scalar);
+  } else if (scalar->isa<BoolImm>()) {
+    return GetValue<bool>(scalar) ? 1.0f : 0.0f;
   } else {
     MS_EXCEPTION(TypeError) << "For Pyboost InplaceNormal, the input " << scalar_name
                             << " does not support dtype: " << scalar->type_name();
