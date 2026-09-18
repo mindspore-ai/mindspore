@@ -99,7 +99,11 @@ uint32_t FFTBaseCpuKernel::FFTBaseComputeR2C(CpuKernelContext &ctx) {
   // step3：Allocate temporary memory of the required type and size and copy the input into this space.
   T_out *calculate_input = static_cast<T_out *>(malloc(sizeof(T_out) * calculate_element));
   auto ret = memset_s(calculate_input, sizeof(T_out) * calculate_element, 0, sizeof(T_out) * calculate_element);
-  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memset_s failed.");
+  if (ret != EOK) {
+    free(calculate_input);
+    CUST_AICPU_LOGE(ctx, "memset_s failed.");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
   ShapeCopy<T_in, T_out>(input_ptr, calculate_input, tensor_shape, calculate_shape);
 
   // step4：Run FFT according to parameters
@@ -171,7 +175,11 @@ uint32_t FFTBaseCpuKernel::FFTBaseComputeC2R(CpuKernelContext &ctx) {
     static_cast<std::complex<T_out> *>(malloc(sizeof(std::complex<T_out>) * calculate_element));
   auto ret = memset_s(calculate_input, sizeof(std::complex<T_out>) * calculate_element, 0,
                       sizeof(std::complex<T_out>) * calculate_element);
-  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memset_s failed.");
+  if (ret != EOK) {
+    free(calculate_input);
+    CUST_AICPU_LOGE(ctx, "memset_s failed.");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
   ShapeCopy<T_in, std::complex<T_out>>(input_ptr, calculate_input, tensor_shape, calculate_shape);
 
   if (op_name == kHFFT) {
@@ -238,7 +246,11 @@ uint32_t FFTBaseCpuKernel::FFTBaseComputeC2C(CpuKernelContext &ctx) {
     static_cast<std::complex<T_out> *>(malloc(sizeof(std::complex<T_out>) * calculate_element));
   auto ret = memset_s(calculate_input, sizeof(std::complex<T_out>) * calculate_element, 0,
                       sizeof(std::complex<T_out>) * calculate_element);
-  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "memset_s failed.");
+  if (ret != EOK) {
+    free(calculate_input);
+    CUST_AICPU_LOGE(ctx, "memset_s failed.");
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
   ShapeCopy<T_in, std::complex<T_out>>(input_ptr, calculate_input, tensor_shape, calculate_shape);
 
   // step4：Run FFT according to parameters
