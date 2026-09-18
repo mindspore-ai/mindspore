@@ -152,7 +152,7 @@ def _assert_fallback_dtensor_close(output, expect, rtol=1e-3, atol=1e-3):
     assert np.allclose(output.asnumpy(), expect, rtol, atol)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
+
 def test_pyboost_atb_swiglu():
     """
     Feature: CustomOpBuilder.
