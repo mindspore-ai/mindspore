@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test for after if."""
 from tests.mark_utils import arg_mark
 from mindspore import context
 from mindspore import Tensor, nn
@@ -48,7 +50,7 @@ def test_for_after_if():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):

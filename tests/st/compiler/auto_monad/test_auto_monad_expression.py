@@ -141,7 +141,7 @@ def test_auto_monad_read_dependency_two_assign_two_addn():
 
 class ForwardNet(Cell):
     def __init__(self):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.array(0), ms.int32), name="param")
 
     def construct(self, x):
@@ -156,7 +156,7 @@ class ForwardNet(Cell):
 
 class BackwardNet(Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 
@@ -219,7 +219,7 @@ def test_load_convert_tensormove():
 
 class ForwardNet2(Cell):
     def __init__(self):
-        super(ForwardNet2, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.array(0), ms.int32), name="param")
 
     def construct(self):

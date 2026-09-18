@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""test for while while."""
+
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -27,7 +29,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.max_cycles = max_cycles
         self.zero = Tensor(np.array(0), mstype.float32)
         self.i = Tensor(np.array(0), mstype.float32)
@@ -48,7 +50,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation()
 

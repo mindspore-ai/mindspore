@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for the scatter function operator on Ascend."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -34,7 +36,7 @@ func_map = {
 
 class TestScatterFuncNet(nn.Cell):
     def __init__(self, func, inputx):
-        super(TestScatterFuncNet, self).__init__()
+        super().__init__()
 
         self.scatter_func = func_map.get(func)()
         self.inputx = Parameter(inputx, name="inputx")
@@ -167,7 +169,7 @@ def scatter_func_dynamic_indices():
 
 class TestScatterFuncGradNet(nn.Cell):
     def __init__(self, network):
-        super(TestScatterFuncGradNet, self).__init__()
+        super().__init__()
         self.grad = ops.GradOperation(
             get_by_position=True, sens_param=True, get_by_list=True)
         self.network = network
@@ -220,7 +222,7 @@ def scatter_func_grad(nptype):
 
 class ScatterFuncVmapNet(nn.Cell):
     def __init__(self, func):
-        super(ScatterFuncVmapNet, self).__init__()
+        super().__init__()
         self.scatter_func = func_map.get(func)()
 
     def construct(self, inputx, indices, updates):
@@ -229,7 +231,7 @@ class ScatterFuncVmapNet(nn.Cell):
 
 class VmapNet(nn.Cell):
     def __init__(self, net, inputx, in_axes, out_axes):
-        super(VmapNet, self).__init__()
+        super().__init__()
         self.net = net
         self.in_axes = in_axes
         self.out_axes = out_axes
@@ -241,7 +243,7 @@ class VmapNet(nn.Cell):
 
 class NestVmapNet(nn.Cell):
     def __init__(self, net, inputx, in_axes, out_axes):
-        super(NestVmapNet, self).__init__()
+        super().__init__()
         self.net = net
         self.in_axes = in_axes
         self.out_axes = out_axes

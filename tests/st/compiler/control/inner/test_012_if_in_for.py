@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test if in for."""
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -29,7 +31,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.max_cycles = max_cycles
         self.zero = Tensor(np.array(0), mstype.float32)
         self.weight = Parameter(Tensor(np.array(0), mstype.float32))
@@ -46,7 +48,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 
@@ -134,7 +136,7 @@ def test_if_in_for_dict_values():
             x = x + value
             if x > 2:
                 continue
-            elif x > 1:
+            if x > 1:
                 x = x - 1
             elif x > 0:
                 x = x + 1

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for dynamic broadcast gradient args on Ascend."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore
@@ -28,7 +30,7 @@ grad = C.GradOperation(get_by_position=True)
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.args = _inner_ops.DynamicBroadcastGradientArgs()
 
     def construct(self, s0, s1):
@@ -52,7 +54,7 @@ def test_net():
 
 class NetWrap(nn.Cell):
     def __init__(self):
-        super(NetWrap, self).__init__()
+        super().__init__()
         self.shape = ops.Shape()
         self.broadcastto = _inner_ops.DynamicBroadcastTo()
 
@@ -63,7 +65,7 @@ class NetWrap(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, data, shape):

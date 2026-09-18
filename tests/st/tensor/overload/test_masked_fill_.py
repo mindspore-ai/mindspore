@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for the Tensor.masked_fill_ in-place overload."""
+
 import numpy as np
 import pytest
 import random

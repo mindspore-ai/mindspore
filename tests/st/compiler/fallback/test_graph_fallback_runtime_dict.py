@@ -57,7 +57,7 @@ def test_return_empty_dict_pyexecute():
         return {}
 
     x = dict_func()
-    assert x == {}
+    assert not x
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
@@ -228,7 +228,7 @@ def test_net_dict_1():
 
     class DictLeNetNet(ms.nn.Cell):
         def __init__(self, num_class=10):
-            super(DictLeNetNet, self).__init__()
+            super().__init__()
             self.conv1 = conv(1, 6, 5)
             self.conv2 = conv(6, 16, 5)
             self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
@@ -276,7 +276,7 @@ def test_net_dict_1_grad():
 
     class DictLeNetNet(ms.nn.Cell):
         def __init__(self, num_class=10):
-            super(DictLeNetNet, self).__init__()
+            super().__init__()
             self.conv1 = conv(1, 6, 5)
             self.conv2 = conv(6, 16, 5)
             self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
@@ -321,7 +321,7 @@ def test_net_dict_2():
 
     class DictLeNetNet(ms.nn.Cell):
         def __init__(self, num_class=10):
-            super(DictLeNetNet, self).__init__()
+            super().__init__()
             self.conv1 = conv(1, 6, 5)
             self.conv2 = conv(6, 16, 5)
             self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
@@ -332,7 +332,7 @@ def test_net_dict_2():
             self.flatten = ms.nn.Flatten()
 
         def construct(self, x):
-            outputs = {} 
+            outputs = {}
             x = self.conv1(x)
             outputs['conv1'] = x
             x = self.relu(x)
@@ -368,7 +368,7 @@ def test_net_dict_2_grad():
 
     class LeNet(ms.nn.Cell):
         def __init__(self, num_class=10):
-            super(LeNet, self).__init__()
+            super().__init__()
             self.conv1 = conv(1, 6, 5)
             self.conv2 = conv(6, 16, 5)
             self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
@@ -398,7 +398,7 @@ def test_net_dict_2_grad():
 
     class DictLeNet(ms.nn.Cell):
         def __init__(self, num_class=10):
-            super(DictLeNet, self).__init__()
+            super().__init__()
             self.conv1 = conv(1, 6, 5)
             self.conv2 = conv(6, 16, 5)
             self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
@@ -409,7 +409,7 @@ def test_net_dict_2_grad():
             self.flatten = ms.nn.Flatten()
 
         def construct(self, x):
-            outputs = {} 
+            outputs = {}
             x = self.conv1(x)
             outputs['conv1'] = x
             x = self.relu(x)
@@ -529,7 +529,7 @@ def test_nested_dict_with_parameter():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
 
@@ -555,7 +555,7 @@ def test_return_nested_dict_with_parameter1():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
 
@@ -579,7 +579,7 @@ def test_return_nested_dict_with_parameter2():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
 
@@ -602,7 +602,7 @@ def test_nested_dict_with_parameter_constant1():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
@@ -628,7 +628,7 @@ def test_nested_dict_with_parameter_constant2():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = {'params': [self.x, self.y], 'a': 1, 'b': {'params': self.x, 'a': 2}}
@@ -654,7 +654,7 @@ def test_return_nested_dict_with_parameter_constant1():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = [{'params': (self.x, self.y), 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
@@ -677,7 +677,7 @@ def test_return_nested_dict_with_parameter_constant2():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = [{'params': [self.x, self.y], 'a': 1, 'b': False}, {'params': self.x, 'a': 2}]
@@ -701,7 +701,7 @@ def test_return_nested_dict_with_parameter_constant3():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = {'params': (self.x, self.y), 'a': 1, 'b': {'params': self.x, 'a': 2}}
@@ -724,7 +724,7 @@ def test_return_nested_dict_with_parameter_constant4():
 
     class Net(ms.nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = Parameter(Tensor([1], dtype=mstype.int64), name="input_x")
             self.y = Parameter(Tensor([2], dtype=mstype.int64), name="input_y")
             self.z = {'params': [self.x, self.y], 'a': 1, 'b': {'params': self.x, 'a': 2}}

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for the index_add operator on Ascend."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -27,7 +29,7 @@ from mindspore.common import dtype as mstype
 
 class NetIndexAdd(nn.Cell):
     def __init__(self, x, axis):
-        super(NetIndexAdd, self).__init__()
+        super().__init__()
         self.input_x = Parameter(Tensor(x), name='x')
         self.index_add = ops.IndexAdd(axis)
 
@@ -117,7 +119,7 @@ def test_index_add_uint8():
 
 class IndexAddGradNet(nn.Cell):
     def __init__(self, network):
-        super(IndexAddGradNet, self).__init__()
+        super().__init__()
         self.grad = ops.GradOperation(get_by_position=True, sens_param=True, get_by_list=True)
         self.network = network
         self.params = ParameterTuple(network.trainable_params())

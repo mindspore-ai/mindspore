@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for mint.dstack."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -60,8 +62,7 @@ def test_ops_dstack_normal(mode):
     input_list.append([generate_random_input((2, 3, 4, 5), np.int32), generate_random_input((2, 3, 4, 5), np.int32)])
     input_list.append([generate_random_input((2, 3, 4), np.complex64), generate_random_input((2, 3, 2), np.complex64)])
 
-    for i in range(len(input_list)):
-        inputs = input_list[i]
+    for inputs in input_list:
         tensors = [ms.Tensor(input_x) for input_x in inputs]
         expect = generate_expect_forward_output(inputs)
         output = dstack_forward_func(*tensors)

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for the truncate_mod operator gradient with dynamic shape."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -24,7 +26,7 @@ from .test_grad_of_dynamic import TestDynamicGrad
 
 class TruncateModNet(nn.Cell):
     def __init__(self):
-        super(TruncateModNet, self).__init__()
+        super().__init__()
         self.truncate_mode = P.TruncateMod()
 
     def construct(self, x, y):

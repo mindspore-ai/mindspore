@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test single for."""
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -49,7 +51,7 @@ def test_single_for_01():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -69,7 +71,8 @@ def test_single_for_01():
     graph_backward_res = net(x, y, z)
 
     assert graph_forward_res == Tensor([125], mstype.float32)
-    assert graph_backward_res == (Tensor([15], mstype.float32), Tensor([40], mstype.float32), Tensor([5], mstype.float32))
+    assert graph_backward_res == (Tensor([15], mstype.float32), Tensor([40], mstype.float32),
+                                  Tensor([5], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -94,7 +97,7 @@ def test_single_for_02():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -114,7 +117,8 @@ def test_single_for_02():
     graph_backward_res = net(x, y, z)
 
     assert graph_forward_res == Tensor([195], mstype.float32)
-    assert graph_backward_res == (Tensor([25], mstype.float32), Tensor([64], mstype.float32), Tensor([5], mstype.float32))
+    assert graph_backward_res == (Tensor([25], mstype.float32), Tensor([64], mstype.float32),
+                                  Tensor([5], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
@@ -149,7 +153,7 @@ def test_single_for_03():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -196,7 +200,7 @@ def test_single_for_04():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -242,7 +246,7 @@ def test_single_for_05():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):

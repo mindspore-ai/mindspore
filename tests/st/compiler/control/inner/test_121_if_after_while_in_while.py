@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""test if after while in while."""
+
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -29,7 +31,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.max_cycles = max_cycles
         self.zero = Tensor(np.array(0), mstype.float32)
         self.i = Tensor(np.array(0), mstype.float32)
@@ -53,7 +55,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 
@@ -99,7 +101,7 @@ def test_backward():
 
 class ForwardNetNoAssign(nn.Cell):
     def __init__(self, max_cycles=10):
-        super(ForwardNetNoAssign, self).__init__()
+        super().__init__()
         self.max_cycles = max_cycles
         self.zero = Tensor(np.array(0), mstype.float32)
         self.i = Tensor(np.array(0), mstype.float32)
@@ -120,7 +122,7 @@ class ForwardNetNoAssign(nn.Cell):
 
 class BackwardNetNoAssign(nn.Cell):
     def __init__(self, net):
-        super(BackwardNetNoAssign, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 

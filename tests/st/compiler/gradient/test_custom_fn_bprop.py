@@ -315,7 +315,7 @@ def test_custom_vjp_fn_with_net():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name="z")
 
@@ -363,7 +363,7 @@ def test_custom_vjp_forward_net_call_fn():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name="z")
 

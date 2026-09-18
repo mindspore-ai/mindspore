@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for mint.nn.functional.nll_loss."""
 import pytest
 import numpy as np
 from mindspore import grad

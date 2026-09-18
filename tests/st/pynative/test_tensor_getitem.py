@@ -163,7 +163,7 @@ def test_index_with_too_many_expanded_indices():
     assert "too many indices for tensor of dimension 2" in str(ex.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=0.01)
 def test_index_with_zero_dim_bool_index():
     """
     Feature: Test the index op with a 0-dim bool index.

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test single while."""
 import pytest
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -36,7 +38,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, forward_net):
-        super(BackwardNet, self).__init__()
+        super().__init__()
         self.forward_net = forward_net
         self.grad = C.GradOperation()
 

@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for mint.count_nonzero."""
+
 import pytest
 import numpy as np
 import mindspore as ms
