@@ -31,7 +31,7 @@ tensor::TensorPtr to_device(const mindspore::tensor::TensorPtr &self,
                             const mindspore::BoolImmPtr &non_blocking, const mindspore::BoolImmPtr &copy) {
   device::DeviceType device_value = device.has_value()
                                       ? GetDeviceType(static_cast<Device>(GetValue<int64_t>(device.value())))
-                                      : self->device_address()->GetDeviceType();
+                                      : GetDeviceTypeChecked(self);
   TypeId dtype_value = dtype.has_value() ? static_cast<TypeId>(GetValue<int64_t>(dtype.value())) : self->data_type();
   bool non_blocking_value = GetValue<bool>(non_blocking);
   bool copy_value = GetValue<bool>(copy);
@@ -40,6 +40,10 @@ tensor::TensorPtr to_device(const mindspore::tensor::TensorPtr &self,
                 << " device:" << device::GetDeviceNameByType(device_value)
                 << " dtype:" << TypeIdToType(dtype_value)->ToString() << " non_blocking:" << non_blocking_value
                 << " copy:" << copy_value;
+
+  if (device_value != device::DeviceType::kMeta) {
+    CheckTensorInitialized(self);
+  }
 
   if (self->device_address() != nullptr && self->device_address()->GetDeviceType() == device::DeviceType::kMeta &&
       device_value != device::DeviceType::kMeta) {

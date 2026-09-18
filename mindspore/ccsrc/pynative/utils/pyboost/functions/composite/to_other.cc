@@ -23,7 +23,8 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr to_other(const mindspore::tensor::TensorPtr &self, const mindspore::tensor::TensorPtr &other,
                            const mindspore::BoolImmPtr &non_blocking, const mindspore::BoolImmPtr &copy) {
-  device::DeviceType device_value = other->device_address()->GetDeviceType();
+  CheckTensorInitialized(self);
+  device::DeviceType device_value = GetDeviceTypeChecked(other);
   TypeId dtype_value = other->data_type();
   bool non_blocking_value = GetValue<bool>(non_blocking);
   bool copy_value = GetValue<bool>(copy);
