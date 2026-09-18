@@ -30,6 +30,42 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
+// Expands a bool or uint8 mask into the integer indices that select its elements.
+void AppendInplaceIndexPutMaskIndexes(const TensorPtr &tensor, const std::vector<TensorPtr> &tensors,
+                                      const std::vector<int64_t> &input_shape, std::vector<TensorPtr> *result) {
+  auto shape = tensor->shape();
+  auto rank = SizeToLong(shape.size());
+  if (rank == 0) {
+    // A 0-dim mask selects the whole tensor (True) or nothing (False) and consumes no dimension of the input.
+    // It is only forwarded to aclnnIndexPutImpl when it is the sole index; combined with other indices it
+    // carries no coordinate information, so it is ignored and does not take part in the dimension count.
+    if (tensors.size() == 1) {
+      result->emplace_back(tensor);
+    }
+    return;
+  }
+  // A mask consumes 'rank' dimensions, so check the accumulated dims before expanding it to avoid reading
+  // input_shape out of bounds below.
+  if (result->size() + LongToSize(rank) > input_shape.size()) {
+    MS_EXCEPTION(ValueError) << "For 'InplaceIndexPut', too many indices for tensor of dimension " << input_shape.size()
+                             << " (got " << (result->size() + LongToSize(rank)) << ")";
+  }
+  for (int64_t j = 0; j < rank; j++) {
+    auto srcIdx = result->size() + j;
+    if (shape[j] != input_shape[srcIdx]) {
+      MS_EXCEPTION(ValueError) << "For 'InplaceIndexPut', the shape of the mask " << tensor->ElementsNum()
+                               << " at index " << j << " does not match the shape of the indexed tensor " << input_shape
+                               << " at index " << srcIdx;
+    }
+  }
+  // Normalize masks to integer coordinates before dispatching to aclnnIndexPutImpl.
+  auto nonzero_op = CREATE_PYBOOST_OP(InnerNonZero, device::DeviceType::kAscend);
+  auto nonzero_tensor = nonzero_op->Call(tensor);
+  for (int64_t j = 0; j < rank; j++) {
+    result->emplace_back(select_ext_view(nonzero_tensor, kIndex0, j));
+  }
+}
+
 std::vector<TensorPtr> InplaceIndexGetNewTensor(const TensorPtr &input_tensor, const std::vector<TensorPtr> &tensors) {
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
   std::vector<TensorPtr> result{};
@@ -37,10 +73,6 @@ std::vector<TensorPtr> InplaceIndexGetNewTensor(const TensorPtr &input_tensor, c
   if (input_shape.size() == 0) {
     MS_EXCEPTION(ValueError) << "For 'InplaceIndexPut', too many indices for tensor of dimension "
                              << input_shape.size();
-  }
-  if (tensors.size() > input_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For 'InplaceIndexPut', too many indices for tensor of dimension " << input_shape.size()
-                             << " (got " << tensors.size() << ")";
   }
   bool needCast = false;
   TypeId indicesDtype = tensors[0]->data_type();
@@ -52,24 +84,14 @@ std::vector<TensorPtr> InplaceIndexGetNewTensor(const TensorPtr &input_tensor, c
         << "For 'InplaceIndexPut', tensors used as indices must be long, int, uint8, or bool tensors";
     }
     if (type_id == kNumberTypeBool || type_id == kNumberTypeUInt8) {
-      auto shape = tensor->shape();
-      auto rank = SizeToLong(shape.size());
-      for (int64_t j = 0; j < rank; j++) {
-        auto srcIdx = result.size() + j;
-        if (shape[j] != input_shape[srcIdx]) {
-          MS_EXCEPTION(ValueError) << "For 'InplaceIndexPut', the shape of the mask " << tensor->ElementsNum()
-                                   << " at index " << j << " does not match the shape of the indexed tensor "
-                                   << input_shape << " at index " << srcIdx;
-        }
-      }
-      // Normalize masks to integer coordinates before dispatching to aclnnIndexPutImpl.
-      auto nonzero_op = CREATE_PYBOOST_OP(InnerNonZero, device::DeviceType::kAscend);
-      auto nonzero_tensor = nonzero_op->Call(tensor);
-      for (int64_t j = 0; j < rank; j++) {
-        auto select_tensor = select_ext_view(nonzero_tensor, kIndex0, j);
-        result.emplace_back(select_tensor);
-      }
+      AppendInplaceIndexPutMaskIndexes(tensor, tensors, input_shape, &result);
     } else {
+      // An integer index consumes one dimension of the input, so check the accumulated dims here as well: the
+      // number of index tensors is not the number of consumed dimensions once 0-dim masks are involved.
+      if (result.size() + 1 > input_shape.size()) {
+        MS_EXCEPTION(ValueError) << "For 'InplaceIndexPut', too many indices for tensor of dimension "
+                                 << input_shape.size() << " (got " << (result.size() + 1) << ")";
+      }
       result.emplace_back(tensor);
     }
     if (indicesDtype != type_id) {

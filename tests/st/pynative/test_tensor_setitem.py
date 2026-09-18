@@ -247,6 +247,106 @@ def test_setitem_with_bool_list_index():
     np.testing.assert_array_equal(output_ms.asnumpy(), expected_np)
 
 
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_index_put_with_too_many_expanded_indices():
+    """
+    Feature: Test index_put_ with more mask dimensions than the input rank.
+    Description: A bool or uint8 mask consumes as many dimensions as its rank, so a rank 2 mask followed by a
+        rank 1 mask already covers three dimensions of a rank 2 tensor. The op must report the invalid index
+        count instead of reading the input shape out of bounds.
+    Expectation: ValueError is raised and mentions the dimension of the input.
+    """
+    input_np = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
+    mask_2d = Tensor(np.ones((2, 3), dtype=np.bool_))
+    mask_1d = Tensor(np.ones((3,), dtype=np.bool_))
+
+    input_ms = Tensor(input_np)
+    with pytest.raises(ValueError) as ex:
+        input_ms.index_put_((mask_2d, mask_1d), Tensor(5.0, mstype.float32))
+        _pynative_executor.sync()
+    assert "too many indices for tensor of dimension 2" in str(ex.value)
+
+    input_ms = Tensor(input_np)
+    uint8_mask_2d = Tensor(np.ones((2, 3), dtype=np.uint8))
+    with pytest.raises(ValueError) as ex:
+        input_ms.index_put_((uint8_mask_2d, mask_1d), Tensor(5.0, mstype.float32))
+        _pynative_executor.sync()
+    assert "too many indices for tensor of dimension 2" in str(ex.value)
+
+    input_3d_np = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)
+    input_ms = Tensor(input_3d_np)
+    int_index = Tensor(np.array([0], dtype=np.int64))
+    with pytest.raises(ValueError) as ex:
+        input_ms.index_put_((int_index, Tensor(np.ones((3, 4), dtype=np.bool_)),
+                             Tensor(np.ones((4,), dtype=np.bool_))), Tensor(5.0, mstype.float32))
+        _pynative_executor.sync()
+    assert "too many indices for tensor of dimension 3" in str(ex.value)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_index_put_with_zero_dim_bool_mask():
+    """
+    Feature: Test index_put_ with a 0-dim bool mask.
+    Description: A 0-dim mask selects the whole tensor when it is True and selects nothing when it is False.
+    Expectation: The whole tensor is assigned for True, and the tensor keeps its values for False.
+    """
+    input_np = np.arange(2 * 3, dtype=np.float32).reshape(2, 3)
+    output_ms = Tensor(input_np)
+    output_ms.index_put_((Tensor(True),), Tensor(4.0, mstype.float32))
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), np.full((2, 3), 4.0, np.float32))
+
+    output_ms = Tensor(input_np)
+    output_ms.index_put_((Tensor(False),), Tensor(4.0, mstype.float32))
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), input_np)
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_index_put_with_zero_dim_mask_and_masks():
+    """
+    Feature: Test index_put_ that mixes a 0-dim mask with another mask.
+    Description: A 0-dim mask consumes no dimension of the input, so it must not make the index list look longer
+        than the input rank nor be handed to the device together with the expanded mask.
+    Expectation: The remaining mask is applied as if the 0-dim mask was absent.
+    """
+    input_np = np.arange(2 * 3, dtype=np.float32).reshape(2, 3)
+    mask_2d = Tensor(np.ones((2, 3), dtype=np.bool_))
+
+    output_ms = Tensor(input_np)
+    output_ms.index_put_((Tensor(True), mask_2d), Tensor(7.0, mstype.float32))
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), np.full((2, 3), 7.0, np.float32))
+
+    output_ms = Tensor(input_np)
+    output_ms.index_put_((mask_2d, Tensor(True)), Tensor(7.0, mstype.float32))
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), np.full((2, 3), 7.0, np.float32))
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=0.01)
+def test_index_put_with_multiple_zero_dim_masks():
+    """
+    Feature: Test index_put_ with more than one 0-dim mask.
+    Description: 0-dim masks carry no coordinate on their own, so they are not handed to the device together with
+        each other and the call must not fail.
+    Expectation: The tensor keeps its values.
+    """
+    input_np = np.arange(2 * 3, dtype=np.float32).reshape(2, 3)
+    output_ms = Tensor(input_np)
+    output_ms.index_put_((Tensor(True), Tensor(True)), Tensor(7.0, mstype.float32))
+    _pynative_executor.sync()
+    np.testing.assert_array_equal(output_ms.asnumpy(), input_np)
+
+
 def test_setitem_by_nested_unit_list():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
