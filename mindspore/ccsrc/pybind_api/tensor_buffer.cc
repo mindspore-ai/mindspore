@@ -27,6 +27,7 @@
 #include "ir/tensor.h"
 #include "pybind_api/pynative/frombuffer.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "utils/shape_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -96,9 +97,17 @@ py::object LoadTensorFromBuf(const py::object &buf, const py::object &dtype, con
   }
   TensorPtr tensor_ptr = ConvertToTensor(flat_tensor);
 
-  // Apply the checkpoint shape as metadata while reusing the same device address. No element-count check is performed
-  // here, so callers must ensure that product(shape) matches count (or the count inferred from the remaining buffer).
+  // Apply the checkpoint shape as metadata while reusing the same device address. The flat view exposes exactly the
+  // elements the buffer holds, so a shape describing a different number of elements would make the returned Tensor
+  // read and write past the end of the buffer.
   auto device_addr = tensor_ptr->device_address();
+  const auto buffer_elements = SizeOf(tensor_ptr->shape());
+  const auto shape_elements = SizeOf(shape);
+  if (shape_elements != buffer_elements) {
+    MS_EXCEPTION(ValueError) << "The buffer holds " << buffer_elements << " elements, but the shape "
+                             << ShapeVectorToString(shape) << " holds " << shape_elements
+                             << " elements. The shape must match the number of elements in the buffer.";
+  }
   auto reshaped_tensor = std::make_shared<Tensor>(tensor_ptr->data_type(), ShapeVector(shape), device_addr);
   // Match other Python-visible tensors: downstream data access performs the normal pipeline synchronization before
   // observing the shared buffer.

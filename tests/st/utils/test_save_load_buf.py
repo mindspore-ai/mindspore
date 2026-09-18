@@ -494,3 +494,28 @@ def test_offset_kwargs():
     save_tensor_to_buf(tensor=tensor, buf=buf3, dtype=dtype, shape=shape)
     loaded3 = load_tensor_from_buf(buf=buf3, dtype=dtype, shape=shape)
     assert _verify_data(tensor, loaded3, dtype)
+
+
+# ==================== load shape validation ====================
+def test_load_rejects_shape_larger_than_buffer():
+    """
+    Feature: Tensor buffer load validation.
+    Description: Load a Tensor whose shape claims more int32 elements than the 12-byte buffer provides.
+    Expectation: A ValueError is raised instead of returning a Tensor that reads out of bounds.
+    """
+    buf = bytearray(12)  # 3 int32 elements
+
+    with pytest.raises(ValueError, match="The buffer holds 3 elements"):
+        load_tensor_from_buf(buf, ms.int32, (1000,))
+
+
+def test_load_rejects_shape_not_matching_explicit_count():
+    """
+    Feature: Tensor buffer load validation.
+    Description: Load a Tensor whose shape describes fewer elements than the explicitly requested count.
+    Expectation: A ValueError is raised because shape and count disagree.
+    """
+    buf = bytearray(48)  # 12 int32 elements
+
+    with pytest.raises(ValueError, match="The buffer holds 12 elements"):
+        load_tensor_from_buf(buf, ms.int32, (2, 2), count=12)

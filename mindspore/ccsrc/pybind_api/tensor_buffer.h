@@ -60,7 +60,8 @@ void SaveTensorToBuf(const py::object &tensor, const py::object &buf, const py::
  * @param offset Byte offset from the beginning of ``buf``.
  * @return A Python MindSpore Tensor that shares storage with ``buf``.
  *
- * @note The product of ``shape`` must equal ``count`` (or the inferred count); this relation is not validated here.
+ * @note The product of ``shape`` must equal ``count`` (or the inferred count). A mismatch is reported as a
+ * ``ValueError`` instead of returning a Tensor that would access memory outside ``buf``.
  * @note Because the result is zero-copy, changes to the buffer are visible through the Tensor and vice versa. Callers
  * must coordinate later accesses to shared or overlapping buffer regions after this function returns.
  */
