@@ -1905,10 +1905,14 @@ REG_BPROP_BUILDER("InplaceMul")
     NodePtr bc_dx = nullptr;
     NodePtr bc_dy = nullptr;
     if (x->need_compute_grad_out()) {
-      bc_dx = ib->Mul(y, dout);
+      // For complex dtypes, dx = dout * conj(y) keeps the same convention as PyTorch.
+      auto y_for_grad = IsComplexType(ib->GetDtypeId(y)) ? ib->Conj(y) : y;
+      bc_dx = ib->Mul(y_for_grad, dout);
     }
     if (y->need_compute_grad_out()) {
-      bc_dy = ib->Mul(x, dout);
+      // For complex dtypes, dy = dout * conj(x) keeps the same convention as PyTorch.
+      auto x_for_grad = IsComplexType(ib->GetDtypeId(x)) ? ib->Conj(x) : x;
+      bc_dy = ib->Mul(x_for_grad, dout);
     }
     auto ret = BinopGradCommon(ib, x, y, bc_dx, bc_dy);
     auto dx = x->need_compute_grad_out() ? ib->Cast(ret[i0], ib->GetDtype(x)) : ret[i0];
