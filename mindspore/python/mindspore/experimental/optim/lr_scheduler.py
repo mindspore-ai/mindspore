@@ -539,10 +539,12 @@ class MultiplicativeLR(LRScheduler):
                     len(optimizer.param_groups), len(lr_lambda)))
         else:
             self.lr_lambdas = [lr_lambda] * len(optimizer.param_groups)
+        self._is_initial = True
         super(MultiplicativeLR, self).__init__(optimizer, last_epoch)
+        self._is_initial = False
 
     def get_lr(self):
-        if self.last_epoch > 0:
+        if not self._is_initial and self.last_epoch > 0:
             return [lr * lmbda(self.last_epoch)
                     for lmbda, lr in zip(self.lr_lambdas, self._last_lr)]
         return [lr * 1. for lr in self._last_lr]
@@ -1262,7 +1264,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
             epoch = self.last_epoch + 1
             ops.assign_add(self.T_cur, self.increase_tensor)
             if self.T_cur >= self.T_i:
-                ops.assign(self.T_cur, self.T_cur - self.T_i)
+                ops.assign(self.T_cur, self.T_cur % self.T_i)
                 ops.assign(self.T_i, self.T_i * self.T_mult)
 
         else:
