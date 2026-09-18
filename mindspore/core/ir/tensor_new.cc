@@ -18,6 +18,7 @@
 
 #include "ir/tensor.h"
 #include "device_address/device_address_maker.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace tensor {
@@ -39,6 +40,10 @@ TensorPtr from_spec_fast(TypeId data_type, const ShapeVector &shape, device::Dev
     auto nbytes = NBytesOf(data_type, shape);
     // Allocate memory without initializing.
     auto buffer = std::malloc(nbytes);
+    if (buffer == nullptr) {
+      MS_EXCEPTION(MemoryError) << "Failed to allocate " << nbytes << " bytes for a CPU tensor with shape ("
+                                << ShapeVectorToString(shape) << "), out of host memory.";
+    }
     auto device_address = DeviceAddressMaker(buffer, data_type, shape)
                             .set_deleter([buffer](void *, bool) { std::free(buffer); })
                             .set_maker(GetDeviceAddressMaker(device_type))
