@@ -688,7 +688,7 @@ class PartialUnusedArgsEliminate {
     for (const auto &unused_arg_u : unused_args_u) {
       (void)manager->Replace(unused_arg_u, origin_parameters.back());
     }
-    fg->set_parameters(new_parameters);
+    manager->SetParameters(fg, new_parameters);
     auto tr = manager->Transact();
     for (auto &item : repl) {
       (void)tr.Replace(item.first, item.second);
