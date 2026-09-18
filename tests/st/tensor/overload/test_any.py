@@ -78,3 +78,23 @@ def test_tensor_any(mode):
     output3_2 = net3(x, dim=1)
     assert np.allclose(output3_2.asnumpy(), np.array([True, False]))
     assert np.allclose(output3_2.shape, (2,))
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', ],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=2048.01)
+@pytest.mark.parametrize('dtype', [np.int16, np.int32, np.int64, np.float32, np.float64])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_any_multi_byte_dtype_axis_reduce(mode, dtype):
+    """
+    Feature: tensor.any
+    Description: Verify any of a multi-byte dtype input tests each element instead of its raw bytes.
+    Expectation: success
+    """
+    ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    net = Net()
+    # Column 0 and column 2 hold a non-zero element, column 1 is all zeros.
+    x = Tensor(np.array([[1, 0, 3], [0, 0, 0]], dtype))
+    output = net(x, axis=0)
+    assert np.array_equal(output.asnumpy(), np.array([True, False, True]))
+    assert output.shape == (3,)

@@ -49,7 +49,34 @@ constexpr size_t kReduceOutputsNum = 1;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-template <typename T>
+// Reduce "any" keeps a bool (or uint8) output while its input element type may be any supported dtype, so every
+// input element has to be converted to its truth value explicitly instead of being reinterpreted as a bool element.
+// Reduce "all" does not need this: its input is already cast to bool in the workspace by ReduceCpuKernelMod::Launch.
+template <typename InT>
+inline bool ReduceElementToBool(const InT &value) {
+  return static_cast<bool>(value);
+}
+
+template <>
+inline bool ReduceElementToBool(const complex64 &value) {
+  return value.real() != 0.0f || value.imag() != 0.0f;
+}
+
+template <>
+inline bool ReduceElementToBool(const complex128 &value) {
+  return value.real() != 0.0 || value.imag() != 0.0;
+}
+
+template <typename T, typename InT>
+inline T ConvertInputElement(const InT &value) {
+  if constexpr (std::is_same_v<T, InT>) {
+    return value;
+  } else {
+    return static_cast<T>(ReduceElementToBool(value));
+  }
+}
+
+template <typename T, typename InT = T>
 class ReduceCpuKernelFunc : public CpuKernelFunc {
  public:
   ReduceCpuKernelFunc() = default;
@@ -61,8 +88,9 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
-  void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
+  void AccelerateLongVector(InT *input_addr, T *output_addr, size_t input_size);
   void ChooseFunc();
+  void ChooseSameTypeFunc();
   void HandleInputAxis();
   void SpecialExcute();
   void CalAxesAndStride(std::vector<size_t> *axes, size_t *stride);
@@ -80,7 +108,7 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   std::vector<int64_t> axis_;
   static constexpr size_t kAxisIndex_{1};
   ReduceFuncType reduce_type_{ReduceFuncType::kReduceAllType};
-  std::function<void(const T *, T *, size_t, size_t, TransposeIterator *)> reduce_func_;
+  std::function<void(const InT *, T *, size_t, size_t, TransposeIterator *)> reduce_func_;
   bool simple_execute_{false};
   std::string kernel_name_;
   bool need_skip_execute_{false};
@@ -187,42 +215,42 @@ void ReduceMin(const T *in, T *out, size_t start, size_t end, TransposeIterator 
   }
 }
 
-template <typename T>
-void ReduceAll(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+template <typename InT, typename T = InT>
+void ReduceAll(const InT *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
   if (end == 0) {
     *out = static_cast<T>(1);
     return;
   }
   if (iter != nullptr) {
     for (size_t i = start; i < end; i++) {
-      *out = *out && in[iter->GetPos()];
+      *out = *out && ConvertInputElement<T>(in[iter->GetPos()]);
       iter->GenNextPos();
     }
     return;
   }
 
   for (size_t i = start; i < end; i++) {
-    *out = *out && in[i];
+    *out = *out && ConvertInputElement<T>(in[i]);
   }
 }
 
-template <typename T>
-void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+template <typename InT, typename T = InT>
+void ReduceAny(const InT *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
   if (iter != nullptr) {
     for (size_t i = start; i < end; i++) {
-      *out = *out || in[iter->GetPos()];
+      *out = *out || ConvertInputElement<T>(in[iter->GetPos()]);
       iter->GenNextPos();
     }
     return;
   }
 
   for (size_t i = start; i < end; i++) {
-    *out = *out || in[i];
+    *out = *out || ConvertInputElement<T>(in[i]);
   }
 }
 
-template <typename T>
-bool SkipExecute(const T *in, T *out, size_t input_size, size_t output_size, const std::string &kernel_name) {
+inline bool SkipExecute(const void *in, void *out, size_t input_size, size_t output_size,
+                        const std::string &kernel_name) {
   if (output_size == 0 && input_size == 0) {
     MS_LOG(DEBUG) << "For '" << kernel_name << "', empty tensor input does not need to memcpy.";
     return true;
@@ -234,8 +262,8 @@ bool SkipExecute(const T *in, T *out, size_t input_size, size_t output_size, con
   return true;
 }
 
-template <typename T>
-void ReduceCpuKernelFunc<T>::SpecialExcute() {
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::SpecialExcute() {
   // reset simple_execute_
   simple_execute_ = false;
   // special accelerate for axis = 1 and input has 2 dims
@@ -256,8 +284,8 @@ void ReduceCpuKernelFunc<T>::SpecialExcute() {
   }
 }
 
-template <typename T>
-void ReduceCpuKernelFunc<T>::HandleInputAxis() {
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::HandleInputAxis() {
   int64_t dimension = SizeToLong(input_shape_.size());
   if (axis_.empty()) {
     for (int64_t i = 0; i < dimension; i++) {
@@ -291,8 +319,9 @@ void ReduceCpuKernelFunc<T>::HandleInputAxis() {
   }
 }
 
-template <typename T>
-int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
+template <typename T, typename InT>
+int ReduceCpuKernelFunc<T, InT>::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &) {
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   if (inputs[kIndex1]->GetType()->isa<TypeNone>()) {
     axis_ = std::vector<int64_t>{};
@@ -313,15 +342,31 @@ int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, co
   return KRET_OK;
 }
 
-template <typename T>
-void ReduceCpuKernelFunc<T>::ChooseFunc() {
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::ChooseFunc() {
+  if constexpr (!std::is_same<T, InT>::value) {
+    // Only reduce "any" reads an input element that differs from the bool output element, so the input elements
+    // must be converted one by one instead of being reinterpreted as bool elements.
+    if (kernel_name_ == kReduceAny) {
+      reduce_type_ = ReduceFuncType::kReduceAnyType;
+      reduce_func_ = ReduceAny<InT, T>;
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
+    }
+  } else {
+    ChooseSameTypeFunc();
+  }
+}
+
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::ChooseSameTypeFunc() {
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == kReduceAll) {
       reduce_type_ = ReduceFuncType::kReduceAllType;
-      reduce_func_ = ReduceAll<T>;
+      reduce_func_ = ReduceAll<InT, T>;
     } else if (kernel_name_ == kReduceAny) {
       reduce_type_ = ReduceFuncType::kReduceAnyType;
-      reduce_func_ = ReduceAny<T>;
+      reduce_func_ = ReduceAny<InT, T>;
     } else if (kernel_name_ == kReduceProd) {
       reduce_type_ = ReduceFuncType::kReduceProdType;
       reduce_func_ = ReduceProd<T>;
@@ -362,22 +407,22 @@ void ReduceCpuKernelFunc<T>::ChooseFunc() {
       reduce_func_ = ReduceProd<T>;
     } else if (kernel_name_ == kReduceAny && std::is_same_v<T, uint8_t>) {
       reduce_type_ = ReduceFuncType::kReduceAnyType;
-      reduce_func_ = ReduceAny<T>;
+      reduce_func_ = ReduceAny<InT, T>;
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
     }
   }
 }
 
-template <typename T>
-void ReduceCpuKernelFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
-                                      const std::vector<KernelTensor *> &) {
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &) {
   kernel_name_ = primitive->name();
   ChooseFunc();
 }
 
-template <typename T>
-void ReduceCpuKernelFunc<T>::CalAxesAndStride(std::vector<size_t> *axes, size_t *stride) {
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::CalAxesAndStride(std::vector<size_t> *axes, size_t *stride) {
   int dimension = SizeToInt(input_shape_.size());
   size_t j = 0;
   size_t k = 0;
@@ -396,13 +441,13 @@ void ReduceCpuKernelFunc<T>::CalAxesAndStride(std::vector<size_t> *axes, size_t 
   }
 }
 
-template <typename T>
-bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
-                                     const std::vector<kernel::KernelTensor *> &,
-                                     const std::vector<kernel::KernelTensor *> &outputs) {
+template <typename T, typename InT>
+bool ReduceCpuKernelFunc<T, InT>::RunFunc(const std::vector<kernel::KernelTensor *> &inputs,
+                                          const std::vector<kernel::KernelTensor *> &,
+                                          const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceOutputsNum, kernel_name_);
-  size_t input_size = inputs[0]->size() / sizeof(T);
-  auto *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  size_t input_size = inputs[0]->size() / sizeof(InT);
+  auto *input_addr = GetDeviceAddress<InT>(inputs, kIndex0);
   auto *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   if (need_skip_execute_ && SkipExecute(input_addr, output_addr, inputs[0]->size(), outputs[0]->size(), kernel_name_)) {
     return true;
@@ -416,7 +461,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
     if (input_size < kReduceSmallVectorSize) {
       // Get one ret
-      *output_addr = input_addr[0];
+      *output_addr = ConvertInputElement<T>(input_addr[0]);
       reduce_func_(input_addr, output_addr, 1, input_size, nullptr);
       if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
         *output_addr /= SizeToFloat(input_size);
@@ -469,7 +514,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &
       auto iter = base_iter;
       iter.SetPos(start * stride);
       for (size_t i = start; i < end; ++i) {
-        output_addr[i] = input_addr[iter.GetPos()];
+        output_addr[i] = ConvertInputElement<T>(input_addr[iter.GetPos()]);
         iter.GenNextPos();
         reduce_func_(input_addr, &output_addr[i], 1, stride, &iter);
         if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
@@ -482,10 +527,10 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &
   return true;
 }
 
-template <typename T>
-void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size) {
+template <typename T, typename InT>
+void ReduceCpuKernelFunc<T, InT>::AccelerateLongVector(InT *input_addr, T *output_addr, size_t input_size) {
   // init output_addr
-  *output_addr = input_addr[0];
+  *output_addr = ConvertInputElement<T>(input_addr[0]);
   std::mutex task_mutex;
   auto task = [this, input_addr, output_addr, &task_mutex](size_t start, size_t end) {
     if (start == 0) {
@@ -494,11 +539,17 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
     if (start == end) {
       return;
     }
-    auto block_output = input_addr[start];
+    auto block_output = ConvertInputElement<T>(input_addr[start]);
     reduce_func_(input_addr, &block_output, start + 1, end, nullptr);
     {
       std::lock_guard<std::mutex> task_lock(task_mutex);
-      reduce_func_(&block_output, output_addr, 0, 1, nullptr);
+      if constexpr (std::is_same<T, InT>::value) {
+        reduce_func_(&block_output, output_addr, 0, 1, nullptr);
+      } else {
+        // The block result is already the truth value of its block, so it is merged into the output directly.
+        *output_addr = static_cast<T>(reduce_type_ == ReduceFuncType::kReduceAllType ? (*output_addr && block_output)
+                                                                                     : (*output_addr || block_output));
+      }
     }
   };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
@@ -507,9 +558,9 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
   }
 }
 
-template <typename T>
+template <typename T, typename InT = T>
 std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
-  return std::make_shared<ReduceCpuKernelFunc<T>>();
+  return std::make_shared<ReduceCpuKernelFunc<T, InT>>();
 }
 
 using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
@@ -531,6 +582,8 @@ using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>
     .AddOutputAttr(MS_T),                             \
     SpecializeReduceFunc<T>
 
+// Reduce "all" casts its input to bool into the workspace before launching the kernel
+// (see ReduceCpuKernelMod::Launch), so the kernel always reads bool elements whatever the input dtype is.
 #define REDUCE_AXIS_OPT_CPU_REG(MS_T, MS_S, T)        \
   KernelAttr()                                        \
     .AddInputAttr(MS_T)                               \
@@ -539,30 +592,30 @@ using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>
     .AddOutputAttr(kNumberTypeBool),                  \
     SpecializeReduceFunc<T>
 
-#define REDUCE_ANY_CPU_REG(MS_I, MS_O, T)                     \
+#define REDUCE_ANY_CPU_REG(MS_I, MS_O, T, InT)                \
   KernelAttr()                                                \
     .AddInputAttr(MS_I)                                       \
     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64) \
     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)         \
     .AddOutputAttr(MS_O),                                     \
-    SpecializeReduceFunc<T>
+    SpecializeReduceFunc<T, InT>
 
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_any_list = {
-  {REDUCE_ANY_CPU_REG(kNumberTypeBool, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeInt8, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeInt16, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeInt32, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeInt64, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeUInt16, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeUInt32, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeUInt64, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeFloat16, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeBFloat16, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeFloat32, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeFloat64, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeComplex64, kNumberTypeBool, bool)},
-  {REDUCE_ANY_CPU_REG(kNumberTypeComplex128, kNumberTypeBool, bool)}};
+  {REDUCE_ANY_CPU_REG(kNumberTypeBool, kNumberTypeBool, bool, bool)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeInt8, kNumberTypeBool, bool, int8_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeInt16, kNumberTypeBool, bool, int16_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeInt32, kNumberTypeBool, bool, int32_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeInt64, kNumberTypeBool, bool, int64_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, uint8_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeUInt16, kNumberTypeBool, bool, uint16_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeUInt32, kNumberTypeBool, bool, uint32_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeUInt64, kNumberTypeBool, bool, uint64_t)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeFloat16, kNumberTypeBool, bool, float16)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeBFloat16, kNumberTypeBool, bool, bfloat16)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeFloat32, kNumberTypeBool, bool, float)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeFloat64, kNumberTypeBool, bool, double)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeComplex64, kNumberTypeBool, bool, complex64)},
+  {REDUCE_ANY_CPU_REG(kNumberTypeComplex128, kNumberTypeBool, bool, complex128)}};
 
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_all_list = {
   {REDUCE_AXIS_OPT_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
