@@ -89,7 +89,8 @@ void *KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel_pac
   std::string bin_file;
   std::string bin_kernel;
   GetFunctionAndKernelName(bin_file_name, kernel_name, &bin_file, &bin_kernel);
-  auto real_file = FileUtils::GetRealPath(bin_file.c_str());
+  auto real_file =
+    GetValidKernelFilePath(KernelMeta::GetInstance()->kernel_meta_path(), bin_file_name + kBinFileSuffix);
   if (!real_file.has_value()) {
     MS_LOG(ERROR) << "Invalid file path " << bin_file << " kernel: " << kernel_name;
     return nullptr;
@@ -107,6 +108,7 @@ void *KernelManager::GenFuncStub(const mindspore::kernel::KernelPack &kernel_pac
   auto launch_func = dlsym(file_handle, bin_kernel.c_str());
   if (launch_func == nullptr) {
     MS_LOG(ERROR) << "Undefined symbol " << bin_kernel << " in " << bin_file;
+    (void)dlclose(file_handle);
     return nullptr;
   }
 
