@@ -21,6 +21,7 @@
 #include "kernel/ascend/acl_ir/custom/custom_op_api_exec.h"
 #include "kernel/ascend/acl_ir/custom/custom_op_api_cache.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
+#include "utils/custom_aot_path_check.h"
 #include "utils/file_utils.h"
 
 namespace mindspore {
@@ -247,6 +248,7 @@ bool CustomV2AclnnKernelMod::CallGetWorkSpaceSize(const std::vector<std::vector<
   } else {
     MS_LOG(EXCEPTION) << "For custom'" << op_type_ << "', user defined function path '" << exec_info << "' is illegal.";
   }
+  CheckCustomAotWhiteList(file_path, "For custom '" + op_type_ + "'", primitive_->HasAttr("is_load"));
 
   auto handle_ = dlopen(file_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (!handle_) {

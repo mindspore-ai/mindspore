@@ -95,6 +95,30 @@ def _get_cache_path():
     return cache_path
 
 
+def _is_path_under_dir(file_path, dir_path):
+    """Return True if canonical file_path is under canonical dir_path."""
+    real_dir = os.path.realpath(dir_path)
+    try:
+        return os.path.commonpath([file_path, real_dir]) == real_dir
+    except ValueError:
+        return False
+
+
+def _is_path_under_custom_aot_generated_dir(file_path):
+    """
+    Return True if file_path is under a framework-generated custom AOT directory
+    (akg_kernel_meta / custom_kernel_meta / MS_COMPILER_CACHE_PATH).
+    """
+    cache = os.getenv('MS_COMPILER_CACHE_PATH')
+    if cache is None:
+        return (_is_path_under_dir(file_path, './akg_kernel_meta') or
+                _is_path_under_dir(file_path, './custom_kernel_meta'))
+    if _is_path_under_dir(file_path, cache):
+        return True
+    rank_id = os.getenv('RANK_ID', '0')
+    return _is_path_under_dir(file_path, os.path.join(cache, 'rank_' + rank_id))
+
+
 def _compile_aot(file):
     """
     Automatically compile the source file for custom aot
@@ -595,7 +619,8 @@ class Custom(ops.PrimitiveWithInfer):
                 Custom.custom_aot_warning = False
         else:
             legal_path = os.path.realpath(os.environ.get('MS_CUSTOM_AOT_WHITE_LIST'))
-            if "akg_kernel_meta" not in file_path and os.path.commonpath([file_path, legal_path]) != legal_path:
+            if os.path.commonpath([file_path, legal_path]) != legal_path and \
+               not _is_path_under_custom_aot_generated_dir(file_path):
                 raise TypeError(
                     "{}, the legal path for the file is {}, but the file is {}".format(
                         self.log_prefix, legal_path, file_path))

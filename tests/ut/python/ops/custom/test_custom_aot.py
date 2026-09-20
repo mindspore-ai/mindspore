@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Unit tests for custom AOT operator construction and white list checks."""
 
 import os
 from mindspore.nn import Cell
@@ -20,8 +21,10 @@ from mindspore.ops import DataType, CustomRegOp
 
 
 class AddCustomAclnnNet(Cell):
+    """Network wrapper for constructing a custom AOT add operator."""
+
     def __init__(self, func, out_shape, bprop):
-        super(AddCustomAclnnNet, self).__init__()
+        super().__init__()
         aclnn_ref_info = CustomRegOp("aclnnAddCustom") \
             .input(0, "x", "required") \
             .input(1, "y", "required") \
@@ -88,10 +91,30 @@ def test_custom_op_white_list():
     Description: Testing the white list path for custom operation files.
     Expectation: A TypeError should be raised with a message indicating that the file path is not legal.
     """
-    os.putenv('MS_CUSTOM_AOT_WHITE_LIST', '/tmp/white_list/')
+    os.environ['MS_CUSTOM_AOT_WHITE_LIST'] = '/tmp/white_list/'
     try:
         script_path, _ = os.path.split(__file__)
         func = script_path + '/infer_file/add_custom_infer.cc:aclnnAddCustom'
         AddCustomAclnnNet(func, None, None)
+        assert False, "expected TypeError for path outside white list"
     except TypeError as e:
         assert "the legal path for the file is" in str(e)
+    finally:
+        os.environ.pop('MS_CUSTOM_AOT_WHITE_LIST', None)
+
+
+def test_custom_op_white_list_akg_kernel_meta_bypass():
+    """
+    Feature: Testing custom operator white list.
+    Description: A file path containing the 'akg_kernel_meta' substring but not under the real akg kernel
+                 meta directory must not bypass the white list check.
+    Expectation: A TypeError should be raised with a message indicating that the file path is not legal.
+    """
+    os.environ['MS_CUSTOM_AOT_WHITE_LIST'] = '/tmp/white_list/'
+    try:
+        AddCustomAclnnNet('/tmp/fake_dir/akg_kernel_meta/evil.so:aclnnAddCustom', None, None)
+        assert False, "expected TypeError for akg_kernel_meta substring bypass"
+    except TypeError as e:
+        assert "the legal path for the file is" in str(e)
+    finally:
+        os.environ.pop('MS_CUSTOM_AOT_WHITE_LIST', None)
