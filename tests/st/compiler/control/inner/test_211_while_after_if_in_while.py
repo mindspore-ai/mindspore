@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test while after if in while."""
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -27,11 +29,11 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.max_cycles = max_cycles
-        self.i = Tensor(np.array(0), mstype.int32)
-        self.zero = Tensor(np.array(0), mstype.int32)
-        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
+        self.i = Tensor(np.array(0), mstype.float32)
+        self.zero = Tensor(np.array(0), mstype.float32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.float32))
 
     def construct(self, x, y):
         i = self.i
@@ -53,7 +55,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 
@@ -69,14 +71,14 @@ def test_forward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNet(max_cycles=10)
     graph_mode_out = graph_forward_net(x, y)
 
-    assert graph_mode_out == (Tensor(np.array(121), mstype.int32), Tensor(np.array(10), mstype.int32))
+    assert graph_mode_out == (Tensor(np.array(121), mstype.float32), Tensor(np.array(10), mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
@@ -86,12 +88,12 @@ def test_backward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNet(max_cycles=10)
     graph_backward_net = BackwardNet(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)
 
-    assert graph_mode_grads == (Tensor(np.array(21), mstype.int32), Tensor(np.array(7), mstype.int32))
+    assert graph_mode_grads == (Tensor(np.array(21), mstype.float32), Tensor(np.array(7), mstype.float32))

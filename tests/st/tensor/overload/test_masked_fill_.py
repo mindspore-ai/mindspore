@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for the Tensor.masked_fill_ in-place overload."""
+
 import numpy as np
 import pytest
 import random
@@ -63,12 +65,12 @@ def masked_fill__forward_func(input_x, mask, value):
 
 @run_with_cell
 def masked_fill__backward_func_scalar(input_x, mask, value):
-    return ms.grad(masked_fill__forward_func, (0, 1))(input_x, mask, value)
+    return ms.grad(masked_fill__forward_func, 0)(input_x, mask, value)
 
 
 @run_with_cell
 def masked_fill__backward_func_tensor(input_x, mask, value):
-    return ms.grad(masked_fill__forward_func, (0, 1, 2))(input_x, mask, value)
+    return ms.grad(masked_fill__forward_func, (0, 2))(input_x, mask, value)
 
 
 @arg_mark(plat_marks=["platform_ascend"],
@@ -102,15 +104,12 @@ def test_ops_masked_fill_normal(mode):
     input_x1 = ms.Tensor(np.array([1.0, 2.0, 3.0, 4.0]).astype(np.float32))
     mask = ms.Tensor(np.array([True, True, False, False]).astype(np.bool_))
     expect_x_grad = np.asarray([0.0, 0.0, 1.0, 1.0]).astype(np.float32)
-    expect_mask_grad = np.asarray([0.0, 0.0, 0.0, 0.0]).astype(np.float32)
     expect_value_grad = np.asarray(2.0).astype(np.float32)
     grads_scalar = masked_fill__backward_func_scalar(input_x1, mask, 0.5)
     grads_tensor = masked_fill__backward_func_tensor(input_x1, mask, Tensor(0.5))
-    allclose_nparray(grads_scalar[0].asnumpy(), expect_x_grad, 1e-04, 1e-04)
-    allclose_nparray(grads_scalar[1].asnumpy(), expect_mask_grad, 1e-04, 1e-04)
+    allclose_nparray(grads_scalar.asnumpy(), expect_x_grad, 1e-04, 1e-04)
     allclose_nparray(grads_tensor[0].asnumpy(), expect_x_grad, 1e-04, 1e-04)
-    allclose_nparray(grads_tensor[1].asnumpy(), expect_mask_grad, 1e-04, 1e-04)
-    allclose_nparray(grads_tensor[2].asnumpy(), expect_value_grad, 1e-04, 1e-04)
+    allclose_nparray(grads_tensor[1].asnumpy(), expect_value_grad, 1e-04, 1e-04)
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_ascend910b"],

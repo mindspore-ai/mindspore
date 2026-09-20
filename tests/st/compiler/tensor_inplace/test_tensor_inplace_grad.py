@@ -274,11 +274,12 @@ def test_tensor_inplace_scatter_grad():
         def __init__(self, net: nn.Cell, sens: Tensor):
             super().__init__()
             self.net = net
-            self.grad_op = ops.GradOperation(get_all=True, sens_param=True)
+            self.grad_op = ops.GradOperation(get_by_position=True, sens_param=True)
             self.grad_wrt_output = sens
 
         def construct(self, x, dim, index, src_or_val, reduce):
-            return self.grad_op(self.net)(x, dim, index, src_or_val, reduce, self.grad_wrt_output)
+            return self.grad_op(self.net, grad_position=(0,))(x, dim, index, src_or_val, reduce,
+                                                               self.grad_wrt_output)
 
     @test_utils.run_with_cell
     def scatter_val_with_grad(x, dim, index, value, reduce):
@@ -294,7 +295,7 @@ def test_tensor_inplace_scatter_grad():
     grads = ScatterGrad(scatter_val_with_grad, grad_value)(slf, 1, index, value, 'none')
     # only self has grad
     grad_np[:, :3] = 0
-    assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
+    assert np.allclose(grads.asnumpy().astype(np.float32), grad_np)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
           card_mark='onecard', mem_peak=4.00)

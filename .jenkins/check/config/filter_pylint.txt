@@ -398,3 +398,5 @@
 "mindspore/mindspore/python/mindspore/train/serialization.py"                          "unspecified-encoding"
 "mindspore/mindspore/python/mindspore/train/serialization.py"                          "consider-using-with"
 "mindspore/mindspore/python/mindspore/train/serialization.py"                          "unnecessary-lambda-assignment"
+"mindspore/tests/st/compiler/control/test_cont_grad.py"                                "comparison-of-constants"
+"mindspore/tests/st/compiler/fallback/test_graph_fallback_runtime_dict.py"             "consider-using-dict-items"

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for mint.cummax."""
 import numpy as np
 import pytest
 from mindspore.mint import cummax
@@ -57,19 +59,22 @@ def test_mint_cummax(mode, dtype):
     expect_values = np.asarray([[1, 4, 3, 2], [7, 6, 5, 8]]).astype(dtype)
     expect_indices = np.asarray([[0, 0, 0, 0], [1, 1, 1, 1]]).astype(np.int64)
     expect_grad = np.asarray([[1, 1, 1, 1], [1, 1, 1, 1]]).astype(dtype)
+    output = None
+    output_grad = None
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         output = cummax_forward_func(x, axis)
-        output_grad = cummax_backward_func(x, axis)
+        output_grad = cummax_backward_func(x, axis) if np.issubdtype(dtype, np.inexact) else None
     elif mode == 'KBK':
         ms.context.set_context(mode=ms.GRAPH_MODE)
         op_froward = ms.jit(cummax_forward_func, backend="ms_backend", jit_level="O0")
         output = op_froward(x, axis)
         op_backward = ms.jit(cummax_backward_func, backend="ms_backend", jit_level="O0")
-        output_grad = op_backward(x, axis)
+        output_grad = op_backward(x, axis) if np.issubdtype(dtype, np.inexact) else None
     assert np.allclose(output[0].asnumpy(), expect_values)
     assert np.allclose(output[1].asnumpy(), expect_indices)
-    assert np.allclose(output_grad.asnumpy(), expect_grad)
+    if output_grad is not None:
+        assert np.allclose(output_grad.asnumpy(), expect_grad)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',

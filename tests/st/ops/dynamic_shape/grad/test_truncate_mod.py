@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for the truncate_mod operator gradient with dynamic shape."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -24,7 +26,7 @@ from .test_grad_of_dynamic import TestDynamicGrad
 
 class TruncateModNet(nn.Cell):
     def __init__(self):
-        super(TruncateModNet, self).__init__()
+        super().__init__()
         self.truncate_mode = P.TruncateMod()
 
     def construct(self, x, y):
@@ -33,15 +35,15 @@ class TruncateModNet(nn.Cell):
 
 def run_dynamic_shape():
     test_dynamic = TestDynamicGrad(TruncateModNet())
-    x = Tensor(np.array([2, 4, -1]), ms.int32)
-    y = Tensor(np.array([3, 3, 3]), ms.int32)
+    x = Tensor(np.array([2., 4., -1.]), ms.float32)
+    y = Tensor(np.array([3., 3., 3.]), ms.float32)
     test_dynamic.test_dynamic_grad_net([x, y])
 
 
 def run_dynamic_rank():
     test_dynamic = TestDynamicGrad(TruncateModNet())
-    x = Tensor(np.array([2, 4, -1]), ms.int32)
-    y = Tensor(np.array([3, 3, 3]), ms.int32)
+    x = Tensor(np.array([2., 4., -1.]), ms.float32)
+    y = Tensor(np.array([3., 3., 3.]), ms.float32)
     test_dynamic.test_dynamic_grad_net([x, y], True)
 
 

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for mint.nn.functional.nll_loss."""
 import pytest
 import numpy as np
 from mindspore import grad
@@ -67,7 +69,7 @@ def nll_loss_forward_func(inputx, target, weight=None, ignore_index=-100, reduct
 
 @test_utils.run_with_cell
 def nll_loss_backward_func(inputx, target, weight=None, ignore_index=-100, reduction="mean"):
-    grad_op = grad(nll_loss_forward_func, (0, 1, 2))
+    grad_op = grad(nll_loss_forward_func, 0)
     return grad_op(inputx, target, weight, ignore_index, reduction)
 
 
@@ -92,7 +94,7 @@ def test_ops_nll_loss(mode, reduction):
     output_forward = nll_loss_forward_func(inputx, target, weight, ignore_index, reduction)
     output_backward = nll_loss_backward_func(inputx, target, weight, ignore_index, reduction)
     np.testing.assert_allclose(output_forward.asnumpy(), expect_forward, rtol=1e-3)
-    np.testing.assert_allclose(output_backward[0].asnumpy(), expect_backward[0], rtol=1e-3)
+    np.testing.assert_allclose(output_backward.asnumpy(), expect_backward[0], rtol=1e-3)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)

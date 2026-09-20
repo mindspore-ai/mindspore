@@ -51,13 +51,13 @@ def test_custom_vjp_mul_add():
 
     fn.defbwd(bprop_fn)
 
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    v = Tensor(1, dtype=ms.int32)
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
+    v = Tensor(1.0, dtype=ms.float32)
     _, grad_fn = vjp(fn, x, y)
     grads = grad_fn(v)
-    assert grads[0] == Tensor(2, dtype=ms.int32)
-    assert grads[1] == Tensor(4, dtype=ms.int32)
+    assert grads[0] == Tensor(2.0, dtype=ms.float32)
+    assert grads[1] == Tensor(4.0, dtype=ms.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
@@ -83,13 +83,13 @@ def test_custom_vjp_inline_mul_add():
         param = 2
         return mul_add(x, y) + x + param * y
 
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    v = Tensor(1, dtype=ms.int32)
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
+    v = Tensor(1.0, dtype=ms.float32)
     _, grad_fn = vjp(inline_mul_add, x, y)
     grads = grad_fn(v)
-    assert grads[0] == Tensor(3, dtype=ms.int32)
-    assert grads[1] == Tensor(6, dtype=ms.int32)
+    assert grads[0] == Tensor(3.0, dtype=ms.float32)
+    assert grads[1] == Tensor(6.0, dtype=ms.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
@@ -104,13 +104,13 @@ def test_custom_vjp_with_no_bprop():
     def with_no_bprop(x, y):
         return 2 * x + y
 
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    v = Tensor(1, dtype=ms.int32)
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
+    v = Tensor(1.0, dtype=ms.float32)
     _, grad_fn = vjp(with_no_bprop, x, y)
     grads = grad_fn(v)
-    assert grads[0] == Tensor(2, dtype=ms.int32)
-    assert grads[1] == Tensor(1, dtype=ms.int32)
+    assert grads[0] == Tensor(2.0, dtype=ms.float32)
+    assert grads[1] == Tensor(1.0, dtype=ms.float32)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
@@ -315,7 +315,7 @@ def test_custom_vjp_fn_with_net():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name="z")
 
@@ -363,7 +363,7 @@ def test_custom_vjp_forward_net_call_fn():
 
     class Net1(nn.Cell):
         def __init__(self):
-            super(Net1, self).__init__()
+            super().__init__()
             self.matmul = P.MatMul()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name="z")
 

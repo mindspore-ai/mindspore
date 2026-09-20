@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test if in for."""
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -29,10 +31,10 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 class ForwardNet(nn.Cell):
     def __init__(self, max_cycles=10):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.max_cycles = max_cycles
-        self.zero = Tensor(np.array(0), mstype.int32)
-        self.weight = Parameter(Tensor(np.array(0), mstype.int32))
+        self.zero = Tensor(np.array(0), mstype.float32)
+        self.weight = Parameter(Tensor(np.array(0), mstype.float32))
 
     def construct(self, x, y):
         out = self.zero
@@ -46,7 +48,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 
@@ -62,14 +64,14 @@ def test_forward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNet(max_cycles=3)
     graph_mode_out = graph_forward_net(x, y)
 
-    expect = (Tensor(np.array(9), mstype.int32), Tensor(np.array(2), mstype.int32))
+    expect = (Tensor(np.array(9), mstype.float32), Tensor(np.array(2), mstype.float32))
     assert graph_mode_out == expect
 
 
@@ -80,15 +82,15 @@ def test_backward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(np.array(1), mstype.int32)
-    y = Tensor(np.array(3), mstype.int32)
+    x = Tensor(np.array(1), mstype.float32)
+    y = Tensor(np.array(3), mstype.float32)
     # Graph Mode
     context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = ForwardNet(max_cycles=3)
     graph_backward_net = BackwardNet(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)
 
-    expect = (Tensor(np.array(9), mstype.int32), Tensor(np.array(3), mstype.int32))
+    expect = (Tensor(np.array(9), mstype.float32), Tensor(np.array(3), mstype.float32))
     assert graph_mode_grads == expect
 
 
@@ -134,7 +136,7 @@ def test_if_in_for_dict_values():
             x = x + value
             if x > 2:
                 continue
-            elif x > 1:
+            if x > 1:
                 x = x - 1
             elif x > 0:
                 x = x + 1

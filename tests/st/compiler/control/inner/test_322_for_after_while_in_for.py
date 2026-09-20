@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test for after while in for."""
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore import context
@@ -74,14 +76,14 @@ def test_for_after_while_in_for_01():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([11], mstype.int32)
-    y = Tensor([7], mstype.int32)
+    x = Tensor([11], mstype.float32)
+    y = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -93,7 +95,7 @@ def test_for_after_while_in_for_01():
     graph_backward_res = net(x, y)
 
     assert graph_forward_res == Tensor([12], mstype.float32)
-    assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([0], mstype.int32))
+    assert graph_backward_res == (Tensor([0], mstype.float32), Tensor([0], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -135,14 +137,14 @@ def test_for_after_while_in_for_02():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([11], mstype.int32)
-    y = Tensor([7], mstype.int32)
+    x = Tensor([11], mstype.float32)
+    y = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -153,5 +155,5 @@ def test_for_after_while_in_for_02():
     graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
-    assert graph_forward_res == Tensor([-1020], mstype.int32)
-    assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([0], mstype.int32))
+    assert graph_forward_res == Tensor([-1020], mstype.float32)
+    assert graph_backward_res == (Tensor([0], mstype.float32), Tensor([0], mstype.float32))

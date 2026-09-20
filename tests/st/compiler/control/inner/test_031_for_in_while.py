@@ -65,7 +65,7 @@ def test_for_in_while_01():
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([2], mstype.int32)
+    x = Tensor([2], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -76,8 +76,8 @@ def test_for_in_while_01():
     graph_forward_res = forward_net(x)
     graph_backward_res = backward_net(x)
 
-    expect_forward_res = Tensor([128], mstype.int32)
-    expect_backward_res = (Tensor([64], mstype.int32),)
+    expect_forward_res = Tensor([128], mstype.float32)
+    expect_backward_res = (Tensor([64], mstype.float32),)
     assert graph_forward_res == expect_forward_res
     assert graph_backward_res == expect_backward_res
 

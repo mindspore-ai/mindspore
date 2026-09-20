@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test jax control ops."""
 from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor, jit
@@ -116,7 +118,7 @@ def test_grad_for_loop():
     Expectation: Null.
     """
     context.set_context(mode=context.GRAPH_MODE, save_graphs=0, save_graphs_path="./ir")
-    x = Tensor([1], mstype.int32)
+    x = Tensor([1.], mstype.float32)
     x = grad_for_loop(x)
     print(x)
 
@@ -170,7 +172,7 @@ def test_grad_while_loop():
     """
 
     context.set_context(mode=context.GRAPH_MODE, save_graphs=0, save_graphs_path="./ir")
-    x = Tensor([1], mstype.int32)
+    x = Tensor([1.], mstype.float32)
     x = grad_while_loop(x)
     print(x)
 

@@ -29,8 +29,8 @@ grad_all = C.GradOperation(get_all=True)
 class IfAfterIfNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x, y):
         out = y
@@ -45,8 +45,8 @@ class IfAfterIfNet(nn.Cell):
 class IfAfterIfNet1(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x, y):
         out = y
@@ -81,8 +81,8 @@ class IfAfterIfNet2(nn.Cell):
 class IfAfterIfNet3(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x, y):
         out = x * y + self.func(self.param_b)
@@ -149,10 +149,10 @@ def test_if_after_if():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(13, mstype.int32)
-    expect2 = (Tensor(0, mstype.int32), Tensor(1, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(13, mstype.float32)
+    expect2 = (Tensor(0, mstype.float32), Tensor(1, mstype.float32))
     control_flow_if_after_if(IfAfterIfNet, x, y, expect1, expect2)
 
 
@@ -163,10 +163,10 @@ def test_if_after_if_01():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(13, mstype.int32)
-    expect2 = (Tensor(0, mstype.int32), Tensor(1, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(13, mstype.float32)
+    expect2 = (Tensor(0, mstype.float32), Tensor(1, mstype.float32))
     control_flow_if_after_if(IfAfterIfNet1, x, y, expect1, expect2)
 
 
@@ -177,10 +177,10 @@ def test_if_after_if_02():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(8, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32), Tensor(1, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(8, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32), Tensor(1, mstype.float32))
     control_flow_if_after_if(IfAfterIfNet2, x, y, expect1, expect2)
 
 
@@ -191,10 +191,10 @@ def test_if_after_if_03():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(23, mstype.int32)
-    expect2 = (Tensor(5, mstype.int32), Tensor(2, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(23, mstype.float32)
+    expect2 = (Tensor(5, mstype.float32), Tensor(2, mstype.float32))
     control_flow_if_after_if(IfAfterIfNet3, x, y, expect1, expect2)
 
 

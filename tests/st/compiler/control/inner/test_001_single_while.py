@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test single while."""
 import pytest
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
@@ -36,7 +38,7 @@ class ForwardNet(nn.Cell):
 
 class BackwardNet(nn.Cell):
     def __init__(self, forward_net):
-        super(BackwardNet, self).__init__()
+        super().__init__()
         self.forward_net = forward_net
         self.grad = C.GradOperation()
 
@@ -52,9 +54,9 @@ def test_forward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    c1 = Tensor([0], mstype.int32)
-    c2 = Tensor([0], mstype.int32)
-    expect = Tensor([75], mstype.int32)
+    c1 = Tensor([0], mstype.float32)
+    c2 = Tensor([0], mstype.float32)
+    expect = Tensor([75], mstype.float32)
     forward_net = ForwardNet()
     output = forward_net(c1, c2)
     assert expect == output
@@ -67,9 +69,9 @@ def test_backward():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    c1 = Tensor([0], mstype.int32)
-    c2 = Tensor([0], mstype.int32)
-    expect = Tensor([15], mstype.int32)
+    c1 = Tensor([0], mstype.float32)
+    c2 = Tensor([0], mstype.float32)
+    expect = Tensor([15], mstype.float32)
     forward_net = ForwardNet()
     backward_net = BackwardNet(forward_net)
     output = backward_net(c1, c2)
@@ -93,8 +95,8 @@ def test_single_while():
         return y
 
     with pytest.raises(RuntimeError, match="The 'while...else...' statement is not supported now."):
-        input_x = Tensor([0], mstype.int32)
-        input_y = Tensor([2], mstype.int32)
+        input_x = Tensor([0], mstype.float32)
+        input_y = Tensor([2], mstype.float32)
         res = control_flow_while(input_x, input_y)
         print("res:", res)
 

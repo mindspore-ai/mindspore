@@ -819,12 +819,12 @@ def test_sequence_ops_with_grad():
     """
     @jit(backend="ms_backend")
     def foo(x):
-        m = ("1", [1, 2], x, x+1, x)
+        m = ("1", [1, 2], x, x + 1, x)
         return m.count(x)
 
-    x = Tensor([3])
+    x = Tensor([3.])
     grad = GradOperation()(foo)(x)
-    assert grad == Tensor([0])
+    assert grad == Tensor([0.])
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
@@ -852,13 +852,14 @@ def test_sequence_ops_with_grad_3():
     Expectation: No exception.
     """
     @jit(backend="ms_backend")
-    def foo(x):
-        m = ("1", [1, 2], x, x+1, x)
-        return m[x]
+    def foo(x, index):
+        m = ("1", [1, 2], x, x + 1, x)
+        return m[index]
 
-    x = Tensor([3])
-    grad = GradOperation()(foo)(x)
-    assert grad == Tensor([0])
+    x = Tensor([3.])
+    index = Tensor(3)
+    grad = GradOperation()(foo)(x, index)
+    assert grad == Tensor([0.])
 
 
 @pytest.mark.skip(reason="PyExecuteGradient with AbstractAny extra input")

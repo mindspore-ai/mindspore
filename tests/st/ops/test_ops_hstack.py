@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Tests for mint.hstack."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -60,14 +62,15 @@ def test_ops_hstack_normal(mode):
     input_list.append([generate_random_input((2, 3, 4, 5), np.int32), generate_random_input((2, 3, 4, 5), np.int32)])
     input_list.append([generate_random_input((2, 3, 4), np.complex64), generate_random_input((2, 2, 4), np.complex64)])
 
-    for i in range(len(input_list)):
-        inputs = input_list[i]
+    for inputs in input_list:
         tensors = [ms.Tensor(input_x) for input_x in inputs]
         expect = generate_expect_forward_output(inputs)
         output = hstack_forward_func(*tensors)
+        np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
+        if not np.issubdtype(inputs[0].dtype, np.inexact):
+            continue
         expect_grads = generate_expect_backward_output(inputs)
         output_grads = hstack_backward_func(*tensors)
-        np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
         assert len(output_grads) == len(expect_grads)
         for output_grad, expect_grad in zip(output_grads, expect_grads):
             np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-4)

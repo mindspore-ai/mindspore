@@ -28,6 +28,7 @@ from mindspore.ops import operations as P
 context.set_context(jit_config={"jit_level": "O0"})
 grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
+grad_by_position = C.GradOperation(get_by_position=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -52,11 +53,11 @@ def test_while_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
+            return grad_by_position(self.net, grad_position=(2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
@@ -69,11 +70,8 @@ def test_while_grad():
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
 
-    expect_zero = np.array([0], dtype=np.float32)
     expect_two = input_x
-    assert np.allclose(graph_output[0].asnumpy(), expect_zero, 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect_zero, 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
+    assert np.allclose(graph_output.asnumpy(), expect_two, 0.0001, 0.0001)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -97,7 +95,7 @@ def test_while_with_const_param_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -136,7 +134,7 @@ def test_while_with_variable_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -249,7 +247,7 @@ def test_while_with_param_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -333,11 +331,11 @@ def test_while_opt_endless():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
+            return grad_by_position(self.net, grad_position=(2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
@@ -348,13 +346,9 @@ def test_while_opt_endless():
     net = GradNet(while_net)
     graph_output = net(idx, end, x)
 
-    expect1 = 0
-    expect2 = 0
     expect3 = np.array([[[16, 16], [16, 16]],
                         [[16, 16], [16, 16]]]).astype(np.float32)
-    assert np.allclose(graph_output[0].asnumpy(), expect1, 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
+    assert np.allclose(graph_output.asnumpy(), expect3, 0.0001, 0.0001)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -421,7 +415,7 @@ def test_while_with_param_grad_with_const_branch():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -472,7 +466,7 @@ def test_for_while_with_param_grad_with_const_branch():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -520,7 +514,7 @@ def test_for_while_with_param_grad_basic():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -567,7 +561,7 @@ def test_for_while_with_param_grad_normal():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -611,7 +605,7 @@ def test_while_with_param_basic_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -655,7 +649,7 @@ def test_while_with_param_basic_grad_mul():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -700,7 +694,7 @@ def test_while_with_param_basic_grad_two():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -750,7 +744,7 @@ def test_while_with_param_basic_grad_three():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -803,7 +797,7 @@ def test_while_if_with_param_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -846,7 +840,7 @@ def test_while_with_param_grad_not_enter_while():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -928,11 +922,11 @@ def test_with_param_if_by_if_grad_inputs():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
-            return grad_all(self.net)(*inputs)
+            return grad_by_position(self.net, grad_position=(2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)
@@ -942,13 +936,9 @@ def test_with_param_if_by_if_grad_inputs():
     if_net = MyIfByIfNet()
     net = GradNet(if_net)
     graph_output = net(idx, end, x)
-    expect1 = Tensor(np.array(0), dtype=ms.int32)
-    expect2 = Tensor(np.array(0), dtype=ms.int32)
     expect3 = np.array([[[3, 3], [3, 3]],
                         [[3, 3], [3, 3]]]).astype(np.float32)
-    assert np.allclose(graph_output[0].asnumpy(), expect1.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[1].asnumpy(), expect2.asnumpy(), 0.0001, 0.0001)
-    assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
+    assert np.allclose(graph_output.asnumpy(), expect3, 0.0001, 0.0001)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -975,7 +965,7 @@ def test_with_param_if_by_if_grad_parameter():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -1018,7 +1008,7 @@ def test_with_param_if_by_if_grad_param_excute_null():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -1063,7 +1053,7 @@ def test_if_by_if_return_inside_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 
@@ -1553,10 +1543,10 @@ def test_if_while_bprop():
             else:
                 out2 = input1 / input1
             if x == z:
-                out3_f = (lambda a: a + a)
+                out3_f = lambda a: a + a  # pylint: disable=unnecessary-lambda-assignment
                 out3 = out3_f(input1)
             else:
-                out3_f = (lambda a: a + a + a)
+                out3_f = lambda a: a + a + a  # pylint: disable=unnecessary-lambda-assignment
                 out3 = out3_f(input1)
             return out, out2, out3
 
@@ -1565,7 +1555,7 @@ def test_if_while_bprop():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):

@@ -141,7 +141,7 @@ def test_auto_monad_read_dependency_two_assign_two_addn():
 
 class ForwardNet(Cell):
     def __init__(self):
-        super(ForwardNet, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.array(0), ms.int32), name="param")
 
     def construct(self, x):
@@ -156,7 +156,7 @@ class ForwardNet(Cell):
 
 class BackwardNet(Cell):
     def __init__(self, net):
-        super(BackwardNet, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.forward_net = net
         self.grad = C.GradOperation(get_all=True)
 
@@ -219,7 +219,7 @@ def test_load_convert_tensormove():
 
 class ForwardNet2(Cell):
     def __init__(self):
-        super(ForwardNet2, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.array(0), ms.int32), name="param")
 
     def construct(self):
@@ -506,8 +506,8 @@ def test_control_while_for_if_break_parameter():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net30()
-    ms_grad = ops.GradOperation(get_all=True, get_by_list=True, sens_param=False)
-    ms_grad(net)(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))
+    ms_grad = ops.GradOperation(get_by_position=True, get_by_list=True, sens_param=False)
+    ms_grad(net, grad_position=(2,))(Tensor(2), Tensor(20), Tensor(np.random.rand(4, 4, 4), dtype=ms.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)

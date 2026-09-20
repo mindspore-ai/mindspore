@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test for after for in for."""
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore import context
@@ -65,14 +67,14 @@ def test_for_after_for_in_for_01():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([11], mstype.int32)
-    y = Tensor([7], mstype.int32)
+    x = Tensor([11], mstype.float32)
+    y = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -84,7 +86,7 @@ def test_for_after_for_in_for_01():
     graph_backward_res = net(x, y)
 
     assert graph_forward_res == Tensor([71], mstype.float32)
-    assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([1], mstype.int32))
+    assert graph_backward_res == (Tensor([0], mstype.float32), Tensor([1], mstype.float32))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -103,9 +105,9 @@ def test_for_after_for_in_for_02():
             self.div = P.Div()
             self.relu = nn.ReLU()
             self.assign = P.Assign()
-            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-            self.param_b = Parameter(Tensor(2, mstype.int32), name='b')
-            self.param_c = Parameter(Tensor(20, mstype.int32), name='c')
+            self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+            self.param_b = Parameter(Tensor(2, mstype.float32), name='b')
+            self.param_c = Parameter(Tensor(20, mstype.float32), name='c')
 
         def construct(self, x, y):
             for _ in range(0, 6):
@@ -123,14 +125,14 @@ def test_for_after_for_in_for_02():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
             return grad_all(self.net)(*inputs)
 
-    x = Tensor([11], mstype.int32)
-    y = Tensor([7], mstype.int32)
+    x = Tensor([11], mstype.float32)
+    y = Tensor([7], mstype.float32)
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
@@ -141,5 +143,5 @@ def test_for_after_for_in_for_02():
     graph_forward_res = forward_net(x, y)
     graph_backward_res = net(x, y)
 
-    assert graph_forward_res == Tensor([240], mstype.int32)
-    assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([1], mstype.int32))
+    assert graph_forward_res == Tensor([240], mstype.float32)
+    assert graph_backward_res == (Tensor([0], mstype.float32), Tensor([1], mstype.float32))
