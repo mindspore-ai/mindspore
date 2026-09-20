@@ -17,7 +17,7 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor, context
+from mindspore import Tensor, context, nn, ops
 from mindspore.common.api import _pynative_executor
 from mindspore.ops import functional as F
 from tests.mark_utils import arg_mark
@@ -85,6 +85,34 @@ def test_stft_small_input(mode):
     expected_complex = np.fft.rfft(x_np[:4] * window_np)
     expected = np.stack((expected_complex.real, expected_complex.imag), axis=-1).astype(np.float32)[:, None, :]
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-5, atol=1e-5)
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_stft_empty_input_raises(mode):
+    """
+    Feature: STFT CPU input validation.
+    Description: Run STFT with an empty 1D input and n_fft=64 in graph and pynative modes.
+    Expectation: A ValueError is raised because n_fft exceeds the input length.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+
+    class STFTNet(nn.Cell):
+        """Call the STFT primitive with fixed FFT settings."""
+
+        def __init__(self):
+            super().__init__()
+            self.stft = ops.STFT(64, 16, 64, False, True, True)
+
+        def construct(self, x, window):
+            return self.stft(x, window)
+
+    x = Tensor(np.empty((0,), dtype=np.float32))
+    window = Tensor(np.ones((64,), dtype=np.float32))
+    with pytest.raises(ValueError, match="n_fft"):
+        STFTNet()(x, window)
+        _pynative_executor.sync()
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
