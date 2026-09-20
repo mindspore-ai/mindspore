@@ -84,6 +84,24 @@ static const int MAX_OS_FILENAME_LENGTH = 255;
 constexpr int kMaxMindIRTensorRank = 32;
 constexpr size_t kMaxMindIRTensorBytes = 64ULL * 1024 * 1024 * 1024;
 constexpr size_t kMaxMindIRModelBytes = 128ULL * 1024 * 1024 * 1024;
+constexpr size_t kMaxMindIRAttributeDepth = 32;
+
+// Count active container parsers together, including dictionary/sequence mutual recursion.
+class AttributeDepthGuard {
+ public:
+  explicit AttributeDepthGuard(size_t &depth) : depth_(depth) {
+    if (depth_ >= kMaxMindIRAttributeDepth) {
+      MS_LOG(EXCEPTION) << "MindIR attribute nesting depth exceeds the limit " << kMaxMindIRAttributeDepth << ".";
+    }
+    ++depth_;
+  }
+  ~AttributeDepthGuard() { --depth_; }
+  AttributeDepthGuard(const AttributeDepthGuard &) = delete;
+  AttributeDepthGuard &operator=(const AttributeDepthGuard &) = delete;
+
+ private:
+  size_t &depth_;
+};
 
 inline std::string ErrnoToString(const int error_number) {
   std::ostringstream ret_info;
@@ -673,6 +691,7 @@ class MSANFModelParser {
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::pair<std::unique_ptr<Byte[]>, size_t>> tenor_data_;
   size_t planned_tensor_bytes_{0};
+  size_t attribute_depth_{0};
   bool is_kernel_graph_{false};
   std::list<std::pair<const AnfNodePtr, const mind_ir::AttributeProto *>> node_abstract_protos_;
 };
@@ -1938,6 +1957,7 @@ bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_
 }
 
 ValuePtr MSANFModelParser::ObtainValueInDictionaryForm(const mind_ir::AttributeProto &attr_proto) {
+  AttributeDepthGuard depth_guard(attribute_depth_);
   std::vector<std::pair<ValuePtr, ValuePtr>> key_values;
   for (int i = 0; i < attr_proto.values_size(); ++i) {
     const mind_ir::AttributeProto &key_value_proto = attr_proto.values(i);
@@ -2009,6 +2029,7 @@ ValuePtr MSANFModelParser::ObtainValueInDictionaryForm(const mind_ir::AttributeP
 }
 
 ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributeProto &attr_proto) {
+  AttributeDepthGuard depth_guard(attribute_depth_);
   std::vector<ValuePtr> vec;
   for (int i = 0; i < attr_proto.values_size(); ++i) {
     mind_ir::AttributeProto elem_attr_proto = attr_proto.values(i);
