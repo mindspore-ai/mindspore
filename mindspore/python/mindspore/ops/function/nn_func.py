@@ -4669,7 +4669,10 @@ def _cross_entropy_for_probabilities(input, target, weight, reduction, label_smo
         loss = loss * weight_
         loss = loss.view(ori_shape)
     if reduction == "mean":
-        return -div(loss.sum(), (input.size / n_classes))
+        # Same expression as `_cross_entropy` above: the divisor must keep the dtype of the dividend.
+        # The legacy Div primitive promotes a 0-dim tensor divided by a Python float to float32, which
+        # would make the mean result inconsistent with torch when the input is float16 or bfloat16.
+        return -(loss.sum()) / (input.size / n_classes)
     if reduction == "sum":
         return -loss.sum()
     if reduction == "none":
@@ -4777,7 +4780,7 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
     Note:
         Dynamic shape, dynamic rank and variable constant inputs are not supported in
         `strict graph mode (jit_syntax_level=mindspore.STRICT)
-        <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.JitConfig.html>`_.
 
     Args:
         input (Tensor): :math:`(N)` or :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
@@ -4804,10 +4807,16 @@ def cross_entropy_ext(input, target, weight=None, ignore_index=-100, reduction='
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default: ``0.0`` .
 
     Returns:
-        Tensor.
+        Tensor. The output data type is the same as `input`.
 
-        - For class indices, the output data type is the same as `input`.
-        - For probabilities, the output data type is float32.
+        When `weight` is not ``None`` and its data type differs from `input`, the output data type is
+        the common type promoted from both. For example, the output data type is float32 when `input`
+        is bfloat16 and `weight` is float32.
+
+    Raises:
+        ValueError: If `label_smoothing` is not in the range [0.0, 1.0].
+        ValueError: If `input` is 0-dim or the size of its first dimension is 0.
+        ValueError: If `target` is probabilities and its shape is not the same as the shape of `input`.
 
     Supported Platforms:
         ``Ascend``

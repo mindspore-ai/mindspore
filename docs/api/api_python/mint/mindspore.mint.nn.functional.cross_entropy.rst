@@ -53,7 +53,7 @@ mindspore.mint.nn.functional.cross_entropy
 
     .. note::
         动态shape、动态rank和可变常量输入不支持在
-        `严格图模式（jit_syntax_level=mindspore.STRICT） <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html>`_
+        `严格图模式（jit_syntax_level=mindspore.STRICT） <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.JitConfig.html>`_
         下执行。
 
     参数：
@@ -73,7 +73,11 @@ mindspore.mint.nn.functional.cross_entropy
         - **label_smoothing** (float, 可选) - 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。默认值： ``0.0`` 。
 
     返回：
-        Tensor。
+        Tensor。输出数据类型与 `input` 相同。
 
-        - 若目标值为类别索引，输出数据类型与 `input` 相同。
-        - 若目标值为类别概率，输出数据类型为float32。
+        当 `weight` 不为 ``None`` 且其数据类型与 `input` 不同时，输出数据类型为两者按类型提升规则得到的公共类型。例如 `input` 为 bfloat16、`weight` 为 float32 时，输出数据类型为 float32。
+
+    异常：
+        - **ValueError** - `label_smoothing` 不在[0.0, 1.0]范围内。
+        - **ValueError** - `input` 为零维张量或首个维度的大小为0。
+        - **ValueError** - 目标值为类别概率且shape与 `input` 不一致。

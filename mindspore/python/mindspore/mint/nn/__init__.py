@@ -459,10 +459,16 @@ class CrossEntropyLoss(Cell):
           float32 or bfloat16.
 
     Outputs:
-        Tensor.
+        Tensor. The output data type is the same as `input`.
 
-        - For class indices, the output data type is the same as `input`.
-        - For probabilities, the output data type is float32.
+        When `weight` is not ``None`` and its data type differs from `input`, the output data type is
+        the common type promoted from both. For example, the output data type is float32 when `input`
+        is bfloat16 and `weight` is float32.
+
+    Raises:
+        ValueError: If `label_smoothing` is not in the range [0.0, 1.0].
+        ValueError: If `input` is 0-dim or the size of its first dimension is 0.
+        ValueError: If `target` is probabilities and its shape is not the same as the shape of `input`.
 
     Supported Platforms:
         ``Ascend``
