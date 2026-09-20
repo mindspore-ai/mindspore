@@ -12,4 +12,4 @@ mindspore.ops.is_tensor
         - **obj** (Object) - 输入对象。
 
     返回：
-        Bool
+        Bool，若输入为Tensor返回True，否则返回False。

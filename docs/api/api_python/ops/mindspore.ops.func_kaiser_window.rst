@@ -24,4 +24,4 @@ mindspore.ops.kaiser_window
         - **dtype** (mindspore.dtype, 可选) - 指定数据类型。默认 ``None`` 。
 
     返回：
-        一维tensor。
+        一个一维tensor。

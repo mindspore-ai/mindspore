@@ -8447,7 +8447,7 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
     .. math::
         - \frac{M - 1}{2} \leq n \leq \frac{M - 1}{2}
 
-    where :math:`I_0` is the modified zeroth-order Bessel function.
+    where :math:`I_0` is the modified zeroth-order Bessel function, :math:`M` represents the `window_length`.
 
     Args:
         window_length (int): The size of the window.

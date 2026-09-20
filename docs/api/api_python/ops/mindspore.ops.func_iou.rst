@@ -7,7 +7,7 @@ mindspore.ops.iou
 
     .. warning::
         - 该接口已废弃，2.9.0（不含）之后版本将删除。
-        - 在Ascend中，仅支持计算float16数据。为避免溢出，输入长度和宽度在内部按0.2缩放。
+        - 在Ascend中，仅支持计算float16数据。为避免溢出，输入长度和宽度在内部乘以0.2进行缩放。
 
     根据真实区域和预测区域计算IOU(intersection over union)或IOF(intersection over foreground)。
 

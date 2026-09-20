@@ -629,7 +629,7 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
     `mindspore.ops.log_uniform_candidate_sampler` is deprecated from version 2.9.0 and will be removed
     in a future version.
 
-    Generates random labels with a log-uniform distribution for sampled_candidates.
+    Generates random labels with a log-uniform distribution (Zipfian) for sampled_candidates.
 
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
 
@@ -642,7 +642,8 @@ def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, uniqu
           shape :math:`(batch\_size, num\_true)` .
         num_true (int, optional): The number of target classes per training example. Default: ``1`` .
         num_sampled (int, optional): The number of classes to randomly sample. Default: ``5`` .
-        unique (bool, optional): Determines whether to sample with rejection. If `unique` is ``True`` ,
+        unique (bool, optional): Determines whether all sampled classes in the batch are unique.
+          If `unique` is ``True`` ,
           all sampled classes in a batch are unique. Default: ``True`` .
         range_max (int, optional): The number of possible classes. When `unique` is ``True`` ,
           `range_max` must be greater than or equal to `num_sampled`. Default: ``5`` .
