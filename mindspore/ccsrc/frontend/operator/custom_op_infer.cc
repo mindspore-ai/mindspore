@@ -25,9 +25,10 @@
 #include "frontend/jit/ps/static_analysis/prim_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
+#include "utils/custom_aot_extra.h"
+#include "utils/custom_aot_path_check.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
-#include "utils/custom_aot_extra.h"
 #include "ops_utils/dl_utils.h"
 #include "mindspore/ops/infer/custom.h"
 #include "infer/ops_func_impl/custom_ext.h"
@@ -94,24 +95,7 @@ void GetInferFilePathAndFuncName(const PrimitivePtr &primitive, std::string *fil
     }
     *file_path = real_path.value();
     *func_name = exec_info.substr(pos + 1);
-    constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
-    const auto white_list_env = common::GetEnv(kWhiteList);
-    if (!white_list_env.empty()) {
-      auto white_list = FileUtils::GetRealPath(white_list_env.c_str());
-      if (!white_list.has_value()) {
-        MS_LOG(EXCEPTION) << "Illegal white list path set in MS_CUSTOM_AOT_WHITE_LIST: " << white_list_env;
-      }
-      std::string wl = white_list.value();
-      if (!wl.empty() && wl.back() != '/') {
-        wl += '/';
-      }
-      constexpr auto kKernelMeta = "akg_kernel_meta";
-      if ((*file_path).rfind(wl, 0) != 0 && (*file_path).find(kKernelMeta) == std::string::npos) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name
-                          << "', the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "
-                          << white_list.value() << ". The file path is: " << *file_path;
-      }
-    }
+    CheckCustomAotWhiteList(*file_path, "For '" + kernel_name + "'", primitive->HasAttr("is_load"));
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', user defined function path '" << exec_info << "' is illegal.";
   }
@@ -194,9 +178,6 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
   (void)std::transform(std::begin(shape_list), std::end(shape_list), std::back_inserter(input_shapes),
                        [](auto &v) { return v.empty() ? nullptr : v.data(); });
 
-  AotExtraImpl attrs;
-  attrs.SetKernelPrim(primitive);
-
   std::string file_path;
   std::string func_name;
   GetInferFilePathAndFuncName(primitive, &file_path, &func_name);
@@ -205,7 +186,11 @@ BaseShapePtr CustomInferShapeByCPP(const PrimitivePtr &primitive, const std::vec
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', dlopen file under path" << file_path
                       << "throw the error: " << dlerror();
   }
+  // Declare the library guard before AotExtraImpl so attrs is destroyed first. kernel_data_ may be
+  // allocated inside the .so; deleting it after dlclose is use-after-free.
   DynamicLibraryGuard handle_guard(handle);
+  AotExtraImpl attrs;
+  attrs.SetKernelPrim(primitive);
 
   std::vector<abstract::BaseShapePtr> shape_vector;
   if (IsMultiOutput(primitive)) {
@@ -246,9 +231,6 @@ TypePtr CustomInferTypeByCPP(const PrimitivePtr &primitive, const std::vector<Ab
   std::vector<TypeId> input_types;
   PrePareInferTypeParams(kernel_name, input_args, &input_types);
 
-  AotExtraImpl attrs;
-  attrs.SetKernelPrim(primitive);
-
   std::string file_path;
   std::string func_name;
   GetInferFilePathAndFuncName(primitive, &file_path, &func_name);
@@ -257,7 +239,11 @@ TypePtr CustomInferTypeByCPP(const PrimitivePtr &primitive, const std::vector<Ab
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', dlopen file under path" << file_path
                       << "throw the error: " << dlerror();
   }
+  // Declare the library guard before AotExtraImpl so attrs is destroyed first. kernel_data_ may be
+  // allocated inside the .so; deleting it after dlclose is use-after-free.
   DynamicLibraryGuard handle_guard(handle);
+  AotExtraImpl attrs;
+  attrs.SetKernelPrim(primitive);
 
   TypePtr res_type = nullptr;
   if (IsMultiOutput(primitive)) {

@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <functional>
 #include "kernel/cpu/cpu_common.h"
+#include "utils/custom_aot_path_check.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 
@@ -61,33 +62,8 @@ void CustomAOTCpuKernelMod::SetKernelPath() {
     }
     file_path_ = real_path.value();
     func_name_ = exec_info.substr(pos + 1);
-
-    constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
-    const char *value = common::EnvHelper::GetInstance()->GetEnv(kWhiteList);
-    if (value == nullptr) {
-      static bool print_cpu_warning_once = true;
-      if (print_cpu_warning_once) {
-        MS_LOG(INFO) << "For '" << kernel_name_ << "' on CPU, no white list is set and it might cause problems. "
-                     << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST.";
-        print_cpu_warning_once = false;
-      }
-    } else {
-      auto white_list = FileUtils::GetRealPath(value);
-      if (!white_list.has_value()) {
-        MS_LOG(EXCEPTION) << "Illegal white list path set in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
-      }
-      std::string wl = white_list.value();
-      if (!wl.empty() && wl.back() != '/') {
-        wl += '/';
-      }
-      constexpr auto kKernelMeta = "akg_kernel_meta";
-      if (file_path_.rfind(wl, 0) != 0 && file_path_.find(kKernelMeta) == std::string::npos) {
-        MS_LOG(EXCEPTION)
-          << "For '" << kernel_name_
-          << "' on CPU, the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "
-          << white_list.value() << ". The file path is: " << file_path_;
-      }
-    }
+    const bool from_model_file = primitive_->HasAttr("is_load");
+    CheckCustomAotWhiteList(file_path_, "For '" + kernel_name_ + "' on CPU", from_model_file);
   } else {
     MS_LOG(EXCEPTION)
       << "For '" << kernel_name_ << "' on CPU, user defined function path '" << exec_info
