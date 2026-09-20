@@ -55,7 +55,9 @@ sparse_flash_attention:
 
     Keyword Args:
         block_table (Tensor, optional): Block mapping table for PageAttention KV cache storage.
-            Data format is ND, dtype is int32, shape is :math:`(B,)`. Default: ``None``.
+            Data format is ND, dtype is int32, shape is :math:`(B, block\_num)`, where `block_num` is not
+            less than the number of blocks corresponding to the maximum S2 among all batches, that is,
+            :math:`S2_{max} / block\_size` rounded up. Default: ``None``.
         actual_seq_lengths_query (Tensor, optional): Valid token count for each batch in query.
             Data format is ND, dtype is int32, shape is :math:`(B,)`. Used in prefix-sum format for
             variable sequence lengths. Default: ``None``.
@@ -80,9 +82,9 @@ sparse_flash_attention:
         sparse_mode (int, optional): Sparse mode. Only ``0`` (full computation) and ``3`` (rightDownCausal
             mask mode) are supported. Default: ``3``.
         pre_tokens (int, optional): For sparse computation, indicates how many tokens to calculate forward.
-            Default: ``2^63-1``.
+            Currently only ``2^63-1`` is supported. Default: ``2^63-1``.
         next_tokens (int, optional): For sparse computation, indicates how many tokens to calculate backward.
-            Default: ``2^63-1``.
+            Currently only ``2^63-1`` is supported. Default: ``2^63-1``.
         attention_mode (int, optional): Attention mode. Currently only ``2`` (MLA-absorb mode) is supported;
             `query_rope` and `key_rope` must be provided when using this mode. Default: ``0``.
         return_softmax_lse (bool, optional): Whether to return softmax_max and softmax_sum. When ``True``,
@@ -110,7 +112,7 @@ sparse_flash_attention:
         TypeError: If the dtype of `query`, `key`, or `value` is not float16 or bfloat16.
         RuntimeError: If `layout_query` is not ``"BSND"`` or ``"TND"``.
         RuntimeError: If `layout_kv` is not ``"BSND"``, ``"TND"`` or ``"PA_BSND"``.
-        RuntimeError: If `sparse_block_size` is not in range [1, 128] or not a power of 2.
+        RuntimeError: If `sparse_block_size` is not a power of 2.
 
     Supported Platforms:
         ``Ascend``
