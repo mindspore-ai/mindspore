@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2025 Huawei Technologies Co., Ltd
+ * Copyright 2022-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1940,6 +1940,7 @@ REG_BPROP_BUILDER("InplaceFillTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BOD
   const auto &value = ib->GetInput(i1);
   if (value->need_compute_grad_out()) {
     value_grad = ib->SumExt(ib->GetInput(i3), ib->EmitValue(kNone), ib->Value(false));
+    value_grad = ib->Cast(value_grad, ib->GetDtype(value));
   } else {
     value_grad = ib->OutZeros(value);
   }
