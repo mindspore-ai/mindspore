@@ -87,10 +87,8 @@ ShapeArray STFTFuncImpl::InferShape(const PrimitivePtr &primitive, const InferIn
   bool return_complex = return_complex_opt.value();
 
   int64_t len = input_shape.back();
-  if (len > 0) {
-    MS_CHECK_VALUE(n_fft > 0 && n_fft <= len, CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>(
-                                                "n_fft", n_fft, kIncludeRight, {0, len}, primitive));
-  }
+  MS_CHECK_VALUE(n_fft > 0 && n_fft <= len, CheckAndConvertUtils::FormatCheckInRangeMsg<int64_t>(
+                                              "n_fft", n_fft, kIncludeRight, {0, len}, primitive));
   MS_CHECK_VALUE(hop_length > 0,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("hop_length", hop_length, kGreaterThan, 0, primitive));
 
