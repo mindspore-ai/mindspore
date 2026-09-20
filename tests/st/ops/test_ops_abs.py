@@ -32,6 +32,18 @@ def abs_forward_func(x):
     return abs_(x)
 
 
+@test_utils.run_with_mode
+@test_utils.run_with_cell
+def tensor_abs_forward_func(x):
+    return x.abs()
+
+
+@test_utils.run_with_mode
+@test_utils.run_with_cell
+def tensor_abs_view_forward_func(x):
+    return x[:, 1:].transpose(1, 0).abs()
+
+
 @test_utils.run_with_cell
 def abs_backward_func(x):
     return ms.grad(abs_forward_func, (0))(x)
@@ -59,6 +71,37 @@ def test_abs_forward(mode):
     x = Tensor([1, 0, 0], ms.int8)
     output = abs_forward_func(x)
     assert np.allclose(output.asnumpy(), [1, 0, 0])
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard', mem_peak=1024.25)
+@pytest.mark.parametrize('mode', ['pynative', 'kbk'])
+@pytest.mark.parametrize('ms_type,np_type,output_type', [
+    (ms.complex64, np.complex64, ms.float32),
+    (ms.complex128, np.complex128, ms.float64),
+])
+def test_tensor_abs_complex(mode, ms_type, np_type, output_type):
+    """
+    Feature: tensor.abs
+    Description: Verify tensor.abs with complex input on Ascend.
+    Expectation: The result and its dtype are correct.
+    """
+    if mode == 'pynative':
+        ms.set_context(mode=context.PYNATIVE_MODE)
+    else:
+        ms.set_context(mode=context.GRAPH_MODE)
+    input_np = np.array([[3 + 4j, -5 - 12j, 0], [8 + 15j, -7 - 24j, 20]], dtype=np_type)
+    x = Tensor(input_np, ms_type)
+
+    output = tensor_abs_forward_func(x, mode=mode)
+
+    assert output.dtype == output_type
+    np.testing.assert_allclose(output.asnumpy(), np.abs(input_np))
+
+    view_output = tensor_abs_view_forward_func(x, mode=mode)
+    assert view_output.dtype == output_type
+    np.testing.assert_allclose(view_output.asnumpy(), np.abs(input_np[:, 1:].transpose(1, 0)))
 
 
 @arg_mark(plat_marks=['platform_ascend'],

@@ -118,6 +118,12 @@ class ArithmeticSelfCpuKernelFuncComplex : public ArithmeticSelfCpuKernelFunc<T,
 };
 
 template <typename T, typename S>
+class ArithmeticSelfCpuKernelFuncAbs : public ArithmeticSelfCpuKernelFunc<T, S> {
+ protected:
+  void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+};
+
+template <typename T, typename S>
 class ArithmeticSelfCpuKernelFuncBFloat16 : public ArithmeticSelfCpuKernelFunc<T, S> {
  protected:
   void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -948,6 +954,15 @@ void ArithmeticSelfCpuKernelFuncBFloat16<T, S>::LaunchKernel(const std::vector<K
 }
 
 template <typename T, typename S>
+void ArithmeticSelfCpuKernelFuncAbs<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
+  auto *output = reinterpret_cast<S *>(outputs[0]->device_ptr());
+  const size_t lens = outputs[0]->size() / sizeof(S);
+  Abs<T, S>(this, input, output, lens);
+}
+
+template <typename T, typename S>
 void ArithmeticSelfCpuKernelFuncComplex<T, S>::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                             const std::vector<KernelTensor *> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->device_ptr());
@@ -1028,6 +1043,12 @@ template <typename T, typename S>
 std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncBool() {
   return std::make_shared<ArithmeticSelfCpuKernelFuncBool<T, S>>();
 }
+
+template <typename T, typename S>
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncAbs() {
+  return std::make_shared<ArithmeticSelfCpuKernelFuncAbs<T, S>>();
+}
+
 template <typename T, typename S>
 std::shared_ptr<CpuKernelFunc> CreateArithSelfFuncComplex() {
   return std::make_shared<ArithmeticSelfCpuKernelFuncComplex<T, S>>();
@@ -1361,10 +1382,10 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), &CreateArithSelfFuncCommon<int, int>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      &CreateArithSelfFuncCommon<int64_t, int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-     &CreateArithSelfFuncComplex<complex64, complex64>},
-    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-     &CreateArithSelfFuncComplex<complex128, complex128>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncAbs<complex64, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncAbs<complex128, double>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncCommon<float, float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
