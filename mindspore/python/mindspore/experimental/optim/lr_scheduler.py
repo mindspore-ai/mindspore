@@ -49,7 +49,7 @@ class LRScheduler:
         ...     def __init__(self, optimizer, factor=0.5, total_iters=3, last_epoch=-1):
         ...         self.factor = factor
         ...         self.total_iters = total_iters
-        ...         super(ConstantLR, self).__init__(optimizer, last_epoch)
+        ...         super().__init__(optimizer, last_epoch)
         ...
         ...     def get_lr(self):
         ...         if self.last_epoch == 0:
@@ -88,7 +88,7 @@ class LRScheduler:
                                    f"in param_groups[{i}] when resuming an optimizer")
         self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
-        self._last_lr = [lr for lr in optimizer.lrs]
+        self._last_lr = list(optimizer.lrs)
         self.groups_num = len(optimizer.param_groups)
         self.last_epoch = Parameter(Tensor(last_epoch, dtype=mstype.float32),
                                     name='last_epoch_' + self.__class__.__name__)
@@ -192,7 +192,7 @@ class StepLR(LRScheduler):
             raise TypeError(f"For 'StepLR', the 'gamma' must be float, but got {type(gamma)}.")
         self.step_size = step_size
         self.gamma = gamma
-        super(StepLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         if self.last_epoch == 0 or self.last_epoch % self.step_size != 0:
@@ -280,7 +280,7 @@ class LinearLR(LRScheduler):
         self.start_factor = start_factor
         self.end_factor = end_factor
         self.total_iters = total_iters
-        super(LinearLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
 
@@ -325,7 +325,7 @@ class ExponentialLR(LRScheduler):
         >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
         ...     def __init__(self):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         self.fc = nn.Dense(16 * 5 * 5, 120)
         ...     def construct(self, x):
         ...         return self.fc(x)
@@ -345,7 +345,7 @@ class ExponentialLR(LRScheduler):
         if not isinstance(gamma, float):
             raise TypeError(f"For 'ExponentialLR', the 'gamma' must be float, but got {type(gamma)}.")
         self.gamma = gamma
-        super(ExponentialLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         if self.last_epoch == 0:
@@ -394,7 +394,7 @@ class PolynomialLR(LRScheduler):
         >>> from mindspore.experimental import optim
         >>> class Net(nn.Cell):
         ...     def __init__(self):
-        ...         super(Net, self).__init__()
+        ...         super().__init__()
         ...         self.fc = nn.Dense(16 * 5 * 5, 120)
         ...     def construct(self, x):
         ...         return self.fc(x)
@@ -424,7 +424,7 @@ class PolynomialLR(LRScheduler):
         self.power = power
         self.min = ops.Minimum()
         self.cast = ops.Cast()
-        super(PolynomialLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         if self.last_epoch == 0 or self.last_epoch > self.total_iters:
@@ -487,7 +487,7 @@ class LambdaLR(LRScheduler):
             self.lr_lambdas = list(lr_lambda)
         else:
             self.lr_lambdas = [lr_lambda] * param_groups_length
-        super(LambdaLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         return [base_lr * lmbda(self.last_epoch)
@@ -539,10 +539,12 @@ class MultiplicativeLR(LRScheduler):
                     len(optimizer.param_groups), len(lr_lambda)))
         else:
             self.lr_lambdas = [lr_lambda] * len(optimizer.param_groups)
-        super(MultiplicativeLR, self).__init__(optimizer, last_epoch)
+        self._is_initial = True
+        super().__init__(optimizer, last_epoch)
+        self._is_initial = False
 
     def get_lr(self):
-        if self.last_epoch > 0:
+        if not self._is_initial and self.last_epoch > 0:
             return [lr * lmbda(self.last_epoch)
                     for lmbda, lr in zip(self.lr_lambdas, self._last_lr)]
         return [lr * 1. for lr in self._last_lr]
@@ -609,14 +611,14 @@ class MultiStepLR(LRScheduler):
         self.milestones_keys = list(self.milestones.keys())
         self.milestones_values = list(self.milestones.values())
         self.gamma = gamma
-        super(MultiStepLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         lrs = [lr.value() for lr in self._last_lr]
         tmp_epoch = int(self.last_epoch.value())
 
-        for i in range(len(self.milestones_keys)):
-            if tmp_epoch == self.milestones_keys[i]:
+        for i, milestones_key in enumerate(self.milestones_keys):
+            if tmp_epoch == milestones_key:
                 value = self.milestones_values[i]
                 return [lr * self.gamma ** value for lr in lrs]
         return lrs
@@ -675,7 +677,7 @@ class ConstantLR(LRScheduler):
             raise TypeError(f"For 'ConstantLR', the type of total_iters must be int, but got {type(total_iters)}.")
         self.factor = factor
         self.total_iters = total_iters
-        super(ConstantLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         if self.last_epoch == 0:
@@ -738,13 +740,13 @@ class SequentialLR:
     """
 
     def __init__(self, optimizer, schedulers, milestones, last_epoch=-1):
-        for sched_idx in range(len(schedulers)):
-            if schedulers[sched_idx].optimizer != optimizer:
+        for sched_idx, sched in enumerate(schedulers):
+            if sched.optimizer != optimizer:
                 raise ValueError(
                     "Sequential Schedulers expects all schedulers to belong to the same optimizer, but "
                     f"got scheduler at index {sched_idx} is different from the optimizer passed in.")
 
-            if schedulers[sched_idx].optimizer != schedulers[0].optimizer:
+            if sched.optimizer != schedulers[0].optimizer:
                 raise ValueError(
                     "Sequential Schedulers expects all schedulers to belong to the same optimizer, but "
                     f"got schedulers at index {0} and {sched_idx} are different.")
@@ -1101,7 +1103,7 @@ class CyclicLR(LRScheduler):
         self._init_scale_fn()
         self.floor = ops.Floor()
 
-        super(CyclicLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
         self.base_lrs = [Tensor(lr) for lr in base_lrs]
 
     def _init_scale_fn(self):
@@ -1241,7 +1243,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         self.assign = ops.Assign()
         self.floor = ops.Floor()
         self._last_lr = [group["lr"] for group in optimizer.param_groups]
-        super(CosineAnnealingWarmRestarts, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
         pct = self.cast(self.math_pi * self.T_cur / self.T_i, mstype.float32)
@@ -1262,7 +1264,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
             epoch = self.last_epoch + 1
             ops.assign_add(self.T_cur, self.increase_tensor)
             if self.T_cur >= self.T_i:
-                ops.assign(self.T_cur, self.T_cur - self.T_i)
+                ops.assign(self.T_cur, self.T_cur % self.T_i)
                 ops.assign(self.T_i, self.T_i * self.T_mult)
 
         else:
@@ -1355,7 +1357,7 @@ class CosineAnnealingLR(LRScheduler):
         self.math_pi = math.pi
         self.cos = ops.Cos()
         self.cast = ops.Cast()
-        super(CosineAnnealingLR, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
 
