@@ -128,7 +128,7 @@ def do_test_matmul_dtypes(valid_dtypes, is_ge_only=False):
                 _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -138,7 +138,7 @@ def test_matmul_dtypes():
     do_test_matmul_dtypes([mstype.float16, mstype.float32])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=2048.09)
 def test_matmul_dtypes_ge():
     """
