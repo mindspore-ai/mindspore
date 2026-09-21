@@ -42,7 +42,7 @@ class NetGradGrad(nn.Cell):
         self.grad_ops = C.GradOperation(get_by_position=True, sens_param=True)
 
     def construct(self, dy, shapex, begin, end, strides, dout):
-        backward_net = self.grad_ops(self.forward_net, grad_position=(0, 5))
+        backward_net = self.grad_ops(self.forward_net, None, (0,))
         return backward_net(dy, shapex, begin, end, strides, dout)
 
 
@@ -71,4 +71,4 @@ def test_stridedslice_high_grad_float32():
     stridedslice = P.StridedSlice()
     forward_res = stridedslice(Tensor(x), begin, end, strides)
     expected = np.ones_like(forward_res.asnumpy())
-    assert np.allclose(dgrad_ms[0].asnumpy(), expected, 1e-4, 1e-4)
+    assert np.allclose(dgrad_ms.asnumpy(), expected, 1e-4, 1e-4)

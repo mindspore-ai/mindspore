@@ -59,14 +59,15 @@ def scatter_val_with_grad(x, dim, index, value, reduce='none'):
 
 
 class ScatterGrad(nn.Cell):
-    def __init__(self, net: nn.Cell, sens: Tensor):
+    def __init__(self, net: nn.Cell, sens: Tensor, grad_position):
         super().__init__()
         self.net = net
-        self.grad_op = GradOperation(get_all=True, sens_param=True)
+        self.grad_op = GradOperation(get_by_position=True, sens_param=True)
         self.grad_wrt_output = sens
+        self.grad_position = grad_position
 
     def construct(self, x, dim, index, src_or_val, reduce):
-        return self.grad_op(self.net)(x, dim, index, src_or_val, reduce, self.grad_wrt_output)
+        return self.grad_op(self.net, None, self.grad_position)(x, dim, index, src_or_val, reduce, self.grad_wrt_output)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
@@ -120,10 +121,9 @@ def _test_inplace_scatter_src_backward1(input_type):
     src = Tensor(np.random.rand(3, 4), dtype=input_type)
     index = Tensor(np.array([list(range(4))] * 3, dtype=np.int64))
     grad = Tensor(np.random.rand(3, 4), dtype=input_type)
-    grads = ScatterGrad(scatter_src_with_grad, grad)(slf, 1, index, src, 'none')
+    grads = ScatterGrad(scatter_src_with_grad, grad, (0, 3))(slf, 1, index, src, 'none')
     assert np.allclose(grads[0].asnumpy(), np.zeros((3, 4), dtype=np.float32))  # self
-    # grads[1] is index which has no grad
-    assert np.allclose(grads[2].asnumpy().astype(np.float32), grad.asnumpy().astype(np.float32))  # src
+    assert np.allclose(grads[1].asnumpy().astype(np.float32), grad.asnumpy().astype(np.float32))  # src
 
 
 def _test_inplace_scatter_src_backward2(input_type):
@@ -133,7 +133,7 @@ def _test_inplace_scatter_src_backward2(input_type):
     index = Tensor(np.array([list(range(3)) + [2]] * 3, dtype=np.int64))  # slf[:, 3] is reserved
     grad = Tensor(np.random.rand(3, 4), dtype=input_type)
     grad_np = grad.asnumpy().copy().astype(np.float32)
-    grads = ScatterGrad(scatter_src_with_grad, grad)(slf, 1, index, src, 'none')
+    grads = ScatterGrad(scatter_src_with_grad, grad, (0, 3))(slf, 1, index, src, 'none')
     grad_np[:, :3] = 0
     # grad of src[:, 3] is uncertain, only assert self
     assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
@@ -181,10 +181,10 @@ def _test_inplace_scatter_value_backward(input_type):
     index = Tensor(np.array([list(range(3)) + [2]] * 3, dtype=np.int64))  # slf[:, 3] is reserved
     grad = Tensor(np.random.rand(3, 4), dtype=input_type)
     grad_np = grad.asnumpy().copy().astype(np.float32)
-    grads = ScatterGrad(scatter_val_with_grad, grad)(slf, 1, index, value, 'none')
+    grads = ScatterGrad(scatter_val_with_grad, grad, (0,))(slf, 1, index, value, 'none')
     # only self has grad
     grad_np[:, :3] = 0
-    assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
+    assert np.allclose(grads.asnumpy().astype(np.float32), grad_np)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=20.0)
@@ -279,14 +279,14 @@ def _test_inplace_scatter_reduce_src_backward():
     src = Tensor(np.random.rand(3, 4), dtype=ms.float32)
     index = Tensor(np.array([list(range(4))] * 3, dtype=np.int64))
     grad = Tensor(np.random.rand(3, 4), dtype=ms.float32)
-    grads = ScatterGrad(scatter_src_with_grad, grad)(slf, 1, index, src, 'add')
+    grads = ScatterGrad(scatter_src_with_grad, grad, (0, 3))(slf, 1, index, src, 'add')
     assert np.allclose(grads[0].asnumpy(), np.zeros((3, 4), dtype=np.float32))  # self
-    assert np.allclose(grads[2].asnumpy().astype(np.float32), np.zeros((3, 4)))  # src
+    assert np.allclose(grads[1].asnumpy().astype(np.float32), np.zeros((3, 4)))  # src
 
 
 def _test_inplace_scatter_reduce_value_backward():
     slf = Tensor([[2] * 4] * 3, dtype=ms.float32)
     index = Tensor(np.array([list(range(4))] * 3, dtype=np.int64))
     grad = Tensor(np.random.rand(3, 4), dtype=ms.float32)
-    grads = ScatterGrad(scatter_val_with_grad, grad)(slf, 1, index, 3, 'add')
-    assert np.allclose(grads[0].asnumpy(), np.zeros((3, 4), dtype=np.float32))  # self
+    grads = ScatterGrad(scatter_val_with_grad, grad, (0,))(slf, 1, index, 3, 'add')
+    assert np.allclose(grads.asnumpy(), np.zeros((3, 4), dtype=np.float32))  # self

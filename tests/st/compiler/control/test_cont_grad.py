@@ -57,7 +57,7 @@ def test_while_grad():
             self.net = net
 
         def construct(self, *inputs):
-            return grad_by_position(self.net, grad_position=(2,))(*inputs)
+            return grad_by_position(self.net, None, (2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(2), dtype=ms.int32)
@@ -335,7 +335,7 @@ def test_while_opt_endless():
             self.net = net
 
         def construct(self, *inputs):
-            return grad_by_position(self.net, grad_position=(2,))(*inputs)
+            return grad_by_position(self.net, None, (2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(4), dtype=ms.int32)
@@ -926,7 +926,7 @@ def test_with_param_if_by_if_grad_inputs():
             self.net = net
 
         def construct(self, *inputs):
-            return grad_by_position(self.net, grad_position=(2,))(*inputs)
+            return grad_by_position(self.net, None, (2,))(*inputs)
 
     idx = Tensor(np.array(0), dtype=ms.int32)
     end = Tensor(np.array(0), dtype=ms.int32)

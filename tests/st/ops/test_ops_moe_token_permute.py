@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test the moe_token_permute operator."""
+
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -30,7 +32,7 @@ def permuted_forward_func(tokens, indices, num_out_tokens=0, padded_mode=False):
 
 @test_utils.run_with_cell
 def permuted_backward_func(tokens, indices, num_out_tokens=0, padded_mode=False):
-    return ms.grad(permuted_forward_func, (0, 1))(
+    return ms.grad(permuted_forward_func, 0)(
         tokens, indices, num_out_tokens, padded_mode
     )
 
@@ -84,7 +86,7 @@ def test_moe_token_permute(mode, dtype):
 
     permuted_grad = permuted_backward_func(tokens, indices, num_out_tokens)
     expect_permuted_grad = (np.ones((8, 3))).astype(np.float32)
-    assert np.allclose(permuted_grad[0].float().asnumpy() if dtype == ms.bfloat16 else permuted_grad[0].asnumpy(),
+    assert np.allclose(permuted_grad.float().asnumpy() if dtype == ms.bfloat16 else permuted_grad.asnumpy(),
                        expect_permuted_grad, loss, loss)
 
 

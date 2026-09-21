@@ -69,7 +69,7 @@ class GradWrap(nn.Cell):
         self.network = network
 
     def construct(self, data, shape):
-        gout = grad(self.network, grad_position=(0,))(data, shape)
+        gout = grad(self.network, None, (0,))(data, shape)
         return gout
 
 

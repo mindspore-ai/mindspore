@@ -278,8 +278,7 @@ def test_tensor_inplace_scatter_grad():
             self.grad_wrt_output = sens
 
         def construct(self, x, dim, index, src_or_val, reduce):
-            return self.grad_op(self.net, grad_position=(0,))(x, dim, index, src_or_val, reduce,
-                                                               self.grad_wrt_output)
+            return self.grad_op(self.net, None, (0,))(x, dim, index, src_or_val, reduce, self.grad_wrt_output)
 
     @test_utils.run_with_cell
     def scatter_val_with_grad(x, dim, index, value, reduce):
