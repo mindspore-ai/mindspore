@@ -20,8 +20,9 @@ upsample_trilinear3d:
               [float16, float32, float64].
             - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 3 int elements
               :math:`(output\_depth, output\_height, output\_width)`. Default: ``None``.
-            - **scales** (Union[tuple[float], list[float]]): A tuple or list of 3 float
-              elements :math:`(scale\_depth, scale\_height, scale\_width)`. Default: ``None``.
+            - **scales** (Union[tuple[number], list[number]]): A tuple or list of 3 numbers
+              :math:`(scale\_depth, scale\_height, scale\_width)`. Each element can be an int or float, and the
+              two types can be mixed. Default: ``None``.
 
         Outputs:
             - **y** (Tensor) - Upsampled output with the same data type as `x`, whose shape is
@@ -29,7 +30,7 @@ upsample_trilinear3d:
 
         Raises:
             TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
-            TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
+            TypeError: When `scales` is not ``None`` and `scales` is not list[number] or tuple[number].
             TypeError: If dtype of `x` is not in [float16, float32, float64].
             TypeError: If type of `align_corners` is not bool.
             ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.

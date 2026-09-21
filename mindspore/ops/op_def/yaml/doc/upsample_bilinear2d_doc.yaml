@@ -1,20 +1,21 @@
 upsample_bilinear2d:
     description: |
-        Performs upsampling with trilinear interpolation across 2dims for 4dim input Tensor.
+        Performs upsampling with bilinear interpolation across 2 dims for 4D input Tensor.
 
         This operator scale up the volumetric input with specified `output_size` or `scales` factors,
-        using trilinear upscaling algorithm.
+        using bilinear upscaling algorithm.
 
         Note:
             One of `scales` and `output_size` must be specified. And it is an error if both are specified.
 
         Inputs:
             - **x** (Tensor) - 4D tensor of shape :math:`(N, C, H_{in}, W_{in})`. Supporting types:
-                float16, float32, float64].
+                [float16, float32, float64].
             - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 2 int elements
                 :math:`(output\_height, output\_width)`. Default: ``None``.
-            - **scales** (Union[tuple[float], list[float]]): A tuple or list of 2 float
-                elements :math:`(scale\_height, scale\_width)`. Default: ``None``.
+            - **scales** (Union[tuple[number], list[number]]): A tuple or list of 2 numbers
+                :math:`(scale\_height, scale\_width)`. Each element can be an int or float, and the two types
+                can be mixed. Default: ``None``.
             - **align_corners** (bool, optional): An optional bool. Default: ``False``.
                 If ``True``, the input and output tensors are aligned by the center points of their corner pixels,
                 preserving the values at the corner pixels.
@@ -27,7 +28,7 @@ upsample_bilinear2d:
 
         Raises:
             TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
-            TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
+            TypeError: When `scales` is not ``None`` and `scales` is not list[number] or tuple[number].
             TypeError: If dtype of `x` is not in [float16, float32, float64].
             TypeError: If type of `align_corners` is not bool.
             ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.

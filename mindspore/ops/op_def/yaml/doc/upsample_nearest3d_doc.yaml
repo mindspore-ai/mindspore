@@ -9,10 +9,11 @@ upsample_nearest3d:
 
         Inputs:
             - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-              Supporting types: [float16, float32, float64].
+              Supporting types: [uint8, float16, float32, float64].
             - **output_size** (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
               Default: ``None``.
-            - **scales** (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
+            - **scales** (Union[tuple[number], list[number]]): A tuple or list specifying the upsampling factors.
+              Each element can be an int or float, and the two types can be mixed.
               Default: ``None``.
 
         Outputs:
@@ -21,8 +22,8 @@ upsample_nearest3d:
 
         Raises:
             TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
-            TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
-            TypeError: If dtype of `x` is not int [float16, float32, float64].
+            TypeError: When `scales` is not ``None`` and `scales` is not list[number] or tuple[number].
+            TypeError: If dtype of `x` is not in [uint8, float16, float32, float64].
             ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
             ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
             ValueError: If shape of `x` is not 5D.

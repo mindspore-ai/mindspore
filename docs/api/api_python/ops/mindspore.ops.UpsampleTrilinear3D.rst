@@ -16,14 +16,14 @@ mindspore.ops.UpsampleTrilinear3D
     输入：
         - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：float16、float32、float64。
         - **output_size** (Union[tuple[int], list[int]]) - 包含3个int的元组或列表。元素分别为 :math:`(output\_depth, output\_height, output\_width)` 。默认值： ``None``。
-        - **scales** (Union[tuple[float], list[float]]) - 包含3个float的元组或列表。元素分别为 :math:`(scale\_depth, scale\_height, scale\_width)` 。默认值： ``None``。
+        - **scales** (Union[tuple[number], list[number]]) - 包含3个number的元组或列表。元素分别为 :math:`(scale\_depth, scale\_height, scale\_width)` ，每个元素可为int或float，且两种类型可混用。默认值： ``None``。
 
     输出：
         - **y** (Tensor) - 上采样输出。其shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` ，数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - 当 `output_size` 不是 ``None`` 并且 `output_size` 不是list[int]或tuple[int]。
-        - **TypeError** - 当 `scales` 不是 ``None`` 并且 `scales` 不是list[float]或tuple[float]。
+        - **TypeError** - 当 `scales` 不是 ``None`` 并且 `scales` 不是list[number]或tuple[number]。
         - **TypeError** - `x` 的数据类型不是float16、float32或float64。
         - **TypeError** - `align_corners` 的数据类型不是bool。
         - **ValueError** - `output_size` 不为 ``None`` 时含有负数或0。
