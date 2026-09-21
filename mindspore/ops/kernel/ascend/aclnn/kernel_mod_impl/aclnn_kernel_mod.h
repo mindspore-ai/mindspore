@@ -251,7 +251,11 @@ using CacheTuple = std::tuple<uint64_t, aclOpExecutor *, ProcessCache, size_t>;
           auto ws_ptr = std::make_shared<kernel::MemBlock>(device_context, ws_size, stream_ptr);                \
           RUN_OP_API_ASYNC(op_type_, ws_ptr->ptr_, ws_size, executor_, stream_ptr, release_func_);              \
         } else {                                                                                                \
+          if (workspace.empty()) {                                                                              \
+            MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";                                        \
+          }                                                                                                     \
           auto ws_tensor = workspace[0];                                                                        \
+          MS_EXCEPTION_IF_NULL(ws_tensor);                                                                      \
           RUN_OP_API_ASYNC(op_type_, ws_tensor->device_ptr(), ws_size, executor_, stream_ptr, release_func_);   \
         }                                                                                                       \
       }                                                                                                         \
