@@ -24,7 +24,7 @@ mindspore.ops.max_unpool3d
           :math:`(C, D_{in}, H_{in}, W_{in})` 。
         - **indices** (Tensor) - 最大值的索引。shape必须与输入 `x` 相同。取值范围需满足
           :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]` 。数据类型必须是int32或int64。
-        - **kernel_size** (Union[int, tuple[int]]) - 池化核尺寸大小。int类型表示池化核的深度、长和宽相同。
+        - **kernel_size** (Union[int, tuple[int]]) - 最大值的核尺寸。int类型表示池化核的深度、长和宽相同。
           tuple类型中的三个值分别代表池化核的深度、长和宽。
         - **stride** (Union[int, tuple[int]]) - 池化操作的移动步长，int类型表示深度、长和宽方向的移动步长相同。
           tuple中的三个值分别代表深度、长和宽方向移动的步长。默认 ``None`` ，表示移动步长为 `kernel_size` 。
