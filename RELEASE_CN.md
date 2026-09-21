@@ -2,6 +2,33 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.11.0 Release Notes
+
+### 主要特性及增强
+
+#### HyperParallel
+
+- [STABLE] **TP (MC2)**：为 RowWiseParallel/ColumnWiseParallel 提供 MC2 通算融合能力，支持 MatMul + ReduceScatter 和 AllGather + MatMul 融合，并通过自定义反向传播支持训练。该特性减少通信与计算之间的独立算子调度及中间数据传输，有助于提升 TP 训练效率。
+- [STABLE] **Swap (Adam/AdamW)**：把 Adam/AdamW 的优化器状态在不参与计算时换出到 pinned CPU 内存。在优化器更新时按分片用独立拷贝流做“预取 → 更新 → 回写”流水线，从而用流水掩盖 D2H/H2D 拷贝开销，在大幅降低优化器状态占用显存的同时减小性能劣化。
+- [STABLE] **Context Parallel**：基于Trainer流程，新增统一的上下文并行能力，支持 Colossal、Ulysses、混合并行、异步通信与负载均衡，适配 SDPA、FlexAttention等注意力，并覆盖 Qwen3-MoE、Kimi K3/Kimi Linear 和 Qwen3.5 等模型；其中 Kimi Delta Attention 与 Gated DeltaNet 支持 Ulysses 和状态 P2P 两种整层并行方案。
+- [STABLE] **Compile**：可通过 Trainer 对 Transformer 层进行编译，并与多维并行和 Activation Checkpoint 协同使用。
+- [STABLE] 新增流水线并行激活 Swap：按 stage/micro-batch 编排前向激活卸载至 CPU、反向预取回 NPU，D2H/H2D 与计算重叠，支持 1F1B、VPP 及 PP+FSDP，降低显存峰值。
+- [DEMO] **Trainer**：提供端到端的分布式训练流程封装，支持通过声明式配置加载 HuggingFace Transformers 模型，并统一编排多维混合并行、高性能算子与模块替换、激活重计算、Swap 和 compile 等训练能力。
+
+### API 变更
+
+#### 非兼容性接口变更
+
+- [Fix PyNative grad metadata](https://atomgit.com/mindspore/mindspore/pull/93133)：修复 MindSpore 对非离散数据类型反向求导时的静默错误，调整为对于此类数据类型求导，直接显式报错。
+
+### 问题修复
+
+- 修复若干host内存泄漏问题：[tensor hook](https://atomgit.com/mindspore/mindspore/pull/93146)、[MsDispatchMode](https://atomgit.com/mindspore/mindspore/pull/93146)、[自定义反向](https://atomgit.com/mindspore/mindspore/pull/93146)
+
+### 贡献者
+
+bellatan,BigSkySea,cheng_xiaoli,chenshan2623,DavidFFFan,fangwenyi1,fary86,gemini524,ginfung,guanqi88,hbhu_bin,huangbingjian1,huan-xiaoling,hwcaifubi,hwjiaorui,hz893,jimmyisme1,liangchenghui,lijiajie1234,LiNuohang,liuchengji3,looop5,luochao60,m0_51742343,machangwei,Margaret_wangrui,mc2gao,nepdada,panzhihui1,pph,shen_haochen,shenwei41,silkage_jiajia,skytier,SorryNaCN,wangyin888,wang-ziqi-code,wei_zhuoyi,wusuqin4,xmoqian,xuxinglei,yangjiane,yanglingyue,yt_289,yuheng_wang,zhangyinxia,zhaochenjie-huawei,zzhongmin
+
 ## MindSpore 2.10.0 Release Notes
 
 ### 主要特性及增强

@@ -2,6 +2,33 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.11.0 Release Notes
+
+### Major Features and Improvements
+
+#### HyperParallel
+
+- [STABLE] **TP (MC2)**: Adds MC2 communication and computation fusion for RowWiseParallel/ColumnWiseParallel, combining MatMul + ReduceScatter and AllGather + MatMul with custom backward support for training. This reduces separate operator launches and intermediate data movement, helping improve TP training efficiency.
+- [STABLE] **Swap (Adam/AdamW)**: During optimizer updates, the Adam/AdamW optimizer states are swapped out to pinned CPU memory while not involved in computation, and split into shards so that a dedicated copy stream can run a "prefetch → update → write-back" pipeline, thereby hiding the D2H/H2D copy overhead behind the pipeline and significantly reducing the optimizer's state footprint in video memory while minimizing performance degradation.
+- [STABLE] **Context Parallel**: Introduced unified Context Parallelism (CP) support within the Trainer workflow, featuring Colossal, Ulysses, hybrid parallelism, asynchronous communication, and load balancing. It supports SDPA, FlexAttention, and models including Qwen3-MoE, Kimi K3/Kimi Linear, and Qwen3.5. Kimi Delta Attention and Gated DeltaNet additionally support two full-layer parallel execution modes: Ulysses and state P2P.
+- [STABLE] **Compile**: The Transformer layers can be compiled through the Trainer, and can be used in conjunction with multi-dimensional parallelism and Activation Checkpoint.
+- [STABLE] Added pipeline parallel activation Swap: Forward activation is offloaded to the CPU and backward activation is prefetched back to the NPU on a stage/micro-batch basis; D2H/H2D operations overlap with computation; supports 1F1B, VPP, and PP+FSDP; reduces peak GPU memory usage.
+- [DEMO] **Trainer**: Provides an end-to-end distributed training workflow with declarative loading of HuggingFace Transformers models and unified orchestration of multidimensional hybrid parallelism, high-performance operator and module replacement, activation checkpoint, Swap and compile.
+
+### API Change
+
+#### Backwards Incompatible Change
+
+- [Fix PyNative grad metadata](https://atomgit.com/mindspore/mindspore/pull/93133): Fixed the silent error in MindSpore during backward differentiation for non-discrete data types, and changed it to directly raise an explicit error when differentiating such data types.
+
+### Bug Fixes
+
+- Fixed some host memory leak bugs: [tensor hook](https://atomgit.com/mindspore/mindspore/pull/93146), [MsDispatchMode](https://atomgit.com/mindspore/mindspore/pull/93146), [custom backward function](https://atomgit.com/mindspore/mindspore/pull/93146)
+
+### Contributors
+
+bellatan,BigSkySea,cheng_xiaoli,chenshan2623,DavidFFFan,fangwenyi1,fary86,gemini524,ginfung,guanqi88,hbhu_bin,huangbingjian1,huan-xiaoling,hwcaifubi,hwjiaorui,hz893,jimmyisme1,liangchenghui,lijiajie1234,LiNuohang,liuchengji3,looop5,luochao60,m0_51742343,machangwei,Margaret_wangrui,mc2gao,nepdada,panzhihui1,pph,shen_haochen,shenwei41,silkage_jiajia,skytier,SorryNaCN,wangyin888,wang-ziqi-code,wei_zhuoyi,wusuqin4,xmoqian,xuxinglei,yangjiane,yanglingyue,yt_289,yuheng_wang,zhangyinxia,zhaochenjie-huawei,zzhongmin
+
 ## MindSpore 2.10.0 Release Notes
 
 ### Major Features and Improvements
