@@ -22,6 +22,7 @@ import numpy as np
 import mindspore as ms
 import numpy as np
 from mindspore import nn, mint
+from mindspore.scipy.linalg import lstsq
 from mindspore.common.parameter import Parameter
 from mindspore.experimental import optim
 import torch
@@ -2754,11 +2755,14 @@ def tensor_exp__torch(input):
 
 def tensor_eigvals_ms(input):
     result = ms.ops.eigvals(input).numpy()
-    return ms.Tensor(np.take_along_axis(result, np.argsort(np.round(result, 1), axis=-1), axis=-1),dtype=ms.complex64)
+    return ms.Tensor(np.take_along_axis(result, np.argsort(np.round(result.real, 0) + complex(0, 1)* result.imag, axis=-1),
+                                        axis=-1),dtype=ms.complex64)
 
 def tensor_eigvals_torch(input):
     result = torch.linalg.eigvals(input).numpy()
-    return torch.tensor(np.take_along_axis(result, np.argsort(np.round(result, 1), axis=-1), axis=-1), dtype=torch.complex64)
+    return torch.tensor(
+        np.take_along_axis(result, np.argsort(np.round(result.real, 0) +  complex(0, 1) * result.imag, axis=-1), axis=-1),
+        dtype=torch.complex64)
 
 def tensor_erf_ms(input):
     return input.erf()
@@ -3033,3 +3037,115 @@ def tensor_fmod_ms(op_input, other):
 
 def tensor_fmod_torch(op_input, other):
     return op_input.fmod(other)
+
+def tensor_masked_fill_ms(input, mask, value):
+    return input.masked_fill(mask, value)
+
+def tensor_masked_fill_torch(input, mask, value):
+    return input.masked_fill(mask, value)
+
+def tensor_mT_ms(input,):
+    return input.mT
+
+def tensor_mT_torch(input,):
+    return input.mT
+
+def tensor_mH_ms(input,):
+    return input.mH
+
+def tensor_mH_torch(input,):
+    return input.mH
+
+def tensor_logsumexp_ms(input,dim=None, keepdim=False):
+    return input.logsumexp(dim=dim, keepdim=keepdim)
+
+def tensor_logsumexp_torch(input, dim=None, keepdim=False):
+    return input.logsumexp(dim=dim, keepdim=keepdim)
+
+def tensor_logical_xor_ms(input, other):
+    return input.logical_xor(other)
+
+def tensor_logical_xor_torch(input, other):
+    return input.logical_xor(other)
+
+def tensor_logdet_ms(input):
+    return input.logdet()
+
+def tensor_logdet_torch(input):
+    return input.logdet()
+
+def tensor_logcumsumexp_ms(input, axis):
+    return input.logcumsumexp(axis)
+
+def tensor_logcumsumexp_torch(input, axis):
+    return input.logcumsumexp(axis)
+
+def tensor_movedim_ms(input, source, destination):
+    return input.movedim(source, destination)
+
+def tensor_movedim_torch(input, source, destination):
+    return input.movedim(source, destination)
+
+def tensor_msort_ms(input):
+    return input.msort()
+
+def tensor_msort_torch(input):
+    return input.msort()
+
+def tensor_mul__ms(input, other):
+    return input.mul_(other)
+
+def tensor_mul__torch(input, other):
+    return input.mul_(other)
+
+def tensor_multinomial_ms(input, num_sumples, replacement=False):
+    if num_sumples == 1000:
+
+        result= input.multinomial(num_sumples, replacement=replacement).numpy()
+        empty_np=np.array([])
+        for i in range(input.numpy().size):
+            empty_np=np.append(empty_np, np.isclose((result==i).sum().item()/num_sumples, input[i]/input.sum(), atol=0.1))
+        return ms.Tensor(empty_np, dtype=ms.bool_)
+
+    return input.multinomial(num_sumples, replacement=replacement)
+
+def tensor_multinomial_torch(input, num_sumples, replacement=False):
+    if num_sumples == 1000:
+
+        result = input.multinomial(num_sumples, replacement=replacement).numpy()
+        empty_np=np.array([])
+        for i in range(input.numpy().size):
+            empty_np=np.append(empty_np, np.isclose((result == i).sum().item() / num_sumples, input[i] / input.sum(), atol=0.1))
+        return torch.tensor(empty_np, dtype=torch.bool)
+
+    return input.multinomial(num_sumples, replacement=replacement)
+
+def tensor_multiply_ms(input, other):
+    return input.multiply(other)
+
+def tensor_multiply_torch(input, other):
+    return input.multiply(other)
+
+def tensor_lu_solve_ms(input, lu_data, lu_pivots):
+    return input.lu_solve(lu_data, lu_pivots)
+
+def tensor_lu_solve_torch(input, lu_data, lu_pivots):
+    return input.lu_solve(lu_data, lu_pivots)
+
+def tensor_logit_ms(input, eps=None):
+    return input.logit(eps=eps)
+
+def tensor_logit_torch(input, eps=None):
+    return input.logit(eps=eps)
+
+def tensor_logaddexp2_ms(input, other):
+    return input.logaddexp2(other)
+
+def tensor_logaddexp2_torch(input, other):
+    return input.logaddexp2(other)
+
+def tensor_lstsq_ms(input, other, rcond=None, driver=None):
+    return lstsq(input, other, rcond=rcond, driver=driver)
+
+def tensor_lstsq_torch(input, other, rcond=None, driver=None):
+    return torch.linalg.lstsq(input, other, rcond=rcond, driver=driver)

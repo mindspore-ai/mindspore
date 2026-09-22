@@ -739,6 +739,119 @@ def dynamic_inputs_binary_op_common_func(
             ),
         )
 
+def sample_inputs_binary_tensor_type_promotion_func(op_info: OpInfo, dtypes, device=None):
+    for input_dtype in dtypes:
+        for other_dtype in dtypes:
+            if input_dtype == other_dtype:
+                continue
+
+            S = SMALL_DIM_SIZE
+            yield OpSampleInput(
+                op_input=make_tensor(shape=(S, S),
+                                     dtype=input_dtype,
+                                     low=op_info.input_low,
+                                     high=op_info.input_high,
+                                     exclude_value=op_info.input_exclude_value,
+                                     device=device,),
+                op_args=(make_tensor(shape=(S, S),
+                                     dtype=other_dtype,
+                                     low=op_info.other_low,
+                                     high=op_info.other_high,
+                                     exclude_value=op_info.other_exclude_value,
+                                     device=device,),
+                         ),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_{input_dtype}_2d_x_{other_dtype}_2d")
+
+def sample_inputs_binary_scalar_type_promotion_func(op_info, supported_dtypes, device=None):
+    def test_tensor_x_scalar_promotion(input_dtype, other_dtype):
+
+        _tensor = make_tensor_func(dtype=input_dtype,
+                                   low=op_info.input_low,
+                                   high=op_info.input_high,
+                                   exclude_value=op_info.input_exclude_value)
+        _scalar_tensor = make_scalar_tensor_func(dtype=other_dtype,
+                                                 low=op_info.other_low,
+                                                 high=op_info.other_high,
+                                                 exclude_value=op_info.other_exclude_value)
+        return OpSampleInput(
+            op_input=_tensor,
+            op_args=(_scalar_tensor,),
+            op_kwargs={},
+            sample_name=(f"{op_info.name}_{input_dtype}_1d_x_{other_dtype}_0d"),
+        )
+
+    def test_scalar_x_tensor_promotion(input_dtype, other_dtype):
+
+        _scalar_tensor = make_scalar_tensor_func(dtype=input_dtype,
+                                                 low=op_info.input_low,
+                                                 high=op_info.input_high,
+                                                 exclude_value=op_info.input_exclude_value)
+        _tensor = make_tensor_func(dtype=other_dtype,
+                                   low=op_info.other_low,
+                                   high=op_info.other_high,
+                                   exclude_value=op_info.other_exclude_value)
+        return OpSampleInput(
+            op_input=_scalar_tensor,
+            op_args=(_tensor,),
+            op_kwargs={},
+            sample_name=(f"{op_info.name}_{input_dtype}_0d_x_{other_dtype}_1d"),
+        )
+
+    def test_scalar_x_scalar_type_promotion(input_dtype, other_dtype, scalar_mode="both"):
+
+        _scalar_tensor1 = make_scalar_tensor_func(dtype=input_dtype,
+                                                  low=op_info.input_low,
+                                                  high=op_info.input_high,
+                                                  exclude_value=op_info.input_exclude_value)
+        _scalar_tensor2 = make_scalar_tensor_func(dtype=other_dtype,
+                                                  low=op_info.other_low,
+                                                  high=op_info.other_high,
+                                                  exclude_value=op_info.other_exclude_value)
+        if scalar_mode == "both":
+            _sample_input = OpSampleInput(
+                op_input=_scalar_tensor1.item(),
+                op_args=(_scalar_tensor2.item(),),
+                op_kwargs={},
+                sample_name=(f"{op_info.name}_{input_dtype}_scalar_x_{other_dtype}_scalar"),
+            )
+
+        elif scalar_mode == "left":
+            _sample_input = OpSampleInput(
+                op_input=_scalar_tensor1.item(),
+                op_args=(_scalar_tensor2,),
+                op_kwargs={},
+                sample_name=(f"{op_info.name}_{input_dtype}_scalar_x_{other_dtype}_0d"),
+            )
+        else:
+            _sample_input = OpSampleInput(
+                op_input=_scalar_tensor1,
+                op_args=(_scalar_tensor2.item(),),
+                op_kwargs={},
+                sample_name=(f"{op_info.name}_{input_dtype}_0d_x_{other_dtype}_scalar"),
+            )
+        return _sample_input
+
+    S = SMALL_DIM_SIZE
+    make_tensor_func = functools.partial(make_tensor, shape=(S,), device=device)
+    make_scalar_tensor_func = functools.partial(make_tensor, shape=(), device=device)
+    for input_dtype, other_dtype in itertools.combinations(supported_dtypes, 2):
+        yield test_tensor_x_scalar_promotion(input_dtype, other_dtype)
+        if not op_info.disable_scalar_x_tensor_promotion:
+            yield test_scalar_x_tensor_promotion(input_dtype, other_dtype)
+
+    if {ms.bool_, ms.float32}.issubset(set(supported_dtypes)):
+        for dtype1 in supported_dtypes:
+            for dtype2 in [ms.bool_, ms.float32]:
+                if dtype1 != dtype2:
+                    if op_info.supports_left_python_scalar:
+                        yield test_scalar_x_scalar_type_promotion(dtype2, dtype1, scalar_mode="left")
+                    if op_info.supports_right_python_scalar:
+                        yield test_scalar_x_scalar_type_promotion(dtype1, dtype2, scalar_mode="right")
+        if op_info.supports_both_python_scalar:
+            yield test_scalar_x_scalar_type_promotion(ms.bool_, ms.float32, scalar_mode="both")
+            yield test_scalar_x_scalar_type_promotion(ms.float32, ms.bool_, scalar_mode="both")
+
 def error_inputs_shape_not_match_func(op_info: OpInfo, dtype=None, device=None, **kwargs):
     supported_dtypes = op_info.get_supported_dtypes(device=device)
     if supported_dtypes:
@@ -858,6 +971,8 @@ class BinaryOpInfo(OpInfo):
             op_basic_reference_inputs_func: Optional[Callable] = basic_reference_inputs_binary_op_common_func,
             op_extra_reference_inputs_func: Optional[Callable] = extra_reference_inputs_binary_op_common_func,
             op_dynamic_inputs_func: Optional[Callable] = dynamic_inputs_binary_op_common_func,
+            op_inputs_tensor_type_promotion_func: Optional[Callable] = sample_inputs_binary_tensor_type_promotion_func,
+            op_inputs_scalar_type_promotion_func: Optional[Callable] = sample_inputs_binary_scalar_type_promotion_func,
             op_error_inputs_func: Optional[Callable] = None,
             support_tensor_type_promotion: Optional[bool] = True,
             promotion_dtypes_exclude: Optional[tuple] = None,
@@ -880,6 +995,8 @@ class BinaryOpInfo(OpInfo):
             op_dynamic_inputs_func=op_dynamic_inputs_func,
             **kwargs,
         )
+        self.op_inputs_tensor_type_promotion_func = op_inputs_tensor_type_promotion_func
+        self.op_inputs_scalar_type_promotion_func = op_inputs_scalar_type_promotion_func
         self.support_tensor_type_promotion = support_tensor_type_promotion
         self.supports_left_python_scalar = supports_left_python_scalar
         self.supports_right_python_scalar = supports_right_python_scalar
@@ -1251,7 +1368,7 @@ def dynamic_inputs_unary_op_common_func(
         Generator[OpDynamicInput]: Dynamic compile-time and runtime inputs.
     """
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
-    if not kwargs.get("only_dynamic_rank", False):
+    if op_info.support_dynamic_shape and not kwargs.get("only_dynamic_rank", False):
         # dynamic shape
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
@@ -1277,7 +1394,7 @@ def dynamic_inputs_unary_op_common_func(
                 ),
             ),
         )
-    if not kwargs.get("only_dynamic_shape", False):
+    if op_info.support_dynamic_rank and not kwargs.get("only_dynamic_shape", False):
         # dynamic rank
         yield OpDynamicInput(
             op_compile_input=OpSampleInput(
@@ -1329,7 +1446,7 @@ def error_inputs_common_func(
         for input_dtype in op_info.not_support_dtypes:
             yield OpErrorInput(
                 op_sample_input=OpSampleInput(
-                    op_input=make_tensor(shape=(S,), dtype=input_dtype, device=device),
+                    op_input=make_tensor(shape=(S,S), dtype=input_dtype, device=device),
                     op_args=(),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dtype_{input_dtype}_error",

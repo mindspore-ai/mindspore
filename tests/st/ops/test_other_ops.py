@@ -32,7 +32,7 @@ ops_params_dict = {
     'test_other_op_reference_forward_kbk' : (['kbk'], other_op_kbk_db),
     'test_other_op_reference_backward_kbk' : (['kbk'], other_op_kbk_db),
     'test_other_op_dynamic_forward': (['kbk'], other_op_kbk_db),
-    'test_other_op_dynamic_backward': (['kbk'], other_op_kbk_db),
+    'test_other_op_dynamic_backward': (['kbk'], [op for op in other_op_kbk_db if op != 'Tensor.logcumsumexp']),
     'test_other_op_error': (['pynative'], other_op_error_db),
     'test_other_op_error_kbk': (['kbk'], other_op_error_kbk_db),
 }

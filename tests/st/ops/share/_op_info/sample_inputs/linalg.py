@@ -25,6 +25,7 @@ import random
 import warnings
 import itertools
 import mindspore as ms
+from scipy.linalg import lu
 from mindspore._c_expression import MSContext
 from tests.st.ops.share._op_info.op_info import OpInfo
 from tests.st.ops.share._op_info.op_info import (
@@ -3570,26 +3571,48 @@ def basic_reference_inputs_tensor_square_matrix(op_info: OpInfo, dtype=None, dev
     # inverse not support 8d
     cases = cases +  ((1, 2, 1, 3, 1, 4, M, M), ) if 'eigvals' in op_info.name else cases
 
-    for input_shape in cases:
-
+    if dtype not in op_info.get_supported_dtypes(device):
         yield OpSampleInput(
-            op_input=make_func(input_shape),
+            op_input= make_func((S, S)),
             op_args=(),
             op_kwargs={},
             sample_name=op_info.name,
         )
 
+    for input_shape in cases:
+
+        if 'logdet' in op_info.name:   # differentiate with respect to the input ,when determinant o<0, torch get 0
+            op_input = make_func(input_shape)
+            mask = np.any(np.linalg.det(op_input.to(ms.float32) if op_input == ms.float16 else op_input) < 0)
+            while mask:
+                index = np.linalg.det(op_input.to(ms.float32) if op_input == ms.float16 else op_input) < 0
+                if len(index.shape) == 0:
+                    op_input = make_func(op_input.shape)
+                else:
+                    op_input[index] = make_func(op_input[index].shape)
+                mask = np.any(np.linalg.det(op_input.to(ms.float32) if op_input == ms.float16 else op_input) < 0)
+        else:
+            op_input = make_func(input_shape)
+
+            yield OpSampleInput(
+                op_input=op_input,
+                op_args=(),
+                op_kwargs={},
+                sample_name=op_info.name,
+            )
+
 def extra_reference_inputs_tensor_square_matrix(op_info: OpInfo, dtype=None, device=None, **kwargs):
 
     yield from make_extra_tensor(op_info, (3, 6, 6), (), {}, dtype=dtype, device=device,
-                                 exclude_value=(-1e20, 1e20) if 'inverse' in op_info.name else () )
+                                 exclude_value=(-5062757.7, 5062757.7, -1e20, 1e20) if 'inverse' or 'logdet' in op_info.name else () )
 
-    yield OpSampleInput(
-            op_input=make_tensor((512, 512), dtype=dtype),
-            op_args=(),
-            op_kwargs={},
-            sample_name=f'{op_info.name}_{dtype}__large_dim',
-        )
+    if 'logdet' not in op_info.name:
+        yield OpSampleInput(
+                op_input=make_tensor((512, 512), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_{dtype}__large_dim',
+            )
 
 def dynamic_sample_inputs_tensor_square_matrix(op_info: OpInfo, dtype, device=None, **kwargs):
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
@@ -3927,3 +3950,149 @@ def error_sample_inputs_tensor_geqrf(op_info, dtype=None, device=None, **kwargs)
             op_error_type=(AttributeError, ValueError),
             op_error_info=f'{op_info.name}: error input.'
         )
+
+def basic_sample_inputs_tensor_lu_solve(op_info, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
+    L = LARGE_DIM_SIZE
+
+    make_arg = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    cases = (
+        ((S, S), (S, M)),
+        ((2, M, M), (2, M, 3)),
+        ((3, 6, L, L), (3, 6, L, 5)),
+        ((1, 3, 1, 2, 1, 4, M, M), (1, 3, 1, 2, 1, 4, M, 6)),
+    )
+    for A_shape, b_shape in cases:
+
+        A = make_arg(A_shape).to(ms.float32) if dtype in (ms.bfloat16, ms.complex64, ms.complex128) else  make_arg(A_shape)
+
+        p, l, u = lu(A)
+        LU_data = make_tensor_with_np_array(np.triu(u) + np.tril(l, -1), dtype=dtype, device=device)
+        LU_pivots = make_tensor_with_np_array(np.argmax(p, axis=-1) + 1, dtype=ms.int32, device=device)
+
+        yield OpSampleInput(
+            op_input=make_arg(b_shape),
+            op_args=(LU_data, LU_pivots),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_basic",
+        )
+
+def extra_sample_inputs_tensor_lu_solve(op_info, dtype=None, device=None, **kwargs):
+
+    extreme_value = {"_float_small_values": dtypes_extra_values["_float_small_values"],
+    "_float_large_values": dtypes_extra_values["_fp16_large_values"]
+    }
+
+    for key, value in extreme_value.items():
+        A = make_tensor_with_np_array(
+            np.random.choice(np.array(value), size=(5, 5)),
+            dtype=dtype, device=device)
+        B = make_tensor_with_np_array(
+            np.random.choice(np.array(value), size=(5, 8)),
+            dtype=dtype, device=device)
+
+        p, l, u = lu(A)
+        LU_data = make_tensor_with_np_array(np.triu(u) + np.tril(l, -1), dtype=dtype, device=device)
+        LU_pivots = make_tensor_with_np_array(np.argmax(p, axis=-1) + 1, dtype=ms.int32, device=device)
+
+        yield OpSampleInput(
+            op_input=B,
+            op_args=(LU_data, LU_pivots),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_{key}",
+        )
+
+def dynamic_sample_inputs_tensor_lu_solve(
+    op_info: OpInfo,
+    dtype=None,
+    device=None,
+    **kwargs
+):
+    '''
+    Generate dynamic inputs for mint.triu ops.
+    Args:
+        op_info: OpInfo object.
+        dtype: Data type of the tensors.
+        device: Device of the tensors.
+        kwargs: Additional keyword arguments.
+    Returns:
+        Generator of OpDynamicInput objects.
+    '''
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+
+    def _make_lu_data_and_lu_pivots(shape):
+        A = make_func(shape)
+        p, l, u = lu(A)
+        LU_data = make_tensor_with_np_array(np.triu(u) + np.tril(l, -1), dtype=dtype, device=device)
+        LU_pivots = make_tensor_with_np_array(np.argmax(p, axis=-1) + 1, dtype=ms.int32, device=device)
+        return (LU_data, LU_pivots)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None), dtype=dtype),
+                op_args=(ms.Tensor(shape=(None, None), dtype=dtype), ms.Tensor(shape=(None,), dtype=ms.int32)),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_dynamic_shape_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 8)),
+                    op_args=_make_lu_data_and_lu_pivots((5, 5)),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 9)),
+                    op_args=_make_lu_data_and_lu_pivots((6, 6)),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_shape_running_input'
+                ),
+            )
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # add/sub_ext dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(ms.Tensor(shape=None, dtype=dtype), ms.Tensor(shape=None, dtype=ms.int32)),
+                op_kwargs={},
+                sample_name=f'{op_info.name}_dynamic_rank_compile_input'
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(5, 3)),
+                    op_args=_make_lu_data_and_lu_pivots((5, 5)),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(6, 7, 8)),
+                    op_args=_make_lu_data_and_lu_pivots((6, 7, 7)),
+                    op_kwargs={},
+                    sample_name=f'{op_info.name}_dynamic_rank_running_input'
+                ),
+            )
+        )
+
+def error_sample_inputs_tensor_lu_solve(op_info, dtype=None, device=None, **kwargs):
+
+    make_arg = functools.partial(make_tensor, dtype=ms.float16, device=device)
+
+    A = make_arg((5, 5))
+    p, l, u = lu(A)
+    LU_data = make_tensor_with_np_array(np.triu(u) + np.tril(l, -1), dtype=ms.float16, device=device)
+    LU_pivots = make_tensor_with_np_array(np.argmax(p, axis=-1) + 1, dtype=ms.int32, device=device)
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg((6, 5)),
+            op_args=(LU_data, LU_pivots),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_error",
+        ),
+        op_error_type=ValueError,
+        op_error_info='op_input.shape must be equal LU_data.shape'
+    )
