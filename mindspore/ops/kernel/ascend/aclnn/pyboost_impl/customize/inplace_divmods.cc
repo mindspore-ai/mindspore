@@ -27,7 +27,8 @@ tensor::TensorPtr InplaceDivModsAscendCustomize(const tensor::TensorPtr &input_t
                                                 const std::optional<Int64ImmPtr> &rounding_mode) {
   MS_LOG(DEBUG) << "Call InplaceDivModsAscendCustomize start";
   TensorToDevice(input_tensor);
-  auto mode = GetValue<int64_t>(rounding_mode.value());
+  // rounding_mode defaults to None, so it can be empty; fall back to the "no rounding" mode.
+  auto mode = rounding_mode.has_value() ? GetValue<int64_t>(rounding_mode.value()) : 0;
   DISPATCH_ACLNN(aclnnInplaceDivMods, input_tensor, other, mode);
   return input_tensor;
 }

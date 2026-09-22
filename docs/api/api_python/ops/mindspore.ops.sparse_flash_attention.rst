@@ -34,7 +34,7 @@ mindspore.ops.sparse_flash_attention
         - **query** (Tensor) - query Tensor，对应公式中的 `Q`。支持的数据类型为 float16 与 bfloat16。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, S1, N1, D)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(T1, N1, D)`。N1 支持 1/2/4/8/16/32/64/128。
         - **key** (Tensor) - key Tensor，对应公式中的 `K`。数据类型与 `query` 一致。当 `layout_kv` 为 ``"BSND"`` 时shape为 :math:`(B, S2, N2, D)`，当 `layout_kv` 为 ``"TND"`` 时shape为 :math:`(T2, N2, D)`，当 `layout_kv` 为 ``"PA_BSND"`` 时shape为 :math:`(block\_num, block\_size, N2, D)`。N2 仅支持 1。
         - **value** (Tensor) - value Tensor，对应公式中的 `V`，数据类型以及 shape 与 `key` 一致。
-        - **sparse_indices** (Tensor) - 稀疏索引Tensor，用于离散KV缓存访问。数据类型为 int32。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, Q\_S, N2, sparse\_size)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(Q\_T, N2, sparse\_size)`。`sparse_size` 必须为 2048。
+        - **sparse_indices** (Tensor) - 稀疏索引Tensor，用于离散KV缓存访问。数据类型为 int32。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, Q\_S, N2, sparse\_size)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(Q\_T, N2, sparse\_size)`。`sparse_size` 为一次离散选取的block数，必须大于0，且不超过 :math:`S2 / sparse\_block\_size` 向上取整后的值。
         - **scale_value** (float) - 缩放系数，用作query和key矩阵乘法后的乘法标量，通常为 1.0 / (D ** 0.5)。
 
     关键字参数：
@@ -43,7 +43,7 @@ mindspore.ops.sparse_flash_attention
         - **actual_seq_lengths_kv** (Tensor，可选) - 每个batch中key和value的有效token数量。数据格式为 ND，数据类型为 int32，shape为 :math:`(B,)`。用于变长序列的前缀和格式。默认值为： ``None`` 。
         - **query_rope** (Tensor，可选) - MLA结构中query的RoPE信息。shape与query相同，但最后一维D替换为D_rope（64）。**当 attention_mode=2（MLA-absorb模式）时必须提供。** 默认值为： ``None`` 。
         - **key_rope** (Tensor，可选) - MLA结构中key的RoPE信息。shape与key相同，但最后一维D替换为D_rope（64）。**当 attention_mode=2（MLA-absorb模式）时必须提供。** 默认值为： ``None`` 。
-        - **sparse_block_size** (int，可选) - 稀疏阶段的块大小，用于重要性分数计算。取值范围为 [1, 64]，必须是2的幂次方。不建议 K * sparse_block_size 超过 100k，由于硬件限制可能会导致 OOM。默认值为： ``1`` 。
+        - **sparse_block_size** (int，可选) - 稀疏阶段的块大小，用于重要性分数计算。取值范围为 [1, 128]，必须是2的幂次方；当 `layout_kv` 为 ``"PA_BSND"`` 时，还需整除 `block_size`。不建议 `sparse_indices` 最后一维（即一次离散选取的block数）与 `sparse_block_size` 的乘积超过 100k，由于硬件限制可能会导致 OOM。默认值为： ``1`` 。
         - **layout_query** (str，可选) - query的数据布局格式。支持 ``"BSND"`` 和 ``"TND"``。默认值为： ``"BSND"``。
         - **layout_kv** (str，可选) - key的数据布局格式。支持 ``"TND"``、``"BSND"`` 和 ``"PA_BSND"``。为 ``"PA_BSND"`` 时，无需与 `layout_query` 取值保持一致；为 ``"BSND"`` 或 ``"TND"`` 时，需要与 `layout_query` 取值保持一致。默认值为： ``"BSND"``。
         - **sparse_mode** (int，可选) - 稀疏模式。仅支持 ``0`` （全部计算）与 ``3`` （rightDownCausal 掩码模式）。默认值为： ``3``。
@@ -51,7 +51,7 @@ mindspore.ops.sparse_flash_attention
         - **next_tokens** (int，可选) - 稀疏计算中向后计算的token数量。当前仅支持 ``2^63-1`` 。默认值为： ``2^63-1`` 。
         - **attention_mode** (int，可选) - 注意力模式。当前仅支持 ``2`` （MLA-absorb 模式），即计算过程中将 query 和 key 的 nope 部分分别与 query_rope 和 key_rope 的 rope 部分沿头维度（D）拼接。使用该模式时必须同时提供 `query_rope` 和 `key_rope`。默认值为： ``0``。
         - **return_softmax_lse** (bool，可选) - 是否返回有效的 softmax_max 和 softmax_sum。为 ``True`` 时返回，但图模式下不支持；为 ``False`` 时不返回。该参数仅在训练且 `layout_kv` 不为 ``"PA_BSND"`` 时支持。默认值为： ``False``。
-  
+
     返回：
         包含3个Tensor的元组。
 
@@ -68,4 +68,4 @@ mindspore.ops.sparse_flash_attention
         - **TypeError** - `query`、`key`、`value` 的数据类型不是 float16 或 bfloat16。
         - **RuntimeError** - `layout_query` 不是 ``"BSND"`` 或 ``"TND"``。
         - **RuntimeError** - `layout_kv` 不是 ``"BSND"``、``"TND"`` 或 ``"PA_BSND"``。
-        - **RuntimeError** - `sparse_block_size` 不是2的幂次方。
+        - **RuntimeError** - `sparse_block_size` 不在范围 [1, 128] 内或不是2的幂次方。

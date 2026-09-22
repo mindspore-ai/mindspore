@@ -63,6 +63,8 @@ class BinaryOpsFactory(OpsFactory):
             if self.op_info.promotion_dtypes_exclude is not None:
                 self.supported_dtypes = tuple(set(self.supported_dtypes)
                                           - set(self.op_info.promotion_dtypes_exclude))
+            # The generator may raise before yielding, so keep the name bound for the report below.
+            sample_input = None
             for sample_input in self.op_info.op_inputs_tensor_type_promotion_func(
                     self.op_info,
                     self.supported_dtypes,
@@ -74,7 +76,7 @@ class BinaryOpsFactory(OpsFactory):
                   f"\nop_name: {self.op_name}"
                   f"\nmode: {self._context_mode}"
                   f"\ndtypes: {self.supported_dtypes}"
-                  f"\n{sample_input.summary(True)}")
+                  f"\n{sample_input.summary(True) if sample_input is not None else '<sample generation failed>'}")
             raise e
 
 

@@ -4677,7 +4677,7 @@ def _cross_entropy_for_probabilities(input, target, weight, reduction, label_smo
         return -loss.sum()
     if reduction == "none":
         return -loss.sum(class_dim)
-    raise ValueError(f"redution value {reduction} not valid.")
+    raise ValueError(f"reduction value {reduction} not valid.")
 
 
 def _cross_entropy_for_class_indices(input, target, weight, ignore_index, reduction, label_smoothing, class_dim,
@@ -4718,7 +4718,7 @@ def _cross_entropy_for_class_indices(input, target, weight, ignore_index, reduct
         elif reduction == "none":
             ret = smooth_loss
         else:
-            raise ValueError(f"redution value {reduction} not valid.")
+            raise ValueError(f"reduction value {reduction} not valid.")
         return (1 - label_smoothing) * nllloss + ret * (label_smoothing / n_classes)
     return nllloss
 
