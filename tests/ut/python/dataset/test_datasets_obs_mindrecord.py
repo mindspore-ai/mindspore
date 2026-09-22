@@ -1301,8 +1301,95 @@ def make_cleanup_runtime(monkeypatch):
     return obs_util, runtime, client, closed
 
 
+@pytest.mark.parametrize("timeout", [0, 0.02])
+def test_obs_close_timeout_retains_borrowed_client(cleanup_runtime, timeout):
+    """
+    Feature: OBS util
+    Description: Close with a zero or positive timeout while the client is still borrowed
+    Expectation: Timeout retains the client, rejects new borrows, and allows cleanup after the borrower returns
+    """
+    _, runtime, client, closed = cleanup_runtime
+    finished = threading.Event()
+    errors = []
+
+    def close_runtime():
+        try:
+            runtime.close(timeout=timeout)
+        except Exception as exc:  # pylint: disable=broad-except
+            errors.append(exc)
+        finally:
+            finished.set()
+
+    closer = threading.Thread(target=close_runtime)
+    try:
+        with runtime.use_obs_client():
+            closer.start()
+            assert finished.wait(2), "close did not respect the borrower wait deadline"
+            assert len(errors) == 1
+            assert isinstance(errors[0], TimeoutError)
+            assert runtime.obs_client is client
+            assert not closed.is_set()
+            with pytest.raises(RuntimeError, match="closed"):
+                with runtime.use_obs_client():
+                    pass
+    finally:
+        closer.join(timeout=2)
+        runtime.close()
+    assert not closer.is_alive()
+    assert closed.is_set()
+    assert runtime.obs_client is None
+
+
+def test_obs_close_default_deadline_survives_wakeups(cleanup_runtime, monkeypatch):
+    """
+    Feature: OBS util
+    Description: Simulate a spurious wakeup and expiration of the default borrower wait deadline
+    Expectation: Close preserves the original 30-second deadline and retains the borrowed client on timeout
+    """
+    obs_util, runtime, client, closed = cleanup_runtime
+    clock = iter([100, 101, 131])
+    waits = []
+    try:
+        with runtime.use_obs_client():
+            with monkeypatch.context() as patch:
+                patch.setattr(obs_util.time, "monotonic", lambda: next(clock))
+                # Simulate a spurious wakeup without waiting 30 real seconds.
+                # pylint: disable=protected-access
+                patch.setattr(runtime._client_condition, "wait", waits.append)
+                # pylint: enable=protected-access
+                with pytest.raises(TimeoutError, match="still in use"):
+                    runtime.close()
+            assert waits == [29]
+            assert runtime.obs_client is client
+            assert not closed.is_set()
+    finally:
+        runtime.close()
+
+
+@pytest.mark.parametrize("timeout", [-1, float("inf"), float("nan")])
+def test_obs_close_rejects_invalid_timeout(cleanup_runtime, timeout):
+    """
+    Feature: OBS util
+    Description: Attempt to close with a negative, infinite, or NaN timeout
+    Expectation: ValueError is raised without changing the runtime lifecycle state
+    """
+    _, runtime, client, closed = cleanup_runtime
+    try:
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            runtime.close(timeout=timeout)
+        with runtime.use_obs_client() as borrowed:
+            assert borrowed is client
+    finally:
+        runtime.close(timeout=0)
+    assert closed.is_set()
+
+
 def test_obs_eviction_requeues_full_path(tmp_path, cleanup_runtime):
-    """Evicted files retain their original OBS bucket and directory when requeued."""
+    """
+    Feature: OBSMindDataset cache eviction
+    Description: Evict a low-priority shard and download it again through the requeued full OBS URI
+    Expectation: The original bucket and key are used, the file is restored, and the cache entry becomes available
+    """
     remote = "s3://bucket/records/later.mindrecord"
     (tmp_path / "later.mindrecord").write_bytes(b"data")
     cache = {"later.mindrecord": (3, False)}

@@ -17,6 +17,7 @@ This dataset module provides internal utility function for OBSMindDataset API.
 """
 
 import hashlib
+import math
 import os
 import shutil
 import sqlite3
@@ -145,13 +146,24 @@ class OBSRuntime:
                 if self._active_client_users == 0:
                     self._client_condition.notify_all()
 
-    def close(self):
-        """Close after all borrowed uses finish, retaining the client if interrupted."""
+    def close(self, timeout=30):
+        """Wait at most timeout seconds for borrowers, retaining the client on failure.
+
+        The timeout must be finite and non-negative. It bounds the borrower wait,
+        not lock acquisition or the SDK's close call. After TimeoutError, new
+        borrows remain rejected; call close again once existing borrowers finish.
+        """
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("OBS close timeout must be finite and non-negative.")
+        deadline = time.monotonic() + timeout
         with self._client_condition:
             # Reject new uses, but allow a later close() to retry failed cleanup.
             self._closed = True
             while self._active_client_users:
-                self._client_condition.wait()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("OBS client is still in use; retry close after borrowers finish.")
+                self._client_condition.wait(remaining)
             if self.obs_client is not None:
                 self.obs_client.close()
                 self.obs_client = None
