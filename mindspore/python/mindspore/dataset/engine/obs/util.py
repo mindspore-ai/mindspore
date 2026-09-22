@@ -146,17 +146,15 @@ class OBSRuntime:
                     self._client_condition.notify_all()
 
     def close(self):
-        """Close the OBS client after all borrowed uses have finished."""
+        """Close after all borrowed uses finish, retaining the client if interrupted."""
         with self._client_condition:
-            if self._closed:
-                return
+            # Reject new uses, but allow a later close() to retry failed cleanup.
             self._closed = True
-            client = self.obs_client
-            self.obs_client = None
             while self._active_client_users:
                 self._client_condition.wait()
-        if client is not None:
-            client.close()
+            if self.obs_client is not None:
+                self.obs_client.close()
+                self.obs_client = None
 
     def __del__(self):
         self.close()
