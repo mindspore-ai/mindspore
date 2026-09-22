@@ -23,6 +23,7 @@ from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import nn
 from mindspore import Tensor, value_and_grad, jit
+from mindspore.common.initializer import TruncatedNormal, initializer
 from mindspore.graph.api import _pynative_executor
 from mindspore.ops.auto_generate.gen_ops_prim import to_device_op, to_dtype_op
 
@@ -394,6 +395,47 @@ def test_tensor_to_meta_to_real_device_error():
     with pytest.raises(RuntimeError, match="Cannot copy from tensor which is on meta device"):
         _ = meta_tensor.to(device=target_device)
         _pynative_executor.sync()
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard')
+@pytest.mark.parametrize("target_kind", ["dtype", "device", "other"])
+def test_tensor_to_uninitialized_initializer_tensor(target_kind):
+    """
+    Feature: Tensor.to
+    Description: Call Tensor.to on a tensor created by initializer() before its data is initialized.
+    Expectation: Raise the uninitialized RuntimeError instead of crashing.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    uninitialized = initializer(TruncatedNormal(sigma=0.02), (4, 4), ms.float32)
+    targets = {
+        "dtype": ms.float32,
+        "device": "cpu",
+        "other": Tensor(np.ones((4, 4)), ms.float32),
+    }
+
+    with pytest.raises(RuntimeError, match="is uninitialized"):
+        _ = uninitialized.to(targets[target_kind])
+        _pynative_executor.sync()
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard')
+def test_tensor_to_initializer_tensor_after_init_data():
+    """
+    Feature: Tensor.to
+    Description: Call Tensor.to on a tensor created by initializer() after init_data() has run.
+    Expectation: Conversion succeeds and keeps the requested dtype.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    initialized = initializer(TruncatedNormal(sigma=0.02), (4, 4), ms.float32)
+    initialized.init_data()
+
+    output = initialized.to(ms.float32)
+    _pynative_executor.sync()
+    assert output.dtype == ms.float32
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],

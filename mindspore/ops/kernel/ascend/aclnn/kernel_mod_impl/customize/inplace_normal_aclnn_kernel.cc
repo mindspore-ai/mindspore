@@ -43,8 +43,13 @@ float GetInputValueToFloat(const std::vector<KernelTensor *> &inputs, const size
       value = static_cast<float>(inputs[kIndex]->GetValueWithCheck<int64_t>());
       break;
     }
+    case kNumberTypeBool: {
+      value = inputs[kIndex]->GetValueWithCheck<bool>() ? 1.0f : 0.0f;
+      break;
+    }
     default:
-      MS_LOG(EXCEPTION) << "mean and std parameters of InplaceNormal only support float and int but got " << dtype_id;
+      MS_LOG(EXCEPTION) << "mean and std parameters of InplaceNormal only support bool, int and float but got "
+                        << dtype_id;
   }
   return value;
 }

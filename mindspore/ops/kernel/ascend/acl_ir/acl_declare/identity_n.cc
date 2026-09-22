@@ -19,5 +19,5 @@
 namespace mindspore::device::ascend {
 REGISTER_ACL_OP(IdentityN).set_extra_supported_datatype({ge::DT_BF16});
 
-REGISTER_ACL_OP(TensorMove).set_extra_supported_datatype({ge::DT_INT16});
+REGISTER_ACL_OP(TensorMove).set_extra_supported_datatype({ge::DT_INT16}).set_complex_parallel_concerned();
 }  // namespace  mindspore::device::ascend

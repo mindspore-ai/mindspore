@@ -42,6 +42,23 @@ Int64ImmPtr GetDeviceByDeviceType(device::DeviceType device_type) {
   }
   return iter->second;
 }
+
+void CheckTensorInitialized(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->device_address() == nullptr) {
+    MS_LOG(EXCEPTION) << "The " << tensor->ToString() << " is uninitialized. "
+                      << "Maybe the Tensor is create by initializer. "
+                      << "You need to call Tensor.init_data before using this Tensor. "
+                      << "For more detail with 'Tensor', Please refer to "
+                      << "https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.Tensor.html";
+  }
+}
+
+device::DeviceType GetDeviceTypeChecked(const tensor::TensorPtr &tensor) {
+  CheckTensorInitialized(tensor);
+  return tensor->device_address()->GetDeviceType();
+}
+
 ToProcessor &ToProcessor::Contiguous() {
   if (!tensor_->is_contiguous()) {
     tensor_ = pyboost::contiguous(tensor_);
@@ -58,7 +75,7 @@ ToProcessor &ToProcessor::Cast() {
 }
 
 ToProcessor &ToProcessor::Device() {
-  if (tensor_->device_address()->GetDeviceType() != device_type_) {
+  if (GetDeviceTypeChecked(tensor_) != device_type_) {
     auto dtype_ptr = MakeValue<int64_t>(static_cast<int64_t>(dtype_))->cast<Int64ImmPtr>();
     bool pin_memory = non_blocking_ && device_type_ == device::DeviceType::kCPU;
     auto new_output = pyboost::empty_like(tensor_, dtype_ptr, GetDeviceByDeviceType(device_type_),

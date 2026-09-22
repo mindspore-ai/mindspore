@@ -55,3 +55,23 @@ def test_tensor_all(mode):
     output3 = net(x, axis=1)
     assert np.allclose(output3.asnumpy(), np.array([False, True]))
     assert np.allclose(output3.shape, (2,))
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu',],
+          level_mark='level1',
+          card_mark='onecard', mem_peak=1024.01)
+@pytest.mark.parametrize('dtype', [np.int16, np.int32, np.int64, np.float32, np.float64])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_all_multi_byte_dtype(mode, dtype):
+    """
+    Feature: tensor.all
+    Description: Verify all of a multi-byte input over all elements and along each axis.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net()
+    # The zeros in column 1 make the tensor and the column-wise reduction false.
+    x = Tensor(np.array([[1, 0, 3], [1, 0, 3]], dtype))
+    assert np.array_equal(net(x).asnumpy(), np.array(False))
+    assert np.array_equal(net(x, axis=0).asnumpy(), np.array([True, False, True]))
+    assert np.array_equal(net(x, axis=1).asnumpy(), np.array([False, False]))

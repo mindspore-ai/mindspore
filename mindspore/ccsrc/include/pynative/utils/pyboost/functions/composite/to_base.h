@@ -27,6 +27,8 @@ namespace kernel {
 namespace pyboost {
 device::DeviceType GetDeviceType(Device device);
 Int64ImmPtr GetDeviceByDeviceType(device::DeviceType device_type);
+void CheckTensorInitialized(const tensor::TensorPtr &tensor);
+device::DeviceType GetDeviceTypeChecked(const tensor::TensorPtr &tensor);
 
 class ToProcessor {
  public:

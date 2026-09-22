@@ -14,6 +14,8 @@
 # ============================================================================
 # pylint: disable=unused-variable
 
+"""Tests for Tensor.normal_ forward behavior and gradients."""
+
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Generator, jit
@@ -100,3 +102,33 @@ def test_normal_forward(mode):
     std = 1
     output = normal_forward_func(ms.Tensor(x), mean=mean, std=std, generator=generator)
     assert output.shape == expect_shape
+
+
+@arg_mark(plat_marks=["platform_ascend"],
+    level_mark="level0",
+    card_mark="onecard",
+    mem_peak=2.00
+)
+@pytest.mark.parametrize("bool_args, int_args", [
+    ((True, 6), (1, 6)),
+    ((-3, True), (-3, 1)),
+    ((-3, False), (-3, 0)),
+])
+@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_normal_forward_bool_mean_std_match_int(mode, bool_args, int_args):
+    """
+    Feature: pyboost function.
+    Description: test Tensor.normal_ with bool mean/std, which torch accepts and treats as 1/0.
+    Expectation: bool mean/std is accepted and samples the same values as the int 1/0 counterpart.
+    """
+    ms.context.set_context(mode=mode)
+    if mode == ms.GRAPH_MODE:
+        ms.set_context(jit_level='O0')
+
+    def sample_with_fixed_seed(mean, std):
+        generator = Generator()
+        generator.manual_seed(255)
+        x = generate_random_input((4, 4))
+        return normal_forward_func(ms.Tensor(x), mean=mean, std=std, generator=generator).asnumpy()
+
+    np.testing.assert_array_equal(sample_with_fixed_seed(*bool_args), sample_with_fixed_seed(*int_args))

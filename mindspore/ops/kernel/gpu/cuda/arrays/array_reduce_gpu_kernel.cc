@@ -391,8 +391,8 @@ int ArrayReduceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     workspace_size_list_.push_back(0);
   }
 
-  if (kernel_name_ == "ReduceAll" && inputs[kIndex0]->dtype_id() != kNumberTypeBool) {
-    workspace_size_list_.push_back(input_num_ / sizeof(bool));
+  if ((kernel_name_ == kReduceAll || kernel_name_ == kReduceAny) && inputs[kIndex0]->dtype_id() != kNumberTypeBool) {
+    workspace_size_list_.push_back(input_num_ * sizeof(bool));
   }
   return KRET_OK;
 }

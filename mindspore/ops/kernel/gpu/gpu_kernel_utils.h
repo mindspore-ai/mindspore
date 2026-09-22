@@ -72,7 +72,7 @@ void CastKernelTensor(KernelTensor *source, KernelTensor *target, cudaStream_t s
   MS_EXCEPTION_IF_NULL(target);
   MS_EXCEPTION_IF_NULL(target->device_ptr());
   T *target_addr = reinterpret_cast<T *>(target->device_ptr());
-  auto status = Cast(source->size(), source_addr, target_addr, stream);
+  auto status = Cast(source->size() / sizeof(S), source_addr, target_addr, stream);
   CHECK_CUDA_STATUS(status, kernel_name);
 }
 

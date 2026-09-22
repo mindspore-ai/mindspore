@@ -4153,7 +4153,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             that has the same type and shape as the `self` tensor.
 
         Raises:
-            TypeError: If the dtype of `mean` or `std` is not one of: bool, int, float, complex.
+            TypeError: If the dtype of `mean` or `std` is not one of: bool, int, float.
 
         Supported Platforms:
             ``Ascend``

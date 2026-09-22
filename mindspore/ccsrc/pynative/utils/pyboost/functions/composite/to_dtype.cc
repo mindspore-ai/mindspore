@@ -23,7 +23,7 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr to_dtype(const mindspore::tensor::TensorPtr &self, const std::optional<mindspore::Int64ImmPtr> &dtype,
                            const mindspore::BoolImmPtr &non_blocking, const mindspore::BoolImmPtr &copy) {
-  device::DeviceType device_value = self->device_address()->GetDeviceType();
+  device::DeviceType device_value = GetDeviceTypeChecked(self);
   TypeId dtype_value = dtype.has_value() ? static_cast<TypeId>(GetValue<int64_t>(dtype.value())) : self->data_type();
   bool non_blocking_value = GetValue<bool>(non_blocking);
   bool copy_value = GetValue<bool>(copy);
