@@ -81,7 +81,6 @@ enum TypeId : int {
   kNumberTypeFloat8E4M3FN,
   kNumberTypeFloat8E5M2,
   kNumberTypeHiFloat8,
-  kNumberTypeFloat8E8M0FNU,
   kNumberTypeDouble,
   kNumberTypeComplex,
   kNumberTypeComplex64,
@@ -111,9 +110,17 @@ enum TypeId : int {
   kEventTypeBegin = kSparseTypeEnd,
   kObjectTypeEventType,
   kEventTypeEnd,
-  // New types should placed at the end of enum,
-  // in order to keep fit with the type of existing model on the lite side.
+  // Append new compatible number types before kNumberTypeCompatEnd to preserve existing TypeId values.
+  kNumberTypeCompatBegin = kEventTypeEnd,
+  kNumberTypeFloat8E8M0FNU,
+  kNumberTypeCompatEnd,
+  // Append other new types at the end of the enum to preserve existing model TypeIds on the lite side.
 };
+
+constexpr bool IsNumberTypeId(TypeId type_id) {
+  return (type_id > kNumberTypeBegin && type_id < kNumberTypeEnd) ||
+         (type_id > kNumberTypeCompatBegin && type_id < kNumberTypeCompatEnd);
+}
 
 /// \brief QuantDataType defines data type for quantization: int1-int16, uint1-uint16.
 enum QuantDataType : int {
