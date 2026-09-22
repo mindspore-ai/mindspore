@@ -12,14 +12,14 @@ mindspore.ops.UpsampleNearest3D
     输入：
         - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：uint8、float16、float32、float64。
         - **output_size** (Union[tuple[int], list[int]]) - 指定输出体积大小的元组或int列表。默认值： ``None`` 。
-        - **scales** (Union[tuple[float], list[float]]) - 指定上采样因子的元组或float列表。默认值： ``None`` 。
+        - **scales** (Union[tuple[number], list[number]]) - 指定上采样因子的元组或列表，每个元素可为int或float，且两种类型可混用。默认值： ``None`` 。
 
     输出：
         - **y** (Tensor) - 上采样输出。其shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` ，数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - 当 `output_size` 不是 ``None`` 并且 `output_size` 不是list[int]或tuple[int]。
-        - **TypeError** - 当 `scales` 不是 ``None`` 并且 `scales` 不是list[float]或tuple[float]。
+        - **TypeError** - 当 `scales` 不是 ``None`` 并且 `scales` 不是list[number]或tuple[number]。
         - **TypeError** - `x` 的数据类型不是uint8、float16、float32或float64。
         - **ValueError** - `output_size` 不为 ``None`` 时含有负数或0。
         - **ValueError** - `scales` 不为 ``None`` 时含有负数或0。
