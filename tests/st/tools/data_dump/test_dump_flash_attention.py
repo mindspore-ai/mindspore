@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test data dump for FlashAttentionScore."""
+
 from tests.mark_utils import arg_mark
 import numpy as np
 import math
@@ -33,12 +35,12 @@ from mindspore.ops.operations.nn_ops import FlashAttentionScore
 def generate_e2edump_json(dump_path, json_file_name, extra_settings_func=None):
     current_dir = Path(__file__).parent
     json_path = current_dir / "test_e2e_statistic_config.json"
-    with open(json_path, 'r') as file:
+    with open(json_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
         data["common_dump_settings"]["path"] = dump_path
         if extra_settings_func is not None:
             extra_settings_func(data)
-    with open(json_file_name, 'w') as f:
+    with open(json_file_name, 'w', encoding='utf-8') as f:
         json.dump(data, f)
 
 
@@ -55,7 +57,7 @@ def check_csv_with_regex(file_path, patterns):
 
 class FlashAttentionNet(nn.Cell):
     def __init__(self, num_heads, head_dim, dropout_rate=0.0, prev_tockens=65536, next_tockens=65536):
-        super(FlashAttentionNet, self).__init__()
+        super().__init__()
         self.keep_prob = 1.0 - dropout_rate
         self.flash_attention = FlashAttentionScore(head_num=num_heads, pre_tokens=prev_tockens,
                                                    next_tokens=next_tockens,
@@ -87,12 +89,12 @@ class FlashAttentionNet(nn.Cell):
 
 class FlashAttentionGradNet(nn.Cell):
     def __init__(self, network):
-        super(FlashAttentionGradNet, self).__init__()
+        super().__init__()
         self.network = network
-        self.grad = C.GradOperation(get_all=True)
+        self.grad = C.GradOperation(get_by_position=True)
 
     def construct(self, *inputs):
-        gout = self.grad(self.network)(*inputs)
+        gout = self.grad(self.network, None, (0, 1, 2, 3))(*inputs)
         return gout
 
 

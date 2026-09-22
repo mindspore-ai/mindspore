@@ -111,11 +111,11 @@ def test_for_after_while_in_if_02():
             self.add = P.Add()
             self.sub = P.Sub()
             self.assign = P.Assign()
-            param_a = np.full((1,), 5, dtype=np.int32)
+            param_a = np.full((1,), 5, dtype=np.float32)
             self.param_a = Parameter(Tensor(param_a), name='a')
-            param_b = np.full((1,), 2, dtype=np.int32)
+            param_b = np.full((1,), 2, dtype=np.float32)
             self.param_b = Parameter(Tensor(param_b), name='b')
-            param_c = np.full((1,), 11, dtype=np.int32)
+            param_c = np.full((1,), 11, dtype=np.float32)
             self.param_c = Parameter(Tensor(param_c), name='c')
 
         def construct(self, x, y):

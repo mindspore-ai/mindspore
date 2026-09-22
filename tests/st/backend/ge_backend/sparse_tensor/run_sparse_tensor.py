@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test sparse tensors with the GE backend."""
+
 import numpy as np
 import mindspore.context as context
 from mindspore import Tensor, COOTensor, CSRTensor, nn, ops
 
-class GradOfAllInputs(nn.Cell):
-    def __init__(self, net):
+class GradOfInputs(nn.Cell):
+    def __init__(self, net, grad_position):
         super().__init__()
         self.net = net
-        self.grad_op = ops.GradOperation(get_all=True)
+        self.grad_op = ops.GradOperation(get_by_position=True)
+        self.grad_position = grad_position
 
     def construct(self, *inputs):
-        grad_net = self.grad_op(self.net)
+        grad_net = self.grad_op(self.net, None, self.grad_position)
         return grad_net(*inputs)
 
 
@@ -63,9 +66,9 @@ def test_coo_tensor():
     net = COOTensorNet(shape)
     out = net(Tensor(indices), Tensor(values))
     assert np.allclose(out.values.asnumpy(), np.abs(values), 1.0e-4, 1.0e-4)
-    net_grad = GradOfAllInputs(net)
+    net_grad = GradOfInputs(net, (1,))
     grad = net_grad(Tensor(indices), Tensor(values))
-    assert len(grad) == 2
+    assert grad.shape == values.shape
 
 
 class CSRTensorNet(nn.Cell):
@@ -107,9 +110,9 @@ def test_csr_tensor():
     net = CSRTensorNet(shape)
     out = net(Tensor(indptr), Tensor(indices), Tensor(values))
     assert np.allclose(out.values.asnumpy(), np.abs(values), 1.0e-4, 1.0e-4)
-    net_grad = GradOfAllInputs(net)
+    net_grad = GradOfInputs(net, (2,))
     grad = net_grad(Tensor(indptr), Tensor(indices), Tensor(values))
-    assert len(grad) == 3
+    assert grad.shape == values.shape
 
 
 if __name__ == "__main__":

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test the flash_attention_score operator."""
+
 import pytest
 import numpy as np
 import mindspore as ms
@@ -37,12 +39,12 @@ def flash_attention_score_forward_func(query, key, value, head_num, real_shift=N
 
 class Grad(Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.network = network
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_by_position=True, sens_param=True)
 
     def construct(self, *inputs):
-        return self.grad(self.network)(*inputs)
+        return self.grad(self.network, None, (0, 1, 2))(*inputs)
 
 
 def tsoftmax(x):
@@ -85,7 +87,7 @@ def fas_backward(dx, q, k, v, softmax_res, drop_mask, pse, scale, keep_prob):
         drop_res = softmax_res * drop_mask * (1.0 / (keep_prob)).transpose(0, 1, 3, 2)
         dp_drop = dp * drop_mask * (1.0 / (keep_prob))
     dv = np.matmul(drop_res, dx)
-    softmax_grad_res = (tsoftmax_grad(dp_drop, softmax_res) * scale)
+    softmax_grad_res = tsoftmax_grad(dp_drop, softmax_res) * scale
     dq = np.matmul(softmax_grad_res, k)
     dk = np.matmul(softmax_grad_res.transpose(0, 1, 3, 2), q)
     return dq, dk, dv
@@ -124,7 +126,7 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
         key = np.random.uniform(min_value, max_value, [B * S2, N2, D])
         value = np.random.uniform(min_value, max_value, [B * S2, N2, D])
     else:
-        raise ValueError(f"input_layout is invalid.")
+        raise ValueError("input_layout is invalid.")
     real_shift = None
     attn_mask = np.triu(np.ones([B, 1, S1, S2]))
     prefix = None
@@ -258,7 +260,7 @@ def test_ops_flash_attention_score(mode, dtype):
                                       -1.1014700000000488e-03, -1.9404400000000432e-03,
                                       6.5506999999997984e-04, -4.6009000000002409e-04]]]])
     else:
-        raise ValueError(f"dtype is invalid.")
+        raise ValueError("dtype is invalid.")
 
     np.testing.assert_allclose(y_diff, expect_y_diff, rtol=1e-4)
     np.testing.assert_allclose(dq_diff, expect_dq_diff, rtol=1e-4)

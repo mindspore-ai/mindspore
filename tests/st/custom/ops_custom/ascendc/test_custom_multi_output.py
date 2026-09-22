@@ -137,8 +137,8 @@ class TestMultiOutput():
         context.set_context(mode=context_mode)
         ms.context.set_context(deterministic="ON")
         msda_net = MultiScaleDeformableAttnFunc()
-        grad = GradOperation(get_all=True, sens_param=False)(msda_net)
-        grad_value, _, _, grad_sampling_loc, grad_attn_weight = grad(
+        grad = GradOperation(get_by_position=True)(msda_net, None, (0, 3, 4))
+        grad_value, grad_sampling_loc, grad_attn_weight = grad(
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)
 
@@ -160,8 +160,8 @@ class TestMultiOutput():
                                                                                                          sl_s[3],
                                                                                                          sl_s[4]]],
                                                 out_dtype=[mstype.float32, mstype.float32, mstype.float32])
-        grad = GradOperation(get_all=True, sens_param=False)(msda_net)
-        grad_value, _, _, grad_sampling_loc, grad_attn_weight = grad(
+        grad = GradOperation(get_by_position=True)(msda_net, None, (0, 3, 4))
+        grad_value, grad_sampling_loc, grad_attn_weight = grad(
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)
 
@@ -176,8 +176,8 @@ class TestMultiOutput():
         context.set_context(mode=context_mode)
         ms.context.set_context(deterministic="ON")
         msda_net = MultiScaleDeformableAttnFunc(None, [mstype.float32, mstype.float32, mstype.float32])
-        grad = GradOperation(get_all=True, sens_param=False)(msda_net)
-        grad_value, _, _, grad_sampling_loc, grad_attn_weight = grad(
+        grad = GradOperation(get_by_position=True)(msda_net, None, (0, 3, 4))
+        grad_value, grad_sampling_loc, grad_attn_weight = grad(
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)
 
@@ -198,7 +198,7 @@ class TestMultiOutput():
                                                                                                          sl_s[2],
                                                                                                          sl_s[3],
                                                                                                          sl_s[4]]])
-        grad = GradOperation(get_all=True, sens_param=False)(msda_net)
-        grad_value, _, _, grad_sampling_loc, grad_attn_weight = grad(
+        grad = GradOperation(get_by_position=True)(msda_net, None, (0, 3, 4))
+        grad_value, grad_sampling_loc, grad_attn_weight = grad(
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)

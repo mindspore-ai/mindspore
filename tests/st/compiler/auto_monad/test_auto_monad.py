@@ -1836,8 +1836,8 @@ def test_bprop_print_func():
         sys.stdout.flush()
         time.sleep(2.0)
 
-    patterns = {'Tensor(shape=[1], dtype=Float32, value= [ 1.00000000e+00])\n'
-                'Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00])'}
+    patterns = {'Tensor(shape=[1], dtype=Float32, value=[ 1.00000000e+00])\n'
+                'Tensor(shape=[1], dtype=Float32, value=[ 2.00000000e+00])'}
     check_output(cap.output, patterns)
 
 

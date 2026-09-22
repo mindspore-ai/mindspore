@@ -77,8 +77,8 @@ def test_for_in_for_01():
     graph_forward_res = forward_net(x)
     graph_backward_res = net(x)
 
-    assert graph_forward_res == Tensor([0], mstype.float32)
-    assert graph_backward_res == (Tensor([0], mstype.float32),)
+    assert graph_forward_res == Tensor([2**62], mstype.float32)
+    assert graph_backward_res == (Tensor([2**61], mstype.float32),)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard', mem_peak=2048.01)

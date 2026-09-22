@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test FlashAttentionScore on Ascend."""
+
 from tests.mark_utils import arg_mark
 import numpy as np
 import math
@@ -25,12 +27,12 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops.operations.nn_ops import FlashAttentionScore
 
-grad = C.GradOperation(get_all=True)
+grad = C.GradOperation(get_by_position=True)
 
 
 class FlashAttentionNet(nn.Cell):
     def __init__(self, num_heads, head_dim, dropout_rate=0.0, prev_tockens=65536, next_tockens=65536):
-        super(FlashAttentionNet, self).__init__()
+        super().__init__()
         self.keep_prob = 1.0 - dropout_rate
         self.flash_attention = FlashAttentionScore(head_num=num_heads, pre_tokens=prev_tockens,
                                                    next_tokens=next_tockens,
@@ -59,11 +61,11 @@ class FlashAttentionNet(nn.Cell):
 
 class FlashAttentionGradNet(nn.Cell):
     def __init__(self, network):
-        super(FlashAttentionGradNet, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, *inputs):
-        gout = grad(self.network)(*inputs)
+        gout = grad(self.network, None, (0, 1, 2))(*inputs)
         return gout
 
 
@@ -82,7 +84,7 @@ class AttnNet(nn.Cell):
     """
 
     def __init__(self, head_dim, dropout_rate=0., softmax_compute_type=mstype.float16):
-        super(AttnNet, self).__init__()
+        super().__init__()
         self.softmax_compute_type = softmax_compute_type
         self._is_ascend = context.get_context('device_target') in ["Ascend"]
         self.scale_factor = Tensor(math.sqrt(math.sqrt(head_dim)))

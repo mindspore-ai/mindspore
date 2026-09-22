@@ -72,7 +72,7 @@ def test_fold_functional_api():
     out_grad_ms = Tensor(forward_out)
     out_net = Fold(kernel_size, dilation, padding, stride)
     grad_net = ops.GradOperation(get_by_position=True, sens_param=True)
-    grad_ms = grad_net(out_net, grad_position=(0,))(input_x, output_size, out_grad_ms).asnumpy()
+    grad_ms = grad_net(out_net, None, (0,))(input_x, output_size, out_grad_ms).asnumpy()
     expect_grad = np.array([[[-0.8044583, 0.32093155, -0.02548288, 0.6443238],
                              [-0.3007967, 0.38947454, -0.10743731, -0.47998306],
                              [0.5950355, -0.46466753, 0.6672813, -0.8061156],
