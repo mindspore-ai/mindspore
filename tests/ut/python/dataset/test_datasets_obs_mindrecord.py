@@ -578,6 +578,59 @@ def test_obs_runtime_does_not_recreate_client_after_close(monkeypatch):
     assert len(created_clients) == 1
 
 
+@pytest.mark.parametrize("failure_stage", ["wait", "client_close"])
+def test_obs_runtime_close_can_retry_after_interruption(monkeypatch, failure_stage):
+    """
+    Feature: OBS util
+    Description: Interrupted shutdown retains the client for a later close attempt
+    Expectation: New requests stay rejected and retry closes the retained client once
+    """
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    close_calls = []
+
+    class RecordingObsClient:  # pylint: disable=too-few-public-methods
+        """Record successful client cleanup."""
+
+        def __init__(self, **kwargs):
+            pass
+
+        def close(self):
+            close_calls.append(self)
+
+    def interrupt(*_args, **_kwargs):
+        raise KeyboardInterrupt("interrupted shutdown")
+
+    monkeypatch.setattr(obs_util, "ObsClient", RecordingObsClient)
+    config = create_obs_config()
+    config.AK, config.SK, config.SERVER = "test-ak", "test-sk", "https://test-server"
+    runtime = obs_util.OBSRuntime(config)
+    with runtime.use_obs_client() as client:
+        if failure_stage == "wait":
+            with monkeypatch.context() as patch:
+                # pylint: disable=protected-access
+                patch.setattr(runtime._client_condition, "wait", interrupt)
+                # pylint: enable=protected-access
+                with pytest.raises(KeyboardInterrupt, match="interrupted shutdown"):
+                    runtime.close()
+            assert runtime.obs_client is client
+            assert not close_calls
+
+    if failure_stage == "client_close":
+        with monkeypatch.context() as patch:
+            patch.setattr(client, "close", interrupt)
+            with pytest.raises(KeyboardInterrupt, match="interrupted shutdown"):
+                runtime.close()
+
+    assert runtime.obs_client is client
+    with pytest.raises(RuntimeError, match="closed"):
+        with runtime.use_obs_client():
+            pass
+    runtime.close()
+    runtime.close()
+    assert close_calls == [client]
+    assert runtime.obs_client is None
+
+
 def test_obs_runtime_close_waits_for_inflight_client_use(monkeypatch):
     """
     Feature: OBS util
@@ -1232,6 +1285,153 @@ def test_mindrecord_from_obs_close_stops_disk_cleanup_retry(monkeypatch):
     assert source._manager is None
     assert source._obs_runtime is None
     assert runtime.closed
+    # pylint: enable=protected-access
+
+
+@pytest.fixture(name="cleanup_runtime")
+def make_cleanup_runtime(monkeypatch):
+    """Runtime and client with observable cleanup, without network access."""
+    obs_util = import_obs_util_without_global_credentials(monkeypatch)
+    closed = threading.Event()
+    client = types.SimpleNamespace(close=closed.set)
+    monkeypatch.setattr(obs_util, "ObsClient", lambda **_kwargs: client)
+    config = create_obs_config()
+    config.AK, config.SK, config.SERVER = "test-ak", "test-sk", "https://test-server"
+    runtime = obs_util.OBSRuntime(config)
+    return obs_util, runtime, client, closed
+
+
+@pytest.mark.parametrize("timeout", [0, 0.02])
+def test_obs_close_timeout_retains_borrowed_client(cleanup_runtime, timeout):
+    """
+    Feature: OBS util
+    Description: Close with a zero or positive timeout while the client is still borrowed
+    Expectation: Timeout retains the client, rejects new borrows, and allows cleanup after the borrower returns
+    """
+    _, runtime, client, closed = cleanup_runtime
+    finished = threading.Event()
+    errors = []
+
+    def close_runtime():
+        try:
+            runtime.close(timeout=timeout)
+        except Exception as exc:  # pylint: disable=broad-except
+            errors.append(exc)
+        finally:
+            finished.set()
+
+    closer = threading.Thread(target=close_runtime)
+    try:
+        with runtime.use_obs_client():
+            closer.start()
+            assert finished.wait(2), "close did not respect the borrower wait deadline"
+            assert len(errors) == 1
+            assert isinstance(errors[0], TimeoutError)
+            assert runtime.obs_client is client
+            assert not closed.is_set()
+            with pytest.raises(RuntimeError, match="closed"):
+                with runtime.use_obs_client():
+                    pass
+    finally:
+        closer.join(timeout=2)
+        runtime.close()
+    assert not closer.is_alive()
+    assert closed.is_set()
+    assert runtime.obs_client is None
+
+
+def test_obs_close_default_deadline_survives_wakeups(cleanup_runtime, monkeypatch):
+    """
+    Feature: OBS util
+    Description: Simulate a spurious wakeup and expiration of the default borrower wait deadline
+    Expectation: Close preserves the original 30-second deadline and retains the borrowed client on timeout
+    """
+    obs_util, runtime, client, closed = cleanup_runtime
+    clock = iter([100, 101, 131])
+    waits = []
+    try:
+        with runtime.use_obs_client():
+            with monkeypatch.context() as patch:
+                patch.setattr(obs_util.time, "monotonic", lambda: next(clock))
+                # Simulate a spurious wakeup without waiting 30 real seconds.
+                # pylint: disable=protected-access
+                patch.setattr(runtime._client_condition, "wait", waits.append)
+                # pylint: enable=protected-access
+                with pytest.raises(TimeoutError, match="still in use"):
+                    runtime.close()
+            assert waits == [29]
+            assert runtime.obs_client is client
+            assert not closed.is_set()
+    finally:
+        runtime.close()
+
+
+@pytest.mark.parametrize("timeout", [-1, float("inf"), float("nan")])
+def test_obs_close_rejects_invalid_timeout(cleanup_runtime, timeout):
+    """
+    Feature: OBS util
+    Description: Attempt to close with a negative, infinite, or NaN timeout
+    Expectation: ValueError is raised without changing the runtime lifecycle state
+    """
+    _, runtime, client, closed = cleanup_runtime
+    try:
+        with pytest.raises(ValueError, match="finite and non-negative"):
+            runtime.close(timeout=timeout)
+        with runtime.use_obs_client() as borrowed:
+            assert borrowed is client
+    finally:
+        runtime.close(timeout=0)
+    assert closed.is_set()
+
+
+def test_obs_eviction_requeues_full_path(tmp_path, cleanup_runtime):
+    """
+    Feature: OBSMindDataset cache eviction
+    Description: Evict a low-priority shard and download it again through the requeued full OBS URI
+    Expectation: The original bucket and key are used, the file is restored, and the cache entry becomes available
+    """
+    remote = "s3://bucket/records/later.mindrecord"
+    (tmp_path / "later.mindrecord").write_bytes(b"data")
+    cache = {"later.mindrecord": (3, False)}
+    downloads = queue.PriorityQueue()
+    # pylint: disable=protected-access
+    assert obs_mindrecord_dataset._delete_candidate_datasets(
+        0, 1, cache, downloads, str(tmp_path), {"later.mindrecord": remote}
+    )
+    assert downloads.get_nowait() == (3, remote)
+    assert cache["later.mindrecord"] == (-1, False)
+    assert not (tmp_path / "later.mindrecord").exists()
+    _, runtime, client, _ = cleanup_runtime
+    requests = []
+    stop_event = threading.Event()
+
+    def metadata(bucket, key):
+        requests.append((bucket, key))
+        return types.SimpleNamespace(status=200, requestId="metadata")
+
+    def download(bucket, key, destination, *_args):
+        assert (bucket, key) == ("bucket", "records/later.mindrecord")
+        with open(destination, "wb") as stream:
+            stream.write(b"downloaded")
+        stop_event.set()
+        return types.SimpleNamespace(status=200, requestId="download")
+
+    client.getObjectMetadata = metadata
+    client.downloadFile = download
+    runtime.config.DISK_THRESHOLD = 1.0
+    runtime.config.WORKING_PATH = str(tmp_path)
+    (tmp_path / "later.mindrecord.db").write_bytes(b"existing metadata")
+    downloads.put((3, remote))
+    try:
+        obs_mindrecord_dataset._download_work(
+            0, types.SimpleNamespace(value=0), str(tmp_path), cache, downloads, runtime,
+            stop_event, {"later.mindrecord": remote}
+        )
+    finally:
+        runtime.close()
+    assert requests == [("bucket", "records/later.mindrecord")]
+    assert cache["later.mindrecord"] == (3, False)
+    assert (tmp_path / "later.mindrecord").read_bytes() == b"downloaded"
     # pylint: enable=protected-access
 
 

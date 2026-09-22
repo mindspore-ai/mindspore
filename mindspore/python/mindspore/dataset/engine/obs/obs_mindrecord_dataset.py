@@ -197,7 +197,7 @@ def _init_shard_files(
     return shard_files, size_per_shard
 
 
-def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, stop_event=None):
+def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, stop_event=None, remote_paths=None):
     """daemon process in backend."""
     runtime_config = obs_runtime.config
     while True:
@@ -221,7 +221,7 @@ def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, sto
                 f"and the disk threshold is {float(runtime_config.DISK_THRESHOLD) * 100}%."
             )
             retry_cnt = 0
-            has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path)
+            has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path, remote_paths)
             while not has_deleted:
                 if stop_event is not None and stop_event.is_set():
                     return
@@ -230,7 +230,7 @@ def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, sto
                         f"Delete operation retries times {retry_cnt} has exceeded threshold "
                         f"{runtime_config.MAX_RETRY}, please clear enough disk space."
                     )
-                has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path)
+                has_deleted = _delete_candidate_datasets(current_idx.value, idx, cache, q, local_path, remote_paths)
                 retry_cnt += 1
                 if stop_event is None:
                     time.sleep(runtime_config.RETRY_DELTA_TIME)
@@ -251,7 +251,7 @@ def _download_work(shard_id, current_idx, local_path, cache, q, obs_runtime, sto
         logger.info(f"[{_current_func_name()} FUNCTION] Shard: {shard_id} finish to download: {dataset_file}.")
 
 
-def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path):
+def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path, remote_paths=None):
     """
     1. Try to delete all the datasets which have been loaded during the epoch.
     2. Otherwise, try to delete a low priority dataset in the epoch.
@@ -288,11 +288,14 @@ def _delete_candidate_datasets(current_idx, queue_top_idx, cache, q, local_path)
     dataset_path = os.path.join(local_path, low_priority_dataset)
     if not os.path.exists(dataset_path):
         return False
+    if remote_paths is None or low_priority_dataset not in remote_paths:
+        raise RuntimeError(f"Missing OBS path for evicted dataset {low_priority_dataset}.")
+    remote_file = remote_paths[low_priority_dataset]
     # update cache
     idx, is_shared = cache[low_priority_dataset]
     cache[low_priority_dataset] = (-1, is_shared)
     os.remove(dataset_path)
-    q.put((idx, low_priority_dataset))
+    q.put((idx, remote_file))
     logger.info(
         f"[{_current_func_name()} FUNCTION] Delete low priority dataset file: {low_priority_dataset} "
         f"and update the cache."
@@ -399,6 +402,7 @@ class MindRecordFromOBS:
 
     def __init__(self, dataset_files, columns_list, shuffle, num_shards, shard_id, shard_equal_rows, obs_config):
         self._dataset_files = dataset_files
+        self._remote_paths = {os.path.basename(path): path for path in dataset_files}
         self._columns_list = columns_list
 
         self._num_shards = num_shards
@@ -455,6 +459,7 @@ class MindRecordFromOBS:
                 self._queue,
                 self._obs_runtime,
                 self._stop_event,
+                self._remote_paths,
             ),
         )
         _sync_for_obs_mindrecord_dataset(
