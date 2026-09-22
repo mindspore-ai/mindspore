@@ -188,7 +188,7 @@ bool ClusterContext::Initialize(int64_t timeout, uint32_t world_size, uint32_t n
   // 2. Set this node's client ip address in this cluster.
   const std::string &client_ip_in_cluster = tcp_store_client_->client_node_->client_ip();
   MS_LOG(INFO) << "Client ip address in this cluster of this client_node is " << client_ip_in_cluster;
-  (void)common::SetEnv(kEnvWorkerIp, client_ip_in_cluster.c_str());
+  DistributedMeta::GetInstance()->set_worker_ip(client_ip_in_cluster);
 
   // 3. Set port range of this node.
   NodeRolePortAssignment port_assignment =
@@ -430,7 +430,7 @@ void ClusterContext::PostProcess() {
   // 2. Set this node's client ip address in this cluster.
   const std::string &client_ip_in_cluster = cgn->client_ip();
   MS_LOG(INFO) << "Client ip address in this cluster of this compute graph node is " << client_ip_in_cluster;
-  (void)common::SetEnv(kEnvWorkerIp, client_ip_in_cluster.c_str());
+  DistributedMeta::GetInstance()->set_worker_ip(client_ip_in_cluster);
 
   // 3. Set port range of this node.
   NodeRolePortAssignment port_assignment =

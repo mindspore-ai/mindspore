@@ -27,6 +27,7 @@
 #include "include/securec.h"
 #include "actor/log.h"
 #include "cluster/rpc/tcp/constants.h"
+#include "utils/distributed_meta.h"
 
 namespace mindspore {
 namespace distributed {
@@ -262,12 +263,13 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
     return false;
   }
 
+  const auto worker_ip = DistributedMeta::GetInstance()->worker_ip();
   int result = inet_pton(AF_INET, ip.c_str(), &addr->saIn.sin_addr);
   if (result > 0) {
     addr->saIn.sin_family = AF_INET;
     addr->saIn.sin_port = htons(port);
-    if (!common::GetEnv(kEnvWorkerIp).empty()) {
-      std::string ip_addr = common::GetEnv(kEnvWorkerIp);
+    if (!worker_ip.empty()) {
+      std::string ip_addr = worker_ip;
       SocketAddress v4_addr;
       if (inet_pton(AF_INET, ip_addr.c_str(), &v4_addr.saIn.sin_addr) <= 0) {
         MS_LOG(EXCEPTION) << "User-specified worker address " << ip_addr
@@ -281,8 +283,8 @@ bool SocketOperation::GetSockAddr(const std::string &url, SocketAddress *addr) {
   if (result > 0) {
     addr->saIn6.sin6_family = AF_INET6;
     addr->saIn6.sin6_port = htons(port);
-    if (!common::GetEnv(kEnvWorkerIp).empty()) {
-      std::string ip_addr = common::GetEnv(kEnvWorkerIp);
+    if (!worker_ip.empty()) {
+      std::string ip_addr = worker_ip;
       SocketAddress v6_addr;
       if (inet_pton(AF_INET6, ip_addr.c_str(), &(v6_addr.saIn6.sin6_addr)) <= 0) {
         MS_LOG(EXCEPTION) << "User-specified worker address " << ip_addr
