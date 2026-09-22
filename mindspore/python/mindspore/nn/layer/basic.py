@@ -832,15 +832,9 @@ class Linear(Cell):
     .. math::
         \text{outputs} = X * kernel + bias
 
-    .. warning::
-        On the Ascend platform, if `bias` is ``False`` , the `x` cannot be greater than 6D in PYNATIVE or KBK mode.
-
     where :math:`X` is the input tensors, :math:`\text{kernel}` is a weight matrix with the same
     data type as the :math:`X` created by the layer, and :math:`\text{bias}` is a bias vector
     with the same data type as the :math:`X` created by the layer (only if the parameter `bias` is ``True``).
-
-    .. warning::
-        In PyNative mode, if `bias` is ``False`` , the `x` cannot be greater than 6D.
 
     Args:
         in_features (int): The number of features in the input space.
