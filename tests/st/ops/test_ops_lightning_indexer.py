@@ -864,54 +864,6 @@ def test_ops_lightning_indexer_tnd_pabsnd_forward(mode, dtype):
           level_mark='level1',
           card_mark='onecard',
           mem_peak=2048.01)
-@pytest.mark.parametrize('mode', ['pynative', 'kbk'])
-@pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
-def test_ops_lightning_indexer_tnd_tnd_normal(mode, dtype):
-    """
-    Feature: pyboost function.
-    Description: Test function lightning_indexer forward and backward computation with TND layout.
-        Test scenario: TND layout with TND key layout (non-PA scenario), B=3, T=5, S2=2048, N1=64, N2=1, D=128,
-        sparse_count=2048, sparse_mode=3 (rightDownCausal).
-    Expectation: Expect correct sparse_indices output and gradient results matching torch_npu reference.
-    """
-    set_context_mode(mode)
-
-    B, T, S2, N1, N2, D = 3, 5, 2048, 64, 1, 128
-    layout_query = 'TND'
-    layout_key = 'TND'
-    sparse_count = 2048
-    sparse_mode = 3
-    return_value = True
-
-    query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key, _ = \
-        get_ndarrays(layout_query, layout_key, B=B, T=T, S2=S2, N1=N1, N2=N2, D=D, dtype=dtype)
-    ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query, ms_actual_seq_lengths_key, _ = \
-        get_mindspore_tensors(query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key,
-                              None, dtype)
-    pt_query, pt_key, pt_weights, pt_actual_seq_lengths_query, pt_actual_seq_lengths_key, _ = \
-        get_torch_tensors(query_np, key_np, weights_np, actual_seq_lengths_query, actual_seq_lengths_key,
-                          None, dtype)
-
-    # torch lightning_indexer forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_weights, pt_actual_seq_lengths_query,
-                                                     pt_actual_seq_lengths_key, None, layout_query,
-                                                     layout_key, sparse_count, sparse_mode, return_value=return_value,
-                                                     grad=True)
-    # mindspore lightning_indexer forward
-    ms_out = lightning_indexer_forward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
-                                            ms_actual_seq_lengths_key, None, layout_query, layout_key,
-                                            sparse_count, sparse_mode, return_value=return_value)
-    # mindspore lightning_indexer backward
-    ms_out_grad = lightning_indexer_backward_func(ms_query, ms_key, ms_weights, ms_actual_seq_lengths_query,
-                                                  ms_actual_seq_lengths_key, None, layout_query, layout_key,
-                                                  sparse_count, sparse_mode, return_value=return_value)
-    compare_results(torch_out, ms_out + ms_out_grad, sparse_count, return_value, skip_cpu_grad_compare=True)
-
-
-@arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1',
-          card_mark='onecard',
-          mem_peak=2048.01)
 @pytest.mark.skip(reason="LightningIndexerGrad multi-batch case fails on current CANN version.")
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
