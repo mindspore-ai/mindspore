@@ -12,8 +12,6 @@ mindspore.mint.nn.Linear
 
     其中， :math:`X` 是输入tensor， :math:`\text{kernel}` 是一个权重矩阵，其数据类型与 :math:`X` 相同， :math:`\text{bias}` 是一个偏置向量，其数据类型与 :math:`X` 相同（仅当参数 `bias` 为 ``True`` 时）。
 
-    .. warning::
-        在Ascend硬件平台下，设置PYNATIVE或KBK模式时，如果 `bias` 为 ``False``， `x` 不可以大于6D。
 
     参数：
         - **in_features** (int) - 输入tensor的空间维度。

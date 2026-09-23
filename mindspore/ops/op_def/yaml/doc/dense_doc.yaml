@@ -7,7 +7,6 @@ dense:
 
     .. warning::
         - After version 2.9.0, the interface will be renamed to `linear`.
-        - On the Ascend platform, if `bias` is not 1D, the `input` cannot be greater than 6D in PYNATIVE or KBK mode.
 
     Args:
         input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
@@ -24,7 +23,6 @@ dense:
         TypeError: If `input` is not Tensor.
         TypeError: If `weight` is not Tensor.
         TypeError: If `bias` is not Tensor.
-        RuntimeError: On the Ascend platform, if `bias` is not 1D and `input` is greater than 6D in PYNATIVE or KBK mode.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
