@@ -18,6 +18,7 @@
 
 #include <utility>
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <vector>
 #include <string>
@@ -279,10 +280,15 @@ py::bytes TensorPybind::GetBytes(const Tensor &tensor) {
 }
 
 void CopyFromBuffer(char *dst, size_t dst_size, const char *src, size_t src_size, TypeId data_type) {
-  bool fp16_in_fp32 = (data_type == TypeId::kNumberTypeBFloat16) && (dst_size * 2 == src_size);
+  bool fp16_in_fp32 = (data_type == TypeId::kNumberTypeBFloat16) &&
+                      (dst_size <= std::numeric_limits<size_t>::max() / 2) && (dst_size * 2 == src_size);
+  if (src_size != dst_size && !fp16_in_fp32) {
+    MS_EXCEPTION(ValueError) << "For convert_bytes_to_tensor, tensor content size " << src_size
+                             << " does not match tensor size " << dst_size << ".";
+  }
   if (fp16_in_fp32) {
-    int elem_num = static_cast<int>(src_size / sizeof(float));
-    for (int i = 0; i < elem_num; ++i) {
+    size_t elem_num = src_size / sizeof(float);
+    for (size_t i = 0; i < elem_num; ++i) {
       auto dst_ptr = static_cast<char *>(dst + i * sizeof(bfloat16));
       auto src_ptr = static_cast<const char *>(src + sizeof(bfloat16) + i * sizeof(float));
       errno_t ret = memcpy_s(dst_ptr, sizeof(bfloat16), src_ptr, sizeof(bfloat16));

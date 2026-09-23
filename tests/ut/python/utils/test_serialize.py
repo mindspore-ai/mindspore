@@ -503,6 +503,25 @@ def test_parse_ckpt_proto_reports_memory_error(tmp_path, monkeypatch):
         _PARSE_CKPT_PROTO(str(ckpt_file), None, "AES-GCM", False)
 
 
+def test_load_checkpoint_rejects_oversized_chunked_tensor_content(tmp_path):
+    """
+    Feature: Load checkpoint.
+    Description: Load a Float32 tensor whose joined content is larger than its declared shape.
+    Expectation: Raise ValueError before copying the oversized tensor content.
+    """
+    checkpoint = serialization.Checkpoint()
+    for _ in range(2):
+        value = checkpoint.value.add()
+        value.tag = "weight"
+        value.tensor.dims.append(1)
+        value.tensor.tensor_type = "Float32"
+        value.tensor.tensor_content = b"\x00" * 4
+    ckpt_file = tmp_path / "long_chunked.ckpt"
+    ckpt_file.write_bytes(checkpoint.SerializeToString())
+    with pytest.raises(ValueError, match="tensor content size"):
+        load_checkpoint(str(ckpt_file))
+
+
 def test_load_checkpoint_error_param():
     """
     Feature: Load checkpoint.
