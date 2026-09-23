@@ -1156,21 +1156,8 @@ void KernelRunner::UpdateRefDeviceAddress(OpContext<KernelTensor> *const context
                  << " for kernel:" + kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info.str());
     }
-    auto input_device_tensor = input_kernel_tensors_[pair.second]->device_address().get();
-    MS_EXCEPTION_IF_NULL(input_device_tensor);
-    auto output_device_tensor = output_kernel_tensors_[pair.first]->device_address().get();
-    MS_EXCEPTION_IF_NULL(output_device_tensor);
     output_kernel_tensors_[pair.first]->set_pointer_ref_count(input_kernel_tensors_[pair.second].get());
     output_kernel_tensors_[pair.first]->IncreaseNewRefCount(GetAID().Name());
-    auto input_storage_info = input_kernel_tensors_[pair.second]->tensor_storage_info();
-    if (input_storage_info != nullptr && need_ref_for_storage_info_) {
-      output_kernel_tensors_[pair.first]->set_tensor_storage_info(input_storage_info);
-    }
-    // When output has view information, the size of the device tensor will be inconsistent with shape_vector_,
-    // and this size needs to be updated from the input device tensor.
-    if (output_kernel_tensors_[pair.first]->tensor_storage_info() != nullptr) {
-      output_device_tensor->SetSize(input_device_tensor->GetSize());
-    }
     MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)
       << "Actor:" << GetAID()
       << " increase new ref count for kernel tensor:" << output_kernel_tensors_[pair.first]->ToString()
@@ -1240,6 +1227,25 @@ void KernelRunner::ExecuteResizeKernelModTask(OpContext<KernelTensor> *const con
                            [](const KernelTensorPtr &tensor) { return tensor->tensor_storage_info() != nullptr; });
     if (it != input_kernel_tensors_.end()) {
       view_input = true;
+    }
+  }
+
+  // transfer storage info from input to ref output
+  if (!ActorDispatcher::enable_use_trace_memory()) {
+    for (const auto &pair : kernel_info_->out_in_ref_map()) {
+      auto input_storage_info = input_kernel_tensors_[pair.second]->tensor_storage_info();
+      if (input_storage_info != nullptr && need_ref_for_storage_info_) {
+        output_kernel_tensors_[pair.first]->set_tensor_storage_info(input_storage_info);
+      }
+      // When output has view information, the size of the device tensor will be inconsistent with shape_vector_,
+      // and this size needs to be updated from the input device tensor.
+      if (output_kernel_tensors_[pair.first]->tensor_storage_info() != nullptr) {
+        auto input_device_tensor = input_kernel_tensors_[pair.second]->device_address().get();
+        MS_EXCEPTION_IF_NULL(input_device_tensor);
+        auto output_device_tensor = output_kernel_tensors_[pair.first]->device_address().get();
+        MS_EXCEPTION_IF_NULL(output_device_tensor);
+        output_device_tensor->SetSize(input_device_tensor->GetSize());
+      }
     }
   }
 
