@@ -7788,7 +7788,8 @@ op_db: Dict[str, OpInfo] = {
         exclude_value=(None, (0, )),
         supports_left_python_scalar=False,
         supports_both_python_scalar=False,
-        supports_right_python_scalar=False,
+        # torch supports tensor.div_(python_scalar), so does Ascend (InplaceDivMods takes a Scalar).
+        supports_right_python_scalar=True,
         disable_scalar_x_tensor_promotion=True,
         convert_half_to_float=False,
         dtypes_cpu=(),

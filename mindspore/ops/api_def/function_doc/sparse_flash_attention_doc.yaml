@@ -49,7 +49,8 @@ sparse_flash_attention:
         sparse_indices (Tensor): Sparse index Tensor. Indices for discrete KV cache access. Dtype is int32.
             When `layout_query` is ``"BSND"``, shape is :math:`(B, Q\_S, N2, sparse\_size)`.
             When `layout_query` is ``"TND"``, shape is :math:`(Q\_T, N2, sparse\_size)`.
-            `sparse_size` must be 2048.
+            `sparse_size` is the number of blocks selected at once. It must be greater than 0 and
+            must not exceed :math:`S2 / sparse\_block\_size` rounded up.
         scale_value (float): Scale coefficient, used as the scalar after query and key matrix multiplication.
             Typically 1.0 / (D ** 0.5).
 
@@ -71,9 +72,10 @@ sparse_flash_attention:
             Required when attention_mode=2 (MLA-absorb mode). Shape is same as key but last
             dimension D is replaced with D_rope (64). Default: ``None``.
         sparse_block_size (int, optional): Block size for sparse stage, used in importance score calculation.
-            Range is [1, 64] and must be a power of 2. It is not recommended that
-            K * sparse_block_size exceeds 100k, as hardware limitations may cause OOM.
-            Default: ``1``.
+            Range is [1, 128] and must be a power of 2. When `layout_kv` is ``"PA_BSND"``, it must also
+            divide `block_size`. It is not recommended that the product of the last dimension of
+            `sparse_indices` (the number of blocks selected at once) and `sparse_block_size` exceeds 100k,
+            as hardware limitations may cause OOM. Default: ``1``.
         layout_query (str, optional): Data layout format for query. Supports ``"BSND"`` and ``"TND"``.
             Default: ``"BSND"``.
         layout_kv (str, optional): Data layout format for key. Supports ``"TND"``, ``"BSND"`` and ``"PA_BSND"``.
@@ -102,7 +104,7 @@ sparse_flash_attention:
           When `layout_query` is ``"TND"``, shape is :math:`(N2, T1, N1/N2)`.
         - **softmax_sum** (Tensor) - Sum value in softmax. Dtype is float32.
           Shape is same as `softmax_max`.
- 
+
     Raises:
         TypeError: If `query` is not a Tensor.
         TypeError: If `key` is not a Tensor.
@@ -112,7 +114,7 @@ sparse_flash_attention:
         TypeError: If the dtype of `query`, `key`, or `value` is not float16 or bfloat16.
         RuntimeError: If `layout_query` is not ``"BSND"`` or ``"TND"``.
         RuntimeError: If `layout_kv` is not ``"BSND"``, ``"TND"`` or ``"PA_BSND"``.
-        RuntimeError: If `sparse_block_size` is not a power of 2.
+        RuntimeError: If `sparse_block_size` is not in range [1, 128] or not a power of 2.
 
     Supported Platforms:
         ``Ascend``
@@ -134,4 +136,3 @@ sparse_flash_attention:
         ...     query_rope=query_rope, key_rope=key_rope, attention_mode=2, return_softmax_lse=True)
         >>> print(attention_out.shape)
         (4, 1, 128, 512)
-

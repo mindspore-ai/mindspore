@@ -237,7 +237,7 @@ class OpSampleInput:
         def _discontiguous(x):
             if isinstance(x, ms.Tensor):
                 return _tensor_to_discontiguous(x)
-            elif isinstance(x, ms.dtype):
+            elif isinstance(x, ms.Type):
                 return x
 
             return x
@@ -497,13 +497,16 @@ def make_tensor(
         ndarray = _generate_ndarray_by_random_method(random_method, shape, np_dtype,
                                                   low, high)
         if exclude_value and dtype != ms.bool_ and 0 not in shape:
-            mask = np.isin(ms.Tensor(ndarray, dtype = dtype), exclude_value)
+            # Compare against the numpy buffer directly. Wrapping it into an ms.Tensor of a dtype
+            # numpy has no native counterpart for (bfloat16) makes np.isin fail with
+            # "ufunc 'equal' not supported for the input types".
+            mask = np.isin(ndarray, exclude_value)
             time = 100
             while mask.any():
                 assert time > 0, "generate_ndarry_random loop count exceeds limits 100"
                 ndarray[mask] = _generate_ndarray_by_random_method(random_method, mask.sum()
                                                                    , np_dtype, low, high)
-                mask = np.isin(ms.Tensor(ndarray, dtype=dtype), exclude_value)
+                mask = np.isin(ndarray, exclude_value)
                 time = time - 1
         return ndarray
 
