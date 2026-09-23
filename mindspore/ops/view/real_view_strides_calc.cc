@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -41,9 +42,8 @@ TypeId GetRealTypeFromComplex(TypeId complex_type) {
   return kTypeUnknown;
 }
 
-BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor, bool is_real) {
+BasicCalcResult RealImagViewStridesCalc(const OldTensorInfoPtr &old_tensor_info, TypeId input_data_type, bool is_real) {
   MS_LOG(DEBUG) << "RealViewBasicTypeCalc Call start";
-  auto input_data_type = input_tensor->data_type();
   TypeId data_type = GetRealTypeFromComplex(input_data_type);
   auto is_complex_data_type = data_type != kTypeUnknown;
   if (!is_real && !is_complex_data_type) {  // RealView
@@ -52,7 +52,6 @@ BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor,
                             << "but got " << TypeIdToString(input_data_type) << ".";
   }
   data_type = is_complex_data_type ? data_type : input_data_type;
-  auto old_tensor_info = GetOldTensorInfo(input_tensor);
   MS_EXCEPTION_IF_NULL(old_tensor_info);
 
   auto new_shape = old_tensor_info->old_shape;
@@ -66,9 +65,8 @@ BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor,
   auto new_storage_offset = old_storage_offset;
   if (is_complex_data_type && dim_size > 0 && ori_dim_size > 0) {
     // if old tensor has shape, and because of the complex storage, the new stride is doubled
-    for (int i = 0; i < dim_size; i++) {
-      new_strides[i] *= kComplexStrideMultiplier;
-    }
+    std::transform(new_strides.begin(), new_strides.end(), new_strides.begin(),
+                   [](int64_t stride) { return stride * kComplexStrideMultiplier; });
     // we reexplained the complex storage into two parts, so the original shape is doubled, eg. complex64 to 2 float32
     ori_shape[ori_dim_size - 1] *= kComplexStrideMultiplier;
     ori_strides[ori_dim_size - 1] = 1;
@@ -88,6 +86,10 @@ BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor,
   return {std::make_shared<TensorStorageInfo>(new_shape, new_strides, new_storage_offset, ori_shape, ori_strides,
                                               is_contiguous),
           data_type};
+}
+
+BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor, bool is_real) {
+  return RealImagViewStridesCalc(GetOldTensorInfo(input_tensor), input_tensor->data_type(), is_real);
 }
 
 BasicCalcResult RealViewBasicTypeCalc(const tensor::TensorPtr &input_tensor) {

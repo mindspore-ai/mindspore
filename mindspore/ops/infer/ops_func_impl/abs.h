@@ -17,12 +17,16 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ABS_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ABS_H_
 
+#include <vector>
 #include "mindapi/base/macros.h"
 #include "infer/ops_func_impl/eltwise_op.h"
 
 namespace mindspore {
 namespace ops {
-class OPS_API AbsFuncImpl : public EltwiseOpFuncImpl {};
+class OPS_API AbsFuncImpl : public EltwiseOpFuncImpl {
+ public:
+  std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 

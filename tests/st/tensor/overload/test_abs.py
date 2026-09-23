@@ -63,6 +63,29 @@ def test_tensor_abs(mode):
           level_mark='level0',
           card_mark='onecard', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('ms_type,np_type,output_type', [
+    (ms.complex64, np.complex64, ms.float32),
+    (ms.complex128, np.complex128, ms.float64),
+])
+def test_tensor_abs_complex(mode, ms_type, np_type, output_type):
+    """
+    Feature: tensor.abs
+    Description: Verify tensor.abs with complex input on CPU and GPU.
+    Expectation: The result and its dtype are correct.
+    """
+    ms.set_context(mode=mode)
+    x = Tensor(np.array([3 + 4j, -5 - 12j, 0], dtype=np_type), ms_type)
+
+    output = Net2()(x)
+
+    assert output.dtype == output_type
+    np.testing.assert_allclose(output.asnumpy(), np.array([5, 13, 0], dtype=np_type).real)
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard', mem_peak=1024.03)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_absolute(mode):
     """
     Feature: tensor.__abs__
