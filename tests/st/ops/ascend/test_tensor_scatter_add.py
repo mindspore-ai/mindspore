@@ -171,7 +171,7 @@ def test_tensor_scatter_add_integer_types_forward_only(data_type, index_type, co
     module.forward_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
         mem_peak=0.01)
 @pytest.mark.parametrize('shape', [
     (3,),

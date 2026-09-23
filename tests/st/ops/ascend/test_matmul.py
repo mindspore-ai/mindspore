@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test matmul"""
 import numpy as np
 import pytest
 
@@ -31,7 +32,7 @@ context.set_context(device_target="Ascend")
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.matmul = P.MatMul()
 
     @jit
@@ -128,7 +129,7 @@ def do_test_matmul_dtypes(valid_dtypes, is_ge_only=False):
                 _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -138,7 +139,7 @@ def test_matmul_dtypes():
     do_test_matmul_dtypes([mstype.float16, mstype.float32])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=2048.09)
 def test_matmul_dtypes_ge():
     """
@@ -160,7 +161,7 @@ def test_trans_double_matmul():
 
     class TransDoubleMatMulNet(nn.Cell):
         def __init__(self, trans_a1=False, trans_b1=False, trans_a2=False, trans_b2=False):
-            super(TransDoubleMatMulNet, self).__init__()
+            super().__init__()
             self.mm1 = P.MatMul(trans_a1, trans_b1)
             self.mm2 = P.MatMul(trans_a2, trans_b2)
             self.trans = P.Transpose()

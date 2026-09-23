@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test dynamic check valid"""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -25,7 +26,7 @@ from mindspore import Tensor
 
 class CheckValidDynNet(nn.Cell):
     def __init__(self, axis=0):
-        super(CheckValidDynNet, self).__init__()
+        super().__init__()
         self.unique = ops.Unique()
         self.gather = ops.Gather()
         self.check_valid = ops.CheckValid()
@@ -39,7 +40,7 @@ class CheckValidDynNet(nn.Cell):
         return self.check_valid(anchor_, image_metas_)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', mem_peak=2048.00)
 @pytest.mark.parametrize('dtype', [np.float16])
 def test_dynamic_check_valid(dtype):
@@ -52,8 +53,8 @@ def test_dynamic_check_valid(dtype):
     image_metas = np.array([76, 128, 1]).astype(dtype)
     anchor_box = Tensor(anchor)
     image_metas_box = Tensor(image_metas)
-    indices_anchor_box = Tensor(np.array([i for i in range(anchor_box.shape[0])])).astype(np.int32)
-    indices_image_metas_box = Tensor(np.array([i for i in range(image_metas_box.shape[0])])).astype(np.int32)
+    indices_anchor_box = Tensor(np.array(list(range(anchor_box.shape[0])))).astype(np.int32)
+    indices_image_metas_box = Tensor(np.array(list(range(image_metas_box.shape[0])))).astype(np.int32)
     expect = np.array([True, True, False], np.bool_)
 
     context.set_context(mode=context.PYNATIVE_MODE)
