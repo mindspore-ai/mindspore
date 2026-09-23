@@ -390,6 +390,7 @@ class KernelRunner {
   void *stream_{nullptr};
 
   bool is_multi_stream_process_skipped_{false};
+  bool is_auto_assigned_comm_{false};
   std::vector<std::pair<uint32_t, void *>> cross_stream_addresses_;
 
   // Flag for skipping launch shape related operator, such as RealMakeTuple.

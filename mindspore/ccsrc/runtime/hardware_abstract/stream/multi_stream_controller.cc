@@ -299,6 +299,23 @@ bool MultiStreamController::DispatchRecordWaitEvent(uint32_t user_stream_id, uin
   return true;
 }
 
+bool MultiStreamController::DispatchRecordWaitEventForMemoryReuse(uint32_t user_stream_id, uint32_t memory_stream_id) {
+  if (user_stream_id == memory_stream_id) {
+    return false;
+  }
+  // WaitEvent records the source stream's covered dependency in [source][destination].
+  // Snapshot before dispatch: tasks submitted after the event must not be marked as covered.
+  const auto task_id = GetTaskIdOnStream(memory_stream_id);
+  if (QueryTaskIdOnStream(memory_stream_id, user_stream_id) >= task_id) {
+    return false;
+  }
+  if (!DispatchRecordWaitEvent(user_stream_id, memory_stream_id)) {
+    return false;
+  }
+  (void)WaitEvent(task_id, memory_stream_id, user_stream_id);
+  return true;
+}
+
 DeviceEventPtr MultiStreamController::DispatchRecordEvent(uint32_t stream_id) {
   LockGuard lock(lock_);
   if (event_pool_ == nullptr) {

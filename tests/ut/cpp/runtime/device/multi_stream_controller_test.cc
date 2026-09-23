@@ -19,6 +19,7 @@
 #include "common/common_test.h"
 #include "common/test_device_address.h"
 #include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "runtime/hardware_abstract/event/device_event.h"
 
 namespace mindspore {
 namespace device {
@@ -94,6 +95,95 @@ TEST_F(MultiStreamControllerTest, MaxTaskIdSelection) {
   current_task_id = 80;
   max_task_id = std::max(cached, current_task_id);
   EXPECT_EQ(max_task_id, 80);
+}
+namespace {
+class MemoryReuseEvent : public DeviceEvent {
+ public:
+  explicit MemoryReuseEvent(std::vector<std::pair<char, uint32_t>> *calls) : calls_(calls) {}
+  bool IsReady() const override { return true; }
+  void RecordEvent(uint32_t stream_id) override { calls_->emplace_back('R', stream_id); }
+  bool WaitEvent(uint32_t stream_id) override {
+    calls_->emplace_back('W', stream_id);
+    return true;
+  }
+  void RecordEvent() override {}
+  void WaitEvent() override {}
+  void WaitEventWithoutReset() override {}
+  bool NeedWait() override { return false; }
+  void SyncEvent() override {}
+  bool QueryEvent() override { return true; }
+  void ElapsedTime(float *, const DeviceEvent *) override {}
+  bool DestroyEvent() override { return true; }
+  void set_wait_stream(void *) override {}
+  void set_record_stream(void *) override {}
+
+ private:
+  std::vector<std::pair<char, uint32_t>> *calls_;
+};
+
+class MemoryReuseResManager : public runtime::test::TestResManager {
+ public:
+  size_t QueryStreamSize() const override { return 7; }
+  DeviceEventPtr CreateRuntimeEvent(bool, bool) override { return std::make_shared<MemoryReuseEvent>(&calls); }
+  std::vector<std::pair<char, uint32_t>> calls;
+};
+}  // namespace
+
+class MemoryReuseSynchronizationTest : public UT::Common {
+ protected:
+  void SetUp() override {
+    res_manager_ = std::make_shared<MemoryReuseResManager>();
+    controller_ = std::make_shared<MultiStreamController>(res_manager_.get());
+    controller_->Refresh();
+  }
+  std::shared_ptr<MemoryReuseResManager> res_manager_;
+  MultiStreamControllerPtr controller_;
+};
+
+/// Feature: Communication buffer reuse synchronization.
+/// Description: The static event already covers all allocation-stream tasks.
+/// Expectation: No additional device event is dispatched.
+TEST_F(MemoryReuseSynchronizationTest, CurrentStaticEventNeedsNoAdditionalEvent) {
+  auto send_task = controller_->LaunchTaskIdOnStream(0);
+  (void)controller_->WaitEvent(send_task, 0, 6);
+  EXPECT_FALSE(controller_->DispatchRecordWaitEventForMemoryReuse(6, 0));
+  EXPECT_TRUE(res_manager_->calls.empty());
+}
+
+/// Feature: Communication buffer reuse synchronization.
+/// Description: Another graph submits two default-stream tasks after the static send.
+/// Expectation: One record/wait pair is dispatched, in the correct direction, without duplicate waits.
+TEST_F(MemoryReuseSynchronizationTest, InterleavedTasksRefreshDependencyOnce) {
+  auto send_task = controller_->LaunchTaskIdOnStream(0);
+  (void)controller_->WaitEvent(send_task, 0, 6);
+  (void)controller_->LaunchTaskIdOnStream(0);  // Add-op63.
+  auto last_reader = controller_->LaunchTaskIdOnStream(0);  // Add-op64.
+  EXPECT_TRUE(controller_->DispatchRecordWaitEventForMemoryReuse(6, 0));
+  const std::vector<std::pair<char, uint32_t>> expected = {{'R', 0}, {'W', 6}};
+  EXPECT_EQ(res_manager_->calls, expected);
+  EXPECT_EQ(controller_->QueryTaskIdOnStream(0, 6), last_reader);
+  EXPECT_FALSE(controller_->DispatchRecordWaitEventForMemoryReuse(6, 0));
+  EXPECT_EQ(res_manager_->calls, expected);
+}
+
+/// Feature: Communication buffer reuse synchronization.
+/// Description: A dependency in the reverse direction does not cover default-stream accesses.
+/// Expectation: A default-to-communication event is still dispatched.
+TEST_F(MemoryReuseSynchronizationTest, ReverseDependencyDoesNotSuppressSynchronization) {
+  (void)controller_->LaunchTaskIdOnStream(0);
+  (void)controller_->UpdateTaskIdOnStream(100, 6, 0);
+  EXPECT_TRUE(controller_->DispatchRecordWaitEventForMemoryReuse(6, 0));
+  const std::vector<std::pair<char, uint32_t>> expected = {{'R', 0}, {'W', 6}};
+  EXPECT_EQ(res_manager_->calls, expected);
+}
+
+/// Feature: Communication buffer reuse synchronization.
+/// Description: No device synchronization is necessary within the same stream.
+/// Expectation: No record/wait pair is dispatched.
+TEST_F(MemoryReuseSynchronizationTest, SameStreamNeedsNoEvent) {
+  (void)controller_->LaunchTaskIdOnStream(0);
+  EXPECT_FALSE(controller_->DispatchRecordWaitEventForMemoryReuse(0, 0));
+  EXPECT_TRUE(res_manager_->calls.empty());
 }
 }  // namespace device
 }  // namespace mindspore
