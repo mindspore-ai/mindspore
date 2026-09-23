@@ -86,6 +86,20 @@ bool SparseFlashAttentionAscend::Launch(const std::vector<KernelTensor *> &input
   MS_EXCEPTION_IF_NULL(stream_ptr);
   MS_LOG(DEBUG) << "Run aclnnSparseFlashAttention in kernel_mod_impl";
 
+  // Validate the framework workspace before RunOp() creates the ACLNN executor so that validation
+  // failures do not leak the executor or its converted parameters. Dynamic kernels with caching
+  // disabled allocate their own workspace in RunOp().
+  if (!(capacity_ == 0 && is_dynamic_) && !workspace_size_list_.empty()) {
+    if (workspace.empty()) {
+      MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
+    }
+    MS_EXCEPTION_IF_NULL(workspace[0]);
+    if (workspace[0]->size() != workspace_size_list_[0]) {
+      MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
+                        << workspace_size_list_[0] << ", but get " << workspace[0]->size();
+    }
+  }
+
   const char *layout_query_ptr = layout_query_.c_str();
   const char *layout_kv_ptr = layout_kv_.c_str();
 

@@ -170,6 +170,11 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
   auto task = [&](size_t start, size_t end) {
     for (size_t b = start; b < end; b++) {
       int64_t in_len = in_len_p[b];
+      // IndexProcessing guarantees that a zero-length input also has an empty target.
+      if (in_len == 0) {
+        neg_log_p[b] = 0;
+        continue;
+      }
       int64_t tar_len = tar_len_p[b];
       int64_t offset = target_offsets[b];
       log_alpha_p[log_alpha_it(b, 0, 0)] = log_probs_p[log_probs_it(0, b, blank_)];
