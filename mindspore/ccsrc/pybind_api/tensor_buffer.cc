@@ -46,6 +46,7 @@ void SaveTensorToBuf(const py::object &tensor_obj, const py::object &buf, const 
     MS_EXCEPTION(TypeError) << "tensor must be a MindSpore Tensor.";
   }
   TensorPtr src_tensor = ConvertToTensor(tensor_obj);
+  MS_EXCEPTION_IF_NULL(src_tensor);
 
   // Materialize data produced by asynchronous PyNative work before reading the source address. WaitForward uses
   // GilReleaseWithCheck while it blocks, allowing other Python threads to make progress, and reacquires the GIL before
@@ -72,6 +73,7 @@ void SaveTensorToBuf(const py::object &tensor_obj, const py::object &buf, const 
     MS_LOG(INTERNAL_EXCEPTION) << "failed to create tensor view on buffer.";
   }
   TensorPtr dst_tensor = ConvertToTensor(dst_tensor_obj);
+  MS_EXCEPTION_IF_NULL(dst_tensor);
 
   // Copy source bytes into the buffer-backed Tensor. HostCopy handles same-type memcpy and supported host-side dtype
   // conversions; checkpoint callers normally use an identical source and destination dtype for byte-exact storage.
@@ -95,6 +97,7 @@ py::object LoadTensorFromBuf(const py::object &buf, const py::object &dtype, con
     MS_LOG(INTERNAL_EXCEPTION) << "failed to create tensor from buffer.";
   }
   TensorPtr tensor_ptr = ConvertToTensor(flat_tensor);
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
 
   // Apply the checkpoint shape as metadata while reusing the same device address. No element-count check is performed
   // here, so callers must ensure that product(shape) matches count (or the count inferred from the remaining buffer).
