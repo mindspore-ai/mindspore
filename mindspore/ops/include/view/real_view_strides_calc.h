@@ -22,6 +22,8 @@
 namespace mindspore {
 namespace ops {
 using BasicCalcResult = std::pair<TensorStorageInfoPtr, TypeId>;
+OPS_API BasicCalcResult RealImagViewStridesCalc(const OldTensorInfoPtr &old_tensor_info, TypeId input_data_type,
+                                                bool is_real);
 OPS_API BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor, bool is_real);
 OPS_API BasicCalcResult RealViewBasicTypeCalc(const tensor::TensorPtr &input_tensor);
 

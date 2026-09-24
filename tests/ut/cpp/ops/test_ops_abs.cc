@@ -17,6 +17,20 @@
 
 namespace mindspore {
 namespace ops {
-INSTANTIATE_TEST_CASE_P(Abs, GeneralInferTest, single_input_eltwise_op_default_cases);
+namespace {
+std::vector<GeneralInferParam> AbsInferParams() {
+  auto params = single_input_eltwise_op_params();
+  GeneralInferParamGenerator generator;
+  generator.FeedInputArgs({InferInfoParam{ShapeVector{2, 3}, kNumberTypeComplex64}})
+    .FeedExpectedOutput({{2, 3}}, {kNumberTypeFloat32});
+  generator.FeedInputArgs({InferInfoParam{ShapeVector{2, -1}, kNumberTypeComplex128}})
+    .FeedExpectedOutput({{2, -1}}, {kNumberTypeFloat64});
+  auto complex_params = generator.Generate();
+  params.insert(params.end(), complex_params.begin(), complex_params.end());
+  return params;
+}
+}  // namespace
+
+INSTANTIATE_TEST_CASE_P(Abs, GeneralInferTest, testing::ValuesIn(AbsInferParams()));
 }  // namespace ops
 }  // namespace mindspore

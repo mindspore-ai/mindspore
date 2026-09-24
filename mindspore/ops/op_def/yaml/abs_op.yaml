@@ -10,3 +10,4 @@ abs:
         name: Abs
     dispatch:
         enable: True
+        Ascend: AbsAscend
