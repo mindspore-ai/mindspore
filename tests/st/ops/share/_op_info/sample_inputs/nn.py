@@ -5869,6 +5869,163 @@ def error_sample_inputs_mint_nn_conv_transpose2d(op_info: OpInfo, dtype=None, de
         op_error_info='wrong output size'
     )
 
+def basic_sample_inputs_tensor_fold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    yield OpSampleInput(
+        op_input=make_arg(shape=(1, 12, 12)),
+        op_args=(ms.Tensor(np.array([4, 5]), ms.int32), 2, 1, 0, 1),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_input_must_3d_kwargs_int"
+    )
+    yield OpSampleInput(
+        op_input=make_arg(shape=(4, 64, 55)),
+        op_args=(ms.Tensor(np.array([32, 32]), ms.int64), [8, 8], (2, 3), 2, (2, 3)),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_input_must_3d_kwargs_sequence"
+    )
+    yield OpSampleInput(
+        op_input=make_arg(shape=(9, 9, 4)),
+        op_args=(ms.Tensor(np.array([6, 8]), ms.int32), 3, [2, 1], [0, 1], 2),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_input_must_3d_kwargs_sequence2"
+    )
+
+def extra_sample_inputs_tensor_fold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
+    #for empty shape
+    yield OpSampleInput(
+            op_input=make_arg(shape=(0, 12, 12)),
+        op_args=(ms.Tensor(np.array([4, 6]), ms.int32), [2, 1], [1, 2], [0, 1], [1, 2]),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_empty_shape"
+    )
+    #for large shape
+    yield OpSampleInput(
+        op_input=make_arg(shape=(256, 256, 25)),
+        op_args=(ms.Tensor(np.array([8, 8]), ms.int32), 2, 2, 2, 2),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_large_shape"
+    )
+    values = small_large_values(dtype)
+    #for small/large values
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice(values, size=(4, 64, 55)), dtype=dtype),
+        op_args=(ms.Tensor(np.array([32, 32]), ms.int64), [8, 8], (2, 3), 2, (2, 3)),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_small_large_values"
+    )
+    #for inf/nan values
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.random.choice([np.inf, -np.inf, np.nan, 1024], size=(4, 64, 55)), dtype=dtype),
+        op_args=(ms.Tensor(np.array([32, 32]), ms.int64), [8, 8], (2, 3), 2, (2, 3)),
+        op_kwargs={},
+        sample_name=f"{op_info.name}_{dtype}_extremal_values"
+    )
+    #for discontiguous values
+    for discontiguous in [True, False]:
+        yield OpSampleInput(
+            op_input=make_arg(shape=(10, 12, 4), discontiguous=discontiguous),
+            op_args=(ms.Tensor(np.array([1, 1]), ms.int64), 1, 1, 1, 2),
+            op_kwargs={},
+            sample_name=f"{op_info.name}_{dtype}_discontiguous_{discontiguous}"
+        )
+
+def error_sample_inputs_tensor_fold(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_arg = functools.partial(make_tensor, device=device, dtype=ms.float32)
+    #input is not tensor
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=np.random.uniform(0, 10, (1, 12, 4)),
+            op_args=(ms.Tensor(np.array([1, 1]), ms.int64), 2, 1, 1, 2),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=(TypeError, AttributeError),
+        op_error_info='input is not tensor'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(1.0, (1, 1), 70, 0, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=TypeError,
+        op_error_info='output_size is not tensor'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5, 6]), ms.int64), 1.0, 1, 0, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=TypeError,
+        op_error_info='kernel_size is not int'
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5, 6]), ms.int64), (1, 1), 1.0, 0, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=TypeError,
+        op_error_info='dilation is not int'
+    )
+
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5, 6]), ms.int64), (1, 1), 1, 0, 1.0),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=TypeError,
+        op_error_info='stride_float is not int'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 3, 3, 3), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5, 6]), ms.int64), (1, 1), 1, 1, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=(TypeError, ValueError),
+        op_error_info='input is not 3D'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5,]), ms.int64), (1, 1), 1, 0, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=(TypeError, ValueError),
+        op_error_info='output_size is not 1D'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5, 6]), ms.bool), (1, 1), 1, 0, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=(TypeError, ValueError),
+        op_error_info='output_size dtype is not int'
+    )
+    yield OpErrorInput(
+        op_sample_input=OpSampleInput(
+            op_input=make_arg(shape=(3, 3, 30), dtype=ms.float32),
+            op_args=(ms.Tensor(np.array([5, 6]), ms.bool), (1, 1, 1), 1, 0, (1, 1)),
+            op_kwargs={},
+            sample_name=f"{op_info.name}"
+        ),
+        op_error_type=(TypeError, ValueError),
+        op_error_info='kernel_size length is invalid'
+    )
+
 def basic_sample_inputs_mint_nn_fold(op_info: OpInfo, dtype=None, device=None, **kwargs):
     make_arg = functools.partial(make_tensor, device=device, dtype=dtype)
     yield OpSampleInput(

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test tensor.masked_select """
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark
@@ -25,7 +26,7 @@ class Net(nn.Cell):
         return x.masked_select(mask)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

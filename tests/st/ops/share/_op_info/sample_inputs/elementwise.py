@@ -3809,6 +3809,155 @@ def basic_reference_inputs_tensor_isreal(op_info: OpInfo, dtype=None, device=Non
 
         yield sample_input
 
+def basic_sample_inputs_mvlgamma_tensor(op_info: OpInfo, dtype=None, device=None):
+    cases = (
+        (ms.Tensor(np.random.uniform(1, 20, size=(2,)), dtype=dtype), 1),
+        (ms.Tensor(np.random.uniform(1.5, 100, size=(2, 3)), dtype=dtype), 3),
+        (ms.Tensor(np.random.uniform(6, 100, size=(12, 3, 4)), dtype=dtype), 12),
+        (ms.Tensor(np.random.uniform(20, 200, size=(2, 13, 24, 5)), dtype=dtype), 23),
+        (ms.Tensor(np.random.uniform(2, 100, size=(12, 3, 4, 5, 6)), dtype=dtype), 4),
+        (ms.Tensor(np.random.uniform(3, 20, size=(2, 3, 4, 5, 6, 7)), dtype=dtype), 5),
+        (ms.Tensor(np.random.uniform(50, 100, size=(2, 3, 4, 5, 6, 7, 8)), dtype=dtype), 46),
+    )
+    for input_shape, p_values in cases:
+        yield OpSampleInput(
+            op_input=input_shape,
+            op_args=(p_values,),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+
+def error_inputs_mvlgamma_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    cases = ((ms.Tensor(np.random.uniform(1, 20, size=(2,)), dtype=dtype), 1.11),#p not int
+             ([ms.Tensor(np.random.uniform(1, 20, size=(2,)), dtype=dtype)], 1),  # input list tensor
+             (ms.Tensor(np.random.uniform(1, 20, size=(2,)), dtype=dtype), -101),  # p < 1
+             (ms.Tensor([[1, 1, 0], [0, 1, -1]], dtype=dtype), 1),  # input elements (p-1)/2< 1
+             )
+
+    for input_shape, p_values in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(p_values,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_params_value_error",
+            ),
+            op_error_type=(ValueError, TypeError, AttributeError, RuntimeError),
+            op_error_info=f'params error values is not supported for {op_info.name}',
+        )
+
+def dynamic_sample_inputs_mvlgamma_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device, low=0, high=9)
+
+    if not kwargs.get("only_dynamic_rank", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, 8, None), dtype=dtype),
+                op_args=(1,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(7, 8, 5)),
+                    op_args=(1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3, 8, 9)),
+                    op_args=(1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+
+    if not kwargs.get("only_dynamic_shape", False):
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(1,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(9, 4, 7, 7)),
+                    op_args=(1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 8, 4, 7, 3, 4, 9)),
+                    op_args=(1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
+        )
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(1,),
+                op_kwargs={},
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input_groups2",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5)),
+                    op_args=(1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input_groups2",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(3,)),
+                    op_args=(1,),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input_groups2",
+                ),
+            ),
+        )
+
+def extra_sample_inputs_mvlgamma_tensor(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    # single inf
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.array([float('inf'), 2.0, 3.0]), dtype=dtype),
+        op_args=(2,),
+        op_kwargs={},
+        sample_name=f'{op_info.name}_{dtype}_input_single_inf',
+    )
+    # all inf
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.array([float('inf'), float('inf')]), dtype=dtype),
+        op_args=(1,),
+        op_kwargs={},
+        sample_name=f'{op_info.name}_{dtype}_input_all_inf',
+    )
+    #p=3, input element> 1, set 1.0001
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.array([1.0001, 2.0]), dtype=dtype),
+        op_args=(3,),
+        op_kwargs={},
+        sample_name=f'{op_info.name}_{dtype}_input_boundary',
+    )
+    #shape 0
+    yield OpSampleInput(
+        op_input=ms.Tensor(np.array([]).reshape(0, 3), dtype=dtype),
+        op_args=(2,),
+        op_kwargs={},
+        sample_name=f'{op_info.name}_{dtype}_shape_0',
+    )
+    #non contiguous
+    row_data = np.random.uniform(2, 10, size=(10, 10)).astype(np.float32)
+    non_contiguous_data = row_data[::2, ::2]
+    yield OpSampleInput(
+        op_input=ms.Tensor(non_contiguous_data, dtype=dtype),
+        op_args=(3,),
+        op_kwargs={},
+        sample_name=f'{op_info.name}_{dtype}_non_contiguous',
+    )
+
 def basic_sample_inputs_tensor_divide_(op_info: BinaryOpInfo, dtype=None, device=None, **kwargs):
     XS = EXTRA_SMALL_DIM_SIZE
     S = EXTRA_SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else SMALL_DIM_SIZE

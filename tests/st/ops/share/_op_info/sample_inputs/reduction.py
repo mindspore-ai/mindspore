@@ -184,6 +184,269 @@ def extra_sample_inputs_reduction_count_nonzero(op_info, dtype, device=None, **k
         sample_input.op_kwargs.pop('keepdim', None)
         yield sample_input
 
+def basic_sample_inputs_reduction_with_tensor_min(op_info, dtype, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+    M = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else MEDIUM_DIM_SIZE
+    L = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else LARGE_DIM_SIZE
+
+    make_func = functools.partial(
+        make_tensor,
+        device=device,
+        dtype=dtype,
+    )
+    # Generate tensors of different dimensions
+    shapes = [
+        (),
+        (S,),
+        (M, S),
+        (S, S, L),
+        (5, 3, 4, 2),
+    ]
+
+    for shape in shapes:
+        ndim = len(shape)
+
+        # Default: full reduction
+        yield OpSampleInput(
+            op_input=make_func(shape),
+            op_kwargs={},
+            sample_name=f'{op_info.name}_{dtype}_default_{ndim}d'
+        )
+
+        # dim=None with keepdim=True
+        yield OpSampleInput(
+            op_input=make_func(shape),
+            op_kwargs={'axis': None, 'keepdims': True},
+            sample_name=f'{op_info.name}_{dtype}_dim_none_default_keepdim_{ndim}d'
+        )
+
+        yield OpSampleInput(
+            op_input=make_func(shape),
+            op_kwargs={'axis': 0, 'keepdims': True},
+            sample_name=f'{op_info.name}_{dtype}_dim0_keepdim_{ndim}d'
+        )
+
+        yield OpSampleInput(
+            op_input=make_func(shape),
+            op_kwargs={'axis': -1, 'keepdims': False},
+            sample_name=f'{op_info.name}_{dtype}_dim_last_{ndim}d'
+        )
+
+        if ndim > 2:
+            yield OpSampleInput(
+                op_input=make_func(shape),
+                op_kwargs={'axis': 1, 'keepdims': True},
+                sample_name=f'{op_info.name}_{dtype}_dim1_{ndim}d'
+            )
+
+            if ndim >= 4:
+                yield OpSampleInput(
+                    op_input=make_func(shape),
+                    op_kwargs={'axis': 3, 'keepdims': False},
+                    sample_name=f'{op_info.name}_{dtype}_dim3_{ndim}d'
+                )
+
+        if getattr(op_info, 'supports_multiple_dims', True):
+            # Test all dimensions
+            yield OpSampleInput(
+                op_input=make_func(shape),
+                op_kwargs={
+                    'axis': tuple(range(ndim)),
+                    'keepdims': False
+                },
+                sample_name=f'{op_info.name}_{dtype}_dim_all_{ndim}d'
+            )
+
+            # Test partial multi-dim reduction: first and last
+            if ndim > 1:
+                yield OpSampleInput(
+                    op_input=make_func(shape),
+                    op_kwargs={'axis': (0, -1), 'keepdims': True},
+                    sample_name=f'{op_info.name}_{dtype}_dim_0_last_{ndim}d'
+                )
+
+                if ndim >= 4:
+                    yield OpSampleInput(
+                        op_input=make_func(shape),
+                        op_kwargs={'axis': (0, 2), 'keepdims': False},
+                        sample_name=f'{op_info.name}_{dtype}_dim_0_2_{ndim}d'
+                    )
+                    yield OpSampleInput(
+                        op_input=make_func(shape),
+                        op_kwargs={'axis': (1, 3), 'keepdims': True},
+                        sample_name=f'{op_info.name}_{dtype}_dim_1_3_{ndim}d'
+                    )
+    for i in [-1,0,2,1]:
+        yield OpSampleInput(
+            op_input=make_tensor(
+                (5,),
+                dtype=dtype,device=device,
+            ),
+            op_kwargs={'axis':0, 'keepdims':True, 'initial':i, 'where': ms.Tensor([False, True, False, True, False]),
+                       'return_indices':False},
+            sample_name=f'{op_info.name}_{dtype}_correction{i}_dim1'
+        )
+        where_tensor = ms.Tensor([[True, True, True, True, True],
+                                  [True, True, True, True, True],
+                                  [True, True, True, True, True],
+                                  [True, True, True, True, True],
+                                  [True, True, True, True, True]])
+        yield OpSampleInput(
+            op_input=make_tensor(
+                (5,5),
+                dtype=dtype, device=device,
+            ),
+            op_kwargs={'axis': (0,1), 'keepdims': True, 'initial':i, 'where': where_tensor, 'return_indices':True},
+            sample_name=f'{op_info.name}_{dtype}_correction{i}_dim2'
+        )
+
+def extra_reference_inputs_reduction_op_tensor_min_func(
+    op_info: OpInfo,
+    dtype,
+    device=None,
+    **kwargs
+):
+    S = SMALL_DIM_SIZE
+    make_func = functools.partial(
+        make_tensor,
+        device=device,
+        dtype=dtype,
+    )
+    def make_from_np(np_array):
+        return make_tensor_with_np_array(np_array.astype(np.bool_), device=device)
+    # Empty tensors
+    yield OpSampleInput(
+        op_input=make_func((0, S)),
+        op_kwargs={'axis': 0, 'initial':0, 'where': ms.Tensor([]).reshape((0, S)), 'return_indices':False},
+        sample_name=f'{op_info.name}_{dtype}_empty_dim0'
+    )
+
+    yield OpSampleInput(
+        op_input=make_func((S, 0)),
+        op_kwargs={'axis': 1, 'initial':0, 'where': ms.Tensor([]).reshape((S, 0)), 'return_indices':False},
+        sample_name=f'{op_info.name}_{dtype}_empty_dim1'
+    )
+
+    # Single element tensors
+    yield OpSampleInput(
+        op_input=make_func((1,)),
+        op_kwargs={'axis': 0, 'initial':0, 'where': ms.Tensor([True]), 'return_indices':False},
+        sample_name=f'{op_info.name}_{dtype}_single_element_1d_default'
+    )
+
+    yield OpSampleInput(
+        op_input=make_func((1, 1, 1)),
+        op_kwargs={'axis': 1, 'initial':0, 'where': ms.Tensor([[[True]]]), 'return_indices':True},
+        sample_name=f'{op_info.name}_{dtype}_single_element_3d_dim1'
+    )
+
+    # Large dimension (only meaningful for operators supporting multi-dim reductions)
+    if getattr(op_info, 'supports_multiple_dims', True):
+        yield OpSampleInput(
+            op_input=make_func((S, S, S, S, S)),
+            op_kwargs={'axis': (1, 3), 'keepdims': True, 'initial':0,
+                       'where': make_from_np(np.ones((S, S, S, S, S), dtype=np.bool_)), 'return_indices':False},
+            sample_name=f'{op_info.name}_{dtype}_5d_multi_dim'
+        )
+
+    # Duplicate values test - numerical stability
+    t = make_func((4, 4))
+    yield OpSampleInput(
+        op_input=t,
+        op_kwargs={'axis': 1, 'keepdims': True, 'initial':1, 'where':
+            make_from_np(np.ones((4, 4), dtype=np.bool_)), 'return_indices':False},
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_default'
+    )
+
+    yield OpSampleInput(
+        op_input=make_func((4, 4)),
+        op_kwargs={'axis': 0, 'keepdims': True, 'initial':0, 'where': make_from_np(np.ones((4, 4), dtype=np.bool_)),
+                   'return_indices':True},
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_dim0'
+    )
+
+    yield OpSampleInput(
+        op_input=make_func((4, 4)),
+        op_kwargs={'axis': 1, 'keepdims': True, 'initial':1, 'where': make_from_np(np.ones((4, 4), dtype=np.bool_)),
+                   'return_indices':False},
+        sample_name=f'{op_info.name}_{dtype}_duplicate_values_dim1'
+    )
+
+    # Extremal values test - only for floating point types
+    if dtype.is_floating_point:
+        # inf and nan is unsupported on Ascend910 devices.
+        skip_inf_nan = False
+        if device == 'ascend':
+            ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            if ascend_name == 'ascend910':
+                skip_inf_nan = True
+
+        # Test with different extremal values
+        extremal_cases = [
+            (0.0, 'zero'),
+            (1.0, 'one'),
+        ]
+
+        # Only add inf and nan cases if not on Ascend910
+        if not skip_inf_nan:
+            extremal_cases.extend([
+                (float('nan'), 'nan'),
+                (float('inf'), 'inf'),
+                (float('-inf'), 'neg_inf'),
+            ])
+
+        for extremal_val, name_suffix in extremal_cases:
+            t = make_func((5,))
+            t[2] = extremal_val
+            yield OpSampleInput(
+                op_input=t,
+                op_kwargs={},
+                sample_name=f'{op_info.name}_{dtype}_default_extremal_{name_suffix}'
+            )
+
+    # Large input tests - numerical stability
+    LARGE_1D_SIZE = 2 ** 20
+    yield OpSampleInput(
+        op_input=make_func((LARGE_1D_SIZE,)),
+        op_kwargs={},
+        sample_name=f'{op_info.name}_{dtype}_default_large_1d_stability'
+    )
+
+    LARGE_2D_SIZE = 2 ** 16
+    yield OpSampleInput(
+        op_input=make_func((32, LARGE_2D_SIZE)),
+        op_kwargs={'axis': 1},
+        sample_name=f'{op_info.name}_{dtype}_large_2d_stability_dim1'
+    )
+
+def error_inputs_tensor_min_op(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    S = SMALL_DIM_SIZE if kwargs.get("only_small_tensor_size", False) else EXTRA_SMALL_DIM_SIZE
+
+    make_func = functools.partial(
+        make_tensor,
+        device=device,
+        dtype=dtype,
+    )
+    cases = ((make_func((S,)), 1.211, True, 1, ms.Tensor([True]), True),#axis is not int
+             (make_func((S,)), 1, "True", 1, ms.Tensor([True]), True), # keepdims is not bool
+             (make_func((S,)), 1, True, [1, 3], ms.Tensor([True]), True),  # initial is not scalar
+             (make_func((S,)), 1, True, 1, "true", True),  # where is not tensor bool
+             (make_func((S,)), 1, True, 1,  ms.Tensor([True]), "True"),  # return_indices is not bool
+             (1, 1, True, 1, ms.Tensor([True]), True),  # input is not tensor
+             )
+    for input_shape, axis, keepdims, initial, where, return_indices in cases:
+        yield OpErrorInput(
+            op_sample_input=OpSampleInput(
+                op_input=input_shape,
+                op_args=(),
+                op_kwargs={'axis': axis, 'keepdims': keepdims, 'initial':initial, 'where': where,
+                   'return_indices':return_indices},
+                sample_name=f"{op_info.name}_index_type_error",
+            ),
+            op_error_type=ValueError,
+            op_error_info=f'index error type is not supported for {op_info.name}',
+        )
+
 def basic_sample_inputs_reduction_with_correction(op_info, dtype, device=None, **kwargs):
     """count_nonzero does not have keepdim parameter"""
     yield from basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs)

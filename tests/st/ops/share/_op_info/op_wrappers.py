@@ -54,6 +54,12 @@ def tensor_clone_ms(op_input):
 def tensor_clone_torch(op_input):
     return op_input.clone()
 
+def tensor_frac_ms(op_input):
+    return op_input.frac()
+
+def tensor_frac_torch(op_input):
+    return op_input.frac()
+
 # wrap tensor method for contiguous
 def tensor_contiguous_ms(op_input):
     return op_input.contiguous()
@@ -396,6 +402,12 @@ def mint_narrow_ms(op_input, dim=0, start=0, length=0):
 def mint_narrow_torch(op_input, dim=0, start=0, length=0):
     return torch.narrow(op_input, dim=dim, start=start, length=length)
 
+def tensor_narrow_ms(op_input, dim=0, start=0, length=0):
+    return op_input.narrow(dim=dim, start=start, length=length)
+
+def tensor_narrow_torch(op_input, dim=0, start=0, length=0):
+    return op_input.narrow(dim=dim, start=start, length=length)
+
 # wrap nn method for batchnorm1d
 def nn_batchnorm1d_ms(op_input, num_features, eps, momentum, affine, track_running_stats, dtype=None):
     op = mint.nn.BatchNorm1d(
@@ -580,6 +592,36 @@ def tensor_inner_ms(op_input, other):
 def tensor_inner_torch(op_input, other):
     return op_input.inner(other)
 
+def tensor_hypot_ms(op_input, other):
+    return op_input.hypot(other)
+
+def tensor_hypot_torch(op_input, other):
+    return op_input.hypot(other)
+
+def tensor_igamma_ms(op_input, other):
+    return op_input.igamma(other)
+
+def tensor_igamma_torch(op_input, other):
+    return op_input.igamma(other)
+
+def tensor_igammac_ms(op_input, other):
+    return op_input.igammac(other)
+
+def tensor_igammac_torch(op_input, other):
+    return op_input.igammac(other)
+
+def tensor_logaddexp_ms(op_input, other):
+    return op_input.logaddexp(other)
+
+def tensor_logaddexp_torch(op_input, other):
+    return op_input.logaddexp(other)
+
+def tensor_histc_ms(op_input, bins=100, min=0, max=0):
+    return op_input.histc(bins=bins, min=min, max=max)
+
+def tensor_histc_torch(op_input, bins=100, min=0, max=0):
+    return op_input.histc(bins=bins, min=min, max=max)
+
 # wrap tensor method for logical_and
 def tensor_logical_and_ms(op_input, args):
     return op_input.logical_and(args)
@@ -693,6 +735,12 @@ def tensor_split_ms(op_input, args, dim):
 def tensor_split_torch(op_input, args, dim):
     return op_input.split(args, dim)
 
+def tensor_hsplit_ms(op_input, indices_or_sections):
+    return op_input.hsplit(indices_or_sections)
+
+def tensor_hsplit_torch(op_input, indices_or_sections):
+    return op_input.hsplit(indices_or_sections)
+
 # wrap tensor method for index_select
 def tensor_index_select_ms(op_input, dim, index):
     return op_input.index_select(dim, index)
@@ -746,6 +794,12 @@ def nn_adaptiveavgpool3d_torch(op_input, output_size):
 def tensor_gather_ms(input, dim, index):
     return input.gather(dim, index)
 
+def tensor_gather_nd_ms(op_input, indices):
+    return op_input.gather_nd(indices)
+
+def tensor_gather_elements_ms(op_input, dim, index):
+    return op_input.gather_elements(dim, index)
+
 def tensor_gather_overload_ms(input, input_indices, axis):
     return input.gather(input_indices, axis)
 
@@ -796,6 +850,12 @@ def tensor_mint_nansum(op_input, dim=None, keepdim=False, dtype=None):
 #  nansum has keyword parameters dtype,so for matching cases make this fouctions
 def tensor_torch_nansum(op_input, dim=None, keepdim=False, dtype=None):
     return torch.nansum(op_input, dim, keepdim, dtype=dtype)
+
+def tensor_nansum_ms(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.nansum(dim, keepdim, dtype=dtype)
+
+def tensor_nansum_torch(op_input, dim=None, keepdim=False, dtype=None):
+    return op_input.nansum(dim, keepdim, dtype=dtype)
 
 def tensor_mint_where(condition, op_input, other):
     return mint.where(condition=condition, input=op_input, other=other)
@@ -1665,6 +1725,14 @@ def nn_conv_transpose2d_torch(op_input, in_channels, out_channels, kernel_size, 
         conv2d_layer.bias = torch.nn.Parameter(bias_init)
     return conv2d_layer(op_input, output_size=output_size)
 
+def tensor_fold_ms(op_input, output_size, kernel_size, dilation=1, padding=0, stride=1):
+    return op_input.fold(output_size=output_size, kernel_size=kernel_size, dilation=dilation,
+                         padding=padding, stride=stride)
+
+# def tensor_fold_torch(op_input, output_size, kernel_size, dilation=1, padding=0, stride=1):
+#     return op_input.fold(output_size=output_size, kernel_size=kernel_size, dilation=dilation,
+#                          padding=padding, stride=stride)
+
 def mint_nn_fold(op_input, output_size, kernel_size, dilation, padding, stride):
     net=mint.nn.Fold(output_size, kernel_size, dilation, padding, stride)
     return net(op_input)
@@ -2302,6 +2370,12 @@ def ms_tensor_flip(op_input, dim):
 def torch_tensor_flip(op_input, dim):
     return op_input.flip(dim)
 
+def tensor_moveaxis_ms(op_input, source, destination):
+    return op_input.moveaxis(source=source, destination=destination)
+
+def tensor_moveaxis_torch(op_input, source, destination):
+    return op_input.moveaxis(source=source, destination=destination)
+
 def mint_bernoulli(input, generator=None):
     return mint.bernoulli(input, generator=generator)
 
@@ -2325,6 +2399,12 @@ def tensor_mint_lt(input, other):
 
 def tensor_torch_lt(input, other):
     return torch.lt(input, other)
+
+def tensor_mm_ms(op_input, mat2):
+    return op_input.mm(mat2)
+
+def tensor_mm_torch(op_input, mat2):
+    return op_input.mm(mat2)
 
 def tensor_mint_floor_divide(input, other):
     return mint.floor_divide(input, other)
@@ -2357,6 +2437,18 @@ def tensor_acos_ms(op_input):
 def tensor_acosh_ms(op_input):
     return op_input.acosh()
 
+def tensor_median_unary_ms(op_input):
+    return op_input.median()
+
+def tensor_median_unary_torch(op_input):
+    return op_input.median()
+
+def tensor_min_unary_ms(op_input):
+    return op_input.min()
+
+def tensor_min_unary_torch(op_input):
+    return op_input.min()
+
 # wrap tensor method for add
 def tensor_add_ms_overload(op_input, other):
     return op_input.add(other)
@@ -2379,6 +2471,65 @@ def tensor_any_torch(op_input, dim=None, keepdim=False):
     if dim==None:
         return op_input.any()
     return op_input.any(dim=dim, keepdim=keepdim)
+
+def tensor_median_ms(op_input, dim=None, keepdim=False):
+    if dim==None:
+        return op_input.median()
+    return op_input.median(dim=dim, keepdim=keepdim)
+
+def tensor_median_torch(op_input, dim=None, keepdim=False):
+    if dim==None:
+        return op_input.median()
+    return op_input.median(dim=dim, keepdim=keepdim)
+
+def tensor_min_ms(op_input, dim, keepdim=False):
+    return op_input.min(dim=dim, keepdim=keepdim)
+
+def tensor_min_torch(op_input, dim, keepdim=False):
+    return op_input.min(dim=dim, keepdim=keepdim)
+
+def tensor_mvlgamma_ms(op_input, p):
+    return op_input.mvlgamma(p)
+
+def tensor_mvlgamma_torch(op_input, p):
+    return op_input.mvlgamma(p)
+
+def tensor_nan_to_num_ms(op_input, nan=None, posinf=None, neginf=None):
+    return op_input.nan_to_num(nan=nan, posinf=posinf, neginf=neginf)
+
+def tensor_nan_to_num_torch(op_input, nan=None, posinf=None, neginf=None):
+    return op_input.nan_to_num(nan=nan, posinf=posinf, neginf=neginf)
+
+def tensor_masked_select_ms(op_input, mask):
+    return op_input.masked_select(mask)
+
+def tensor_masked_select_torch(op_input, mask):
+    return op_input.masked_select(mask)
+
+def tensor_masked_fill__ms(op_input, mask, value):
+    cloned_input = op_input.clone()
+    cloned_input.masked_fill_(mask, value)
+    return cloned_input
+
+def tensor_masked_fill__torch(op_input, mask, value):
+    cloned_input_pt = op_input.clone()
+    cloned_input_pt.masked_fill_(mask, value)
+    return cloned_input_pt
+
+def tensor_nanmedian_ms(op_input, axis=-1, keepdims=False):
+    return op_input.nanmedian(axis=axis, keepdims=keepdims)
+
+def tensor_nanmedian_torch(op_input, axis=-1, keepdims=False):
+    return op_input.nanmedian(axis=axis, keepdims=keepdims)
+
+def tensor_nanmean_ms(op_input, axis=None, keepdims=False, dtype=None):
+    return op_input.nanmean(axis=axis, keepdims=keepdims, dtype=dtype)
+
+def tensor_nanmean_torch(op_input, axis=None, keepdims=False, dtype=None):
+    return op_input.nanmean(axis=axis, keepdims=keepdims, dtype=dtype)
+
+def tensor_min_override_ms(op_input, axis=None, keepdims=False, initial=None, where=True, return_indices=False):
+    return op_input.min(axis=axis, keepdims=keepdims, initial=initial, where=where, return_indices=return_indices)
 
 def tensor_any_ms_override(op_input, axis=None, keep_dims=False):
     if axis==None:
@@ -2683,11 +2834,23 @@ def tensor_cross_ms(op_input, other, dim=None):
 def tensor_cross_torch(op_input, other, dim=None):
     return op_input.cross(other, dim=dim)
 
+def tensor_ms_from_numpy(op_input):
+    return ms.Tensor.from_numpy(op_input)
+
+def tensor_torch_from_numpy(op_input):
+    return torch.from_numpy(op_input)
+
 def tensor_ms_item(input):
     return input.item()
 
 def tensor_torch_item(input):
     return input.item()
+
+def tensor_ms_nbytes(op_input):
+    return op_input.nbytes
+
+def tensor_torch_nbytes(op_input):
+    return op_input.nbytes
 
 def tensor_ms_itemsize(input):
     return input.itemsize
