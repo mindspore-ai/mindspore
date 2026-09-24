@@ -12,6 +12,7 @@ cdist:
             The signature will change to
             ``mindspore.ops.cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary')``.
             This change is backward-compatible; behavior is unchanged when `compute_mode` is not specified.
+            On Ascend, CANN 8.5.0_0120 or a later version is required.
 
         Args:
             x1 (Tensor): Input tensor of shape :math:`(B, P, M)`.

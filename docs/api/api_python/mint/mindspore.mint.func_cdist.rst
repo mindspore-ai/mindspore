@@ -7,6 +7,7 @@ mindspore.mint.cdist
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
+        在Ascend上，要求配套CANN版本为CANN8.5.0_0120及之后的版本。
 
     .. note::
         Ascend上支持的输入数据类型为mindspore.float16和mindspore.float32。

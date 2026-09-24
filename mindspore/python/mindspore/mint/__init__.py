@@ -1410,7 +1410,8 @@ def cdist(x1, x2, p=2.0, compute_mode='use_mm_for_euclid_dist_if_necessary'):
     Compute p-norm distance between each pair of row vectors of two input tensors.
 
     .. warning::
-        This is an experimental optimizer API that is subject to change.
+        This is an experimental API that is subject to change.
+        On Ascend, CANN 8.5.0_0120 or a later version is required.
 
     Note:
         On Ascend, the supported dtypes are mindspore.float16 and mindspore.float32.
