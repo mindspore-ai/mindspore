@@ -194,7 +194,7 @@ from mindspore.ops.functional import logical_or
 # 68
 from mindspore.ops.functional import logical_xor
 # 69
-from mindspore.ops.functional import less_equal, le
+from mindspore.ops.functional_overload import less_equal, le
 # 70
 from mindspore.ops.functional import negative, neg
 # 71

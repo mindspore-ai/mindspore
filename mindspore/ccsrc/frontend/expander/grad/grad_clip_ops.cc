@@ -113,35 +113,22 @@ REG_BPROP_BUILDER("ClampMin").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("ClampScalar").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
-  auto min = ib->GetInput(i1);
-  auto max = ib->GetInput(i2);
+  const auto &min = ib->GetInput(i1);
+  const auto &max = ib->GetInput(i2);
   const auto &dout = ib->GetInput(i4);
   auto zero = ib->Tensor(0, ib->GetDtype(dout));
   bool min_type_none = ib->GetDtype(min)->isa<TypeNone>();
   bool max_type_none = ib->GetDtype(max)->isa<TypeNone>();
 
-  if (!min_type_none) {
-    min = ib->ScalarToTensor(min, ib->GetDtype(min));
-    if (ib->GetDtype(x)->type_id() != ib->GetDtype(min)->type_id()) {
-      min = ib->Cast(min, ib->GetDtype(x)->type_id());
-    }
-  }
-  if (!max_type_none) {
-    max = ib->ScalarToTensor(max, ib->GetDtype(min));
-    if (ib->GetDtype(x)->type_id() != ib->GetDtype(max)->type_id()) {
-      max = ib->Cast(max, ib->GetDtype(x)->type_id());
-    }
-  }
-
   if (!min_type_none && !max_type_none) {
-    auto is_in_Interval = ib->LogicalAnd(ib->GreaterEqual(x, min), ib->LessEqual(x, max));
+    auto is_in_Interval = ib->LogicalAnd(ib->GreaterEqualScalar(x, min), ib->LessEqualScalar(x, max));
     return {ib->Select(is_in_Interval, dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
   }
   if (!min_type_none) {
-    return {ib->Select(ib->GreaterEqual(x, min), dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
+    return {ib->Select(ib->GreaterEqualScalar(x, min), dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
   }
   if (!max_type_none) {
-    return {ib->Select(ib->LessEqual(x, max), dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
+    return {ib->Select(ib->LessEqualScalar(x, max), dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
   }
 
   return {dout, ib->OutZeros(min), ib->OutZeros(max)};

@@ -1028,6 +1028,10 @@ NodePtr FuncBuilder::GreaterEqualScalar(const NodePtr &input, const NodePtr &oth
   return NativeFunc::GreaterEqualScalar(input, other);
 }
 
+NodePtr FuncBuilder::LessEqualScalar(const NodePtr &input, const NodePtr &other) {
+  return NativeFunc::LeScalar(input, other);
+}
+
 NodePtr FuncBuilder::HSigmoidGrad(const NodePtr &grads, const NodePtr &input_x) {
   return NativeFunc::HSigmoidGrad(grads, input_x);
 }

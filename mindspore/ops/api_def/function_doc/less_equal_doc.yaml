@@ -1,0 +1,37 @@
+less_equal:
+  description: |
+    less_equal(input, other) -> Tensor
+
+    Compute the value of :math:`input <= other` element-wise.
+
+    .. math::
+        out_{i} = \begin{cases}
+            & \text{True,    if } input_{i}<=other_{i} \\
+            & \text{False,   if } input_{i}>other_{i}
+            \end{cases}
+
+    .. note::
+        - Supports implicit type conversion.
+        - When the inputs are one tensor and one scalar, the scalar can only be a constant.
+
+    Args:
+        input (Union[Tensor, Number, bool]): The first input.
+        other (Union[Tensor, Number, bool]): The second input.
+
+    Returns:
+        Tensor, with bool dtype.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> input = mindspore.tensor([1, 2, 3], mindspore.float32)
+        >>> output = mindspore.mint.less_equal(input, 2.0)
+        >>> print(output)
+        [True  True False]
+        >>> input = mindspore.tensor([1, 2, 3], mindspore.int32)
+        >>> other = mindspore.tensor([1, 2, 4], mindspore.int32)
+        >>> output = mindspore.mint.less_equal(input, other)
+        >>> print(output)
+        [ True  True  True]

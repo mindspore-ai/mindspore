@@ -1,7 +1,15 @@
 less_equal:
-  op_yaml: less_equal_op.yaml
-  py_method: tensor_le
-  Ascend: pyboost
-  CPU: pyboost
-  GPU: pyboost
-  interface: tensor
+  - op_yaml: le_scalar_op.yaml
+    py_method: tensor_le
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    disable_scalar_tensor: other
+    interface: tensor, function
+
+  - op_yaml: less_equal_op.yaml
+    py_method: tensor_le
+    Ascend: pyboost
+    CPU: pyboost
+    GPU: pyboost
+    interface: tensor, function

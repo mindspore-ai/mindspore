@@ -666,7 +666,7 @@ void TensorPybind::SetDeviceAddress(const TensorPtr &tensor, uintptr_t addr, con
 }
 
 uintptr_t TensorPybind::DataPtr(const TensorPtr &tensor) {
-  runtime::Pipeline::Get().WaitForward();
+  runtime::Pipeline::Get().WaitBackend();
   const auto device_address = tensor->device_address();
   if (device_address == nullptr) {
     MS_LOG(INFO) << "Tensor device address is null";

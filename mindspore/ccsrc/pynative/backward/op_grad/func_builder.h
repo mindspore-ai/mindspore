@@ -151,6 +151,7 @@ class FuncBuilder : public BpropBuilder {
   NodePtr RandExt(const NodePtr &shape, const NodePtr &seed, const NodePtr &offset, const NodePtr &dtype,
                   const NodePtr &device) override;
   NodePtr GreaterEqualScalar(const NodePtr &input, const NodePtr &other) override;
+  NodePtr LessEqualScalar(const NodePtr &input, const NodePtr &other) override;
   NodePtr HSigmoidGrad(const NodePtr &grads, const NodePtr &input_x) override;
   NodePtr Swiglu(const NodePtr &input, const NodePtr &dim) override;
   NodePtr SplitWithSizeView(const NodePtr &input, const NodePtr &split_size, const NodePtr &dim) override;
