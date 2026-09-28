@@ -11,6 +11,7 @@ mindspore.ops.communication.batch_isend_irecv
         - `p2p_op_list` 中 `P2POp` 的 `tag` 暂不支持。
         - `p2p_op_list` 中 `P2POp` 的 `tensor` 不会被结果原地修改。
         - 当前仅支持PyNative模式，不支持Graph模式。
+        - 在昇腾超节点场景，P2P跨逻辑超节点会产生通信QP对，QP对会挤占NPU device OS内存，触发NPU内存溢出，算法设计需要考虑跨逻辑超节点QP对小于300。
 
     参数：
         - **p2p_op_list** (list[P2POp]) - 包含 `P2POp` 的列表。`P2POp` 的类型为 :class:`mindspore.ops.communication.P2POp`。

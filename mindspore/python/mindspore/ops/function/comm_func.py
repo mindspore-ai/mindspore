@@ -2081,6 +2081,9 @@ def batch_isend_irecv(p2p_op_list):
         - `tag` of `P2POp` in `p2p_op_list` is not supported yet.
         - `tensor` of `P2POp` in `p2p_op_list` will not be modified by result inplace.
         - Only support PyNative mode, Graph mode is not currently supported.
+        - In Ascend SuperPod scenarios, P2P communication across logical SuperPods creates communication QP pairs.
+          These QP pairs consume NPU device OS memory and can cause NPU out-of-memory errors. Algorithm design must
+          keep the number of QP pairs across logical SuperPods below 300.
 
     Args:
         p2p_op_list(list[P2POp]): list contains `P2POp`. `P2POp` is type of :class:`mindspore.ops.communication.P2POp`.
