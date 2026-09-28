@@ -57,12 +57,13 @@ TEST_F(TestShapeUtils, NBytesOfDynamicShape) {
 }
 
 // Feature: NBytesOf
-// Description: Check that NBytesOf returns zero for an unknown data type whose item size is zero,
-//              even when the shape is extremely large.
-// Expectation: The result is zero and no overflow check is triggered.
+// Description: Check that NBytesOf throws a ValueError for a data type whose item size is zero
+//              (e.g. kTypeUnknown, kObjectTypeTensorType), instead of silently returning 0.
+// Expectation: A std::runtime_error is thrown for unknown types with a non-empty data size.
 TEST_F(TestShapeUtils, NBytesOfUnknownType) {
-  ASSERT_EQ(NBytesOf(kTypeUnknown, {2, 3}), 0);
-  ASSERT_EQ(NBytesOf(kTypeUnknown, {INT64_MAX}), 0);
+  EXPECT_THROW(NBytesOf(kTypeUnknown, {2, 3}), std::runtime_error);
+  EXPECT_THROW(NBytesOf(kTypeUnknown, {INT64_MAX}), std::runtime_error);
+  EXPECT_THROW(NBytesOf(kObjectTypeTensorType, {1}), std::runtime_error);
 }
 
 // Feature: NBytesOf
