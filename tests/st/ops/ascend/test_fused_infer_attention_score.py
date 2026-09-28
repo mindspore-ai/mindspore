@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test cases for FusedInferAttentionScore operator."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -27,7 +28,7 @@ from mindspore.ops.function.nn_func import prompt_flash_attention, incre_flash_a
 
 class PromptFlashAttention(nn.Cell):
     def __init__(self):
-        super(PromptFlashAttention, self).__init__()
+        super().__init__()
         self.pfa = prompt_flash_attention
 
     def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
@@ -124,13 +125,15 @@ def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
     net = PromptFlashAttention()
     pfa_attention_out = net(query, key, value, attn_mask, None, None,
                             None, None, None, None, None, None, N,
-                            num_key_value_heads=KV_N, scale_value=scale_value, inner_precise=0)
+                            num_key_value_heads=KV_N, scale_value=scale_value, inner_precise=0,
+                            next_tokens=np.iinfo(np.int32).max-1)
     key_mut = [key]
     value_mut = [value]
     # enable softmax_lse_flag here to avoid softmax_lse infer shape error in GE mode
     # (this will be fixed in the future by GE team, currently just skip)
     net_fias = FusedInferAttentionScoreFunc(num_heads=N, num_key_value_heads=KV_N, inner_precise=0,
-                                            scale_value=scale_value, softmax_lse_flag=True)
+                                            scale_value=scale_value, softmax_lse_flag=True,
+                                            next_tokens=np.iinfo(np.int32).max-1)
     fias_result = net_fias(query, key_mut, value_mut, None, attn_mask,
                            None, None, None, None, None, None,
                            None, None, None, None, None, None)
