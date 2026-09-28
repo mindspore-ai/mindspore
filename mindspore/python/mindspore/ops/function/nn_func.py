@@ -5484,8 +5484,9 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
             the depth, height and width of movement are both stride, or a tuple of three int numbers that
             represent depth, height and width of movement respectively.
             Default: ``None`` , which indicates the moving step is `kernel_size` .
-        padding (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
-            strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
+        padding (Union[int, tuple[int]]): Padding length for pooling. An integer representing the stride along depth, 
+            height and width, or a tuple of three integers representing the stride for depth, 
+            height and width respectively.
             Default: ``0`` .
         dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: ``1`` .
         ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: ``False`` .
@@ -7965,7 +7966,8 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         kernel_size (int): The size of kernel window.
         stride (int): The distance of kernel moving, an int number that represents
             the width of movement is stride. Default: ``None`` , which indicates the moving step is `kernel_size` .
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
+        ceil_mode (bool): If ``True`` , use ceil to compute the output shape. If ``False`` , 
+            use floor to compute the output shape. Default: ``False`` .
 
     Returns:
         - **output** (Tensor) - LPPool1d result, with shape :math:`(N, C, L_{out})` or :math:`(C, L_{out})`,
@@ -8050,7 +8052,8 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively.
             Default: ``None`` , which indicates the moving step is `kernel_size` .
-        ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
+        ceil_mode (bool): If ``True`` , use ceil to compute the output shape. If ``False`` , 
+            use floor to compute the output shape. Default: ``False`` .
 
     Returns:
         - **output** (Tensor) - LP Pool2d result, with shape :math:`(N, C, H_{out}, W_{out})`,
@@ -8724,7 +8727,7 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
     Args:
         x (Tensor): Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,
             int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 in CPU or GPU
-            while that of uint16 in Ascend.
+            while that of float16 in Ascend.
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
             value, is an int number that represents height and width of the kernel, or a tuple of
             two int numbers that represent height and width respectively.
@@ -8772,7 +8775,7 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
+        >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float16)
         >>> output_tensor, argmax = ops.max_pool2d(x, kernel_size=(3, 2), stride=(2, 1), return_indices=True)
         >>> print(output_tensor.shape)
         (20, 16, 24, 31)

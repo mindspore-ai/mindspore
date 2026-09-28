@@ -3599,7 +3599,7 @@ def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
             means subdiagonals. When `k` is a pair of integers specifying the low and high ends of a matrix band.
         padding_value (Tensor): The number to fill the area outside the specified
             diagonal band.
-        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
+        align (str, optional): Specifies how superdiagonals and subdiagonals should be aligned.
             Supported values ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
             Default ``"RIGHT_LEFT"`` .
 

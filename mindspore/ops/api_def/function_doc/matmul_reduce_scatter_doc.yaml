@@ -22,7 +22,7 @@ matmul_reduce_scatter:
                 of devices actually running, supporting ``2`` , ``4`` , and ``8`` .
 
         Keyword Args:
-            reduce_op (str, optional) The reduce operation type. Currently only ``'sum'`` is supported. Default:
+            reduce_op (str, optional): The reduce operation type. Currently only ``'sum'`` is supported. Default:
                 ``'sum'`` .
             bias (Tensor, optional): Currently only ``None`` is supported. Default: ``None`` .
             comm_turn (int, optional): Indicates the granularity of communication between ranks. Currently only ``0``
