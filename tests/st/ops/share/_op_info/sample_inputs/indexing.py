@@ -33,6 +33,7 @@ from tests.st.ops.share._internal.utils import (
     make_tensor, make_tensor_with_np_array,
 )
 from tests.st.ops.share._op_info.sample_inputs.common import make_extra_tensor
+from tests.st.ops.share._op_info.sample_inputs.elementwise import _generate_random_index
 from tests.st.ops.share._op_info.op_common import (
     EXTRA_SMALL_DIM_SIZE,
     LARGE_DIM_SIZE,
@@ -4257,4 +4258,113 @@ def error_sample_inputs_tensor_diagonal_scatter(op_info:OpInfo, dtype=None, devi
             ),
             op_error_type=(ValueError, TypeError),
             op_error_info=f'error values of input/offset/dim1/dim2 is not supported for {op_info.name}.',
+        )
+
+def basic_sample_inputs_tensor_nonzeros(op_info: OpInfo, dtype=None, device=None):
+    L = LARGE_DIM_SIZE
+    M = MEDIUM_DIM_SIZE
+    S = SMALL_DIM_SIZE
+
+    cases=(
+        (),
+        (S, ),
+        (M, S),
+        (M, 1, L),
+        (2, 1, 0, 2),
+        (2, 3, 4, 1, 2),
+        (2, 1, 2, 2, 1, 2),
+        (2, 1, 2, 2, 1, 2, 1),
+        (2, 1, 2, 2, 1, 2, 1, 2),
+    )
+
+    for input_shape in cases:
+
+        input_tensor = make_tensor(input_shape, device=device, dtype=dtype)
+
+        if not 0 in input_shape:
+            nonzero_index = _generate_random_index(input_shape)
+            input_tensor[nonzero_index] = 0
+
+        if not (len(input_shape) == 0 and not bool(input_tensor.value())):
+
+            yield OpSampleInput(
+                op_input=input_tensor,
+                op_args=(),
+                op_kwargs={},
+                sample_name=op_info.name,
+            )
+
+            yield OpSampleInput(
+                op_input=input_tensor,
+                op_args=(),
+                op_kwargs={'as_tuple': True},
+                sample_name=op_info.name,
+            )
+
+def extra_sample_inputs_tensor_nonzeros(op_info: OpInfo, dtype=None, device=None):
+
+    nonzero_index = _generate_random_index((2, 3, 4))
+
+    for sample_input in make_extra_tensor(op_info, (2, 3, 4), (),
+                                 {}, dtype=dtype, device=device):
+
+        sample_input.op_input[nonzero_index]=0
+
+        yield sample_input
+
+        sample_input.op_kwargs={'as_tuple': True}
+
+        yield sample_input
+
+def dynamic_sample_inputs_tensor_nonzeros(op_info: OpInfo, dtype=None, device=None, **kwargs):
+    make_func = functools.partial(make_tensor, dtype=dtype, device=device)
+    if not kwargs.get("only_dynamic_rank", False):
+        # dynamic shape
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=(None, None, None), dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_shape_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3, 2)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5, 2)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_shape_running_input",
+                ),
+            ),
+        )
+    if not kwargs.get("only_dynamic_shape", False):
+        # dynamic rank
+        yield OpDynamicInput(
+            op_compile_input=OpSampleInput(
+                op_input=ms.Tensor(shape=None, dtype=dtype),
+                op_args=(),
+                op_kwargs={},
+                grad_position=(),
+                sample_name=f"{op_info.name}_dynamic_rank_compile_input",
+            ),
+            op_running_inputs=(
+                OpSampleInput(
+                    op_input=make_func(shape=(2, 3)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+                OpSampleInput(
+                    op_input=make_func(shape=(4, 5, 6)),
+                    op_args=(),
+                    op_kwargs={},
+                    sample_name=f"{op_info.name}_dynamic_rank_running_input",
+                ),
+            ),
         )

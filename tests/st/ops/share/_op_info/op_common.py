@@ -21,7 +21,6 @@ This module provides:
 """
 import torch
 import numpy as np
-import itertools
 import mindspore as ms
 import math
 
@@ -183,7 +182,7 @@ def small_large_values(dtype, exclude_values=None):
         else:
             float_vals = dtypes_extra_values['_float_small_values'] + dtypes_extra_values['_fp32_large_values']
             if dtype.is_complex:
-                values = [complex(r, i) for r, i in itertools.product(float_vals, float_vals)]
+                values = tuple(complex(r, i) for r in float_vals for i in float_vals)
             else:
                 values = float_vals
     if exclude_values:

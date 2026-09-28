@@ -1,3 +1,6 @@
+"""
+Test for Tensor.ndimension
+"""
 import pytest
 from tests.mark_utils import arg_mark
 import mindspore.common.dtype as mstype
@@ -11,7 +14,7 @@ class Net(nn.Cell):
         return x.ndimension()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
           level_mark='level2',
           card_mark='onecard')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

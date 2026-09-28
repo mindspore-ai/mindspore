@@ -3312,3 +3312,63 @@ def tensor_lstsq_ms(input, other, rcond=None, driver=None):
 
 def tensor_lstsq_torch(input, other, rcond=None, driver=None):
     return torch.linalg.lstsq(input, other, rcond=rcond, driver=driver)
+
+def tensor_ndim_ms(input,):
+    return input.ndim
+
+def tensor_ndim_torch(input,):
+    return input.ndim
+
+def tensor_ndimension_ms(input,):
+    return input.ndimension()
+
+def tensor_ndimension_torch(input,):
+    return input.ndimension()
+
+def tensor_negative_ms(input,):
+    return input.negative()
+
+def tensor_negative_torch(input,):
+    return input.negative()
+
+def tensor_nelement_ms(input,):
+    return input.nelement()
+
+def tensor_nelement_torch(input,):
+    return input.nelement()
+
+def tensor_new_empty_ms(input, size, dtype=None,):
+    return input.new_empty(size, dtype=dtype)
+
+def tensor_new_empty_torch(input, size, dtype=None,):
+    return input.new_empty(size, dtype=dtype)
+
+def tensor_new_full_ms(input, size, fill_value, dtype=None,):
+    return input.new_full(size, fill_value, dtype=dtype)
+
+def tensor_new_full_torch(input, size, fill_value , dtype=None,):
+    return input.new_full(size, fill_value, dtype=dtype)
+
+def tensor_new_ones_ms(input, size, dtype=None,):
+    return input.new_ones(size, dtype=dtype)
+
+def tensor_new_ones_torch(input, size, dtype=None,):
+    return input.new_ones(size, dtype=dtype)
+
+def tensor_new_zeros_ms(input, size, dtype=None,):
+    return input.new_zeros(size, dtype=dtype)
+
+def tensor_new_zeros_torch(input, size, dtype=None,):
+    return input.new_zeros(size, dtype=dtype)
+
+def tensor_nextafter_ms(input, size):
+    return input.nextafter(size)
+
+def tensor_nextafter_torch(input, size):
+    return input.nextafter(size)
+
+def tensor_nonzero_ms(input, as_tuple=False,):
+    return input.nonzero(as_tuple=as_tuple)
+
+def tensor_nonzero_torch(input, as_tuple=False,):
+    return input.nonzero(as_tuple=as_tuple)
