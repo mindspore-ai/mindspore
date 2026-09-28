@@ -141,6 +141,7 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
   do {                                                                                                            \
     static auto simu = mindspore::common::IsCompileSimulation();                                                  \
     if (simu) {                                                                                                   \
+      SIMU_LAUNCH_ACLNN(aclnn_api, device_context, stream_id, __VA_ARGS__);                                       \
       break;                                                                                                      \
     }                                                                                                             \
     static const std::string aclnn_name = #aclnn_api;                                                             \
@@ -277,6 +278,32 @@ struct MemBlock {
   const DeviceContext *device_context_;
 };
 using MemBlockPtr = std::shared_ptr<MemBlock>;
+
+// Dryrun-only launch: query the workspace size (host-side, no kernel launch), allocate
+// the reported size through a 1-tick MemBlock (same lifetime as the real path's), and
+// release executor/params right away. On failure it degrades to no-workspace instead of
+// aborting the dryrun; see the block comment above for details.
+#define SIMU_LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                      \
+  do {                                                                                                    \
+    uint64_t sim_ws_size = 0;                                                                             \
+    const std::string sim_api_name = #aclnn_api;                                                          \
+    try {                                                                                                 \
+      auto [sim_ws, sim_executor, sim_cache, sim_release_func] = GEN_EXECUTOR(sim_api_name, __VA_ARGS__); \
+      sim_ws_size = sim_ws;                                                                               \
+      if (sim_release_func) {                                                                             \
+        sim_release_func();                                                                               \
+      }                                                                                                   \
+    } catch (const std::exception &e) {                                                                   \
+      MS_LOG(INFO) << "Dryrun: GetWorkspaceSize failed for " << sim_api_name                              \
+                   << ", skip workspace alloc: " << e.what();                                             \
+      sim_ws_size = 0;                                                                                    \
+    }                                                                                                     \
+    if (sim_ws_size != 0) {                                                                               \
+      auto sim_ws_ptr =                                                                                   \
+        std::make_shared<mindspore::kernel::pyboost::MemBlock>(device_context, sim_ws_size, stream_id);   \
+      (void)sim_ws_ptr;                                                                                   \
+    }                                                                                                     \
+  } while (0)
 
 int8_t GetCubeMathType(bool use_hf32 = false);
 int8_t GetCubeMathTypeForAddOps(bool use_hf32 = false);

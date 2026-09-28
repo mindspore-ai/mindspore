@@ -103,11 +103,13 @@ void PyboostRunner::_Run() {
   this->_PrepareDeviceAddress();
   PyBoostUtils::DispatchRun(std::make_shared<mindspore::runtime::PyBoostDeviceTask>([runner = shared_from_this()]() {
     static auto simu = mindspore::common::IsCompileSimulation();
+    // Dryrun: keep the device-address and workspace allocations so the tracked memory profile
+    // matches real execution. Only the kernel launch must be skipped.
+    runner->_MallocDeviceAddress();
+    runner->_MallocWorkspace();
     if (simu) {
       return;
     }
-    runner->_MallocDeviceAddress();
-    runner->_MallocWorkspace();
     runner->_DispatchLaunchTask();
   }));
 }
