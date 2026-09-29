@@ -1,0 +1,5 @@
+le:
+  description: |
+    le(input, other) -> Tensor
+
+    Alias for :func:`mindspore.mint.less_equal`.

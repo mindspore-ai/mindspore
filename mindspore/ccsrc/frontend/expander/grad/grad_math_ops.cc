@@ -2310,6 +2310,8 @@ REG_BPROP_BUILDER("LessScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(Return
 
 REG_BPROP_BUILDER("LessEqual").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
+REG_BPROP_BUILDER("LeScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+
 REG_BPROP_BUILDER("LogicalNot").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("LogicalAnd").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);

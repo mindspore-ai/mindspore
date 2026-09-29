@@ -508,6 +508,9 @@ class COMMON_EXPORT Emitter {
   virtual NodePtr GreaterEqualScalar(const NodePtr &input, const NodePtr &other) {
     return Emit("GreaterEqualScalar", {input, other});
   }
+  virtual NodePtr LessEqualScalar(const NodePtr &input, const NodePtr &other) {
+    return Emit("LeScalar", {input, other});
+  }
   virtual NodePtr HSigmoidGrad(const NodePtr &grads, const NodePtr &input_x) {
     return Emit("HSigmoidGrad", {grads, input_x});
   }
