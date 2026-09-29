@@ -15,7 +15,7 @@ mindspore.experimental.optim.Rprop
         - **step_sizes** (Tuple[float, float], 可选) - 设定的最小步长和最大步长。默认值：``(1e-6, 50)``。
 
     关键字参数：
-        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数。默认值：``False``。
+        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数，而不是最小化。默认值：``False``。
 
     输入：
         - **gradients** (tuple[Tensor]) - 网络权重的梯度。

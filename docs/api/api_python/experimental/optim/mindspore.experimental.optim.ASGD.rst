@@ -15,7 +15,7 @@ mindspore.experimental.optim.ASGD
         - **alpha** (float, 可选) - eta更新的幂。默认值：``0.75``。
         - **t0** (float, 可选) - 开始计算平均的时刻。默认值：``1e6``。
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值：``0.``。
-        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数。默认值：``False``。
+        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数，而不是最小化。默认值：``False``。
 
     输入：
         - **gradients** (tuple[Tensor]) - 网络权重的梯度。

@@ -49,7 +49,8 @@ class RMSprop(Optimizer):
             parameter groups.
         lr (Union[int, float, Tensor], optional): learning rate. Default: ``1e-2``.
         alpha (float, optional): smoothing constant. Default: ``0.99``.
-        eps (float, optional): term added to the denominator to improve numerical stability. Default: ``1e-8``.
+        eps (float, optional): term added to the denominator to improve numerical stability.
+            It must be greater than 0. Default: ``1e-8``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         momentum (float, optional): momentum factor. Default: ``0.``.
         centered (bool, optional) : if ``True``, compute the centered RMSProp,
