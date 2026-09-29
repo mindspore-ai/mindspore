@@ -4139,9 +4139,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             This is an experimental API that is subject to change or deletion.
 
         Args:
-            mean (number, optional): the mean of normal distribution. With float data type.
+            mean (Union[bool, int, float], optional): the mean of normal distribution.
                 Default: ``0``.
-            std (number, optional): the std of normal distribution. With float data type.
+            std (Union[bool, int, float], optional): the std of normal distribution.
                 Default: ``1``.
 
         Keyword Args:
