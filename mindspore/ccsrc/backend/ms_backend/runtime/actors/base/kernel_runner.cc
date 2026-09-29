@@ -1167,6 +1167,27 @@ void KernelRunner::UpdateRefDeviceAddress(OpContext<KernelTensor> *const context
   }
 }
 
+void KernelRunner::UpdateRefTensorStorageInfo() {
+  if (ActorDispatcher::enable_use_trace_memory()) {
+    return;
+  }
+  for (const auto &pair : kernel_info_->out_in_ref_map()) {
+    auto input_storage_info = input_kernel_tensors_[pair.second]->tensor_storage_info();
+    if (input_storage_info != nullptr && need_ref_for_storage_info_) {
+      output_kernel_tensors_[pair.first]->set_tensor_storage_info(input_storage_info);
+    }
+    // When output has view information, the size of the device tensor will be inconsistent with shape_vector_,
+    // and this size needs to be updated from the input device tensor.
+    if (output_kernel_tensors_[pair.first]->tensor_storage_info() != nullptr) {
+      auto input_device_tensor = input_kernel_tensors_[pair.second]->device_address().get();
+      MS_EXCEPTION_IF_NULL(input_device_tensor);
+      auto output_device_tensor = output_kernel_tensors_[pair.first]->device_address().get();
+      MS_EXCEPTION_IF_NULL(output_device_tensor);
+      output_device_tensor->SetSize(input_device_tensor->GetSize());
+    }
+  }
+}
+
 void KernelRunner::FetchOutputDeviceTensor(OpContext<KernelTensor> *const context) {
   auto &output_kernel_tensors = kernel_info_->output_kernel_tensor_list();
   const auto &output_size_list = kernel_mod_->GetOutputSizeList();
@@ -1229,25 +1250,6 @@ void KernelRunner::ExecuteResizeKernelModTask(OpContext<KernelTensor> *const con
                            [](const KernelTensorPtr &tensor) { return tensor->tensor_storage_info() != nullptr; });
     if (it != input_kernel_tensors_.end()) {
       view_input = true;
-    }
-  }
-
-  // transfer storage info from input to ref output
-  if (!ActorDispatcher::enable_use_trace_memory()) {
-    for (const auto &pair : kernel_info_->out_in_ref_map()) {
-      auto input_storage_info = input_kernel_tensors_[pair.second]->tensor_storage_info();
-      if (input_storage_info != nullptr && need_ref_for_storage_info_) {
-        output_kernel_tensors_[pair.first]->set_tensor_storage_info(input_storage_info);
-      }
-      // When output has view information, the size of the device tensor will be inconsistent with shape_vector_,
-      // and this size needs to be updated from the input device tensor.
-      if (output_kernel_tensors_[pair.first]->tensor_storage_info() != nullptr) {
-        auto input_device_tensor = input_kernel_tensors_[pair.second]->device_address().get();
-        MS_EXCEPTION_IF_NULL(input_device_tensor);
-        auto output_device_tensor = output_kernel_tensors_[pair.first]->device_address().get();
-        MS_EXCEPTION_IF_NULL(output_device_tensor);
-        output_device_tensor->SetSize(input_device_tensor->GetSize());
-      }
     }
   }
 
@@ -1504,6 +1506,10 @@ void KernelRunner::InferShape() {
 }
 
 void KernelRunner::ResizeKernelMod() {
+  // Defer ref storage/size refresh to Resize: doing it in UpdateRefDeviceAddress can race with the resize thread
+  // when the runtime pipeline is enabled. This entry also covers synchronous execution.
+  UpdateRefTensorStorageInfo();
+
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResizeInner, GetAID().Name(), true);
   MS_VLOG(VL_RUNTIME_FRAMEWORK_KERNEL) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
   int ret = kernel_mod_->Resize(input_launch_tensors_, output_launch_tensors_);
