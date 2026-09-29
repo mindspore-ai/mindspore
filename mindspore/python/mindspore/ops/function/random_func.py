@@ -761,9 +761,9 @@ def normal_(input, mean=0, std=1, *, generator=None):
 
     Args:
         input (Tensor): The origin input tensor.
-        mean (number, optional): the mean of normal distribution. With float data type.
+        mean (Union[bool, int, float], optional): the mean of normal distribution.
             Default: ``0``.
-        std (number, optional): the std of normal distribution. With float data type.
+        std (Union[bool, int, float], optional): the std of normal distribution.
             Default: ``1``.
 
     Keyword Args:
@@ -775,7 +775,7 @@ def normal_(input, mean=0, std=1, *, generator=None):
         that has the same type and shape as the `self` tensor.
 
     Raises:
-        TypeError: If the dtype of `mean` or `std` is not one of: bool, int, float, complex.
+        TypeError: If the dtype of `mean` or `std` is not one of: bool, int, float.
 
     Supported Platforms:
         ``Ascend``
