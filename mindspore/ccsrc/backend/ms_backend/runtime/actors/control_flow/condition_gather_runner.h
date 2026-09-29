@@ -48,6 +48,8 @@ class ConditionGatherRunner : public KernelRunner {
 
  protected:
   void Init() override;
+  // UpdateRefDeviceAddress forwards storage info from the active branch.
+  void UpdateRefTensorStorageInfo() override {}
 
  private:
   void FetchParameterInput(size_t start_index, OpContext<DeviceTensor> *const context);

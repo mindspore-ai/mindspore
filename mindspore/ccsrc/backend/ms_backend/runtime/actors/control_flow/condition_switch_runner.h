@@ -47,6 +47,8 @@ class ConditionSwitchRunner : public KernelRunner {
  protected:
   void Init() override;
   void UpdateRefDeviceAddress(OpContext<KernelTensor> *const context, bool increase_ref_count) override;
+  // Control-flow routing uses its own ref mapping instead of the kernel ref map.
+  void UpdateRefTensorStorageInfo() override {}
   void ExecuteInferShapeTask(OpContext<KernelTensor> *const context, bool high_perf) override;
   void ExecuteResizeKernelModTask(OpContext<KernelTensor> *const context, bool high_perf) override;
   void ExecuteLaunchKernelTask(OpContext<KernelTensor> *const context) override;

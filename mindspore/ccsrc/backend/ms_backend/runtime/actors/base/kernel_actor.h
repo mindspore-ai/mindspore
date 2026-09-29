@@ -147,6 +147,8 @@ class KernelActor : public DebugAwareActor {
   virtual bool LaunchKernel(OpContext<KernelTensor> *const context, bool is_skip_launch = false);
   // Handle the ref op, set input addr to output addr.
   virtual void UpdateRefDeviceAddress(OpContext<KernelTensor> *const context, bool increase_ref_count);
+  // Propagate ref output view metadata and allocation size on the resize path.
+  void UpdateRefTensorStorageInfo();
   // Execute kernel actor multi stream produre to make sure safety of memory before kernel launch.
   void ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> *const context);
   // Execute kernel actor multi stream produre to make sure safety of memory after kernel launch.
