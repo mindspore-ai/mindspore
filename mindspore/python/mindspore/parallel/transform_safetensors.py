@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,6 +114,11 @@ def _save_file_atomically(transform_param_dict, save_file_name, metadata=None):
     """Atomically save file using temporary name and rename."""
     if metadata is None:
         metadata = {"format": "ms"}
+    # safetensors writes raw memory buffers, so normalize non-contiguous views before saving.
+    transform_param_dict = {
+        name: np.ascontiguousarray(value)
+        for name, value in transform_param_dict.items()
+    }
     file_name_list = list(os.path.splitext(save_file_name))
     file_name_list[1] = file_name_list[1].replace('.safetensors', '.tmp')
     tmp_name = ''.join(file_name_list)
