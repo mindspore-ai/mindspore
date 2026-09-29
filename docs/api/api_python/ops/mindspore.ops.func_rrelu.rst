@@ -13,12 +13,12 @@ mindspore.ops.rrelu
 
     其中，:math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u` 。
 
-    更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
+    逐元素执行 RReLU 函数，更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
 
     .. warning::
         从2.9.0（不含）之后版本开始，该接口将新增可选参数 `training` 和 `inplace` ，接口签名将变更为
         ``mindspore.ops.rrelu(input, lower=1.0/8, upper=1.0/3, training=False, inplace=False)`` 。
-        该变更与当前版本兼容，不使用新增参数时行为不变。
+        该变更向后兼容，不使用新增参数时行为不变。
 
     参数：
         - **input** (Tensor) - 计算RReLU的任意维度的Tensor。

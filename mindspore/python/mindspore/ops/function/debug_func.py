@@ -34,8 +34,8 @@ def print_(*input_x):
 
     Note:
         In pynative mode, please use python print function.
-        In Ascend platform with graph mode, the bool, int and float would be converted into tensor to print, and
-        str remains unchanged.
+        In Ascend platform with graph mode, the bool, int, float, tuple and list would be converted into tensor 
+        to print, and str remains unchanged.
         This function is used for debugging.
 
     Args:

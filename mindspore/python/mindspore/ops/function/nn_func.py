@@ -1039,8 +1039,8 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
         - In KBK mode, `output_size` does not support mutable.
 
     Args:
-        input (Tensor): A 3D or 4D tensor,
-            with float16, float32 or float64 data type.
+        input (Tensor): The input tensor for adaptive_max_pool2d. 
+            A 3D or 4D tensor, with float16, float32 or float64 data type.
         output_size (Union[int, tuple]): The target output size. `output_size` can be a tuple :math:`(H, W)`,
             or an int H for :math:`(H, H)`. :math:`H` and :math:`W` can be int or ``None``.
             If it is ``None``, it means the output size is the same as the input size.
@@ -4455,10 +4455,10 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         \end{array}\right.
 
     Args:
-        inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+        inputs (Tensor): Input predicted values. :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
             in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
             `inputs` is expected to be log-probabilities, data type must be float16 or float32.
-        target (Tensor): :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
+        target (Tensor): Input target values. :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
             high-dimensional loss, data type must be int32.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`.
@@ -4476,7 +4476,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: ``0.0`` .
 
     Returns:
-        Tensor, the computed loss value.
+        Tensor, with the same data type as inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7024,7 +7024,7 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
         weight (Tensor, optional): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type,
             Default: ``None``. Initialized to ``1`` when `weight` is ``None``.
         bias (Tensor, optional): The shape :math:`(C,)`, with bfloat16, float16 or float32 data type. Default: ``None``.
-            Initialized to ``0`` when `weight` is ``None``.
+            Initialized to ``0`` when `bias` is ``None``.
         training (bool, optional): If `training` is ``True``, `running_mean` and `running_var` are computed during
             training. If `training` is ``False``, they're loaded from checkpoint during inference. Default: ``False`` .
         momentum (float, optional): The hyper parameter to compute moving average for `running_mean` and `running_var`
@@ -9043,7 +9043,7 @@ def prompt_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths
         TypeError: `quant_scale2` is not Tensor of type float32.
         TypeError: `deq_scale2` is not Tensor of type uint64 or float32.
         TypeError: `quant_offset2` is not Tensor of type float32.
-        ValueError: `input_layout` is a string but of `(BSH)` or `(BNSD)`.
+        ValueError: `input_layout` is a string but not in the `(BSH)` or `(BNSD)` format.
         RuntimeError: `num_heads` is not divisible by `num_key_value_heads`.
         RuntimeError: `num_heads` is not greater than 0.
         RuntimeError: `num_key_value_heads` is not greater than or equal to 0.
@@ -9461,7 +9461,7 @@ def speed_fusion_attention(query, key, value, head_num, input_layout, *, pse=Non
         A tuple of tensors containing `attention_out`, `softmax_max`, `softmax_sum`, `softmax_out`, `seed`, `offset`
         and `numels` .
 
-        - `attention_out` is the output of attention, it's shape, and data type are the same as the query.
+        - `attention_out` is the output of attention, its shape, and data type are the same as the query.
         - `softmax_max` is the max intermediate result calculated by Softmax, used for grad calculation.
         - `softmax_sum` is the sum intermediate result calculated by Softmax, used for grad calculation.
         - `softmax_out` is a reserved parameter.

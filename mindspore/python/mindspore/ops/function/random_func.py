@@ -1329,7 +1329,7 @@ def rand_like_ext(input, *, dtype=None, device=None):
 @_function_forbid_reuse
 def randn_ext(*size, generator=None, dtype=None, device=None):
     r"""
-    Returns a new tensor filled with numbers from the normal distribution over an interval :math:`[0, 1)`
+    Returns a new tensor filled with numbers from the standard normal distribution 
     based on the given shape and dtype.
 
     Args:
@@ -1344,8 +1344,8 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
             supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
 
     Returns:
-        Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
-        the interval :math:`[0, 1)`.
+        Tensor, filled with numbers from the standard normal distribution 
+        based on the given shape and dtype.
 
     Raises:
         ValueError: If `size` contains negative numbers.
@@ -1372,7 +1372,7 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
 @_function_forbid_reuse
 def randn_like_ext(input, *, dtype=None, device=None):
     r"""
-    Returns a new tensor filled with numbers from the normal distribution over an interval :math:`[0, 1)`
+    Returns a new tensor filled with numbers from the standard normal distribution 
     based on the given dtype and shape of the input tensor.
 
     .. warning::
@@ -1388,8 +1388,8 @@ def randn_like_ext(input, *, dtype=None, device=None):
             supported. If `device = None`, the device of `input` will be used. Default ``None``.
 
     Returns:
-        Tensor, with the designated shape and dtype, filled with random numbers from the normal distribution on
-        the interval :math:`[0, 1)`.
+        Tensor, filled with numbers from the standard normal distribution 
+        based on the given shape and dtype.
 
     Raises:
         RuntimeError: If `input` device is ``"CPU"``, and `device` is ``None`` .
@@ -1657,6 +1657,7 @@ def randn_like(input, seed=None, *, dtype=None):
 @_function_forbid_reuse
 def randint(low, high, size, seed=None, *, dtype=None):
     r"""
+    `mindspore.ops.randint` has been deprecated since version 2.10.0 and will be removed in a future release.
     Return a tensor whose elements are random integers in the range of [ `low` , `high` ) .
 
     .. warning::

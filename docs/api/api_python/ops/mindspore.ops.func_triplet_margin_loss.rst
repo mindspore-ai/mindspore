@@ -13,7 +13,7 @@ mindspore.ops.triplet_margin_loss
         - **margin** (float，可选) - 用于拉近 `anchor` 和 `positive` 之间的距离，拉远 `anchor` 和 `negative` 之间的距离。 `margin` 的shape必须为0。默认 ``1.0`` 。
         - **p** (int，可选) - 成对距离的范数。默认 ``2`` 。
         - **eps** (float，可选) - 防止除数为 0。默认 ``1e-06`` 。
-        - **swap** (bool，可选) - 距离交换。默认 ``False`` 。
+        - **swap** (bool，可选) - 距离交换会将 `negative` 样本距离替换为 `negative` 样本与 `positive` 样本之间的距离。默认 ``False`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
           - ``"none"``：不应用归约方法。

@@ -21,7 +21,7 @@ from mindspore.ops.function.nn_func import log_softmax_ext as log_softmax
 
 def round(input):
     r"""
-    Returns half to even of a tensor element-wise.
+    Round input to the nearest integer.
 
     .. math::
         out_i \approx input_i

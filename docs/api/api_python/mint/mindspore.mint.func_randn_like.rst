@@ -3,7 +3,7 @@ mindspore.mint.randn_like
 
 .. py:function:: mindspore.mint.randn_like(input, *, dtype=None, device=None)
 
-    返回shape与输入相同，类型为 `dtype` 的tensor。dtype由输入决定，其元素取值服从 :math:`[0, 1)` 区间内的正态分布。
+    返回shape与输入相同，类型为 `dtype` 的tensor。dtype由输入决定，其元素取值服从标准正态分布。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。
@@ -16,7 +16,7 @@ mindspore.mint.randn_like
         - **device** (str, 可选) - 指定tensor使用的内存来源。支持 ``"Ascend"`` 、 ``"npu"`` 和 ``"meta"``。如果是 ``None`` ，则使用参数 `input` 的device。默认值 ``None`` 。
 
     返回：
-        Tensor，shape和dtype由输入决定，其元素为服从标准正态分布的数字。
+        Tensor，shape和dtype由输入决定，其元素取值服从标准正态分布。
 
     异常：
         - **RuntimeError** - 如果 `input` 的device是 ``"CPU"`` ，同时 `device` 是 ``None`` 。

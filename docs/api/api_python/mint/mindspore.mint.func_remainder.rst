@@ -15,8 +15,8 @@ mindspore.mint.remainder
         输入不支持复数类型。至少一个输入必须为tensor，且不能都为布尔型tensor。
 
     参数：
-        - **input** (Union[Tensor, numbers.Number, bool]) - 除数为数值型、bool或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
-        - **other** (Union[Tensor, numbers.Number, bool]) - 被除数为数值型、bool或数据类型为数值型或bool的Tensor。当除数是Tensor时，则被除数是数值型、bool或数据类型为数值型或bool的Tensor。当除数是Scalar时，则被除数必须是数据类型为数值型或bool的Tensor。
+        - **input** (Union[Tensor, numbers.Number, bool]) - 被除数为数值型、bool或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
+        - **other** (Union[Tensor, numbers.Number, bool]) - 除数为数值型、bool或数据类型为数值型或bool的Tensor。当除数是Tensor时，则被除数是数值型、bool或数据类型为数值型或bool的Tensor。当除数是Scalar时，则被除数必须是数据类型为数值型或bool的Tensor。
 
     返回：
         Tensor，其数据类型经过隐式类型提升和广播。

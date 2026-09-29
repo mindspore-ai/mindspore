@@ -3163,7 +3163,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
 
 def scatter(input, axis, index, src):
     """
-    Update the value in `src` to `input` according to the specified index.
+    Update the value in `src` to `input` according to the specified index and return the output.
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more details.
 
     .. warning::
@@ -3983,7 +3983,7 @@ def unsorted_segment_max(x, segment_ids, num_segments):
     Args:
         x (Tensor): The input tensor.
         segment_ids (Tensor): Indicate the segment to which each element belongs.
-            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where :math:`0 < N \le R`.
         num_segments (Union[int, Tensor]): Number of segments, it can be an int or 0-D tensor.
 
     Returns:
@@ -4330,11 +4330,13 @@ def tensor_scatter_div(input_x, indices, updates):
         output\left [indices \right ] = input\_x \div updates
 
     Note:
-        - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
-          the corresponding `updates` will not be updated to self tensor.
-        - On CPU, if some values of the `indices` are out of bounds, an index error will be raised.
-        - On Ascend, out of bounds checking is not supported, if some values of the `indices` are out of bounds,
-          unknown errors may be caused.
+        - If the values in `indices` are out of the index range of the input `input_x`:
+
+          - On GPU, if some values of the `indices` are out of bounds, instead of raising an index error,
+            the corresponding `updates` will not be updated to self tensor.
+          - On CPU, if some values of the `indices` are out of bounds, an index error will be raised.
+          - On Ascend, out of bounds checking is not supported, if some values of the `indices` are out of bounds,
+            unknown errors may be caused.
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
 
@@ -5615,7 +5617,8 @@ def topk(input, k, dim=None, largest=True, sorted=True):
     Args:
         input (Tensor): The input tensor.
         k (int): The number of elements to be returned.
-        dim (int, optional): Specify the dimension for sorting. Default ``None`` .
+        dim (int, optional): Specify the dimension for sorting. If `None`, sorting will be performed 
+            along the last dimension. Default ``None`` .
         largest (bool, optional): If ``True`` , return largest elements. If ``False`` , then return smallest elements.
             Default ``True`` .
         sorted (bool, optional): If ``True`` , the elements are returned in descending order. If ``False`` , the
@@ -6622,7 +6625,7 @@ def repeat_elements(x, rep, axis=0):
 
 def sequence_mask(lengths, maxlen=None):
     """
-    Returns a mask tensor representing the first N positions of each cell.
+    Returns a mask tensor representing the first N positions of each cell, with boolean elements internally.
 
     If `lengths` has shape :math:`(d_1, d_2, ..., d_n)`, then the resulting tensor mask has type and shape
     :math:`(d_1, d_2, ..., d_n, maxlen)`, with mask :math:`[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])`.
@@ -6633,7 +6636,7 @@ def sequence_mask(lengths, maxlen=None):
     Args:
         lengths (Tensor): Tensor to calculate the mask for. All values in this tensor should be
             less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
-        maxlen (int): size of the last dimension of returned tensor. Must be positive and same
+        maxlen (int): Size of the last dimension of returned tensor. Must be positive and same
             type as elements in `lengths`. Default ``None`` .
 
     Returns:

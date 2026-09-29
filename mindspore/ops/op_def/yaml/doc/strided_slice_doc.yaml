@@ -23,7 +23,7 @@ strided_slice:
         Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
         set `begin`, `end` and `strides` to (1, 3),
         (3, 5), (1, 1) respectively, then elements from index 1 to 3 are extracted
-        for dim 0, index 3 to 5 are extracted for dim 1 and index 3 to 5 are extracted
+        for dim 0, index 3 to 5 are extracted for dim 1 and all elements (index 0 to 6) are extracted
         for dim 2, this process is equivalent to a pythonic slice `input_x[1:3, 3:5, 0:7]`.
 
         Here's how a mask works:

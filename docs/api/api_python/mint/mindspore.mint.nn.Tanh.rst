@@ -18,7 +18,7 @@ mindspore.mint.nn.Tanh
         :align: center
 
     输入：
-        - **input** (Tensor) - 输入tensor。
+        - **input** (Tensor) - 输入tensor。数据类型必须为mindspore.float16或mindspore.float32。
 
     输出：
         Tensor。

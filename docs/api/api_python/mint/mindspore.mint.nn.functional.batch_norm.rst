@@ -5,7 +5,7 @@ mindspore.mint.nn.functional.batch_norm
 
     对输入数据进行批量归一化和更新参数。
 
-    批量归一化广泛应用于卷积神经网络中。此运算对输入应用归一化，避免内部协变量偏移，详见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。使用mini-batch数据和学习参数进行训练，学习的参数见如下公式中，
+    批量归一化广泛应用于卷积神经网络中。此运算对输入应用归一化，避免内部协变量偏移，详见论文 `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_ 。使用mini-batch数据对特征进行重新缩放与中心化，学习参数的计算方式见如下公式，
 
     .. math::
         y = \frac{x - \mathrm{mean}}{\sqrt{\mathrm{variance} + \epsilon}} * \gamma + \beta

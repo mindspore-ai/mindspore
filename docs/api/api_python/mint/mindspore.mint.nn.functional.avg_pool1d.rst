@@ -12,7 +12,8 @@ mindspore.mint.nn.functional.avg_pool1d
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        `kernel_size` 的取值范围为 [1, 255]。 `stride` 的取值范围为 [1, 63]。
+        2.9.0（不含）之后版本非兼容性变更： `stride` 的默认值将从1修改为 `None` 。
 
     参数：
         - **input** (Tensor) - 输入shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。

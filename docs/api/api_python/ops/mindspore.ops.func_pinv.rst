@@ -34,4 +34,4 @@ mindspore.ops.pinv
         - **hermitian** (bool) - 是否求解x为实对称的矩阵。默认 ``False`` 。
 
     输出：
-        一个shape为 :math:`(*, N, M)` 的tensor。
+        一个shape为 :math:`(*, N, M)` 的tensor，``*`` 代表零个或多个批量维度。

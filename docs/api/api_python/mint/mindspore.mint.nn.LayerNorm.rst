@@ -21,7 +21,7 @@ mindspore.mint.nn.LayerNorm
         - **eps** (float，可选) - 添加到分母中的值（:math:`\epsilon`），以确保数值稳定。默认 ``1e-5`` 。
         - **elementwise_affine** (bool，可选) - 是否需要仿射变换。一个布尔值，当设置为 ``True`` 时，该模具有可学习的每元素仿射参数，
           初始化为 1（权重）和 0（偏置）。默认 ``True`` 。
-        - **bias** (bool，可选) - 当被设置为 ``False`` 时，不会学习结果性偏差（仅 `elementwise_affine` 值为 ``True`` 时生效）。默认 ``True`` 。
+        - **bias** (bool，可选) - 当被设置为 ``False`` 时，不会学习加性偏置（仅 `elementwise_affine` 值为 ``True`` 时生效）。默认 ``True`` 。
         - **dtype** (:class:`mindspore.dtype`，可选) - Parameters的dtype。默认 ``None`` 。
 
     输入：

@@ -7,7 +7,8 @@ mindspore.numpy.trace
     如果 ``a`` 是二维数组，则返回沿给定偏移量的对角线的元素之和，即所有 ``i`` 对应的元素 ``a[i,i+offset]`` 的和。如果 ``a`` 有超过两个维度，则使用 ``axis1`` 和 ``axis2`` 指定的轴来确定返回的二维子数组的迹。结果数组的shape与移除 ``axis1`` 和 ``axis2`` 后的 ``a`` 相同。
 
     .. note::
-        在GPU上，支持的数据类型为 ``np.float16`` 和 ``np.float32``。在CPU上，支持的数据类型为 ``np.float16`` 、 ``np.float32`` 和 ``np.float64`` 。
+        当前仅用于 MindScience 科学计算场景，不支持其他使用场景。
+        暂不支持 Windows 平台。在GPU上，支持的数据类型为 ``np.float16`` 和 ``np.float32``。在CPU上，支持的数据类型为 ``np.float16`` 、 ``np.float32`` 和 ``np.float64`` 。
 
     参数：
         - **a** (Tensor) - 输入的需要计算的矩阵。
