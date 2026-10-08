@@ -113,13 +113,13 @@
 /mindspore/ops/infer/ops_func_impl/communication/  @zhangyinxia
 
 # The maintainers of mindspore/python.
-/mindspore/python/ @zhao_ting_v
+/mindspore/python/ @hz893
 /mindspore/python/mindspore/_extends/ @ginfung
 /mindspore/python/mindspore/_extends/graph_kernel/ @gaoxiong1
 /mindspore/python/mindspore/_extends/parallel_compile/ @gaoxiong1
 /mindspore/python/mindspore/_extends/remote/ @gaoxiong1
 /mindspore/python/mindspore/boost/ @limingqi107
-/mindspore/python/mindspore/common/ @changzherui1
+/mindspore/python/mindspore/common/ @hz893
 /mindspore/python/mindspore/communication/ @zhangyinxia
 /mindspore/python/mindspore/custom_compiler/ @limingqi107
 /mindspore/python/mindspore/dataset/ @jonyguo
@@ -136,20 +136,20 @@
 /mindspore/python/mindspore/nn/layer/ @liangchenghui
 /mindspore/python/mindspore/nn/layer/container.py @chujinjin
 /mindspore/python/mindspore/nn/layer/transformer.py @tanghuikang
-/mindspore/python/mindspore/nn/loss/ @zhao_ting_v
-/mindspore/python/mindspore/nn/optim/ @zhao_ting_v
+/mindspore/python/mindspore/nn/loss/ @hz893
+/mindspore/python/mindspore/nn/optim/ @hz893
 /mindspore/python/mindspore/nn/optim/tft_wrapper.py @fary86
 /mindspore/python/mindspore/nn/probability/ @yi-zhang95
 /mindspore/python/mindspore/nn/sparse/ @yi-zhang95
 /mindspore/python/mindspore/numpy/ @yi-zhang95
-/mindspore/python/mindspore/onnx/ @changzherui1
+/mindspore/python/mindspore/onnx/ @hz893
 /mindspore/python/mindspore/ops/ @liangchenghui
 /mindspore/python/mindspore/ops/composite/ @ginfung
 /mindspore/python/mindspore/ops_generate/ @chujinjin
 /mindspore/python/mindspore/parallel/ @yangzhenzhang
 /mindspore/python/mindspore/parallel/cluster/ @zhangyinxia
-/mindspore/python/mindspore/profiler/ @tangmengcheng @changzherui1
-/mindspore/python/mindspore/rewrite/ @changzherui1
+/mindspore/python/mindspore/profiler/ @tangmengcheng @hz893
+/mindspore/python/mindspore/rewrite/ @hz893
 /mindspore/python/mindspore/runtime/ @limingqi107
 /mindspore/python/mindspore/scipy/ @yi-zhang95
 /mindspore/python/mindspore/train/ @hz893
@@ -175,11 +175,11 @@
 /tests/st/dataloader/ @jonyguo
 /tests/st/dataset/ @jonyguo
 /tests/st/mindrecord/ @jonyguo
-/tests/st/dataset_helper/ @changzherui1
+/tests/st/dataset_helper/ @hz893
 /tests/st/data_transfer/ @jonyguo
 /tests/st/dfx/ @fary86
 /tests/st/dynamic_shape/ @liangchenghui
-/tests/st/export_and_load/ @changzherui1
+/tests/st/export_and_load/ @hz893
 /tests/st/fusion/ @limingqi107
 /tests/st/golden_stick/ @liulili-huawei
 /tests/st/graceful_exit/ @fary86
@@ -209,7 +209,7 @@
 /tests/st/parameter/ @hz893
 /tests/st/pi_jit/ @ginfung
 /tests/st/pynative/ @chujinjin
-/tests/st/rewrite/ @changzherui1
+/tests/st/rewrite/ @hz893
 /tests/st/runtime/ @limingqi107
 /tests/st/scipy_st/ @yi-zhang95
 /tests/st/scripts/ @nicholas_yhr
@@ -266,7 +266,7 @@
 /tests/ut/python/_extends/parallel_compile/ @gaoxiong1
 /tests/ut/python/_extends/remote/ @gaoxiong1
 /tests/ut/python/boost/ @limingqi107
-/tests/ut/python/common/ @changzherui1
+/tests/ut/python/common/ @hz893
 /tests/ut/python/communication/ @zhangyinxia
 /tests/ut/python/custom_compiler/ @limingqi107
 /tests/ut/python/dataset/ @jonyguo
@@ -278,17 +278,17 @@
 /tests/ut/python/nn/ @hz893
 /tests/ut/python/nn/grad/ @ginfung
 /tests/ut/python/nn/layer/ @liangchenghui
-/tests/ut/python/nn/loss/ @zhao_ting_v
-/tests/ut/python/nn/optim/ @zhao_ting_v
+/tests/ut/python/nn/loss/ @hz893
+/tests/ut/python/nn/optim/ @hz893
 /tests/ut/python/nn/probability/ @yi-zhang95
 /tests/ut/python/nn/sparse/ @yi-zhang95
 /tests/ut/python/numpy/ @yi-zhang95
-/tests/ut/python/onnx/ @changzherui1
+/tests/ut/python/onnx/ @hz893
 /tests/ut/python/ops/ @liangchenghui
 /tests/ut/python/ops_generate/ @chujinjin
 /tests/ut/python/parallel/ @yangzhenzhang
-/tests/ut/python/profiler/ @tangmengcheng @changzherui1
-/tests/ut/python/rewrite/ @changzherui1
+/tests/ut/python/profiler/ @tangmengcheng @hz893
+/tests/ut/python/rewrite/ @hz893
 /tests/ut/python/runtime/ @limingqi107
 /tests/ut/python/scipy/ @yi-zhang95
 /tests/ut/python/train/ @hz893
