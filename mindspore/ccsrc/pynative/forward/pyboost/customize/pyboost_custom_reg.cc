@@ -42,5 +42,8 @@ void RegPyBoostCustomizeModule(py::module *m) {
   m->def("pyboost_custom_ext", &Pyboost_CustomExt, "Encrypt the data.");
   m->def("pyboost_cell_backward_hook", &Pyboost_CellBackwardHook, "CellBackwardHook Ops");
   m->def("pyboost_detach", &PyboostDetach, "Detach");
+  m->def("_validate_all_to_all_single_and_build_comm_args", &ValidateAllToAllSingleAndBuildCommArgs, py::arg("output"),
+         py::arg("input"), py::arg("output_split_sizes"), py::arg("input_split_sizes"), py::arg("group"),
+         py::arg("async_op"));
 }
 }  // namespace mindspore::pynative

@@ -28,21 +28,23 @@ namespace kernel {
 namespace pyboost {
 namespace {
 
-void GetAllToAllVParam(const ValueTuplePtr &send_numel_list, const ValueTuplePtr &recv_numel_list,
+void GetAllToAllVParam(const ValueTuplePtr &send_numel_list, const ValueTuplePtr &recv_numel_list, TypeId input_type,
                        hccl::HcclAllToAllVParams *params) {
   const auto &send_numel_list_vec = ConvertValueTupleToVector<int64_t>(send_numel_list);
   const auto &recv_numel_list_vec = ConvertValueTupleToVector<int64_t>(recv_numel_list);
+  // HCCL communicates complex64 storage as pairs of float32 elements, including displacements.
+  const uint64_t elements_per_value = input_type == kNumberTypeComplex64 ? kComplex64ConvertFloat32Num : 1;
 
   uint64_t offset = 0;
   for (size_t i = 0; i < send_numel_list_vec.size(); i++) {
-    auto count = static_cast<uint64_t>(send_numel_list_vec[i]);
+    auto count = static_cast<uint64_t>(send_numel_list_vec[i]) * elements_per_value;
     params->sendcounts.push_back(count);
     params->sdispls.push_back(offset);
     offset += count;
   }
   offset = 0;
   for (size_t i = 0; i < recv_numel_list_vec.size(); i++) {
-    auto count = static_cast<uint64_t>(recv_numel_list_vec[i]);
+    auto count = static_cast<uint64_t>(recv_numel_list_vec[i]) * elements_per_value;
     params->recvcounts.push_back(count);
     params->rdispls.push_back(offset);
     offset += count;
@@ -55,7 +57,7 @@ std::function<void(const HcclComm &, void *)> CallAllToAllV(const std::shared_pt
                                                             const ValueTuplePtr &recv_numel_list) {
   MS_LOG(DEBUG) << "Begin";
   hccl::HcclAllToAllVParams params;
-  GetAllToAllVParam(send_numel_list, recv_numel_list, &params);
+  GetAllToAllVParam(send_numel_list, recv_numel_list, input_tensor->data_type(), &params);
   auto hccl_data_type = HcomUtil::ConvertHcclType(input_tensor->data_type());
   const auto &op_name = op->primitive()->name();
   auto input_data_ptr = GetDevicePtrFromTensor(op_name, input_tensor);
@@ -77,10 +79,10 @@ std::function<void(const HcclComm &, void *)> CallAllToAll(const std::shared_ptr
   MS_LOG(DEBUG) << "Begin";
   hccl::HcclAllToAllParams params;
   auto rank_size_imm = GetValue<int64_t>(rank_size);
-  size_t count = SizeOf(input_tensor->shape()) / LongToSize(rank_size_imm);
+  auto [hccl_count, hccl_data_type] = HcomUtil::GetHcclCountAndTypeFromTensor(op->primitive(), input_tensor);
+  auto count = hccl_count / LongToSize(rank_size_imm);
   params.sendcount = count;
   params.recvcount = count;
-  auto hccl_data_type = HcomUtil::ConvertHcclType(input_tensor->data_type());
   const auto &op_name = op->primitive()->name();
   auto input_data_ptr = GetDevicePtrFromTensor(op_name, input_tensor);
   auto output_data_ptr = GetDevicePtrFromTensor(op_name, op->output(0));

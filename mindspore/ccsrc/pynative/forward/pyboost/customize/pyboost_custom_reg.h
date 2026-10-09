@@ -29,6 +29,10 @@ py::object PyboostCustomExtBase(const PrimitivePtr &prim, const py::list &args);
 py::object Pyboost_CustomExt(const py::args &args);
 py::object Pyboost_CellBackwardHook(const py::args &args);
 py::object PyboostDetach(const py::object &input);
+py::tuple ValidateAllToAllSingleAndBuildCommArgs(const py::object &output, const py::object &input,
+                                                 const py::object &output_split_sizes,
+                                                 const py::object &input_split_sizes, const py::object &group,
+                                                 const py::object &async_op);
 
 PYNATIVE_EXPORT void RegPyBoostCustomizeModule(py::module *m);
 }  // namespace mindspore::pynative

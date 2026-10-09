@@ -18,6 +18,22 @@ The tests of mindspore, used to test communication for mint.distributed.
 """
 import os
 from tests.mark_utils import arg_mark
+
+
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
+def test_mint_all_to_all_single_two_ranks():
+    """
+    Feature: mint.distributed.all_to_all_single.
+    Description: Verify the single-tensor collective contract on two Ascend ranks.
+    Expectation: Values, output storage, validation and stream dependencies are correct.
+    """
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10667 --join=True "
+        "pytest -s test_mint_all_to_all_single.py"
+    )
+    assert return_code == 0
+
+
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards")
 def test_hccl_mint_ops():
     """
