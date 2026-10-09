@@ -25,6 +25,10 @@
 
 - Fixed some host memory leak bugs: [tensor hook](https://atomgit.com/mindspore/mindspore/pull/93146), [MsDispatchMode](https://atomgit.com/mindspore/mindspore/pull/93146), [custom backward function](https://atomgit.com/mindspore/mindspore/pull/93146)
 
+### Discontinuation Reminder
+
+MindSpore's distributed parallel processing capabilities for static graphs will be discontinued in Q4 2026. If needed, please use the corresponding version for Q3 2026 (version 2.11.0).
+
 ### Contributors
 
 bellatan,BigSkySea,cheng_xiaoli,chenshan2623,DavidFFFan,fangwenyi1,fary86,gemini524,ginfung,guanqi88,hbhu_bin,huangbingjian1,huan-xiaoling,hwcaifubi,hwjiaorui,hz893,jimmyisme1,liangchenghui,lijiajie1234,LiNuohang,liuchengji3,looop5,luochao60,m0_51742343,machangwei,Margaret_wangrui,mc2gao,nepdada,panzhihui1,pph,shen_haochen,shenwei41,silkage_jiajia,skytier,SorryNaCN,wangyin888,wang-ziqi-code,wei_zhuoyi,wusuqin4,xmoqian,xuxinglei,yangjiane,yanglingyue,yt_289,yuheng_wang,zhangyinxia,zhaochenjie-huawei,zzhongmin

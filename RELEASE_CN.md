@@ -25,6 +25,10 @@
 
 - 修复若干host内存泄漏问题：[tensor hook](https://atomgit.com/mindspore/mindspore/pull/93146)、[MsDispatchMode](https://atomgit.com/mindspore/mindspore/pull/93146)、[自定义反向](https://atomgit.com/mindspore/mindspore/pull/93146)
 
+### 日落提醒
+
+MindSpore静态图分布式并行功能将在2026年Q4日落，如有需要请使用2026年Q3配套版本（即2.11.0版本）。
+
 ### 贡献者
 
 bellatan,BigSkySea,cheng_xiaoli,chenshan2623,DavidFFFan,fangwenyi1,fary86,gemini524,ginfung,guanqi88,hbhu_bin,huangbingjian1,huan-xiaoling,hwcaifubi,hwjiaorui,hz893,jimmyisme1,liangchenghui,lijiajie1234,LiNuohang,liuchengji3,looop5,luochao60,m0_51742343,machangwei,Margaret_wangrui,mc2gao,nepdada,panzhihui1,pph,shen_haochen,shenwei41,silkage_jiajia,skytier,SorryNaCN,wangyin888,wang-ziqi-code,wei_zhuoyi,wusuqin4,xmoqian,xuxinglei,yangjiane,yanglingyue,yt_289,yuheng_wang,zhangyinxia,zhaochenjie-huawei,zzhongmin
