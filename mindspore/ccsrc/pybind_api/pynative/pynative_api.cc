@@ -40,9 +40,6 @@ void RegPyNativeModule(py::module *m) {
   mindspore::tensor::RegTensorUtilsApi(m);
   mindspore::pynative::RegPyNativeExecutor(m);
   mindspore::pynative::RegisterPyBoostFunction(m);
-  mindspore::pynative::RegisterCustomizeFunction(m);
-  mindspore::pynative::RegisterCellBackwardHookFunction(m);
-  mindspore::pynative::RegisterDetachFunction(m);
   mindspore::pynative::RegisterFunctional(m);
   mindspore::pynative::RegOpCall(m);
   mindspore::pynative::RegFallback(m);

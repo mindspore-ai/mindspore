@@ -24,7 +24,7 @@
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/runtime/lazy_fusion.h"
 #include "include/pynative/forward/pyboost/fallback.h"
-#include "pybind_api/pynative/pynative_api.h"
+#include "pynative/forward/pyboost/customize/pyboost_custom_reg.h"
 
 namespace mindspore::pynative {
 namespace {
@@ -65,5 +65,4 @@ py::object PyboostDetach(const py::object &input) {
   return py::reinterpret_steal<py::object>(tensor::TransformOutput(py_output));
 }
 
-void RegisterDetachFunction(py::module *m) { m->def("pyboost_detach", &PyboostDetach, OP_NAME); }
 }  // namespace mindspore::pynative

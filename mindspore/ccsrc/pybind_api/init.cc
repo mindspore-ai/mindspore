@@ -22,6 +22,7 @@
 #include "pybind_api/ops/ops_api.h"
 #include "pybind_api/parallel/parallel_api.h"
 #include "pybind_api/pynative/pynative_api.h"
+#include "pynative/forward/pyboost/customize/pyboost_custom_reg.h"
 #include "pybind_api/runtime/runtime_api.h"
 #include "pybind_api/tools/tools_api.h"
 #include "pybind_api/utils/utils_api.h"
@@ -39,6 +40,8 @@ void RegModule(py::module *m) {
   RegFrontendModule(m);
 
   RegPyNativeModule(m);
+
+  pynative::RegPyBoostCustomizeModule(m);
 
   RegParallelModule(m);
 
