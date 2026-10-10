@@ -147,7 +147,7 @@ class StepLR(LRScheduler):
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         step_size (int): Period of learning rate decay.
         gamma (float, optional): Multiplicative factor of learning rate decay.
-            Default: ``0.5``.
+            Default: ``0.1``.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
@@ -1194,8 +1194,8 @@ class CosineAnnealingWarmRestarts(LRScheduler):
             the current learning rate adjustment strategy has been executed. Default: ``-1``.
 
     Raises:
-        ValueError: `T_0` is less than or equal than 0 or not an int.
-        ValueError: `T_mult` is less than or equal than 1 or not an int.
+        ValueError: `T_0` is less than or equal to 0 or not an int.
+        ValueError: `T_mult` is less than or equal to 1 or not an int.
         ValueError: `eta_min` is not int or float.
 
     Supported Platforms:

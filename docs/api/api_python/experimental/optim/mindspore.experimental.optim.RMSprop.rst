@@ -16,7 +16,7 @@ mindspore.experimental.optim.RMSprop
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值：``0.``。
         - **momentum** (float, 可选) - 动量系数。默认值：``0.``。
         - **centered** (bool, 可选) - 如果为 ``True``，则计算centered RMSProp，梯度通过其方差进行归一化。默认值：``False``。
-        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数。默认值：``False``。
+        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数，而不是最小化。默认值：``False``。
 
     输入：
         - **gradients** (tuple[Tensor]) - 网络权重的梯度。

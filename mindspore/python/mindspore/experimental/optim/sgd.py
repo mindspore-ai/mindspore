@@ -55,7 +55,8 @@ class SGD(Optimizer):
         momentum (Union[int, float], optional): momentum factor. Default: ``0``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         dampening (Union[int, float], optional): dampening for momentum. Default: ``0``.
-        nesterov (bool, optional): enables Nesterov momentum. Default: ``False``.
+        nesterov (bool, optional): enables Nesterov momentum. If using Nesterov,
+            the momentum must be positive, and the damping must be equal to 0.0. Default: ``False``.
 
     Keyword Args:
         maximize (bool, optional): maximize the params based on the objective, instead of minimizing.

@@ -59,7 +59,7 @@ mindspore.experimental.optim.AdamW
         - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数。默认值：``False``。
 
     输入：
-        - **gradients** (tuple[Tensor], 可选) - 网络权重的梯度。
+        - **gradients** (tuple[Tensor]) - 网络权重的梯度。
 
     异常：
         - **ValueError** - 学习率不是int、float或Tensor。

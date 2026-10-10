@@ -56,7 +56,7 @@ class NAdam(Optimizer):
         betas (Tuple[float, float], optional): coefficients used for computing
             running averages of gradient and its square. Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
-            numerical stability. Default: ``1e-8``.
+            numerical stability. It must be greater than 0. Default: ``1e-8``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         momentum_decay (float, optional): momentum momentum_decay. Default: ``4e-3``.
 
