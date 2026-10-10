@@ -107,10 +107,10 @@ class SGD(Optimizer):
         Validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
         Validator.check_value_type("maximize", maximize, [bool], self.cls_name)
 
-        defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
-                        weight_decay=weight_decay, nesterov=nesterov,
-                        maximize=maximize, grad_centralization=False)
-        super(SGD, self).__init__(params, defaults)
+        defaults = {"lr": lr, "momentum": momentum, "dampening": dampening,
+                    "weight_decay": weight_decay, "nesterov": nesterov,
+                    "maximize": maximize, "grad_centralization": False}
+        super().__init__(params, defaults)
         for group in self.param_groups:
             Validator.check_value_type("dampening", group.get("dampening"), [int, float], self.cls_name)
             group["dampening"] = float(group.get("dampening"))
@@ -128,7 +128,8 @@ class SGD(Optimizer):
         end_id = self.group_start_id[group_id + 1]
         momentum = self.op_cast(momentum, mstype.float32)
         opt = ops.SGD(dampening, weight_decay, nesterov)
-        grads = tuple([grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = [grad if not maximize else ops.neg(grad) for grad in gradients[start_id: end_id]]
+        grads = tuple(grads)
         self.hyper_map(ops.partial(_sgd_opt, opt, momentum, lr), grads,
                        self.parameters[start_id: end_id], self.accum[start_id: end_id],
                        self.stat[start_id: end_id])
