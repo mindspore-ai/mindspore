@@ -535,10 +535,13 @@ class Upsample(Cell):
 
 class UpsampleExt(Cell):
     r"""
-    For details, please refer to :func:`mindspore.mint.nn.functional.interpolate`.
+    Interpolates the input tensor `input` according to the interpolation mode specified by `mode`, 
+    with the given `size` or `scale_factor`.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    For details, please refer to :func:`mindspore.mint.nn.functional.interpolate`.
 
     Supported Platforms:
         ``Ascend``

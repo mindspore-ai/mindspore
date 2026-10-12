@@ -1385,6 +1385,8 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
         - `trace` is currently only used in `mindscience` scientific computing scenarios and
           does not support other usage scenarios.
         - `trace` is not supported on Windows platform yet.
+          Supported dtypes: `np.float16`, `np.float32` on GPU;
+          `np.float16`, `np.float32`, `np.float64` on CPU.
 
     Args:
         a (Tensor): A matrix to be calculated.

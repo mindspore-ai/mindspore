@@ -10,7 +10,7 @@ mindspore.mint.nn.functional.adaptive_max_pool1d
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - adaptive_max_pool1d的输入，为二维或三维的Tensor，数据类型为float16、float32或者float64。。
+        - **input** (Tensor) - adaptive_max_pool1d的输入，为二维或三维的Tensor，数据类型为float16、float32或者float64。
         - **output_size** (int) - 输出特征图的size。 `output_size` 是一个整数。
         - **return_indices** (bool，可选) - 如果为 ``True`` ，输出最大值的索引。默认值为 ``False`` 。
 

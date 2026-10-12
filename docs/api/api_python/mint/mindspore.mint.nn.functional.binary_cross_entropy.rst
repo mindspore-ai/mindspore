@@ -28,7 +28,7 @@ mindspore.mint.nn.functional.binary_cross_entropy
 
     参数：
         - **input** (Tensor) - 输入预测值，其数据类型为float16或float32。在Ascend平台，也支持bfloat16。
-        - **target** (Tensor) - 输入目标值，shape与 `input` 相同。数据类型为float16或float32。
+        - **target** (Tensor) - 输入目标值，shape和数据类型与 `input` 相同。数据类型为float16或float32。
           在Ascend平台，也支持bfloat16。
         - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `input`
           的shape保持一致。数据类型必须为float16或float32。在Ascend平台，也支持bfloat16。

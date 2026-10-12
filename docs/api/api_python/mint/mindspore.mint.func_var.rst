@@ -3,7 +3,7 @@ mindspore.mint.var
 
 .. py:function:: mindspore.mint.var(input, dim=None, *, correction=1, keepdim=False)
 
-    计算tensor在指定维度上的方差。
+    计算tensor在指定维度上的方差。`dim` 可以是单个维度、维度列表，也可为 ``None`` ，表示对全部维度做规约计算。
 
     方差 (:math:`\delta ^2`) 计算如下：
 

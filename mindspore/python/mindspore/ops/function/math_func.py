@@ -6108,7 +6108,7 @@ def tril_indices(row, col, offset=0, *, dtype=mstype.int64):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor.
-            An optional data type of `mindspore.int32` and `mindspore.int64`. Default ``mstype.int64`` .
+            Support `mstype.int32` and `mstype.int64`. Default ``mstype.int64`` .
 
     Returns:
         Tensor
@@ -10783,7 +10783,7 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
 
 def tanhshrink(input):
     '''
-    Apply the element-wise Tanhshrink function.
+    Compute the Tanhshrink activation function of the input tensor element-wise.
 
     .. math::
 

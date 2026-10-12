@@ -18,8 +18,6 @@ mindspore.mint.where
         Tensor，其中的元素从 `input` 和 `other` 中选取。
 
     异常：
-        - **TypeError** - 如果 `condition` 不是Tensor。
-        - **TypeError** - 如果 `input` 和 `other` 都是常量。
         - **ValueError** - `condition` 、 `input` 和 `other` 不能互相广播。
 
     .. py:function:: mindspore.mint.where(condition) -> Tensor

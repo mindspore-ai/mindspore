@@ -3,7 +3,7 @@ mindspore.ops.sparse_flash_attention
 
 .. py:function:: mindspore.ops.sparse_flash_attention(query, key, value, sparse_indices, scale_value, *, block_table=None, actual_seq_lengths_query=None, actual_seq_lengths_kv=None, query_rope=None, key_rope=None, sparse_block_size=1, layout_query='BSND', layout_kv='BSND', sparse_mode=3, pre_tokens=2^63-1, next_tokens=2^63-1, attention_mode=0, return_softmax_lse=False) -> Tuple[Tensor, Tensor, Tensor]
 
-    针对大序列长度推理场景的稀疏注意力计算模块。该模块通过"只计算关键部分"大幅减少计算量，基于稀疏索引选取重要的 Key 和 Value 进行注意力计算。
+    计算稀疏闪速注意力（SFA）。稀疏闪速注意力是面向长序列推理场景的高效注意力计算模块。该模块通过"只计算关键部分"大幅减少计算量，基于稀疏索引选取重要的 Key 和 Value 进行注意力计算。
     以下为公式与参数 shape 中维度的含义：
 
     - B：batch维。
@@ -55,7 +55,7 @@ mindspore.ops.sparse_flash_attention
     返回：
         包含3个Tensor的元组。
 
-        - **attention_out** (Tensor) - 注意力输出，数据类型与 `query` 一致。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, S1, N1, D)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(T1, N1, D)`。
+        - **attention_out** (Tensor) - 注意力输出，数据类型为 bfloat16 或 float16。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, S1, N1, D)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(T1, N1, D)`。
         - **softmax_max** (Tensor) - softmax中的最大值，数据类型为 float32。当 `layout_query` 为 ``"BSND"`` 时shape为 :math:`(B, N2, S1, N1/N2)`，当 `layout_query` 为 ``"TND"`` 时shape为 :math:`(N2, T1, N1/N2)`。
         - **softmax_sum** (Tensor) - softmax中的求和值，数据类型为 float32。shape与 `softmax_max` 一致。
 

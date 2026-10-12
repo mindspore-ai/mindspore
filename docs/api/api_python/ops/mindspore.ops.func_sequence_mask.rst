@@ -12,8 +12,8 @@
         该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
-        - **lengths** (Tensor) - 输入tensor。此tensor中的所有值都应小于或等于 `maxlen` ，大于 `maxlen` 的值将被视为 `maxlen` 。
-        - **maxlen** (int) - 指定返回tensor的长度。默认 ``None`` 。
+        - **lengths** (Tensor) - 用于计算掩码tensor。此tensor中的所有值都应小于或等于 `maxlen` ，大于 `maxlen` 的值将被视为 `maxlen` 。
+        - **maxlen** (int) - 返回tensor最后一维的尺寸。必须为正数，且数据类型与 `lengths` 中的元素类型相同。默认 ``None`` 。
 
     返回：
         Tensor，shape为 `lengths.shape + (maxlen,)` 。

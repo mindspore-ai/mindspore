@@ -3,7 +3,7 @@
 
 .. py:function:: mindspore.ops.relu6(x)
 
-    计算输入Tensor的ReLU（修正线性单元），其上限为6。
+    逐元素计算输入Tensor的ReLU（修正线性单元），其上限为6。
 
     .. math::
         \text{ReLU6}(x) = \min(\max(0,x), 6)

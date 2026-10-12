@@ -3,7 +3,7 @@ mindspore.mint.randn
 
 .. py:function:: mindspore.mint.randn(*size, generator=None, dtype=None, device=None)
 
-    返回一个tensor，shape和dtype由输入决定，其元素为服从标准正态分布的数字。
+    返回一个新的tensor，shape和dtype由输入决定，其元素为服从标准正态分布的数字。
 
     参数：
         - **size** (Union[int, tuple(int), list(int)]) - 输出的tensor的shape，例如，:math:`(2, 3)` 或 :math:`2`。

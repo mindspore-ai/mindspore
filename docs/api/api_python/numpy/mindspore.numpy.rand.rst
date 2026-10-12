@@ -7,7 +7,7 @@ mindspore.numpy.rand
 
     参数：
         - **shape** (Union[int, tuple(int), list(int)]) - 指定新Tensor的shape，例如 :math:`(2,3)` 或 :math:`2` 。
-        - **dtype** (Union[mindspore.dtype, str], 可选) - 指定Tensor的数据类型。默认值： ``mstype.float32`` 。
+        - **dtype** (Union[mindspore.dtype, str], 可选) - 指定Tensor的数据类型。必须为float类型。默认值： ``mstype.float32`` 。
 
     返回：
         Tensor，给定shape和类型，其中所有元素都为区间 :math:`[0,1)` 上均匀分布的随机数。

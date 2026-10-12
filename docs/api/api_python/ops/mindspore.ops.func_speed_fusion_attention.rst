@@ -42,7 +42,7 @@ mindspore.ops.speed_fusion_attention
         - **input_layout** (str) - 指定输入 `query` 、 `key` 和 `value` 的数据格式。值可以为 ``"BSH"`` 、 ``"BNSD"`` 、 ``"SBH"`` 、 ``"BSND"`` 或  ``"TND"`` 。其中 ``"TND"`` 是实验性格式。
 
           当 `input_layout` 为 ``"TND"`` 时，必须满足以下限制：
-          假设有两个列表list_seq_q和list_seq_k表示输入序列的长度。每个列表的值表示batch中每个序列的长度。例如，list_seq_q = [4, 2, 6]，list_seq_k = [10, 3, 9]。
+          假设有两个列表list_seq_q和list_seq_k表示输入序列的长度。每个列表的值表示batch中每个序列的长度。例如，list_seq_q = [4, 2, 6]，list_seq_k = [10, 3, 9]。列表元素代表 S。
           T1 = sum(list_seq_q) = 12，T2 = sum(list_seq_k) = 22。
           max_seqlen_q = max(list_seq_q)，max_seqlen_k = max(list_seq_k)。
           qk_pointer = sum(list_seq_q * list_seq_k)，表示元素乘积的总和。

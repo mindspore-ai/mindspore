@@ -9,7 +9,7 @@ mindspore.mint.nn.functional.linear
         output = input * weight^{T} + bias
 
     .. warning::
-        - 这是一个实验性API，后续可能修改或删除。
+        - 2.9.0 版本后接口将更名为 `linear`。
 
     参数：
         - **input** (Tensor) - 输入Tensor，shape是 :math:`(*, in\_channels)`，其中 :math:`*` 表示任意的附加维度。

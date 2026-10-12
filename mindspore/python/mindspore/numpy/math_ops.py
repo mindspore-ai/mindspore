@@ -951,7 +951,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Returns:
-        Standard deviation tensor.
+        Variance tensor.
 
     Examples:
         >>> import mindspore.numpy as np

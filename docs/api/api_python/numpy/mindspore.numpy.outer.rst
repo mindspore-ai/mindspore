@@ -17,8 +17,8 @@ mindspore.numpy.outer
 
     .. note::
         - 不支持NumPy参数 `out` 。
-        - 在 GPU 上，支持的数据类型为 np.float16 。
-        - 在 CPU 上，支持的数据类型为 np.float32 和 np.float64。
+        - 在 GPU 上，支持的数据类型为 np.float16 和 np.float32。
+        - 在 CPU 上，支持的数据类型为 np.float16 、 np.float32 和 np.float64。
 
     参数：
         - **a** (Tensor) - 第一个输入向量。如果不是一维的，则将其展平。

@@ -10,7 +10,7 @@ mindspore.ops.trapz
         \mathop{ \int }\nolimits_{{}}^{{}}{y}{ \left( {x} \right) } \text{d} x
 
     参数：
-        - **y** (Tensor) - 输入tensor。
+        - **y** (Tensor) - 用于积分计算的输入tensor。
         - **x** (Tensor，可选) - 如果指定，则定义采样点之间的间距。
 
     关键字参数：

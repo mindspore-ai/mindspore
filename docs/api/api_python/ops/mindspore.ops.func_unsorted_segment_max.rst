@@ -23,7 +23,7 @@ mindspore.ops.unsorted_segment_max
 
     参数：
         - **x** (Tensor) - 输入tensor。
-        - **segment_ids** (Tensor) - 标识每个元素所属段。
+        - **segment_ids** (Tensor) - 标识每个元素所属段。形状设为 :math:`(x_1, x_2, ..., x_N)` ，满足 :math:`0 < N \le R` 。
         - **num_segments** (Union[int, Tensor]) - 分段数量，可以为int或零维的tensor。
 
     返回：

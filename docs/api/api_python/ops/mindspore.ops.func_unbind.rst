@@ -7,7 +7,7 @@ mindspore.ops.unbind
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **dim** (int) - 指定维度。默认 ``0`` 。
+        - **dim** (int) - 指定要移除的维度。默认 ``0`` 。
 
     返回：
         由多个tensor组成的tuple。

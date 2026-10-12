@@ -1246,7 +1246,8 @@ def unique_consecutive(input, return_inverse=False, return_counts=False, dim=Non
         input (Tensor): The input tensor.
         return_inverse (bool, optional): Whether to return the index where the element in the original input
             maps to the position in the output. Default: ``False`` .
-        return_counts (bool, optional): Whether to return the counts of each unique element. Default: ``False`` .
+        return_counts (bool, optional): Whether to return the counts of each unique element 
+            in its consecutive group. Default: ``False`` .
         dim (int, optional): The dimension along which to apply unique.
             If ``None`` , the unique of the flattened input is
             returned. If the dimension is specified, it must be int32 or int64. Default: ``None`` .

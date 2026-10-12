@@ -16,8 +16,6 @@ where:
         Tensor, elements are selected from `input` and `other`.
 
     Raises:
-        TypeError: If `condition` is not a tensor.
-        TypeError: If both `input` and `other` are scalars.
         ValueError: If `condition`, `input` and `other` can not broadcast to each other.
 
     Supported Platforms:
