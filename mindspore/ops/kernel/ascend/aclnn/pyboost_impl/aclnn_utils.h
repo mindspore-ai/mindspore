@@ -286,7 +286,7 @@ using MemBlockPtr = std::shared_ptr<MemBlock>;
 #define SIMU_LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                      \
   do {                                                                                                    \
     uint64_t sim_ws_size = 0;                                                                             \
-    const std::string sim_api_name = #aclnn_api;                                                          \
+    static const std::string sim_api_name = #aclnn_api;                                                          \
     try {                                                                                                 \
       auto [sim_ws, sim_executor, sim_cache, sim_release_func] = GEN_EXECUTOR(sim_api_name, __VA_ARGS__); \
       sim_ws_size = sim_ws;                                                                               \
