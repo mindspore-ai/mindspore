@@ -16,6 +16,7 @@
 
 #include "kernel/cpu/op_plugin/op_plugin_utils.h"
 #include <unordered_set>
+#include <unordered_map>
 #include <string>
 #include <algorithm>
 #include "ops_utils/dl_utils.h"
@@ -24,10 +25,32 @@
 
 namespace mindspore::kernel {
 namespace op_plugin {
-OpPluginKernelParam CreateOpPluginParam(const std::vector<KernelTensor *> &inputs,
+namespace {
+const char *GetCachedTypeName(TypeId type_id) {
+  // The plugin ABI consumes dtype names only for the duration of the call. A
+  // worker-local cache avoids rebuilding the same std::string for every input
+  // and output on every invocation, while keeping returned c_str pointers
+  // stable as the node-based unordered_map grows.
+  thread_local std::unordered_map<TypeId, std::string> type_names;
+  const auto iter = type_names.find(type_id);
+  if (iter != type_names.end()) {
+    return iter->second.c_str();
+  }
+  const auto result = type_names.emplace(type_id, TypeIdToString(type_id, true));
+  return result.first->second.c_str();
+}
+}  // namespace
+
+OpPluginKernelParam CreateOpPluginParam(std::vector<KernelTensor *> inputs,
                                         const std::vector<KernelTensor *> &outputs,
                                         const std::vector<KernelTensor *> &workspace) {
   OpPluginKernelParam param;
+
+  const auto tensor_param_size = inputs.size() + outputs.size();
+  param.params.reserve(tensor_param_size + workspace.size());
+  param.shapes.reserve(tensor_param_size);
+  param.ndims.reserve(tensor_param_size);
+  param.dtypes.reserve(tensor_param_size);
 
   // Process inputs
   for (const auto &input : inputs) {
@@ -35,7 +58,7 @@ OpPluginKernelParam CreateOpPluginParam(const std::vector<KernelTensor *> &input
     const auto &in_shape = input->GetShapeVector();
     param.shapes.push_back(const_cast<int64_t *>(in_shape.data()));
     param.ndims.push_back(SizeToInt(in_shape.size()));
-    param.dtype_strings.push_back(TypeIdToString(input->dtype_id(), true));
+    param.dtypes.push_back(GetCachedTypeName(input->dtype_id()));
   }
 
   // Process outputs
@@ -44,44 +67,62 @@ OpPluginKernelParam CreateOpPluginParam(const std::vector<KernelTensor *> &input
     const auto &out_shape = output->GetShapeVector();
     param.shapes.push_back(const_cast<int64_t *>(out_shape.data()));
     param.ndims.push_back(SizeToInt(out_shape.size()));
-    param.dtype_strings.push_back(TypeIdToString(output->dtype_id(), true));
+    param.dtypes.push_back(GetCachedTypeName(output->dtype_id()));
   }
 
   // Process workspace
   std::transform(workspace.begin(), workspace.end(), std::back_inserter(param.params),
                  [](const KernelTensor *ws) { return ws->device_ptr(); });
 
-  param.dtypes.reserve(param.dtype_strings.size());
-  std::transform(param.dtype_strings.begin(), param.dtype_strings.end(), std::back_inserter(param.dtypes),
-                 [](const std::string &dtype_str) { return dtype_str.c_str(); });
-
-  param.kernel_info.SetKernelInput(inputs);
+  param.kernel_info.SetKernelInput(std::move(inputs));
   return param;
 }
 
 int LaunchOpPluginKernel(const std::string &op_name, size_t nparam, void **params, int *ndims, int64_t **shapes,
                          const char **dtypes, void *kernel_info, void *stream) {
-  int (*op_plugin_func)(int, void **, int *, int64_t **, const char **, void *, void *) = nullptr;
-  void *handle = ops::GetOpPluginHandle();
-  if (handle == nullptr) {
-    MS_LOG(ERROR) << "Op plugin handle is not initialized. Please ensure MS_OP_PLUGIN_PATH is set correctly.";
-    return -1;
-  }
+  using OpPluginFunc = int (*)(int, void **, int *, int64_t **, const char **, void *, void *);
+  OpPluginFunc op_plugin_func = nullptr;
 
-  // Clear previous errors before dlsym
-  (void)DL_ERROR();
+  const auto resolve_symbol = [&op_name, &op_plugin_func]() {
+    // PyBoost CPU tasks normally execute on a stable worker thread. Cache one
+    // resolved entry per op and worker to avoid repeated dlsym calls without a
+    // global lock on the hot path.
+    static thread_local std::unordered_map<std::string, OpPluginFunc> op_func_cache;
+    const auto cached = op_func_cache.find(op_name);
+    if (cached != op_func_cache.end()) {
+      op_plugin_func = cached->second;
+      return true;
+    }
+    void *handle = ops::GetOpPluginHandle();
+    if (handle == nullptr) {
+      MS_LOG(ERROR) << "Op plugin handle is not initialized. Please ensure MS_OP_PLUGIN_PATH is set correctly.";
+      return false;
+    }
+
+    // Clear previous errors before dlsym
+    (void)DL_ERROR();
 #ifdef _WIN32
-  SetLastError(0);
+    SetLastError(0);
 #endif
-  op_plugin_func =
-    reinterpret_cast<std::add_pointer<int(int, void **, int *, int64_t **, const char **, void *, void *)>::type>(
-      DL_SYM(handle, op_name.c_str()));
-  if (auto error_info = DL_ERROR(); error_info != nullptr) {
-    MS_LOG(ERROR) << "Failed to load op plugin kernel function for '" << op_name << "'. Error info: " << error_info;
+    op_plugin_func = reinterpret_cast<OpPluginFunc>(DL_SYM(handle, op_name.c_str()));
+    if (auto error_info = DL_ERROR(); error_info != nullptr) {
+      MS_LOG(ERROR) << "Failed to load op plugin kernel function for '" << op_name << "'. Error info: " << error_info;
+      return false;
+    }
+    (void)op_func_cache.emplace(op_name, op_plugin_func);
+    return true;
+  };
+
+  bool resolved = false;
+  resolved = resolve_symbol();
+  if (!resolved) {
     return -1;
   }
 
-  return op_plugin_func(nparam, params, ndims, shapes, dtypes, stream, kernel_info);
+  int ret = 0;
+  ret = op_plugin_func(nparam, params, ndims, shapes, dtypes, stream, kernel_info);
+
+  return ret;
 }
 
 int LaunchOpPluginKernel(const std::string &op_name, OpPluginKernelParam *param) {
