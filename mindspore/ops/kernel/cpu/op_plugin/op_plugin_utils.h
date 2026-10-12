@@ -29,7 +29,6 @@ struct OpPluginKernelParam {
   std::vector<void *> params;
   std::vector<int> ndims;
   std::vector<int64_t *> shapes;
-  std::vector<std::string> dtype_strings;
   std::vector<const char *> dtypes;
   KernelInputInfoImpl kernel_info;
   void *stream{nullptr};
@@ -38,7 +37,7 @@ struct OpPluginKernelParam {
 int LaunchOpPluginKernel(const std::string &op_name, size_t nparam, void **params, int *ndims, int64_t **shapes,
                          const char **type_pointer_list, void *kernel_info, void *stream = nullptr);
 int LaunchOpPluginKernel(const std::string &op_name, OpPluginKernelParam *param);
-OpPluginKernelParam CreateOpPluginParam(const std::vector<KernelTensor *> &inputs,
+OpPluginKernelParam CreateOpPluginParam(std::vector<KernelTensor *> inputs,
                                         const std::vector<KernelTensor *> &outputs,
                                         const std::vector<KernelTensor *> &workspace);
 }  // namespace op_plugin

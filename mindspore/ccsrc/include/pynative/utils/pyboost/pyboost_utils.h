@@ -138,6 +138,9 @@ class PYBOOST_API PyBoostUtils {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, kernel tensor ptr need to be returned.
     std::vector<kernel::KernelTensorPtr> kernel_tensor_ptr_list;
+    constexpr size_t argument_count = sizeof...(args);
+    kernel_tensor_list.reserve(argument_count);
+    kernel_tensor_ptr_list.reserve(argument_count);
     if (input_abs.empty()) {
       std::vector<AbstractBasePtr> tmp_abs(sizeof...(args), nullptr);
       GetAddressInfoHelper(device_context, stream_id, tmp_abs, &kernel_tensor_list, &kernel_tensor_ptr_list,
