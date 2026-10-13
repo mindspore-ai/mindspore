@@ -32,6 +32,7 @@ target_compile_options(mindspore_cpu_kernels PRIVATE
     -fvisibility=hidden
     -fno-strict-aliasing
     -fno-common
+    -Wno-interference-size
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
