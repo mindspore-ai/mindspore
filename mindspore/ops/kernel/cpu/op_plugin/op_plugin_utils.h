@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include "ir/tensor.h"
 #include "kernel/cpu/op_plugin/custom_kernel_input_info_impl.h"
 #include "kernel/cpu/utils/visible.h"
 
@@ -37,9 +38,13 @@ struct OpPluginKernelParam {
 int LaunchOpPluginKernel(const std::string &op_name, size_t nparam, void **params, int *ndims, int64_t **shapes,
                          const char **type_pointer_list, void *kernel_info, void *stream = nullptr);
 int LaunchOpPluginKernel(const std::string &op_name, OpPluginKernelParam *param);
-OpPluginKernelParam CreateOpPluginParam(std::vector<KernelTensor *> inputs,
-                                        const std::vector<KernelTensor *> &outputs,
-                                        const std::vector<KernelTensor *> &workspace);
+OpPluginKernelParam CreateOpPluginParam(std::vector<KernelTensor *> inputs, const std::vector<KernelTensor *> &outputs,
+                                        const std::vector<KernelTensor *> &workspace, size_t layout_output_count = 0);
+bool GetPluginOutputLayoutKind(const std::string &op_name);
+std::vector<tensor::TensorPtr> PreparePluginOutputBuffers(const std::string &op_name,
+                                                          const std::vector<tensor::TensorPtr> &outputs);
+void UpdatePluginOutputLayouts(OpPluginKernelParam &param, const std::vector<tensor::TensorPtr> &outputs,
+                               const std::vector<tensor::TensorPtr> &buffers);
 }  // namespace op_plugin
 }  // namespace mindspore::kernel
 

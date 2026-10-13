@@ -29,9 +29,17 @@ struct OpPluginTensorStorageInfo {
   size_t storage_offset;
 };
 
+struct OpPluginOutputLayout {
+  std::vector<int64_t> strides;
+  size_t storage_offset{0};
+  size_t buffer_index{0};
+};
+
 struct OpPluginOutputShapeInfo {
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<bool> shape_calculated;
+  // Populated only after the optional output-info initialization handshake.
+  std::vector<OpPluginOutputLayout> output_layouts;
 };
 
 // KernelInputInfo is an interface class.
