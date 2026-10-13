@@ -34,6 +34,9 @@ target_compile_options(mindspore_cpu_kernels PRIVATE
     -fno-common
     -Wno-interference-size
     -Wno-array-bounds
+    -Wno-range-loop-construct   # 新增：关闭 range-loop-construct 警告
+    -include                    # 新增：强制包含 <algorithm>
+    algorithm
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
