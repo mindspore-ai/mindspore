@@ -3,6 +3,6 @@ new_full:
     py_method: tensor_new_full
     kwonlyargs: dtype
     Ascend: pyboost
-    CPU: py_method
+    CPU: pyboost
     GPU: py_method
     interface: tensor

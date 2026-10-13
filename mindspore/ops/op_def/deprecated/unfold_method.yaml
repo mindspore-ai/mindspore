@@ -1,0 +1,23 @@
+# deprecated image unfold method
+unfold:
+  args:
+    input:
+      dtype: tensor
+    kernel_size:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+    dilation:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: 1
+    padding:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: 0
+    stride:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+      default: 1
+  returns:
+    output:
+      dtype: tensor

@@ -38,6 +38,10 @@ from mindspore.ops.functional_overload import empty_like
 from mindspore.ops.function.math_func import isclose
 from mindspore.ops.auto_generate import abs
 from mindspore.ops.auto_generate import clone
+from mindspore.ops.auto_generate import hann_window
+from mindspore.ops.functional_overload import hstack
+from mindspore.ops.auto_generate import pad_sequence
+from mindspore.ops.auto_generate import vstack
 from mindspore.ops.function.array_func import full_like_ext as full_like
 from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore.graph._check_supported import jit_view_unsupported
@@ -237,6 +241,7 @@ from mindspore.ops.auto_generate import trunc
 from mindspore.ops.auto_generate import argsort_ext as argsort
 # 90
 from mindspore.ops.auto_generate import isinf
+from mindspore.ops.auto_generate import isin, searchsorted_impl
 # 91
 
 # 92
@@ -467,7 +472,6 @@ from mindspore.ops.functional_overload import add
 from mindspore.ops.functional_overload import sub
 
 # 739
-from mindspore.ops.function.array_func import hstack
 
 # 826
 from mindspore.ops.functional_overload import floor_divide
@@ -504,6 +508,14 @@ from mindspore.ops.auto_generate import npu_gelu
 
 # 1106
 from mindspore.ops.auto_generate import vdot
+
+
+def bucketize(input, boundaries, *, out_int32=False, right=False):
+    """Return bucket indices for each input value."""
+    if boundaries.ndim != 1:
+        raise RuntimeError(f"boundaries tensor must be 1 dimension, but got dim({boundaries.ndim})")
+    dtype = mindspore.int32 if out_int32 else mindspore.int64
+    return searchsorted_impl(boundaries, input, None, dtype, right)
 
 
 def all(input, dim=None, keepdim=False):
@@ -1647,6 +1659,7 @@ __all__ = [
     'sqrt',
     # 30
     'searchsorted',
+    'bucketize',
     # 31
     'cummax',
     'cummin',
@@ -1774,6 +1787,7 @@ __all__ = [
     'argsort',
     # 90
     'isinf',
+    'isin',
     # 91
 
     # 92
@@ -2011,6 +2025,8 @@ __all__ = [
 
     # 739
     'hstack',
+    'pad_sequence',
+    'vstack',
 
     # 826
     'floor_divide',

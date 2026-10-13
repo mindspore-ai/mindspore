@@ -1,0 +1,7 @@
+hstack:
+  - op_yaml: hstack_op.yaml
+    py_method: functional_hstack
+    Ascend: pyboost
+    CPU: pyboost
+    GPU: pyboost
+    interface: function
