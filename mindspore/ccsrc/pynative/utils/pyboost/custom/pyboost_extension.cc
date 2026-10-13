@@ -103,11 +103,11 @@ void PyboostRunner::_Run() {
   this->_PrepareDeviceAddress();
   PyBoostUtils::DispatchRun(std::make_shared<mindspore::runtime::PyBoostDeviceTask>([runner = shared_from_this()]() {
     static auto simu = mindspore::common::IsCompileSimulation();
+    runner->_MallocDeviceAddress();
+    runner->_MallocWorkspace();
     if (simu) {
       return;
     }
-    runner->_MallocDeviceAddress();
-    runner->_MallocWorkspace();
     runner->_DispatchLaunchTask();
   }));
 }
