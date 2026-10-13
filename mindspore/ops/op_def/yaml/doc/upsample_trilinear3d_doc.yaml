@@ -13,7 +13,7 @@ upsample_trilinear3d:
               If ``True``, the input and output tensors are aligned by the center points of their corner pixels,
               preserving the values at the corner pixels.
               If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
-              and the interpolation use edge value padding for out of boundary values.
+              and the interpolation uses edge value padding for out of boundary values.
 
         Inputs:
             - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Supporting types:
@@ -47,7 +47,7 @@ upsample_trilinear3d:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> net = ops.UpsampleTrilinear3D()
-            >>> in_x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
+            >>> in_x = Tensor(np.random.randn(2, 3, 4, 512, 256))
             >>> output_size=[4, 64, 48]
             >>> out = net(in_x, output_size, None)
             >>> print(out.shape)
