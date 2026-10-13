@@ -22,6 +22,7 @@
 #include "include/pynative/utils/pyboost/op_runner.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/cpu/op_plugin/op_plugin_utils.h"
+#include "include/runtime/pipeline/pipeline.h"
 
 // Helper to check if a type is optional
 template <typename T>
@@ -89,6 +90,44 @@ inline void UpdateOutputShapesFromPlugin(op_plugin::OpPluginKernelParam &param, 
   }
 }
 
+template <bool IsInplace, typename... Args>
+void RunOpPluginDeviceTask(const std::shared_ptr<OpRunner> &op, const std::string &op_name,
+                           const std::vector<tensor::TensorPtr> &outputs,
+                           const std::vector<tensor::TensorPtr> &output_buffers, bool output_layout, Args &&...args) {
+  auto device_context = op->device_context();
+
+  // Process tensor arguments for MallocOpInputs.
+  auto malloc_tensor_args = [&](auto &&arg) {
+    if constexpr (is_std_optional_v<decltype(arg)>) {
+      if constexpr (is_tensor_ptr_v<decltype(arg.value())>) {
+        PyBoostUtils::MallocOpInputs(device_context, arg);
+      }
+    } else if constexpr (is_tensor_ptr_v<decltype(arg)> || is_value_tuple_ptr_v<decltype(arg)>) {
+      PyBoostUtils::MallocOpInputs(device_context, arg);
+    }
+  };
+  (malloc_tensor_args(args), ...);
+
+  if constexpr (!IsInplace) {
+    PyBoostUtils::MallocOpOutputs(device_context, output_buffers);
+  }
+  auto input_address_info = PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), args...);
+  const auto output_address_info = PyBoostUtils::GetAddressInfo(
+    device_context, op->stream_id(),
+    output_layout ? std::vector<AbstractBasePtr>{} : std::vector<AbstractBasePtr>{op->output_abs()}, output_buffers);
+  std::vector<kernel::KernelTensor *> workspace_tensors;
+  auto op_plugin_param = op_plugin::CreateOpPluginParam(std::move(input_address_info.first), output_address_info.first,
+                                                        workspace_tensors, output_layout ? outputs.size() : 0);
+  const auto ret = op_plugin::LaunchOpPluginKernel(op_name, &op_plugin_param);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Launch op plugin kernel failed, op name: " << op_name << ", return code: " << ret;
+  }
+  if (output_layout) {
+    op_plugin::UpdatePluginOutputLayouts(op_plugin_param, outputs, output_buffers);
+  }
+  UpdateOutputShapesFromPlugin(op_plugin_param, op);
+}
+
 // The InplaceIndex indicates the input tensor the output corresponds to in a inplace operation.
 template <std::size_t... InplaceIndices, typename... Args>
 std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPtr>> PyboostLaunchOpPluginKernel(
@@ -99,6 +138,7 @@ std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPt
 
   constexpr bool is_inplace = sizeof...(InplaceIndices) > 0;
 
+  const bool output_layout = !is_inplace && op_plugin::GetPluginOutputLayoutKind(op_name);
   if (!is_inplace) {
     op->InferOutput(args...);
   }
@@ -111,6 +151,8 @@ std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPt
     op->set_outputs(effective_outputs);
   }
 
+  const auto output_buffers =
+    output_layout ? op_plugin::PreparePluginOutputBuffers(op_name, op->outputs()) : op->outputs();
   const auto device_context = op->device_context();
   MS_EXCEPTION_IF_NULL(device_context);
 
@@ -128,45 +170,22 @@ std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPt
 
   const auto &outputs = op->outputs();
   if constexpr (!is_inplace) {
-    PyBoostUtils::PrepareOpOutputs(device_context, 0, outputs);
+    PyBoostUtils::PrepareOpOutputs(device_context, 0, output_buffers);
   }
 
   op->ProfileTrackerTask();
 
   // Async
   // pass 'outputs' by value because op->outputs() is occasionally broken in the dispatch task
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, &op_name, outputs, args...]() {
-    auto device_context = op->device_context();
-    constexpr bool is_inplace_lambda = sizeof...(InplaceIndices) > 0;
-
-    // Process tensor arguments for MallocOpInputs
-    auto malloc_tensor_args = [&](auto &&arg) {
-      if constexpr (is_std_optional_v<decltype(arg)>) {
-        if constexpr (is_tensor_ptr_v<decltype(arg.value())>) {
-          PyBoostUtils::MallocOpInputs(device_context, arg);
-        }
-      } else if constexpr (is_tensor_ptr_v<decltype(arg)> || is_value_tuple_ptr_v<decltype(arg)>) {
-        PyBoostUtils::MallocOpInputs(device_context, arg);
-      }
-    };
-    (malloc_tensor_args(args), ...);
-
-    if constexpr (!is_inplace_lambda) {
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    }
-    auto input_address_info =
-      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), args...);
-    const auto &output_address_info =
-      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
-    std::vector<kernel::KernelTensor *> workspace_tensors;
-    auto op_plugin_param = op_plugin::CreateOpPluginParam(std::move(input_address_info.first), output_address_info.first,
-                                                          workspace_tensors);
-    auto ret = op_plugin::LaunchOpPluginKernel(op_name, &op_plugin_param);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "Launch op plugin kernel failed, op name: " << op_name << ", return code: " << ret;
-    }
-    UpdateOutputShapesFromPlugin(op_plugin_param, op);
-  }));
+  PyBoostUtils::DispatchRun(
+    std::make_shared<runtime::PyBoostDeviceTask>([op, &op_name, outputs, output_buffers, output_layout, args...]() {
+      constexpr bool is_inplace_lambda = sizeof...(InplaceIndices) > 0;
+      RunOpPluginDeviceTask<is_inplace_lambda>(op, op_name, outputs, output_buffers, output_layout, args...);
+    }));
+  // Publish computed shapes only after the existing device task has finished.
+  if (output_layout) {
+    runtime::Pipeline::Get().WaitForward();
+  }
   op->ProfileTrackerInput(args...);
   op->ProfileTrackerOutput(outputs);
   MS_LOG(DEBUG) << op_name << " op plugin kernel call end";
