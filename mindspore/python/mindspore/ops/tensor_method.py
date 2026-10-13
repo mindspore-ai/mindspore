@@ -1246,6 +1246,13 @@ def deprecated_tensor_unbind(input, dim=0):
 
 
 # 117 unfold
+def tensor_unfold(input, dimension, size, step):
+    return ops.auto_generate.tensor_unfold(input, dimension, size, step)
+
+
+def deprecated_tensor_unfold(input, kernel_size, dilation=1, padding=0, stride=1):
+    return F.unfold(input, kernel_size, dilation, padding, stride)
+
 
 # 118 unique
 def deprecated_tensor_unique(input, sorted=True, return_inverse=False, return_counts=False, dim=None):
@@ -2114,3 +2121,8 @@ def _tensor_sparse_flash_attention(query, key, value, sparse_indices, scale_valu
                                    attention_mode=0, return_softmax_lse=False):
     """Placeholder for unsupported devices: sparse_flash_attention."""
     raise RuntimeError("'sparse_flash_attention' is only supported on Ascend.")
+
+
+def functional_hstack(tensors):
+    """Keep the existing horizontal-stack implementation for Python dispatch."""
+    return F.hstack(tensors)

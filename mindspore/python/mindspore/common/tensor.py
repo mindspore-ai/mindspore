@@ -3619,18 +3619,6 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('fold')(self, output_size, kernel_size, dilation, padding, stride)
 
-    def unfold(self, kernel_size, dilation=1, padding=0, stride=1):
-        r"""
-        For details, please refer to :func:`mindspore.ops.unfold`.
-
-        .. warning::
-            Non-backward-compatible change after version 2.9.0: parameter names
-            `kernel_size`, `dilation`, `padding` will be renamed to `dimension`,
-            `size`, `step`; the parameter `stride` will be removed.
-
-        """
-        return tensor_operator_registry.get('unfold')(self, kernel_size, dilation, padding, stride)
-
     def expand(self, *size):
         r"""
         For details, please refer to :func:`mindspore.ops.broadcast_to`.
