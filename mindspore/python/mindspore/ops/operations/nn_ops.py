@@ -188,7 +188,7 @@ class AdaptiveAvgPool2D(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
-          with float16 ,float32 or float64 data type.
+          with float16, float32 or float64 data type.
 
     Outputs:
         Tensor, with the same type as the `input_x`.

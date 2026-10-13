@@ -44,7 +44,7 @@ mindspore.ops.prompt_flash_attention
           - int8输出：
 
             - per-channel格式的 `quant_scale2` 和 `quant_offset2` 不支持有左填充、Ring Attention或D轴未对齐到32字节的情况。
-            - 不支持带有负值的带状稀疏和 `pre_tokens`/ `next_tokens` 。
+            - 不支持带有负值的带状稀疏和 `pre_tokens` / `next_tokens` 。
 
           - `quant_scale2` 和 `quant_offset2` 只有在 `query` 为bfloat16时才可以是bfloat16。
 
