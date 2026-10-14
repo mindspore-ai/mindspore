@@ -2365,7 +2365,7 @@ class MultiMarginLoss(Primitive):
 
 class L2Loss(Primitive):
     r"""
-    Calculates half of the L2 norm, but do not square the result.
+    Calculates half of the L2 norm of the input without taking the square root.
 
     Set input as x and output as loss.
 
@@ -7825,7 +7825,7 @@ class MultilabelMarginLoss(Primitive):
     Inputs:
         - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
           is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        - **target** (Tensor) - Ground truth data, with the same shape as `input`, data type must be int32 and
+        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
           label targets padded by -1.
 
     Outputs:

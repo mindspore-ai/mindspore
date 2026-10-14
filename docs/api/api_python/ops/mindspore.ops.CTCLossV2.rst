@@ -30,7 +30,7 @@ mindspore.ops.CTCLossV2
         - **TypeError** - 如果 `reduction` 不是string类型。
         - **TypeError** - 如果 `log_probs` 的dtype不是float类型或double类型。
         - **TypeError** - 如果 `targets`、 `input_lengths` 或 `target_lengths` 的dtype不是int32类型或int64类型。
-        - **ValueError** - 如果 `log_probs` 的秩不等于2。
+        - **ValueError** - 如果 `log_probs` 的秩不等于3。
         - **ValueError** - 如果 `targets` 的秩不等于2。
         - **ValueError** - 如果 `input_lengths` 的shape与批大小 :math:`N` 不匹配。
         - **ValueError** - 如果 `targets` 的shape与批大小 :math:`N` 不匹配。
