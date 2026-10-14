@@ -6115,6 +6115,8 @@ def nonzero(input, *, as_tuple=False):
         raise TypeError(
             f"For array function 'nonzero', 'as_tuple' must be bool, but got {type(as_tuple)}.")
     if as_tuple:
+        if input.ndim == 0:
+            input = input.expand_dims(0)
         return non_zero_ext_(input)
     return non_zero_(input)
 
