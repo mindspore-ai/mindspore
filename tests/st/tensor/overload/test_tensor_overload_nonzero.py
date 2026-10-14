@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""System tests for Tensor.nonzero and scalar tuple outputs."""
+
 import pytest
 import numpy as np
 import mindspore as ms
@@ -107,6 +109,22 @@ def test_ops_nonzero_normal(context_mode, as_tuple):
 
     with pytest.raises(TypeError):
         ms.Tensor(x).nonzero(False)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
+@pytest.mark.parametrize('value, expected', [(7, [0]), (0, [])])
+def test_nonzero_scalar_as_tuple(value, expected):
+    """
+    Feature: nonzero with a scalar input and as_tuple=True.
+    Description: Expand the scalar before inferring the tuple output.
+    Expectation: One int64 index tensor is returned for both zero and nonzero inputs.
+    """
+    ms.context.set_context(mode=ms.PYNATIVE_MODE, device_target='Ascend')
+    result = ops.nonzero(ms.Tensor(value, ms.int32), as_tuple=True)
+    assert isinstance(result, tuple)
+    assert len(result) == 1
+    assert result[0].dtype == ms.int64
+    np.testing.assert_array_equal(result[0].asnumpy(), np.array(expected, dtype=np.int64))
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
