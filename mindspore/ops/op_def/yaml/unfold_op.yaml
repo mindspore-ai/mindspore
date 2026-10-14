@@ -1,0 +1,20 @@
+# operator unfold (torch Tensor.unfold semantics)
+unfold:
+    args:
+        input:
+            dtype: tensor
+        dimension:
+            dtype: int
+        size:
+            dtype: int
+        step:
+            dtype: int
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: tensor_unfold
+    class:
+        name: Unfold
+    dispatch:
+        enable: True

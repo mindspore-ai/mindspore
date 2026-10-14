@@ -1,0 +1,23 @@
+# operator pad_sequence
+pad_sequence:
+    args:
+        sequences:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        batch_first:
+            dtype: bool
+            default: False
+        padding_value:
+            dtype: float
+            default: 0.0
+        padding_side:
+            dtype: int
+            default: "'right'"
+            arg_handler: str_to_enum
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: None
+        GPU: None
