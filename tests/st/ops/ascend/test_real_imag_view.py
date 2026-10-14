@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
+"""Tests for real and imag view operations on Ascend backend."""
 from tests.mark_utils import arg_mark
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.st.utils.test_utils import get_inputs_np, get_inputs_tensor
@@ -68,7 +70,7 @@ def test_real_imag_compare_numpy(accessor):
     Expectation: outputs are the same as numpy within tolerance
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    
+
     # 固定随机种子
     np.random.seed(42)
 
@@ -139,7 +141,7 @@ def test_real_imag_compare_numpy(accessor):
     run_unified_test(real_data, imag_data, mstype.float32, np.float32, 1e-5, 1e-5, "mixed special values")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_real_imag_view_exceptions():
     """
     Feature: RealImagView ascend kernel exception handling
@@ -166,6 +168,7 @@ def test_real_imag_view_exceptions():
     # Test float64 type
     test_exception(TypeError, [1.0, 2.0, 3.0], mstype.float64, "imag_view", "type_error")
 
+
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.0)
 def test_real_imag_view_backward():
     """
@@ -174,7 +177,7 @@ def test_real_imag_view_backward():
     Expectation: gradients are computed correctly
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    
+
     # 固定随机种子
     np.random.seed(42)
 
@@ -186,7 +189,7 @@ def test_real_imag_view_backward():
     # MindSpore network
     class MSBackwardNet(nn.Cell):
         def __init__(self):
-            super(MSBackwardNet, self).__init__()
+            super().__init__()
             self.real_view = mint.real
             self.imag_view = mint.imag
             self.sum = ops.ReduceSum()
@@ -211,7 +214,7 @@ def test_real_imag_view_backward():
 
     # Get mindspore grad
     ms_grad_fn = ms.value_and_grad(ms_net, grad_position=0)
-    ms_loss, ms_grad = ms_grad_fn(complex_input_ms)
+    _, ms_grad = ms_grad_fn(complex_input_ms)
 
     # Verify that gradients are computed
     assert ms_grad is not None
@@ -243,8 +246,10 @@ def test_real_view_non_complex_input_no_error():
 def real_func(x):
     return mint.real(x)
 
+
 def imag_func(x):
     return mint.imag(x)
+
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.0)
 def test_real_imag_view_dyn():
@@ -255,7 +260,7 @@ def test_real_imag_view_dyn():
     """
     np.random.seed(42)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    input_case1 = get_inputs_tensor(get_inputs_np([(2,4,4)], [np.complex64]))
-    input_case2 = get_inputs_tensor(get_inputs_np([(2,2,4,4)], [np.complex64]))
+    input_case1 = get_inputs_tensor(get_inputs_np([(2, 4, 4)], [np.complex64]))
+    input_case2 = get_inputs_tensor(get_inputs_np([(2, 2, 4, 4)], [np.complex64]))
     TEST_OP(real_func, [input_case1, input_case2], disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'])
     TEST_OP(imag_func, [input_case1, input_case2], disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'])
