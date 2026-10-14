@@ -267,7 +267,7 @@ def test_no_grad_stop_gradient_inplace_view():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.00)
 def test_auto_grad_stop_gradient_inplace_view_error():
