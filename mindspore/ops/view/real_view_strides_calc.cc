@@ -76,6 +76,10 @@ BasicCalcResult RealImagViewBasicTypeCalc(const tensor::TensorPtr &input_tensor,
     for (int i = ori_dim_size - 2; i >= 0; i--) {
       ori_strides[i] = ori_strides[i + 1] * ori_shape[i + 1];
     }
+  }
+
+  // Storage offsets use output element units, including zero-dimensional views.
+  if (is_complex_data_type) {
     new_storage_offset *= kComplexStrideMultiplier;
   }
 
