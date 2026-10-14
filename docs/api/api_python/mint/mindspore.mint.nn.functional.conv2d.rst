@@ -31,6 +31,10 @@ mindspore.mint.nn.functional.conv2d
     想更深入了解卷积层，请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 以及 `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
 
 
+    .. note::
+        当 `input` 和 `weight` 的数据类型均为 ``float16`` 、 ``bfloat16`` 或 ``float32`` 时，两者的数据类型可以不同。
+        例如，支持 ``bfloat16`` 的 `input` 与 ``float32`` 的 `weight` 和 `bias` 组合，输出数据类型与 `input` 相同。
+
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 或 :math:`(C_{in}, H_{in}, W_{in})` 的Tensor。
         - **weight** (Tensor) - shape为 :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})` ，则卷积核的大小为 :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})` 。
@@ -51,10 +55,11 @@ mindspore.mint.nn.functional.conv2d
           - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
     返回：
-        Tensor，卷积后的值。shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
+        Tensor，卷积后的值，数据类型与 `input` 相同。shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
         要了解不同的填充模式如何影响输出shape，请参考 :class:`mindspore.mint.nn.Conv2d` 以获取更多详细信息。
 
     异常：
+        - **TypeError** - `input` 和 `weight` 的数据类型不同，且其中至少一个不是 ``float16`` 、 ``bfloat16`` 或 ``float32`` 。
         - **ValueError** - 输入特征图的大小与参数应满足输出公式，以确保输出特征图大小为正，否则会报错。输出公式请参考 :class:`mindspore.mint.nn.Conv2d` 以获取更多详细信息。
         - **RuntimeError** - 在Ascend上，受不同型号NPU芯片L1缓存容量限制，输入尺寸或卷积核尺寸过大时可能报错。
         - **TypeError** - 如果 `stride` 、 `padding` 或 `dilation` 既不是int，也不是tuple或list。
