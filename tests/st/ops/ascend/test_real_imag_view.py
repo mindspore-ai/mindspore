@@ -264,4 +264,3 @@ def test_real_imag_view_dyn():
     input_case2 = get_inputs_tensor(get_inputs_np([(2, 2, 4, 4)], [np.complex64]))
     TEST_OP(real_func, [input_case1, input_case2], disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'])
     TEST_OP(imag_func, [input_case1, input_case2], disable_mode=['GRAPH_MODE_GE', 'GRAPH_MODE_O0'])
-
