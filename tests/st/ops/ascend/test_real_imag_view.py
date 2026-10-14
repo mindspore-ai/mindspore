@@ -139,7 +139,7 @@ def test_real_imag_compare_numpy(accessor):
     run_unified_test(real_data, imag_data, mstype.float32, np.float32, 1e-5, 1e-5, "mixed special values")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_real_imag_view_exceptions():
     """
     Feature: RealImagView ascend kernel exception handling
