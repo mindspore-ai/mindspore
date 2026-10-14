@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,11 +273,14 @@ std::vector<TypeId> ConvBaseFunImpl::InferType(const PrimitivePtr &primitive,
                                                const InferInfoPtrList &input_infos) const {
   const auto input_type = input_infos[idxes_.input_idx]->GetType();
   const auto weight_type = input_infos[idxes_.weight_idx]->GetType();
-  if (MS_UNLIKELY(input_type != weight_type)) {
+  // Allow mixed floating-point inputs while retaining the input dtype for the output.
+  static const std::set<TypeId> mixed_types = {kNumberTypeFloat16, kNumberTypeBFloat16, kNumberTypeFloat32};
+  const bool supported_mixed_types = mixed_types.count(input_type) != 0 && mixed_types.count(weight_type) != 0;
+  if (MS_UNLIKELY(input_type != weight_type && !supported_mixed_types)) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', the dtype of 'input' should be the same as 'weight', but got 'input' with dtype "
-                            << TypeIdToString(input_type) << " and 'weight' with dtype " << TypeIdToString(weight_type)
-                            << ".";
+                            << "', input and weight must have matching dtypes or both be float16, bfloat16 or float32, "
+                            << "but got input with dtype " << TypeIdToString(input_type) << " and weight with dtype "
+                            << TypeIdToString(weight_type) << ".";
   }
   return {input_type};
 }

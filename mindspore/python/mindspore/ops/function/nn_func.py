@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Huawei Technologies Co., Ltd
+# Copyright 2023-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -6515,6 +6515,11 @@ def conv2d_ext(input, weight, bias=None, stride=1, padding=0, dilation=1, groups
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ and
     `ConvNets <http://cs231n.github.io/convolutional-networks/>`_.
 
+    Note:
+        `input` and `weight` can have different dtypes when both are selected from
+        ``float16``, ``bfloat16`` and ``float32``. For example, ``bfloat16`` `input` with ``float32``
+        `weight` and `bias` is supported. The output dtype is the same as `input`.
+
     Args:
         input (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
         weight (Tensor): Tensor of shape
@@ -6557,11 +6562,14 @@ def conv2d_ext(input, weight, bias=None, stride=1, padding=0, dilation=1, groups
             - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
     Returns:
-        Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor, the value that applied 2D convolution, with the same dtype as `input`.
+        The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
         To see how different pad modes affect the output shape, please refer to
         :class:`mindspore.mint.nn.Conv2d` for more details.
 
     Raises:
+        TypeError: If `input` and `weight` have different dtypes and either is not ``float16``,
+            ``bfloat16`` or ``float32``.
         ValueError: Args and size of the input feature map should satisfy the output formula to ensure that the size of
             the output feature map is positive; otherwise, an error will be reported. For more details on the output
             formula, please refer to :class:`mindspore.mint.nn.Conv2d`.
