@@ -5,7 +5,7 @@ mindspore.ops.ApplyAdagrad
 
     根据Adagrad算法更新相关参数或者Tensor。
 
-    Adagrad算法在论文 `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ 中提出。针对不同参数样本数不均匀的问题，自适应的为各个参数分配不同的学习率。
+    Adagrad算法在论文 `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ 中提出。针对不同参数样本数不均匀的问题，自适应地为各个参数分配不同的学习率。
 
     .. math::
         \begin{array}{ll} \\
