@@ -28,6 +28,6 @@ mindspore.ops.softshrink
         Tensor，shape和数据类型与输入 `input` 相同。
 
     异常：
-        - **TypeError** - `lambd` 不是float、bool或int。
+        - **TypeError** - `lambd` 不是float、int或bool。
         - **TypeError** - `input` 不是Tensor。
         - **TypeError** - `input` 的dtype不是float16、float32或bfloat16。
