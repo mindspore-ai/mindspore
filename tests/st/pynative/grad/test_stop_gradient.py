@@ -200,7 +200,7 @@ class StopGradientInplaceViewNet(nn.Cell):
 
 class StopGradientInplaceParameterNet(nn.Cell):
     def __init__(self):
-        super(StopGradientInplaceParameterNet, self).__init__()
+        super().__init__()
         self.p1 = Parameter(Tensor([2.0, 3.0], dtype=ms.float32))
 
     def construct(self, x):
@@ -267,7 +267,7 @@ def test_no_grad_stop_gradient_inplace_view():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'],
+@arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard', mem_peak=1024.00)
 def test_auto_grad_stop_gradient_inplace_view_error():
