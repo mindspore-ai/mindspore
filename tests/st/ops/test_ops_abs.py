@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,13 @@ def abs_forward_func(x):
 @test_utils.run_with_cell
 def tensor_abs_forward_func(x):
     return x.abs()
+
+
+@test_utils.run_with_mode
+@test_utils.run_with_cell
+def mint_abs_forward_func(x: Tensor) -> Tensor:
+    """Return complex magnitudes through the mint functional API."""
+    return ms.mint.abs(x)
 
 
 @test_utils.run_with_mode
@@ -102,6 +109,26 @@ def test_tensor_abs_complex(mode, ms_type, np_type, output_type):
     view_output = tensor_abs_view_forward_func(x, mode=mode)
     assert view_output.dtype == output_type
     np.testing.assert_allclose(view_output.asnumpy(), np.abs(input_np[:, 1:].transpose(1, 0)))
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=1024.25)
+@pytest.mark.parametrize('mode', ['pynative', 'kbk'])
+@pytest.mark.parametrize('ms_type,np_type,output_type', [
+    (ms.complex64, np.complex64, ms.float32),
+    (ms.complex128, np.complex128, ms.float64),
+])
+def test_mint_abs_complex(mode, ms_type, np_type, output_type):
+    """
+    Feature: mint.abs with complex input.
+    Description: Verify complex64 and complex128 inputs in PyNative and graph modes.
+    Expectation: The magnitude and corresponding real output dtype are correct.
+    """
+    ms.set_context(mode=context.PYNATIVE_MODE if mode == 'pynative' else context.GRAPH_MODE)
+    input_np = np.array([[3 + 4j, -5 - 12j, 0], [8 + 15j, -7 - 24j, 20]], dtype=np_type)
+    output = mint_abs_forward_func(Tensor(input_np, ms_type), mode=mode)
+
+    assert output.dtype == output_type
+    np.testing.assert_allclose(output.asnumpy(), np.abs(input_np))
 
 
 @arg_mark(plat_marks=['platform_ascend'],

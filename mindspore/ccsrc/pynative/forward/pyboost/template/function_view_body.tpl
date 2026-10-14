@@ -80,4 +80,3 @@ ${return_type} ${op_name}(${input_args_with_type}) {
   MS_LOG(DEBUG) << "Out ${op_name} function";
   return output;
 }
-

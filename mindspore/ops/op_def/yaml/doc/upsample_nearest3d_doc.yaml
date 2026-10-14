@@ -5,7 +5,7 @@ upsample_nearest3d:
         This operator scale up the volumetric input with specified `output_size` or `scales` factors, using nearest
         neighbor algorithm.
 
-        One of `output_size` or `scales` must be given, and can not specified both at the same time.
+        One of `output_size` or `scales` must be given, and cannot be specified both at the same time.
 
         Inputs:
             - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.

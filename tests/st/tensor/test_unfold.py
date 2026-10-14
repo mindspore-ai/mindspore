@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for the image-block Tensor.unfold interface."""
+
 import pytest
 from tests.mark_utils import arg_mark
 import numpy as np

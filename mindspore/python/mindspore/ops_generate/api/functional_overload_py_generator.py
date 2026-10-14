@@ -61,7 +61,7 @@ class FunctionalOverloadPyGenerator(BaseGenerator):
         validate_func_docs(mint_func_protos_data, function_doc_data, alias_api_mapping)
         import_mint_list, mint_init_list, mint_def_list, add_to_all_list = [], [], [], []
         for mint_api_name, _ in mint_func_protos_data.items():
-            func_docstr = _format_docstring(function_doc_data[mint_api_name]["description"])
+            func_docstr = _format_docstring(function_doc_data.get(mint_api_name, {"description": ""})["description"])
             import_mint_list.append(self.import_mint_template.replace(cpp_func_name=mint_api_name))
             mint_def_list.append(self.mint_def_template.replace(mint_func_name=mint_api_name,
                                                                 docstr=func_docstr,
@@ -69,7 +69,8 @@ class FunctionalOverloadPyGenerator(BaseGenerator):
             add_to_all_list.append(f'"{mint_api_name}",\n')
             if mint_api_name in alias_api_mapping:
                 for alias_api_name in alias_api_mapping[mint_api_name]:
-                    func_docstr = _format_docstring(function_doc_data[alias_api_name]["description"])
+                    func_docstr = _format_docstring(
+                        function_doc_data.get(alias_api_name, {"description": ""})["description"])
                     mint_def_list.append(self.mint_def_template.replace(mint_func_name=alias_api_name,
                                                                         docstr=func_docstr,
                                                                         cpp_func_name=mint_api_name))

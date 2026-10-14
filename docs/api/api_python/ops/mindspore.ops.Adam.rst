@@ -44,7 +44,7 @@ mindspore.ops.Adam
 
         - **var** (Tensor) - shape和数据类型与输入 `var` 相同。
         - **m** (Tensor) - shape和数据类型与输入 `m` 相同。
-        - **v** (Tensor) - shape和数据类型与输入 `v` 相同的。
+        - **v** (Tensor) - shape和数据类型与输入 `v` 相同。
 
     异常：
         - **TypeError** - `use_locking` 和 `use_nesterov` 都不是bool。

@@ -37,7 +37,7 @@ adam_weight_decay:
             - **var** (Union[Parameter, Tensor]) - Weights to be updated. The shape is :math:`(N, *)`
               where :math:`*` means any number of additional dimensions. The data type can be float16 or float32.
             - **m** (Union[Parameter, Tensor]) - The 1st moment vector in the updating formula,
-              it should have the the shape as `var`. The data type can be float16 or float32.
+              it should have the shape as `var`. The data type can be float16 or float32.
             - **v** (Union[Parameter, Tensor]) - The 2nd moment vector in the updating formula,
               it should have the same shape as `m`.
             - **lr** (float) - :math:`lr` in the updating formula. The paper suggested value is :math:`10^{-8}`,

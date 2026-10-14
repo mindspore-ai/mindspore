@@ -254,6 +254,7 @@ deprecated_tensor_method_map = {
     # 116 unbind
     "unbind": "deprecated_tensor_unbind",
     # 117 unfold
+    "unfold": "deprecated_tensor_unfold",
 
     # 118 unique
     "unique": "deprecated_tensor_unique",

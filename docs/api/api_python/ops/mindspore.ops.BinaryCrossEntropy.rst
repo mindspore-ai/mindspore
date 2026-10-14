@@ -31,8 +31,8 @@ mindspore.ops.BinaryCrossEntropy
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **logits** (Tensor) - 输入预测值。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
-        - **labels** (Tensor) - 输入目标值，其shape和数据类型与 `logits` 相同。
+        - **logits** (Tensor) - 输入预测值。数据类型必须为float16或float32。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
+        - **labels** (Tensor) - 输入目标值，其shape和数据类型与 `logits` 相同。数据类型必须为float16或float32。
         - **weight** (Tensor, 可选) - 每个批次二值交叉熵的权重。且shape和数据类型必须与 `logits` 相同。默认值： ``None`` 。
 
     输出：

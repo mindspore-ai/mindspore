@@ -1,0 +1,17 @@
+# operator hstack
+hstack:
+    args:
+        tensors:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    bprop_expander: False
+    dispatch:
+        enable: True
+        Ascend: HstackAscend
+        CPU: HstackCPU
+        GPU: HstackGPU
