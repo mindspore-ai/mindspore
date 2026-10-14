@@ -281,3 +281,4 @@ def test_auto_grad_stop_gradient_inplace_view_error():
     grad_op = ops.GradOperation(get_all=True)
     with pytest.raises(RuntimeError, match="Cannot stop_gradient view inplace"):
         grad_op(net)(x)
+
