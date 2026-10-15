@@ -17,8 +17,8 @@
 /mindspore/ccsrc/cluster/ @zhangyinxia
 /mindspore/ccsrc/cmake/ @liuchongming74
 /mindspore/ccsrc/frontend/ @ginfung
-/mindspore/ccsrc/frontend/expander/grad/ @liangchenghui
-/mindspore/ccsrc/frontend/operator/meta_dsl/func_op/ @liangchenghui
+/mindspore/ccsrc/frontend/expander/grad/ @hz893
+/mindspore/ccsrc/frontend/operator/meta_dsl/func_op/ @hz893
 /mindspore/ccsrc/frontend/np_dtypes/ @hz893
 /mindspore/ccsrc/frontend/parallel/ @yangzhenzhang
 /mindspore/ccsrc/include/ @limingqi107
@@ -44,7 +44,7 @@
 /mindspore/ccsrc/pybind_api/pynative/ @chujinjin
 /mindspore/ccsrc/pybind_api/backend/ @limingqi107
 /mindspore/ccsrc/pybind_api/runtime/ @limingqi107
-/mindspore/ccsrc/pybind_api/ops/ @liangchenghui
+/mindspore/ccsrc/pybind_api/ops/ @hz893
 /mindspore/ccsrc/pybind_api/ops/custom/ @limingqi107
 /mindspore/ccsrc/pybind_api/parallel/ @yangzhenzhang
 /mindspore/ccsrc/pybind_api/tools/ @fary86
@@ -77,7 +77,7 @@
 /mindspore/core/utils/llm_manager.cc @liulili-huawei
 
 # The maintainers of mindspore/ops.
-/mindspore/ops/ @liangchenghui
+/mindspore/ops/ @hz893
 /mindspore/ops/kernel/ascend/aclop/ @limingqi107
 /mindspore/ops/kernel/ascend/acl_ir/ @limingqi107
 /mindspore/ops/kernel/ascend/akg/ @gaoxiong1
@@ -126,13 +126,13 @@
 /mindspore/python/mindspore/graph/ @ginfung
 /mindspore/python/mindspore/hal/ @limingqi107
 /mindspore/python/mindspore/mindrecord/ @jonyguo
-/mindspore/python/mindspore/mint/ @liangchenghui
+/mindspore/python/mindspore/mint/ @hz893
 /mindspore/python/mindspore/mint/optim/ @hz893
 /mindspore/python/mindspore/mint/distributed/ @zhangyinxia
 /mindspore/python/mindspore/multiprocessing/ @hz893
 /mindspore/python/mindspore/nn/ @hz893
 /mindspore/python/mindspore/nn/grad/ @ginfung
-/mindspore/python/mindspore/nn/layer/ @liangchenghui
+/mindspore/python/mindspore/nn/layer/ @hz893
 /mindspore/python/mindspore/nn/layer/container.py @chujinjin
 /mindspore/python/mindspore/nn/layer/transformer.py @tanghuikang
 /mindspore/python/mindspore/nn/loss/ @hz893
@@ -142,7 +142,7 @@
 /mindspore/python/mindspore/nn/sparse/ @yi-zhang95
 /mindspore/python/mindspore/numpy/ @yi-zhang95
 /mindspore/python/mindspore/onnx/ @hz893
-/mindspore/python/mindspore/ops/ @liangchenghui
+/mindspore/python/mindspore/ops/ @hz893
 /mindspore/python/mindspore/ops/composite/ @ginfung
 /mindspore/python/mindspore/ops_generate/ @chujinjin
 /mindspore/python/mindspore/parallel/ @yangzhenzhang
@@ -177,7 +177,7 @@
 /tests/st/dataset_helper/ @hz893
 /tests/st/data_transfer/ @jonyguo
 /tests/st/dfx/ @fary86
-/tests/st/dynamic_shape/ @liangchenghui
+/tests/st/dynamic_shape/ @hz893
 /tests/st/export_and_load/ @hz893
 /tests/st/fusion/ @limingqi107
 /tests/st/golden_stick/ @liulili-huawei
@@ -190,7 +190,7 @@
 /tests/st/infer/ @liulili-huawei
 /tests/st/mem_reuse/ @limingqi107
 /tests/st/mindscience/ @yi-zhang95
-/tests/st/mint/ @liangchenghui
+/tests/st/mint/ @hz893
 /tests/st/mint/optim/ @hz893
 /tests/st/mix_precision/ @hz893
 /tests/st/networks/large_models/ @suhaibo
@@ -201,7 +201,7 @@
 /tests/st/nontask_sink/ @zhangyinxia
 /tests/st/numpy_native/ @yi-zhang95
 /tests/st/offload/ @limingqi107
-/tests/st/ops/ @liangchenghui
+/tests/st/ops/ @hz893
 /tests/st/frontend/ @hz893
 /tests/st/optimizer/ @hz893
 /tests/st/optimizer_ex/ @hz893
@@ -253,7 +253,7 @@
 /tests/ut/cpp/utils/*tensor*.cc @chujinjin
 /tests/ut/cpp/utils/*utils*.cc @ginfung
 /tests/ut/cpp/mindir/ @ginfung
-/tests/ut/cpp/ops/ @liangchenghui
+/tests/ut/cpp/ops/ @hz893
 /tests/ut/cpp/utils/hyper_offload/ @zh_qh
 
 # The maintainers of tests/ut/python.
@@ -272,18 +272,18 @@
 /tests/ut/python/device_context/ @limingqi107
 /tests/ut/python/hal/ @limingqi107
 /tests/ut/python/mindrecord/ @jonyguo
-/tests/ut/python/mint/ @liangchenghui
+/tests/ut/python/mint/ @hz893
 /tests/ut/python/multiprocessing/ @hz893
 /tests/ut/python/nn/ @hz893
 /tests/ut/python/nn/grad/ @ginfung
-/tests/ut/python/nn/layer/ @liangchenghui
+/tests/ut/python/nn/layer/ @hz893
 /tests/ut/python/nn/loss/ @hz893
 /tests/ut/python/nn/optim/ @hz893
 /tests/ut/python/nn/probability/ @yi-zhang95
 /tests/ut/python/nn/sparse/ @yi-zhang95
 /tests/ut/python/numpy/ @yi-zhang95
 /tests/ut/python/onnx/ @hz893
-/tests/ut/python/ops/ @liangchenghui
+/tests/ut/python/ops/ @hz893
 /tests/ut/python/ops_generate/ @chujinjin
 /tests/ut/python/parallel/ @yangzhenzhang
 /tests/ut/python/profiler/ @tangmengcheng @hz893
