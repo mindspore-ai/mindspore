@@ -741,6 +741,42 @@ def test_roll():
     match_res(mnp_roll, onp_roll, arr)
 
 
+class RollNumpyNet(Cell):
+    """Exercise mindspore.numpy.roll in both execution modes."""
+
+    def __init__(self, shift, axis):
+        super().__init__()
+        self.shift = shift
+        self.axis = axis
+
+    def construct(self, x):
+        return mnp.roll(x, self.shift, self.axis)
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+@pytest.mark.parametrize('values, shift, axis', [
+    (onp.array([2**40 + 1, 2**40 + 3, 2**40 + 5], dtype=onp.int64), -1, None),
+    (onp.array([], dtype=onp.int64), -1, None),
+    (onp.empty((2, 0), dtype=onp.int64), 1, 1),
+], ids=['large_int64', 'empty_flat', 'empty_axis'])
+def test_roll_int64_precision_and_empty_input(mode, values, shift, axis):
+    """
+    Feature: mindspore.numpy.roll.
+    Description: Roll large int64 values and empty inputs in PyNative and Graph modes.
+    Expectation: Output dtype and values match NumPy without errors.
+    """
+    previous_mode = context.get_context('mode')
+    try:
+        context.set_context(mode=mode)
+        result = RollNumpyNet(shift, axis)(Tensor(values)).asnumpy()
+        expected = onp.roll(values, shift, axis)
+        assert result.dtype == expected.dtype
+        onp.testing.assert_array_equal(result, expected)
+    finally:
+        context.set_context(mode=previous_mode)
+
+
 def mnp_moveaxis(a):
     a = mnp.moveaxis(a, 3, 3)
     b = mnp.moveaxis(a, -1, 4)
