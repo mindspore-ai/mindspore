@@ -200,7 +200,7 @@ class StopGradientInplaceViewNet(nn.Cell):
 
 class StopGradientInplaceParameterNet(nn.Cell):
     def __init__(self):
-        super(StopGradientInplaceParameterNet, self).__init__()
+        super().__init__()
         self.p1 = Parameter(Tensor([2.0, 3.0], dtype=ms.float32))
 
     def construct(self, x):

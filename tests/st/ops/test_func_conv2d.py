@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ class Net2d(nn.Cell):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_conv2d_with_mixed_precision(mode):
     """
-    Feature: conv2d with mixed precision (bfloat16 input, float32 weight/bias).
-    Description: Test conv2d when input is bfloat16 and weight/bias are float32.
-    Expectation: Success.
+    Feature: conv2d with bfloat16 input and float32 weight/bias.
+    Description: Test conv2d with bfloat16 input and float32 weight/bias.
+    Expectation: The output has bfloat16 dtype and the expected values.
     """
     ms.context.set_context(mode=mode)
     ms.device_context.ascend.op_precision.conv_allow_hf32(False)
@@ -50,20 +50,60 @@ def test_conv2d_with_mixed_precision(mode):
     bias = ms.Tensor(np.ones([2]), ms.float32)
     net = Net2d()
     output = net(x, weight, bias=bias)
-    expected = np.array([[[3., 3., 3., 3.],
-                          [3., 3., 3., 3.],
-                          [3., 3., 3., 3.],
-                          [3., 3., 3., 3.]],
-                         [[3., 3., 3., 3.],
-                          [3., 3., 3., 3.],
-                          [3., 3., 3., 3.],
-                          [3., 3., 3., 3.]]])
+    assert output.dtype == ms.bfloat16
+    expected = np.full((2, 2, 4, 4), 3., dtype=np.float32)
+    assert output.shape == expected.shape
     cpu_cast = ops.Cast().set_device("CPU")
     output = cpu_cast(output, ms.float32)
     assert np.allclose(output.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.01)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('input_dtype', [ms.float16, ms.bfloat16, ms.float32])
+@pytest.mark.parametrize('weight_dtype', [ms.float16, ms.bfloat16, ms.float32])
+def test_conv2d_with_floating_dtypes(mode, input_dtype, weight_dtype):
+    """
+    Feature: conv2d mixed floating-point inputs.
+    Description: Cover float16, bfloat16 and float32 input/weight pairs.
+    Expectation: Output retains the input dtype and has the expected values.
+    """
+    ms.context.set_context(mode=mode)
+    ms.device_context.ascend.op_precision.conv_allow_hf32(False)
+    x = ms.Tensor(np.ones([2, 2, 4, 4]), input_dtype)
+    weight = ms.Tensor(np.array([0.5, 1.5, 2.25, -0.25]).reshape((2, 2, 1, 1)), weight_dtype)
+    bias = ms.Tensor(np.array([1., -1.]), ms.float32)
+    output = Net2d()(x, weight, bias=bias)
+    expected = np.empty((2, 2, 4, 4), dtype=np.float32)
+    expected[:, 0] = 3.
+    expected[:, 1] = 1.
+    assert output.dtype == input_dtype
+    assert output.shape == expected.shape
+    cpu_cast = ops.Cast().set_device("CPU")
+    np.testing.assert_allclose(cpu_cast(output, ms.float32).asnumpy(), expected)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.01)
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('input_dtype,weight_dtype', [
+    (ms.float32, ms.int32),
+    (ms.int32, ms.float32),
+])
+def test_conv2d_with_unsupported_mixed_dtypes(mode, input_dtype, weight_dtype):
+    """
+    Feature: conv2d input and weight dtype validation.
+    Description: Reject mixed floating-point/integer tensors in both execution modes.
+    Expectation: A TypeError identifies the unsupported input and weight dtype pair.
+    """
+    ms.context.set_context(mode=mode)
+    x = ms.Tensor(np.ones([2, 2, 4, 4]), input_dtype)
+    weight = ms.Tensor(np.ones([2, 2, 1, 1]), weight_dtype)
+    with pytest.raises(TypeError, match="input and weight must"):
+        Net2d()(x, weight).asnumpy()
+
+
 def ops_conv2d_binary_compare(input_binary_data, output_binary_data, stride, padding, dilation, groups):
+    """Compare conv2d forward and backward results against the binary references."""
     def _count_unequal_element(data_expected, data_me, rtol, atol):
         assert data_expected.shape == data_me.shape
         total_count = len(data_expected.flatten())
@@ -71,8 +111,7 @@ def ops_conv2d_binary_compare(input_binary_data, output_binary_data, stride, pad
         greater = np.greater(error, atol + np.abs(data_me) * rtol)
         loss_count = np.count_nonzero(greater)
         assert (loss_count / total_count) < rtol, \
-            "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-                format(data_expected[greater], data_me[greater], error[greater])
+            f"\ndata_expected_std:{data_expected[greater]}\ndata_me_error:{data_me[greater]}\nloss:{error[greater]}"
 
     def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         if np.any(np.isnan(data_expected)):
