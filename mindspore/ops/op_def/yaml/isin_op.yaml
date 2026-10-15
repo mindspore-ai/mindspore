@@ -1,0 +1,20 @@
+# operator isin
+isin:
+    args:
+        elements:
+            dtype: tensor
+        test_elements:
+            dtype: tensor
+        assume_unique:
+            dtype: bool
+            default: False
+        invert:
+            dtype: bool
+            default: False
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: Isin
+    dispatch:
+        enable: True

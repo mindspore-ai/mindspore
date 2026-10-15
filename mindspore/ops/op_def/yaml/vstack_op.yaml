@@ -1,0 +1,13 @@
+# operator vstack
+vstack:
+    args:
+        tensors:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: None
+        GPU: None

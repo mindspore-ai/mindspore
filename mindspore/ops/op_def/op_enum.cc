@@ -189,6 +189,9 @@ REG_STRING_TO_ENUM_COMMON(grid_sampler_padding_mode, StrToGridSamplerPaddingMode
 REG_STRING_TO_ENUM_COMMON(k_v_cache_align_mode,
                           StrToEnumMap{{"LEFT", KVCacheAlignMode::LEFT}, {"RIGHT", KVCacheAlignMode::RIGHT}})
 
+// PadSequence padding side
+REG_STRING_TO_ENUM_SPECIAL(padding_side, StrToEnumMap{{"LEFT", 0}, {"RIGHT", 1}})
+
 // FAS input_layout
 REG_STRING_TO_ENUM_COMMON(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLayoutMode::BSH},
                                                               {"BNSD", FASInputLayoutMode::BNSD},

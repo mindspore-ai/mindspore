@@ -1,0 +1,19 @@
+# operator hann_window
+hann_window:
+    args:
+        window_length:
+            dtype: int
+        periodic:
+            dtype: bool
+            default: True
+        dtype:
+            dtype: TypeId
+            arg_handler: dtype_to_type_id
+            default: None
+    returns:
+        output:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: None
+        GPU: None
