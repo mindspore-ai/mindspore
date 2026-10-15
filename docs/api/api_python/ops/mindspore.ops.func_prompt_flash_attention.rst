@@ -39,12 +39,12 @@ mindspore.ops.prompt_flash_attention
         - 量化：
 
           - int8输入，int8输出：必须提供 `deq_scale1`、 `quant_scale1`、 `deq_scale2` 和 `quant_scale2` 参数。 `quant_offset2` 是可选的（如果未提供，默认值为0）。
-          - int8输入，float16输出：必须提供 `deq_scale1`、 `quant_scale1` 和 `deq_scale2` 参数。如果提供 `quant_offset2` 或 `quant_scale2`（不为空），将导致错误。
+          - int8输入，float16输出：必须提供 `deq_scale1`、 `quant_scale1` 和 `deq_scale2` 参数。如果提供 `quant_offset2` 或 `quant_scale2` （不为空），将导致错误。
           - float16或bfloat16输入，int8输出：必须提供 `quant_scale2` 参数。 `quant_offset2` 是可选的（如果未提供，默认值为0）。如果提供 `deq_scale1`、 `quant_scale1` 或 `deq_scale2` 参数（不为空），将导致错误。
           - int8输出：
 
             - per-channel格式的 `quant_scale2` 和 `quant_offset2` 不支持有左填充、Ring Attention或D轴未对齐到32字节的情况。
-            - 不支持带有负值的带状稀疏和 `pre_tokens`/ `next_tokens` 。
+            - 不支持带有负值的带状稀疏和 `pre_tokens` / `next_tokens` 。
 
           - `quant_scale2` 和 `quant_offset2` 只有在 `query` 为bfloat16时才可以是bfloat16。
 
