@@ -3537,12 +3537,11 @@ op_db: Dict[str, OpInfo] = {
         name='mint.abs',
         op=mint.abs,
         ref=torch.abs,
-        # torch donen't support bool, bool type is maintained in test_ops_abs::
+        # Bool and complex forward cases are maintained in test_ops_abs.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d not in [ms.bool_, ms.bfloat16])),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bool_)),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        not_support_dtypes=(ms.complex64, ms.complex128),
     ),
     'Tensor.floor': UnaryOpInfo(
         name='Tensor.floor',

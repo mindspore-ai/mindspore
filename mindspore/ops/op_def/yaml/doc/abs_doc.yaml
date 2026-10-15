@@ -2,6 +2,8 @@ abs:
     description: |
         Compute the absolute value of a tensor element-wise.
 
+        For complex input, computes the magnitude of each element.
+
         .. math::
 
             out_i = |input_i|
@@ -10,7 +12,9 @@ abs:
             input (Tensor): The input tensor.
 
         Returns:
-            Tensor
+            Tensor with the same shape as `input`. If `input` has dtype ``complex64`` or ``complex128``,
+            the output dtype is ``float32`` or ``float64``, respectively. Otherwise, the output dtype
+            is the same as `input`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

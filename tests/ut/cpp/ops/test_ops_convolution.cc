@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,9 +176,29 @@ std::vector<GeneralInferParam> prepare_params() {
                     InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)}})
     .FeedExpectedOutput({{2, 3, 7, 7}}, {kNumberTypeFloat32});
 
+  for (auto input_type : {kNumberTypeFloat16, kNumberTypeBFloat16, kNumberTypeFloat32}) {
+    for (auto weight_type : {kNumberTypeFloat16, kNumberTypeBFloat16, kNumberTypeFloat32}) {
+      generator
+        .FeedInputArgs({InferInfoParam{ShapeVector{2, 3, 8, 8}, input_type},
+                        InferInfoParam{ShapeVector{3, 3, 2, 2}, weight_type},
+                        InferInfoParam{ShapeVector{3}, kNumberTypeFloat32},
+                        InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                       ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+                        InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                       ValuePtrList{CreateScalar<int64_t>(0), CreateScalar<int64_t>(0)}},
+                        InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                       ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+                        InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
+                        InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
+                                       ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
+                        InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)}})
+        .FeedExpectedOutput({{2, 3, 7, 7}}, {input_type});
+    }
+  }
+
   generator
     .FeedInputArgs({InferInfoParam{ShapeVector{2, 3, 8, 8}, kNumberTypeFloat32},
-                    InferInfoParam{ShapeVector{3, 3, 2, 2}, kNumberTypeFloat16},
+                    InferInfoParam{ShapeVector{3, 3, 2, 2}, kNumberTypeInt32},
                     InferInfoParam{ShapeVector{3}, kNumberTypeFloat32},
                     InferInfoParam{ShapeArray{{}, {}}, kNumberTypeInt64,
                                    ValuePtrList{CreateScalar<int64_t>(1), CreateScalar<int64_t>(1)}},
