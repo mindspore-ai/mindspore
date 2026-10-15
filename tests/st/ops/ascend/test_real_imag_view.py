@@ -141,6 +141,30 @@ def test_real_imag_compare_numpy(accessor):
     run_unified_test(real_data, imag_data, mstype.float32, np.float32, 1e-5, 1e-5, "mixed special values")
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard')
+@pytest.mark.parametrize("dtype, np_dtype", [(mstype.complex64, np.complex64),
+                                            (mstype.complex128, np.complex128)])
+@pytest.mark.parametrize("accessor", ["func", "attr"])
+def test_real_imag_scalar_view_storage_offset(dtype, np_dtype, accessor):
+    """
+    Feature: Real and imag of a scalar view with a nonzero storage offset.
+    Description: Select a non-initial complex element before reading its components.
+    Expectation: Component values and storage offsets refer to the selected element.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    data = np.array([1 + 2j, 3 + 4j], dtype=np_dtype)
+    scalar = Tensor(data, dtype).select(0, 1)
+    assert scalar.ndim == 0
+    assert scalar.storage_offset() > 0
+
+    real, imag = _ms_access_real_imag(scalar, accessor)
+    assert real.ndim == imag.ndim == 0
+    np.testing.assert_array_equal(real.asnumpy(), data[1].real)
+    np.testing.assert_array_equal(imag.asnumpy(), data[1].imag)
+    assert real.storage_offset() == scalar.storage_offset() * 2
+    assert imag.storage_offset() == real.storage_offset() + 1
+
+
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
 def test_real_imag_view_exceptions():
     """

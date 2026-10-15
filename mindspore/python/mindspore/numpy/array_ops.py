@@ -1029,6 +1029,8 @@ def roll_along_axis(a, shift, axis):
     _check_element_int((shift, axis))
     if axis < 0:
         axis += a.ndim
+    if a.shape[axis] == 0:
+        return a
     shift = -(shift % a.shape[axis])
     # if shift is 0, we do not need to roll at all
     if shift == 0:
@@ -1090,13 +1092,7 @@ def roll(a, shift, axis=None):
     """
     _check_input_tensor(a)
     original_shape = a.shape
-    original_dtype = a.dtype
     restore_shape = False
-    # ops.strided_slice only supports float on cpu, this will change once more supports
-    # are added.
-    if not _check_is_float(original_dtype):
-        if not original_dtype in (mstype.complex64, mstype.complex128):
-            a = a.astype(mstype.float32)
     if axis is None:
         restore_shape = True
         axis = 0
@@ -1107,9 +1103,6 @@ def roll(a, shift, axis=None):
         a = roll_along_axis(a, shift_each, axis_each)
     if restore_shape:
         a = a.reshape(original_shape)
-    if not _check_is_float(original_dtype):
-        if not original_dtype in (mstype.complex64, mstype.complex128):
-            a = a.astype(original_dtype)
     return a
 
 

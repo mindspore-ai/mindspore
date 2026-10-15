@@ -93,7 +93,7 @@ TypePtrList NonZeroExtFuncImpl::InferType(const PrimitivePtr &primitive, const V
   auto x_rank_size = x_shape.size();
   TypePtrList type_tuple;
   for (size_t i = 0; i < x_rank_size; i++) {
-    type_tuple.push_back(std::make_shared<TensorType>(kInt64));
+    type_tuple.push_back(kInt64);
   }
   return type_tuple;
 }
