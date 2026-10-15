@@ -1,0 +1,11 @@
+unfold:
+  description: |
+    unfold(kernel_size, dilation=1, padding=0, stride=1) -> Tensor
+
+    For details, please refer to :func:`mindspore.ops.unfold`.
+
+    .. warning::
+        Non-backward-compatible change after version 2.9.0: parameter names
+        ``kernel_size``, ``dilation``, ``padding`` will be renamed to
+        ``dimension``, ``size``, ``step``; the parameter ``stride`` will be
+        removed.
