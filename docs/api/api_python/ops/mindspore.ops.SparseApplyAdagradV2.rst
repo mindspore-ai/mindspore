@@ -1,11 +1,11 @@
 mindspore.ops.SparseApplyAdagradV2
 ==================================
 
-.. py:class:: mindspore.ops.SparseApplyAdagradV2(lr, epsilon, update_slots=True, use_locking=False)
+.. py:class:: mindspore.ops.SparseApplyAdagradV2(lr, epsilon, use_locking=False, update_slots=True)
 
     `ops.SparseApplyAdagradV2` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
 
-    根据Adagrad算法更新相关参数或者Tensor。
+    根据Adagrad算法更新相关参数或者Tensor，比SparseApplyAdagrad算法多一个epsilon属性。
 
     .. math::
         \begin{array}{ll} \\
@@ -21,7 +21,7 @@ mindspore.ops.SparseApplyAdagradV2
         - **lr** (float) - 学习率。
         - **epsilon** (float) - 添加到分母上的较小值，以确保数值的稳定性。
         - **update_slots** (bool，可选) - 如果为 ``True`` ，则将更新 `accum` 。默认值： ``True`` 。
-        - **use_locking** (bool，可选) - 是否对参数更新加锁保护。默认值： ``False`` 。
+        - **use_locking** (bool，可选) - 是否对 `var` 和 `accum` 的张量更新进行加锁保护。默认值： ``False`` 。
 
     输入：
         - **var** (Union[Parameter, Tensor]) - 要更新的变量。为任意维度，其数据类型为float16或float32。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
@@ -39,6 +39,6 @@ mindspore.ops.SparseApplyAdagradV2
     异常：
         - **TypeError** - 如果 `lr` 或者 `epsilon` 不是float类型。
         - **TypeError** - 如果 `update_slots` 或者 `use_locking` 不是布尔值。
-        - **TypeError** - 如果 `var` 、 `accum` 、 `lr` 或 `grad` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 如果 `var` 、 `accum` 或 `grad` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `indices` 的数据类型不是int32。
         - **RuntimeError** - 如果 `var` 、 `accum` 和 `grad` 不支持数据类型转换。

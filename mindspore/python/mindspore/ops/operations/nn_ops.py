@@ -5028,7 +5028,7 @@ class ApplyPowerSign(Primitive):
     is the last moment of :math:`m_{t+1}`, :math:`lr` represents scaling factor `lr`, :math:`g` represents `grad`,
     :math:`\beta` represents `beta`.
 
-    All of inputs comply with the implicit type conversion rules to make the data types consistent.
+    All inputs comply with the implicit type conversion rules to make the data types consistent.
     If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
     If inputs are tensors and have different data types, the lower priority data type will be converted to
@@ -5218,7 +5218,7 @@ class ApplyProximalGradientDescent(Primitive):
         TypeError: If dtype of `var`, `alpha`, `l1` or `l2` is neither float16 nor float32.
         TypeError: If `alpha`, `l1` or `l2` is neither a Number nor a Tensor.
         TypeError: If `delta` is not a Tensor.
-        TypeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
+        TypeError: If `var` and `delta` do not support data type conversion.
 
     Supported Platforms:
         Deprecated
@@ -5280,7 +5280,7 @@ class LARSUpdate(PrimitiveWithInfer):
     Inputs:
         - **weight** (Tensor) - A tensor, representing the weight.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **gradient** (Tensor) - The gradient of weight, which has the same shape and dtype with weight.
+        - **gradient** (Tensor) - The gradient of weight, which has the same shape and dtype as weight.
         - **norm_weight** (Tensor) - A scalar tensor, representing the sum of squares of weight.
         - **norm_gradient** (Tensor) - A scalar tensor, representing the sum of squares of gradient.
         - **weight_decay** (Union[Number, Tensor]) - Weight decay. It must be a scalar tensor or number.
@@ -5290,7 +5290,7 @@ class LARSUpdate(PrimitiveWithInfer):
         Tensor, represents the new gradient.
 
     Raises:
-        TypeError: If neither `epsilon` nor `hyperpara` is a float.
+        TypeError: If either `epsilon` or `hyperpara` is not a float.
         TypeError: If `use_clip` is not a bool.
         TypeError: If `weight`, `gradient`, `norm_weight` or `norm_gradient` is not a Tensor.
         TypeError: If `weight_decay` or `learning_rate` is neither a Number nor a Tensor.

@@ -22,10 +22,10 @@ mindspore.ops.ApplyRMSProp
     :math:`\eta` 为 `learning_rate` 。 :math:`\nabla Q_{i}(w)` 代表 `grad` 。
 
     .. warning::
-        在该算法的稠密实现版本中，即使 `grad` 为零， `mean_square` 和 `momemt` 仍会被更新。但在该稀疏实现版本中，当 `grad` 为零时， `mean_squre` 和 `moment` 将不会被更新。
+        在该算法的稠密实现版本中，即使 `grad` 为零， `mean_square` 和 `moment` 仍会被更新。但在该稀疏实现版本中，当 `grad` 为零时， `mean_square` 和 `moment` 将不会被更新。
 
     参数：
-        - **use_locking** (bool，可选) - 是否对参数更新加锁保护。默认值:  ``False`` 。
+        - **use_locking** (bool，可选) - 是否对variable和accumulation的张量更新进行加锁保护。默认值: ``False`` 。
 
     输入：
         - **var** (Parameter) - 待更新的网络参数。
