@@ -51,6 +51,6 @@
     异常：
         - **TypeError** - 如果 `use_locking` 不是bool。
         - **TypeError** - 如果 `var` 、 `mean_gradient` 、 `mean_square` 、 `moment` 或 `grad` 不是Tensor。
-        - **TypeError** - 如果 `learing_rate` 既不是数值型也不是Tensor。
-        - **TypeError** - 如果 `learing_rate` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 如果 `learning_rate` 既不是数值型也不是Tensor。
+        - **TypeError** - 如果 `learning_rate` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `decay` 、 `momentum` 或 `epsilon` 不是float。

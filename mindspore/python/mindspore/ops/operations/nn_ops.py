@@ -2744,7 +2744,7 @@ class ApplyCenteredRMSProp(Primitive):
           a scalar tensor with float16 or float32 data type.
         - **decay** (float) - Decay rate.
         - **momentum** (float) - Momentum.
-        - **epsilon** (float) - Ridge term.
+        - **epsilon** (float) - A small value added to the denominator to avoid division by zero.
 
     Outputs:
         Tensor, parameters to be updated.
@@ -2752,8 +2752,8 @@ class ApplyCenteredRMSProp(Primitive):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `var`, `mean_gradient`, `mean_square`, `moment` or `grad` is not a Tensor.
-        TypeError: If `learing_rate` is neither a Number nor a Tensor.
-        TypeError: If dtype of `learing_rate` is neither float16 nor float32.
+        TypeError: If `learning_rate` is neither a Number nor a Tensor.
+        TypeError: If dtype of `learning_rate` is neither float16 nor float32.
         TypeError: If `decay`, `momentum` or `epsilon` is not a float.
 
     Supported Platforms:
@@ -4241,7 +4241,7 @@ class ApplyAdaMax(Primitive):
                    float16 nor float32.
         TypeError: If `beta_power`, `lr`, `beta1`, `beta2` or `epsilon` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        TypeError: If the data type of `var`, `m`, `v` and `grad` conversion of Parameter is not supported.
+        TypeError: If `var`, `m`, `v` and `grad` do not support data type conversion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4346,8 +4346,8 @@ class ApplyAdadelta(Primitive):
         TypeError: If dtype of `var`, `accum`, `accum_update`, `lr`, `rho`, `epsilon` or `grad` is neither float16 nor
                    float32.
         TypeError: If `accum_update`, `lr`, `rho` or `epsilon` is neither a Number nor a Tensor.
-        TypeError: If the data type of `var`, `accum`, `accum_update` and `grad` conversion of Parameter
-                      is not supported.
+        TypeError: If `var`, `accum`, `accum_update` and `grad` do not support 
+                      data type conversion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4442,7 +4442,8 @@ class ApplyAdagrad(Primitive):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float nor complex.
         TypeError: If `lr` is neither a Number nor a Tensor.
-        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If `var`, `accum` and `grad` do not support 
+                      data type conversion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4532,7 +4533,7 @@ class ApplyAdagradV2(Primitive):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
         TypeError: If `lr` is neither a Number nor a Tensor.
-        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If `var`, `accum` and `grad` do not support data type conversion.
 
     Supported Platforms:
         Deprecated
@@ -4955,7 +4956,7 @@ class ApplyAddSign(Primitive):
         TypeError: If dtype of `sign_decay` and `beta` are both not float16, float32 or float64.
         TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If `var`, `accum` and `grad` do not support data type conversion.
 
     Supported Platforms:
         Deprecated
@@ -5141,7 +5142,7 @@ class ApplyGradientDescent(Primitive):
         TypeError: If dtype of `var` or `alpha` is neither float16 nor float32.
         TypeError: If `delta` is not a Tensor.
         TypeError: If `alpha` is neither a Number nor a Tensor.
-        TypeError: If the data type of `var` and `delta` conversion of Parameter is not supported.
+        TypeError: If `var` and `delta` do not support data type conversion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7388,8 +7389,9 @@ class ApplyAdagradDA(Primitive):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): If ``True`` , updating of the `var` and `accum` tensors will be protected by a lock.
-                            Otherwise the behavior is undefined, but may exhibit less contention. Default: ``False`` .
+        use_locking (bool): If ``True`` , updating of the `var` and `gradient_accumulator` tensors 
+                            will be protected by a lock.Otherwise the behavior is undefined, 
+                            but may exhibit less contention. Default: ``False`` .
 
     Inputs:
         - **var** (Union[Parameter, Tensor]) - Variable to be updated. The data type must be float16 or float32.
@@ -7410,17 +7412,19 @@ class ApplyAdagradDA(Primitive):
         - **var** (Tensor) - The same shape and data type as `var`.
 
     Raises:
-        TypeError: If `var`, `gradient_accumulator` or `gradient_squared_accumulator` neither a Parameter nor a Tensor.
+        TypeError: If `var`, `gradient_accumulator` or `gradient_squared_accumulator` is neither 
+                      a Parameter nor a Tensor.
         TypeError: If `grad` is not a Tensor.
         TypeError: If `lr`, `l1`, `l2` or `global_step` is neither a Number nor a Tensor.
         TypeError: If use_locking is not a bool.
         TypeError: If dtype of `var`, `gradient_accumulator`, `gradient_squared_accumulator`, `grad`,
-                   `lr`, `l1` or `l2` is neither float16 nor float32.
-        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator` or `grad` is not same as `var`.
+                      `lr`, `l1` or `l2` is neither float16 nor float32.
+        TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator` or `grad` is not 
+                      the same as `var`.
         TypeError: If dtype of `global_step` is not int32 nor int64.
         ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
-        TypeError: If the data type of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
-                      conversion of Parameter is not supported.
+        TypeError: If `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
+                      do not support data type conversion.
 
     Supported Platforms:
         Deprecated
@@ -8028,10 +8032,10 @@ class ApplyAdamWithAmsgradV2(Primitive):
         - **vhat** (Tensor) - The same shape and data type as `vhat`.
 
     Raises:
-        TypeError: If `var`, `m`, `v`, `vhat` neither a Parameter nor a Tensor.
+        TypeError: If `var`, `m`, `v`, `vhat` is neither a Parameter nor a Tensor.
         TypeError: If dtype of `var`, `m`, `v`, `vhat`, `beta1_power`, `beta2_power`,
             `lr`, `beta1` , `beta2` , `epsilon` or `grad` is not float64, float32 or float16.
-        RuntimeError: If the data type of `var`, `m`, `v` , `vhat` and `grad` conversion of Parameter is not supported.
+        RuntimeError: If `var`, `m`, `v` , `vhat` and `grad` do not support data type conversion.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
