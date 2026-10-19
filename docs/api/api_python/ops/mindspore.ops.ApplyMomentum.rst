@@ -12,7 +12,7 @@
     有关公式和用法的更多详细信息，请参阅 :class:`mindspore.nn.Momentum` 。
 
     参数：
-        - **use_locking** (bool, 可选) - 是否对参数更新加锁保护。默认值： ``False`` 。
+        - **use_locking** (bool, 可选) - 是否对variable和accumulation的张量更新进行加锁保护。默认值： ``False`` 。
         - **use_nesterov** (bool, 可选) - 是否使用nesterov动量。默认值： ``False`` 。
         - **gradient_scale** (float, 可选) - 梯度的缩放比例。默认值： ``1.0`` 。
 
