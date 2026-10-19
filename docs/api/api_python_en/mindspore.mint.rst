@@ -3,6 +3,7 @@ mindspore.mint
 
 mindspore.mint provides a large number of functional, nn, optimizer interfaces. The API usages and functions are consistent with the mainstream usage in the industry for easy reference.
 The mint interface is currently an experimental interface and performs better than ops in graph mode of O0 and PyNative mode. Currently, the CPU/GPU backend are not supported, and it will be gradually improved in the future.
+Some operators support the CPU backend through ``mindspore_op_plugin``. For details, see the `mindspore_op_plugin supported operator list <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/SUPPORTED_OPS.md>`_.
 
 The module import method is as follows:
 
@@ -11,6 +12,69 @@ The module import method is as follows:
     from mindspore import mint
 
 Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.mint` operators in MindSpore, please refer to the link `mindspore.mint API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_en.md>`_ .
+
+``mindspore_op_plugin`` is an operator extension mechanism provided by MindSpore. Without changing how public
+MindSpore APIs are called, it uses the plugin to invoke ATen operators in libtorch for selected operators,
+supplementing CPU backend operator capabilities. This enables developers to quickly extend MindSpore operator
+capabilities and reduces duplicated operator development and maintenance costs.
+
+For the source code, see the
+`mindspore_op_plugin repository <https://atomgit.com/mindspore/mindspore_op_plugin>`_.
+
+1. How It Works
+
+  ``mindspore_op_plugin`` is implemented based on PyTorch's ATen operator library and converts MindSpore
+  operator calls to ATen operator calls through an adaptation layer. The workflow is as follows:
+
+  1. **Operator Registration**: Register plugin operators in MindSpore.
+  2. **Call Conversion**: Convert MindSpore Tensors to PyTorch Tensors.
+  3. **Operator Execution**: Call corresponding ATen operators for computation.
+  4. **Result Return**: Convert computation results back to MindSpore Tensors.
+
+  This design enables developers to quickly adapt new operators without worrying about underlying implementation details.
+
+2. Notes
+
+  - After installing the plugin, enable it by running ``import ms_op_plugin`` or setting ``MS_OP_PLUGIN_PATH``.
+  - ``mindspore_op_plugin`` supports execution only in CPU PyNative mode. For supported operators, see the
+    `mindspore_op_plugin supported operator list <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/SUPPORTED_OPS.md>`_.
+  - MindSpore, the plugin, and any PyTorch/LibTorch runtime loaded into the same process must use compatible
+    versions. For specific requirements, see the version information in the ``mindspore_op_plugin`` repository.
+
+3. Installation
+
+  Install compatible versions of MindSpore and ``mindspore_op_plugin`` first. Install the
+  plugin from a WHL package:
+
+  .. code-block:: bash
+
+      pip install ms_op_plugin-*.whl
+
+  For source builds, platform-specific instructions, and other installation methods, see
+  `Installing mindspore_op_plugin <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/README.md#installation>`_.
+
+4. Example
+
+  The following example uses ``mindspore.mint.abs`` to demonstrate how to use ``mindspore_op_plugin``.
+
+  .. code-block:: python
+
+      import mindspore as ms
+      import ms_op_plugin
+      from mindspore import Tensor, mint
+
+      ms.set_context(mode=ms.PYNATIVE_MODE)
+      ms.set_device(device_target="CPU")
+
+      input_x = Tensor([-1.0, 2.0, -3.0], ms.float32)
+      output = mint.abs(input_x)
+      print(output)
+
+  Output:
+
+  .. code-block:: text
+
+      [1. 2. 3.]
 
 Tensor
 ---------------
