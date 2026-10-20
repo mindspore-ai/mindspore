@@ -5,7 +5,7 @@ mindspore.ops.EditDistance
 
     `ops.EditDistance` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
 
-    计算Levenshtein编辑距离。它用于测量两个序列的相似性。输入是可变长度的序列，由SpaseTensors（hypothesis_indices, hypothesis_values, hypothesis_shape）和（truth_indices, truth_values, truth_shape）提供。
+    计算Levenshtein编辑距离。它用于测量两个序列的相似性。输入是可变长度的序列，由SparseTensors（hypothesis_indices, hypothesis_values, hypothesis_shape）和（truth_indices, truth_values, truth_shape）提供。
 
     .. math::
         \operatorname{lev}_{a, b}(i, j)=\left\{\begin{array}{ll}
