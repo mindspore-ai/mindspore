@@ -34,7 +34,7 @@ class Net(nn.Cell):
 def test_norm_normal(mode):
     """
     Feature: norm
-    Description: Verify the result of norm
+    Description: Verify norm results and matrix infinity-norm gradients at ties
     Expectation: success
     """
     ms.set_context(mode=mode)
@@ -56,6 +56,11 @@ def test_norm_normal(mode):
     output4 = net(b, float('inf'))
     expect_output4 = np.array(9.0)
     assert np.allclose(output4.asnumpy(), expect_output4)
+
+    tie_input = ms.Tensor([[1., -2.], [2., -1.]], ms.float16)
+    grad = ops.grad(net)(tie_input, float('inf'))
+    expect_grad = np.array([[0.5, -0.5], [0.5, -0.5]], dtype=np.float16)
+    np.testing.assert_array_equal(grad.asnumpy(), expect_grad)
 
     output7 = net(a, 1)
     expect_output7 = np.array(20.0)
@@ -123,7 +128,7 @@ def test_norm_normal(mode):
 def test_norm_normal2(mode):
     """
     Feature: norm
-    Description: Verify the result of norm
+    Description: Verify norm results and matrix negative-infinity-norm gradients at ties
     Expectation: success
     """
     ms.set_context(mode=mode)
@@ -137,3 +142,8 @@ def test_norm_normal2(mode):
     output6 = net(b, -float('inf'))
     expect_output6 = np.array(2.0)
     assert np.allclose(output6.asnumpy(), expect_output6)
+
+    tie_input = ms.Tensor([[1., -2.], [2., -1.]], ms.float16)
+    grad = ops.grad(net)(tie_input, -float('inf'))
+    expect_grad = np.array([[0.5, -0.5], [0.5, -0.5]], dtype=np.float16)
+    np.testing.assert_array_equal(grad.asnumpy(), expect_grad)
