@@ -36,7 +36,7 @@ class KernelInputInfoImpl : public KernelInputInfo {
   virtual ~KernelInputInfoImpl() = default;
   KernelInputInfoImpl(KernelInputInfoImpl &&) = default;
   KernelInputInfoImpl &operator=(KernelInputInfoImpl &&) = default;
-  void SetKernelInput(const std::vector<kernel::KernelTensor *> &inputs) { inputs_ = inputs; }
+  void SetKernelInput(std::vector<kernel::KernelTensor *> inputs) { inputs_ = std::move(inputs); }
   size_t GetInputSize() { return inputs_.size(); }
   bool IsScalarInput(size_t idx) final { return inputs_[idx]->type_id() != TypeId::kObjectTypeTensorType; }
 

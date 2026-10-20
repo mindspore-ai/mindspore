@@ -24,8 +24,10 @@
 #include <algorithm>
 #include <functional>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 #include "kernel/cpu/cpu_common.h"
 #include "kernel/cpu/op_plugin/op_plugin_utils.h"
@@ -100,6 +102,12 @@ bool CustomOpPluginCpuKernelMod::Launch(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs) {
   kernel_info_.SetOutputShapeInfo(nullptr);
+  if (is_compute_depend_op_) {
+    auto info = std::make_unique<OpPluginOutputShapeInfo>();
+    info->output_shapes.resize(outputs.size());
+    info->shape_calculated.resize(outputs.size(), false);
+    kernel_info_.SetOutputShapeInfo(std::move(info));
+  }
 
   std::vector<void *> params;
   kernel_info_.SetKernelInput(inputs);
