@@ -4833,7 +4833,7 @@ class SparseApplyProximalAdagrad(Primitive):
     Inputs:
         - **var** (Union[Parameter, Tensor]) - Variable tensor to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameterv) - Variable tensor to be updated, has the same shape as `var`.
+        - **accum** (Union[Parameter, Tensor]) - Variable tensor to be updated, has the same shape as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a float number or
           a scalar tensor with float16 or float32 data type. It must be positive.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a float number or
@@ -5443,7 +5443,7 @@ class SparseApplyFtrl(Primitive):
     Updates relevant entries according to the FTRL-proximal scheme
     For more details, please refer to :class:`mindspore.nn.FTRL`.
 
-    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    All inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
