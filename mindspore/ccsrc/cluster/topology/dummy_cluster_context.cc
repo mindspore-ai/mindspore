@@ -46,8 +46,6 @@ uint32_t ClusterContext::node_num(const std::string &) { return 0; }
 
 bool ClusterContext::initialized() const { return false; }
 
-bool ClusterContext::enable_cross_cluster() const { return false; }
-
 void ClusterContext::set_cluster_exit_with_exception() { return; }
 
 bool ClusterContext::cluster_exit_with_exception() const { return true; }

@@ -52,7 +52,6 @@
 #include "utils/distributed_meta.h"
 #include "graph/def_types.h"
 #include "acl/acl_rt.h"
-#include "plugin/ascend/res_manager/collective/ccool_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/dummy_ascend_collective_comm_lib.h"
@@ -1288,12 +1287,6 @@ bool AscendResManager::LoadCollectiveCommLib() {
   // If this is simulation, load dummy collective communication library.
   if (!common::GetEnv(kSimulationLevel).empty()) {
     collective_comm_lib_ = &DummyAscendCollectiveCommLib::GetInstance();
-    return true;
-  }
-  if (DistributedMeta::GetInstance()->enable_cross_cluster()) {
-    collective_comm_lib_ = &CcoolCollectiveCommLib::GetInstance();
-    MS_EXCEPTION_IF_NULL(collective_comm_lib_);
-    MS_LOG(INFO) << "Loading CCOOL collective library successfully.";
     return true;
   }
   // Load Multi ascend collective communication lib using dynamic library.

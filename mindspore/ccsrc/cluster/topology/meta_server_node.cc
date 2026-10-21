@@ -38,7 +38,6 @@ namespace cluster {
 namespace topology {
 // The keys for parsed information of rank table file.
 constexpr char kRankTableServerList[] = "server_list";
-constexpr char kRankTableClusterList[] = "cluster_list";
 constexpr char kRankTableDevice[] = "device";
 constexpr char kRankTablePodIp[] = "pod_ip";
 constexpr char kRankTableRankId[] = "rank_id";

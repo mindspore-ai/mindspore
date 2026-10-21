@@ -56,11 +56,6 @@ class MS_CORE_API DistributedMeta {
     return worker_ip_;
   }
 
-  // Set whether enable cross cluster communication.
-  void set_enable_cross_cluster(bool enable_cross_cluster) { enable_cross_cluster_ = enable_cross_cluster; }
-  // Return whether enable cross cluster communication.
-  bool enable_cross_cluster() const { return enable_cross_cluster_; }
-
  private:
   static std::shared_ptr<DistributedMeta> instance_;
   bool inited_{false};
@@ -70,8 +65,6 @@ class MS_CORE_API DistributedMeta {
   uint32_t local_rank_size_{1};
   mutable std::mutex worker_ip_mutex_;
   std::string worker_ip_;
-  // Indicate whether enable cross cluster communication.
-  bool enable_cross_cluster_{false};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_INCLUDE_UTILS_DISTRIBUTED_META_H_

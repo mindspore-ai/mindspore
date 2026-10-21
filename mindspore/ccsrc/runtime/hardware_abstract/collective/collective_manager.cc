@@ -695,10 +695,6 @@ bool CollectiveManager::InitDeviceCommLib(const std::string &init_group_name) {
   }
   RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->Initialize(global_rank_id_, global_rank_size_, device_id),
                            "Failed to initialize communication library on device side.");
-  if (DistributedMeta::GetInstance()->enable_cross_cluster()) {
-    MS_LOG(WARNING) << "Set helper for CCOOL collective communication.";
-    device_comm_lib_instance_->SetHelperCommLib(host_comm_lib_instance_);
-  }
   MS_LOG(INFO) << "Communication library on device side is successfully initialized.";
   return true;
 }
@@ -1013,11 +1009,10 @@ bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, 
 
   // Step 1: Generate and broadcast device information of the root node (required for NPU backend without rank table).
   static bool use_ranktable = !common::GetEnv("RANK_TABLE_FILE").empty();
-  bool use_cross_cluster = DistributedMeta::GetInstance()->enable_cross_cluster();
   bool use_config_hcom = (config.hccl_config.find("hccl_comm") != config.hccl_config.end());
   bool ret = false;
   void *root_info;
-  if (!is_mccl && !use_config_hcom && (!use_ranktable || use_cross_cluster)) {
+  if (!is_mccl && !use_config_hcom && !use_ranktable) {
     size_t root_info_size = 0;
     PROF_START(GenerateRootInfo);
     root_info = group->GenerateRootInfo(&root_info_size);
@@ -1029,19 +1024,16 @@ bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, 
            "different port, or 'npu-smi info' to check if there's residual processes.";
     }
 
-    // Broadcast the device root information to all nodes on host side. CCOOL broadcasts inner comm
-    // group's rootinfo within func 'GenerateRootInfo', do not need to broadcast outer comm group's rootinfo.
-    if (!use_cross_cluster) {
-      PROF_START(BroadcastUniqueID);
-      MS_LOG(WARNING) << "Start to send/fetch unqiueid for communication group " << group_name;
-      while (!ret) {
-        RETURN_IF_FALSE_WITH_LOG(host_comm_lib_instance_->BroadcastUniqueID(group_name, root_info_size, root_info),
-                                 "Broadcast for device root info failed on the host side.");
-        ret = true;
-      }
-      MS_LOG(WARNING) << "End to send/fetch unqiueid for communication group " << group_name;
-      PROF_END(BroadcastUniqueID);
+    // Broadcast the device root information to all nodes on host side.
+    PROF_START(BroadcastUniqueID);
+    MS_LOG(WARNING) << "Start to send/fetch unqiueid for communication group " << group_name;
+    while (!ret) {
+      RETURN_IF_FALSE_WITH_LOG(host_comm_lib_instance_->BroadcastUniqueID(group_name, root_info_size, root_info),
+                               "Broadcast for device root info failed on the host side.");
+      ret = true;
     }
+    MS_LOG(WARNING) << "End to send/fetch unqiueid for communication group " << group_name;
+    PROF_END(BroadcastUniqueID);
   }
 
   // Step 2: Initialize communication group on the device side.
