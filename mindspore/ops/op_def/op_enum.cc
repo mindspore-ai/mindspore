@@ -192,6 +192,10 @@ REG_STRING_TO_ENUM_COMMON(k_v_cache_align_mode,
 // PadSequence padding side
 REG_STRING_TO_ENUM_SPECIAL(padding_side, StrToEnumMap{{"LEFT", 0}, {"RIGHT", 1}})
 
+// QuantileExt interpolation
+REG_STRING_TO_ENUM_SPECIAL(interpolation,
+                           StrToEnumMap{{"LINEAR", 0}, {"LOWER", 1}, {"HIGHER", 2}, {"MIDPOINT", 3}, {"NEAREST", 4}})
+
 // FAS input_layout
 REG_STRING_TO_ENUM_COMMON(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLayoutMode::BSH},
                                                               {"BNSD", FASInputLayoutMode::BNSD},
