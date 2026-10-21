@@ -2883,7 +2883,7 @@ bool MSANFModelParser::BuildPrimitiveNodeFromProto(const mind_ir::ModelProto &mo
     if (prim_name.find("GraphKernel") == 0 || prim_name.find("_packet") != std::string::npos) {
       (void)graph_kernel_prim_proto.emplace_back(model_proto.primitives(i));
     } else if (!BuildPrimitiveNode(model_proto.primitives(i))) {
-      MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << graph_kernel_prim_proto[i].DebugString();
+      MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << prim_name;
       return false;
     }
   }
