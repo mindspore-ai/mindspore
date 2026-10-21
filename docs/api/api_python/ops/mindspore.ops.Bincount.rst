@@ -9,7 +9,7 @@ mindspore.ops.Bincount
         这是一个实验性API，后续可能修改或删除。
 
     输入：
-        - **array** (Tensor) - int32数据类型的Tensor。
+        - **array** (Tensor) - int32数据类型的Tensor，其值不能小于0。
         - **size** (Tensor) - int32数据类型的非负Tensor。
         - **weights** (Tensor) - 与 `array` shape相同或维度为0的Tensor。当维度为0时，所有权重均等于1。数据类型必须是以下类型之一：int32、int64、float32、float64。
 
