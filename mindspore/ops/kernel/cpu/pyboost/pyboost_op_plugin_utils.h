@@ -23,7 +23,6 @@
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/cpu/op_plugin/op_plugin_utils.h"
 #include "include/runtime/pipeline/pipeline.h"
-#include "pybind_api/gil_scoped_long_running.h"
 
 // Helper to check if a type is optional
 template <typename T>
@@ -185,7 +184,6 @@ std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPt
     }));
   // Publish computed shapes only after the existing device task has finished.
   if (output_layout) {
-    GilReleaseWithCheck no_gil;
     runtime::Pipeline::Get().WaitForward();
   }
   op->ProfileTrackerInput(args...);
