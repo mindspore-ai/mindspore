@@ -242,6 +242,7 @@ from mindspore.ops.auto_generate import argsort_ext as argsort
 # 90
 from mindspore.ops.auto_generate import isinf
 from mindspore.ops.auto_generate import isin, searchsorted_impl
+from mindspore.ops.auto_generate import quantile_ext as quantile
 # 91
 
 # 92
@@ -1786,6 +1787,7 @@ __all__ = [
     # 90
     'isinf',
     'isin',
+    'quantile',
     # 91
 
     # 92
