@@ -8,7 +8,7 @@ mindspore.ops.UniformInt
     生成均匀分布在区间 `[minval, maxval)` 中的随机数。离散概率函数定义如下：
 
     .. math::
-        \text{P}(i|a,b) = \frac{1}{b-a+1},
+        \text{P}(i|a,b) = \frac{1}{b-a},
 
     其中 :math:`a` 为分布区间的最小值 `minval` ， :math:`b` 为分布区间的最大值 `maxval` 。
 

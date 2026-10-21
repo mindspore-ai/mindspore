@@ -304,12 +304,12 @@ class Im2Col(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
-            for height and width. If type is int, it means that height equal with width. Must be specified.
-        strides (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
-        dilations (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+        ksizes (Union[int, tuple[int], list[int]]): The size of the kernel, should be two ints
+            for height and width. If type is int, it means that the height and width are equal. Must be specified.
+        strides (Union[int, tuple[int], list[int]], optional): The stride of the window, should be two ints
+            for height and width. If type is int, it means that the height and width are equal. Default: ``1`` .
+        dilations (Union[int, tuple[int], list[int]], optional): The dilation of the window, should be two ints
+            for height and width. If type is int, it means that the height and width are equal. Default: ``1`` .
 
         pads (Union[int, tuple[int], list[int]], optional): The pad of the window, that must be a tuple of
             one or two `int` for height and width. Default: ``0`` .
@@ -381,7 +381,7 @@ class Im2Col(Primitive):
 class Col2Im(Primitive):
     r"""
     Rearranges a row vector to an image. It is
-    usually used to reconstruct an image from a set of image patches(or sliding local blocks).
+    usually used to reconstruct an image from a set of image patches (or sliding local blocks).
 
     Consider an input Tensor of shape :math:`(N, C, \prod(\text{kernel_size}), L)`,
     where :math:`N` is batch dimension, :math:`C` is channel dimension,
@@ -402,14 +402,14 @@ class Col2Im(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive int
-            for height and width. If type is int, it means that height equal with width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two positive int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
-        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
-            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
-        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two positive int
-            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two positive ints
+            for height and width. If type is int, it means that the height and width are equal. Must be specified.
+        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two positive ints
+            for height and width. If type is int, it means that the height and width are equal. Default: ``1`` .
+        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two ints
+            for height and width. If type is int, it means that the height and width are equal. Default: ``0`` .
+        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two positive ints
+            for height and width. If type is int, it means that the height and width are equal. Default: ``1`` .
 
     Inputs:
         - **x** (Tensor) - 4D input Tensor.
@@ -3436,7 +3436,7 @@ class BatchToSpace(PrimitiveWithInfer):
 
     Args:
         block_size (int): The block size of division, has the value not less than 2.
-        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction lists.
+        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 sub-lists.
             Each list contains 2 integers.
             All values must be not less than 0. crops[i] specifies the crop values for the spatial dimension i, which
             corresponds to the input dimension i+2. It is required that
@@ -3444,7 +3444,7 @@ class BatchToSpace(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by
-          product of `block_shape`. The data type is float16 or float32.
+          product of `block_size`. The data type is float16 or float32.
 
     Outputs:
         Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
@@ -3476,8 +3476,8 @@ class BatchToSpace(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
         >>> output = batch_to_space(input_x)
         >>> print(output)
-        [[[[1.  2.]
-           [3.  4.]]]]
+        [[[[1. 2.]
+           [3. 4.]]]]
 
     """
 
@@ -5508,10 +5508,10 @@ class AffineGrid(Primitive):
     Refer to :func:`mindspore.ops.affine_grid` for more details.
 
     Args:
-        align_corners (bool, optional): Geometrically, each pixel of input is viewed as a squqre instead of dot.
+        align_corners (bool, optional): Geometrically, each pixel of input is viewed as a square instead of dot.
             If ``True``, consider extremum -1 and 1 referring to the centers of the pixels rather than pixel corners.
             The default value is ``False`` , extremum -1 and 1 refer to the corners of the pixels, so that sampling is
-            irrelevant to resolution of the image. Default: ``False`` .
+            independent of resolution of the image. Default: ``False`` .
 
     Inputs:
         - **theta** (Tensor) - The input tensor of flow field whose dtype is float16, float32.

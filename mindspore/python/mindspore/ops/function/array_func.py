@@ -4506,7 +4506,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
             for height and width. If type is int, it means that height equals width. Must be specified.
         dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
             for height and width. If type is int, it means that height equals width.
-        padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+        padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two ints
             for height and width. If type is int, it means that height equals width.
         stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
             for height and width. If type is int, it means that height equals width.
