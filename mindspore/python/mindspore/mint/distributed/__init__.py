@@ -40,6 +40,7 @@ from mindspore.mint.distributed.distributed import (
     all_gather_into_tensor_uneven,
     all_to_all,
     all_to_all_single,
+    _all_to_all_single_v2,
     reduce_scatter_tensor,
     reduce_scatter_tensor_uneven,
     isend,

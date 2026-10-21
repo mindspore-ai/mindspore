@@ -54,6 +54,8 @@ from mindspore.communication.comm_func import (
     _deal_dist_comm_outputs,
     _check_all_tensors,
     _check_all_tensor_same_dtype,
+    _is_split_sizes_empty,
+    _get_size,
     _get_group_rank_from_world_rank_from_cache_helper,
 )
 from mindspore.ops.auto_generate.gen_ops_prim import (
@@ -62,9 +64,9 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
     dist_comm_reduce_scatter_op,
     dist_comm_isend_op,
     dist_comm_all_to_all_v_op,
-    dist_comm_all_to_all_v_single_op,
     dist_comm_reduce_scatter_tensor_op,
     dist_comm_reduce_scatter_tensor_uneven_op,
+    dist_comm_all_to_all_v_single_op,
     dist_comm_broadcast_op,
     dist_comm_all_gather_into_tensor_op,
     dist_comm_all_gather_into_tensor_uneven_op,
@@ -2790,12 +2792,152 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
     return handle
 
 
+def _get_all_to_all_single_numel_list(tensor, output, output_split_sizes,
+                                      input_split_sizes, group):
+    """get numel list for all_to_all_single."""
+    if _is_split_sizes_empty(input_split_sizes):
+        _world_size = get_cache_group_size(group)
+        if tensor.shape[0] % _world_size != 0:
+            raise ValueError(
+                "input shape at dim 0 must be divided by world_size, "
+                f"but got {tensor.shape[0]} and {_world_size}."
+            )
+        _split_size = tensor.shape[0] // _world_size
+        input_split_sizes = (_split_size,) * _world_size
+    if _is_split_sizes_empty(output_split_sizes):
+        _world_size = get_cache_group_size(group)
+        shape_dim_0 = output.shape[0]
+
+        if shape_dim_0 % _world_size != 0:
+            raise ValueError(
+                "output shape at dim 0 must be divided by world_size, "
+                f"but got {shape_dim_0} and {_world_size}."
+            )
+        _split_size = shape_dim_0 // _world_size
+        output_split_sizes = (_split_size,) * _world_size
+
+    send_size_without_first_dim = _get_size(tensor.shape[1:])
+    send_numel_list = [size * send_size_without_first_dim for size in input_split_sizes]
+
+    recv_shape_without_first_dim = output.shape[1:]
+    recv_size_without_first_dim = _get_size(recv_shape_without_first_dim)
+    recv_numel_list = [
+        size * recv_size_without_first_dim for size in output_split_sizes
+    ]
+    return send_numel_list, recv_numel_list, recv_shape_without_first_dim
+
+
 def all_to_all_single(output,
                       input,
                       output_split_sizes=None,
                       input_split_sizes=None,
                       group=None,
                       async_op=False):
+    """
+    scatter and gather input with split size to/from all rank, and return result in a single tensor.
+
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
+    Args:
+        output (Tensor): The output tensor is gathered concatenated from remote ranks.
+        input (Tensor): The input tensor to be scattered to remote rank.
+        output_split_sizes (Union(Tuple(int), List(int)), optional): The output split size at dim 0.
+            Default: ``None``, which means equally split by ``world_size``.
+        input_split_sizes (Union(Tuple(int), List(int)), optional): The input split size at dim 0.
+            Default: ``None``, which means equally split by ``world_size``.
+        group (str, optional): The communication group to work on.
+            Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
+        async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
+
+    Returns:
+        CommHandle. CommHandle is an async work handle, if `async_op` is set to ``True``.
+        CommHandle will be ``None``, when `async_op` is ``False``.
+
+    Raises:
+        TypeError: If `input` or `output` is not tensor, `group` is not a str, or `async_op` is not bool.
+        ValueError: When `input_split_sizes` is empty, input dim 0 can not be divided by ``world_size``.
+        ValueError: When `output_split_sizes` is empty, output dim 0 can not be divided by ``world_size``.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.mint.distributed import init_process_group, get_rank
+        >>> from mindspore.mint.distributed import all_to_all_single
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import zeros
+        >>>
+        >>> init_process_group()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        ...     output = Tensor(np.zeros([3, 3]).astype(np.float32))
+        ...     tensor = Tensor([[0, 1, 2.], [3, 4, 5], [6, 7, 8]])
+        ...     result = all_to_all_single(output, tensor, [2, 1], [2, 1])
+        ...     print(output)
+        >>> if this_rank == 1:
+        ...     output = Tensor(np.zeros([2, 3]).astype(np.float32))
+        ...     tensor = Tensor([[9, 10., 11], [12, 13, 14]])
+        ...     result = all_to_all_single(output, tensor, [1, 1], [1, 1])
+        ...     print(output)
+        rank 0:
+        [[ 0.  1.  2.]
+         [ 3.  4.  5.]
+         [ 9. 10. 11.]]
+        rank 1:
+        [[ 6.  7.  8.]
+         [12. 13. 14.]]
+
+    """
+
+    _check_all_tensors([input])
+    _check_all_tensors([output])
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+    if not isinstance(group, str):
+        raise TypeError(
+            "The argument 'group' must be type of string, "
+            "but got 'group' type : {}.".format(type(group))
+        )
+    if not isinstance(async_op, bool):
+        raise TypeError(
+            f"The argument 'async_op' must be a bool, but got {type(async_op)}."
+        )
+    split_sizes_empty = _is_split_sizes_empty(output_split_sizes) and _is_split_sizes_empty(input_split_sizes)
+    send_numel_list, recv_numel_list, _ = \
+        _get_all_to_all_single_numel_list(input, output, output_split_sizes, input_split_sizes, group)
+    _input = input.reshape(-1)
+    rank_size = get_cache_group_size(group)
+    result = dist_comm_all_to_all_v_single_op(
+        output,
+        _input,
+        group,
+        send_numel_list,
+        recv_numel_list,
+        rank_size,
+        split_sizes_empty,
+        async_op,
+    )
+    _, handle = _deal_dist_comm_outputs(result, async_op)
+    return handle
+
+
+# Match the existing API's input keyword.
+# pylint: disable-next=redefined-builtin
+def _all_to_all_single_v2(output, input, output_split_sizes=None, input_split_sizes=None, group=None, async_op=False):
     """
     Split the input along dimension 0, exchange the splits with all ranks, and write the received data into `output`.
 
@@ -2859,7 +3001,7 @@ def all_to_all_single(output,
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore.mint.distributed import init_process_group, get_rank
-        >>> from mindspore.mint.distributed import all_to_all_single
+        >>> from mindspore.mint.distributed import _all_to_all_single_v2
         >>> from mindspore import Tensor
         >>> from mindspore.ops import zeros
         >>>
@@ -2868,12 +3010,12 @@ def all_to_all_single(output,
         >>> if this_rank == 0:
         ...     output = Tensor(np.zeros([3, 3]).astype(np.float32))
         ...     tensor = Tensor([[0, 1, 2.], [3, 4, 5], [6, 7, 8]])
-        ...     result = all_to_all_single(output, tensor, [2, 1], [2, 1])
+        ...     result = _all_to_all_single_v2(output, tensor, [2, 1], [2, 1])
         ...     print(output)
         >>> if this_rank == 1:
         ...     output = Tensor(np.zeros([2, 3]).astype(np.float32))
         ...     tensor = Tensor([[9, 10., 11], [12, 13, 14]])
-        ...     result = all_to_all_single(output, tensor, [1, 1], [1, 1])
+        ...     result = _all_to_all_single_v2(output, tensor, [1, 1], [1, 1])
         ...     print(output)
         rank 0:
         [[ 0.  1.  2.]

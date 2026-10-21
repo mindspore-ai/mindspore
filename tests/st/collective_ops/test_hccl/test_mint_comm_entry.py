@@ -21,15 +21,16 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards")
-def test_mint_all_to_all_single_two_ranks():
+def test_mint_all_to_all_single_v2_two_ranks():
     """
-    Feature: mint.distributed.all_to_all_single.
+    Feature: mint.distributed._all_to_all_single_v2.
     Description: Verify the single-tensor collective contract on two Ascend ranks.
     Expectation: Values, output storage, validation and stream dependencies are correct.
     """
     return_code = os.system(
         "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10667 --join=True "
-        "pytest -s test_mint_all_to_all_single.py"
+        "--bind_core=True "
+        "pytest -s test_mint_all_to_all_single_v2.py"
     )
     assert return_code == 0
 

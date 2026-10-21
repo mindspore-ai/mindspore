@@ -33,7 +33,7 @@
 
 namespace mindspore::pynative {
 namespace {
-constexpr char kErrorPrefix[] = "For 'all_to_all_single', ";
+constexpr char kErrorPrefix[] = "For '_all_to_all_single_v2', ";
 
 struct AllToAllTensorInfo {
   ShapeVector shape;
