@@ -3364,7 +3364,6 @@ class ROIAlign(Primitive):
         roi_end_mode (int): Number must be 0 or 1. If roi_end_mode=0, use the legacy implementation.
             If roi_end_mode=1, end pixel of the roi_box will be shifted by +1*spatial_scale. Default: ``1`` .
 
-
     Inputs:
         - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`, with data type of
           float16 or float32.

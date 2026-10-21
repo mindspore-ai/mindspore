@@ -6,6 +6,7 @@
     计算单个或成批对称正定矩阵的Cholesky分解。
 
     .. warning::
+        自 2.9.0 版本起，参数 `input_x` 将重命名为 `input` 。
         这是一个实验性API，后续可能修改或删除。
 
     更多参考详见 :func:`mindspore.ops.cholesky` 。

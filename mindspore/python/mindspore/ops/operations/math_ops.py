@@ -2266,8 +2266,8 @@ class NMSWithMask(PrimitiveWithInfer):
 
     Raises:
         ValueError: If the `iou_threshold` is not a float number.
-        ValueError:  if the first dimension of input Tensor is less than or equal to 0.
-        TypeError: if the dtype of the `bboxes` is not float16 or float32.
+        ValueError: If the first dimension of input Tensor is less than or equal to 0.
+        TypeError: If the dtype of the `bboxes` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
