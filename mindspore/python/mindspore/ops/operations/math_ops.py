@@ -1756,8 +1756,7 @@ class ApproximateEqual(_LogicBinaryOp):
 
     Raises:
         TypeError: If `tolerance` is not a float.
-        TypeError: If the data type of `x`, `y` conversion of Parameter is given
-                      but data type conversion of Parameter is not supported.
+        TypeError: If the data type conversion between `x` and `y` is not supported.
 
     Supported Platforms:
         Deprecated
@@ -3140,14 +3139,14 @@ class MatrixInverse(Primitive):
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-          dimensions must be the same size.
+          dimensions must be the same size. The dtype should be float32 or float64.
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
 
     Raises:
         TypeError: If `adjoint` is not a bool.
-        TypeError: If `x` is not a Tensor.
+        TypeError: If the dtype of `x` is neither `float32` nor `float64`.
         ValueError: If the last two dimensions of `x` is not same size.
         ValueError: If the dimension of `x` is less than 2.
 

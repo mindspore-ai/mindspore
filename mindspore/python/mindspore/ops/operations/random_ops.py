@@ -98,7 +98,7 @@ class TruncatedNormal(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -167,7 +167,7 @@ class StandardNormal(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -222,7 +222,7 @@ class StandardLaplace(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -386,7 +386,7 @@ class Gamma(PrimitiveWithInfer):
     Note:
         - Random Seed: Through some complex mathematical algorithms, a set of regular random numbers can be obtained,
           and the random seed is the initial value of this random number.
-          The random seed is the same, the random number obtained will not change.
+          The random seed is the same, and the random number obtained will not change.
         - When neither the global random seed nor the operator layer random seed
           is set or both are 0: generate completely random numbers.
         - When the global random seed is set, but the operator layer random seed is not set:
@@ -398,7 +398,7 @@ class Gamma(PrimitiveWithInfer):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -488,7 +488,7 @@ class ParameterizedTruncatedNormal(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -701,11 +701,11 @@ class UniformInt(Primitive):
     r"""
     `mindspore.ops.UniformInt` is deprecated from version 2.10.0 and will be removed in a future version.
 
-    Produces random integer values i, uniformly distributed on the closed interval [minval, maxval), that is,
+    Produces random integer values i, uniformly distributed on the half-open interval [minval, maxval), that is,
     distributed according to the discrete probability function:
 
     .. math::
-        \text{P}(i|a,b) = \frac{1}{b-a+1},
+        \text{P}(i|a,b) = \frac{1}{b-a},
 
     where the :math:`a` indicates the min distribution parameter,
     the :math:`b` indicates the max distribution parameter.
@@ -720,7 +720,7 @@ class UniformInt(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -775,7 +775,7 @@ class UniformReal(Primitive):
     r"""
     `mindspore.ops.UniformReal` is deprecated from version 2.10.0 and will be removed in a future version.
 
-    Produces random floating-point values, uniformly distributed to the interval [0, 1).
+    Produces random floating-point values, uniformly distributed on the interval [0, 1).
 
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
@@ -792,7 +792,7 @@ class UniformReal(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -967,7 +967,7 @@ class Multinomial(Primitive):
 
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` and `seed2` parameter have no effect.
+        the `seed` and `seed2` parameters have no effect.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
