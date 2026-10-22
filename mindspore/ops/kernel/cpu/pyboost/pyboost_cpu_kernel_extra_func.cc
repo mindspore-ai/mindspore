@@ -15,14 +15,73 @@
  */
 
 #include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_kernel_extra_func.h"
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 #include "kernel/cpu/cpu_kernel.h"
 #include "utils/ms_context.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_custom_kernel_register.h"
+#include "mindspore/ops/kernel/cpu/pyboost/auto_generate/contiguous.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+tensor::TensorPtr MakeCpuFallbackContiguous(const tensor::TensorPtr &input) {
+  const auto &op = CREATE_PYBOOST_OP(Contiguous, device::DeviceType::kCPU);
+  return op->Call(input);
+}
+
+// View operators retain their existing input-layout policy.
+bool PrepareCpuFallbackEnabled(const std::string &name) {
+  if (name == "Contiguous" || name == "Copy") {
+    return false;
+  }
+  const auto op_def = ops::GetOpDef(name);
+  return op_def == nullptr || !op_def->is_view_;
+}
+
+tensor::TensorPtr PrepareCpuFallbackInput(const tensor::TensorPtr &input, bool *changed) {
+  MS_EXCEPTION_IF_NULL(input);
+  if (input->is_contiguous()) {
+    return input;
+  }
+  auto output = MakeCpuFallbackContiguous(input);
+  MS_EXCEPTION_IF_NULL(output);
+  if (!output->is_contiguous()) {
+    MS_LOG(EXCEPTION) << "CPU Contiguous returned a non-contiguous tensor.";
+  }
+  *changed = true;
+  return output;
+}
+
+ValuePtr PrepareCpuFallbackInput(const ValuePtr &input, bool *changed) {
+  MS_EXCEPTION_IF_NULL(input);
+  if (input->isa<tensor::Tensor>()) {
+    return PrepareCpuFallbackInput(input->cast<tensor::TensorPtr>(), changed);
+  }
+  if (input->isa<ValueTuple>()) {
+    return PrepareCpuFallbackInput(input->cast<ValueTuplePtr>(), changed);
+  }
+  return input;
+}
+
+ValueTuplePtr PrepareCpuFallbackInput(const ValueTuplePtr &input, bool *changed) {
+  MS_EXCEPTION_IF_NULL(input);
+  auto values = input->value();
+  bool tuple_changed = false;
+  for (auto &value : values) {
+    value = PrepareCpuFallbackInput(value, &tuple_changed);
+  }
+  if (!tuple_changed) {
+    return input;
+  }
+  *changed = true;
+  return std::make_shared<ValueTuple>(std::move(values));
+}
+
 void PyboostCPUKernelExtraFunc::SetThreadPool(const kernel::KernelModPtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
 
