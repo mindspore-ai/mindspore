@@ -7498,7 +7498,11 @@ def _norm_matrix_other_ord(A, ord, dim, keepdim, ndim):
         if row_axis > col_axis:
             row_axis -= 1
         sum_abs = ops.reduce_sum(ops.abs(A), col_axis)
-        ret = (ops.max(sum_abs, axis=row_axis)[0] if ord == float('inf') else ops.min(sum_abs, axis=row_axis)[0])
+        # Value-only reductions share gradients equally among tied extrema.
+        if ord == float('inf'):
+            ret = ops.amax(sum_abs, axis=row_axis)
+        else:
+            ret = ops.amin(sum_abs, axis=row_axis)
     elif ord == 'nuc':
         ret = _multi_svd_norm(A, row_axis, col_axis, 'sum')
     else:
