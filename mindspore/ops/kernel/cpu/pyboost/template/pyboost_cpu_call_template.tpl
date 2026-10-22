@@ -5,6 +5,15 @@ if (ops::IsOpPluginKernel(op_name())) {
   return ${return_values};
 }
 
+static const bool prepare_cpu_inputs = PrepareCpuFallbackEnabled(op_name());
+if (prepare_cpu_inputs) {
+  bool changed = false;
+  auto inputs = PrepareCpuFallbackInputs(std::make_tuple(${call_args}), &changed);
+  if (changed) {
+    return std::apply([this](const auto &...args) { return this->Call(args...); }, inputs);
+  }
+}
+
 InferOutput(${call_args});
 
 ${tensor_list_convert}

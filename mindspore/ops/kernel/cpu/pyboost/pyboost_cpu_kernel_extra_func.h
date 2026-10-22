@@ -18,7 +18,9 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_CPU_KERNRL_EXTRA_FUNC_H_
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
@@ -26,10 +28,38 @@
 #include "include/pynative/utils/pyboost/pyboost_kernel_extra_func.h"
 #include "kernel/cpu/utils/visible.h"
 #include "mindapi/base/macros.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+// Prepare inputs only for the native CPU fallback; plugin calls keep their layouts.
+OPS_HOST_API bool PrepareCpuFallbackEnabled(const std::string &name);
+OPS_HOST_API tensor::TensorPtr MakeCpuFallbackContiguous(const tensor::TensorPtr &input);
+OPS_HOST_API tensor::TensorPtr PrepareCpuFallbackInput(const tensor::TensorPtr &input, bool *changed);
+OPS_HOST_API ValuePtr PrepareCpuFallbackInput(const ValuePtr &input, bool *changed);
+OPS_HOST_API ValueTuplePtr PrepareCpuFallbackInput(const ValueTuplePtr &input, bool *changed);
+
+template <typename T>
+T PrepareCpuFallbackInput(const T &input, bool *) {
+  return input;
+}
+
+template <typename T>
+std::optional<T> PrepareCpuFallbackInput(const std::optional<T> &input, bool *changed) {
+  if (!input.has_value()) {
+    return input;
+  }
+  return PrepareCpuFallbackInput(input.value(), changed);
+}
+
+template <typename... Args>
+auto PrepareCpuFallbackInputs(const std::tuple<Args...> &inputs, bool *changed) {
+  return std::apply(
+    [changed](const auto &...args) { return std::make_tuple(PrepareCpuFallbackInput(args, changed)...); }, inputs);
+}
+
 class OPS_HOST_API PyboostCPUKernelExtraFunc : public PyboostKernelExtraFunc {
  public:
   void SetThreadPool(const kernel::KernelModPtr &kernel) override;
