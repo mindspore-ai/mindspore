@@ -160,15 +160,21 @@ class _ProcessManager:
         self.master_addr = _convert_addr_to_ip(args.master_addr)
         self.master_port = args.master_port
 
-        """`is_master` flags whether the current node is the master node."""
-        self.is_master = _is_local_ip(self.master_addr)
-
         self.worker_num = args.worker_num
         if self.worker_num <= 0:
             raise ValueError(f"worker_num must be greater than 0, but got {self.worker_num}.")
         self.exported_rank_size = self.worker_num
         self.local_worker_num = args.local_worker_num
         self.node_rank = args.node_rank
+
+        # In single-node mode, an omitted node rank represents the rank-0 node.
+        if self.node_rank == -1 and self.local_worker_num == self.worker_num:
+            self.node_rank = 0
+
+        # `is_master` flags whether the current node is the master node.
+        ms_role = os.getenv("MS_ROLE")
+        self.is_master = ms_role == "MS_SCHED" or (ms_role != "MS_WORKER" and self.node_rank == 0)
+        self._check_master_addr()
 
         self.log_dir = args.log_dir
         self.join = args.join
@@ -226,6 +232,11 @@ class _ProcessManager:
         self.enable_mindx = False
         self.handler = None
         self._check_taskd()
+
+    def _check_master_addr(self):
+        """Check whether the master address belongs to the master node."""
+        if self.is_master and not _is_local_ip(self.master_addr):
+            raise RuntimeError(f"The master address {self.master_addr} is not a local IP address.")
 
     def _check_taskd(self):
         """check if enable taskd."""
