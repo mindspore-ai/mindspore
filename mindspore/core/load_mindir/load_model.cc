@@ -696,7 +696,7 @@ class MSANFModelParser {
   void SetCNodeAbstract(const mind_ir::AttributeProto &attr_proto, const CNodePtr &cnode_ptr);
   bool SetNodeAbstractFromAttrProto(const mind_ir::AttributeProto &attr_proto, const AnfNodePtr &node_ptr);
   abstract::AbstractBasePtr GetNodeAbstractFromAttrProtoWithType(const mind_ir::AttributeProto &attr_proto);
-  void SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr);
+  bool SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr);
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInTupleTensorForm(const string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   bool GetAttrValueForValueNode(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
@@ -726,6 +726,8 @@ class MSANFModelParser {
   bool is_lite_ = false;
   bool abstract_valid_ = false;
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
+  // Cache only within this parser; a null entry denotes a graph still being built.
+  std::unordered_map<std::string, FuncGraphPtr> attribute_graphs_;
   std::string mindir_path_;
   std::pair<const void *, size_t> weight_buffer_{nullptr, 0};
   const unsigned char *mindir_dec_key_{nullptr};
@@ -829,16 +831,21 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
 }
 
 FuncGraphPtr MSANFModelParser::GenerateFuncGraphValue(const mind_ir::GraphProto &graph_proto) {
-  static std::unordered_map<std::string, FuncGraphPtr> graphs;
-  auto it = graphs.find(graph_proto.name());
-  if (it != graphs.end()) {
+  auto it = attribute_graphs_.find(graph_proto.name());
+  if (it != attribute_graphs_.end()) {
+    if (it->second == nullptr) {
+      MS_LOG(ERROR) << "Cyclic graph attribute reference: " << graph_proto.name();
+    }
     return it->second;
   }
   auto graph = std::make_shared<FuncGraph>();
-  graphs[graph_proto.name()] = graph;
+  attribute_graphs_[graph_proto.name()] = nullptr;
   if (!BuildFuncGraph(graph, graph_proto)) {
+    attribute_graphs_.erase(graph_proto.name());
     MS_LOG(ERROR) << "Failed to build funcgraph for " << graph_proto.name();
+    return nullptr;
   }
+  attribute_graphs_[graph_proto.name()] = graph;
   return graph;
 }
 
@@ -1057,7 +1064,7 @@ bool MSANFModelParser::SetNodeAbstractFromAttrProto(const mind_ir::AttributeProt
   return true;
 }
 
-void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr) {
+bool MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr) {
   auto prim_to_add_attr = GetCNodePrimitiveWithoutDoSignature(cnode_ptr);
   if (prim_to_add_attr != nullptr) {
     prim_to_add_attr->set_attr("is_load", MakeValue(true));
@@ -1073,6 +1080,7 @@ void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &nod
       if (prim_to_add_attr != nullptr && !GetAttrValueForCNode(prim_to_add_attr, attr_proto)) {
         MS_LOG(ERROR) << "Parse prim: " << prim_to_add_attr->ToString()
                       << ", attributes error: " << attr_proto.DebugString();
+        return false;
       }
     } else {
       // ref_attr_name is removed in newer versions.
@@ -1083,9 +1091,11 @@ void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &nod
       if (prim_to_add_attr != nullptr && !SetPrimitiveAttrWithType(prim_to_add_attr, attr_proto)) {
         MS_LOG(ERROR) << "Parse prim: " << prim_to_add_attr->ToString()
                       << ", attributes error: " << attr_proto.DebugString();
+        return false;
       }
     }
   }
+  return true;
 }
 
 abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const mind_ir::TensorProto &tensor_proto) {
@@ -2507,10 +2517,13 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   anfnode_build_map_[node_name] = cnode_ptr;
 
   // Set Abstract and prim attr for CNode
-  SetCNodePrimAttrAndAbstract(node_proto, cnode_ptr);
+  if (!SetCNodePrimAttrAndAbstract(node_proto, cnode_ptr)) {
+    return nullptr;
+  }
   if (!BuildAttrForCNode(cnode_ptr, node_proto)) {
     MS_LOG(ERROR) << "Failed build attr for node: " << cnode_ptr->DebugString()
                   << ", proto: " << node_proto.DebugString();
+    return nullptr;
   }
   return cnode_ptr;
 }
@@ -2631,6 +2644,7 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   }
   if (!BuildAttrForFuncGraph(output_graph, import_proto)) {
     MS_LOG(ERROR) << "Build attribute for graph fail!";
+    return false;
   }
   if (!ImportParametersForGraph(output_graph, import_proto)) {
     MS_LOG(ERROR) << "Import parameters for graph fail!";
@@ -2868,6 +2882,7 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
   }
   // Release resource
   anfnode_build_map_.clear();
+  attribute_graphs_.clear();
   // Correct the null abstract for compatibility with previous versions.
   if (!abstract_valid_ && weights.empty()) {
     CorrectFuncGraph(dstGraph);
@@ -2908,6 +2923,7 @@ bool MSANFModelParser::BuildParamsAndAttrs(const FuncGraphPtr &graph, const mind
   debug_info_ptr->set_name(proto.name());
   if (!BuildAttrForFuncGraph(graph, proto)) {
     MS_LOG(ERROR) << "Build attribute for graph fail!";
+    return false;
   }
   if (!ImportParametersForGraph(graph, proto)) {
     MS_LOG(ERROR) << "Import parameters for graph fail!";
@@ -3019,6 +3035,7 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   }
   // Release resource
   anfnode_build_map_.clear();
+  attribute_graphs_.clear();
   return true;
 }
 
@@ -3579,6 +3596,10 @@ bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std:
   InitModelParser(&model_parser, this);
   model_parser.SetMindIRPath(mindir_path);
   *func_graph = model_parser.Parse(model);
+  if (*func_graph == nullptr) {
+    MS_LOG(ERROR) << "Parse MindIR model failed.";
+    return false;
+  }
   std::stringstream user_info_buffer;
   // user_info to string
   auto user_info = model.user_info();
@@ -3665,6 +3686,10 @@ bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std:
   model_parser.SetMindIRDecMode(cryptoInfo.mode);
   model_parser.SetMindIRDecParallelNum(cryptoInfo.parallel_num);
   *func_graph = model_parser.Parse(model);
+  if (*func_graph == nullptr) {
+    MS_LOG(ERROR) << "Parse MindIR model failed.";
+    return false;
+  }
   std::stringstream user_info_buffer;
   // user_info to string
   auto user_info = model.user_info();
@@ -3700,6 +3725,10 @@ bool MindIRLoader::LoadMindIR(const void *model_buffer, const size_t &model_size
   InitModelParser(&model_parser, this);
   model_parser.SetExternalWeightBuffer(weight_buffer, weight_size);
   *func_graph = model_parser.Parse(model);
+  if (*func_graph == nullptr) {
+    MS_LOG(ERROR) << "Parse MindIR model failed.";
+    return false;
+  }
   if (user_info_string == nullptr) {
     return true;
   }
