@@ -15,6 +15,7 @@
  */
 
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_kernel_extra_func.h"
 #include "mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_custom_kernel_register.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "include/pynative/utils/pyboost/tensor_memory.h"
@@ -24,6 +25,7 @@ ${merge_op_header}
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+
 ${merge_op_function}
 }  // namespace pyboost
 }  // namespace kernel

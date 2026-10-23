@@ -54,6 +54,9 @@ ShapeArray PadSequenceFuncImpl::InferShape(const PrimitivePtr &primitive, const 
     if (IsDynamicRank(element_shape)) {
       return {{abstract::TensorShape::kShapeRankAny}};
     }
+    if (element_shape.empty()) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', every sequence tensor must have rank >= 1.";
+    }
     ShapeVector output(element_shape.size() + 1, abstract::TensorShape::kShapeDimAny);
     std::copy(element_shape.begin() + 1, element_shape.end(), output.begin() + 2);
     return {output};
