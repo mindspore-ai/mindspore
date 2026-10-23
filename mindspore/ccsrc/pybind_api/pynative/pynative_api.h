@@ -26,9 +26,6 @@ namespace mindspore {
 namespace pynative {
 PYNATIVE_EXPORT void RegPyNativeExecutor(const py::module *m);
 PYNATIVE_EXPORT void RegisterPyBoostFunction(py::module *m);
-PYNATIVE_EXPORT void RegisterCustomizeFunction(py::module *m);
-PYNATIVE_EXPORT void RegisterCellBackwardHookFunction(py::module *m);
-PYNATIVE_EXPORT void RegisterDetachFunction(py::module *m);
 PYNATIVE_EXPORT void RegisterFunctional(py::module *m);
 PYNATIVE_EXPORT void RegMsDispatch(py::module *m);
 namespace distributed {

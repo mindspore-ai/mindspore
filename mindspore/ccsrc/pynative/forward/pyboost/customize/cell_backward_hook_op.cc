@@ -26,7 +26,7 @@
 #include "include/pynative/utils/pyboost/functions/base.h"
 #include "include/pynative/utils/pyboost/auto_generate/cell_backward_hook.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
-#include "pybind_api/pynative/pynative_api.h"
+#include "pynative/forward/pyboost/customize/pyboost_custom_reg.h"
 
 namespace mindspore::pynative {
 py::object PyboostCellBackwardHookBase(const PrimitivePtr &prim, const py::list &args) {
@@ -97,7 +97,4 @@ py::object Pyboost_CellBackwardHook(const py::args &args) {
   return PyboostCellBackwardHookBase(prim, args[1]);
 }
 
-void RegisterCellBackwardHookFunction(py::module *m) {
-  m->def("pyboost_cell_backward_hook", &mindspore::pynative::Pyboost_CellBackwardHook, "CellBackwardHook Ops");
-}
 }  // namespace mindspore::pynative

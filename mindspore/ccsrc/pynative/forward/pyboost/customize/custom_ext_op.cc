@@ -26,7 +26,7 @@
 #include "include/pynative/utils/pyboost/auto_generate/custom_ext.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "include/pynative/forward/pyboost/fallback.h"
-#include "pybind_api/pynative/pynative_api.h"
+#include "pynative/forward/pyboost/customize/pyboost_custom_reg.h"
 
 namespace mindspore::pynative {
 py::object PyboostCustomExtBase(const PrimitivePtr &prim, const py::list &args) {
@@ -98,23 +98,4 @@ py::object Pyboost_CustomExt(const py::args &args) {
   return PyboostCustomExtBase(prim, args[1]);
 }
 
-class CustomExtPrimAdapter : public PrimitiveFunctionAdapter {
- public:
-  CustomExtPrimAdapter() : PrimitiveFunctionAdapter() {}
-  ~CustomExtPrimAdapter() = default;
-  std::string name() override { return "CustomExt"; }
-  py::object Call(const py::list &args) {
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp, "CustomExt",
-                                       false, true);
-    return PyboostCustomExtBase(prim::kPrimCustomExt, args);
-  }
-};
-
-void RegisterCustomizeFunction(py::module *m) {
-  (void)py::class_<CustomExtPrimAdapter, PrimitiveFunctionAdapter, std::shared_ptr<CustomExtPrimAdapter>>(
-    *m, "CustomExtPrim_")
-    .def(py::init<>())
-    .def("__call__", &CustomExtPrimAdapter::Call, "Call CustomExt op.");
-  m->def("pyboost_custom_ext", &mindspore::pynative::Pyboost_CustomExt, "Encrypt the data.");
-}
 }  // namespace mindspore::pynative

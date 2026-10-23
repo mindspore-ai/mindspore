@@ -80,6 +80,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
     dist_comm_batch_isend_irecv_op,
 )
 from mindspore._c_expression import TCPStoreClient, GroupOptions, _finalize_collective
+from mindspore._c_expression import _validate_all_to_all_single_and_build_comm_args
 from ._utils import _parse_tcp_url_for_ipv4
 
 _pickler = pickle.Pickler
@@ -2930,6 +2931,108 @@ def all_to_all_single(output,
         split_sizes_empty,
         async_op,
     )
+    _, handle = _deal_dist_comm_outputs(result, async_op)
+    return handle
+
+
+# Match the existing API's input keyword.
+# pylint: disable-next=redefined-builtin
+def _all_to_all_single_v2(output, input, output_split_sizes=None, input_split_sizes=None, group=None, async_op=False):
+    """
+    Split the input along dimension 0, exchange the splits with all ranks, and write the received data into `output`.
+
+    The split at index ``i`` is sent to group rank ``i``. Received splits are stored in group-rank order.
+    Split sizes count rows along dimension 0, rather than individual elements. The send and receive sizes
+    must match between each pair of ranks. Complex tensors are supported without changing their dtype.
+
+    Note:
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - Input and output must be contiguous, have at least one dimension, and have the same dtype.
+          Contiguous views with a nonzero storage offset are supported. Output storage is updated in place.
+        - A split sequence must contain one non-negative integer per group rank and sum to dimension 0
+          of its corresponding tensor. Zero-sized splits are allowed.
+        - ``None``, an empty list, or an empty tuple requests equal splits for that tensor. Its dimension 0
+          must be divisible by the group size. If both split sequences are empty, input and output must
+          contain the same number of elements.
+        - When `async_op` is ``True``, call the returned handle's ``wait()`` on the stream that will use
+          `output`. The synchronous call establishes this stream dependency internally; it does not imply
+          that all device work has completed on the host.
+        - `group` is a MindSpore communication group name, and the asynchronous handle is a MindSpore
+          CommHandle. This operation does not support automatic differentiation.
+
+    Args:
+        output (Tensor): Preallocated output tensor to receive the concatenated data. Its shape and dtype are preserved.
+        input (Tensor): The input tensor to be scattered to remote rank.
+        output_split_sizes (Union(Tuple(int), List(int)), optional): The output split size at dim 0.
+            Default: ``None``, which means equally split by ``world_size``.
+        input_split_sizes (Union(Tuple(int), List(int)), optional): The input split size at dim 0.
+            Default: ``None``, which means equally split by ``world_size``.
+        group (str, optional): The communication group to work on.
+            Default: ``None``, which means ``"hccl_world_group"`` in Ascend.
+        async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
+
+    Returns:
+        CommHandle. CommHandle is an async work handle, if `async_op` is set to ``True``.
+        CommHandle will be ``None``, when `async_op` is ``False``.
+
+    Raises:
+        TypeError: If `input` or `output` is not tensor, `group` is not a str, `async_op` is not bool,
+            or split sizes are not lists or tuples of integers.
+        ValueError: If split sizes are negative, have the wrong length or sum, or an equally split dimension
+            is not divisible by the group size.
+        ValueError: If tensors are scalar or non-contiguous, their dtypes differ, or their element counts differ
+            when both split sequences request equal splits.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore.mint.distributed import init_process_group, get_rank
+        >>> from mindspore.mint.distributed import _all_to_all_single_v2
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import zeros
+        >>>
+        >>> init_process_group()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        ...     output = Tensor(np.zeros([3, 3]).astype(np.float32))
+        ...     tensor = Tensor([[0, 1, 2.], [3, 4, 5], [6, 7, 8]])
+        ...     result = _all_to_all_single_v2(output, tensor, [2, 1], [2, 1])
+        ...     print(output)
+        >>> if this_rank == 1:
+        ...     output = Tensor(np.zeros([2, 3]).astype(np.float32))
+        ...     tensor = Tensor([[9, 10., 11], [12, 13, 14]])
+        ...     result = _all_to_all_single_v2(output, tensor, [1, 1], [1, 1])
+        ...     print(output)
+        rank 0:
+        [[ 0.  1.  2.]
+         [ 3.  4.  5.]
+         [ 9. 10. 11.]]
+        rank 1:
+        [[ 6.  7.  8.]
+         [12. 13. 14.]]
+
+    """
+
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+    comm_args = _validate_all_to_all_single_and_build_comm_args(
+        output, input, output_split_sizes, input_split_sizes, group, async_op
+    )
+    result = dist_comm_all_to_all_v_single_op(*comm_args)
     _, handle = _deal_dist_comm_outputs(result, async_op)
     return handle
 

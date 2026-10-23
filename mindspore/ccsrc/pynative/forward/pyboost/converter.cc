@@ -415,10 +415,10 @@ ValuePtr Converter::ToTensor(PyObject *python_args, size_t i) {
     if (tensor->isa<tensor::Tensor>()) {
       auto t = tensor->cast<tensor::TensorPtr>();
       t->set_need_pipeline_sync(true);
-      // Check for ms_dispatch
-      if (!has_ms_dispatch_ && ms_dispatch_enabled() && (HasActiveDispatchGuard() || t->has_ms_dispatch())) {
-        has_ms_dispatch_ = true;
-      }
+    }
+    // Dispatch modes also apply to Tensor arguments represented by StubNodes.
+    if (!has_ms_dispatch_ && ShouldDispatch(tensor)) {
+      has_ms_dispatch_ = true;
     }
     return tensor;
   }
