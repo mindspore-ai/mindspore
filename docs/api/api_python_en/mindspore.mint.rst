@@ -23,41 +23,41 @@ For the source code, see the
 
 1. How It Works
 
-  ``mindspore_op_plugin`` is implemented based on PyTorch's ATen operator library and converts MindSpore
-  operator calls to ATen operator calls through an adaptation layer. The workflow is as follows:
+   ``mindspore_op_plugin`` is implemented based on PyTorch's ATen operator library and converts MindSpore
+   operator calls to ATen operator calls through an adaptation layer. The workflow is as follows:
 
-  1. **Operator Registration**: Register plugin operators in MindSpore.
-  2. **Call Conversion**: Convert MindSpore Tensors to PyTorch Tensors.
-  3. **Operator Execution**: Call corresponding ATen operators for computation.
-  4. **Result Return**: Convert computation results back to MindSpore Tensors.
+   1. **Operator Registration**: Register plugin operators in MindSpore.
+   2. **Call Conversion**: Convert MindSpore Tensors to PyTorch Tensors.
+   3. **Operator Execution**: Call corresponding ATen operators for computation.
+   4. **Result Return**: Convert computation results back to MindSpore Tensors.
 
-  This design enables developers to quickly adapt new operators without worrying about underlying implementation details.
+   This design enables developers to quickly adapt new operators without worrying about underlying implementation details.
 
 2. Notes
 
-  - After installing the plugin, enable it by running ``import ms_op_plugin`` or setting ``MS_OP_PLUGIN_PATH``.
-  - ``mindspore_op_plugin`` supports execution only in CPU PyNative mode. For supported operators, see the
-    `mindspore_op_plugin supported operator list <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/SUPPORTED_OPS.md>`_.
-  - MindSpore, the plugin, and any PyTorch/LibTorch runtime loaded into the same process must use compatible
-    versions. For specific requirements, see the version information in the ``mindspore_op_plugin`` repository.
+   - After installing the plugin, enable it by running ``import ms_op_plugin`` or setting ``MS_OP_PLUGIN_PATH``.
+   - ``mindspore_op_plugin`` supports execution only in CPU PyNative mode. For supported operators, see the
+     `mindspore_op_plugin supported operator list <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/SUPPORTED_OPS.md>`_.
+   - MindSpore, the plugin, and any PyTorch/LibTorch runtime loaded into the same process must use compatible
+     versions. For specific requirements, see the version information in the ``mindspore_op_plugin`` repository.
 
 3. Installation
 
-  Install compatible versions of MindSpore and ``mindspore_op_plugin`` first. Install the
-  plugin from a WHL package:
+   Install compatible versions of MindSpore and ``mindspore_op_plugin`` first. Install the
+   plugin from a WHL package:
 
-  .. code-block:: bash
+   .. code-block:: bash
 
       pip install ms_op_plugin-*.whl
 
-  For source builds, platform-specific instructions, and other installation methods, see
-  `Installing mindspore_op_plugin <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/README.md#installation>`_.
+   For source builds, platform-specific instructions, and other installation methods, see
+   `Installing mindspore_op_plugin <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/README.md#installation>`_.
 
 4. Example
 
-  The following example uses ``mindspore.mint.abs`` to demonstrate how to use ``mindspore_op_plugin``.
+   The following example uses ``mindspore.mint.abs`` to demonstrate how to use ``mindspore_op_plugin``.
 
-  .. code-block:: python
+   .. code-block:: python
 
       import mindspore as ms
       import ms_op_plugin
@@ -70,9 +70,9 @@ For the source code, see the
       output = mint.abs(input_x)
       print(output)
 
-  Output:
+   Output:
 
-  .. code-block:: text
+   .. code-block:: text
 
       [1. 2. 3.]
 
