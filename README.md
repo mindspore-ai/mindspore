@@ -36,7 +36,7 @@
 MindSpore is a new open source deep learning training/inference framework that
 could be used for mobile, edge and cloud scenarios. MindSpore is designed to
 provide development experience with friendly design and efficient execution for
-the data scientists and algorithmic engineers, native support for Ascend AI
+the data scientists and algorithmic engineers, native support for Huawei Ascend AI
 processor, and software hardware co-optimization. At the meantime MindSpore as
 a global AI open source community, aims to further advance the development and
 enrichment of the AI software/hardware application ecosystem.
@@ -76,7 +76,7 @@ MindSpore offers build options across multiple backends:
 
 | Hardware Platform | Operating System | Status |
 | :------------ | :------------- | :--- |
-| Ascend        | Linux-x86      | ✔️   |
+| Huawei Ascend | Linux-x86      | ✔️   |
 |               | Linux-aarch64  | ✔️   |
 | GPU CUDA 11.6 | Linux-x86      | ✔️   |
 | CPU           | Linux-x86      | ✔️   |
@@ -101,7 +101,7 @@ For installation using `pip`, take `CPU` and `Linux-x86` build version as an exa
 
 Use pip mode method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using pip mode method to install MindSpore in Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
+- [Using pip mode method to install MindSpore in Huawei Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
 - [Using pip mode method to install MindSpore in GPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
 - [Using pip mode method to install MindSpore in CPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
 
@@ -109,7 +109,7 @@ Use pip mode method to install MindSpore in different environments. Refer to the
 
 Use the source code compilation method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using the source code compilation method to install MindSpore in Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in Huawei Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
 - [Using the source code compilation method to install MindSpore in GPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
 - [Using the source code compilation method to install MindSpore in CPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
 
@@ -118,7 +118,7 @@ Use the source code compilation method to install MindSpore in different environ
 MindSpore docker image is hosted on [Huawei SWR](https://support.huaweicloud.com/swr/index.html).
 Use Docker to install MindSpore in different environments, refer to the following documents.
 
-- [Installing MindSpore in Ascend by Docker](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker_en.md)
+- [Installing MindSpore in Huawei Ascend by Docker](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker_en.md)
 
 ## Quickstart
 
