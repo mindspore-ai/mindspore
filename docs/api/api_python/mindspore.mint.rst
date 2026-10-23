@@ -21,40 +21,40 @@ MindSpore中 `mindspore.mint` 接口与上一版本相比，新增、删除和�
 
 1. 执行原理
 
-  ``mindspore_op_plugin`` 基于 PyTorch 的 ATen 算子库实现，通过适配层将 MindSpore 的算子调用
-  转换为 ATen 算子调用。具体工作流程如下：
+   ``mindspore_op_plugin`` 基于 PyTorch 的 ATen 算子库实现，通过适配层将 MindSpore 的算子调用
+   转换为 ATen 算子调用。具体工作流程如下：
 
-  1. **算子注册**：在 MindSpore 中注册插件算子。
-  2. **调用转换**：将 MindSpore Tensor 转换为 PyTorch Tensor。
-  3. **算子执行**：调用对应的 ATen 算子进行计算。
-  4. **结果返回**：将计算结果转换回 MindSpore Tensor。
+   1. **算子注册**：在 MindSpore 中注册插件算子。
+   2. **调用转换**：将 MindSpore Tensor 转换为 PyTorch Tensor。
+   3. **算子执行**：调用对应的 ATen 算子进行计算。
+   4. **结果返回**：将计算结果转换回 MindSpore Tensor。
 
-  这种设计使开发者可以快速适配新的算子，而无需关心底层实现细节。
+   这种设计使开发者可以快速适配新的算子，而无需关心底层实现细节。
 
 2. 说明
 
-  - 安装插件后，需要通过 ``import ms_op_plugin`` 或设置 ``MS_OP_PLUGIN_PATH`` 启用。
-  - ``mindspore_op_plugin`` 仅支持在 CPU PyNative 模式下执行，具体支持的算子以
-    `mindspore_op_plugin 已支持算子列表 <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/SUPPORTED_OPS_CN.md>`_ 为准。
-  - MindSpore、插件及同一进程中的 PyTorch/LibTorch 运行库需要使用兼容版本，具体要求以
-    ``mindspore_op_plugin`` 仓库的版本说明为准。
+   - 安装插件后，需要通过 ``import ms_op_plugin`` 或设置 ``MS_OP_PLUGIN_PATH`` 启用。
+   - ``mindspore_op_plugin`` 仅支持在 CPU PyNative 模式下执行，具体支持的算子以
+     `mindspore_op_plugin 已支持算子列表 <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/SUPPORTED_OPS_CN.md>`_ 为准。
+   - MindSpore、插件及同一进程中的 PyTorch/LibTorch 运行库需要使用兼容版本，具体要求以
+     ``mindspore_op_plugin`` 仓库的版本说明为准。
 
 3. 安装
 
-  请先安装相互兼容的 MindSpore 和 ``mindspore_op_plugin``。可以使用 WHL 包安装：
+   请先安装相互兼容的 MindSpore 和 ``mindspore_op_plugin``。可以使用 WHL 包安装：
 
-  .. code-block:: bash
+   .. code-block:: bash
 
       pip install ms_op_plugin-*.whl
 
-  源码编译、不同平台及其他安装方式请参考
-  `mindspore_op_plugin 安装说明 <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/README_CN.md#安装>`_ 。
+   源码编译、不同平台及其他安装方式请参考
+   `mindspore_op_plugin 安装说明 <https://atomgit.com/mindspore/mindspore_op_plugin/blob/master/README_CN.md#安装>`_ 。
 
 4. 使用示例
 
-  以 ``mindspore.mint.abs`` 为例，展示 ``mindspore_op_plugin`` 使用方式。
+   以 ``mindspore.mint.abs`` 为例，展示 ``mindspore_op_plugin`` 使用方式。
 
-  .. code-block:: python
+   .. code-block:: python
 
       import mindspore as ms
       import ms_op_plugin
@@ -67,9 +67,9 @@ MindSpore中 `mindspore.mint` 接口与上一版本相比，新增、删除和�
       output = mint.abs(input_x)
       print(output)
 
-  输出如下：
+   输出如下：
 
-  .. code-block:: text
+   .. code-block:: text
 
       [1. 2. 3.]
 
