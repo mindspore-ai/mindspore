@@ -1,0 +1,25 @@
+# operator quantile_ext
+quantile_ext:
+    args:
+        input:
+            dtype: tensor
+        q:
+            dtype: tensor
+        dim:
+            dtype: int
+            default: None
+        keepdim:
+            dtype: bool
+            default: False
+        interpolation:
+            dtype: int
+            default: "'linear'"
+            arg_handler: str_to_enum
+    returns:
+        output:
+            dtype: tensor
+    bprop_expander: False
+    dispatch:
+        enable: True
+        Ascend: None
+        GPU: None
