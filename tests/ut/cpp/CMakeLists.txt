@@ -77,6 +77,10 @@ file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} .
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./frontend/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./func_graph_builder/*.cc  ./side_effect/*.cc ./utils/*.cc)
 file(GLOB_RECURSE UT_PYNATIVE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./pynative/*.cc)
+if(ENABLE_CPU)
+    file(GLOB_RECURSE UT_OPS_GENERATE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ops_generate/*.cc)
+    list(APPEND UT_PYNATIVE_SRCS ${UT_OPS_GENERATE_SRCS})
+endif()
 file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc ./kernel/*/*.cc
         ./pre_activate/common/*.cc  ./session/*.cc ./runtime/device/move_to_test.cc
         ./runtime/device/multi_stream_controller_test.cc
@@ -249,6 +253,18 @@ target_link_libraries(_ut_obj_static PRIVATE mindspore_ms_backend mindspore_pybo
                       mindspore_pynative_utils mindspore_runtime_pipeline)
 foreach(comp ${ALL_UT_COMPS})
     add_executable(ut_${comp}_tests ${UT_${comp}_SRCS})
+    if("${comp}" STREQUAL "PYNATIVE" AND ENABLE_CPU)
+        # mindspore_ops_cpu is an INTERFACE target in UT builds; compile the production helpers directly.
+        target_sources(ut_${comp}_tests PRIVATE
+                ${CMAKE_SOURCE_DIR}/mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_kernel_extra_func.cc
+                ${CMAKE_SOURCE_DIR}/mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_custom_kernel_register.cc)
+        if(NOT MSVC)
+            # Keep the Contiguous execution boundary mockable in this UT translation unit.
+            set_source_files_properties(
+                    ${CMAKE_SOURCE_DIR}/mindspore/ops/kernel/cpu/pyboost/pyboost_cpu_kernel_extra_func.cc
+                    PROPERTIES COMPILE_FLAGS "-fno-inline")
+        endif()
+    endif()
 
     # ci envs have no enough memory, so make link target sequentially
     list(FIND UT_COMPS ${comp} comp_index)
