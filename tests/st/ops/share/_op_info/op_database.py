@@ -8801,6 +8801,122 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_tensor_lstsq,
         op_error_inputs_func=error_sample_inputs_tensor_lstsq,
     ),
+    'Tensor.ndim': UnaryOpInfo(
+        name='Tensor.ndim',
+        op=tensor_ndim_ms,
+        ref=tensor_ndim_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'Tensor.ndimension': UnaryOpInfo(
+        name='Tensor.ndimension',
+        op=tensor_ndimension_ms,
+        ref=tensor_ndimension_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'Tensor.negative': UnaryOpInfo(
+        name='Tensor.negative',
+        op=tensor_negative_ms,
+        ref=tensor_negative_torch,
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in (ms.uint8, ms.int16, ms.bool_)),
+        not_support_dtypes=(ms.uint8, ms.int16, ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'Tensor.nelement': UnaryOpInfo(
+        name='Tensor.nelement',
+        op=tensor_nelement_ms,
+        ref=tensor_nelement_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+    ),
+    'Tensor.new_empty': OpInfo(
+        name='Tensor.new_empty',
+        op=tensor_new_empty_ms,
+        ref=tensor_new_empty_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        skip_forward_comparison=True,
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_new_empty,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_new_empty,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_new_empty,
+    ),
+    'Tensor.new_full': OpInfo(
+        name='Tensor.new_full',
+        op=tensor_new_full_ms,
+        ref=tensor_new_full_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_new_fill,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_new_fill,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_new_fill,
+        op_error_inputs_func=error_sample_inputs_tensor_new_fill,
+    ),
+    'Tensor.new_ones': OpInfo(
+        name='Tensor.new_ones',
+        op=tensor_new_ones_ms,
+        ref=tensor_new_ones_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_new_ones_or_zeros,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_new_ones_or_zeros,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_new_ones_or_zeros,
+        op_error_inputs_func=error_sample_inputs_tensor_new_ones_or_zeros,
+    ),
+    'Tensor.new_zeros': OpInfo(
+        name='Tensor.new_zeros',
+        op=tensor_new_zeros_ms,
+        ref=tensor_new_zeros_torch,
+        dtypes_ascend910b=dtypes_as_torch,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_new_ones_or_zeros,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_new_ones_or_zeros,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_new_ones_or_zeros,
+        op_error_inputs_func=error_sample_inputs_tensor_new_ones_or_zeros,
+    ),
+    'Tensor.nextafter': BinaryOpInfo(
+        name='Tensor.nextafter',
+        op=tensor_nextafter_ms,
+        ref=tensor_nextafter_torch,
+        dtypes_ascend910b=(ms.float32, ms.float64),
+        not_support_dtypes=tuple(d for d in dtypes_as_torch if d not in (ms.float32, ms.float64)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        support_tensor_type_promotion=False,
+        supports_left_python_scalar=False,
+        supports_right_python_scalar=False,
+        supports_both_python_scalar=False,
+    ),
+    'Tensor.nonzero': OpInfo(
+        name='Tensor.nonzero',
+        op=tensor_nonzero_ms,
+        ref=tensor_nonzero_torch,
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        not_support_dtypes=(ms.complex128, ms.complex64),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        is_differentiable=False,
+        op_basic_reference_inputs_func=basic_sample_inputs_tensor_nonzeros,
+        op_extra_reference_inputs_func=extra_sample_inputs_tensor_nonzeros,
+        op_dynamic_inputs_func=dynamic_sample_inputs_tensor_nonzeros,
+    ),
 }
 
 all_op_db = list(op_db.keys())
@@ -8887,6 +9003,7 @@ binary_op_db = [
     'Tensor.mul_',
     'Tensor.multiply',
     'Tensor.logaddexp2',
+    'Tensor.nextafter',
 ]
 
 unary_op_db = [
@@ -9057,6 +9174,10 @@ unary_op_db = [
     'Tensor.mT',
     'Tensor.mH',
     'Tensor.msort',
+    'Tensor.ndim',
+    'Tensor.ndimension',
+    'Tensor.negative',
+    'Tensor.nelement',
 ]
 
 other_op_db = [
@@ -9360,6 +9481,11 @@ other_op_db = [
     'Tensor.lu_solve',
     'Tensor.logit',
     'ms.scipy.linalg.lstsq',
+    'Tensor.new_empty',
+    'Tensor.new_full',
+    'Tensor.new_ones',
+    'Tensor.new_zeros',
+    'Tensor.nonzero',
 ]
 
 reduction_op_db = [
@@ -9540,6 +9666,11 @@ other_op_kbk_db = [
     'Tensor.lu_solve',
     'Tensor.logit',
     'ms.scipy.linalg.lstsq',
+    'Tensor.new_empty',
+    'Tensor.new_full',
+    'Tensor.new_ones',
+    'Tensor.new_zeros',
+    'Tensor.nonzero'
 ]
 
 reduction_op_kbk_db = [
@@ -9605,6 +9736,7 @@ binary_op_kbk_db = [
     'Tensor.mul_',
     'Tensor.multiply',
     'Tensor.logaddexp2',
+    'Tensor.nextafter',
 ]
 
 unary_op_kbk_db = [
@@ -9671,6 +9803,10 @@ unary_op_kbk_db = [
     'Tensor.mT',
     'Tensor.mH',
     'Tensor.msort',
+    'Tensor.ndim',
+    'Tensor.ndimension',
+    'Tensor.negative',
+    'Tensor.nelement',
 ]
 
 # unary_op_kbk_db = [ o for o in unary_op_db if o not in ['mint.imag', 'mint.real'] ]
