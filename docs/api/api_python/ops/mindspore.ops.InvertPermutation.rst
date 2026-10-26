@@ -5,7 +5,7 @@ mindspore.ops.InvertPermutation
 
     计算索引的逆置换。
 
-    该算子主要用于计算索引的逆置换。 `input_x` 是一个一维的整数Tensor，一个以0开始的索引数组，并将每个值与其索引位置交换。换句话说，对于输出Tensor和输入 `input_x` ，依赖此计算方法 :math:`y[x[i]] = i, \quad i \in [0, 1, \ldots, \text{len}(x)-1]` 。
+    该算子主要用于计算索引的逆置换。 `input_x` 是一个一维的整数列表或元组，一个以0开始的索引数组，并将每个值与其索引位置交换。换句话说，对于输出Tensor和输入 `input_x` ，依赖此计算方法 :math:`y[x[i]] = i, \quad i \in [0, 1, \ldots, \text{len}(x)-1]` 。
 
     .. note::
         这些值必须包括0。不能有重复的值，并且不能为负值。

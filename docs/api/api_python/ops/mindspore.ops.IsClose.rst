@@ -6,7 +6,7 @@ mindspore.ops.IsClose
     返回一个bool型Tensor，表示 `input` 的每个元素与 `other` 的每个元素在给定容忍度内是否“接近”。其中“接近”的数学公式为：
 
     .. math::
-        |input-other| ≤ atol + rtol × |other|
+        |input-other| ≤ atol + rtol x |other|
 
     更多参考详见 :func:`mindspore.ops.isclose`。
 

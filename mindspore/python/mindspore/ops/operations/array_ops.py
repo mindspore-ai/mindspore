@@ -531,12 +531,13 @@ class ConjugateTranspose(Primitive):
 
 class Unique(Primitive):
     """
-    Returns the unique elements of input tensor and also return a tensor containing the index of each value of input
+    Returns the unique elements of input tensor and also returns a tensor containing the index of each value of input
     tensor corresponding to the output unique tensor.
 
     The output contains Tensor `y` and Tensor `idx`, the format is probably similar to (`y`, `idx`).
-    The shape of Tensor `y` and Tensor `idx` is different in most cases, because Tensor `y` will be duplicated,
-    and the shape of Tensor `idx` is consistent with the input.
+    The shape of Tensor `y` and Tensor `idx` is different in most cases,
+    because the input contains duplicate values, Tensor `y` records the unique elements (length ≤ input),
+    while Tensor `idx` matches the input length.
 
     To get the same shape between `idx` and `y`, please refer to :class:`mindspore.ops.UniqueWithPad`.
 
@@ -1244,8 +1245,8 @@ class InvertPermutation(PrimitiveWithInfer):
     Computes the inverse of an index permutation.
 
     This operator is mainly used to calculate the inverse of index permutation.
-    It requires a 1-dimensional integer tensor x, which represents the index of a zero-based array,
-    and exchanges each value with its index position. In other words, For output tensor y and input tensor x,
+    It requires a 1-dimensional integer list or tuple, `input_x`, which represents the index of a zero-based array,
+    and exchanges each value with its index position. In other words, for output y and input x,
     this operation calculates the following values:
 
     :math:`y[x[i]] = i, \quad i \in [0, 1, \ldots, \text{len}(x)-1]`.
@@ -1458,7 +1459,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # case 1: Only have two num_segments, where is 0 and 1, and segment_ids=[0, 1, 1]
+        >>> # case 1: Only have two num_segments, where are 0 and 1, and segment_ids=[0, 1, 1]
         >>> # num_segments = 2 indicates that there are two types of segment_id,
         >>> # the first number '0' in [0, 1, 1] indicates input_x[0],
         >>> # the second number '1' in [0, 1, 1] indicates input_x[1],
@@ -1490,7 +1491,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         >>> print(output)
             [[4. 2. 3.]
              [4. 5. 6.]]
-        >>> # case 3: If the input_x have three dimensions even more, what will happen?
+        >>> # case 3: If the input_x has three dimensions even more, what will happen?
         >>> # The shape of input_x is (2, 4, 3),
         >>> # and the length of segment_ids should be the same as the first dimension of input_x.
         >>> # Because the segment_ids are different, input_x[0] will not be compared to input_x[1].
@@ -1513,7 +1514,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
               [4. 2. 1.]]]
         >>> # case 4: It has the same input with the 3rd case.
         >>> # Because num_segments is equal to 2, there are two segment_ids, but currently only one 0 is used.
-        >>> # the segment_id i is absent in the segment_ids, then output[i] will be filled with
+        >>> # The segment_id i is absent in the segment_ids, then output[i] will be filled with
         >>> # the smallest possible value of the input_x's type.
         >>> segment_ids = Tensor(np.array([0, 0]).astype(np.int32))
         >>> output = unsorted_segment_max(input_x, segment_ids, num_segments)
@@ -2080,8 +2081,8 @@ class ScatterUpdate(Primitive):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
-        RuntimeError: If the data type of `input_x` and `updates` conversion is required when data type conversion
-                      is not supported.
+        RuntimeError: If the data types of `input_x` and `updates` are inconsistent and require conversion,
+            but the conversion of `updates` to the data type of `input_x` is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2117,8 +2118,6 @@ class ScatterUpdate(Primitive):
 
 class ScatterNdUpdate(Primitive):
     r"""
-    Updates tensor values by using input indices and value.
-
     Using given values to update tensor value, along with the input indices.
 
     `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
@@ -2138,7 +2137,7 @@ class ScatterNdUpdate(Primitive):
         use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``True`` .
 
     Inputs:
-        - **input_x** (Union[Parameter, Tensor]) - The target tensor, with data type of Parameter or Tensor.
+        - **input_x** (Union[Parameter, Tensor]) - The target tensor.
           The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
         - **updates** (Tensor) - N-D(2D or 3D) Tensor The tensor to be updated to the input tensor,
@@ -2150,8 +2149,8 @@ class ScatterNdUpdate(Primitive):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32 or an int64.
-        RuntimeError: If the data type of `input_x` and `updates` conversion is required when data type conversion
-                      is not supported.
+        RuntimeError: If the data types of `input_x` and `updates` are inconsistent and require conversion,
+            but the conversion of `updates` to the data type of `input_x` is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2471,9 +2470,9 @@ class ScatterSub(Primitive):
     Inputs:
         - **input_x** (Union[Parameter, Tensor]) - The target tensor.
           The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
+        - **indices** (Tensor) - The index to do sub operation whose data type must be mindspore.int32 or
           mindspore.int64.
-        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
+        - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
@@ -2484,8 +2483,8 @@ class ScatterSub(Primitive):
         TypeError: If `indices` is not mindspore.int32 or
             mindspore.int64.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
-        RuntimeError: If the data type of `input_x` and `updates` conversion is required when data type conversion
-                      is not supported.
+        RuntimeError: If the data type of `input_x` and `updates` are inconsistent and require conversion,
+            but the conversion of `updates` to the data type of `input_x` is not supported.
 
     Supported Platforms:
         Deprecated
@@ -5111,7 +5110,7 @@ class IndexFill(Primitive):
 
 class IndexPut(Primitive):
     r"""
-    According to the index number of `indexes`, replace the value corresponding to `x1` with the value in `x2`.
+    According to the index number of `indices`, replace the value corresponding to `x1` with the value in `x2`.
 
     Args:
         accumulate (int): If accumulate is 1, the elements in x2 are added to x1,
@@ -5741,7 +5740,7 @@ class TopK(Primitive):
           The supported dtype is int32 and it should be 0-D or 1-D Tensor with shape :math:`(1, )` .
 
     Outputs:
-        A tuple consisting of `values` and `indexes`.
+        A tuple consisting of `values` and `indices`.
 
         - **values** (Tensor) - The `k` largest elements in each slice of the last dimension.
         - **indices** (Tensor) - The indices of values within the last dimension of input.

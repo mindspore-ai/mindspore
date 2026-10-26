@@ -681,10 +681,11 @@ class InplaceUpdateV2(Primitive):
     Refer to :func:`mindspore.ops.inplace_update` for more details.
 
     Inputs:
-        - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
+        - **x** (Tensor) - A tensor to be inplace updated. It can be one of the following data types:
           float32, float16 and int32.
-        - **indices** (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
-          to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+        - **indices** (Union[int, tuple, Tensor]): Indices into the left-most dimension of `x`,
+          and determines which rows of x
+          to update with v. It is an int, tuple or Tensor, whose value is in [0, the first dimension size of x).
         - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
           the first dimension, which must be the same as the size of `indices`.
 
@@ -722,18 +723,18 @@ class InplaceUpdateV2(Primitive):
 
 class InplaceAdd(Primitive):
     """
-    Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
+    Adds `input_v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `input_v`.
 
     Refer to :func:`mindspore.ops.inplace_add` for more details.
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
+            to add with `input_v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
 
     Inputs:
         - **x** (Tensor) - The tensor to be added. It has shape :math:`(N,*)` where :math:`*` means
           any number of additional dimensions.
-        - **input_v** (Tensor) - The value tensor add to `x`. It has the same dimension sizes as `x` except
+        - **input_v** (Tensor) - The value tensor to add to `x`. It has the same dimension sizes as `x` except
           the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
 
     Outputs:
@@ -785,7 +786,7 @@ class InplaceIndexAdd(Primitive):
     Inputs:
         - **var** (Union[Parameter, Tensor]) - The input Parameter or Tensor to add to, with data type uint8, int8,
           int16, int32, float16, float32, float64.
-        - **indices** (Tensor) - The indies along `axis` to perform the addition. A 1D Tensor
+        - **indices** (Tensor) - The indices along `axis` to perform the addition. A 1D Tensor
           of shape :math:`(updates.shape[axis],)`, every value of it
           should be in range :math:`[0, var.shape[axis])` with data type int32.
         - **updates** (Tensor) - The input Tensor with the value to add. Must have same data type as `var`.
@@ -835,12 +836,13 @@ class InplaceSub(Primitive):
 
     Args:
         indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to subtract by `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
+            to subtract by `input\_v`. It is an integer or a tuple, whose value is
+            in [0, the first dimension size of `x`).
 
     Inputs:
         - **x** (Tensor) - The tensor to be subtracted. It has shape :math:`(N,*)` where :math:`*` means
           any number of additional dimensions.
-        - **input_v** (Tensor) - The value tensor subtract from `x`. It has the same dimension sizes as `x` except
+        - **input_v** (Tensor) - The value tensor to subtract from `x`. It has the same dimension sizes as `x` except
           the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
 
     Outputs:

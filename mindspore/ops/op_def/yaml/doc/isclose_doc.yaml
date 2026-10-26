@@ -4,7 +4,7 @@ isclose:
     is "close" to the corresponding element of `other`. Closeness is defined as:
     
     .. math::
-        |input-other| <= atol + rtol * |other|
+        |input-other| <= atol + rtol x |other|
 
     Refer to :func:`mindspore.ops.isclose` for more details.
 

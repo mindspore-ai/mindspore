@@ -857,11 +857,11 @@ class AlltoAll(PrimitiveWithInfer):
     r"""
     AlltoAll is a collective operation.
 
-    AlltoAll sends data from the all processes to the all processes in the specified group. It has two phases:
+    AlltoAll sends data from the all processes to all processes in the specified group. It has two phases:
 
     - The scatter phase: On each process, the operand is split into split_count number of blocks along the
-      split_dimensions, and the blocks are scattered to all processes, e.g., the ith block is send to the ith process.
-    - The gather phase: Each process concatenates the received blocks along the concat_dimension.
+      split_dimensions, and the blocks are scattered to all processes, e.g., the ith block is sent to the ith process.
+    - The gather phase: Each process concatenates the received blocks along the concat_dim.
 
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
@@ -871,7 +871,7 @@ class AlltoAll(PrimitiveWithInfer):
     Args:
         split_count (int): On each process, divide blocks into split_count number.
         split_dim (int): On each process, split blocks along the split_dim.
-        concat_dim (int): On each process, gather the received blocks along the concat_dimension.
+        concat_dim (int): On each process, gather the received blocks along the concat_dim.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
@@ -1263,9 +1263,9 @@ class CollectiveGather(Primitive):
 
 class Barrier(PrimitiveWithInfer):
     """
-    Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
+    Synchronizes all processes in the specified group. Once the processes call this operation, it will be blocked until
     all processes call this operation. After all processes finish calling the operations, the blocked processes
-    will be waken and continue their task.
+    will be woken and continue their task.
 
     Args:
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
@@ -1287,7 +1287,7 @@ class Barrier(PrimitiveWithInfer):
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
-            This example should be run with 2 devices.
+            This example should be run with 4 devices.
 
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -1944,10 +1944,10 @@ class BatchISendIRecv(PrimitiveWithInfer):
 
 class AlltoAllV(PrimitiveWithInfer):
     r"""
-    AllToAllV which support uneven scatter and gather compared with AllToAll.
+    AlltoAllV which supports uneven scatter and gather compared with AllToAll.
 
     Note:
-        Only support flatten tensor as input. input tensor should be flattened and
+        Only support flatten tensor as input. Input tensor should be flattened and
         concatenated before call this primitive.
 
     Args:
@@ -2033,8 +2033,8 @@ class AlltoAllV(PrimitiveWithInfer):
 
 class AlltoAllVC(PrimitiveWithInfer):
     r"""
-    AllToAllVC passes in the sending and receiving parameters of all ranks through the input parameter
-    `send_count_matrix`. Compared to AllToAllV, AllToAllVC does not require the aggregation of all rank
+    AlltoAllVC passes in the sending and receiving parameters of all ranks through the input parameter
+    `send_count_matrix`. Compared to AlltoAllV, AlltoAllVC does not require the aggregation of all rank
     sending and receiving parameters, thus offering superior performance.
 
     Note:
@@ -2047,10 +2047,10 @@ class AlltoAllVC(PrimitiveWithInfer):
         block_size (int, optional): The basic units for splitting and gathering numel by `send_count_matrix`.
             Default: ``1``.
         transpose (bool, optional): Indicates whether the `send_count_matrix` needs to undergo a transpose
-            operation, this parameter is used in reverse calculation scenarios. Default: ``False``.
+            operation. This parameter is used in reverse calculation scenarios. Default: ``False``.
 
     Inputs:
-        - **input_x** (Tensor) - flatten tensor to scatter. The shape of tensor is :math:`(x_1)`.
+        - **input_x** (Tensor) - flattened tensor to scatter. The shape of tensor is :math:`(x_1)`.
         - **send_count_matrix** (Union[list[int], Tensor]) - The sending and receiving parameters of
           all ranks, :math:`\text{send_count_matrix}[i*\text{rank_size}+j]` represents the amount of data sent by
           rank i to rank j, and the basic unit is the number of bytes of Tensor's dtype. Among them, `rank_size`
@@ -2124,8 +2124,8 @@ class AllGatherV(PrimitiveWithInfer):
     Gathers uneven tensors from the specified communication group and returns the tensor which is all gathered.
 
     Note:
-        Only support flatten tensor as input. input tensor should be flattened and
-        concatenated before call this primitive.
+        Only supports flattened tensor as input. Input tensor should be flattened and
+        concatenated before calling this primitive.
 
     Args:
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
