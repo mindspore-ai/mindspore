@@ -291,3 +291,35 @@ def test_ctc_loss_v2_exception():
                        zero_infinity=zero_infinity)
         _pynative_executor.sync()
     assert "but got Float32" in str(e.value)
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize("mixed_batch", [False, True])
+def test_ctc_loss_v2_zero_input_length(mode, mixed_batch):
+    """
+    Feature: CTCLossV2 CPU zero-length input (issue #43456).
+    Description: Run empty samples alone and at the start/middle of a mixed batch.
+    Expectation: Empty samples have exactly zero loss; other samples retain their CTC loss.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    if mixed_batch:
+        input_lengths = np.array([0, 2, 0, 2], dtype=np.int32)
+        target_lengths = np.array([0, 0, 0, 1], dtype=np.int32)
+        expected = np.array([0, 2 * np.log(2), 0, np.log(4 / 3)], dtype=np.float32)
+    else:
+        input_lengths = np.array([0], dtype=np.int32)
+        target_lengths = np.array([0], dtype=np.int32)
+        expected = np.array([0], dtype=np.float32)
+
+    batch_size = input_lengths.size
+    log_probs = Tensor(np.full((2, batch_size, 2), -np.log(2), dtype=np.float32))
+    # Keep nonempty storage: zero lengths are runtime values, not zero tensor dimensions.
+    targets = Tensor(np.ones((batch_size, 1), dtype=np.int32))
+    ctc = P.CTCLossV2(blank=0, reduction="none", zero_infinity=False)
+    loss, _ = ctc(log_probs, targets, Tensor(input_lengths), Tensor(target_lengths))
+    actual = loss.asnumpy()
+    np.testing.assert_array_equal(actual[input_lengths == 0], expected[input_lengths == 0])
+    np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-6)
+    # In the old kernel, sample 2 reads sample 1's last blank state and returns
+    # 2*log(2), deterministically detecting the bug even without ASan.
