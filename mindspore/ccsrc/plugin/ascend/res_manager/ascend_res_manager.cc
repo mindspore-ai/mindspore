@@ -51,6 +51,7 @@
 #include "utils/file_utils.h"
 #include "utils/distributed_meta.h"
 #include "graph/def_types.h"
+#include "ge/ge_api.h"
 #include "acl/acl_rt.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
@@ -256,7 +257,7 @@ void GetGeGlobalOptions(std::map<std::string, std::string> *ge_options) {
   MS_LOG(INFO) << "Set ge::DETERMINISTIC to " << (*ge_options)[::ge::DETERMINISTIC];
 }
 
-void SetPassthroughGeOptions(std::string option_level, OptionMap *options) {
+void SetPassthroughGeOptions(std::string option_level, std::map<std::string, std::string> *options) {
   const auto &new_options = AnfAlgo::GetGeOptions(option_level);
   for (auto &[key, value] : new_options) {
     (*options)[key] = value;
