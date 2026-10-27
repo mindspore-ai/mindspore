@@ -34,7 +34,6 @@
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
-#include "include/cluster/topology/cluster_context.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
 #include "plugin/ascend/res_manager/collective/utils.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_vmm_adapter.h"
@@ -170,8 +169,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   std::string rank_table_file_path = common::GetEnv("RANK_TABLE_FILE");
   if (hccl_config_.find(kHcclComm) != hccl_config_.end()) {
     ret = InitByHcclComm();
-  } else if (!rank_table_file_path.empty() && common::GetEnv(kSimulationLevel).empty() &&
-             !distributed::cluster::ClusterContext::instance()->enable_cross_cluster()) {
+  } else if (!rank_table_file_path.empty() && common::GetEnv(kSimulationLevel).empty()) {
     ret = InitByRankTable(rank_table_file_path, group_size, group_rank, &config);
   } else {
     ret = InitByRootInfoConfig(root_info, group_size, group_rank, config);
