@@ -2504,7 +2504,7 @@ class BesselI0(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2549,7 +2549,7 @@ class BesselI1(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2589,7 +2589,7 @@ class BesselI0e(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2634,7 +2634,7 @@ class BesselI1e(Primitive):
           Data type must be float16 or float32, float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2682,7 +2682,7 @@ class BesselK0(Primitive):
           Data type must be float16, float32, float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32, float64.
@@ -2728,7 +2728,7 @@ class BesselK1(Primitive):
           Data type must be float16, float32, float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32, float64.
@@ -2774,7 +2774,7 @@ class BesselK0e(Primitive):
           Data type must be float16, float32, float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32, float64.
@@ -2820,7 +2820,7 @@ class BesselK1e(Primitive):
           Data type must be float16, float32, float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32, float64.
@@ -2864,7 +2864,7 @@ class BesselJ0(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
@@ -2909,7 +2909,7 @@ class BesselJ1(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
@@ -2955,7 +2955,7 @@ class BesselY0(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32, float64.
@@ -3001,7 +3001,7 @@ class BesselY1(Primitive):
           Data type must be float16, float32 or float64.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor of float16, float32, float64.
