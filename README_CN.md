@@ -35,7 +35,7 @@
 ## MindSpore介绍
 
 MindSpore是一种适用于端边云场景的新型开源深度学习训练/推理框架。
-MindSpore提供了友好的设计和高效的执行，旨在提升数据科学家和算法工程师的开发体验，并为Ascend AI处理器提供原生支持，以及软硬件协同优化。
+MindSpore提供了友好的设计和高效的执行，旨在提升数据科学家和算法工程师的开发体验，并为Huawei Ascend AI处理器提供原生支持，以及软硬件协同优化。
 
 同时，MindSpore作为全球AI开源社区，致力于进一步开发和丰富AI软硬件应用生态。
 
@@ -74,7 +74,7 @@ MindSpore提供跨多个后端的构建选项：
 
 | 硬件平台      | 操作系统        | 状态  |
 | :------------ | :-------------- | :--- |
-| Ascend 910    | Ubuntu-x86      | ✔️   |
+| Huawei Ascend | Ubuntu-x86      | ✔️   |
 |               | Ubuntu-aarch64  | ✔️   |
 |               | EulerOS-aarch64 | ✔️   |
 |               | CentOS-x86      | ✔️   |
@@ -124,7 +124,7 @@ MindSpore提供跨多个后端的构建选项：
 
 使用pip方式，在不同的环境安装MindSpore，可参考以下文档。
 
-- [Ascend环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip.md)
+- [Huawei Ascend环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip.md)
 - [GPU环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip.md)
 - [CPU环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip.md)
 
@@ -132,7 +132,7 @@ MindSpore提供跨多个后端的构建选项：
 
 使用源码编译方式，在不同的环境安装MindSpore，可参考以下文档。
 
-- [Ascend环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source.md)
+- [Huawei Ascend环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source.md)
 - [GPU环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source.md)
 - [CPU环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source.md)
 
