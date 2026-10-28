@@ -37,7 +37,7 @@
 MindSpore is a new open source deep learning training/inference framework that
 could be used for mobile, edge and cloud scenarios. MindSpore is designed to
 provide development experience with friendly design and efficient execution for
-the data scientists and algorithmic engineers, native support for Ascend AI
+the data scientists and algorithmic engineers, native support for Huawei Ascend AI
 processor, and software hardware co-optimization. At the meantime MindSpore as
 a global AI open source community, aims to further advance the development and
 enrichment of the AI software/hardware application ecosystem.
@@ -77,7 +77,7 @@ MindSpore offers build options across multiple backends:
 
 | Hardware Platform | Operating System | Status |
 | :---------------- | :--------------- | :----- |
-| Ascend910 | Ubuntu-x86 | ✔️ |
+| Huawei Ascend | Ubuntu-x86 | ✔️ |
 |  | Ubuntu-aarch64 | ✔️ |
 |  | EulerOS-aarch64 | ✔️ |
 |  | CentOS-x86 | ✔️ |
@@ -127,7 +127,7 @@ For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an ex
 
 Use pip mode method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using pip mode method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
+- [Using pip mode method to install MindSpore in Huawei Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
 - [Using pip mode method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
 - [Using pip mode method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
 
@@ -135,7 +135,7 @@ Use pip mode method to install MindSpore in different environments. Refer to the
 
 Use the source code compilation method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using the source code compilation method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in Huawei Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
 - [Using the source code compilation method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
 - [Using the source code compilation method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
 
