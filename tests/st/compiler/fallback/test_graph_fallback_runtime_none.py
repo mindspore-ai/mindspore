@@ -23,7 +23,6 @@ import pytest
 import numpy as np
 from mindspore import Tensor, jit, context, Parameter, ops
 from mindspore.nn import Cell
-from mindspore.nn.probability import distribution
 from mindspore import nn
 import mindspore.common.dtype as mstype
 import mindspore as ms
@@ -468,37 +467,40 @@ def test_none_is_input_of_tuple_return():
 def test_none_is_input_of_tuple_return_2():
     """
     Feature: Support None.
-    Description: Support None is input of tuple, and the tuple is return.
-    Expectation: No exception.
+    Description: Return a tuple containing None from a subcell with optional inputs.
+    Expectation: Graph and PyNative results agree for provided and default inputs.
     """
-
-    class BernoulliCrossEntropy(Cell):
-        def __init__(self, probs, seed=10, dtype=ms.int32, name='Bernoulli', dist='Bernoulli'):
+    class OptionalTuple(Cell):
+        def __init__(self):
             super().__init__()
-            self.b = distribution.Bernoulli(probs, seed, dtype, name)
-            self.dist = dist
+            self.default = None
 
-        def construct(self, probs1_b, probs1=None):
-            if probs1 is None:
-                out1 = self.b.cross_entropy(self.dist, probs1_b)
-                out2 = self.b.kl_loss(self.dist, probs1_b)
-            else:
-                out1 = self.b.cross_entropy(self.dist, probs1_b, probs1)
-                out2 = self.b.kl_loss(self.dist, probs1_b, probs1)
-            out3 = self.b.probs
-            return out1, out2, out3
+        def construct(self, x, y=None):
+            if y is None:
+                y = x
+            return x + y, x - y, self.default
 
-    probs = None
-    probs1 = 0.2
-    probs1_b = 0.9
-    context.set_context(mode=context.GRAPH_MODE)
-    net_graph = BernoulliCrossEntropy(probs)
-    out_me_graph = net_graph(Tensor(probs1_b), Tensor(probs1))
-    context.set_context(mode=context.PYNATIVE_MODE)
-    net_pynative = BernoulliCrossEntropy(probs)
-    out_me_pynative = net_pynative(Tensor(probs1_b), Tensor(probs1))
-    assert out_me_graph == out_me_pynative
-    context.set_context(mode=context.GRAPH_MODE)
+    class Network(Cell):
+        def __init__(self):
+            super().__init__()
+            self.inner = OptionalTuple()
+
+        def construct(self, x, y=None):
+            return self.inner(x, y)
+
+    original_mode = context.get_context("mode")
+    try:
+        for y in (None, Tensor(0.2, ms.float32)):
+            context.set_context(mode=context.GRAPH_MODE)
+            graph_result = Network()(Tensor(0.9, ms.float32), y)
+            context.set_context(mode=context.PYNATIVE_MODE)
+            pynative_result = Network()(Tensor(0.9, ms.float32), y)
+            for graph_value, pynative_value in zip(graph_result[:2], pynative_result[:2]):
+                np.testing.assert_allclose(graph_value.asnumpy(), pynative_value.asnumpy())
+            assert graph_result[2] is None
+            assert pynative_result[2] is None
+    finally:
+        context.set_context(mode=original_mode)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')

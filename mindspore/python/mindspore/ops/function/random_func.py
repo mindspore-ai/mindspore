@@ -120,8 +120,10 @@ def standard_laplace(shape, seed=None):
     .. warning::
         - The Ascend backend does not support the reproducibility of random numbers, so
           the `seed` parameter has no effect.
-        - In the next version, this interface will undergo a non-compatible change: this sampling interface
-          will be changed to a distribution object form. Please use the corresponding distribution class instead.
+        - The probability module containing ``mindspore.nn.probability.distribution.Laplace`` has been removed
+          in this version. The previous guidance to replace this function with a distribution object and migrate
+          to ``Laplace`` no longer applies. This function retains its current function form and parameters for
+          standard Laplace sampling; it does not provide all the functionality of the former ``Laplace`` class.
 
     Args:
         shape (Union[tuple, Tensor]): The shape of returned tensor.
