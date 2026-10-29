@@ -30,7 +30,7 @@ Tag 遵循以下格式：
 |-------------|---------------|--------------------------------|
 | MindSpore 版本号 | 2.11.0         | 对应 MindSpore 官方发布 Tag 中的版本标识        |
 | CANN 版本 | cann9.2.0         | 对应 Ascend 官方发布 Tag 中的版本标识        |
-| 硬件信息（芯片）  | 参考下文 | 昇腾芯片型号标识                      |
+| 硬件信息（芯片）  | 910b / a3 | 昇腾芯片型号标识                      |
 | 操作系统      | ubuntu22.04 / openeuler24.03 | 基础镜像所使用的操作系统发行版及版本号      |
 | Python 版本   | py3.12        | 镜像内置 Python 大版本号                |
 
@@ -52,7 +52,9 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.11.0-cann9.2.0-910b-ubunt
 
 ### 构建参数选择参考地址
 
-### Tag
+### 2.11.0 版本 Tag 列表
+
+如下所示是 MindSpore 最新发布的 2.11.0 版本的所有镜像 tags，历史版本所有的 Tag 请参考 [Supported Tags](https://atomgit.com/mindspore/mindspore/blob/master/docker/supported_tags.md)。
 
 - `2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12`
 - `2.11.0-cann9.2.0-910b-openeuler24.03-py3.12`
@@ -132,15 +134,6 @@ COPY . /workspace
 
 CMD ["python", "train.py"]
 ```
-
-## 支持的硬件
-
-| 芯片系列 | 产品示例 | 架构 |
-|---|---|---|
-| 昇腾 A2 | Atlas 800T A2、Atlas 900 A2 PoD | 自动识别 (ARM64/x86_64) |
-| 昇腾 A3 | Atlas 800T A3 | 自动识别 (ARM64/x86_64) |
-
-> Tips: 使用 `docker manifest inspect` 命令可以查看镜像支持的系统架构。
 
 ## 许可证
 
