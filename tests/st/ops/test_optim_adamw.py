@@ -1,5 +1,5 @@
+"""AdamW optimizer regression tests against PyTorch."""
 from __future__ import absolute_import
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import torch
@@ -7,7 +7,8 @@ import mindspore
 from mindspore import nn
 from mindspore import Tensor, context
 from mindspore.mint.optim import AdamW
-from mindspore.experimental.optim.lr_scheduler import StepLR
+from tests.mark_utils import arg_mark
+from tests.st.optimizer_utils import apply_step_decay
 
 
 class Network(nn.Cell):
@@ -119,7 +120,6 @@ class AdamWFactory():
             optimizer = AdamW(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
-        lr_scheduler = StepLR(optimizer, 2, gamma=0.5, last_epoch=-1)
 
         def forward_fn(data, label):
             logits = model(data)
@@ -134,11 +134,11 @@ class AdamWFactory():
             return loss
 
         def train(epochs, steps, lr_dynamic, if_change):
-            for _ in range(epochs):
+            for epoch in range(epochs):
                 for _ in range(steps):
                     train_step(data, label)
                 if lr_dynamic:
-                    lr_scheduler.step()
+                    apply_step_decay(optimizer, epoch + 1, 2, 0.5)
                 if if_change:
                     optimizer.param_groups[1]["betas"] = (0.77, 0.7)
                     optimizer.param_groups[1]["amsgrad"] = False

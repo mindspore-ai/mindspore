@@ -82,8 +82,6 @@ class SGD(Optimizer):
 
     .. warning::
         This is an experimental optimizer API, which may be modified or removed in the future.
-        This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining

@@ -204,7 +204,6 @@
 /tests/st/ops/ @hz893
 /tests/st/frontend/ @hz893
 /tests/st/optimizer/ @hz893
-/tests/st/optimizer_ex/ @hz893
 /tests/st/parameter/ @hz893
 /tests/st/pi_jit/ @ginfung
 /tests/st/pynative/ @chujinjin

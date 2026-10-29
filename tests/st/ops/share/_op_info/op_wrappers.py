@@ -24,7 +24,7 @@ import numpy as np
 from mindspore import nn, mint
 from mindspore.scipy.linalg import lstsq
 from mindspore.common.parameter import Parameter
-from mindspore.experimental import optim
+from tests.st.optimizer_utils import apply_step_decay
 import torch
 from torch.nn import functional as torch_F
 
@@ -2203,11 +2203,10 @@ def mint_optim_AdamW_ms(input,  weight, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, w
     optimizer = mint.optim.AdamW(net.trainable_params(), lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
                                  amsgrad=amsgrad, maximize=maximize)
 
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 
     for i in range(6):  #epoch=6
         optimizer((ms.value_and_grad(net, None, net.trainable_params())(input)[1]))
-        scheduler.step()
+        apply_step_decay(optimizer, i + 1, 2, 0.1)
 
     return net.weight.value()
 

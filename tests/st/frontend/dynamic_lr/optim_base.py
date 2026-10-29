@@ -19,12 +19,10 @@ import mindspore
 from mindspore import nn
 from mindspore import ops
 from mindspore import Tensor
-from mindspore.experimental.optim import SGD
-from mindspore.experimental.optim import Adam
-from mindspore.experimental.optim import AdamW
-from mindspore.experimental.optim.lr_scheduler import StepLR
-from mindspore.experimental.optim.lr_scheduler import LinearLR
+from mindspore.mint.optim import Adam
+from mindspore.mint.optim import AdamW
 from mindspore.graph.api import jit
+from tests.st.optimizer_utils import apply_step_decay, scale_learning_rates
 
 
 class Network(nn.Cell):
@@ -52,7 +50,7 @@ class NetworkPt(torch.nn.Module):
 
 
 class OptimFactory:
-    def __init__(self, optim_ex="SDG", group=True, lr_dynamic=0, if_change=0, if_change_inside=0,
+    def __init__(self, optim_ex="Adam", group=True, lr_dynamic=0, if_change=0, if_change_inside=0,
                  dtype=np.float32):
         super().__init__()
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
@@ -82,9 +80,7 @@ class OptimFactory:
 
         optimizer = None
         if not self.group:
-            if self.optim_ex == "SDG":
-                optimizer = torch.optim.SGD(model.parameters(), lr=self.lr)
-            elif self.optim_ex == "Adam":
+            if self.optim_ex == "Adam":
                 optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
             elif self.optim_ex == "AdamW":
                 optimizer = torch.optim.AdamW(model.parameters(), lr=self.lr)
@@ -98,9 +94,7 @@ class OptimFactory:
             group_params = [
                 {'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "dampening": 1},
                 {'params': no_bias_params, 'lr': 0.66, "momentum": 0.7, "nesterov": True}]
-            if self.optim_ex == "SDG":
-                optimizer = torch.optim.SGD(params=group_params, lr=self.lr)
-            elif self.optim_ex == "Adam":
+            if self.optim_ex == "Adam":
                 optimizer = torch.optim.Adam(params=group_params, lr=self.lr)
             elif self.optim_ex == "AdamW":
                 optimizer = torch.optim.AdamW(params=group_params, lr=self.lr)
@@ -147,9 +141,7 @@ class OptimFactory:
 
         optimizer = None
         if not self.group:
-            if self.optim_ex == "SDG":
-                optimizer = SGD(params=model_ms.trainable_params(), lr=self.lr)
-            elif self.optim_ex == "Adam":
+            if self.optim_ex == "Adam":
                 optimizer = Adam(params=model_ms.trainable_params(), lr=self.lr)
             elif self.optim_ex == "AdamW":
                 optimizer = AdamW(params=model_ms.trainable_params(), lr=self.lr)
@@ -160,18 +152,15 @@ class OptimFactory:
             group_params = [
                 {'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "dampening": 1},
                 {'params': no_bias_params, 'lr': 0.66, "momentum": 0.7, "nesterov": True}]
-            if self.optim_ex == "SDG":
-                optimizer = SGD(params=group_params, lr=self.lr)
-            elif self.optim_ex == "Adam":
+            if self.optim_ex == "Adam":
                 optimizer = Adam(params=group_params, lr=self.lr)
             elif self.optim_ex == "AdamW":
                 optimizer = AdamW(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
 
-        lr_scheduler1 = StepLR(optimizer, 2, gamma=0.5, last_epoch=-1)
-        lr_scheduler2 = LinearLR(optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=6,
-                                 last_epoch=-1)
+        # Match the initial factor applied by the PyTorch LinearLR reference.
+        scale_learning_rates(optimizer, 1.0 / 3)
 
         def forward_fn(data, label):
             logits = model_ms(data)
@@ -193,7 +182,7 @@ class OptimFactory:
             return loss
 
         def train(epochs, steps, lr_dynamic, if_change):
-            for _ in range(epochs):
+            for epoch in range(epochs):
                 for _ in range(steps):
                     train_step(data, label, self.if_change_inside)
                 if if_change == 1:
@@ -203,10 +192,11 @@ class OptimFactory:
                     optimizer.param_groups[1]["momentum"] = 0.2
                     optimizer.param_groups[1]["eps"] = 0.05
                 if lr_dynamic == 1:
-                    lr_scheduler1.step()
+                    apply_step_decay(optimizer, epoch + 1, 2, 0.5)
                 elif lr_dynamic == 2:
-                    lr_scheduler1.step()
-                    lr_scheduler2.step()
+                    apply_step_decay(optimizer, epoch + 1, 2, 0.5)
+                    if epoch < 6:
+                        scale_learning_rates(optimizer, 1.0 + 2.0 / (6 + 2 * epoch))
 
         train(self.epochs, self.steps, self.lr_dynamic, self.if_change)
         output = model_ms(data)
@@ -217,4 +207,4 @@ class OptimFactory:
         if self.if_change == 2:
             self.if_change = 0
         loss_expect = self.forward_pytorch_impl()
-        np.allclose(loss_expect, loss_out, self.loss, self.loss)
+        np.testing.assert_allclose(loss_out, loss_expect, rtol=self.loss, atol=self.loss)

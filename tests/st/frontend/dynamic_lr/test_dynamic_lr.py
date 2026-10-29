@@ -17,13 +17,7 @@ import pytest
 from tests.mark_utils import arg_mark
 from tests.st.frontend.utils.model_train_base import set_mode
 from .test_adam_optim import test_adam_true_1_1_0
-from .test_adamax_optim import test_adamax_group_dynamic
 from .test_adamw_optim import test_adamw_true_1_1_0
-from .test_constant_lr import test_constant_lr_epoch_0_step_1_no_grouping
-from .test_cosine_annealing_lr import test_cosine_annealing_lr_epoch_0_step_1_no_grouping
-from .test_cosine_annealing_warm_restarts import test_cosine_annealing_warm_restarts_epoch_1_step_0_group_0
-from .test_nadam_optim import test_nadam_group_dynamic
-from .test_radam_optim import test_radam_group_dynamic
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
@@ -37,10 +31,4 @@ def test_dynamic_lr(mode):
     """
     set_mode(mode)
     test_adam_true_1_1_0()
-    test_adamax_group_dynamic()
     test_adamw_true_1_1_0()
-    test_constant_lr_epoch_0_step_1_no_grouping()
-    test_cosine_annealing_lr_epoch_0_step_1_no_grouping()
-    test_cosine_annealing_warm_restarts_epoch_1_step_0_group_0()
-    test_nadam_group_dynamic()
-    test_radam_group_dynamic()

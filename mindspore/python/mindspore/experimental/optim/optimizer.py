@@ -25,8 +25,8 @@ class Optimizer(Cell):
 
     .. warning::
         This is an experimental optimizer API that is subject to change.
-        This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+        This shared base remains available for mint optimizers. The concrete experimental
+        optimizers and the experimental lr_scheduler module have been removed.
 
     Args:
         params (Union[list(Parameter), list(dict)]): an iterable of :class:`mindspore.Parameter` or
@@ -80,7 +80,7 @@ class Optimizer(Cell):
         >>> train_step(data, label)
     """
     def __init__(self, params, defaults):
-        super(Optimizer, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
 
         param_groups = self._parameters_base_check(params, "params")
         self.defaults = defaults
@@ -199,8 +199,8 @@ class Optimizer(Cell):
         if isinstance(learning_rate, Tensor):
             if learning_rate.ndim == 0:
                 return Parameter(learning_rate.astype(mstype.float32), name)
-            raise ValueError(f"For 'Optimizer', if 'learning_rate' is a Tensor, "
-                             f"then it should be scalar Tensor")
+            raise ValueError("For 'Optimizer', if 'learning_rate' is a Tensor, "
+                             "then it should be scalar Tensor")
 
         raise TypeError("For 'Optimizer', the argument 'learning_rate' must be int, float or Tensor, "
                         "but got {}.".format(type(learning_rate)))

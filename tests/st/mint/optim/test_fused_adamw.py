@@ -33,7 +33,7 @@ from mindspore.common.dtype import _dtype_to_nptype
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
 from mindspore.mint.optim.fused_adamw import FusedAdamW
-from mindspore.experimental.optim.lr_scheduler import StepLR
+from tests.st.optimizer_utils import apply_step_decay
 
 from tests.mark_utils import arg_mark
 from tests.st.ops.test_optim_adamw import AdamWFactory as AdamWFactoryBase
@@ -207,7 +207,6 @@ class AdamWFactory(AdamWFactoryBase):
             optimizer = FusedAdamW(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
-        lr_scheduler = StepLR(optimizer, 2, gamma=0.5, last_epoch=-1)
 
         def forward_fn(data, label):
             logits = model(data)
@@ -223,11 +222,11 @@ class AdamWFactory(AdamWFactoryBase):
             return loss
 
         def train(epochs, steps, lr_dynamic, if_change):
-            for _ in range(epochs):
+            for epoch in range(epochs):
                 for _ in range(steps):
                     train_step(data, label)
                 if lr_dynamic:
-                    lr_scheduler.step()
+                    apply_step_decay(optimizer, epoch + 1, 2, 0.5)
                 if if_change:
                     optimizer.param_groups[1]["betas"] = (0.77, 0.7)
                     optimizer.param_groups[1]["amsgrad"] = False

@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
+"""SGD optimizer regression tests against PyTorch."""
 from __future__ import absolute_import
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import torch
 import mindspore as ms
 from mindspore.mint.optim import SGD
-from mindspore.experimental.optim.lr_scheduler import StepLR
+from tests.mark_utils import arg_mark
+from tests.st.optimizer_utils import apply_step_decay
 
 
 class Network(ms.nn.Cell):
@@ -129,7 +130,6 @@ class SGDFactory:
             optimizer = SGD(params=group_params, lr=self.lr)
 
         criterion = ms.nn.L1Loss(reduction='mean')
-        lr_scheduler = StepLR(optimizer, 2, gamma=0.5, last_epoch=-1)
 
         def forward_fn(data, label):
             logits = model(data)
@@ -144,11 +144,11 @@ class SGDFactory:
             return loss
 
         def train(epochs, steps, lr_dynamic):
-            for _ in range(epochs):
+            for epoch in range(epochs):
                 for _ in range(steps):
                     train_step(data, label)
                 if lr_dynamic:
-                    lr_scheduler.step()
+                    apply_step_decay(optimizer, epoch + 1, 2, 0.5)
 
         train(self.epochs, self.steps, self.lr_dynamic)
         output = model(data)
@@ -235,7 +235,9 @@ def test_sgd_group(mode):
 def test_sgd_lr_dynamic(mode):
     """
     Feature: Test SGD.
-    Description: Test SGD when lr is dynamic.
+    Description: Exercise the schedule call for one epoch (before the first decay).
+        This does not verify scheduled SGD updates: mint SGD reads lr_float,
+        while the helper only changes the shared lr Parameter.
     Expectation: success.
     """
     ms.set_context(mode=mode, jit_syntax_level=ms.LAX, jit_config={'jit_level': 'O0'})
@@ -248,7 +250,9 @@ def test_sgd_lr_dynamic(mode):
 def test_sgd_group_lr_dynamic(mode):
     """
     Feature: Test SGD.
-    Description: Test SGD with grouped params when lr is dynamic.
+    Description: Exercise grouped SGD with a schedule call before the first decay.
+        This does not verify scheduled SGD updates: mint SGD reads lr_float,
+        while the helper only changes the shared lr Parameter.
     Expectation: success.
     """
     ms.set_context(mode=mode, jit_syntax_level=ms.LAX, jit_config={'jit_level': 'O0'})

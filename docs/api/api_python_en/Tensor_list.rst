@@ -38,7 +38,7 @@
     :exclude-members: check_axis_valid
     :members:
 
-{% elif "mindspore.experimental.optim" in fullname and "lr_scheduler" not in fullname and objname[0].istitle() %}
+{% elif fullname == "mindspore.experimental.optim.Optimizer" %}
 {{ fullname | underline }}
 
 .. autoclass:: {{ name }}
