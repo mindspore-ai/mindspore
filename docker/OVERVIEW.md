@@ -30,13 +30,15 @@ Tags follow this format:
 |-------|---------------|-------------|
 | MindSpore Version | 2.11.0 | Corresponds to the version identifier in MindSpore official release tags |
 | CANN Version | cann9.2.0 | Corresponds to the version identifier in Atlas official release tags |
-| Hardware Info (Chip) | see below | Atlas chip model identifier |
+| Hardware Info (Chip) | 910b / a3 | Atlas chip model identifier |
 | Operating System | ubuntu22.04 / openeuler24.03 | Operating system distribution and version used in the base image |
 | Python Version | py3.12 | Major Python version built into the image |
 
 > Tips: System architecture is automatically detected via Docker Manifest, no need to specify in the tag.
 
-### Tag
+### Tags for Version 2.11.0
+
+The following are all image tags for the latest MindSpore 2.11.0 release. For all tags of historical versions, see [Supported Tags](https://atomgit.com/mindspore/mindspore/blob/master/docker/supported_tags.md).
 
 - `2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12`
 - `2.11.0-cann9.2.0-910b-openeuler24.03-py3.12`
@@ -128,15 +130,6 @@ COPY . /workspace
 
 CMD ["python", "train.py"]
 ```
-
-## Supported Hardware
-
-| Chip Series | Product Examples | Architecture |
-|-------------|-----------------|--------------|
-| Atlas A2 | Atlas 800T A2, Atlas 900 A2 PoD | Auto-detected (ARM64/x86_64) |
-| Atlas A3 | Atlas 800T A3 | Auto-detected (ARM64/x86_64) |
-
-> Tips: Use the `docker manifest inspect` command to view the system architectures supported by an image.
 
 ## License
 
