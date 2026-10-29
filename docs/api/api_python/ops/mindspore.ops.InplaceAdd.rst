@@ -8,7 +8,7 @@ mindspore.ops.InplaceAdd
     更多参考详见 :func:`mindspore.ops.inplace_add`。
 
     参数：
-        - **indices** (Union[int, tuple]) - 指定将 `input_v` 添加到 `x` 的哪些行。可以为int或Tuple，取值范围[0, len(`x`)]。
+        - **indices** (Union[int, tuple]) - 指定将 `input_v` 添加到 `x` 的哪些行。可以为int或Tuple，取值范围[0, len(`x`))。
 
     输入：
         - **x** (Tensor) - 输入Tensor，shape为：:math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。

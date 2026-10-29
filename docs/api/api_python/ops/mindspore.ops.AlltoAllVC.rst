@@ -3,7 +3,7 @@ mindspore.ops.AlltoAllVC
 
 .. py:class:: mindspore.ops.AlltoAllVC(group=GlobalComm.WORLD_COMM_GROUP, block_size=1, transpose=False)
 
-    AllToAllVC通过输入参数 `send_count_matrix` 传入所有rank的收发参数。相对AllToAllV来说，AllToAllVC不需要汇聚所有rank的收发参数，因此性能更优。
+    AlltoAllVC通过输入参数 `send_count_matrix` 传入所有rank的收发参数。相对AlltoAllV来说，AlltoAllVC不需要汇聚所有rank的收发参数，因此性能更优。
 
     .. note::
         只支持一维的输入，使用该接口前需要将输入数据展开成一维。

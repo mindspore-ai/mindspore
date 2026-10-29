@@ -15,7 +15,7 @@ mindspore.ops.AlltoAllV
     输入：
         - **input_x** (Tensor) - 一维待分发的张量, shape为 :math:`(x_1)`。
         - **send_numel_list** (Union[tuple[int], list[int], Tensor]) - 分发给每张卡的数据量。实际分发数据量为 :math:`(send\_numel\_list * block\_size * input\_x.dtype)` 。
-        - **recv_numel_list** (Union[tuple[int], list[int], Tensor]) - 从每张卡聚合的数据量。实际聚合数据量为 :math:`(send\_numel\_list * block\_size * input\_x.dtype)` 。
+        - **recv_numel_list** (Union[tuple[int], list[int], Tensor]) - 从每张卡聚合的数据量。实际聚合数据量为 :math:`(recv\_numel\_list * block\_size * input\_x.dtype)` 。
 
     输出：
         Tensor，从每张卡上聚合的一维数据结果。如果结果为空，则返回空张量，且张量数值无意义。

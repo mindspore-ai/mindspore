@@ -2860,8 +2860,8 @@ class GetNext(Primitive):
 
     Note:
         The GetNext operation needs to be associated with network and it also depends
-        on the 'dataset' interface, For example, please refer to :class:`mindspore.dataset.MnistDataset` .
-        it can't be used directly as a single operation.
+        on the 'dataset' interface. For example, please refer to :class:`mindspore.dataset.MnistDataset` .
+        It can't be used directly as a single operation.
         For details, please refer to :class:`mindspore.connect_network_with_dataset` source code.
 
     Args:
