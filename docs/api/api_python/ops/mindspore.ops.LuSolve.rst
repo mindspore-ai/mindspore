@@ -5,7 +5,7 @@ mindspore.ops.LuSolve
 
     使用给定的LU分解A和列向量b，计算线性方程组 :math:`Ay = b` 的解。
 
-    矩阵的LU分解可以由 :func:`mindspore.scipy.linalg.lu` 计算产生。
+    输入需要提供矩阵A的紧凑LU分解结果及其主元索引。
 
     .. note::
         `lu_pivots` 的batch维度必须与 `lu_data` 的batch维度相匹配，且batch维度的大小和每个维度的值必须相同。

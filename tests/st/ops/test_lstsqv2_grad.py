@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for LstsqV2 gradients and dynamic input shapes."""
 import pytest
 import numpy as np
 import mindspore as ms

@@ -149,7 +149,6 @@
 /mindspore/python/mindspore/profiler/ @tangmengcheng @hz893
 /mindspore/python/mindspore/rewrite/ @hz893
 /mindspore/python/mindspore/runtime/ @limingqi107
-/mindspore/python/mindspore/scipy/ @yi-zhang95
 /mindspore/python/mindspore/train/ @hz893
 /mindspore/python/mindspore/train/callback/_train_fault_tolerance.py @fary86
 /mindspore/python/mindspore/train/callback/_on_request_exit.py @fary86
@@ -211,7 +210,6 @@
 /tests/st/pynative/ @chujinjin
 /tests/st/rewrite/ @hz893
 /tests/st/runtime/ @limingqi107
-/tests/st/scipy_st/ @yi-zhang95
 /tests/st/scripts/ @liuchongming74
 /tests/st/sparse/ @yi-zhang95
 /tests/st/tensor/ @chujinjin
@@ -289,7 +287,6 @@
 /tests/ut/python/profiler/ @tangmengcheng @hz893
 /tests/ut/python/rewrite/ @hz893
 /tests/ut/python/runtime/ @limingqi107
-/tests/ut/python/scipy/ @yi-zhang95
 /tests/ut/python/train/ @hz893
 /tests/ut/python/ops/composite/ @ginfung
 

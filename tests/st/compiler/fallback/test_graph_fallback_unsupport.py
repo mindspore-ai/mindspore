@@ -382,20 +382,21 @@ def test_import_in_graph():
 def test_from_import_in_graph():
     """
     Feature: Support JIT Fallback runtime feature.
-    Description: Support from and import in graph mode.
+    Description: Support from-import in graph mode using general matrix eigendecomposition.
     Expectation: No exception.
     """
 
     @jit
     def test_from_import(x):
-        from mindspore.scipy.ops import Eig
-        s, u = Eig()(x)
+        from mindspore.ops import eig
+        s, u = eig(x)
         return s, u
 
     context.set_context(device_target='CPU')
-    x = Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32))
-    test_from_import_out = test_from_import(x)
-    print("out:", test_from_import_out)
+    x = Tensor(np.array([[1, 2], [0, 3]]).astype(np.float32))
+    values, vectors = test_from_import(x)
+    np.testing.assert_allclose(x.asnumpy() @ vectors.asnumpy(),
+                               vectors.asnumpy() * values.asnumpy(), rtol=1e-5, atol=1e-6)
 
 
 @pytest.mark.skip(reason="not support now")
@@ -589,7 +590,7 @@ def test_assign_class_member():
     """
     class InnerNet(nn.Cell):
         def __init__(self, x):
-            super(InnerNet, self).__init__()
+            super().__init__()
             self.x = x
 
         def construct(self, x):
@@ -597,7 +598,7 @@ def test_assign_class_member():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.cell_list = nn.CellList()
             self.net = InnerNet(0)
             self.cell_list.append(self.net)

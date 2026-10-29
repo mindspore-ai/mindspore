@@ -56,7 +56,7 @@ def create_sym_pos_matrix(shape, dtype):
 class Norm(Cell):
     def __init__(self):
         # pylint: disable=useless-super-delegation
-        super(Norm, self).__init__()
+        super().__init__()
 
     def construct(self, x):
         return ops.sqrt(ops.reduce_sum(x ** 2))
@@ -65,7 +65,7 @@ class Norm(Cell):
 class Dot(Cell):
     def __init__(self):
         # pylint: disable=useless-super-delegation
-        super(Dot, self).__init__()
+        super().__init__()
 
     def construct(self, a, b):
         b_aligned = ops.reshape(b, (b.shape[0], -1))
@@ -76,7 +76,7 @@ class Dot(Cell):
 
 class CG(Cell):
     def __init__(self):
-        super(CG, self).__init__()
+        super().__init__()
         self.norm = Norm()
         self.dot = Dot()
 
@@ -121,7 +121,7 @@ def test_cg(mode, tensor_type_a, tensor_type_m):
     """
     Feature: Sparsify scipy.cg
     Description: test case for sparsify using CG network.
-    Expectation: the result matches mindspore.scipy
+    Expectation: the result matches scipy.sparse.linalg.cg
     """
     if platform.system() != "Linux":
         return
