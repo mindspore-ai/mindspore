@@ -140,7 +140,6 @@ from .array_func import (
     fills,
     broadcast_to,
     unsorted_segment_sum,
-    col2im,
     split,
     split_ext,
     tensor_split,

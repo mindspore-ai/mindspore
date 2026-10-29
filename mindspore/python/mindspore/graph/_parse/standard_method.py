@@ -2851,14 +2851,6 @@ def masked_fill(x, mask, value):
     return F.masked_fill(x, mask, value)
 
 
-def col2im(*inputs):
-    """
-    inputs: input_x, output_size, kernel_size, dilation, padding_value, stride
-    Combines an array of sliding local blocks into a large containing tensor.
-    """
-    return F.col2im(*inputs)
-
-
 def narrow(input, axis, start, length):
     """
     Obtains a tensor of a specified length at a

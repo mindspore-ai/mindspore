@@ -159,7 +159,6 @@ mindspore.Tensor
     mindspore.Tensor.clamp_
     mindspore.Tensor.clip
     mindspore.Tensor.clone
-    mindspore.Tensor.col2im
     mindspore.Tensor.conj
     mindspore.Tensor.contiguous
     mindspore.Tensor.copy

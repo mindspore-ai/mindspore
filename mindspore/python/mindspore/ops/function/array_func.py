@@ -4492,54 +4492,6 @@ def diagflat(input, offset=0):
     return res
 
 
-def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
-    """
-    Combines an array of sliding local blocks into a large containing tensor.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        input_x (Tensor): 4D tensor with data type float16 or float32.
-        output_size (Tensor): 1D tensor with 2 elements of data type int.
-        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
-            for height and width. If type is int, it means that height equals width. Must be specified.
-        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
-            for height and width. If type is int, it means that height equals width.
-        padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two ints
-            for height and width. If type is int, it means that height equals width.
-        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
-            for height and width. If type is int, it means that height equals width.
-
-    Returns:
-        A 4D Tensor, with the same type as `input_x`.
-
-    Raises:
-        TypeError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` data type is not in
-            Union[int, tuple[int], list[int]].
-        ValueError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` value is not
-            greater than zero or elements number more than 2.
-        ValueError: If :attr:`padding_value` value is less than zero or elements number more than 2.
-        ValueError: If input_x.shape[2] != kernel_size[0] * kernel_size[1].
-        ValueError: If input_x.shape[3] does not match the calculated number of sliding blocks.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
-        >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
-        >>> output = ops.col2im(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
-        >>> print(output.shape)
-        (16, 16, 8, 8)
-    """
-    c2i = _get_cache_prim(Col2Im)(kernel_size, dilation, padding_value, stride)
-    return c2i(input_x, output_size)
-
-
 def _split_int(x, split_size_or_sections, axis):
     """
     Splits the input tensor `x` into multiple sub-tensors along the axis according to the given `split_size_or_sections`
@@ -5722,6 +5674,23 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     Therefore, `output_size` is the spatial shape of the large containing tensor of the sliding local blocks.
 
     The `dilation`, `padding` and `stride` arguments specify how the sliding blocks are retrieved.
+
+    Note:
+        The legacy ``ops.col2im`` and ``Tensor.col2im`` entry points have been removed.
+        To migrate, reshape the old input from ``(N, C, K, L)`` to ``(N, C * K, L)``, where
+        ``K`` is the product of the kernel dimensions, and rename ``padding_value`` to ``padding``.
+        Keep the original ``output_size`` Tensor and explicitly preserve the kernel, dilation, padding and stride
+        values instead of relying on the new defaults. For an old input ``x``, use:
+
+        .. code-block:: python
+
+            n, channels, kernel_area, blocks = x.shape
+            columns = x.reshape(n, channels * kernel_area, blocks)
+            output = ops.fold(columns, output_size, kernel_size,
+                              dilation=dilation, padding=padding_value, stride=stride)
+
+        The underlying :class:`mindspore.ops.Col2Im` primitive remains available.
+        Old ``Tensor.col2im`` calls can also migrate to the function form above.
 
     .. warning::
         - The input must be a 3-dimensional Tensor with shape
@@ -7063,7 +7032,6 @@ __all__ = [
     'affine_grid',
     'meshgrid',
     'broadcast_to',
-    'col2im',
     'split',
     'tensor_split',
     'vsplit',
