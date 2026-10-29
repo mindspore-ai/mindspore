@@ -28,8 +28,8 @@ Tags follow this format:
 
 | Field | Example Values | Description |
 |-------|---------------|-------------|
-| MindSpore Version | 2.10.0 | Corresponds to the version identifier in MindSpore official release tags |
-| CANN Version | cann9.1.0 | Corresponds to the version identifier in Atlas official release tags |
+| MindSpore Version | 2.11.0 | Corresponds to the version identifier in MindSpore official release tags |
+| CANN Version | cann9.2.0 | Corresponds to the version identifier in Atlas official release tags |
 | Hardware Info (Chip) | see below | Atlas chip model identifier |
 | Operating System | ubuntu22.04 / openeuler24.03 | Operating system distribution and version used in the base image |
 | Python Version | py3.12 | Major Python version built into the image |
@@ -38,10 +38,10 @@ Tags follow this format:
 
 ### Tag
 
-- `2.10.0-cann9.1.0-910b-ubuntu22.04-py3.12`
-- `2.10.0-cann9.1.0-910b-openeuler24.03-py3.12`
-- `2.10.0-cann9.1.0-a3-ubuntu22.04-py3.12`
-- `2.10.0-cann9.1.0-a3-openeuler24.03-py3.12`
+- `2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12`
+- `2.11.0-cann9.2.0-910b-openeuler24.03-py3.12`
+- `2.11.0-cann9.2.0-a3-ubuntu22.04-py3.12`
+- `2.11.0-cann9.2.0-a3-openeuler24.03-py3.12`
 
 See dockerfile:[dockerfile](https://atomgit.com/mindspore/mindspore/blob/master/docker/Dockerfile)
 
@@ -49,11 +49,11 @@ See dockerfile:[dockerfile](https://atomgit.com/mindspore/mindspore/blob/master/
 
 | Parameter | Description | Required | Source | Example Values |
 |-----------|-------------|----------|--------|----------------|
-| CANN_VERSION | Atlas CANN toolkit version | Yes | CANN image tag | 9.1.0 |
+| CANN_VERSION | Atlas CANN toolkit version | Yes | CANN image tag | 9.2.0 |
 | CHIP_ARCH | Atlas chip architecture identifier | Yes | Tag specification | see below |
 | OS_SYSTEM | Base image operating system and version | Yes | Tag specification | ubuntu22.04 / openeuler24.03 |
 | PY_VERSION | Python version built into the base image | Yes | Tag specification | py3.12 |
-| MINDSPORE_VERSION | MindSpore version number | Yes | [MindSpore repository releases](https://atomgit.com/mindspore/mindspore/releases) | 2.10.0 |
+| MINDSPORE_VERSION | MindSpore version number | Yes | [MindSpore repository releases](https://atomgit.com/mindspore/mindspore/releases) | 2.11.0 |
 | PIP_INDEX_URL | pip installation source URL (default: Huawei Cloud mirror) | No | PyPI mirror source | https://mirrors.huaweicloud.com/repository/pypi/simple |
 
 ### Image Repository Address
@@ -67,24 +67,24 @@ swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore
 **Full Image Example:**
 
 ```text
-swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.10.0-cann9.1.0-910b-ubuntu22.04-py3.12
+swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12
 ```
 
 ## Quick Start
 
 ### Building MindSpore Image
 
-Taking the construction of the 2.10.0-cann9.1.0-910b-ubuntu22.04-py3.12 image as an example:
+Taking the construction of the 2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12 image as an example:
 
 ```bash
 docker build \
-    --build-arg CANN_VERSION=9.1.0 \
+    --build-arg CANN_VERSION=9.2.0 \
     --build-arg CHIP_ARCH=910b \
     --build-arg OS_SYSTEM=ubuntu22.04 \
     --build-arg PY_VERSION=py3.12 \
-    --build-arg MINDSPORE_VERSION=2.10.0 \
+    --build-arg MINDSPORE_VERSION=2.11.0 \
     --build-arg PIP_INDEX_URL=https://mirrors.huaweicloud.com/repository/pypi/simple \
-    -t mindspore:2.10.0-cann9.1.0-910b-ubuntu22.04-py3.12 \
+    -t mindspore:2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12 \
     -f Dockerfile .
 ```
 
@@ -108,13 +108,13 @@ docker run \
 
 Where:
 
-- `{tag}` is the tag specified during the MindSpore image build, for example, `mindspore:2.10.0-cann9.1.0-910b-ubuntu22.04-py3.12`.
+- `{tag}` is the tag specified during the MindSpore image build, for example, `mindspore:2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12`.
 
 ### How to Extend for Custom Development
 
 ```bash
 # Use MindSpore image as base image, add user software
-FROM swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.10.0-cann9.1.0-910b-ubuntu22.04-py3.12
+FROM swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore:2.11.0-cann9.2.0-910b-ubuntu22.04-py3.12
 
 RUN apt update -y && \
     apt install -y gcc g++
