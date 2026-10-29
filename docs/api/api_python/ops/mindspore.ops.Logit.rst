@@ -17,4 +17,4 @@ mindspore.ops.Logit
         - **x** (Tensor) - Tensor输入，其数据类型为float16、float32或float64。
 
     输出：
-        Tensor，具有与 `x` 相同的shape。
+        Tensor，具有与 `x` 相同的shape和数据类型。

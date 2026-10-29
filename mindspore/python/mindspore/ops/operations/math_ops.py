@@ -994,7 +994,7 @@ class Einsum(Primitive):
             and the right of it indicates the desired output dimension.
 
     Inputs:
-        - **x** () - Input tensor used for calculation.
+        - **x** (Union[tuple[Tensor], list[Tensor]]) - Input tensor used for calculation.
           The inputs must be a tuple/list of Tensors.
           When the inputs are only one tensor, you can input (tensor, ).
           Dtypes of them should be float16/float32/float64 and dtype of the tensor(s) must be the same.

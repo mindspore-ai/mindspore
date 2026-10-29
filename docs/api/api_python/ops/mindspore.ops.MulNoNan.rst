@@ -14,7 +14,7 @@
         \end{cases}
 
     .. note::
-        `x` 和 `y` 的shape应该相同，或者可以广播。如果 `y` 是NaN或为无限的，并且 `x` 是0，结果将是NaN。
+        `x` 和 `y` 的shape应该相同，或者可以广播。该运算不满足交换律，如果 `y` 是NaN或为无限的，并且 `x` 是0，结果将是NaN。
 
     输入：
         - **x** (Union[Tensor]) - 第一个输入是Tensor，其数据类型为int32、int64、float16、float32、float64、complex64、complex128或Scalar。
