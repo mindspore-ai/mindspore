@@ -563,15 +563,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"coalesce", std::string("coo_coalesce")},  // C.coo_coalesce
        {"add", std::string("coo_add")},            // C.coo_add
      }},
-    {kObjectTypeMapTensorType,
-     {
-       {"get", std::string("map_tensor_get")},                // C.map_tensor_get
-       {"put", std::string("map_tensor_put")},                // C.map_tensor_put
-       {"erase", std::string("map_tensor_erase")},            // C.map_tensor_erase
-       {"get_keys", std::string("map_tensor_get_keys")},      // C.map_tensor_get_keys
-       {"get_values", std::string("map_tensor_get_values")},  // C.map_tensor_get_values
-       {"get_data", std::string("map_tensor_get_data")},      // C.map_tensor_get_data
-     }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},
     {kObjectTypeEnvType, {}},
@@ -626,12 +617,6 @@ BuiltInTypeMap &GetAttrMap() {
        {"size", std::string("sparse_size_")},         // C.sparse_size_
        {"ndim", std::string("sparse_ndim_")},         // C.sparse_ndim_
        {"itemsize", std::string("itemsize_")},        // C.itemsize_
-     }},
-    {kObjectTypeMapTensorType,
-     {
-       {"default_value", prim::kPrimMapTensorGetDefaultValue},             // F.map_tensor_get_default_value
-       {"permit_filter_value", prim::kPrimMapTensorGetPermitFilterValue},  // F.map_tensor_get_permit_filter_value
-       {"evict_filter_value", prim::kPrimMapTensorGetEvictFilterValue},    // F.map_tensor_get_evict_filter_value
      }},
     {kObjectTypeSlice,
      {

@@ -110,7 +110,7 @@ static irpb::DataType GetNumberDataType(const TypePtr &type) {
 static inline bool IsKindOfTensorType(const TypePtr &type) {
   MS_EXCEPTION_IF_NULL(type);
   return type->isa<TensorType>() || type->isa<RowTensorType>() || type->isa<CSRTensorType>() ||
-         type->isa<COOTensorType>() || type->isa<MapTensorType>();
+         type->isa<COOTensorType>();
 }
 
 void CheckIfValidType(const TypePtr &type) {

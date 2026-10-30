@@ -8,6 +8,7 @@ mindspore.load_checkpoint
     .. note::
         - `specify_prefix` 和 `filter_prefix` 参数已被弃用，推荐使用 `choice_func` 代替。 `specify_prefix` 和 `filter_prefix` 的功能相互之间没有影响，并且使用这两个参数中的任何一个都将覆盖 `choice_func` 。
         - 如果没有参数被成功加载，将会报ValueError。
+        - MapParameter 功能已移除。如果待加载的参数包含旧 MapTensor 数据，将抛出 ValueError，不会将其作为普通 Tensor 加载。
         - 当加载去冗余的checkpoint时，网络应该是编译过的。
         - 当 `net` 不为 ``None`` 时，校验入参 `remove_redundancy` 与所加载的safetensors文件中的去冗余标志位是否相同。如果不同，按照文件的去冗余标志位进行加载。
         - ckpt格式会将checkpoint protobuf内容作为单体消息读入内存后解析。当protobuf内容大于当前可用内存时，加载会提前失败以避免确定性的OOM。大模型权重建议使用safetensors或分片checkpoint。

@@ -18,7 +18,6 @@
 """Env related operations."""
 from __future__ import absolute_import
 from mindspore.ops.composite.base import MultitypeFuncGraph
-from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops
 from mindspore.ops import operations as P
@@ -33,9 +32,3 @@ tensor_zeros_like = P.ZerosLike()
 def _tensor_env_get(env, parameter):
     """Used to get env."""
     return environ_get(env, ref_to_embed(parameter), tensor_zeros_like(parameter))
-
-
-@env_get.register("EnvType", "MapTensor")
-def _map_tensor_env_get(env, map_parameter):
-    """Used to get env for map parameter."""
-    return environ_get(env, ref_to_embed(map_parameter), zeros_like(map_parameter))

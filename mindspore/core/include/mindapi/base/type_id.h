@@ -102,7 +102,7 @@ enum TypeId : int {
   kSparseTypeBegin = kMonadTypeEnd,
   kObjectTypeCSRTensorType,
   kObjectTypeSparseTensorType,
-  kObjectTypeMapTensorType,
+  kObjectTypeMapTensorType,  // Reserved legacy value; MapParameter support has been removed.
   kSparseTypeEnd,
   //
   // Event Types

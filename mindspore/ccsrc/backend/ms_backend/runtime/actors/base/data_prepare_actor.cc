@@ -20,7 +20,6 @@
 
 #include "include/utils/callback.h"
 #include "ir/anf.h"
-#include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "backend/ms_backend/runtime/actors/base/memory_manager_actor.h"
 #include "backend/ms_backend/runtime/actors/base/kernel_actor.h"
@@ -46,11 +45,6 @@
 namespace mindspore {
 namespace runtime {
 namespace {
-constexpr size_t kNormalTensorNum = 1;
-constexpr size_t kMapTensorNum = 3;
-constexpr size_t kMapTensorKeyIndex = 0;
-constexpr size_t kMapTensorValueIndex = 1;
-constexpr size_t kMapTensorStatusIndex = 2;
 constexpr size_t kPinMemThreshold = 1024 << 10;
 
 bool IsDataTakenOverByMemOffload(const DeviceContext *device_context, const DeviceTensorPtr &device_tensor) {
@@ -114,47 +108,16 @@ void SyncTensorData(const TensorPtr &host_tensor, const KernelTensorPtr &kernel_
     }
   }
 
-  auto get_tensor_by_index = [&host_tensor](size_t index) {
-    if (!host_tensor->isa<tensor::MapTensor>()) {
-      return host_tensor;
-    }
-    const auto &map_tensor = host_tensor->cast<tensor::MapTensorPtr>();
-    MS_EXCEPTION_IF_NULL(map_tensor);
-    switch (index) {
-      case kMapTensorKeyIndex:
-        return map_tensor->key_tensor();
-      case kMapTensorValueIndex:
-        return map_tensor->value_tensor();
-      case kMapTensorStatusIndex:
-        return map_tensor->status_tensor();
-      default:
-        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for map tensor:" << host_tensor->ToString();
-    }
-  };
-
-  ShapeVector host_shape = {};
-  // GetRuntimePaddingShape doesn't support the value tuple node.
-  if (!node->isa<ValueNode>()) {
-    host_shape = AnfAlgo::GetRuntimePaddingShape(node, 0);
-  }
-  auto get_tensor_num = (host_tensor->isa<tensor::MapTensor>() ? kMapTensorNum : kNormalTensorNum);
-  for (size_t i = 0; i < get_tensor_num; ++i) {
-    const auto &real_host_tensor = get_tensor_by_index(i);
-    MS_EXCEPTION_IF_NULL(real_host_tensor);
-    // Copy data from host tensor to device.
-    auto host_tensor_size = LongToSize(real_host_tensor->DataNBytes());
-    auto host_tensor_type = real_host_tensor->data_type();
-    if (node->isa<ValueNode>()) {
-      host_shape = real_host_tensor->shape();
-    }
-    if (!skip_h2d && (!device_context->device_res_manager_->SyncAllStreams() ||
-                      !SyncCopy(kernel_tensor.get(), real_host_tensor.get(), kDefaultStreamIndex))) {
-      std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
-                               ", host tensor size: " + std::to_string(host_tensor_size) +
-                               ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
-                               ", device tensor size: " + std::to_string(device_tensor->GetSize());
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, (*context), error_info);
-    }
+  // Copy data from host tensor to device.
+  auto host_tensor_size = LongToSize(host_tensor->DataNBytes());
+  auto host_tensor_type = host_tensor->data_type();
+  if (!skip_h2d && (!device_context->device_res_manager_->SyncAllStreams() ||
+                    !SyncCopy(kernel_tensor.get(), host_tensor.get(), kDefaultStreamIndex))) {
+    std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
+                             ", host tensor size: " + std::to_string(host_tensor_size) +
+                             ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
+                             ", device tensor size: " + std::to_string(device_tensor->GetSize());
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy, (*context), error_info);
   }
 }
 

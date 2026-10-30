@@ -21,6 +21,7 @@ message Checkpoint {
         required string tag = 1;
         oneof value{
             TensorProto tensor = 2;
+            // Legacy tag retained to reject removed MapParameter checkpoints explicitly.
             MapTensorProto maptensor = 3;
         }
     }

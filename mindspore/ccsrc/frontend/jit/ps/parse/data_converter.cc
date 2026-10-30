@@ -37,7 +37,6 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/cell.h"
 #include "ir/dtype.h"
-#include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
@@ -73,8 +72,6 @@ using CSRTensor = mindspore::tensor::CSRTensor;
 using CSRTensorPtr = mindspore::tensor::CSRTensorPtr;
 using COOTensor = mindspore::tensor::COOTensor;
 using COOTensorPtr = mindspore::tensor::COOTensorPtr;
-using MapTensor = mindspore::tensor::MapTensor;
-using MapTensorPtr = mindspore::tensor::MapTensorPtr;
 
 using InstanceCheckFunc = std::function<bool(const py::object &)>;
 using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &, const ValuePtrList &)>;
@@ -864,7 +861,6 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByTypeDataConvertFunc<py::none>>(kNone),
     std::make_shared<ByTypeDataConvertFunc<CSRTensor>>(ObjCast<CSRTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<COOTensor>>(ObjCast<COOTensorPtr>),
-    std::make_shared<ByTypeDataConvertFunc<MapTensor>>(ObjCast<MapTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConvertFunc<py::module>>(ConvertModuleNameSpace),
     std::make_shared<ByTypeDataConvertFunc<Type>>(ObjCast<TypePtr>),

@@ -28,7 +28,6 @@
 #include "include/backend/common/exec_order/execute_order_tracker.h"
 #include "include/backend/common/pass_manager/helper.h"
 #include "device_address/device_type.h"
-#include "ir/map_tensor.h"
 #include "include/backend/common/device_address_utils.h"
 #include "include/pynative/utils/runtime/op_runtime_info.h"
 #include "include/pynative/utils/runtime/op_executor.h"
@@ -146,16 +145,7 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
     auto &input_node = input_nodes[i];
     auto &input_tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(input_tensor);
-    if (input_tensor->isa<tensor::MapTensor>()) {
-      auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();
-      MS_EXCEPTION_IF_NULL(map_tensor);
-      SetDeviceAddress(input_node, map_tensor, device_context);
-      SetDeviceAddress(input_node, map_tensor->key_tensor(), device_context);
-      SetDeviceAddress(input_node, map_tensor->value_tensor(), device_context);
-      SetDeviceAddress(input_node, map_tensor->status_tensor(), device_context);
-    } else {
-      SetDeviceAddress(input_node, input_tensor, device_context);
-    }
+    SetDeviceAddress(input_node, input_tensor, device_context);
   }
   MS_LOG(DEBUG) << "End";
 }
@@ -239,26 +229,6 @@ void UpdateAddressSizeForDynamicShapeTensor(const tensor::TensorPtr &input_tenso
   }
 }
 
-void CopyMapTensorDataToDevice(const tensor::MapTensorPtr &map_tensor, const AnfNodePtr &input_node,
-                               const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(map_tensor);
-  auto key_tensor = map_tensor->key_tensor();
-  MS_EXCEPTION_IF_NULL(key_tensor);
-  UpdateAddressSizeForDynamicShapeTensor(key_tensor);
-  CopyTensorDataToDevice(key_tensor, input_node, device_context);
-  key_tensor->set_sync_status(kNoNeedSync);
-  auto value_tensor = map_tensor->value_tensor();
-  MS_EXCEPTION_IF_NULL(value_tensor);
-  UpdateAddressSizeForDynamicShapeTensor(value_tensor);
-  CopyTensorDataToDevice(value_tensor, input_node, device_context);
-  value_tensor->set_sync_status(kNoNeedSync);
-  auto status_tensor = map_tensor->status_tensor();
-  MS_EXCEPTION_IF_NULL(status_tensor);
-  UpdateAddressSizeForDynamicShapeTensor(status_tensor);
-  CopyTensorDataToDevice(status_tensor, input_node, device_context);
-  status_tensor->set_sync_status(kNoNeedSync);
-}
-
 void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
                                const std::vector<tensor::TensorPtr> &input_tensors,
                                const device::DeviceContext *device_context) {
@@ -272,14 +242,9 @@ void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
     MS_EXCEPTION_IF_NULL(input_tensors[i]);
     if (input_tensors[i]->NeedSyncHostToDeviceImmediately()) {
       // First op in dynamic shape scenario(feed mode)
-      if (input_tensors[i]->isa<tensor::MapTensor>()) {
-        auto map_tensor = input_tensors[i]->cast<tensor::MapTensorPtr>();
-        CopyMapTensorDataToDevice(map_tensor, input_nodes[i], device_context);
-      } else {
-        UpdateAddressSizeForDynamicShapeTensor(input_tensors[i]);
-        CopyTensorDataToDevice(input_tensors[i], input_nodes[i], device_context);
-        input_tensors[i]->set_sync_status(kNoNeedSync);
-      }
+      UpdateAddressSizeForDynamicShapeTensor(input_tensors[i]);
+      CopyTensorDataToDevice(input_tensors[i], input_nodes[i], device_context);
+      input_tensors[i]->set_sync_status(kNoNeedSync);
     }
   }
   MS_LOG(DEBUG) << "End";

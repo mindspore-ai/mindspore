@@ -1164,10 +1164,6 @@ AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param) {
   MS_EXCEPTION_IF_NULL(value);
   auto value_abs = value->ToAbstract();
   MS_EXCEPTION_IF_NULL(value_abs);
-  if (value_abs->isa<abstract::AbstractMapTensor>()) {
-    // Return AbstractMapTensor for map parameter.
-    return value_abs;
-  }
   // Make an AbstractRefTensor for the tensor value.
   auto abs_tensor = value_abs->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(abs_tensor);

@@ -151,12 +151,6 @@ OPS_API AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const Prim
                                            const AbstractBasePtrList &args_abs_list);
 OPS_API AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const AbstractBasePtrList &args_abs_list);
-OPS_API AbstractBasePtr InferImplMapTensorGetDefaultValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                          const AbstractBasePtrList &args_abs_list);
-OPS_API AbstractBasePtr InferImplMapTensorGetPermitFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                               const AbstractBasePtrList &args_abs_list);
-OPS_API AbstractBasePtr InferImplMapTensorGetEvictFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                              const AbstractBasePtrList &args_abs_list);
 
 template <typename T>
 AbstractBasePtr InferTupleOrListOrDictLen(const std::string &op_name, const AbstractBasePtrList &args_abs_list) {

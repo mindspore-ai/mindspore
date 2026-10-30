@@ -2226,8 +2226,6 @@ NodeWithIndexToContext ControlNodeParser::FetchBackendParameterWithContextByFron
     return {};
   }
 
-  const auto &abstract =
-    AnfAlgo::GetNodeAbstractByIndex(front_parameter_with_index.first, front_parameter_with_index.second);
   for (const auto &node_with_index_to_context : iter->second) {
     const auto &node = node_with_index_to_context.first.first;
     MS_EXCEPTION_IF_NULL(node);
@@ -2237,9 +2235,6 @@ NodeWithIndexToContext ControlNodeParser::FetchBackendParameterWithContextByFron
       MS_LOG(DEBUG) << "Front node:" << front_parameter_with_index.first->DebugString()
                     << " index:" << front_parameter_with_index.second << " backend node:" << node->DebugString()
                     << " abstract:" << node->abstract()->ToString();
-      return node_with_index_to_context;
-    }
-    if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
       return node_with_index_to_context;
     }
     MS_LOG(DEBUG) << "Backend node:" << node->DebugString()

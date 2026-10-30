@@ -29,7 +29,6 @@
 #include "primitive/framework_ops.h"
 #include "ir/param_info.h"
 #include "ir/value.h"
-#include "ir/map_tensor.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/func_graph_flag.h"
 #include "frontend/jit/ps/action.h"
@@ -151,24 +150,9 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   return res_val;
 }
 
-using tensor::MapTensorPtr;
 // Get parameter value from a python parameter object.
-// If it is a map parameter, return the map tensor value in it,
-// otherwise, return parameter itself as a meta tensor value.
-ValuePtr GetParameterValue(const py::object &param_obj) {
-  constexpr char attr_map_tensor[] = "_map_tensor";
-  constexpr char attr_param_info[] = "param_info";
-  if (py::hasattr(param_obj, attr_map_tensor)) {
-    auto map_tensor = py::cast<MapTensorPtr>(python_adapter::GetPyObjAttr(param_obj, attr_map_tensor));
-    MS_EXCEPTION_IF_NULL(map_tensor);
-    auto param_info = py::cast<ParamInfoPtr>(python_adapter::GetPyObjAttr(param_obj, attr_param_info));
-    MS_EXCEPTION_IF_NULL(param_info);
-    map_tensor->set_param_info(param_info);
-    return map_tensor;
-  }
-
-  return tensor::ConvertToTensorPyWrapper(param_obj);
-}
+// Return the parameter itself as a meta tensor value.
+ValuePtr GetParameterValue(const py::object &param_obj) { return tensor::ConvertToTensorPyWrapper(param_obj); }
 
 void ClearCNodeAbstract(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);

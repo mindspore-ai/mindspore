@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <regex>
 
-#include "ir/map_tensor.h"
 #include "ir/quantization_param.h"
 #include "ir/tensor_new.h"
 #include "pybind11/pybind11.h"
@@ -96,7 +95,6 @@ typedef enum _ItemType {
   ParamInfo,
   MetaTensor,
   Tensor,
-  MapTensor,
   RowTensor,
   COOTensor,
   CSRTensor,
@@ -1610,126 +1608,6 @@ static TensorDataPtr CreateTensorData(mindspore::tensor::TensorPtr tensor, bool 
   }
 }
 
-class MapTensorData : public TensorData {
- public:
-  MapTensorData(PyObject *obj, bool needSpecialize, int recurseDepth) : TensorData(obj, needSpecialize, recurseDepth) {
-    tp_ = ItemType::MapTensor;
-    needSpecialize = specialized_;
-    auto pyObj = py::cast<py::object>(obj);
-    auto tensor_ptr = pyObj.cast<mindspore::tensor::MapTensorPtr>();
-    key_dtype_ = tensor_ptr->key_dtype();
-    if (tensor_ptr->key_tensor() != nullptr) {
-      key_shape_ = tensor_ptr->key_tensor()->shape();
-    }
-    default_value_ = tensor_ptr->default_value() == nullptr ? nullptr : tensor_ptr->default_value()->type()->Clone();
-    permit_filter_value_ =
-      tensor_ptr->permit_filter_value() == nullptr ? nullptr : tensor_ptr->permit_filter_value()->type()->Clone();
-    evict_filter_value_ =
-      tensor_ptr->evict_filter_value() == nullptr ? nullptr : tensor_ptr->evict_filter_value()->type()->Clone();
-    value_shape_ = tensor_ptr->value_shape();
-    key_tensor_ = CreateTensorData(tensor_ptr->key_tensor(), needSpecialize, recurseDepth);
-    value_tensor_ = CreateTensorData(tensor_ptr->value_tensor(), needSpecialize, recurseDepth);
-    status_tensor_ = CreateTensorData(tensor_ptr->status_tensor(), needSpecialize, recurseDepth);
-  }
-
-  bool IsPermitFilterValue(const MapTensorData &other) const {
-    return (other.permit_filter_value_ == nullptr && permit_filter_value_ == nullptr) ||
-           (other.permit_filter_value_ != nullptr && permit_filter_value_ != nullptr &&
-            *permit_filter_value_ == *(other.permit_filter_value_));
-  }
-
-  bool IsDefaultValue(const MapTensorData &other) const {
-    return (other.default_value_ == nullptr && default_value_ == nullptr) ||
-           (other.default_value_ != nullptr && default_value_ != nullptr && *default_value_ == *(other.default_value_));
-  }
-
-  bool IsEvictFilterValue(const MapTensorData &other) const {
-    return (other.evict_filter_value_ == nullptr && evict_filter_value_ == nullptr) ||
-           (other.evict_filter_value_ != nullptr && evict_filter_value_ != nullptr &&
-            *evict_filter_value_ == *(other.evict_filter_value_));
-  }
-
-  bool operator==(const ItemData &obj) const override {
-    if (!ItemData::operator==(obj)) {
-      return false;
-    }
-    const MapTensorData &other = dynamic_cast<const MapTensorData &>(obj);
-    bool ret = TensorData::operator==(obj);
-    return ret && other.key_dtype_ == key_dtype_ && other.key_shape_ == key_shape_ && IsDefaultValue(other) &&
-           IsPermitFilterValue(other) && IsEvictFilterValue(other) && value_shape_ == other.value_shape_ &&
-           Equal(key_tensor_, other.key_tensor_, recurseDepth_) &&
-           Equal(value_tensor_, other.value_tensor_, recurseDepth_) &&
-           Equal(status_tensor_, other.status_tensor_, recurseDepth_);
-  }
-
-  bool operator==(PyObject *obj) const override {
-    if (obj == nullptr) {
-      return false;
-    }
-    if (py::isinstance<mindspore::tensor::MapTensor>(obj)) {
-      auto pyObj = py::cast<py::object>(obj);
-      auto tensor_ptr = pyObj.cast<mindspore::tensor::MapTensorPtr>();
-      auto key_dtype = tensor_ptr->key_dtype();
-      ShapeVector key_shape;
-      if (tensor_ptr->key_tensor() != nullptr) {
-        key_shape = tensor_ptr->key_tensor()->shape();
-      }
-      TypePtr default_value =
-        tensor_ptr->default_value() == nullptr ? nullptr : tensor_ptr->default_value()->type()->Clone();
-      TypePtr permit_filter_value =
-        tensor_ptr->permit_filter_value() == nullptr ? nullptr : tensor_ptr->permit_filter_value()->type()->Clone();
-      TypePtr evict_filter_value =
-        tensor_ptr->evict_filter_value() == nullptr ? nullptr : tensor_ptr->evict_filter_value()->type()->Clone();
-      auto value_shape = tensor_ptr->value_shape();
-      bool ret = TensorData::operator==(obj) && key_dtype == key_dtype_ && key_shape == key_shape_ &&
-                 CheckType(permit_filter_value_, permit_filter_value) && CheckType(default_value_, default_value) &&
-                 CheckType(evict_filter_value_, evict_filter_value);
-      if (!ret) {
-        return ret;
-      }
-      return value_shape_ == value_shape &&
-             Equal(key_tensor_, CreateTensorData(tensor_ptr->key_tensor(), specialized_, recurseDepth_),
-                   recurseDepth_) &&
-             Equal(value_tensor_, CreateTensorData(tensor_ptr->value_tensor(), specialized_, recurseDepth_),
-                   recurseDepth_) &&
-             Equal(status_tensor_, CreateTensorData(tensor_ptr->status_tensor(), specialized_, recurseDepth_),
-                   recurseDepth_);
-    }
-    return false;
-  }
-
-  std::string ToString() override {
-    std::string map_tensor = ToStringIntern();
-    return DESC(map_tensor) + DESC_END;
-  }
-
- protected:
-  bool CheckType(const TypePtr &tp1, const TypePtr &tp2) const {
-    return (tp1 == nullptr && tp2 == nullptr) || (tp1 != nullptr && tp2 != nullptr && *tp1 == *(tp2));
-  }
-  std::string ToStringIntern() override {
-    return TensorData::ToStringIntern() + DESC_STRING(key_dtype_) + DESC_TOSTRING(default_value_) +
-           DESC_TOSTRING(permit_filter_value_) + DESC_TOSTRING(evict_filter_value_) + DESC_TOSTRING(key_tensor_) +
-           DESC_TOSTRING(value_tensor_) + DESC_TOSTRING(status_tensor_) + DESC_END;
-  }
-
-  void SubInfo(InfoPack *info) override {
-    TensorData::SubInfo(info);
-    (*info) << key_dtype_ << default_value_ << permit_filter_value_ << evict_filter_value_ << value_shape_
-            << key_tensor_->Info() << value_tensor_->Info() << status_tensor_->Info();
-  }
-
-  mindspore::TypeId key_dtype_;
-  ShapeVector key_shape_;
-  TypePtr default_value_;
-  TypePtr permit_filter_value_;
-  TypePtr evict_filter_value_;
-  ShapeVector value_shape_;
-  TensorDataPtr key_tensor_;
-  TensorDataPtr value_tensor_;
-  TensorDataPtr status_tensor_;
-};
-
 class RowTensorData : public ItemData {
  public:
   RowTensorData(PyObject *obj, bool needSpecialize, int recurseDepth)
@@ -2233,8 +2111,6 @@ static const std::vector<std::pair<CheckPyObjectFunc, CreatePyObjectFunc>> kFunc
   {[](PyObject *obj) -> bool { return !!PyType_Check(obj); }, CreatePyData<TypeData>},
   {[](PyObject *obj) -> bool { return py::isinstance<py::array>(obj); }, CreatePyData<NumpyData>},
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::Type>(obj); }, CreatePyData<TensorTypeData>},
-  {[](PyObject *obj) -> bool { return py::isinstance<mindspore::tensor::MapTensor>(obj); },
-   CreatePyData<MapTensorData>},
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::ParamInfo>(obj); }, CreatePyData<ParamInfoData>},
   {[](PyObject *obj) -> bool { return CheckTensorObject(obj); }, CreatePyData<TensorData>},
   {[](PyObject *obj) -> bool { return CheckMetaTensorObject(obj); }, CreatePyData<MetaTensorData>},

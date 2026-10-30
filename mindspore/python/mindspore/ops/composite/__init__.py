@@ -22,6 +22,8 @@ Pre-defined combination of operators.
 from __future__ import absolute_import
 from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, MultitypeFuncGraph, add_flags, \
     tail, zip_operation, _Vmap, _TaylorOperation, iter_converter, ms_hasnext, ms_next, recompute_block
+# Initialize multitype operators before function imports to avoid a functional/array_func import cycle.
+from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.composite.env_ops import env_get
 from mindspore.ops.function.clip_func import clip_by_global_norm
 from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
@@ -32,7 +34,6 @@ from mindspore.ops.composite.multitype_ops.div_impl import augassign_div
 from mindspore.ops.composite.multitype_ops.floordiv_impl import augassign_floordiv
 from mindspore.ops.composite.multitype_ops.mod_impl import augassign_mod
 from mindspore.ops.composite.multitype_ops.ones_like_impl import ones_like, _ones_like_for_grad
-from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.function.random_func import normal, laplace, uniform, gamma, poisson, multinomial
 from mindspore.ops.composite.math_ops import matmul, cummin, mm
 from mindspore.ops.function.math_func import count_nonzero, tensor_dot, vecdot, dot, batch_dot

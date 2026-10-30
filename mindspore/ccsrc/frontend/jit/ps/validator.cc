@@ -57,7 +57,6 @@ using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
-using mindspore::abstract::AbstractMapTensor;
 using mindspore::abstract::AbstractProblem;
 using mindspore::abstract::AbstractRefTensor;
 using mindspore::abstract::AbstractRowTensor;
@@ -191,9 +190,8 @@ void ValidateAbstract(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
   bool is_legal_abstract = abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() ||
                            abstract->isa<AbstractTuple>() || abstract->isa<AbstractList>() ||
                            abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
-                           abstract->isa<AbstractRefTensor>() || abstract->isa<AbstractMapTensor>() ||
-                           abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>() ||
-                           abstract->isa<abstract::AbstractScript>();
+                           abstract->isa<AbstractRefTensor>() || abstract->isa<abstract::AbstractNone>() ||
+                           abstract->isa<abstract::AbstractMonad>() || abstract->isa<abstract::AbstractScript>();
   if (is_legal_abstract && !abstract->isa<abstract::FunctionalAbstractClosure>()) {
     return;
   }

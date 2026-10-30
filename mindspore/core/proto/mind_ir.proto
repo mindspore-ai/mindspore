@@ -47,7 +47,7 @@ message AttributeProto {
     NAME_SPACE = 34;
     SYMBOL = 35;
     TYPE_NULL = 36;
-    MAP_TENSOR = 37;
+    MAP_TENSOR = 37; // Legacy wire value, retained to reject unsupported MapTensor models.
     FUNCTOR = 38;
     SCALAR = 39;
     SCALAR_GRAPH_HOLDER = 40;
@@ -152,7 +152,7 @@ message GraphProto {
   optional string bprop_hash = 7;
   repeated AttributeProto attribute = 8;
   optional string bprop_filepath = 9;
-  repeated MapTensorProto map_parameter = 10;
+  repeated MapTensorProto map_parameter = 10; // Legacy field; loaders reject nonempty entries.
 }
 
 
@@ -218,6 +218,7 @@ message TensorProto {
   repeated QuantParamProto quant_params = 17;
 }
 
+// Legacy wire schema retained for explicit compatibility errors. Do not reuse its field numbers.
 message MapTensorProto {
   required string name = 1;
   required AttributeProto default_value = 2;

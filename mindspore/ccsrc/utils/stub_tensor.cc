@@ -195,7 +195,7 @@ py::object TensorNode::GetDtype() {
 }
 
 bool TensorNode::SetAbstract(const AbstractBasePtr &abs) {
-  if (!abs->isa<abstract::AbstractTensor>() && !abs->isa<abstract::AbstractMapTensor>()) {
+  if (!abs->isa<abstract::AbstractTensor>()) {
     if (!abs->isa<abstract::AbstractScalar>() || abs->BuildValue() != kValueAny) {
       return false;
     }

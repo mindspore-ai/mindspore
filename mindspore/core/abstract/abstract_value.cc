@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "ir/map_tensor.h"
 #include "ir/value.h"
 #include "ir/dtype/ref.h"
 #include "ir/dtype/tensor_type.h"
@@ -2381,24 +2380,6 @@ AbstractIOMonad::AbstractIOMonad(const ValuePtr &value) : AbstractMonad(value, k
 
 AbstractBasePtr AbstractIOMonad::Clone() const { return std::make_shared<AbstractIOMonad>(GetValueTrack()); }
 
-MapTensorTypePtr AbstractMapTensor::map_tensor_type() const { return dyn_cast<MapTensorType>(GetTypeTrack()); }
-
-ShapePtr AbstractMapTensor::shape() const { return dyn_cast<Shape>(GetShapeTrack()); }
-
-const ShapePtr &AbstractMapTensor::value_shape() const { return value_shape_; }
-
-const ValuePtr &AbstractMapTensor::ref_key_value() const { return ref_key_value_; }
-
-const ValuePtr &AbstractMapTensor::default_value() const { return default_value_; }
-
-const ValuePtr &AbstractMapTensor::permit_filter_value() const { return permit_filter_value_; }
-
-const ValuePtr &AbstractMapTensor::evict_filter_value() const { return evict_filter_value_; }
-
-TypePtr AbstractMapTensor::BuildType() const { return GetTypeTrack(); }
-
-BaseShapePtr AbstractMapTensor::BuildShape() const { return GetShapeTrack(); }
-
 TypePtr AbstractKeywordArg::BuildType() const {
   MS_EXCEPTION_IF_NULL(arg_value_);
   TypePtr type = arg_value_->BuildType();
@@ -2754,171 +2735,6 @@ const AbstractTensorPtr AbstractCSRTensor::values() const {
     MS_LOG(INTERNAL_EXCEPTION) << "Get values nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
-}
-
-AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor)
-    : AbstractBase(map_tensor, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
-                   std::make_shared<Shape>(map_tensor->shape())),
-      ref_key_value_(kValueAny),
-      default_value_(map_tensor->default_value()),
-      permit_filter_value_(map_tensor->permit_filter_value()),
-      evict_filter_value_(map_tensor->evict_filter_value()),
-      value_shape_(std::make_shared<Shape>(map_tensor->value_shape())) {}
-
-AbstractMapTensor::AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value)
-    : AbstractBase(kValueAny, std::make_shared<MapTensorType>(map_tensor->KeyDtype(), map_tensor->ValueDtype()),
-                   std::make_shared<Shape>(map_tensor->shape())),
-      ref_key_value_(ref_key_value),
-      default_value_(map_tensor->default_value()),
-      permit_filter_value_(map_tensor->permit_filter_value()),
-      evict_filter_value_(map_tensor->evict_filter_value()),
-      value_shape_(std::make_shared<Shape>(map_tensor->value_shape())) {}
-
-AbstractMapTensor::AbstractMapTensor(const AbstractMapTensor &other)
-    : AbstractBase(other),
-      ref_key_value_(other.ref_key_value_),
-      default_value_(other.default_value_),
-      permit_filter_value_(other.permit_filter_value()),
-      evict_filter_value_(other.evict_filter_value()),
-      value_shape_(other.value_shape_) {
-  set_shape(other.shape());
-}
-
-AbstractMapTensor::AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
-                                     const ValuePtr &ref_key_value, const ValuePtr &default_value,
-                                     const ValuePtr &permit_filter_value, const ValuePtr &evict_filter_value) {
-  set_value(value);
-  set_type(type);
-  ref_key_value_ = ref_key_value;
-  default_value_ = default_value;
-  permit_filter_value_ = permit_filter_value;
-  evict_filter_value_ = evict_filter_value;
-  ShapeVector shape = {abstract::Shape::kShapeDimAny};
-  (void)shape.insert(shape.end(), value_shape->shape().begin(), value_shape->shape().end());
-  set_shape(std::make_shared<mindspore::abstract::Shape>(shape));
-}
-
-AbstractMapTensor &AbstractMapTensor::operator=(const AbstractMapTensor &other) {
-  if (this == &other) {
-    return *this;
-  }
-  this->ref_key_value_ = other.ref_key_value();
-  this->default_value_ = other.default_value();
-  this->permit_filter_value_ = other.permit_filter_value();
-  this->evict_filter_value_ = other.evict_filter_value();
-  this->value_shape_ = other.value_shape_;
-  this->set_shape(other.shape());
-  return *this;
-}
-
-AbstractBasePtr AbstractMapTensor::Clone() const { return std::make_shared<AbstractMapTensor>(*this); }
-
-AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
-  MS_EXCEPTION_IF_NULL(other);
-  if (other->isa<AbstractNegligible>()) {
-    return shared_from_base<AbstractBase>();
-  }
-  // Same pointer.
-  if (this == other.get()) {
-    return shared_from_base<AbstractMapTensor>();
-  }
-
-  // Check class.
-  auto other_abs = dyn_cast<AbstractMapTensor>(other);
-  if (other_abs == nullptr) {
-    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
-  }
-
-  // Join type.
-  auto joined_type = TypeJoin(GetTypeTrack(), other_abs->GetTypeTrack());
-  if (joined_type == kTypeAny) {
-    TypeJoinLogging(GetTypeTrack(), other_abs->GetTypeTrack(), shared_from_base<AbstractBase>(), other);
-  }
-
-  // Join shape
-  auto joined_shape = ShapeJoin(value_shape(), other_abs->value_shape());
-  if (joined_shape == nullptr) {
-    ShapeJoinLogging(value_shape(), other_abs->value_shape(), shared_from_base<AbstractBase>(), other);
-  }
-
-  // Join value.
-  auto joined_value = (GetValueTrack() == other_abs->GetValueTrack() ? GetValueTrack() : kValueAny);
-
-  // Join the ref_key_value.
-  auto joined_ref_key = ValueJoin(ref_key_value_, other_abs->ref_key_value_);
-
-  // Join the default_value.
-  auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
-  if (joined_default_value->ContainsValueAny()) {
-    MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
-                             << " != " << other_abs->default_value_->ToString();
-  }
-
-  // Join the permit_filter_value.
-  auto joined_permit_filter_value = ValueJoin(permit_filter_value_, other_abs->permit_filter_value_);
-  if (joined_permit_filter_value->ContainsValueAny()) {
-    MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << permit_filter_value_->ToString()
-                             << " != " << other_abs->permit_filter_value_->ToString();
-  }
-
-  // Join the evict_filter_value.
-  auto joined_evict_filter_value = ValueJoin(evict_filter_value_, other_abs->evict_filter_value_);
-  if (joined_evict_filter_value->ContainsValueAny()) {
-    MS_EXCEPTION(ValueError) << "Join evict_filter_value failed for MapTensor. " << evict_filter_value_->ToString()
-                             << " != " << other_abs->evict_filter_value_->ToString();
-  }
-
-  return std::make_shared<AbstractMapTensor>(joined_type, joined_shape, joined_value, joined_ref_key,
-                                             joined_default_value, joined_permit_filter_value,
-                                             joined_evict_filter_value);
-}
-
-bool AbstractMapTensor::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  if (!other.isa<AbstractMapTensor>()) {
-    return false;
-  }
-  const auto &v1 = GetValueTrack();
-  const auto &v2 = other.GetValueTrack();
-  MS_EXCEPTION_IF_NULL(v1);
-  MS_EXCEPTION_IF_NULL(v2);
-  // Check if both point to same specific value.
-  if (!v1->isa<ValueAny>()) {
-    return v1 == v2;
-  }
-  // Check if both are ValueAny.
-  if (!v2->isa<ValueAny>()) {
-    return false;
-  }
-  const auto &other_map_tensor = dynamic_cast<const AbstractMapTensor &>(other);
-  return common::IsEqual(GetTypeTrack(), other_map_tensor.GetTypeTrack()) &&
-         common::IsEqual(GetShapeTrack(), other_map_tensor.GetShapeTrack()) &&
-         common::IsEqual(default_value(), other_map_tensor.default_value());
-}
-
-std::size_t AbstractMapTensor::hash() const {
-  const auto &type = GetTypeTrack();
-  const auto &value_shape = GetShapeTrack();
-  MS_EXCEPTION_IF_NULL(type);
-  MS_EXCEPTION_IF_NULL(value_shape);
-  MS_EXCEPTION_IF_NULL(default_value_);
-  std::size_t hash_value = hash_combine(tid(), type->hash());
-  hash_value = hash_combine(hash_value, value_shape->hash());
-  return hash_combine(hash_value, default_value_->hash());
-}
-
-std::string AbstractMapTensor::ToString() const {
-  const auto &type = GetTypeTrack();
-  const auto &value = GetValueTrack();
-  const auto &value_shape = GetShapeTrack();
-  MS_EXCEPTION_IF_NULL(type);
-  MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(value_shape);
-  return type_name() + "(" + type->ToString() + " " + value_shape->ToString() +
-         " key: " + (ref_key_value_ == nullptr ? "<null>" : ref_key_value_->ToString()) +
-         " value: " + value->ToString() + ")";
 }
 
 AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {

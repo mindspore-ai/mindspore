@@ -5,6 +5,9 @@ mindspore.load
 
     加载MindIR文件。
 
+    .. note::
+        MapParameter 功能已移除，含旧 MapTensor 参数或类型信息的 MindIR 文件不再支持加载。
+
     返回一个可以由 `GraphCell` 执行的对象，更多细节参见类 :class:`mindspore.nn.GraphCell` 。
 
     参数：

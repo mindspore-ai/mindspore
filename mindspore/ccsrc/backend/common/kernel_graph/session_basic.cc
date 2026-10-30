@@ -30,7 +30,6 @@
 #include "primitive/framework_op_name.h"
 #include "primitive/sequence_ops.h"
 #include "ir/manager.h"
-#include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "utils/config_manager.h"
@@ -101,13 +100,6 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsReshapeType({device_address->padding_type()});
     kernel_build_info_builder->SetOutputsFormat(
       std::vector<std::string>{kernel::GetFormatFromEnumToStr(input_tensor->format())});
-  }
-  if (input_tensor->isa<tensor::MapTensor>()) {
-    auto map_tensor = input_tensor->cast<tensor::MapTensorPtr>();
-    auto map_tensor_abs = std::make_shared<abstract::AbstractMapTensor>(map_tensor);
-    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
-    param->set_abstract(map_tensor_abs);
-    return param;
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter

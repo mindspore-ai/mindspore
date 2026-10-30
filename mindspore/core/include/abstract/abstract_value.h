@@ -37,20 +37,12 @@
 #include "utils/shape_utils.h"
 
 namespace mindspore {
-class MapTensorType;
-using MapTensorTypePtr = std::shared_ptr<MapTensorType>;
-
 namespace symshape {
 class Symbol;
 using SymbolPtr = std::shared_ptr<Symbol>;
 class ListSymbol;
 using ListSymbolPtr = std::shared_ptr<ListSymbol>;
 }  // namespace symshape
-
-namespace tensor {
-class MapTensor;
-using MapTensorPtr = std::shared_ptr<MapTensor>;
-}  // namespace tensor
 
 namespace abstract {
 class AbstractBase;
@@ -1785,52 +1777,6 @@ class MS_CORE_API AbstractIOMonad final : public AbstractMonad {
   bool operator==(const AbstractBase &other) const override;
 };
 using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
-using tensor::MapTensorPtr;
-/// \brief Class AbstractMapTensor describes a MapTensor's abstract value.
-class MS_CORE_API AbstractMapTensor final : public AbstractBase {
- public:
-  explicit AbstractMapTensor(const MapTensorPtr &map_tensor);
-  AbstractMapTensor(const MapTensorPtr &map_tensor, const ValuePtr &ref_key_value);
-  AbstractMapTensor(const AbstractMapTensor &other);
-  AbstractMapTensor(const TypePtr &type, const ShapePtr &value_shape, const ValuePtr &value,
-                    const ValuePtr &ref_key_value, const ValuePtr &default_value, const ValuePtr &permit_filter_value,
-                    const ValuePtr &evict_filter_value);
-  ~AbstractMapTensor() override = default;
-
-  MS_DECLARE_PARENT(AbstractMapTensor, AbstractBase)
-
-  AbstractMapTensor &operator=(const AbstractMapTensor &other);
-
-  MapTensorTypePtr map_tensor_type() const;
-  ShapePtr shape() const;
-  const ShapePtr &value_shape() const;
-  const ValuePtr &ref_key_value() const;
-  const ValuePtr &default_value() const;
-  const ValuePtr &permit_filter_value() const;
-  const ValuePtr &evict_filter_value() const;
-  TypePtr BuildType() const override;
-  BaseShapePtr BuildShape() const override;
-
-  AbstractBasePtr Clone() const override;
-  AbstractBasePtr Join(const AbstractBasePtr &other) override;
-  bool operator==(const AbstractBase &other) const override;
-  std::size_t hash() const override;
-  std::string ToString() const override;
-
- private:
-  // The reference key value, can be a string value or kValueAny.
-  ValuePtr ref_key_value_;
-  // The default value, a scalar or string with initializer name.
-  ValuePtr default_value_;
-  // Permission threshold.
-  ValuePtr permit_filter_value_;
-  // Remove threshold.
-  ValuePtr evict_filter_value_;
-  // The value shape.
-  ShapePtr value_shape_;
-};
-using AbstractMapTensorPtr = std::shared_ptr<AbstractMapTensor>;
-
 /// \brief Class AbstractEvent describes a event's type, shape and value.
 class MS_CORE_API AbstractEvent : public AbstractBase {
  public:

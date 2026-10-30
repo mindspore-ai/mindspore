@@ -233,7 +233,6 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
 
   // Note: for performance, the function `SetShape` uses host_info_->type_id_, so need to SetType first.
   switch (host_info_->type_id_) {
-    case kObjectTypeMapTensorType:
     case kObjectTypeTensorType: {
       // The shape type check will affect the performance. The following check will be deleted after the framework is
       // stable.
@@ -309,7 +308,7 @@ void KernelTensor::CalculateMemSize() {
 
 void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
   CheckHostInfoValid();
-  if (host_info_->type_id_ == kObjectTypeTensorType || host_info_->type_id_ == kObjectTypeMapTensorType) {
+  if (host_info_->type_id_ == kObjectTypeTensorType) {
     shape_vector_ = shape_vector;
     MS_EXCEPTION_IF_NULL(shape_);
     shape_->SetShapeVector(shape_vector);
@@ -339,13 +338,12 @@ void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
   if (host_info_->type_id_ == kMetaTypeNone) {
     return;
   }
-  MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
-                    << TypeIdLabel(host_info_->type_id_);
+  MS_LOG(EXCEPTION) << "Unsupported type for setting shape vector: " << TypeIdLabel(host_info_->type_id_);
 }
 
 void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
   CheckHostInfoValid();
-  if (host_info_->type_id_ == kObjectTypeTensorType || host_info_->type_id_ == kObjectTypeMapTensorType) {
+  if (host_info_->type_id_ == kObjectTypeTensorType) {
     shape_vector_ = shape_vector;
     MS_EXCEPTION_IF_NULL(shape_);
     shape_->SetShapeVector(GetShapeVector());
@@ -368,8 +366,7 @@ void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
     return;
   }
 
-  MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
-                    << TypeIdLabel(host_info_->type_id_);
+  MS_LOG(EXCEPTION) << "Unsupported type for setting shape vector: " << TypeIdLabel(host_info_->type_id_);
 }
 
 using ShapeTransposeFunc = std::function<void(const ShapeVector *, ShapeVector *)>;

@@ -51,7 +51,6 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as compile_util
 
 from mindspore.ops.operations import array_ops
 from mindspore.ops.operations import _csr_ops
-from mindspore.ops.operations import _map_tensor_ops
 
 from mindspore.ops.operations._inner_ops import Format
 
@@ -4094,48 +4093,6 @@ def cholesky_solve(input, input2, upper=False):
     according to its Cholesky decomposition factor `input2` .
     """
     return F.cholesky_solve(input, input2, upper=upper)
-
-
-def map_tensor_get(map_tensor, key_tensor, insert_default_value=True):
-    r"""
-    Get or create value according the key tensor from a map tensor.
-    """
-    return _map_tensor_ops.MapTensorGet(insert_default_value)(map_tensor, key_tensor)
-
-
-def map_tensor_put(map_tensor, key_tensor, value_tensor):
-    r"""
-    Insert or update key value tensor pairs to a map tensor.
-    """
-    return _map_tensor_ops.put(map_tensor, key_tensor, value_tensor)
-
-
-def map_tensor_erase(map_tensor, key_tensor):
-    r"""
-    Remove records according the key tensor from a map tensor.
-    """
-    return _map_tensor_ops.erase(map_tensor, key_tensor)
-
-
-def map_tensor_get_keys(map_tensor):
-    r"""
-    Get all keys as a tensor.
-    """
-    return _map_tensor_ops.get_keys(map_tensor)
-
-
-def map_tensor_get_values(map_tensor):
-    r"""
-    Get all values as a tensor.
-    """
-    return _map_tensor_ops.get_values(map_tensor)
-
-
-def map_tensor_get_data(map_tensor):
-    r"""
-    Get all keys and values as a tensor.
-    """
-    return _map_tensor_ops.get_data(map_tensor)
 
 
 def conj(input):

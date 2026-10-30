@@ -94,19 +94,6 @@ constexpr auto kCSRTensorGetIndicesOpName = "CSRTensorGetIndices";
 constexpr auto kCSRTensorGetDenseShapeOpName = "CSRTensorGetDenseShape";
 constexpr auto kIsCSRFuncOpName = "IsCSRFunc";
 
-// MapTensor
-constexpr auto kMakeMapParameterOpName = "MakeMapParameter";
-constexpr auto kMapTensorGetOpName = "MapTensorGet";
-constexpr auto kMapTensorPutOpName = "MapTensorPut";
-constexpr auto kMapTensorEraseOpName = "MapTensorErase";
-constexpr auto kMapTensorPutWithStatusOpName = "MapTensorPutWithStatus";
-constexpr auto kMapTensorGetDefaultValueOpName = "MapTensorGetDefaultValue";
-constexpr auto kMapTensorGetPermitFilterValueOpName = "MapTensorGetPermitFilterValue";
-constexpr auto kMapTensorGetEvictFilterValueOpName = "MapTensorGetEvictFilterValue";
-constexpr auto kMapTensorGetKeysOpName = "MapTensorGetKeys";
-constexpr auto kMapTensorGetValuesOpName = "MapTensorGetValues";
-constexpr auto kMapTensorGetDataOpName = "MapTensorGetData";
-constexpr auto kMapTensorGetGradOpName = "MapTensorGetGrad";
 constexpr auto kCSRSparseMatrixToDenseOpName = "CSRSparseMatrixToDense";
 constexpr auto kSspaddmmOpName = "Sspaddmm";
 constexpr auto kDenseToCSRSparseMatrixOpName = "DenseToCSRSparseMatrix";

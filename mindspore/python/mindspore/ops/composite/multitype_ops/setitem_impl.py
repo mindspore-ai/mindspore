@@ -20,7 +20,6 @@ import os
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import SliceGetItem
-from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite import base
 from mindspore.ops.composite.base import _dict_setitem
 from mindspore.ops.operations._sequence_ops import TensorToScalar
@@ -915,23 +914,6 @@ def _tensor_setitem_by_list_with_list(data, index, value):
         return compile_utils._tensor_setitem(data, index, value)
     value = compile_utils.sequence_to_tensor(value, F.dtype(data))
     return compile_utils.tensor_setitem_by_list(data, index, value)
-
-
-@setitem.register("MapTensor", "Tensor", "Tensor")
-def _map_tensor_setitem(map_tensor, key_tensor, value_tensor):
-    """
-    Update or insert to map tensor by key tensor and value tensor.
-
-    Inputs:
-        map_tensor (MapTensor): A map tensor.
-        key_tensor (Tensor): The key tensor.
-        value_tensor (Tensor): The value tensor.
-
-    Outputs:
-        MapTensor, the map tensor be updated.
-    """
-    _map_tensor_ops.put(map_tensor, key_tensor, value_tensor)
-    return map_tensor
 
 
 # pylint: disable=protected-access

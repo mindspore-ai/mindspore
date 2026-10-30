@@ -18,7 +18,6 @@
 #include <iomanip>
 #include "ir/tensor.h"
 #include "ir/tensor_data.h"
-#include "ir/map_tensor.h"
 #include "frontend/jit/pi/python_adapter/pydef.h"
 #include "pybind11/pybind11.h"
 #include "frontend/jit/pi/utils/opcode_util.h"
@@ -327,9 +326,9 @@ bool CheckContainer(PyObject *obj) {
 }
 
 bool IsTensorPyObject(PyObject *obj) {
-  return py::isinstance<mindspore::tensor::MapTensor>(obj) || mindspore::tensor::IsTensorPy(obj) ||
-         py::isinstance<mindspore::tensor::CSRTensor>(obj) || py::isinstance<mindspore::tensor::RowTensor>(obj) ||
-         py::isinstance<mindspore::tensor::COOTensor>(obj) || py::isinstance<mindspore::tensor::TensorData>(obj);
+  return mindspore::tensor::IsTensorPy(obj) || py::isinstance<mindspore::tensor::CSRTensor>(obj) ||
+         py::isinstance<mindspore::tensor::RowTensor>(obj) || py::isinstance<mindspore::tensor::COOTensor>(obj) ||
+         py::isinstance<mindspore::tensor::TensorData>(obj);
 }
 
 bool IsCTensorPyObject(PyObject *obj) {
