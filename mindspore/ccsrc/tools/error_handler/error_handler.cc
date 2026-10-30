@@ -504,15 +504,19 @@ void TftCallback::ProcessResumableError() {
 }
 
 void InitWatchDogCallback() {
-  static auto init_cb =
-    GET_COMMON_CALLBACK(TftInitWatchDogCallback, void, bool, bool, bool, int64_t, const std::string &);
+  auto init_cb = GET_COMMON_CALLBACK(TftInitWatchDogCallback, void, bool, bool, bool, int64_t, const std::string &);
   if (init_cb != nullptr) {
-    init_cb(TftConfig::GetInstance()->IsEnableWatchdog(), TftConfig::GetInstance()->IsEnableSaveHcclOpStatus(),
-            TftConfig::GetInstance()->CheckSupport(kStatusRecord, false),
-            TftConfig::GetInstance()->GetConfigValue<int64_t>(kStatusSaveInterval, kInterval),
-            TftConfig::GetInstance()->GetConfigValue<std::string>(kStatusSavePath, "/tmp"));
+    static std::once_flag flag;
+    std::call_once(flag, [&]() {
+      init_cb(TftConfig::GetInstance()->IsEnableWatchdog(), TftConfig::GetInstance()->IsEnableSaveHcclOpStatus(),
+              TftConfig::GetInstance()->CheckSupport(kStatusRecord, false),
+              TftConfig::GetInstance()->GetConfigValue<int64_t>(kStatusSaveInterval, kInterval),
+              TftConfig::GetInstance()->GetConfigValue<std::string>(kStatusSavePath, "/tmp"));
+    });
   }
 }
+
+REGISTER_COMMON_CALLBACK(InitWatchDogCallback);
 
 bool WatchDogPreLaunchKernel(const CNodePtr &kernel, const std::vector<KernelTensor *> &inputs,
                              const std::vector<KernelTensor *> &outputs, KernelMod *kernel_mod, void *stream,

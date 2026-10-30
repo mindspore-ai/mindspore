@@ -436,8 +436,15 @@ bool HcclWatchDogHandler::CheckHcclEvents() {
 
 void RegisterHcclWatchDog(uint32_t global_rank, uint32_t device_id, const std::string &name, HcclComm comm,
                           const std::vector<uint32_t> &group_ranks) {
-  if (common::GetEnv(kSimulationLevel).empty() && (WatchDogCallback::GetInstance().is_enable_watch_dog_ ||
-                                                   WatchDogCallback::GetInstance().is_enable_save_op_status_)) {
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    return;
+  }
+  auto init_cb = GET_COMMON_CALLBACK(InitWatchDogCallback, void);
+  if (init_cb != nullptr) {
+    init_cb();
+  }
+  if (WatchDogCallback::GetInstance().is_enable_watch_dog_ ||
+      WatchDogCallback::GetInstance().is_enable_save_op_status_) {
     MS_LOG(INFO) << "Start initializing hccl watchdog on device side for group: " << name << ", rank: " << global_rank;
     HcclWatchDogManager::GetInstance().AddHandler(
       std::make_unique<HcclWatchDogHandler>(global_rank, device_id, name, comm, group_ranks));
