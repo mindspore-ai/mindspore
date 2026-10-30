@@ -16,7 +16,6 @@
 """vmap base functions"""
 from __future__ import absolute_import
 
-import mindspore.numpy as mnp
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -271,7 +270,7 @@ def _bdim_at_any(x, src, dst, axis_size):
         return _broadcast_by_axis(x, dst, axis_size)
     if dst is None:
         _raise_value_error("The destination axis can not be None")
-    return mnp.moveaxis(x, src, dst)
+    return F.moveaxis(x, src, dst)
 
 
 def _bdim_at_front(x, src, axis_size):
@@ -349,7 +348,7 @@ def get_assign_vmap_rule(prim, axis_size):
             if val_dim is None:
                 val = _broadcast_by_axis(val, var_dim, axis_size)
             else:
-                val = mnp.moveaxis(val, val_dim, var_dim)
+                val = F.moveaxis(val, val_dim, var_dim)
 
         if args_count == inplace_args_count:
             out = prim(var, val, alpha_value, u_monad)
@@ -430,7 +429,7 @@ def get_unary_grad_vmap_rule(prim, axis_size):
             out_dim = x_dim
         # This branch means (x_dim is not None) and (dout_dim is not None).
         else:
-            dout = mnp.moveaxis(dout, dout_dim, x_dim)
+            dout = F.moveaxis(dout, dout_dim, x_dim)
             out_dim = x_dim
         out = prim(x, dout)
         return out, out_dim

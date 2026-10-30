@@ -1,5 +1,6 @@
 import pytest 
-from mindspore import numpy as np
+import numpy as np
+from mindspore import dtype as mstype
 from mindspore import ops
 from mindspore import Tensor, jit, context
 from ..share.utils import match_array
@@ -88,7 +89,7 @@ def test_div_float_tensor(func, ms_func, test_data):
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [div])
 @pytest.mark.parametrize('ms_func', [jit_div])
-@pytest.mark.parametrize('test_data', [(Tensor(ops.fill(np.float32, (2, 3), 8)), 2.0)])
+@pytest.mark.parametrize('test_data', [(Tensor(ops.fill(mstype.float32, (2, 3), 8)), 2.0)])
 def test_div_tensor_float(func, ms_func, test_data):
     """
     Feature: ALL TO ALL
@@ -105,7 +106,7 @@ def test_div_tensor_float(func, ms_func, test_data):
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [div])
 @pytest.mark.parametrize('ms_func', [jit_div])
-@pytest.mark.parametrize('test_data', [(Tensor(ops.fill(np.float32, (2, 3), 8)),
+@pytest.mark.parametrize('test_data', [(Tensor(ops.fill(mstype.float32, (2, 3), 8)),
                                         Tensor(np.ones((2, 3)).astype(np.float32)))])
 def test_div_tensor(func, ms_func, test_data):
     """

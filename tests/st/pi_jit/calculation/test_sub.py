@@ -1,5 +1,6 @@
 import pytest 
-from mindspore import numpy as np
+import numpy as np
+from mindspore import dtype as mstype
 from mindspore import ops, Tensor, jit, context
 from ..share.utils import match_array
 from tests.mark_utils import arg_mark
@@ -86,7 +87,7 @@ def test_subtraction_float_tensor(func, ms_func, a, b):
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [sub])
 @pytest.mark.parametrize('ms_func', [jit_sub])
-@pytest.mark.parametrize('a', [Tensor(ops.fill(np.float32, (2, 3), 8))])
+@pytest.mark.parametrize('a', [Tensor(ops.fill(mstype.float32, (2, 3), 8))])
 @pytest.mark.parametrize('b', [2.0])
 def test_subtraction_tensor_float(func, ms_func, a, b):
     """
@@ -103,7 +104,7 @@ def test_subtraction_tensor_float(func, ms_func, a, b):
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func', [sub])
 @pytest.mark.parametrize('ms_func', [jit_sub])
-@pytest.mark.parametrize('a', [Tensor(ops.fill(np.float32, (2, 3), 8))])
+@pytest.mark.parametrize('a', [Tensor(ops.fill(mstype.float32, (2, 3), 8))])
 @pytest.mark.parametrize('b', [Tensor(np.ones((2, 3)).astype(np.float32))])
 def test_subtraction_tensor_tensor(func, ms_func, a, b):
     """

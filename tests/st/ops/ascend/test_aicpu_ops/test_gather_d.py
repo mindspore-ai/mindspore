@@ -24,7 +24,6 @@ import mindspore.ops as ops
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.functional import vmap
-import mindspore.numpy as ms_np
 
 context.set_context(device_target="Ascend")
 
@@ -139,9 +138,9 @@ def test_pynative_tensor():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = ms_np.array([[1, 2], [3, 4]])
+    x = Tensor([[1, 2], [3, 4]], mindspore.int32)
     dim = 1
-    index = ms_np.array([[0, 0], [1, 0]])
+    index = Tensor([[0, 0], [1, 0]], mindspore.int32)
     output = x.gather_elements(dim, index)
     expect = np.array([[1, 1], [4, 3]])
     assert np.array_equal(output.asnumpy(), expect)
@@ -155,8 +154,8 @@ def test_graph_tensor():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    x = ms_np.array([[1, 2], [3, 4]])
-    index = ms_np.array([[0, 0], [1, 0]])
+    x = Tensor([[1, 2], [3, 4]], mindspore.int32)
+    index = Tensor([[0, 0], [1, 0]], mindspore.int32)
     dim = 1
     net = TensorNet(dim)
     output = net(x, index)

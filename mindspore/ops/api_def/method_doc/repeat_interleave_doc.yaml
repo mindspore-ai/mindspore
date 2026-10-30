@@ -2,7 +2,7 @@ repeat_interleave:
   description: |
     repeat_interleave(repeats, dim=None, *, output_size=None) -> Tensor
 
-    Repeat elements of a tensor along a dim, like :func:`mindspore.numpy.repeat`.
+    Repeat elements of a tensor along a dim, like ``numpy.repeat``.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: overload `repeat_interleave(repeats, dim=None)` will be removed,
@@ -50,7 +50,7 @@ repeat_interleave:
     .. method:: Tensor.repeat_interleave(repeats, dim=None) -> Tensor
         :noindex:
 
-    Repeat elements of a tensor along a dim, like :func:`mindspore.numpy.repeat`.
+    Repeat elements of a tensor along a dim, like ``numpy.repeat``.
 
     .. note::
         The tensor to repeat values for. Must be of type: float16,

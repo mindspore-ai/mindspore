@@ -18,7 +18,6 @@ from __future__ import absolute_import
 from enum import Enum
 
 import mindspore
-import mindspore.numpy as mnp
 from mindspore import ops
 from mindspore.common import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
@@ -430,7 +429,7 @@ def get_reshape_vmap_rule(prim, axis_size):
         batch_shape, out_axis, need_moveaxis = get_batch_shape(x_shape, dim, shape, axis_size)
         if need_moveaxis:
             # for such case: `x_shape` is (2, 3, 4, 5, 6), `x_dim` is 3, and `shape` is (-1,)
-            x = mnp.moveaxis(x, dim, 0)
+            x = F.moveaxis(x, dim, 0)
             batch_shape = (axis_size,) + shape
             out = prim(x, batch_shape)
             return out, 0
@@ -488,10 +487,10 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
         if dim is None:
             x = _bdim_at_front(x, dim, axis_size)
             origin_shape = x.shape
-            x = mnp.moveaxis(x, batch_dim_, 1)
+            x = F.moveaxis(x, batch_dim_, 1)
             real_dim = 0
         else:
-            x = mnp.moveaxis(x, [dim, batch_dim_], [0, 1])
+            x = F.moveaxis(x, [dim, batch_dim_], [0, 1])
             real_dim = dim
         shape = x.shape
         shape = (shape[0] * shape[1],) + tuple(shape[2:])
@@ -503,7 +502,7 @@ def get_reverse_sequence_vmap_rule(prim, axis_size):
         shape = (origin_shape[real_dim], origin_shape[batch_dim_],) + tuple(shape[1:])
         out = reshape(x, shape)
         if batch_dim_ not in (0, 1):
-            out = mnp.moveaxis(out, 1, batch_dim_)
+            out = F.moveaxis(out, 1, batch_dim_)
         return out, 0
 
     return vmap_rule
@@ -1408,7 +1407,7 @@ def get_gatherd_vmap_rule(prim, axis_size):
             index = _broadcast_by_axis(index, x_dim, axis_size)
             out_dim = x_dim
         elif x_dim != index_dim:
-            mnp.moveaxis(x, x_dim, index_dim)
+            F.moveaxis(x, x_dim, index_dim)
 
         # Adapt `dim` to vmap case.
         x_ndim = ops.rank(x)
@@ -1480,7 +1479,7 @@ def get_space_to_batch_nd_vmap_rule(prim, axis_size):
             return result
 
         x, x_dim = input_xdim
-        x_trans = mnp.moveaxis(x, x_dim, 1)
+        x_trans = F.moveaxis(x, x_dim, 1)
         out = prim(x_trans)
         return out, 1
 
@@ -1497,7 +1496,7 @@ def get_batch_to_space_nd_vmap_rule(prim, axis_size):
             return result
 
         x, x_dim = input_xdim
-        x_trans = mnp.moveaxis(x, x_dim, 1)
+        x_trans = F.moveaxis(x, x_dim, 1)
         out = prim(x_trans)
         return out, 1
 
@@ -1682,7 +1681,7 @@ def get_gather_vmap_rule(prim, axis_size):
 
         axis = process_axis(axis, x_shape_len, True, True)
 
-        x = mnp.moveaxis(x, 0, axis)
+        x = F.moveaxis(x, 0, axis)
 
         x_shape = x.shape
         target_axis_size, x_dst_shape, max_axis_size = get_x_dst_shape(x_shape, axis)
@@ -1690,12 +1689,13 @@ def get_gather_vmap_rule(prim, axis_size):
         x = x.reshape(x_dst_shape)
 
         counts_shape = indices.shape
-        counts = mnp.arange(0, axis_size, 1)
+        counts = F.arange(0, axis_size, 1, dtype=mindspore.int32)
         counts = F.mul(counts, target_axis_size)
         counts = P.BroadcastTo(counts_shape[1:] + (axis_size,))(counts)
-        counts = mnp.moveaxis(counts, -1, 0)
+        counts = F.moveaxis(counts, -1, 0)
 
-        indices_out_of_bound = mnp.where(indices > target_axis_size - 1, x=max_axis_size, y=0)
+        indices_out_of_bound = F.where(indices > target_axis_size - 1,
+                                       Tensor(max_axis_size, mindspore.int32), Tensor(0, mindspore.int32))
 
         indices = F.add(indices, counts)
         indices = F.add(indices, indices_out_of_bound)
@@ -1727,7 +1727,7 @@ def get_tensor_scatter_elements_vmap_rule(prim, axis_size):
     def one_dim_is_none(i_bdim, j_bdim, k_no_dim, axis_size):
         i, i_dim = i_bdim
         j, j_dim = j_bdim
-        mnp.moveaxis(j, j_dim, i_dim)
+        F.moveaxis(j, j_dim, i_dim)
         k = _broadcast_by_axis(k_no_dim, i_dim, axis_size)
         new_inputs = (i, j, k)
         return (new_inputs, i_dim)
@@ -1736,8 +1736,8 @@ def get_tensor_scatter_elements_vmap_rule(prim, axis_size):
         i, i_dim = i_bdim
         j, j_dim = j_bdim
         k, k_dim = k_bdim
-        mnp.moveaxis(j, j_dim, i_dim)
-        mnp.moveaxis(k, k_dim, i_dim)
+        F.moveaxis(j, j_dim, i_dim)
+        F.moveaxis(k, k_dim, i_dim)
         new_inputs = (i, j, k)
         return new_inputs, i_dim
 

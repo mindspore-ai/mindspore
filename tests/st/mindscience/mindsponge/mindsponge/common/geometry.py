@@ -14,8 +14,9 @@
 # ============================================================================
 """Geometry"""
 import numpy as np
-import mindspore.numpy as mnp
-from mindspore import Tensor
+from mindspore import ops
+from tests.st.mindscience.mindsponge.mindsponge.common.tensor_utils import concat_features
+from mindspore import Tensor, float32
 from mindspore.ops import operations as P
 
 QUAT_MULTIPLY = np.zeros((4, 4, 4), dtype=np.float32)
@@ -243,7 +244,7 @@ def vecs_to_tensor(v):
     """
     Converts 'v' to tensor with last dim shape 3, inverse of 'vecs_from_tensor'.
     """
-    return mnp.stack([v[0], v[1], v[2]], axis=-1)
+    return ops.stack([v[0], v[1], v[2]], axis=-1)
 
 
 def make_transform_from_reference(point_a, point_b, point_c):
@@ -257,16 +258,16 @@ def make_transform_from_reference(point_a, point_b, point_c):
     point_a = point_a + translation
     # step 2: rotate the crd system around z-axis to put point_c on x-z plane
     c_x, c_y, c_z = vecs_from_tensor(point_c)
-    sin_c1 = -c_y / mnp.sqrt(1e-20 + c_x ** 2 + c_y ** 2)
-    cos_c1 = c_x / mnp.sqrt(1e-20 + c_x ** 2 + c_y ** 2)
-    zeros = mnp.zeros_like(sin_c1)
-    ones = mnp.ones_like(sin_c1)
+    sin_c1 = -c_y / ops.sqrt(1e-20 + c_x ** 2 + c_y ** 2)
+    cos_c1 = c_x / ops.sqrt(1e-20 + c_x ** 2 + c_y ** 2)
+    zeros = ops.zeros_like(sin_c1)
+    ones = ops.ones_like(sin_c1)
     c1_rot_matrix = (cos_c1, -sin_c1, zeros,
                      sin_c1, cos_c1, zeros,
                      zeros, zeros, ones)
     # step 2 : rotate the crd system around y_axis to put point_c on x-axis
-    sin_c2 = c_z / mnp.sqrt(1e-20 + c_x ** 2 + c_y ** 2 + c_z ** 2)
-    cos_c2 = mnp.sqrt(c_x ** 2 + c_y ** 2) / mnp.sqrt(1e-20 + c_x ** 2 + c_y ** 2 + c_z ** 2)
+    sin_c2 = c_z / ops.sqrt(1e-20 + c_x ** 2 + c_y ** 2 + c_z ** 2)
+    cos_c2 = ops.sqrt(c_x ** 2 + c_y ** 2) / ops.sqrt(1e-20 + c_x ** 2 + c_y ** 2 + c_z ** 2)
     c2_rot_matrix = (cos_c2, zeros, sin_c2,
                      zeros, ones, zeros,
                      -sin_c2, zeros, cos_c2)
@@ -275,8 +276,8 @@ def make_transform_from_reference(point_a, point_b, point_c):
     vec_a = vecs_from_tensor(point_a)
     _, rotated_a_y, rotated_a_z = rots_mul_vecs(c_rot_matrix, vec_a)
 
-    sin_n = -rotated_a_z / mnp.sqrt(1e-20 + rotated_a_y ** 2 + rotated_a_z ** 2)
-    cos_n = rotated_a_y / mnp.sqrt(1e-20 + rotated_a_y ** 2 + rotated_a_z ** 2)
+    sin_n = -rotated_a_z / ops.sqrt(1e-20 + rotated_a_y ** 2 + rotated_a_z ** 2)
+    cos_n = rotated_a_y / ops.sqrt(1e-20 + rotated_a_y ** 2 + rotated_a_z ** 2)
     a_rot_matrix = (ones, zeros, zeros,
                     zeros, cos_n, -sin_n,
                     zeros, sin_n, cos_n)
@@ -312,7 +313,7 @@ def quat_affine(quaternion, translation, rotation=None, unstack_inputs=False, us
         translation = vecs_from_tensor(translation)
 
     if normalize and quaternion is not None:
-        quaternion = quaternion / mnp.norm(quaternion, axis=-1, keepdims=True)
+        quaternion = quaternion / ops.norm(quaternion, dim=-1, keepdim=True)
     if rotation is None:
         rotation = quat_to_rot(quaternion)
     return quaternion, rotation, translation
@@ -328,8 +329,8 @@ def quat_to_rot(normalized_quat, use_numpy=False):
                             * normalized_quat[..., None, :, None], axis=(-3, -2))
         rot_tensor = rots_from_tensor(rot_tensor, use_numpy)
     else:
-        rot_tensor = mnp.sum(mnp.reshape(QUAT_TO_ROT, (4, 4, 9)) * normalized_quat[..., :, None, None] *
-                             normalized_quat[..., None, :, None], axis=(-3, -2))
+        rot_tensor = ops.sum(ops.reshape(QUAT_TO_ROT, (4, 4, 9)) * normalized_quat[..., :, None, None] *
+                             normalized_quat[..., None, :, None], dim=(-3, -2))
         rot_tensor = P.Split(-1, 9)(rot_tensor)
         rot_tensor = (P.Squeeze()(rot_tensor[0]), P.Squeeze()(rot_tensor[1]), P.Squeeze()(rot_tensor[2]),
                       P.Squeeze()(rot_tensor[3]), P.Squeeze()(rot_tensor[4]), P.Squeeze()(rot_tensor[5]),
@@ -345,8 +346,8 @@ def initial_affine(num_residues, use_numpy=False):
         quaternion = np.tile(np.reshape(np.asarray([1., 0., 0., 0.]), [1, 4]), [num_residues, 1])
         translation = np.zeros([num_residues, 3])
     else:
-        quaternion = mnp.tile(mnp.reshape(mnp.asarray([1., 0., 0., 0.]), [1, 4]), [num_residues, 1])
-        translation = mnp.zeros([num_residues, 3])
+        quaternion = ops.tile(ops.reshape(Tensor([1., 0., 0., 0.], float32), [1, 4]), [num_residues, 1])
+        translation = ops.zeros((num_residues, 3), float32)
     return quat_affine(quaternion, translation, unstack_inputs=True, use_numpy=use_numpy)
 
 
@@ -392,8 +393,8 @@ def quat_multiply_by_vec(quat, vec):
     Multiply a quaternion by a pure-vector quaternion.
     """
 
-    return mnp.sum(QUAT_MULTIPLY_BY_VEC * quat[..., :, None, None] * vec[..., None, :, None],
-                   axis=(-3, -2))
+    return ops.sum(QUAT_MULTIPLY_BY_VEC * quat[..., :, None, None] * vec[..., None, :, None],
+                   dim=(-3, -2))
 
 
 def pre_compose(quaternion, rotation, translation, update):
@@ -401,8 +402,8 @@ def pre_compose(quaternion, rotation, translation, update):
     Return a new QuatAffine which applies the transformation update first.
     """
 
-    vector_quaternion_update, x, y, z = mnp.split(update, [3, 4, 5], axis=-1)
-    trans_update = [mnp.squeeze(x, axis=-1), mnp.squeeze(y, axis=-1), mnp.squeeze(z, axis=-1)]
+    vector_quaternion_update, x, y, z = ops.tensor_split(update, [3, 4, 5], axis=-1)
+    trans_update = [ops.squeeze(x, axis=-1), ops.squeeze(y, axis=-1), ops.squeeze(z, axis=-1)]
     new_quaternion = (quaternion + quat_multiply_by_vec(quaternion, vector_quaternion_update))
     rotated_trans_update = rots_mul_vecs(rotation, trans_update)
     new_translation = vecs_add(translation, rotated_trans_update)
@@ -415,7 +416,7 @@ def quaternion_to_tensor(quaternion, translation):
     """
     translation = (P.ExpandDims()(translation[0], -1), P.ExpandDims()(translation[1], -1),
                    P.ExpandDims()(translation[2], -1),)
-    return mnp.concatenate((quaternion,) + translation, axis=-1)
+    return concat_features((quaternion,) + translation, axis=-1)
 
 def apply_to_point(rotation, translation, point, extra_dims=0):
     r"""

@@ -3,7 +3,7 @@ mindspore.mint.repeat_interleave
 
 .. py:function:: mindspore.mint.repeat_interleave(input, repeats, dim=None, *, output_size=None) -> Tensor
 
-    沿着特定维度重复tensor的元素，类似 :func:`mindspore.numpy.repeat`。
+    沿着特定维度重复tensor的元素，类似 ``numpy.repeat``。
 
     参数：
         - **input** (Tensor) - 输入tensor。

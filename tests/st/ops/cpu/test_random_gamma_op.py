@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import Tensor
-import mindspore.numpy as ms_np
+from mindspore import ops, int32
 
 
 class RandomGammaTEST(nn.Cell):
@@ -46,8 +46,8 @@ class RandomGammaDR(nn.Cell):
         self.reducesum = P.ReduceSum(keep_dims=False)
 
     def construct(self, shape, alpha, seed=0):
-        axis = ms_np.randint(1, 2, (2,))
-        rand_axis = ms_np.unique(axis)
+        axis = ops.randint(1, 2, (2,), dtype=int32)
+        rand_axis = ops.unique(axis)[0]
         outshape = self.reducesum(shape, rand_axis)
         outalpha = self.reducesum(alpha, rand_axis)
         return F.random_gamma(outshape, outalpha, seed), outshape, outalpha

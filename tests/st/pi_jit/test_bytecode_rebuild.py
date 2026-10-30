@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore import ops, numpy, Tensor
+from mindspore import ops, Tensor
 from mindspore.nn import Cell
 from mindspore import jit
 from mindspore._c_expression import get_code_extra
@@ -527,8 +527,8 @@ def test_break_at_loop(a):
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('a', [numpy.rand(10)])
-@pytest.mark.parametrize('b', [numpy.rand(10)])
+@pytest.mark.parametrize('a', [ops.rand(10)])
+@pytest.mark.parametrize('b', [ops.rand(10)])
 def test_toy_example(a, b):
     """
     Feature:

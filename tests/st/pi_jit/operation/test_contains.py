@@ -1,5 +1,5 @@
 import pytest
-from mindspore import numpy as np
+import numpy as np
 from mindspore import Tensor, jit, context
 from ..share.utils import match_array, assert_executed_by_graph_mode, pi_jit_with_config
 from tests.mark_utils import arg_mark

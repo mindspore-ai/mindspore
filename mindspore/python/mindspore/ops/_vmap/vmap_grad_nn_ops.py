@@ -18,7 +18,6 @@ from __future__ import absolute_import
 
 from __future__ import division
 from functools import reduce
-import mindspore.numpy as mnp
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import _primexpr
@@ -77,21 +76,21 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         # If stacked, move vmap_dim to first dim and reshape to right shape.
         if x_dim is not None:
             if x_dim != 0:
-                x = mnp.moveaxis(x, x_dim, 0)
+                x = F.moveaxis(x, x_dim, 0)
                 x_shape = F.shape(x)
             if base_x_len == 2:
                 x = F.reshape(x, _get_reshape_shape(x_shape, 1))
 
         if lg_dim is not None:
             if lg_dim != 0:
-                loss_grad = mnp.moveaxis(loss_grad, lg_dim, 0)
+                loss_grad = F.moveaxis(loss_grad, lg_dim, 0)
                 loss_grad_shape = F.shape(loss_grad)
             loss_grad = F.reshape(
                 loss_grad, _get_reshape_shape(loss_grad_shape))
 
         if target_dim is not None:
             if target_dim != 0:
-                target = mnp.moveaxis(target, target_dim, 0)
+                target = F.moveaxis(target, target_dim, 0)
                 target_shape = F.shape(target)
             target = F.reshape(target, _get_reshape_shape(target_shape))
 

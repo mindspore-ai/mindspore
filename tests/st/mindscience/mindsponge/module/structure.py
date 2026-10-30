@@ -16,8 +16,8 @@
 import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-import mindspore.numpy as mnp
 import mindspore.ops as ops
+from tests.st.mindscience.mindsponge.mindsponge.common.tensor_utils import concat_features
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore import lazy_inline
@@ -91,7 +91,7 @@ class MultiRigidSidechain(nn.Cell):
         num_res = act.shape[0]
         unnormalized_angles = self.unnormalized_angles(self.relu(act))
 
-        unnormalized_angles = mnp.reshape(unnormalized_angles, [num_res, 7, 2])
+        unnormalized_angles = ops.reshape(unnormalized_angles, [num_res, 7, 2])
         angles = self.l2_normalize(unnormalized_angles)
 
         backb_to_global = ((rotation[0], rotation[1], rotation[2],
@@ -248,13 +248,13 @@ class StructureModule(nn.Cell):
             affine_init = affine_init + (affine_output[None, ...],)
             angles_sin_cos_init = angles_sin_cos_init + (angles_sin_cos[None, ...],)
             um_angles_sin_cos_init = um_angles_sin_cos_init + (unnormalized_angles_sin_cos[None, ...],)
-            atom_pos_batch += (mnp.concatenate(vecs_expand_dims(atom_pos, 0), axis=0)[:, None, ...],)
-            frames_batch += (mnp.concatenate(rots_expand_dims(frames[0], 0) +
+            atom_pos_batch += (concat_features(vecs_expand_dims(atom_pos, 0), axis=0)[:, None, ...],)
+            frames_batch += (concat_features(rots_expand_dims(frames[0], 0) +
                                              vecs_expand_dims(frames[1], 0), axis=0)[:, None, ...],)
-        affine_output_new = mnp.concatenate(affine_init, axis=0)
-        angles_sin_cos_new = mnp.concatenate(angles_sin_cos_init, axis=0)
-        um_angles_sin_cos_new = mnp.concatenate(um_angles_sin_cos_init, axis=0)
-        frames_new = mnp.concatenate(frames_batch, axis=1)
-        atom_pos_new = mnp.concatenate(atom_pos_batch, axis=1)
+        affine_output_new = concat_features(affine_init, axis=0)
+        angles_sin_cos_new = concat_features(angles_sin_cos_init, axis=0)
+        um_angles_sin_cos_new = concat_features(um_angles_sin_cos_init, axis=0)
+        frames_new = concat_features(frames_batch, axis=1)
+        atom_pos_new = concat_features(atom_pos_batch, axis=1)
         res = (atom_pos_new, affine_output_new, angles_sin_cos_new, um_angles_sin_cos_new, frames_new, act)
         return res

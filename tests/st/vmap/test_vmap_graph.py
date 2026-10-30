@@ -17,7 +17,6 @@
 import platform
 import numpy as np
 from mindspore import nn
-import mindspore.numpy as mnp
 from mindspore import context
 import mindspore.ops.operations as P
 import mindspore.ops.functional as F
@@ -261,27 +260,27 @@ def test_vmap_general_rule():
         1. The general VmapRule.
         2. The specific VmapRule of `Reshape` operation.
         3. The same `vmap` object is called multiple times.
-        4. The `mindspore.numpy` objects as the arguments.
+        4. Tensor arguments constructed with retained ops.
     Expectation: success
     """
     def convolve(x, w):
         output = []
         for i in range(1, len(x) - 1):
-            output.append(mnp.dot(x[i - 1 : i + 2], w))
-        return mnp.stack(output)
+            output.append(F.reduce_sum(x[i - 1 : i + 2] * w))
+        return F.stack(output)
 
-    x = mnp.arange(5).astype('float32')
-    w = mnp.array([1., 2., 3.])
+    x = F.arange(5, dtype=mstype.float32)
+    w = Tensor([1., 2., 3.], mstype.float32)
     vmap_function = vmap(convolve)
 
-    x1 = mnp.stack([x, x, x])
-    w1 = mnp.stack([w, w, w])
+    x1 = F.stack([x, x, x])
+    w1 = F.stack([w, w, w])
     result1 = vmap_function(x1, w1)
     expect_result1 = Tensor([[8, 14, 20], [8, 14, 20], [8, 14, 20]], mstype.float32)
     assert np.allclose(result1.asnumpy(), expect_result1.asnumpy())
 
-    x2 = mnp.stack([x, x + 1, x + 2])
-    w2 = mnp.stack([w, w * 2, w * 3])
+    x2 = F.stack([x, x + 1, x + 2])
+    w2 = F.stack([w, w * 2, w * 3])
     result2 = vmap_function(x2, w2)
     expect_result2 = Tensor([[8, 14, 20], [28, 40, 52], [60, 78, 96]], mstype.float32)
     assert np.allclose(result2.asnumpy(), expect_result2.asnumpy())

@@ -16,7 +16,6 @@
 """convolution vmap impl"""
 from __future__ import absolute_import
 
-import mindspore.numpy as mnp
 from mindspore.ops import constexpr
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops import operations as P
@@ -166,7 +165,7 @@ def _reshape_merge_dims(src_dim, dst_dim, target):
     """Reshape target by merging the src_dim and dst_dim."""
     shape = F.shape(target)
     new_shape = _get_merge_shape(src_dim, dst_dim, shape)
-    new_target = mnp.moveaxis(target, src_dim, dst_dim)
+    new_target = F.moveaxis(target, src_dim, dst_dim)
     output = F.reshape(new_target, new_shape)
     return output, new_shape
 

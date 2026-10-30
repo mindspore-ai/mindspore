@@ -2,7 +2,7 @@
 
 import pytest
 import mindspore as ms
-from mindspore import numpy as np
+import numpy as np
 from mindspore import Tensor, jit, context
 from tests.mark_utils import arg_mark
 

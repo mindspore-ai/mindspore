@@ -170,7 +170,7 @@ def rpn_anchor_target(
             fg_mask[fg_idx.reshape(-1)] = fg_s_mask
 
             bg_num = rnp_sample_batch - fg_num
-            bg_num_mask = ms.numpy.arange(int(rnp_sample_batch)) < bg_num
+            bg_num_mask = ms.ops.arange(int(rnp_sample_batch), dtype=ms.int32) < bg_num
             bg_sampler = ops.RandomChoiceWithMask(count=int(rnp_sample_batch), seed=1, seed2=1)
             bg_idx, bg_s_mask = bg_sampler(bg_mask)
             bg_mask = ops.zeros_like(bg_mask)
@@ -260,7 +260,7 @@ def generate_proposal_target(rois, rois_mask, gts, rois_per_batch, fg_fraction, 
         bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
         bg_idx, bg_s_mask = bg_sampler(bg_mask)
         bg_num = int(rois_per_batch - fg_num)
-        bg_num_mask = ms.numpy.arange(int(rois_per_batch)) < bg_num
+        bg_num_mask = ms.ops.arange(int(rois_per_batch), dtype=ms.int32) < bg_num
         bg_s_mask = ops.logical_and(bg_s_mask, bg_num_mask)
 
         vaild_idx = ops.concat((fg_idx, bg_idx), 0).reshape(-1)

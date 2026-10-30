@@ -1175,7 +1175,6 @@ def max(input, axis=None, keepdims=False, *, initial=None,  # pylint: disable=re
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.numpy as np
         >>> a = Tensor(np.arange(4).reshape((2,2)).astype('float32'))
         >>> output = a.max()
         >>> print(output)
@@ -1230,7 +1229,6 @@ def min(input, axis=None, keepdims=False, *, initial=None,  # pylint: disable=re
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.numpy as np
         >>> a = Tensor(np.arange(4).reshape((2,2)).astype('float32'))
         >>> output = a.min()
         >>> print(output)
@@ -1421,8 +1419,10 @@ def resize(x, *new_shape):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import numpy as np
-        >>> x = np.array([[0, 1], [2, 3]])
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([[0, 1], [2, 3]]), dtype=mindspore.int32)
         >>> x = x.resize(2, 3)
         >>> print(x)
         [[0 1 2]
@@ -1476,8 +1476,10 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> a = np.arange(4).reshape(2,2)
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> a = Tensor(np.arange(4).reshape(2,2), dtype=mindspore.int32)
         >>> print(a)
         [[0 1]
         [2 3]]
@@ -1665,8 +1667,10 @@ def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> x = np.eye(3)
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.eye(3), dtype=mindspore.float32)
         >>> print(x.trace())
         3.0
     """
@@ -1702,9 +1706,11 @@ def take(x, indices, axis=None, mode='clip'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> a = np.array([4, 3, 5, 7, 6, 8])
-        >>> indices = np.array([0, 1, 4])
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> a = Tensor(np.array([4, 3, 5, 7, 6, 8]), dtype=mindspore.int32)
+        >>> indices = Tensor(np.array([0, 1, 4]), dtype=mindspore.int32)
         >>> output = a.take(indices)
         >>> print(output)
         [4 3 6]
@@ -1798,9 +1804,11 @@ def choose(x, choices, mode='clip'):
         ValueError: if ``len(condlist) != len(choicelist)``.
 
     Examples:
-        >>> import mindspore.numpy as np
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
         >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]]
-        >>> x = np.array([2, 3, 1, 0])
+        >>> x = Tensor(np.array([2, 3, 1, 0]), dtype=mindspore.int32)
         >>> print(x.choose(choices))
         [20 31 12  3]
     """
@@ -1868,8 +1876,10 @@ def searchsorted(x, v, side='left', sorter=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import numpy as np
-        >>> x = np.array([1,2,3,4,5])
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([1,2,3,4,5]), dtype=mindspore.int32)
         >>> print(x.searchsorted(3))
         2
     """
@@ -2014,8 +2024,10 @@ def var(x, axis=None, ddof=0, keepdims=False):
         Standard deviation tensor.
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> input_x = np.array([1., 2., 3., 4.])
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([1., 2., 3., 4.]), dtype=mindspore.float32)
         >>> print(input_x.var())
         1.25
     """
@@ -2073,8 +2085,10 @@ def std(x, axis=None, ddof=0, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> input_x = np.array([1., 2., 3., 4.])
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([1., 2., 3., 4.]), dtype=mindspore.float32)
         >>> print(input_x.std())
         1.118034
     """
@@ -2128,11 +2142,13 @@ def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: 
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> input_x = np.array([-1, 0, 1]).astype('int32')
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([-1, 0, 1]).astype('int32'), dtype=mindspore.int32)
         >>> print(input_x.sum())
         0
-        >>> input_x = np.arange(10).reshape(2, 5).astype('float32')
+        >>> input_x = Tensor(np.arange(10).reshape(2, 5).astype('float32'), dtype=mindspore.int32)
         >>> print(input_x.sum(axis=1))
         [10. 35.]
     """
@@ -2293,8 +2309,10 @@ def hardshrink(x, lambd=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.numpy as np
-        >>> x = np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]])
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), dtype=mindspore.float32)
         >>> print(x.hardshrink())
         [[ 0.      1.      2.    ]
         [ 0.      0.     -2.1233]]

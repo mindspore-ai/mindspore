@@ -1038,7 +1038,7 @@ class Dataset:
             num_parallel_workers = 1
             logger.warning(
                 "Input 'operations' of 'map' includes network computing operators like in mindspore.nn, mindspore.ops, "
-                "mindspore.numpy module and etc, which do not support multithreading compiling, recommend to replace "
+                "modules, which do not support multithreading compiling, recommend to replace "
                 "it with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' into 1.")
 
         return MapDataset(self, operations, input_columns, output_columns, num_parallel_workers, **kwargs)

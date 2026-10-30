@@ -139,7 +139,6 @@
 /mindspore/python/mindspore/nn/optim/ @hz893
 /mindspore/python/mindspore/nn/optim/tft_wrapper.py @fary86
 /mindspore/python/mindspore/nn/sparse/ @yi-zhang95
-/mindspore/python/mindspore/numpy/ @yi-zhang95
 /mindspore/python/mindspore/onnx/ @hz893
 /mindspore/python/mindspore/ops/ @hz893
 /mindspore/python/mindspore/ops/composite/ @ginfung
@@ -200,7 +199,6 @@
 /tests/st/collective_ops/ @zhangyinxia
 /tests/st/nn/ @hz893
 /tests/st/nontask_sink/ @zhangyinxia
-/tests/st/numpy_native/ @yi-zhang95
 /tests/st/offload/ @limingqi107
 /tests/st/ops/ @hz893
 /tests/st/frontend/ @hz893

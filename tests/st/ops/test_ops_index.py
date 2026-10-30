@@ -54,8 +54,8 @@ def test_ops_index_forward(context_mode):
     indices1 = ms.Tensor(np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int32))
     indices2 = ms.Tensor(np.array([0, 1, 2], dtype=np.int32))
     indices3 = ms.Tensor(np.array(([1], [1]), dtype=np.int32))
-    indices4 = ms.Tensor(ms.numpy.empty([0]*9, dtype=ms.numpy.int64))
-    indices5 = ms.Tensor(ms.numpy.empty((0,), dtype=ms.numpy.int64))
+    indices4 = ms.Tensor(ms.ops.zeros((0,) * 9, ms.int64))
+    indices5 = ms.Tensor(ms.ops.zeros((0,), ms.int64))
 
     output_1 = index_forward_func(ms.Tensor(x), [indices1, indices2])
     output_2 = index_forward_func(ms.Tensor(x), [indices4, indices3, indices5, indices4, indices4])

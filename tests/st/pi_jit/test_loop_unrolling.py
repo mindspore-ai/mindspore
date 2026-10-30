@@ -1,6 +1,6 @@
 import pytest
 from mindspore import Tensor, jit, ops
-from mindspore import numpy as np
+from mindspore import dtype as mstype
 import mindspore.nn as nn
 from mindspore import context
 from .share.utils import match_array
@@ -10,9 +10,9 @@ class ListTest():
     list = list()
 
     def __init__(self, *args):
-        a = Tensor(ops.fill(np.float32, (2, 2), 1))
-        b = Tensor(ops.fill(np.float32, (2, 2), 2))
-        c = Tensor(ops.fill(np.float32, (2, 2), 3))
+        a = Tensor(ops.fill(mstype.float32, (2, 2), 1))
+        b = Tensor(ops.fill(mstype.float32, (2, 2), 2))
+        c = Tensor(ops.fill(mstype.float32, (2, 2), 3))
         self.list.append(a)
         self.list.append(b)
         self.list.append(c)
@@ -87,7 +87,7 @@ class CellListTest(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
-@pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (1, 3, 64, 32), 8))])
+@pytest.mark.parametrize('input_x', [Tensor(ops.fill(mstype.float32, (1, 3, 64, 32), 8))])
 def test_celllist(input_x):
     """
     Feature: ALL TO ALL
@@ -104,7 +104,7 @@ def test_celllist(input_x):
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (2, 2), 4))])
+@pytest.mark.parametrize('input_x', [Tensor(ops.fill(mstype.float32, (2, 2), 4))])
 def test_sideeffect(input_x):
     """
     Feature: ALL TO ALL

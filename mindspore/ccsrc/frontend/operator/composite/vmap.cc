@@ -145,7 +145,7 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerSingleElement(
     (void)dim_cnode_inputs.emplace_back(inputs);
     (void)dim_cnode_inputs.emplace_back(NewValueNode(static_cast<int64_t>(1)));
     auto dim_cnode = fg_->NewCNodeInOrder(dim_cnode_inputs);
-    const py::function move_axis = python_adapter::GetPyFn(kNumpyModelName, "moveaxis");
+    const py::function move_axis = python_adapter::GetPyFn(kVmapFunctionalModelName, "moveaxis");
     auto move_axis_fg = parse::ParsePythonCode(move_axis);
     MS_EXCEPTION_IF_NULL(move_axis_fg);
     (void)out_cnode_inputs.emplace_back(NewValueNode(move_axis_fg));
@@ -245,7 +245,7 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerAllTuple(const AnfNodePtr &inpu
       } else if (src_abstract->isa<abstract::AbstractNone>() && dst_abstract->isa<abstract::AbstractNone>()) {
         out_cnode = val_cnode;
       } else {
-        const py::function move_axis = python_adapter::GetPyFn(kNumpyModelName, "moveaxis");
+        const py::function move_axis = python_adapter::GetPyFn(kVmapFunctionalModelName, "moveaxis");
         auto move_axis_fg = parse::ParsePythonCode(move_axis);
         MS_EXCEPTION_IF_NULL(move_axis_fg);
         out_cnode = fg_->NewCNodeInOrder({NewValueNode(move_axis_fg), val_cnode, src_cnode, dst_cnode});

@@ -16,7 +16,6 @@
 """Define the grad rules of math related operations."""
 
 import numpy as np
-import mindspore.numpy as mnp
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -101,8 +100,8 @@ def get_brop_cumulative_logsumexp(self):
             dtype_min = cast(np.finfo(np.float16).min, x.dtype)
         else:
             dtype_min = cast(np.finfo(np.float32).min, x.dtype)
-        log_grad_positive = mnp.where(greater_op(dout, 0), log_op(dout), dtype_min)
-        log_grad_negative = mnp.where(less_op(dout, 0), log_op(neg_op(dout)), dtype_min)
+        log_grad_positive = F.where(greater_op(dout, 0), log_op(dout), dtype_min)
+        log_grad_negative = F.where(less_op(dout, 0), log_op(neg_op(dout)), dtype_min)
         output_pos = exp_op(cumulative_op(log_grad_positive - out, axis) + x)
         output_neg = exp_op(cumulative_op(log_grad_negative - out, axis) + x)
         return (output_pos - output_neg, zeros_like(x))
@@ -599,18 +598,18 @@ def get_bprop_fft_with_size(self):
                     dout_last = slice_op(dout, dout_last_from, dout_last_to)
                     if signal_ndim == 1:
                         dx = irfft_(dout)
-                        vec_mask = complex_op(1 - 2 * (mnp.arange(0, input_shape[-1], 1, input_type) % 2),
+                        vec_mask = complex_op(1 - 2 * (F.arange(0, input_shape[-1], 1, dtype=input_type) % 2),
                                               zeros_op(input_shape[-1], input_type))
                         terms = real_op(dout_first) + is_even * real_op(dout_last * vec_mask)
                         dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
                     elif signal_ndim == 2:
                         dx = irfft2d_(dout)
-                        arange_inner = mnp.arange(0, input_shape[-2], 1, input_type)
+                        arange_inner = F.arange(0, input_shape[-2], 1, dtype=input_type)
                         matrix_a = tile_op(expand_dims(arange_inner, 0), (input_shape[-2], 1))
                         matrix_b = transpose_op(matrix_a, (1, 0))
                         matrix_mul = matrix_a * matrix_b
                         imag_offset = complex_op(to_tensor_op(0, input_type), to_tensor_op(-2, input_type))
-                        pi_tensor = to_tensor_op(mnp.pi, output_type)
+                        pi_tensor = to_tensor_op(np.pi, output_type)
                         matrix_mul_complex = complex_op(matrix_mul, zeros_op(shape_op(matrix_mul), input_type))
                         matrix_base_mask = exp_op(imag_offset * pi_tensor * matrix_mul_complex /
                                                   to_tensor_op(input_shape[-2], output_type))
@@ -635,7 +634,7 @@ def get_bprop_fft_with_size(self):
                                                                                    shape_op(dout_last)))),
                                                     _batch_matmul_shape_decrease(
                                                         tile_matrix_mask_shape))
-                        vec_mask = complex_op(1 - 2 * (mnp.arange(0, input_shape[-1], 1, input_type) % 2), zeros_op(
+                        vec_mask = complex_op(1 - 2 * (F.arange(0, input_shape[-1], 1, dtype=input_type) % 2), zeros_op(
                             input_shape[-1], input_type))
                         dout_last_term = complex_op(tile_op(real_op(dout_last_term), _rfft_last_term_shape(dout_shape,
                                                                                                            [input_shape[

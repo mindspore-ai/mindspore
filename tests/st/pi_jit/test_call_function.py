@@ -14,7 +14,7 @@
 # ============================================================================
 """test bytecode CALL_FUNCTION*"""
 import pytest
-from mindspore import numpy as np
+import numpy as np
 from mindspore import Tensor, jit, context, ops, nn
 from mindspore._c_expression import get_code_extra
 from .share.utils import match_array, assert_executed_by_graph_mode

@@ -14,7 +14,7 @@
 # ============================================================================
 """Test sub_mul operation"""
 import pytest 
-from mindspore import numpy as np
+from mindspore import dtype as mstype
 from mindspore import ops, Tensor, jit
 from ..share.utils import match_array
 from tests.mark_utils import arg_mark
@@ -27,9 +27,9 @@ def jit_sub_mul(a, b, c):
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 @pytest.mark.parametrize('ms_func', [jit_sub_mul])
-@pytest.mark.parametrize('a', [1, 2.0, (1.0, 2.0, 3.0), [1.0, 2.0, 3.0], Tensor(ops.fill(np.float32, (2, 3), 8))])
-@pytest.mark.parametrize('b', [3, 4.0, (4.0, 5.0, 6.0), [4.0, 5.0, 6.0], Tensor(ops.fill(np.float32, (2, 3), 8))])
-@pytest.mark.parametrize('c', [5, 6.0, (7.0, 8.0, 9.0), [7.0, 8.0, 9.0], Tensor(ops.fill(np.float32, (2, 3), 8))])
+@pytest.mark.parametrize('a', [1, 2.0, (1.0, 2.0, 3.0), [1.0, 2.0, 3.0], Tensor(ops.fill(mstype.float32, (2, 3), 8))])
+@pytest.mark.parametrize('b', [3, 4.0, (4.0, 5.0, 6.0), [4.0, 5.0, 6.0], Tensor(ops.fill(mstype.float32, (2, 3), 8))])
+@pytest.mark.parametrize('c', [5, 6.0, (7.0, 8.0, 9.0), [7.0, 8.0, 9.0], Tensor(ops.fill(mstype.float32, (2, 3), 8))])
 def test_sub_mul(ms_func, a, b, c):
     """
     Feature: ALL TO ALL

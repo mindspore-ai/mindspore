@@ -213,7 +213,6 @@ def test_standard_dtype_roundtrip(np_dtype, ms_dtype) -> None:
         'mindspore.train.metrics.auc',
         'mindspore.train.summary._summary_adapter',
         'mindspore.nn.layer.math',
-        'mindspore.numpy.dtypes',
     ],
 )
 def test_modules_import_without_removed_aliases(module_name: str) -> None:

@@ -19,7 +19,7 @@ import mindspore.context as context
 from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
-from mindspore import numpy as mnp
+from mindspore import ops
 from mindspore.ops import constexpr
 from mindspore.ops.operations import _tensor_array as P
 
@@ -45,7 +45,7 @@ class Net(nn.Cell):
     def construct(self, x, cond):
         index_0 = get_while_index()
         tensor_array_handle = self.tensor_array()
-        indices_range = mnp.arange(0, 3, 1, mstype.int32)
+        indices_range = ops.arange(0, 3, 1, dtype=mstype.int32)
 
         while index_0 < cond:
             self.tensor_array_write(tensor_array_handle, index_0, x)

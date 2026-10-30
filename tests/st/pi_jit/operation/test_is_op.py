@@ -1,5 +1,5 @@
 import pytest 
-from mindspore import numpy as np
+import numpy as np
 from mindspore import Tensor, jit, context
 from ..share.utils import match_array
 from tests.mark_utils import arg_mark

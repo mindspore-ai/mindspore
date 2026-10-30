@@ -6431,7 +6431,7 @@ def _check_rank_range(x_rank, limit, arg_name, op_name):
 
 def repeat_interleave(input, repeats, axis=None):
     """
-    Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
+    Repeat elements of a tensor along an axis, like ``numpy.repeat``.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: `axis` will be renamed to `dim`.
@@ -6502,7 +6502,7 @@ def repeat_interleave(input, repeats, axis=None):
 
 def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
     r"""
-    Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
+    Repeat elements of a tensor along an axis, like ``numpy.repeat``.
 
     Args:
         input (Tensor): The tensor to repeat values for. Must be of type: float16,
@@ -6540,7 +6540,7 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
 
 def repeat_elements(x, rep, axis=0):
     """
-    Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat` .
+    Repeat elements of a tensor along an axis, like ``numpy.repeat`` .
 
     .. warning::
         This interface is deprecated and will be removed after version 2.9.0.
