@@ -1339,6 +1339,26 @@ bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &n
   return true;
 }
 
+// A shared-weight directory conversion (lite) records in user_info the directory its
+// external_data.location entries are relative to, as a path relative to the mindir itself, because
+// the weights live next to the rank directories instead of next to each mindir. Keep the key in
+// sync with lite::kMindIRWeightRootKey (src/common/common.h).
+constexpr char kMindIRWeightRootKey[] = "mindir_weight_root";
+
+// Resolve the recorded weight root against the directory the caller supplied. Without a recorded
+// root the caller's directory is used unchanged. A model loaded from a bare buffer has no directory
+// of its own, so the recorded root stays relative and resolves against the current directory.
+std::string ResolveWeightRoot(const mind_ir::ModelProto &model_proto, const std::string &mindir_dir) {
+  auto it = model_proto.user_info().find(kMindIRWeightRootKey);
+  if (it == model_proto.user_info().end() || it->second.empty()) {
+    return mindir_dir;
+  }
+  if (mindir_dir.empty()) {
+    return it->second;
+  }
+  return mindir_dir + "/" + it->second;
+}
+
 // Resolve and validate the external data file path declared in a TensorProto.
 // Returns the canonical file path on success, or empty string on failure.
 // This prevents directory traversal via a malicious external_data.location.
@@ -3571,7 +3591,8 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
 
   auto mindir_path = std::string(abs_path_buff);
   auto mindir_sep_pos = mindir_path.find_last_of("/\\");
-  model_parser.SetMindIRPath(mindir_sep_pos == std::string::npos ? mindir_path : mindir_path.substr(0, mindir_sep_pos));
+  model_parser.SetMindIRPath(ResolveWeightRoot(
+    origin_model, mindir_sep_pos == std::string::npos ? mindir_path : mindir_path.substr(0, mindir_sep_pos)));
   InitModelParser(&model_parser, this);
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_, name_to_node);
   if (has_parallel_info_) {
@@ -3594,7 +3615,7 @@ bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std:
   }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
-  model_parser.SetMindIRPath(mindir_path);
+  model_parser.SetMindIRPath(ResolveWeightRoot(model, mindir_path));
   *func_graph = model_parser.Parse(model);
   if (*func_graph == nullptr) {
     MS_LOG(ERROR) << "Parse MindIR model failed.";
@@ -3628,7 +3649,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, co
   }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
-  model_parser.SetMindIRPath(mindir_path);
+  model_parser.SetMindIRPath(ResolveWeightRoot(model, mindir_path));
   FuncGraphPtr func_graph = model_parser.Parse(model);
   return func_graph;
 }
@@ -3680,7 +3701,7 @@ bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std:
   }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
-  model_parser.SetMindIRPath(mindir_path);
+  model_parser.SetMindIRPath(ResolveWeightRoot(model, mindir_path));
   model_parser.SetMindIRDecKey(cryptoInfo.key.key);
   model_parser.SetMindIRKeySize(cryptoInfo.key.len);
   model_parser.SetMindIRDecMode(cryptoInfo.mode);
@@ -3723,6 +3744,7 @@ bool MindIRLoader::LoadMindIR(const void *model_buffer, const size_t &model_size
   }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
+  model_parser.SetMindIRPath(ResolveWeightRoot(model, ""));
   model_parser.SetExternalWeightBuffer(weight_buffer, weight_size);
   *func_graph = model_parser.Parse(model);
   if (*func_graph == nullptr) {
