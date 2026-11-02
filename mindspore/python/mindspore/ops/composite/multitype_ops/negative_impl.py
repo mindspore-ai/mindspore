@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
-from mindspore.common import CSRTensor, COOTensor
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor
 
 
 negative = base.MultitypeFuncGraph("negative", True)

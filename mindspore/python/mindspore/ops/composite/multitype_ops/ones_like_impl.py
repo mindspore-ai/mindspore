@@ -21,6 +21,13 @@ from __future__ import absolute_import
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.function.sparse_func import (
+    _coo_tensor_get_dense_shape,
+    _coo_tensor_get_indices,
+    _coo_tensor_get_values,
+    _make_coo_tensor,
+    _make_csr_tensor,
+)
 
 
 ones_like_leaf = base.MultitypeFuncGraph('ones_like', True)
@@ -58,16 +65,16 @@ def _ones_like_tensor(x):
 @ones_like_leaf.register("COOTensor")
 def _ones_like_coo_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 1."""
-    values_ = F.coo_tensor_get_values(x)
+    values_ = _coo_tensor_get_values(x)
     values = P.OnesLike()(values_)
-    return F.make_coo_tensor(F.coo_tensor_get_indices(x), values, F.coo_tensor_get_dense_shape(x))
+    return _make_coo_tensor(_coo_tensor_get_indices(x), values, _coo_tensor_get_dense_shape(x))
 
 
 @_ones_like_leaf_for_grad.register("CSRTensor")
 @ones_like_leaf.register("CSRTensor")
 def _ones_like_csr_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 1."""
-    return F.make_csr_tensor(x.indptr, x.indices, ones_like(x.values), x.shape)
+    return _make_csr_tensor(x.indptr, x.indices, ones_like(x.values), x.shape)
 
 
 @_ones_like_leaf_for_grad.register("Function")

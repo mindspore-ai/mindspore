@@ -2974,76 +2974,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('log_matrix_determinant')(self)
 
-    def to_coo(self):
-        """
-        Convert a Tensor to COOTensor.
 
-        .. warning::
-            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `to_sparse_coo`.
-
-        Note:
-            Only 2-D tensor is supported for now.
-
-        Returns:
-            COOTensor, a sparse representation of the original dense tensor, containing the following parts.
-
-            - indices (Tensor): 2-D integer tensor, indicates the positions of `values` of the dense tensor.
-            - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
-            - shape (tuple(int)): the shape of the COOTensor, is the same as the original dense tensor.
-
-        Raises:
-            ValueError: If input tensor is not 2-D.
-
-        Supported Platforms:
-            ``GPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> import mindspore
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.array([[1,  0], [-5, 0]]), mindspore.float32)
-            >>> output = x.to_coo()
-            >>> print(output.indices, output.values, output.shape)
-            [[0 0]
-             [1 0]] [ 1. -5.] (2, 2)
-
-        """
-        return tensor_operator_registry.get('dense_to_sparse_coo')(self)
-
-    def to_csr(self):
-        """
-        Convert a Tensor to CSRTensor.
-
-        .. warning::
-            Non-backward-compatible change after version 2.9.0: the interface name will be changed to `to_sparse_csr`.
-
-        Note:
-            Only 2-D tensor is supported for now.
-
-        Returns:
-            CSRTensor, a sparse representation of the original dense tensor, containing the following parts.
-
-            - indptr (Tensor): 1-D integer tensor, indicates the start and end point for `values` in each row.
-            - indices (Tensor): 1-D integer tensor, indicates the column positions of all non-zero values of the input.
-            - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
-            - shape (tuple(int)): the shape of the CSRTensor, is the same as the original dense tensor.
-
-        Raises:
-            ValueError: If input tensor is not 2-D.
-
-        Supported Platforms:
-            ``GPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> import mindspore
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.array([[1,  0], [-5, 0]]), mindspore.float32)
-            >>> output = x.to_csr()
-            >>> print(output.indptr, output.indices, output.values, output.shape)
-            [0 1 2] [0 0] [ 1. -5.] (2, 2)
-        """
-        return tensor_operator_registry.get('dense_to_sparse_csr')(self)
 
     def tolist(self):
         r"""

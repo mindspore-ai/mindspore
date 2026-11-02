@@ -23,7 +23,8 @@ from mindspore import mint
 from mindspore.ops import composite as C
 from mindspore import nn, Tensor, Parameter, _Function
 from mindspore.nn.optim import Momentum
-from mindspore import ops, COOTensor, CSRTensor
+from mindspore import ops
+from mindspore.common._sparse_tensor import COOTensor, CSRTensor
 from mindspore.graph.api import _pynative_executor
 from mindspore.ops.composite import GradOperation
 from mindspore.ops.auto_generate import GroupedMatmul

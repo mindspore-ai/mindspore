@@ -25,7 +25,7 @@ from mindspore.parallel._utils import _get_enable_parallel_optimizer, _get_grad_
 from mindspore.ops import operations as P
 from mindspore.ops import Send, Receive
 from mindspore.ops.operations._inner_ops import issubclass_
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce,
                                                NeighborExchange, AlltoAll, AlltoAllV, NeighborExchangeV2,
@@ -437,6 +437,7 @@ def get_bprop_micro_step_all_gather(self):
     do_mirror = False
     if self.group != "":
         do_mirror = self.get_attr_dict()["do_mirror"]
+    scale = 1.0
     if do_mirror:
         scale = 1.0 / self.rank_size
         reduce_scatter = ReduceScatter(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
@@ -761,17 +762,20 @@ def get_bprop_mirror_operator(self):
         squared_device_local_norm = get_squared_device_local_norm_param()
     # feature value sampling for sdc detect
     feat_value_dump_name = _sdc_detector.get_dump_name(param_name) if _sdc_detector.need_sample() else None
+    # Local norm diagnostics also run when no communication is needed.
+    mul = P.Mul()
+    cast = P.Cast()
+    ln_print = P.Print()
+    tensor_dump = P.TensorDump()
+    reduce_sum = P.ReduceSum(keep_dims=False)
+    square = P.Square()
+    sqrt = P.Sqrt()
+    all_reduce = None
+    all_gather = None
     if dev_num > 1:
         dev_num_r = 1.0 / dev_num
         all_reduce = AllReduce(group=group)
         all_gather = AllGather(group=group)
-        mul = P.Mul()
-        cast = P.Cast()
-        ln_print = P.Print()
-        tensor_dump = P.TensorDump()
-        reduce_sum = P.ReduceSum(keep_dims=False)
-        square = P.Square()
-        sqrt = P.Sqrt()
 
         fusion = self.get_attr_dict()["fusion"]
         all_reduce.add_prim_attr("fusion", fusion)

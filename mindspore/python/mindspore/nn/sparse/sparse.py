@@ -16,72 +16,9 @@
 from __future__ import absolute_import
 
 from mindspore import ops
-from mindspore import log as logger
 from mindspore.nn.cell import Cell
 
 
-class SparseToDense(Cell):
-    """
-    Converts a sparse tensor(COOTensor) into dense.
-
-    In Python, for the ease of use, three tensors are collected into a SparseTensor class.
-    MindSpore uses three independent dense tensors: indices, value and dense shape to represent the sparse tensor.
-    Separate indexes, values and dense shape tensors can be wrapped in a Sparse Tensor object
-    before :class:`mindspore.ops.SparseToDense` is called.
-
-    Note:
-        `nn.SparseToDense` is deprecated from version 2.0, and will be removed in a future version, please use
-        :func:`mindspore.COOTensor.to_dense` instead.
-
-    Inputs:
-        - **coo_tensor** (:class:`mindspore.COOTensor`) - the sparse COOTensor to convert.
-
-    Outputs:
-        Tensor, converted from sparse tensor.
-
-    Raises:
-        TypeError: If `sparse_tensor.indices` is not a Tensor.
-        TypeError: If `sparse_tensor.values` is not a Tensor.
-        TypeError: If `sparse_tensor.shape` is not a tuple.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import Tensor, COOTensor
-        >>> import mindspore.nn as nn
-        >>> ms.set_context(mode=ms.PYNATIVE_MODE)
-        >>> indices = Tensor([[0, 1], [1, 2]])
-        >>> values = Tensor([1, 2], dtype=ms.int32)
-        >>> dense_shape = (3, 4)
-        >>> class Net(nn.Cell):
-        ...     def __init__(self, dense_shape):
-        ...         super(Net, self).__init__()
-        ...         self.dense_shape = dense_shape
-        ...         self.op = nn.SparseToDense()
-        ...
-        ...     def construct(self, indices, values):
-        ...         x = COOTensor(indices, values, self.dense_shape)
-        ...         return self.op(x)
-        ...
-        >>> print(Net(dense_shape)(indices, values))
-        [[0 1 0 0]
-         [0 0 2 0]
-         [0 0 0 0]]
-    """
-
-    def __init__(self):
-        """Initialize SparseToDense."""
-        logger.warning("'nn.SparseToDense' is deprecated from version 2.0 and will be removed in a future version. " +
-                       "Please use 'COOTensor.to_dense()' instead.")
-        super().__init__()
-        self.sparse_to_dense = ops.SparseToDense()
-
-    def construct(self, sparse_tensor):
-        return self.sparse_to_dense(sparse_tensor.indices,
-                                    sparse_tensor.values,
-                                    sparse_tensor.shape)
 
 
 class SparseTensorDenseMatmul(Cell):

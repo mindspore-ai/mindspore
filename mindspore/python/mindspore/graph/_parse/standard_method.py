@@ -17,13 +17,14 @@
 """standard_method"""
 
 from __future__ import absolute_import
-from mindspore import Tensor, CSRTensor, COOTensor, Parameter
+from mindspore import Tensor, Parameter
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor
 from mindspore import dtype as mstype
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.common import mutable
 from mindspore.common.generator import default_generator
 import mindspore.graph._utils.monad as monad
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
 from mindspore.ops.operations._sequence_ops import TensorToTuple
@@ -2858,20 +2859,8 @@ def narrow(input, axis, start, length):
     return F.narrow(input, axis, start, length)
 
 
-def to_csr(x):
-    """
-    Convert a Tensor to CSRTensor.
-    Please refer to tensor.py Tensor::to_csr(self) for more details.
-    """
-    return F.dense_to_sparse_csr(x)
 
 
-def to_coo(x):
-    """
-    Convert a Tensor to COOTensor.
-    Please refer to tensor.py Tensor::to_coo(self) for more details.
-    """
-    return F.dense_to_sparse_coo(x)
 
 
 def tolist(x):
@@ -3185,7 +3174,7 @@ def coo_to_csr(x):
     row_indices = row_indices.astype(idx_dtype)
     col_indices = col_indices[sort_idx]
     values = x.values[sort_idx]
-    indptr = F.coo2csr(row_indices, x.shape[0])
+    indptr = F._coo2csr(row_indices, x.shape[0])
     return CSRTensor(indptr, col_indices, values, x.shape)
 
 
@@ -3208,14 +3197,14 @@ def csr_to_coo(x):
     if x.ndim != 2:
         const_utils.raise_value_error(
             "Currently only support 2-D CSRTensor when converting to COOTensor.")
-    row_indices = F.csr2coo(x.indptr, x.values.shape[0])
+    row_indices = F._csr2coo(x.indptr, x.values.shape[0])
     coo_indices = P.Stack(1)((row_indices, x.indices))
     return COOTensor(coo_indices, x.values, x.shape)
 
 
 def csr_to_dense(x):
     """convert csr to dense."""
-    return F.csr_to_dense(x)
+    return F._csr_to_dense(x)
 
 
 def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
@@ -3636,35 +3625,35 @@ def csr_softmax(logits, dtype):
 
 def csr_add(a, b, alpha, beta):
     """Implementation of "csr_add" for CSRTensor."""
-    return F.csr_add(a, b, alpha, beta)
+    return F._csr_add(a, b, alpha, beta)
 
 
 def csr_astype(x, dtype):
     """Implementation of `astype` for CSRTensor."""
     data = x.values.astype(dtype)
-    return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
+    return F._make_csr_tensor(x.indptr, x.indices, data, x.shape)
 
 
 def csr_sum(x, axis):
     """Implementation of `sum` for CSRTensor."""
-    return F.csr_reduce_sum(x, axis)
+    return F._csr_reduce_sum(x, axis)
 
 
 def csr_abs(x):
     """Implementation of `abs` for CSRTensor."""
     data = F.absolute(x.values)
-    return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
+    return F._make_csr_tensor(x.indptr, x.indices, data, x.shape)
 
 
 def csr_mv(x, dense_vector):
     """Implementation of `mv` for CSRTensor."""
-    return F.csr_mv(x, dense_vector)
+    return F._csr_mv(x, dense_vector)
 
 
 def csr_mm(x, matrix):
     """Implementation of `mm` for CSRTensor."""
     if isinstance(matrix, CSRTensor):
-        return F.csr_mm(x, matrix)
+        return F._csr_mm(x, matrix)
     return _csr_mm(x.indptr, x.indices, x.values, x.shape, matrix)
 
 
@@ -3677,7 +3666,7 @@ def csr_to_tuple(x):
 def coo_astype(x, dtype):
     """Implementation of `astype` for COOTensor."""
     data = x.values.astype(dtype)
-    return F.make_coo_tensor(x.indices, data, x.shape)
+    return F._make_coo_tensor(x.indices, data, x.shape)
 
 
 def coo_to_tuple(x):
@@ -3688,12 +3677,12 @@ def coo_to_tuple(x):
 def coo_abs(x):
     """Implementation of `abs` for COOTensor."""
     data = F.absolute(x.values)
-    return F.make_coo_tensor(x.indices, data, x.shape)
+    return F._make_coo_tensor(x.indices, data, x.shape)
 
 
 def coo_add(x, y, thresh):
     """Implementation of `add` for COOTensor."""
-    return F.coo_add(x, y, thresh)
+    return F._coo_add(x, y, thresh)
 
 
 ################

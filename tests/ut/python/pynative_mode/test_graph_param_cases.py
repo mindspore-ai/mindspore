@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for graph param cases."""
 import pytest
 import numpy as np
 from mindspore import context, nn, Tensor, ParameterTuple
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
 from mindspore.common import jit
 from mindspore.ops import composite as C

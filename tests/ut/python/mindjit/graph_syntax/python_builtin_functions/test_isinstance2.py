@@ -18,12 +18,13 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, CSRTensor, COOTensor, jit, jit_class, context
+from mindspore import Tensor, jit, jit_class, context
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.graph.mutable import mutable
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -61,7 +62,7 @@ class MSClass2:
 @jit_class
 class MSCombine(MSClass1, MSClass2):
     def __init__(self):
-        super(MSCombine, self).__init__()
+        super().__init__()
         self.num3 = Tensor(3)
 
 
@@ -270,6 +271,8 @@ def test_isinstance_x_ms_class_obj_5():
 
     @jit
     def foo():
+        # Deliberately pass an instance to verify the TypeError contract.
+        # pylint: disable-next=isinstance-second-argument-not-valid-type
         return isinstance(ms_obj, (int, float, (MSClass2(), MSCombine)))
 
     with pytest.raises(TypeError) as err:
@@ -589,6 +592,8 @@ def test_isinstance_wrong_cmp_input():
     """
     @jit
     def foo():
+        # Deliberately pass a non-type to verify the TypeError contract.
+        # pylint: disable-next=isinstance-second-argument-not-valid-type
         return isinstance(Tensor(1), (np.array([1, 2, 3], Tensor)))
 
     with pytest.raises(TypeError) as err:
@@ -619,6 +624,8 @@ def test_isinstance_wrong_cmp_input_3():
     """
     @jit
     def foo():
+        # A list of types is invalid; isinstance requires a type or tuple.
+        # pylint: disable-next=isinstance-second-argument-not-valid-type
         return isinstance(Tensor(1), [list, tuple])
 
     with pytest.raises(TypeError) as err:
@@ -634,6 +641,8 @@ def test_isinstance_wrong_cmp_input_4():
     """
     @jit
     def foo():
+        # Deliberately pass a non-type list to verify the TypeError contract.
+        # pylint: disable-next=isinstance-second-argument-not-valid-type
         return isinstance(Tensor(1), [1, tuple])
 
     with pytest.raises(TypeError) as err:

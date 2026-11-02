@@ -19,12 +19,17 @@ from __future__ import absolute_import
 
 import ast
 
-from mindspore import RowTensor, SparseTensor, COOTensor, CSRTensor
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import COOTensor, CSRTensor
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops import Primitive
 from mindspore.ops.composite import multitype_ops
 from mindspore._c_expression import security
+from mindspore.ops.function.sparse_func import (
+    _make_coo_tensor,
+    _make_csr_tensor,
+    _make_row_tensor_inner,
+)
 from . import standard_method as M
 from . import trope as T
 from .namespace import ModuleNamespace
@@ -196,11 +201,9 @@ convert_object_map = {
     T.mutable:      Primitive('mutable'),
 
     # user defined
-    RowTensorInner: F.make_row_tensor_inner,
-    RowTensor:      F.make_row_tensor,
-    SparseTensor:   F.make_sparse_tensor,
-    COOTensor:      F.make_coo_tensor,
-    CSRTensor:      F.make_csr_tensor,
+    RowTensorInner: _make_row_tensor_inner,
+    COOTensor:      _make_coo_tensor,
+    CSRTensor:      _make_csr_tensor,
 }
 
 if not security.enable_security():

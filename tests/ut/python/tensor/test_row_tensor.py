@@ -32,7 +32,7 @@ from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops._utils.utils import generate_shape_index
 from mindspore import Tensor, context
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
 from mindspore import _checkparam as validator
 from mindspore.nn import Optimizer
@@ -63,7 +63,7 @@ def get_axis(x):
 
 class MSELoss(nn.Cell):
     def __init__(self):
-        super(MSELoss, self).__init__()
+        super().__init__()
         self.reduce_sum = P.ReduceSum()
         self.square = P.Square()
         self.reduce_mean = P.ReduceMean()
@@ -75,7 +75,7 @@ class MSELoss(nn.Cell):
 
 class MindDataSet(MindData):
     def __init__(self, dataset_types, dataset_shapes):
-        super(MindDataSet, self).__init__(size=2, batch_size=32,
+        super().__init__(size=2, batch_size=32,
                                           np_types=dataset_types,
                                           output_shapes=dataset_shapes,
                                           input_indexs=(0, 1))
@@ -219,7 +219,7 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
 class AdamWeightDecaySparse(Optimizer):
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
-        super(AdamWeightDecaySparse, self).__init__(learning_rate, params)
+        super().__init__(learning_rate, params)
         if self.is_group:
             raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
@@ -245,7 +245,7 @@ class AdamWeightDecaySparse(Optimizer):
 def test_row_tensor_make_row_tensor():
     class MakeRowTensor(nn.Cell):
         def __init__(self):
-            super(MakeRowTensor, self).__init__()
+            super().__init__()
             self.dense_shape = (3, 2)
 
         def construct(self, indices, values):
@@ -259,7 +259,7 @@ def test_row_tensor_make_row_tensor():
 
 class RowTensorGetAttr(nn.Cell):
     def __init__(self, dense_shape):
-        super(RowTensorGetAttr, self).__init__()
+        super().__init__()
         self.dense_shape = dense_shape
 
     def construct(self, indices, values):
@@ -278,7 +278,7 @@ def test_row_tensor_sparse_gatherv2_grad_all():
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
-            super(GradWrap, self).__init__()
+            super().__init__()
             self.network = network
 
         def construct(self, x, y):
@@ -287,7 +287,7 @@ def test_row_tensor_sparse_gatherv2_grad_all():
 
     class SparseGatherV2(nn.Cell):
         def __init__(self):
-            super(SparseGatherV2, self).__init__()
+            super().__init__()
             self.sparse_gatherv2 = MySparseGatherV2()
             self.axis = 0
 
@@ -304,7 +304,7 @@ def test_row_tensor_sparse_gatherv2_grad_with_pram():
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
-            super(GradWrap, self).__init__()
+            super().__init__()
             self.network = network
             self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
 
@@ -316,7 +316,7 @@ def test_row_tensor_sparse_gatherv2_grad_with_pram():
 
     class SparseGatherV2(nn.Cell):
         def __init__(self):
-            super(SparseGatherV2, self).__init__()
+            super().__init__()
             self.sparse_gatherv2 = MySparseGatherV2()
             self.axis = 0
             self.params = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.int32)), name="params")
@@ -332,7 +332,7 @@ def test_row_tensor_sparse_gatherv2_grad_with_pram():
 def test_row_tensor_env_get():
     class Loss(nn.Cell):
         def __init__(self, empty=None):
-            super(Loss, self).__init__()
+            super().__init__()
             self.empty = empty
 
         def construct(self, base, target):
@@ -340,7 +340,7 @@ def test_row_tensor_env_get():
 
     class NetWithSparseGatherV2(nn.Cell):
         def __init__(self):
-            super(NetWithSparseGatherV2, self).__init__()
+            super().__init__()
             self.w1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="w1")
             self.w2 = Parameter(Tensor(np.ones([2, 1, 2]).astype(np.float32)), name="w2")
             self.gatherv2 = MySparseGatherV2()
@@ -364,7 +364,7 @@ def test_row_tensor_env_get():
 def test_row_tensor_model_train():
     class Net(nn.Cell):
         def __init__(self, in_features, out_features):
-            super(Net, self).__init__()
+            super().__init__()
             self.weight = Parameter(Tensor(np.ones([out_features, in_features]).astype(np.float32)), name="weight")
             self.add = P.Add()
             self.cast = P.Cast()
@@ -413,7 +413,7 @@ def test_row_tensor_value_and_dense_shape_illegal():
 
 class RowTensorValuesDouble(nn.Cell):
     def __init__(self, empty=None):
-        super(RowTensorValuesDouble, self).__init__()
+        super().__init__()
         self.empty = empty
 
     def construct(self, x):
@@ -425,7 +425,7 @@ class RowTensorValuesDouble(nn.Cell):
 
 class RowTensorValuesAdd2(nn.Cell):
     def __init__(self, empty=None):
-        super(RowTensorValuesAdd2, self).__init__()
+        super().__init__()
         self.empty = empty
 
     def construct(self, x):

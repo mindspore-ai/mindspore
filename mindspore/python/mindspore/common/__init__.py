@@ -29,9 +29,10 @@ from mindspore.common.file_system import set_mindio_server_info, mindio_preload
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.seed import set_seed, get_seed
 from mindspore.common.tensor import Tensor, tensor, swap_tensors
+# Explicit-import compatibility for MindFormers; keep out of __all__ and the mindspore top level.
+from mindspore.common._sparse_tensor import RowTensorInner as RowTensor
 from mindspore.common.storage import UntypedStorage
 from mindspore.common.device import DeviceCtx
-from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTensor, COOTensor, CSRTensor
 from mindspore.graph.mutable import mutable
 from mindspore.graph.jit_config import JitConfig
 from mindspore.graph.lazy_inline import lazy_inline
@@ -112,7 +113,7 @@ __all__ = [
 ]
 
 __all__.extend([
-    "tensor", "Tensor", "swap_tensors", "RowTensor", "SparseTensor", "COOTensor", "CSRTensor",  # tensor
+    "tensor", "Tensor", "swap_tensors",  # tensor
     'jit', 'jit_class', '_no_grad', 'saved_tensors_hooks', 'register_saved_tensors_hooks',  # api
     "Parameter", "ParameterTuple",  # parameter
     "UntypedStorage",

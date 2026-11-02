@@ -932,6 +932,7 @@ def test_addn_zero(tag):
 
 
 def test_convert_switch_ops(tag):
+    """Build graph fixtures for convert switch ops."""
     fns = FnDict()
     ge_switch = Primitive('GeSwitch')
     merge = Primitive('Merge')
@@ -1044,6 +1045,7 @@ def test_reducesum_one(tag):
 
 
 def test_print_tuple_wrapper(tag):
+    """Build graph fixtures for print tuple wrapper."""
     fns = FnDict()
     print_ = Primitive('Print')
     make_tuple = Primitive('MakeTuple')
@@ -1073,6 +1075,7 @@ def test_print_tuple_wrapper(tag):
 
 # pylint: disable=unnecessary-semicolon
 def test_constant_duplicate_mul(tag):
+    """Build graph fixtures for constant duplicate mul."""
     fns = FnDict()
     Mul = Primitive('Mul')
     Sqrt = Primitive('Sqrt')
@@ -1105,6 +1108,7 @@ def test_constant_duplicate_mul(tag):
 
 
 def test_adjust_allreduce_mul_add(tag):
+    """Build graph fixtures for adjust allreduce mul add."""
     fns = FnDict()
     Mul = Primitive('Mul')
     AddN = Primitive('AddN')
@@ -1152,14 +1156,14 @@ def test_adjust_allreduce_mul_add(tag):
 def test_row_tensor(tag):
     """ test_add_zero """
     fns = FnDict()
-    make_row_tensor = Primitive('MakeRowTensor')
-    row_tensor_get_values = Primitive('RowTensorGetValues')
-    row_tensor_get_indices = Primitive('RowTensorGetIndices')
-    row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
+    _make_row_tensor = Primitive('MakeRowTensor')
+    _row_tensor_get_values = Primitive('RowTensorGetValues')
+    _row_tensor_get_indices = Primitive('RowTensorGetIndices')
+    _row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
 
     @fns
     def before_get_indices(x, y, z):
-        return row_tensor_get_indices(make_row_tensor(x, y, z))
+        return _row_tensor_get_indices(_make_row_tensor(x, y, z))
 
     @fns
     def after_get_indices(x, y, z):
@@ -1167,7 +1171,7 @@ def test_row_tensor(tag):
 
     @fns
     def before_get_values(x, y, z):
-        return row_tensor_get_values(make_row_tensor(x, y, z))
+        return _row_tensor_get_values(_make_row_tensor(x, y, z))
 
     @fns
     def after_get_values(x, y, z):
@@ -1175,7 +1179,7 @@ def test_row_tensor(tag):
 
     @fns
     def before_get_dense_shape(x, y, z):
-        return row_tensor_get_dense_shape(make_row_tensor(x, y, z))
+        return _row_tensor_get_dense_shape(_make_row_tensor(x, y, z))
 
     @fns
     def after_get_dense_shape(x, y, z):
@@ -1187,14 +1191,14 @@ def test_row_tensor(tag):
 def test_sparse_tensor(tag):
     """ test_add_zero """
     fns = FnDict()
-    make_sparse_tensor = Primitive('MakeCOOTensor')
+    _make_sparse_tensor = Primitive('MakeCOOTensor')
     sparse_tensor_get_values = Primitive('COOTensorGetValues')
     sparse_tensor_get_indices = Primitive('COOTensorGetIndices')
     sparse_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
 
     @fns
     def before_get_indices(x, y, z):
-        return sparse_tensor_get_indices(make_sparse_tensor(x, y, z))
+        return sparse_tensor_get_indices(_make_sparse_tensor(x, y, z))
 
     @fns
     def after_get_indices(x, y, z):
@@ -1202,7 +1206,7 @@ def test_sparse_tensor(tag):
 
     @fns
     def before_get_values(x, y, z):
-        return sparse_tensor_get_values(make_sparse_tensor(x, y, z))
+        return sparse_tensor_get_values(_make_sparse_tensor(x, y, z))
 
     @fns
     def after_get_values(x, y, z):
@@ -1210,7 +1214,7 @@ def test_sparse_tensor(tag):
 
     @fns
     def before_get_dense_shape(x, y, z):
-        return sparse_tensor_get_dense_shape(make_sparse_tensor(x, y, z))
+        return sparse_tensor_get_dense_shape(_make_sparse_tensor(x, y, z))
 
     @fns
     def after_get_dense_shape(x, y, z):

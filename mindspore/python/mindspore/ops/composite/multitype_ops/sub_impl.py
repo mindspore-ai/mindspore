@@ -21,6 +21,10 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal, make_tensor
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
+from mindspore.ops.function.sparse_func import (
+    _coo_add,
+    _csr_add,
+)
 
 
 # x -= y
@@ -116,7 +120,7 @@ def _tensor_sub_list(x, y):
 def _sub_csrtensor(x, y):
     """Returns x - y where x and y are all CSR tensors."""
     check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
-    return F.csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(-1, x.values.dtype))
+    return _csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(-1, x.values.dtype))
 
 
 @augassign_sub.register("COOTensor", "COOTensor")
@@ -124,7 +128,7 @@ def _sub_csrtensor(x, y):
 def _sub_cootensor(x, y):
     """Returns x - y where x and y are all COO tensors."""
     check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
-    return F.coo_add(x, -y, make_tensor(0, x.values.dtype))
+    return _coo_add(x, -y, make_tensor(0, x.values.dtype))
 
 
 @augassign_sub.register("Tensor", "COOTensor")

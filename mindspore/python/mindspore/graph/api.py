@@ -38,9 +38,9 @@ from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
 from mindspore.graph.jit_config import JitConfig, _DEFAULT_JIT_CONFIG, _warn_infer_boost_interface_deprecated
 from mindspore.common.tensor import Tensor as PythonTensor
-from mindspore.common.sparse_tensor import CSRTensor as PythonCSRTensor
-from mindspore.common.sparse_tensor import COOTensor as PythonCOOTensor
-from mindspore.common.sparse_tensor import RowTensor as PythonRowTensor
+from mindspore.common._sparse_tensor import CSRTensor as PythonCSRTensor
+from mindspore.common._sparse_tensor import COOTensor as PythonCOOTensor
+from mindspore.common._sparse_tensor import RowTensorInner as PythonRowTensor
 from mindspore._c_expression.amp import get_curr_amp_strategy
 from mindspore._c_expression import GraphExecutor_, JitExecutor_, CSRTensor, RowTensor, COOTensor, \
     PyNativeExecutor_, verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline, \

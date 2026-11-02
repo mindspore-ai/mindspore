@@ -1,6 +1,17 @@
 mindspore
 =========
 
+.. note::
+    This version removes the public ``COOTensor``, ``CSRTensor``, ``RowTensor`` and ``SparseTensor`` APIs,
+    together with ``Tensor.to_coo`` and ``Tensor.to_csr``. Existing imports and calls must be adapted.
+    Ordinary Tensor, Parameter and internal sparse-gradient implementations remain available.
+    Private representations are not stable replacements for the removed APIs. Depending on operator support,
+    use Tensor components such as indices, values and shapes, or use dense tensors after evaluating memory,
+    computation cost and semantic differences.
+    Related COO/CSR object functions, ``nn.SparseToDense`` and ``rewrite.sparsify`` are also removed.
+    Shared sparse primitives accepting ordinary Tensor components and ``nn.SparseTensorDenseMatmul`` remain;
+    consult each operator's documentation for supported platforms.
+
 Data Presentation
 ------------------
 
@@ -14,10 +25,6 @@ Tensor
 
     mindspore.Tensor
     mindspore.tensor
-    mindspore.COOTensor
-    mindspore.CSRTensor
-    mindspore.RowTensor
-    mindspore.SparseTensor
     mindspore.is_tensor
     mindspore.from_numpy
     mindspore.frombuffer

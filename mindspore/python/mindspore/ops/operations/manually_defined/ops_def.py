@@ -25,7 +25,8 @@ from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_regi
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops._utils import arg_handler as handler
 from mindspore.ops._utils.arg_dtype_cast import DtypeToEnum
-from mindspore.common import Tensor, CSRTensor, COOTensor
+from mindspore.common import Tensor
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor
 from mindspore._c_expression import typing
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore._c_expression import pyboost_cast, pyboost_tile, pyboost_type_as

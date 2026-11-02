@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+"""Tests for graph fallback runtime isinstance."""
 import numpy as np
-from mindspore import Tensor, context, Parameter, jit_class, COOTensor, CSRTensor
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore import Tensor, context, Parameter, jit_class
+from mindspore.common._sparse_tensor import COOTensor, CSRTensor
+from mindspore.common._sparse_tensor import RowTensorInner
 import mindspore.nn as nn
 import mindspore as ms
 from tests.mark_utils import arg_mark

@@ -1,6 +1,15 @@
 mindspore
 =========
 
+.. note::
+    本版本移除公开的 ``COOTensor``、``CSRTensor``、``RowTensor``、``SparseTensor``
+    以及 ``Tensor.to_coo``、``Tensor.to_csr`` 接口。
+    原有代码中的相关导入和调用需要调整。普通 Tensor、Parameter 和训练内部使用的稀疏梯度实现继续保留。
+    内部私有表示不作为上述公开接口的稳定替代；迁移应根据算子支持情况使用索引、数值、形状等 Tensor 分量，
+    或在确认内存和计算开销可接受后使用稠密 Tensor，不能直接假定两者在性能和语义上等价。
+    配套的 COO/CSR 对象函数、``nn.SparseToDense`` 和 ``rewrite.sparsify`` 同步移除。
+    接收普通 Tensor 分量的共享稀疏原语和 ``nn.SparseTensorDenseMatmul`` 保留，支持平台以各算子文档为准。
+
 数据表达
 ---------
 
@@ -12,10 +21,6 @@ mindspore
 
     mindspore.Tensor
     mindspore.tensor
-    mindspore.COOTensor
-    mindspore.CSRTensor
-    mindspore.RowTensor
-    mindspore.SparseTensor
     mindspore.is_tensor
     mindspore.from_numpy
     mindspore.frombuffer

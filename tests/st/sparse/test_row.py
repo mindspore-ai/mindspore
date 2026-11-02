@@ -17,7 +17,7 @@
 import numpy as np
 
 from mindspore import Tensor, nn, context
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
 
 from tests.mark_utils import arg_mark
@@ -26,8 +26,8 @@ from tests.mark_utils import arg_mark
 def compare_row(row1, row2):
     assert isinstance(row1, RowTensorInner)
     assert isinstance(row2, RowTensorInner)
-    assert (row1.indices.asnumpy() == row1.indices.asnumpy()).all()
-    assert (row2.values.asnumpy() == row2.values.asnumpy()).all()
+    assert (row1.indices.asnumpy() == row2.indices.asnumpy()).all()
+    assert (row1.values.asnumpy() == row2.values.asnumpy()).all()
     assert row1.dense_shape == row2.dense_shape
 
 
@@ -77,7 +77,7 @@ def test_row_tensor_with_control_if():
 
     class RowTensorWithControlIf(nn.Cell):
         def __init__(self, shape):
-            super(RowTensorWithControlIf, self).__init__()
+            super().__init__()
             self.op1 = RowTensorValuesDouble()
             self.op2 = RowTensorValuesAdd2()
             self.shape = shape

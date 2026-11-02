@@ -1694,17 +1694,16 @@ class SparseMatrixSoftmax(Primitive):
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.common.dtype as mstype
-        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore import Tensor
         >>> from mindspore.ops.operations.sparse_ops import SparseMatrixSoftmax
         >>> logits_indptr = Tensor([0, 4, 6], dtype=mstype.int32)
         >>> logits_indices = Tensor([0, 2, 3, 4, 3, 4], dtype=mstype.int32)
         >>> logits_values = Tensor([1, 2, 3, 4, 1, 2], dtype=mstype.float32)
         >>> shape = (2, 6)
-        >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
         >>> net = SparseMatrixSoftmax(mstype.float32)
-        >>> logits_pointers =Tensor(logits.values.shape[0], mstype.int32)
-        >>> out = net(Tensor(logits.shape, dtype=mstype.int32), logits_pointers,
-        ...         logits.indptr, logits.indices, logits.values)
+        >>> logits_pointers = Tensor(logits_values.shape[0], mstype.int32)
+        >>> out = net(Tensor(shape, dtype=mstype.int32), logits_pointers,
+        ...           logits_indptr, logits_indices, logits_values)
         >>> print(out)
         (Tensor(shape=[2], dtype=Int32, value= [2, 6]),
          Tensor(shape=[], dtype=Int32, value= 6),

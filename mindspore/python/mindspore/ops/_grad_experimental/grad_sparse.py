@@ -28,6 +28,17 @@ from mindspore.ops.operations import _csr_ops
 from mindspore.ops.operations.sparse_ops import SparseAdd, CSRSparseMatrixToDense, CSRSparseMatrixToSparseTensor, \
     DenseToCSRSparseMatrix
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
+from mindspore.ops.function.sparse_func import (
+    _coo2csr,
+    _csr2coo,
+    _csr_div,
+    _csr_gather,
+    _csr_mul,
+    _csr_mv,
+    _csr_reduce_sum,
+    _make_coo_tensor,
+    _make_csr_tensor,
+)
 
 
 @bprop_getters.register(SparseTensorDenseAdd)
@@ -59,13 +70,13 @@ def bprop_make_coo_tensor(indices, values, dense_shape, out, dout):
 @bprops.register("COOTensorGetIndices")
 def bprop_coo_tensor_get_indices(coo_tensor, out, dout):
     """Backpropagator for primitive `COOTensorGetIndices`."""
-    return (F.make_coo_tensor(dout, zeros_like(coo_tensor.values), coo_tensor.shape),)
+    return (_make_coo_tensor(dout, zeros_like(coo_tensor.values), coo_tensor.shape),)
 
 
 @bprops.register("COOTensorGetValues")
 def bprop_coo_tensor_get_values(coo_tensor, out, dout):
     """Backpropagator for primitive `COOTensorGetValues`."""
-    return (F.make_coo_tensor(zeros_like(coo_tensor.indices), dout, coo_tensor.shape),)
+    return (_make_coo_tensor(zeros_like(coo_tensor.indices), dout, coo_tensor.shape),)
 
 
 @bprops.register("COOTensorGetDenseShape")
@@ -173,19 +184,19 @@ def bprop_make_csr_tensor(indptr, indices, values, dense_shape, out, dout):
 @bprops.register("CSRTensorGetIndptr")
 def bprop_csr_tensor_get_indptr(csr_tensor, out, dout):
     """Backpropagator for primitive `CSRTensorGetIndptr`."""
-    return (F.make_csr_tensor(dout, zeros_like(csr_tensor.indices), zeros_like(csr_tensor.values), csr_tensor.shape),)
+    return (_make_csr_tensor(dout, zeros_like(csr_tensor.indices), zeros_like(csr_tensor.values), csr_tensor.shape),)
 
 
 @bprops.register("CSRTensorGetIndices")
 def bprop_csr_tensor_get_indices(csr_tensor, out, dout):
     """Backpropagator for primitive `CSRTensorGetIndices`."""
-    return (F.make_csr_tensor(zeros_like(csr_tensor.indptr), dout, zeros_like(csr_tensor.values), csr_tensor.shape),)
+    return (_make_csr_tensor(zeros_like(csr_tensor.indptr), dout, zeros_like(csr_tensor.values), csr_tensor.shape),)
 
 
 @bprops.register("CSRTensorGetValues")
 def bprop_csr_tensor_get_values(csr_tensor, out, dout):
     """Backpropagator for primitive `CSRTensorGetValues`."""
-    return (F.make_csr_tensor(zeros_like(csr_tensor.indptr), zeros_like(csr_tensor.indices), dout, csr_tensor.shape),)
+    return (_make_csr_tensor(zeros_like(csr_tensor.indptr), zeros_like(csr_tensor.indices), dout, csr_tensor.shape),)
 
 
 @bprops.register("CSRTensorGetDenseShape")
@@ -201,7 +212,7 @@ def get_bprop_csr_reduce_sum(self):
         output_shape_kept_dims = F.reduced_shape(shape, axis)
         tile_scaling = F.tuple_div(shape, output_shape_kept_dims)
         values_grad_dense = F.tile(F.reshape(dout, output_shape_kept_dims), tile_scaling)
-        values_grad = F.csr_gather(indptr, indices, values_grad_dense, shape)
+        values_grad = _csr_gather(indptr, indices, values_grad_dense, shape)
         res = (indptr, indices, values_grad, (), zeros_like(axis))
         return res
     return bprop
@@ -211,17 +222,17 @@ def get_bprop_csr_reduce_sum(self):
 def get_bprop_csr_mv(self):
     "Back-propagation for CSRMV."
     def bprop(indptr, indices, values, dense_shape, dense, out, dout):
-        rows = F.csr2coo(indptr, indices.shape[0])
+        rows = _csr2coo(indptr, indices.shape[0])
         idx_dtype = rows.dtype
         rows_transposed, cols_indexing = F.sort(indices.astype(mstype.float32))
         rows_transposed = rows_transposed.astype(idx_dtype)
         cols_transposed = rows[cols_indexing]
         values_transposed = values[cols_indexing]
-        indptr_transposed = F.coo2csr(rows_transposed, dense_shape[1])
-        csr_tensor_transposed = F.make_csr_tensor(
+        indptr_transposed = _coo2csr(rows_transposed, dense_shape[1])
+        csr_tensor_transposed = _make_csr_tensor(
             indptr_transposed, cols_transposed, values_transposed, (dense_shape[1], dense_shape[0]))
 
-        dense_grad = F.csr_mv(csr_tensor_transposed, dout)
+        dense_grad = _csr_mv(csr_tensor_transposed, dout)
         parts_a = F.gather(dout, rows, 0)
         parts_b = F.gather(dense, indices, 0)
         values_grad = F.reduce_sum(parts_a * parts_b, 1)
@@ -241,16 +252,16 @@ def get_bprop_csr_mul(self):
     to index the dense input.
     """
     def bprop(indptr, indices, values, shape, dense, out, dout):
-        csr_tensor_grad_value = F.csr_mul(F.make_csr_tensor(indptr, indices, dout, shape), dense).values
+        csr_tensor_grad_value = _csr_mul(_make_csr_tensor(indptr, indices, dout, shape), dense).values
         dense_grad_value = F.mul(dout, values)
-        dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
+        dense_grad = _make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:
             raise ValueError(
                 "Backpropagation for CSRMul with broadcast for the first dimension is not supported! Use `*` instead")
         if dense.shape[1] == 1:
-            dense_grad = F.csr_reduce_sum(dense_grad, 1)
+            dense_grad = _csr_reduce_sum(dense_grad, 1)
         else:
-            row = F.csr2coo(indptr, indices.shape[0])
+            row = _csr2coo(indptr, indices.shape[0])
             coo_idx = P.Stack(-1)((row, indices))
             dense_grad = F.tensor_scatter_update(zeros_like(dense), coo_idx, dense_grad_value)
         res = (indptr, indices, csr_tensor_grad_value, (), dense_grad)
@@ -278,20 +289,20 @@ def get_bprop_csr_div(self):
         shape_y = feature_dim + shape[batch_dim_dense_start:]
         reduce_x, reduce_y = F.broadcast_gradient_args(shape_x, shape_y)
 
-        csr_tensor_grad = F.csr_div(F.make_csr_tensor(indptr, indices, dout, shape), dense)
+        csr_tensor_grad = _csr_div(_make_csr_tensor(indptr, indices, dout, shape), dense)
         if reduce_x:
             csr_tensor_grad_value = P.ReduceSum(True)(csr_tensor_grad.values, reduce_x)
         else:
             csr_tensor_grad_value = csr_tensor_grad.values
         dense_grad_value = F.neg(F.mul(out, csr_tensor_grad_value))
-        dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
+        dense_grad = _make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:
             raise ValueError(
                 "Backpropagation for CSRDiv with broadcast for the first dimension is not supported! Use `/` instead")
         if dense.shape[1] == 1:
-            dense_grad = F.csr_reduce_sum(dense_grad, 1)
+            dense_grad = _csr_reduce_sum(dense_grad, 1)
         else:
-            row = F.csr2coo(indptr, indices.shape[0])
+            row = _csr2coo(indptr, indices.shape[0])
             coo_idx = P.Stack(-1)((row, indices))
             dense_grad = F.tensor_scatter_update(zeros_like(dense), coo_idx, dense_grad_value)
         if reduce_y:
