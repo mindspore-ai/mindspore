@@ -36,7 +36,7 @@ argsort:
     Sorts `self` along the given dimension in specified order and return the sorted indices.
 
     .. warning::
-        This is an experimental optimizer API that is subject to deletion or change.
+        This is an experimental API that is subject to deletion or change.
 
     Args:
         dim (int, optional): The dim to sort along. Default: ``-1`` , means the last dimension.

@@ -166,7 +166,7 @@ def is_available(device_target):
 
     Args:
         device_target (str): The target device specified, should be one of ``"CPU"`` , ``"GPU"`` and
-            ``"Ascend"`` . Default ``None`` , represents the current device set by context.
+            ``"Ascend"`` .
 
     Returns:
         bool

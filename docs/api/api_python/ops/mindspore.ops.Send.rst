@@ -3,7 +3,7 @@ mindspore.ops.Send
 
 .. py:class:: mindspore.ops.Send(sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP, group_back=GlobalComm.WORLD_COMM_GROUP)
 
-    发送张量到指定线程。
+    发送张量到指定进程。
 
     .. note::
         Send 和 Receive 算子需组合使用，且需要有同一个 `sr_tag`。
@@ -18,9 +18,9 @@ mindspore.ops.Send
         - **input_x** (Tensor) - 输入待发送的Tensor，Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
 
     异常：
-        - **TypeError** - dest_rank不是int或group不是str。
+        - **TypeError** - 如果 `group` 不是字符串。
         - **RuntimeError** - 如果目标设备无效，或者后端无效，或者分布式初始化失败。
-        - **ValueError** - 如果该线程的rank id 大于通信组的rank size。
+        - **ValueError** - 如果该进程的rank id 大于通信组的rank size。
 
     样例：
 

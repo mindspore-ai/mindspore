@@ -54,7 +54,7 @@ def combine_tensor_list_contiguous(tensor_list, enable_mem_align=True):
 
 class ContiguousTensorsHandle:
     r"""
-    ContiguousTensorsHandle is a handle manage continuous memory.
+    ContiguousTensorsHandle is a handle for managing continuous memory.
 
     Args:
         tensor_list (list[Tensor], tuple[Tensor]): The tensor list to be stored.
@@ -138,7 +138,7 @@ class ContiguousTensorsHandle:
 
         Args:
             start(int, None): Starting position. Default ``None``.
-            end(int, None): Deadline position. Default ``None``.
+            end(int, None): End position. Default ``None``.
 
         Returns:
             Tensor

@@ -1065,7 +1065,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def asnumpy(self):
         """
-        Convert tensor to numpy array. Returns self tensor as a NumPy ndarray. This tensor and the returned ndarray
+        Convert a tensor to numpy array. Returns self tensor as a NumPy ndarray. This tensor and the returned ndarray
         share the same underlying storage. Changes to self tensor will be reflected in the ndarray.
 
         .. warning::
@@ -1763,7 +1763,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype, can be in
                 format of `mindspore.dtype.float32` or `numpy.float32` or `float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
-                tensor. If this is set to ``false`` , the input tensor is returned instead
+                tensor. If this is set to ``False`` , the input tensor is returned instead
                 of a copy. Default:  ``True`` .
 
         Returns:

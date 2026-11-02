@@ -286,7 +286,7 @@ class Custom(ops.PrimitiveWithInfer):
               a) GPU/CPU platform.
 
               "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as an
-              operator. Users need to compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
+              operator. Users need to compile a handwritten "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time,
               and offer the path of the file along with a function name.
 
               - "xxx.so" file generation:
@@ -350,7 +350,7 @@ class Custom(ops.PrimitiveWithInfer):
               based on the implementation of the infer function:
 
               - Python infer: If the operator's infer function is implemented in Python, that is, the infer shape
-                function is passed through the `out_shape` parameter, and the infer type is passed throuht the
+                function is passed through the `out_shape` parameter, and the infer type is passed through the
                 `out_dtype`, then the `func` should be specified as the operator name, for example,
                 `func="CustomName"`.
               - C++ infer: If the operator's infer function is implemented through C++, then pass the path of the
@@ -366,7 +366,7 @@ class Custom(ops.PrimitiveWithInfer):
             of each output.
 
             The input can be None only when the func_type input is "hybrid". In this case, the automatic infer
-            shape mechanic will be enabled.
+            shape mechanism will be enabled.
 
         out_dtype (Union[function, :class:`mindspore.dtype`, tuple[:class:`mindspore.dtype`]], optional): The output
             data type infer function or the value of output data type of `func`. Default: ``None`` .
@@ -377,7 +377,7 @@ class Custom(ops.PrimitiveWithInfer):
             represents the data type of each output.
 
             The input can be None only when the func_type input is "hybrid". In this case, the automatic infer
-            value mechanic will be enabled.
+            value mechanism will be enabled.
 
         func_type (str, optional): The implementation type of `func`, should be one of
             [ ``"aot"`` , ``"pyfunc"``]. Default: ``"pyfunc"``.

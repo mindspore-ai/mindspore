@@ -2398,10 +2398,10 @@ class WhileLoop(Primitive):
 
     The current WhileLoop operator has the following syntactic limitations:
 
-    - Using a side-effect function as `loop_func` is currently not support,
+    - Using a side-effect function as `loop_func` is currently not supported,
       such as operations that modify parameters, global variables, etc.
     - The return value of `loop_func` being of a different type or shape
-      from the `init_val` is currently not support.
+      from the `init_val` is currently not supported.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2478,10 +2478,10 @@ class Scan(Primitive):
 
     The current Scan operator has the following syntactic limitations:
 
-    - Using a side-effect function as `loop_func` is currently not support,
+    - Using a side-effect function as `loop_func` is currently not supported,
       such as operations that modify parameters, global variables, etc.
     - The first element of the return value of `loop_func` being of a different
-      type or shape from the `init_val` is currently not support.
+      type or shape from the `init` is currently not supported.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2568,11 +2568,11 @@ class ForiLoop(Primitive):
 
     The current ForiLoop operator has the following syntactic limitations:
 
-    - Using a side-effect function as `loop_func` is currently not support,
+    - Using a side-effect function as `loop_func` is currently not supported,
       such as operations that modify parameters, global variables, etc.
     - The return value of `loop_func` being of a different type or shape
-      from the `init_val` is currently not support.
-    - Negative numbers or custom increments is currently not support.
+      from the `init_val` is currently not supported.
+    - Negative numbers or custom increments is currently not supported.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
