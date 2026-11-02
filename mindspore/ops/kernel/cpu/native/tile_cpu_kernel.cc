@@ -16,6 +16,7 @@
 
 #include "kernel/cpu/native/tile_cpu_kernel.h"
 #include <algorithm>
+#include <climits>
 #include <map>
 #include <numeric>
 #include <functional>
@@ -50,25 +51,22 @@ void TileCpuKernelMod::TileMultipleCompute() {
 
   input_size_ = 1;
   tile_struct_.in_dim_ = x_shape_.size();
+  int64_t output_size = 1;
   for (int i = 0; i < tile_struct_.in_dim_; i++) {
-    input_size_ *= x_shape_[i];
+    input_size_ *= static_cast<size_t>(x_shape_[i]);
+    output_size *= y_shape_[i];
     tile_struct_.in_shape_[i] = x_shape_[i];
     tile_struct_.out_shape_[i] = y_shape_[i];
-  }
-
-  int stridex = 1;
-  int stridey = 1;
-  for (int i = tile_struct_.in_dim_ - 1; i >= 0; i--) {
-    tile_struct_.in_strides_[i] = stridex;
-    tile_struct_.out_strides_[i] = stridey;
-    stridex *= x_shape_[i];
-    stridey *= y_shape_[i];
   }
 
   int large_one_multiple_count_ = 0;
   int multiple = 0;
   size_t mul_index = 0;
   for (size_t i = 0; i < multiples_.size(); i++) {
+    if (multiples_[i] > INT_MAX) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of multiples can not be greater than " << INT_MAX
+                        << ", but got multiples[" << i << "]: " << multiples_[i] << ".";
+    }
     tile_struct_.multiples_[i] = static_cast<int>(multiples_[i]);
     if (tile_struct_.multiples_[i] > 1) {
       large_one_multiple_count_++;
@@ -79,12 +77,36 @@ void TileCpuKernelMod::TileMultipleCompute() {
 
   one_dim_tile_ = large_one_multiple_count_ == 1;
   if (one_dim_tile_) {
+    // Calculate the fast stride by int64 to avoid the int32 overflow of in_strides_ when the element number of
+    // the input exceeds INT_MAX.
+    int64_t fast_stride = 1;
+    for (size_t i = mul_index; i < x_shape_.size(); i++) {
+      fast_stride *= x_shape_[i];
+    }
     tile_struct_.fast_multiple_ = static_cast<size_t>(multiple);
-    tile_struct_.fast_stride_ = static_cast<size_t>(x_shape_[mul_index] * tile_struct_.in_strides_[mul_index]);
+    tile_struct_.fast_stride_ = static_cast<size_t>(fast_stride);
     if (tile_struct_.fast_stride_ == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fast stride can not be equal to 0";
     }
-    tile_struct_.fast_outer_size_ = static_cast<size_t>(input_size_ / tile_struct_.fast_stride_);
+    // Skip copying when the output is empty to avoid writing out of bounds.
+    tile_struct_.fast_outer_size_ =
+      (output_size == 0) ? 0 : static_cast<size_t>(input_size_ / tile_struct_.fast_stride_);
+  } else {
+    // The strides and offsets of the shared nnacl kernel are calculated in int32, so the element number of the
+    // input and output must not exceed INT_MAX in the multiple dimension tile case.
+    if (static_cast<int64_t>(input_size_) > INT_MAX || output_size > INT_MAX) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element number of input: " << input_size_
+                        << " or output: " << output_size << " exceeds the int32 range: " << INT_MAX
+                        << ", which is not supported on CPU when tile on multiple dimensions.";
+    }
+    int stridex = 1;
+    int stridey = 1;
+    for (int i = tile_struct_.in_dim_ - 1; i >= 0; i--) {
+      tile_struct_.in_strides_[i] = stridex;
+      tile_struct_.out_strides_[i] = stridey;
+      stridex *= static_cast<int>(x_shape_[i]);
+      stridey *= static_cast<int>(y_shape_[i]);
+    }
   }
 }
 
