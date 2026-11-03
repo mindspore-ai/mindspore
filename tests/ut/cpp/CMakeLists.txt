@@ -287,8 +287,7 @@ foreach(comp ${ALL_UT_COMPS})
                 ${PYTHON_LIBRARIES} pthread util dl)
         target_link_libraries(ut_${comp}_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
-                mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
-                mindspore::icui18n mindspore::z)
+                mindspore::z)
         if(ENABLE_FFMPEG)
             target_link_libraries(ut_${comp}_tests PRIVATE mindspore::avcodec mindspore::avdevice mindspore::avfilter
                     mindspore::avformat mindspore::avutil mindspore::swresample mindspore::swscale)

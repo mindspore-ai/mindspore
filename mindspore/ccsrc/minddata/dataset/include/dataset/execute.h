@@ -128,13 +128,13 @@ class DATASET_API Execute {
   /// \par Example
   /// \code
   ///      /* Usage of Execute */
-  ///      auto tokenizer = text::BasicTokenizer();
-  ///      mindspore::dataset::Execute transform = Execute({tokenizer});
+  ///      auto decode = std::make_shared<vision::Decode>();
+  ///      mindspore::dataset::Execute transform = Execute({decode});
   ///
   ///      /* Apply transforms */
-  ///      std::vector<mindspore::MSTensor> txt = ReadTextToTensor("demo.txt");
-  ///      std::vector<mindspore::MSTensor> txt_result;
-  ///      Status rc = transform1({txt}, &txt_result);
+  ///      mindspore::MSTensor image = ReadFileToTensor("apple.jpg");
+  ///      std::vector<mindspore::MSTensor> decoded_images;
+  ///      Status rc = transform({image}, &decoded_images);
   /// \endcode
   Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
 

@@ -8,7 +8,6 @@ SET(DE_UT_SRCS
         bit_functions_test.cc
         btree_test.cc
         buddy_test.cc
-        build_vocab_test.cc
         c_api_audio_a_to_q_test.cc
         c_api_audio_r_to_z_test.cc
         c_api_cache_test.cc
@@ -68,10 +67,6 @@ SET(DE_UT_SRCS
         c_api_pull_based_test.cc
         c_api_repeat_test.cc
         c_api_samplers_test.cc
-        c_api_text_sentence_piece_vocab_test.cc
-        c_api_text_test.cc
-        c_api_text_vocab_test.cc
-        c_api_text_test.cc
         c_api_transforms_test.cc
         c_api_vision_random_test.cc
         c_api_vision_r_to_z_test.cc
@@ -101,7 +96,6 @@ SET(DE_UT_SRCS
         ir_tree_adapter_test.cc
         ir_vision_random_test.cc
         ir_vision_test.cc
-        jieba_tokenizer_op_test.cc
         main_test.cc
         map_op_test.cc
         memory_pool_test.cc
@@ -127,7 +121,6 @@ SET(DE_UT_SRCS
         skip_first_epoch_sampler_test.cc
         skip_pushdown_optimization_pass_test.cc
         slice_op_test.cc
-        sliding_window_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
         storage_container_test.cc
@@ -140,10 +133,8 @@ SET(DE_UT_SRCS
         tensor_test.cc
         tensorshape_test.cc
         tfReader_op_test.cc
-        tokenizer_op_test.cc
         treap_test.cc
         tree_modifying_function_test.cc
-        trucate_pair_test.cc
         type_cast_op_test.cc
         weighted_random_sampler_test.cc
         )

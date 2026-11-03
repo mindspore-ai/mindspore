@@ -79,11 +79,6 @@ Status PythonPullBasedIteratorConsumer::GetNextAsDict(const py::dict *out) {
   return consumers_util::GetNextAsPythonDict(this, out);
 }
 
-Status PythonBuildVocabConsumer::Start() {
-  py::gil_scoped_release gil_release;
-  return BuildVocabConsumer::Start();
-}
-
 Status PythonSaveToDisk::Save() {
   py::gil_scoped_release gil_release;
   return SaveToDisk::Save();

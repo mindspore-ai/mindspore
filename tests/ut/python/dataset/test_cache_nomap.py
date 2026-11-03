@@ -21,9 +21,9 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-from mindspore.dataset import text
 from mindspore.dataset import vision
 from mindspore import log as logger
+from tests.ut.python.dataset.text_pyfunc_helpers import split_words
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -1918,11 +1918,6 @@ def test_cache_nomap_textfile2():
 
     Expectation: Output is equal to the expected output
     """
-    def my_tokenizer(line):
-        words = line.split()
-        if not words:
-            return [""]
-        return words
 
     logger.info("Test cache nomap textfile 2")
     if "SESSION_ID" in os.environ:
@@ -1933,8 +1928,7 @@ def test_cache_nomap_textfile2():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.TextFileDataset(TEXT_FILE_DATA_DIR, num_samples=2)
-    tokenizer = text.PythonTokenizer(my_tokenizer)
-    ds1 = ds1.map(operations=tokenizer, cache=some_cache)
+    ds1 = ds1.map(operations=split_words, cache=some_cache)
 
     num_epoch = 4
     iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)

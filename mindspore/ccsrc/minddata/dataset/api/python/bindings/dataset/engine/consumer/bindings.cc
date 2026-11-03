@@ -143,15 +143,6 @@ PYBIND_REGISTER(PythonRuntimeContext, 2, ([](const py::module *m) {
                          [](py::object &runtime_context, const py::dict &memo) { return runtime_context; });
                 }));
 
-PYBIND_REGISTER(PythonBuildVocabConsumer, 1, ([](const py::module *m) {
-                  (void)py::class_<PythonBuildVocabConsumer, TreeConsumer, std::shared_ptr<PythonBuildVocabConsumer>>(
-                    *m, "PythonBuildVocabConsumer")
-                    .def(py::init<>())
-                    .def("Init", [](PythonBuildVocabConsumer &self,
-                                    const std::shared_ptr<DatasetNode> &root) { THROW_IF_ERROR(self.Init(root)); })
-                    .def("Start", [](PythonBuildVocabConsumer &self) { THROW_IF_ERROR(self.Start()); });
-                }));
-
 PYBIND_REGISTER(ToDevice, 1, ([](const py::module *m) {
                   (void)py::class_<ToDevice, TreeConsumer, std::shared_ptr<ToDevice>>(*m, "ToDevice")
                     .def(py::init<int32_t>())

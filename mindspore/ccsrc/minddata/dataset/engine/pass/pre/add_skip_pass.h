@@ -46,18 +46,6 @@ class AddSkipPass : public IRTreePass {
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<RootNode> node, bool *const modified) override;
 
-    /// \brief Performs finder work for BuildVocabNode that has special rules about skip injection.
-    /// \param[in] node The node being visited
-    /// \param[in, out] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) override;
-
-    /// \brief Performs finder work for BuildSentenceVocabNode that has special rules about skip injection.
-    /// \param[in] node The node being visited
-    /// \param[in, out] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) override;
-
     /// \brief Performs finder work for ShuffleNode that has special rules about skip injection.
     /// \param[in] node The node being visited
     /// \param[in, out] modified Indicator if the node was changed at all

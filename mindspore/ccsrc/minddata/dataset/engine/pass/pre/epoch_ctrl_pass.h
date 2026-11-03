@@ -42,23 +42,11 @@ class EpochCtrlPass : public IRTreePass {
     /// \brief Destructor
     ~InjectionFinder() = default;
 
-    /// \brief Performs finder work for BuildVocabNode that has special rules about epoch control injection.
+    /// \brief Finds the root child and epoch count for epoch control injection.
     /// \param[in] node The node being visited
     /// \param[in, out] modified Indicator if the node was changed at all
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<RootNode> node, bool *const modified) override;
-
-    /// \brief Performs finder work for BuildVocabNode that has special rules about epoch control injection.
-    /// \param[in] node The node being visited
-    /// \param[in, out] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) override;
-
-    /// \brief Performs finder work for BuildSentenceVocabNode that has special rules about epoch control injection.
-    /// \param[in] node The node being visited
-    /// \param[in, out] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) override;
 
     /// \brief Register the DataQueueNode for further action.
     /// \param[in] node The node being visited

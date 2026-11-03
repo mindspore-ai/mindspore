@@ -57,20 +57,6 @@ from mindspore.parallel._utils import _is_in_data_parallel_mode
 from mindspore.run_check._check_version import check_version_and_env_config
 from mindspore.dataset.callback.ds_callback import DSCallback, WaitedDSCallback
 from mindspore.dataset.transforms.transforms import TensorOperation, _Compose, Plugin, TypeCast
-from mindspore.dataset.text.transforms import (
-    AddToken,
-    JiebaTokenizer,
-    Lookup,
-    Ngram,
-    SentencePieceTokenizer,
-    SlidingWindow,
-    ToNumber,
-    ToVectors,
-    Truncate,
-    TruncateSequencePair,
-    UnicodeCharTokenizer,
-    WordpieceTokenizer,
-)
 from mindspore.dataset.core.datatypes import nptype_to_detype, mstype_to_detype, mstypelist_to_detypelist
 from mindspore.dataset.audio.utils import create_dct, linear_fbanks, melscale_fbanks
 from mindspore.dataset.engine.cache_client import DatasetCache
@@ -149,20 +135,6 @@ def _get_dataset_forbidden_code():
     codes = []
     codes.extend([DSCallback.__init__, WaitedDSCallback.__init__])
     codes.extend([TensorOperation.__call__, _Compose.parse, Plugin.parse, TypeCast.parse])
-    codes.extend([
-        AddToken.parse,
-        JiebaTokenizer.parse,
-        Lookup.parse,
-        Ngram.parse,
-        SentencePieceTokenizer.parse,
-        SlidingWindow.parse,
-        ToNumber.parse,
-        ToVectors.parse,
-        Truncate.parse,
-        TruncateSequencePair.parse,
-        UnicodeCharTokenizer.parse,
-        WordpieceTokenizer.parse,
-    ])
     codes.extend([create_dct, linear_fbanks, melscale_fbanks])
     codes.extend([DatasetCache.__init__, Iterator.__init__])
     codes.extend([CSVDataset.parse, MindDataset.parse, TFRecordDataset.parse])

@@ -41,8 +41,6 @@
 
 // IR non-leaf nodes - for android
 #include "minddata/dataset/engine/operation/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/operation/datasetops/build_sentence_piece_vocab_node.h"
-#include "minddata/dataset/engine/operation/datasetops/build_vocab_node.h"
 #include "minddata/dataset/engine/operation/datasetops/sync_wait_node.h"
 
 // op
@@ -135,34 +133,6 @@ PYBIND_REGISTER(BucketBatchByLengthNode, 2, ([](const py::module *m) {
                          py::arg("dataset"), py::arg("column_names"), py::arg("bucket_boundaries"),
                          py::arg("bucket_batch_sizes"), py::arg("element_length_function") = py::none(),
                          py::arg("pad_info"), py::arg("pad_to_bucket_boundary"), py::arg("drop_remainder"));
-                }));
-
-PYBIND_REGISTER(BuildSentenceVocabNode, 2, ([](const py::module *m) {
-                  (void)py::class_<BuildSentenceVocabNode, DatasetNode, std::shared_ptr<BuildSentenceVocabNode>>(
-                    *m, "BuildSentenceVocabNode", "to create a BuildSentenceVocabNode")
-                    .def(py::init(
-                      [](const std::shared_ptr<DatasetNode> &self, const std::shared_ptr<SentencePieceVocab> &vocab,
-                         const std::vector<std::string> &col_names, int32_t vocab_size, float character_coverage,
-                         SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params) {
-                        auto build_sentence_vocab = std::make_shared<BuildSentenceVocabNode>(
-                          self, vocab, col_names, vocab_size, character_coverage, model_type, params);
-                        THROW_IF_ERROR(build_sentence_vocab->ValidateParams());
-                        return build_sentence_vocab;
-                      }));
-                }));
-
-PYBIND_REGISTER(BuildVocabNode, 2, ([](const py::module *m) {
-                  (void)py::class_<BuildVocabNode, DatasetNode, std::shared_ptr<BuildVocabNode>>(
-                    *m, "BuildVocabNode", "to create a BuildVocabNode")
-                    .def(py::init([](const std::shared_ptr<DatasetNode> &self, const std::shared_ptr<Vocab> &vocab,
-                                     const py::list &columns, const py::tuple &freq_range, int64_t top_k,
-                                     py::list special_tokens, bool special_first) {
-                      auto build_vocab =
-                        std::make_shared<BuildVocabNode>(self, vocab, toStringVector(columns), toIntPair(freq_range),
-                                                         top_k, toStringVector(special_tokens), special_first);
-                      THROW_IF_ERROR(build_vocab->ValidateParams());
-                      return build_vocab;
-                    }));
                 }));
 
 PYBIND_REGISTER(ConcatNode, 2, ([](const py::module *m) {

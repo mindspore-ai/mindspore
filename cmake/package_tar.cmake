@@ -118,16 +118,6 @@ if(ENABLE_MINDDATA)
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
     )
-    file(GLOB_RECURSE ICU4C_LIB_LIST
-            ${icu4c_LIBPATH}/libicuuc*
-            ${icu4c_LIBPATH}/libicudata*
-            ${icu4c_LIBPATH}/libicui18n*
-            )
-    install(
-            FILES ${ICU4C_LIB_LIST}
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
-    )
 
     if(ENABLE_ACL)
         install(
@@ -206,7 +196,6 @@ install(
         FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
         ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h

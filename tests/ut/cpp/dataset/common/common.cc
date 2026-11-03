@@ -18,6 +18,9 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#ifdef ENABLE_PYTHON
+#include "pybind11/pybind11.h"
+#endif
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/pybind_support.h"
@@ -92,8 +95,8 @@ std::shared_ptr<mindspore::dataset::BatchOp> DatasetOpTesting::Batch(int32_t bat
   int32_t op_connector_size = cfg->op_connector_size();
   std::vector<std::string> output_columns = {};
   std::vector<std::string> input_columns = {};
-  mindspore::dataset::py::function batch_size_func;
-  mindspore::dataset::py::function batch_map_func;
+  pybind11::function batch_size_func;
+  pybind11::function batch_map_func;
   bool pad = false;
   if (!pad_map.empty()) {
     pad = true;

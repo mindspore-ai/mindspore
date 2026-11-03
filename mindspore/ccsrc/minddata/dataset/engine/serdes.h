@@ -102,7 +102,6 @@
 #include "minddata/dataset/vision/transform/rotate_ir.h"
 #include "minddata/dataset/vision/transform/swap_red_blue_ir.h"
 #include "minddata/dataset/vision/transform/to_tensor_ir.h"
-#include "minddata/dataset/text/transform/text_ir.h"
 
 namespace mindspore::dataset {
 using FuncResult = std::map<std::string, Status (*)(nlohmann::json, std::shared_ptr<TensorOperation> *)>;

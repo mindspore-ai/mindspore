@@ -86,7 +86,6 @@ add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(data_source)
 add_subdirectory(audio)
-add_subdirectory(text)
 add_subdirectory(vision)
 add_subdirectory(general)
 add_subdirectory(callback)
@@ -105,9 +104,6 @@ add_dependencies(engine core)
 add_dependencies(callback core)
 add_dependencies(audio-kernels core)
 add_dependencies(audio-transform core)
-add_dependencies(text core)
-add_dependencies(text-kernels core)
-add_dependencies(text-transform core)
 add_dependencies(vision-transform core)
 add_dependencies(vision-kernels core)
 add_dependencies(vision-kernels-dvpp-image core)
@@ -169,9 +165,6 @@ set(dataengine_submodules
         $<TARGET_OBJECTS:engine>
         $<TARGET_OBJECTS:audio-kernels>
         $<TARGET_OBJECTS:audio-transform>
-        $<TARGET_OBJECTS:text>
-        $<TARGET_OBJECTS:text-kernels>
-        $<TARGET_OBJECTS:text-transform>
         $<TARGET_OBJECTS:vision-transform>
         $<TARGET_OBJECTS:vision-kernels>
         $<TARGET_OBJECTS:vision-kernels-dvpp-image>
@@ -200,7 +193,7 @@ endif()
 ######################################################################
 
 ################# Link with external libraries ########################
-target_link_libraries(_c_dataengine PRIVATE proto_input mindspore::sentencepiece)
+target_link_libraries(_c_dataengine PRIVATE proto_input)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if(ENABLE_PYTHON)
@@ -212,13 +205,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         target_link_options(_c_dataengine PRIVATE -Wl,--allow-multiple-definition)
     endif()
 else()
-    set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
     if(ENABLE_PYTHON)
         target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::securec)
     else()
         target_link_libraries(_c_dataengine PRIVATE -ldl mindspore::securec)
     endif()
-    target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece mindspore::z)
+    target_link_libraries(_c_dataengine PUBLIC mindspore::z)
 endif()
 
 if(ENABLE_FFMPEG)
@@ -228,8 +220,7 @@ if(ENABLE_FFMPEG)
 endif()
 
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core
-                                          mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
-                                          mindspore::sentencepiece_train ${ICU_LIB})
+                                          mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2)
 
 target_link_libraries(_c_dataengine PRIVATE mindspore_profiler mindspore_hardware_abstract mindspore_runtime_utils)
 
@@ -273,7 +264,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     include(${CMAKE_SOURCE_DIR}/cmake/change_rpath.cmake)
-    set(LINK_SOS libtinyxml libicuuc libicudata libicui18n)
+    set(LINK_SOS libtinyxml)
     changerpath($<TARGET_FILE:_c_dataengine> _c_dataengine "${LINK_SOS}")
 endif()
 

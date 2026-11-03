@@ -77,8 +77,6 @@ The specific steps are as follows:
 - Dataset sample transform operation: The user can add data transform operations
   (`vision transform <https://www.mindspore.cn/docs/en/master/api_python/
   mindspore.dataset.transforms.html#module-mindspore.dataset.vision>`_,
-  `nlp transform <https://www.mindspore.cn/docs/en/master/api_python/
-  mindspore.dataset.transforms.html#module-mindspore.dataset.text>`_,
   `audio transform <https://www.mindspore.cn/docs/en/master/api_python/
   mindspore.dataset.transforms.html#module-mindspore.dataset.audio>`_ )
   to the `.map <https://www.mindspore.cn/docs/en/master/api_python/dataset/dataset_method/operation/

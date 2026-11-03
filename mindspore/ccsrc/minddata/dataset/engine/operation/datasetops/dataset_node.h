@@ -52,8 +52,6 @@ class DatasetSizeGetter;
 // Names for non-leaf IR node
 constexpr char kBatchNode[] = "Batch";
 constexpr char kBucketBatchByLengthNode[] = "BucketBatchByLength";
-constexpr char kBuildSentencePieceVocabNode[] = "BuildSentencePieceVocab";
-constexpr char kBuildVocabNode[] = "BuildVocab";
 constexpr char kCacheLookupNode[] = "CacheLookup";
 constexpr char kCacheMergeNode[] = "CacheMerge";
 constexpr char kCacheNode[] = "Cache";

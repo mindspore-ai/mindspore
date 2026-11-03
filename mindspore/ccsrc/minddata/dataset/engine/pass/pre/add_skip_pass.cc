@@ -33,7 +33,7 @@ namespace dataset {
 AddSkipPass::InjectionFinder::InjectionFinder(const std::shared_ptr<DatasetNode> &node)
     : injection_point_(nullptr), has_shuffle_node_(false), has_batch_sampler_(false) {}
 
-// Performs finder work for BuildVocabOp that has special rules about skip injection
+// Find the root child and iteration state for skip injection
 Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool *const modified) {
   RETURN_UNEXPECTED_IF_NULL(node);
   RETURN_UNEXPECTED_IF_NULL(modified);
@@ -44,22 +44,6 @@ Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool 
   num_epochs_ = node->NumEpochs();
   step_ = node->Step();
   dataset_size_ = node->DatasetSize();
-  return Status::OK();
-}
-
-// Performs finder work for BuildVocabOp that has special rules about skip injection
-Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
-  injection_point_ = nullptr;
-  return Status::OK();
-}
-
-// Performs finder work for BuildSentencePieceVocabNode that has special rules about skip injection
-Status AddSkipPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
-  injection_point_ = nullptr;
   return Status::OK();
 }
 

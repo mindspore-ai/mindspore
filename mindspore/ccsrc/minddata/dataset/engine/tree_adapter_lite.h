@@ -34,8 +34,8 @@ class DatasetNode;
 class TreeAdapterLite {
  public:
   // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
-  // Currently there are 3 types of consumer, Iterator, Getter and TDT/Vocab/Save ...
-  // To avoid premature optimization, the last type (TDT/Vocab/Save) is regarded as Iterator for now.
+  // Currently there are 3 types of consumer, Iterator, Getter and TDT/Save ...
+  // To avoid premature optimization, the last type (TDT/Save) is regarded as Iterator for now.
   enum UsageFlag { kDeIterator = 0, kDeGetter = 1, kDeReset = 2 };
 
   explicit TreeAdapterLite(UsageFlag usage = kDeGetter);

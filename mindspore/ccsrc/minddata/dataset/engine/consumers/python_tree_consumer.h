@@ -69,11 +69,6 @@ class PythonPullBasedIteratorConsumer : public PullBasedIteratorConsumer {
   Status GetNextAsDict(const py::dict *out);
 };
 
-class PythonBuildVocabConsumer : public BuildVocabConsumer {
- public:
-  Status Start() override;
-};
-
 class PythonSaveToDisk : public SaveToDisk {
  public:
   PythonSaveToDisk(const std::string &datasetPath, int32_t numFiles, const std::string &datasetType);

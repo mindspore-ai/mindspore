@@ -29,7 +29,6 @@ namespace dataset {
 // Non-leaf IR node
 class BatchNode;
 class BucketBatchByLengthNode;
-class BuildVocabNode;
 class CacheLookupNode;
 class CacheMergeNode;
 class CacheNode;
@@ -50,7 +49,6 @@ class ZipNode;
 #ifdef ENABLE_PYTHON
 class SyncWaitNode;
 #endif
-class BuildSentenceVocabNode;
 // Leaf IR node
 class AlbumNode;
 class CelebANode;
@@ -154,10 +152,7 @@ class IRNodePass : public IRPass {
   virtual Status VisitAfter(std::shared_ptr<BatchNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<BucketBatchByLengthNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<BucketBatchByLengthNode> node, bool *const modified);
-  virtual Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified);
-  virtual Status VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified);
-  virtual Status Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified);
-  virtual Status VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *const modified);
+
   virtual Status Visit(std::shared_ptr<ConcatNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<ConcatNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<CacheMergeNode> node, bool *const modified);

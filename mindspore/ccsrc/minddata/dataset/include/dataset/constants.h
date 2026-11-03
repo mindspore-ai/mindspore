@@ -214,42 +214,6 @@ enum class DATASET_API VdecStreamFormat {
   kH264HighLevel       ///< Input video with H264_HIGH_LEVEL
 };
 
-/// \brief Possible tokenize modes for JiebaTokenizer.
-enum class DATASET_API JiebaMode {
-  kMix = 0,  ///< Tokenize with MPSegment algorithm.
-  kMp = 1,   ///< Tokenize with Hiddel Markov Model Segment algorithm.
-  kHmm = 2   ///< Tokenize with a mix of MPSegment and HMMSegment algorithm.
-};
-
-/// \brief Possible options for SPieceTokenizerOutType.
-enum class DATASET_API SPieceTokenizerOutType {
-  kString = 0,  ///< Output of sentencepiece tokenizer is string type.
-  kInt = 1      ///< Output of sentencepiece tokenizer is int type.
-};
-
-/// \brief Possible options for SPieceTokenizerLoadType.
-enum class DATASET_API SPieceTokenizerLoadType {
-  kFile = 0,  ///< Load sentencepiece tokenizer from local sentencepiece vocab file.
-  kModel = 1  ///< Load sentencepiece tokenizer from sentencepiece vocab instance.
-};
-
-/// \brief Type options for SentencePiece Model.
-enum class DATASET_API SentencePieceModel {
-  kUnigram = 0,  ///< Based on Unigram model.
-  kBpe = 1,      ///< Based on Byte Pair Encoding (BPE) model.
-  kChar = 2,     ///< Based on Char model.
-  kWord = 3      ///< Based on Word model.
-};
-
-/// \brief Possible options to specify a specific normalize mode.
-enum class DATASET_API NormalizeForm {
-  kNone = 0,  ///< Keep the input string tensor unchanged.
-  kNfc,       ///< Normalize with Normalization Form C.
-  kNfkc,      ///< Normalize with Normalization Form KC.
-  kNfd,       ///< Normalize with Normalization Form D.
-  kNfkd,      ///< Normalize with Normalization Form KD.
-};
-
 /// \brief Possible options for Mask.
 enum class DATASET_API RelationalOp {
   kEqual = 0,     ///< equal to `==`

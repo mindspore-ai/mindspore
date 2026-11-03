@@ -16,8 +16,6 @@ if(ENABLE_PYTHON)
             python/bindings/dataset/engine/perf/bindings.cc
             python/bindings/dataset/kernels/bindings.cc
             python/bindings/dataset/vision/bindings.cc
-            python/bindings/dataset/text/bindings.cc
-            python/bindings/dataset/text/transform/bindings.cc
             python/bindings/dataset/general/bindings.cc
             python/bindings/dataset/util/bindings.cc
             python/bindings/mindrecord/include/bindings.cc
@@ -36,6 +34,5 @@ add_library(cpp-API OBJECT
         iterator.cc
         transforms.cc
         samplers.cc
-        text.cc
         vision.cc
         )

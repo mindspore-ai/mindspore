@@ -32,8 +32,6 @@
 #include "minddata/dataset/engine/datasetops/barrier_op.h"
 #include "minddata/dataset/engine/datasetops/filter_op.h"
 #include "minddata/dataset/data_source/generator_op.h"
-#include "minddata/dataset/engine/datasetops/build_vocab_op.h"
-#include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"
 #endif
 
 #include "minddata/dataset/engine/datasetops/batch_op.h"

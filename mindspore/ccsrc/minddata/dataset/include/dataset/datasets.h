@@ -21,6 +21,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -33,7 +34,7 @@
 #include "utils/dual_abi_helper.h"
 #include "include/dataset/iterator.h"
 #include "include/dataset/samplers.h"
-#include "include/dataset/text.h"
+#include "include/dataset/transforms.h"
 #include "minddata/dataset/util/visible.h"
 
 namespace mindspore::dataset {
@@ -45,15 +46,12 @@ class Iterator;
 class PullBasedIterator;
 class SamplerObj;
 class SchemaObj;
-enum class SentencePieceModel;
-class SentencePieceVocab;
 class Tensor;
 class TensorOperation;
 class TensorShape;
 class TreeAdapter;
 class TreeAdapterLite;
 class TreeGetters;
-class Vocab;
 
 // Dataset classes (in alphabetical order)
 class BatchDataset;
@@ -256,60 +254,6 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
     return std::make_shared<BucketBatchByLengthDataset>(
       shared_from_this(), VectorStringToChar(column_names), bucket_boundaries, bucket_batch_sizes,
       element_length_function, MapStringToChar(pad_info), pad_to_bucket_boundary, drop_remainder);
-  }
-
-  /// \brief Function to create a SentencePieceVocab from source dataset.
-  /// \note Build a SentencePieceVocab from a dataset.
-  /// \param[in] col_names Column names to get words from. It can be a vector of column names.
-  /// \param[in] vocab_size Vocabulary size.
-  /// \param[in] character_coverage Percentage of characters covered by the model, must be between
-  ///     0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
-  ///     Japanese or Chinese character sets, and 1.0 for other languages with small character sets.
-  /// \param[in] model_type Model type. Choose from unigram (default), bpe, char, or word.
-  ///     The input sentence must be pretokenized when using word type.
-  /// \param[in] params A vector contains more option parameters of sentencepiece library.
-  /// \return Shared pointer to the SentencePieceVocab.
-  /// \par Example
-  /// \code
-  ///      /* Build a SentencePieceVocab from TextFile dataset */
-  ///      std::string vocab_file = "/path/to/txtfile";
-  ///      std::shared_ptr<Dataset> ds_vocab = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
-  ///      std::shared_ptr<SentencePieceVocab> vocab =
-  ///          ds_vocab->BuildSentencePieceVocab({}, 5000, 0.9995, SentencePieceModel::kUnigram, {});
-  /// \endcode
-  std::shared_ptr<SentencePieceVocab> BuildSentencePieceVocab(
-    const std::vector<std::string> &col_names, int32_t vocab_size, float character_coverage,
-    SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params) {
-    return BuildSentencePieceVocabCharIF(VectorStringToChar(col_names), vocab_size, character_coverage, model_type,
-                                         UnorderedMapStringToChar(params));
-  }
-
-  /// \brief Function to create a Vocab from source dataset.
-  /// \note Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-  ///    which contains top_k most frequent words (if top_k is specified).
-  /// \param[in] columns Column names to get words from. It can be a vector of column names.
-  /// \param[in] freq_range A tuple of integers (min_frequency, max_frequency). Words within the frequency
-  ///    range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-  ///    can be set to default, which corresponds to 0/total_words separately.
-  /// \param[in] top_k Number of words to be built into vocab. top_k most frequent words are
-  ///    taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken.
-  /// \param[in] special_tokens A list of strings, each one is a special token.
-  /// \param[in] special_first Whether special_tokens will be prepended/appended to vocab, If special_tokens
-  ///    is specified and special_first is set to default, special_tokens will be prepended.
-  /// \return Shared pointer to the Vocab.
-  /// \par Example
-  /// \code
-  ///      /* Build a Vocab from TextFile dataset */
-  ///      std::string vocab_file = "/path/to/txtfile";
-  ///      std::shared_ptr<Dataset> ds = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
-  ///      std::shared_ptr<Vocab> vocab = ds->BuildVocab();
-  /// \endcode
-  std::shared_ptr<Vocab> BuildVocab(const std::vector<std::string> &columns = {},
-                                    const std::pair<int64_t, int64_t> &freq_range = {0, kDeMaxFreq},
-                                    int64_t top_k = kDeMaxTopk, const std::vector<std::string> &special_tokens = {},
-                                    bool special_first = true) {
-    return BuildVocabCharIF(VectorStringToChar(columns), freq_range, top_k, VectorStringToChar(special_tokens),
-                            special_first);
   }
 
   /// \brief Function to create a ConcatDataset.
@@ -594,16 +538,6 @@ class DATASET_API Dataset : public std::enable_shared_from_this<Dataset> {
 
   // Char interface(CharIF) of Save
   bool SaveCharIF(const std::vector<char> &dataset_path, int32_t num_files, const std::vector<char> &dataset_type);
-
-  // Char interface(CharIF) of BuildSentencePieceVocab
-  std::shared_ptr<SentencePieceVocab> BuildSentencePieceVocabCharIF(
-    const std::vector<std::vector<char>> &col_names, int32_t vocab_size, float character_coverage,
-    SentencePieceModel model_type, const std::map<std::vector<char>, std::vector<char>> &params);
-
-  // Char interface(CharIF) of BuildVocab
-  std::shared_ptr<Vocab> BuildVocabCharIF(const std::vector<std::vector<char>> &columns,
-                                          const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
-                                          const std::vector<std::vector<char>> &special_tokens, bool special_first);
 };
 
 /// \class SchemaObj
