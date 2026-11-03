@@ -61,11 +61,11 @@ class Stream(Stream_):
         Record an event.
 
         Args:
-            event (Event, optional): event to record. If not given, a new one
-                will be allocated.
+            event (Event, optional): event to record. If this argument is ``None``,
+                a new one will be allocated. Default is ``None``.
 
         Returns:
-            Event, recorded event. If this argument is ``None``, a new one will be allocated. Default is ``None``.
+            Event, recorded event.
 
         Examples:
             >>> import mindspore

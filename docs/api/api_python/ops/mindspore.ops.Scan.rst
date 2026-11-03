@@ -4,7 +4,7 @@ mindspore.ops.Scan
 .. py:class:: mindspore.ops.Scan
 
     将一个函数循环作用于一个数组，且对当前元素的处理依赖上一个元素的执行结果。
-    Scan算子的执行逻辑可以近似表示为如下代码:
+    Scan算子的执行逻辑可以近似表示为如下代码：
 
     .. code-block:: python
 
@@ -18,7 +18,7 @@ mindspore.ops.Scan
                 ys.append(y)
             return carry, ys
 
-    当前Scan算子存在以下语法限制:
+    当前Scan算子存在以下语法限制：
 
     - 暂不支持 `loop_func` 为副作用函数，如：对Parameter、全局变量的修改等操作。
     - 暂不支持 `loop_func` 的返回值的第一个元素与初始值 `init` 的类型或形状不同。

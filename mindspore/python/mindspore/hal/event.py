@@ -98,7 +98,7 @@ class Event(Event_):
         Use :func:`mindspore.hal.current_stream()` if no `stream` is specified.
 
         Args:
-            stream (Stream, optional): a stream to record. If this argument is ``None``,
+            stream (Stream, optional): a stream to wait. If this argument is ``None``,
                 current stream will be used. Default ``None``.
 
         Examples:

@@ -1933,7 +1933,7 @@ class NPUGetFloatStatus(Primitive):
         If the sum of the flag equals to 0, there is no overflow happened. If the sum of the
         flag is bigger than 0, there is overflow happened.
         In addition, there are strict sequencing requirements for use, i.e., before
-        using the NPUGetFloatStatus operator, need to ensure that the NPUClearFlotStatus
+        using the NPUGetFloatStatus operator, need to ensure that the NPUClearFloatStatus
         and your compute has been executed. We use :class:`mindspore.ops.Depend`
         to ensure the correct execution order.
 
@@ -2002,8 +2002,8 @@ class NPUClearFloatStatus(Primitive):
         The flag is in the register on the `Ascend` device. It will be reset and can not be reused again after the
         `NPUClearFloatStatus` is called.
         In addition, there are strict sequencing requirements for use, i.e., before using the NPUGetFloatStatus
-        operator, need to ensure that the NPUClearFlotStatus and your compute has been executed.
-        We use :class:`mindspore.ops.Depend` on ensure the execution order.
+        operator, need to ensure that the NPUClearFloatStatus and your compute has been executed.
+        We use :class:`mindspore.ops.Depend` to ensure the execution order.
 
         Please refer to the Examples of :class:`mindspore.ops.NPUGetFloatStatus`.
 

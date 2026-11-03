@@ -250,7 +250,7 @@ class Reduce(PrimitiveWithInfer):
         >>> print(output)
         Process with rank 1: [[4. 4. 4. 4. 4. 4. 4. 4.]
                              [4. 4. 4. 4. 4. 4. 4. 4.]],
-        Other proesses: [0.].
+        Other processes: [0.].
     """
 
     @prim_attr_register
@@ -505,7 +505,7 @@ class ReduceScatter(Primitive):
 
     Args:
         op (str, optional): Specifies an operation used for element-wise reductions,
-                  like SUM and MAX. Default: ``ReduceOp.SUM`` .
+                  like sum, prod, max, min, and avg. Default: ``ReduceOp.SUM`` .
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
@@ -517,7 +517,7 @@ class ReduceScatter(Primitive):
         Tensor, it has the same dtype as `input_x` with a shape of :math:`(N/rank\_size, *)`.
 
     Raises:
-        TypeError: If any of operation and group is not a string.
+        TypeError: If any of `op` and `group` is not a string.
         ValueError: If the first dimension of the input cannot be divided by the rank_size.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
@@ -645,15 +645,15 @@ class Broadcast(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        root_rank (int): Specifies the rank(global rank) of the process that broadcast the tensor.
+        root_rank (int): Specifies the rank (global rank) of the process that broadcasts the tensor.
             And only process `root_rank` will broadcast the tensor.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` .
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (tuple[Tensor]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        tuple[Tensor], Tensor has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
+        tuple[Tensor], Tensor has the same shape as the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
         The contents depend on the data of the `root_rank` device.
 
     Raises:
@@ -954,9 +954,9 @@ class NeighborExchangeV2(Primitive):
     r"""
     NeighborExchangeV2 is a collective communication operation.
 
-    NeighborExchangeV2 sends data from the local rank to ranks in the `send_rank_ids`,
-    as while receive data from `recv_rank_ids`. Please refer to the tutorial examples
-    below to learn about how the data is exchanged between neighborhood devices.
+    NeighborExchangeV2 sends data from the local rank to the ranks specified in `send_rank_ids`,
+    and at the same time receives data from the ranks specified in `recv_rank_ids`.
+    Refer to the tutorial examples below for details on how data is exchanged between neighboring devices.
 
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
@@ -967,12 +967,12 @@ class NeighborExchangeV2(Primitive):
         the sent data `send_lens`.
 
     Args:
-        send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
+        send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represent 8 directions, if one
                                    direction is not send to , set it -1.
-        recv_rank_ids (list(int)): Ranks which the data is received from. 8 rank_ids represents 8 directions,
-                                   if one direction is not recv from , set it -1.
         send_lens (list(int)): Data lens which send to the send_rank_ids, 4 numbers represent the lens of
                                [send_top, send_bottom, send_left, send_right].
+        recv_rank_ids (list(int)): Ranks which the data is received from. 8 rank_ids represent 8 directions,
+                                   if one direction is not recv from , set it -1.
         recv_lens (list(int)): Data lens which received from recv_rank_ids, 4 numbers represent the lens of
                                [recv_top, recv_bottom, recv_left, recv_right].
         data_format (str): Data format, only support NCHW now.
@@ -1089,14 +1089,14 @@ class NeighborExchangeV2(Primitive):
 
 class CollectiveScatter(Primitive):
     r"""
-    Scatter input data evently across the processes in the specified communication group.
+    Scatter input data evenly across the processes in the specified communication group.
 
     Note:
         The interface behavior only support Tensor input and scatter evenly.
-        Only the tensor in process `src_rank` (global rank) will do scatter.
+        Only the tensor in process `src_rank` (global rank) will perform the scatter.
 
     Args:
-        src_rank (int, optional): Specifies the rank of the process that send the tensor.
+        src_rank (int, optional): Specifies the rank of the process that sends the tensor.
             And only process `src_rank` will send the tensor.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
@@ -1105,7 +1105,7 @@ class CollectiveScatter(Primitive):
 
     Outputs:
         Tensor, the shape of output is :math:`(x_1/src\_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
-        the dimension of input tensor divided by `src`, and the other dimension keep the same.
+        the dimension of input tensor divided by `src_rank`, and the other dimension keeps the same.
 
     Raises:
         TypeError: If `group` is not a str.
@@ -1154,7 +1154,7 @@ class CollectiveScatter(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - CollectiveScatter
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#reducescatter>`_
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#collectivescatter>`_
 
     """
 
@@ -1174,14 +1174,14 @@ class CollectiveScatter(Primitive):
 class CollectiveGather(Primitive):
     r"""
     Gathers tensors from the specified communication group. The operation will gather the tensor
-    from processes according to dimension 0.
+    from processes along dimension 0.
 
     Note:
         Only the tensor in process `dest_rank` (global rank) will keep the gathered tensor. The other process
         will keep a tensor with shape [1], which has no mathematical meaning.
 
     Args:
-        dest_rank(int): Specifies the rank of the process that receive the tensor.
+        dest_rank(int): Specifies the rank of the process that receives the tensor.
             And only process `dest_rank` will receive the gathered tensor.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
@@ -1189,8 +1189,8 @@ class CollectiveGather(Primitive):
         - **input_x** (Tensor) - The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
-        Tensor, the shape of output is :math:`(\sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
-        sum of the dimension of input tensor, and the other dimension keep the same.
+        Tensor, the shape of output is :math:`(\sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to the
+        sum of the dimension of input tensor, and the other dimension keeps the same.
 
     Raises:
         TypeError: If `group` is not a str.
@@ -1211,7 +1211,7 @@ class CollectiveGather(Primitive):
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
-            This example should be run with 4 devices.
+            This example should be run with 2 devices.
 
         >>> import numpy as np
         >>> import mindspore as ms
@@ -1947,7 +1947,7 @@ class AlltoAllV(PrimitiveWithInfer):
     AlltoAllV which supports uneven scatter and gather compared with AllToAll.
 
     Note:
-        Only support flatten tensor as input. Input tensor should be flattened and
+        Only support flattened tensor as input. Input tensor should be flattened and
         concatenated before call this primitive.
 
     Args:
@@ -2210,7 +2210,7 @@ class ReduceScatterV(PrimitiveWithInfer):
     and returns the tensor which is reduced and scattered.
 
     Note:
-        Only support flatten tensor as input. The input tensor should be flattened and
+        Only support flattened tensor as input. The input tensor should be flattened and
         concatenated before call this primitive.
 
     Args:

@@ -224,7 +224,7 @@ class GradOperation(GradOperation_):
          all inputs and given parameters: `gradient_function(x, y)`.
 
     - We can configure the sensitivity(gradient with respect to output) by setting `sens_param` as True and
-      passing an extra sensitivity input to the gradient function, the sensitivity input should has the
+      passing an extra sensitivity input to the gradient function, the sensitivity input should have the
       same shape and type with input function's output(see `GradNetWrtXYWithSensParam` in Examples).
 
       1. Construct a `GradOperation` higher-order function with `get_all=True` and `sens_param=True`:
@@ -721,11 +721,11 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
 
     Args:
         name (str): Operator name.
-        read_value (bool, optional): If the registered function do not need to set value on Parameter,
+        read_value (bool, optional): If the registered function does not need to set value on Parameter,
             and all inputs will pass by value, set `read_value` to ``True`` . Default: ``False`` .
 
     Raises:
-        ValueError: If failed to find a matching function for the given arguments.
+        ValueError: If no matching function is found for the given arguments.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

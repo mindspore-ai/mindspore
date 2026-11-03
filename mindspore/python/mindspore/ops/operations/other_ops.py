@@ -427,8 +427,8 @@ class IOU(Primitive):
 
 class Partial(Primitive):
     """
-    Makes a partial function instance. Partial function can be used to derived specialized
-    functions from general functions by fixing the value of certain number of arguments.
+    Makes a partial function instance. Partial function can be used to derive specialized
+    functions from general functions by fixing the value of a certain number of arguments.
 
     Inputs:
         - **args** (Union[FunctionType, Tensor]) - The function and bind arguments.

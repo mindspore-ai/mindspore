@@ -2,7 +2,7 @@ all:
   description: |
     all(axis=None, keep_dims=False) -> Tensor
 
-    Tests if all elements in tensor evaluates to `True` along the given axes.
+    Tests if all elements in a tensor evaluate to `True` along the given axes.
 
     .. warning::
         Non-backward-compatible change after version 2.9.0: overload `all(axis=None, keep_dims=False)` will be removed, and only `all(dim=None, keepdim=False)` will be supported.
@@ -42,7 +42,7 @@ all:
     .. method:: Tensor.all(dim=None, keepdim=False) -> Tensor
         :noindex:
 
-    Tests if all elements in tensor evaluates to `True` along the given axes.
+    Tests if all elements in a tensor evaluate to `True` along the given axes.
 
     Args:
         dim (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce. If ``None`` ,
