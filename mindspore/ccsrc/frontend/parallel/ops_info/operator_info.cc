@@ -2600,7 +2600,7 @@ TensorLayout OperatorInfo::GetInputLayoutFromSWCByStrategy(const StrategyPtr &st
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
   if (it != strategy_cost_.end()) {
     const auto &input_info = (*it)->inputs_ptr[input_index];
-    return std::move(input_info.tensor_layout());
+    return input_info.tensor_layout();
   }
   TensorLayout empty;
   return empty;
@@ -2611,7 +2611,7 @@ TensorLayout OperatorInfo::GetOutputLayoutFromSWCByStrategy(const StrategyPtr &s
   auto it = std::find_if(strategy_cost_.begin(), strategy_cost_.end(), is_target);
   if (it != strategy_cost_.end()) {
     const auto &output_info = (*it)->outputs_ptr[output_index];
-    return std::move(output_info.tensor_layout());
+    return output_info.tensor_layout();
   }
   TensorLayout empty;
   return empty;

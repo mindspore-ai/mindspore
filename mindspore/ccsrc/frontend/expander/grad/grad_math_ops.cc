@@ -671,10 +671,9 @@ NodePtr MeanExtGrad(BpropBuilder *ib, const NodePtr &input, NodePtr axis, const 
 
 DEF_PURE_SHAPE_CALC(g_addbmm_shapecalc)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
-    auto batch1_shape = inputs.at(i0);
-    auto batch2_shape = inputs.at(i1);
-    ShapeVector ret_shape(batch1_shape.begin(), batch1_shape.end());
-    ret_shape.back() = *(batch2_shape.end() - 1);
+    auto ret_shape = inputs.at(i0);
+    const auto &batch2_shape = inputs.at(i1);
+    ret_shape.at(ret_shape.size() - 1) = batch2_shape.at(batch2_shape.size() - 1);
     return {ret_shape};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {

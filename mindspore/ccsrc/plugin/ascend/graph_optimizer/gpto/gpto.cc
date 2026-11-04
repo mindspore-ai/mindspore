@@ -2977,7 +2977,7 @@ void UpdateTasksInlineCondition(std::unordered_map<CNodePtr, GptoTaskPtr> *cnode
             return i.second->name() == selected_task->name();
           })->first;
         // Get all nested switch parents to visit
-        for (const auto switch_parent : selected_task_switch->parents()) {
+        for (const auto &switch_parent : selected_task_switch->parents()) {
           PushTasksToVisit(&tasks_to_visit, &unprocessed_children, switch_parent, switch_task, count_condition);
         }
       } else if (selected_task->parents().size() == 0) {

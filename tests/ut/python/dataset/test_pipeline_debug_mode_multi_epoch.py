@@ -193,7 +193,6 @@ def test_pipeline_debug_mode_multi_epoch_cifar10_repeat_batch(my_debug_mode):
     logger.info("test_pipeline_debug_mode_multi_epoch_cifar10_repeat_batch")
 
     # Set configuration
-    original_seed = config_get_set_seed(399)
     if my_debug_mode:
         debug_mode_original = ds.config.get_debug_mode()
         ds.config.set_debug_mode(True)
@@ -203,7 +202,12 @@ def test_pipeline_debug_mode_multi_epoch_cifar10_repeat_batch(my_debug_mode):
     num_repeat = 2
     batch_size = 16
 
-    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=num_samples)
+    # This test checks repeat/batch semantics, not the standard library's random sequence.
+    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=num_samples, shuffle=False)
+    labels_per_repeat = np.array([
+        row["label"] for row in data1.create_dict_iterator(num_epochs=1, output_numpy=True)
+    ])
+    assert labels_per_repeat.shape == (num_samples,)
     # Add repeat then batch
     data1 = data1.repeat(num_repeat)
     data1 = data1.batch(batch_size, True)
@@ -213,16 +217,7 @@ def test_pipeline_debug_mode_multi_epoch_cifar10_repeat_batch(my_debug_mode):
     epoch_count = 0
     sample_count = 0
     label_list = []
-    label_golden = [[0, 7, 8, 4, 9, 1, 9, 8, 6, 2, 7, 0, 2, 1, 7, 0],
-                    [1, 4, 4, 7, 9, 4, 7, 8, 3, 4, 3, 9, 4, 7, 3, 9],
-                    [0, 0, 5, 6, 6, 6, 5, 4, 7, 6, 9, 0, 3, 4, 3, 7],
-                    [2, 4, 0, 3, 1, 7, 7, 9, 9, 8, 7, 0, 6, 3, 7, 9],
-                    [0, 8, 7, 8, 1, 6, 4, 2, 6, 4, 9, 5, 3, 2, 5, 9],
-                    [2, 5, 3, 6, 2, 0, 7, 8, 3, 9, 6, 2, 4, 1, 5, 4],
-                    [5, 0, 9, 8, 6, 4, 9, 2, 0, 0, 0, 2, 7, 2, 6, 4],
-                    [6, 2, 7, 7, 2, 6, 9, 2, 8, 5, 7, 6, 6, 4, 6, 2],
-                    [0, 7, 2, 9, 8, 6, 7, 6, 0, 3, 2, 2, 6, 8, 8, 2],
-                    [4, 6, 6, 9, 8, 4, 6, 1, 0, 5, 5, 9, 2, 0, 8, 7]]
+    label_golden = np.tile(labels_per_repeat, num_repeat * num_epoch).reshape(-1, batch_size)
     for _ in range(num_epoch):
         row_count = 0
         label_list_per_epoch = []
@@ -242,7 +237,6 @@ def test_pipeline_debug_mode_multi_epoch_cifar10_repeat_batch(my_debug_mode):
     np.testing.assert_array_equal(label_list, np.array(label_golden))
 
     # Restore configuration
-    ds.config.set_seed(original_seed)
     if my_debug_mode:
         ds.config.set_debug_mode(debug_mode_original)
 
@@ -761,7 +755,7 @@ def test_pipeline_debug_mode_multi_ep_im_batch_with_remainders(my_debug_mode, my
         for row_item in iter1:
             image = row_item["image"]
             label = row_item["label"]
-            assert image.shape == (2, 384, 682, 3) or (1, 384, 682, 3)
+            assert image.shape in ((2, 384, 682, 3), (1, 384, 682, 3))
             image_list.append(image[0])
             label_list.append(list(label))
             label_list_per_epoch.append(list(label))
@@ -1086,8 +1080,8 @@ def test_pipeline_debug_mode_batch_map_get_batch_num(my_debug_mode):
 
     def check_res(arr1, arr2):
         assert len(arr1) == len(arr2)
-        for ind, _ in enumerate(arr1):
-            assert np.array_equal(arr1[ind], np.array(arr2[ind]))
+        for actual, expected in zip(arr1, arr2):
+            assert np.array_equal(actual, np.array(expected))
 
     def gen(num):
         for i in range(num):

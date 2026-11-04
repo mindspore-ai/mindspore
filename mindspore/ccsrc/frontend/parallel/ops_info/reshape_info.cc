@@ -1002,7 +1002,7 @@ TensorLayout ReshapeInfo::GetInputLayoutBySWCIndex(int64_t swc_index) const {
     MS_LOG_WITH_NODE(EXCEPTION, cnode_) << "The strategy_index: " << swc_index << " is out of range.";
   }
   const auto &swc = strategy_cost_[LongToSize(swc_index)];
-  return std::move(swc->inputs_ptr[0].tensor_layout());
+  return swc->inputs_ptr[0].tensor_layout();
 }
 
 TensorLayout ReshapeInfo::GetOutputLayoutBySWCIndex(int64_t swc_index) const {
@@ -1010,7 +1010,7 @@ TensorLayout ReshapeInfo::GetOutputLayoutBySWCIndex(int64_t swc_index) const {
     MS_LOG_WITH_NODE(EXCEPTION, cnode_) << "The strategy_index: " << swc_index << " is out of range.";
   }
   const auto &swc = strategy_cost_[LongToSize(swc_index)];
-  return std::move(swc->outputs_ptr[0].tensor_layout());
+  return swc->outputs_ptr[0].tensor_layout();
 }
 
 StrategyPtr ReshapeInfo::get_input_shard_strategy() {

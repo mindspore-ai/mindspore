@@ -160,6 +160,9 @@
 # The maintainers of mindspore/include.
 /mindspore/include/ @limingqi107
 
+# The maintainers of tests/torch_npu.
+/tests/torch_npu/ @chujinjin
+
 # The maintainers of tests/st.
 /tests/st/auto_parallel/ @yangzhenzhang
 /tests/st/backend_ascend/ @limingqi107

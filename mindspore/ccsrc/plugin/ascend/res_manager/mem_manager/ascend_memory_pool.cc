@@ -306,7 +306,7 @@ DeviceMemPtr DefaultEnhancedAscendMemoryPool::AllocTensorMem(size_t size, bool f
 std::vector<DeviceMemPtr> DefaultEnhancedAscendMemoryPool::AllocContinuousTensorMem(
   const std::vector<size_t> &size_list, uint32_t stream_id) {
   MS_VLOG(VL_RUNTIME_FRAMEWORK_MEMORY) << "Alloc continuous tensor mem, stream id : " << stream_id << ".";
-  const auto &continuous_addrs = instance_->AllocContinuousTensorMem(size_list, stream_id);
+  auto continuous_addrs = instance_->AllocContinuousTensorMem(size_list, stream_id);
   if (continuous_addrs.size() != size_list.size()) {
     return continuous_addrs;
   }

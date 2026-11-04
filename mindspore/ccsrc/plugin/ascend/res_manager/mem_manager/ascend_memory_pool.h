@@ -183,21 +183,21 @@ class DefaultEnhancedAscendMemoryPool : public DefaultAscendMemoryPool {
   size_t ActualPeakStatistics() const override { return instance_->ActualPeakStatistics(); }
 
   std::unordered_map<std::string, std::size_t> BlockCountsStatistics() const override {
-    return std::move(instance_->BlockCountsStatistics());
+    return instance_->BlockCountsStatistics();
   }
 
   std::unordered_map<std::string, std::size_t> BlockUnitSizeStatistics() const override {
-    return std::move(instance_->BlockUnitSizeStatistics());
+    return instance_->BlockUnitSizeStatistics();
   }
 
   std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> CommonMemBlocksInfoStatistics()
     const override {
-    return std::move(instance_->CommonMemBlocksInfoStatistics());
+    return instance_->CommonMemBlocksInfoStatistics();
   }
 
   std::unordered_map<device::DeviceMemPtr, std::unordered_map<std::string, size_t>> PersistentMemBlocksInfoStatistics()
     const override {
-    return std::move(instance_->PersistentMemBlocksInfoStatistics());
+    return instance_->PersistentMemBlocksInfoStatistics();
   }
 
   void ResetMaxMemReserved() override { instance_->ResetMaxMemReserved(); }

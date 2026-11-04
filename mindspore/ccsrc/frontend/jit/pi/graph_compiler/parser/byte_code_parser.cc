@@ -1114,7 +1114,7 @@ void ByteCodeParser::ParseRaiseVarargs(const InstrPtr &instr) {
 }
 
 ir::DebugInfoPtr ByteCodeParser::GetNodeDebugInfo(const InstrPtr &instr) {
-  return std::move(std::make_shared<ir::DebugInfo>(instr->GetArgRepr(), func_->GetFileName(), instr->GetStartsLine()));
+  return std::make_shared<ir::DebugInfo>(instr->GetArgRepr(), func_->GetFileName(), instr->GetStartsLine());
 }
 }  // namespace pijit
 }  // namespace mindspore

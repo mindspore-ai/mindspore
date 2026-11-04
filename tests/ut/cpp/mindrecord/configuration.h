@@ -17,6 +17,9 @@
 #ifndef TESTS_MINDRECORD_CONFIGURATION_H_
 #define TESTS_MINDRECORD_CONFIGURATION_H_
 
+#include <array>
+#include <string>
+
 // schema define
 const char kCvatSchema[] =
   "{            "

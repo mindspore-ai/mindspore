@@ -50,6 +50,7 @@ MS_CLOUD_ASCEND:
     mindspore/ccsrc/plugin/device/ascend
     mindspore/ccsrc/profiler/device/ascend
     tests/st/ops/ascend
+    tests/torch_npu
 MS_LITE:
     include/c_api
     include/api/allocator.h

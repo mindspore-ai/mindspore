@@ -74,7 +74,7 @@ void AscendTwoPointerMemAdapter::SimulationInitialize() {
   cur_dynamic_mem_offset_ = 0;
   max_dynamic_mem_offset_ = 0;
   history_max_dynamic_mem_offset_ = 0;
-  uint8_t simulation_addr = 0;
+  static uint8_t simulation_addr = 0;
   device_mem_base_addr_ = &simulation_addr;
 }
 

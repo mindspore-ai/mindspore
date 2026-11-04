@@ -24,3 +24,6 @@
 	path = dvm
 	url = https://gitcode.com/mindspore/dvm.git
 	branch = r2.9
+[submodule "third_party/torch_npu"]
+	path = third_party/torch_npu
+	url = https://gitcode.com/Ascend/pytorch.git
