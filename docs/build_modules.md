@@ -175,3 +175,31 @@ python scripts/packaging/check_unified.py --runtime --require-no-torch --device 
 
 检查覆盖独立导入、两种导入顺序、Ascend 前反向。两个框架同时操作同一设备不属于默认检查；
 `--shared-ascend` 可单独测试。GPU 合包结构验证不能替代 GPU 设备上的运行测试。
+
+## 版本信息
+
+安装联合 wheel 后，`pip show mindspore` 的 Summary 以单行展示各组件版本，例如：
+
+```text
+Summary: MindSpore unified distribution; MindSpore Core=3.0.0b0; Torch Adapter Core (torch_npu)=2.13.0
+```
+
+包同时安装 `msinfo` 命令，入口复用 `_mindspore_torch_npu_loader.py`，
+以缩进形式展示发行版本和内置组件版本：
+
+```text
+$ msinfo
+MindSpore:
+  Version: 3.0.0b0
+  Components:
+    MindSpore Core:
+      Version: 3.0.0b0
+    Torch Adapter Core (torch_npu):
+      Version: 2.13.0
+```
+
+版本来自实际输入 wheel；默认下载模式读取官方 torch_npu wheel 的元数据，源码模式读取原生构建产物。
+合包时生成统一的 `components.json` 并存入发行包的 dist-info 目录。
+旧格式联合 wheel 缺少 torch_npu 元数据时，从内置 `torch_npu/version.py` 读取版本。
+`msinfo` 仅使用 Python 标准库读取安装元数据，不导入 MindSpore、PyTorch 或 torch_npu，
+无需初始化设备。展示的是包内置版本；即使另装外部 torch_npu，也不改变这份构建信息。

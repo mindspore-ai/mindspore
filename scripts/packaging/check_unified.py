@@ -4,6 +4,7 @@ import configparser
 import fnmatch
 import importlib.metadata
 import importlib.util
+import json
 from email.parser import BytesParser
 import os
 from pathlib import Path
@@ -41,12 +42,20 @@ def check_wheel(filename):
         assert not any(part.endswith('.dist-info') for name in names
                        for part in name.split('/')[1:]), 'Nested distribution metadata'
         assert {'mindspore', '_mindspore_torch_npu_loader.py'} <= roots, roots
-        assert not {'_mindspore_torch_npu_path.py', 'mindspore_torch_npu.pth'} & roots, roots
+        assert not {'_mindspore_torch_npu_path.py', 'mindspore_torch_npu.pth', '_mindspore_info.py'} & roots, roots
         assert not {'torch', 'functorch', 'torchgen', 'torch_npu', 'torchnpugen'} & roots, roots
         assert BUNDLE + 'torchnpugen/__init__.py' in names
         metadata_root = metadata_roots[0]
         metadata = BytesParser().parsebytes(archive.read(metadata_root + '/METADATA'))
         assert metadata['Name'] == 'mindspore', metadata['Name']
+        components = json.loads(archive.read(metadata_root + '/components.json'))
+        core = [component for component in components['components'] if component['name'] == 'mindspore']
+        assert len(core) == 1, f'{filename}: Expected exactly one mindspore component, found {len(core)}'
+        assert core[0]['version'] == metadata['Version'], (
+            f"{filename}: MindSpore Core version mismatch: expected {metadata['Version']}, got {core[0]['version']}")
+        summary = 'MindSpore unified distribution; ' + '; '.join(
+            f"{component['display_name']}={component['version']}" for component in components['components'])
+        assert metadata['Summary'] == summary, metadata['Summary']
         torch_requirements = [item for item in metadata.get_all('Requires-Dist', [])
                               if item.startswith('torch==')]
         assert len(torch_requirements) == 1 and 'extra == "torch-npu"' in torch_requirements[0], torch_requirements
@@ -54,6 +63,7 @@ def check_wheel(filename):
         entries.read_string(archive.read(metadata_root + '/entry_points.txt').decode())
         assert entries['torch.backends']['torch_npu'] == '_mindspore_torch_npu_loader:autoload'
         assert 'msrun' in entries['console_scripts']
+        assert entries['console_scripts']['msinfo'] == '_mindspore_torch_npu_loader:msinfo'
         assert entries['console_scripts']['torch_npu_run'] == '_mindspore_torch_npu_loader:run'
         assert 'mindspore-torch-npu-run' not in entries['console_scripts']
         assert 'npu' in entries['torch_dynamo_backends']

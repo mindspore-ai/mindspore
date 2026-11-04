@@ -4,6 +4,7 @@ import ast
 import configparser
 from email.parser import BytesParser
 import hashlib
+import json
 from pathlib import Path
 import re
 import shutil
@@ -24,7 +25,7 @@ BACKEND_LIBRARIES = ('libmpi_collective.so', 'libmpi_adapter.so',
                      'libmindspore.so', 'libmindspore_ge_backend.so')
 BUNDLE = Path('mindspore/_bundled/torch_npu')
 # Embedded so this merger remains usable without a source checkout or companion files.
-TORCH_NPU_LOADER = '''"""Load torch_npu through PyTorch's native backend entry point."""
+TORCH_NPU_LOADER = '''"""Load torch_npu and report installed MindSpore component versions."""
 
 
 def autoload():
@@ -46,6 +47,42 @@ def run():
     autoload()  # The launcher also works when backend autoloading is disabled.
     from torch_npu.distributed.run import _main
     return _main()
+
+
+def msinfo():
+    """Print the component information recorded when the wheel was built."""
+    import argparse
+    from importlib.metadata import PackageNotFoundError, distribution
+    import json
+
+    parser = argparse.ArgumentParser(
+        prog='msinfo', description='Display installed MindSpore component versions without loading frameworks.')
+    parser.parse_args()
+    try:
+        package = distribution('mindspore')
+    except PackageNotFoundError:
+        parser.exit(1, 'msinfo: MindSpore is not installed in this Python environment.\\n')
+    try:
+        contents = package.read_text('components.json')
+        if contents is None:
+            parser.exit(1, 'msinfo: This MindSpore installation has no component information.\\n')
+        components = json.loads(contents)['components']
+        if not isinstance(components, list) or not components:
+            raise ValueError('expected a nonempty components list')
+        for component in components:
+            if not isinstance(component, dict) or any(
+                    not isinstance(component.get(key), str) or not component[key].strip()
+                    for key in ('name', 'display_name', 'version')):
+                raise ValueError('each component requires nonempty name, display_name and version strings')
+    except (ValueError, KeyError, TypeError) as error:
+        parser.exit(1, f'msinfo: Invalid components.json: {error}. Reinstall MindSpore.\\n')
+    print('MindSpore:')
+    print(f'  Version: {package.version}')
+    print('  Components:')
+    for component in components:
+        print(f"    {component['display_name']}:")
+        print(f"      Version: {component['version']}")
+    return 0
 '''
 
 
@@ -58,14 +95,14 @@ def digest(path):
     return result.hexdigest()
 
 
-def read_version(package):
+def read_version(package, filename='mindspore/version.py'):
     """Read the input wheel's version without importing its native extensions."""
-    tree = ast.parse((package / 'mindspore/version.py').read_text(encoding='utf-8'))
+    tree = ast.parse((package / filename).read_text(encoding='utf-8'))
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(
                 isinstance(target, ast.Name) and target.id == '__version__' for target in node.targets):
             return str(ast.literal_eval(node.value))
-    raise ValueError(f'Missing MindSpore version in {package}')
+    raise ValueError(f'Missing __version__ in {package / filename}')
 
 
 def unpack(filename, destination):
@@ -146,7 +183,7 @@ def prepare_module(inputs, base):
         shutil.copy2(source, destination)
         if source.is_relative_to(base['path']):
             source.unlink()  # Migrate a flat unified wheel without leaving shared files.
-    for old in ('_mindspore_torch_npu_path.py', 'mindspore_torch_npu.pth'):
+    for old in ('_mindspore_torch_npu_path.py', 'mindspore_torch_npu.pth', '_mindspore_info.py'):
         (base['path'] / old).unlink(missing_ok=True)
     (base['path'] / '_mindspore_torch_npu_loader.py').write_text(TORCH_NPU_LOADER)
     return provider
@@ -254,7 +291,43 @@ def merge_metadata(base, inputs, requirements):
             metadata[header] = value
 
 
-def repack(base, inputs, output_dir, requirements):
+def write_component_info(package, info, metadata, entries, module_filename):
+    """Generate the summary and msinfo data from the versions actually bundled."""
+    components = {
+        'mindspore': {'name': 'mindspore', 'display_name': 'MindSpore Core',
+                      'version': metadata['Version']}}
+    for filename in sorted((info / 'modules').glob('*/METADATA')):
+        module = BytesParser().parsebytes(filename.read_bytes())
+        name = canonicalize_name(module['Name'])
+        components[name] = {
+            'name': name,
+            'display_name': 'Torch Adapter Core (torch_npu)' if name == 'torch-npu' else module['Name'],
+            'version': str(Version(module['Version']))}
+    if 'torch-npu' not in components:
+        # Older unified wheels contain the payload without its original metadata.
+        filename = BUNDLE / 'torch_npu/version.py'
+        try:
+            version = str(Version(read_version(package, filename)))
+        except (OSError, ValueError, SyntaxError, TypeError) as error:
+            raise ValueError(
+                f'{module_filename}: Cannot read bundled torch_npu version '
+                f'from {package / filename}: {error}') from error
+        components['torch-npu'] = {
+            'name': 'torch-npu', 'display_name': 'Torch Adapter Core (torch_npu)',
+            'version': version}
+    ordered = [components.pop('mindspore'), components.pop('torch-npu')]
+    ordered.extend(components[name] for name in sorted(components))
+    (info / 'components.json').write_text(
+        json.dumps({'components': ordered}, indent=2) + '\n', encoding='utf-8')
+    del metadata['Summary']
+    metadata['Summary'] = 'MindSpore unified distribution; ' + '; '.join(
+        f"{component['display_name']}={component['version']}" for component in ordered)
+    if not entries.has_section('console_scripts'):
+        entries.add_section('console_scripts')
+    entries['console_scripts']['msinfo'] = '_mindspore_torch_npu_loader:msinfo'
+
+
+def repack(base, inputs, output_dir, requirements, module_filename):
     """Merge standard distribution metadata and let setuptools generate RECORD."""
     package, info, metadata = base['path'], base['info'], base['metadata']
     entries = base['entries']
@@ -278,11 +351,14 @@ def repack(base, inputs, output_dir, requirements):
         info.rename(destination_info)
         info = destination_info
     metadata.replace_header('Name', 'mindspore')
-    (info / 'METADATA').write_bytes(metadata.as_bytes())
+    write_component_info(package, info, metadata, entries, module_filename)
+    # Summary is a single logical and physical line, including long local versions.
+    (info / 'METADATA').write_bytes(metadata.as_bytes(policy=metadata.policy.clone(max_line_length=0)))
     top_levels.difference_update(path.stem if path.is_file() else path.name
                                  for path in (package / BUNDLE).iterdir())
     top_levels.discard('_mindspore_torch_npu_path')
     top_levels.add('_mindspore_torch_npu_loader')
+    top_levels.discard('_mindspore_info')
     if top_levels:
         (info / 'top_level.txt').write_text('\n'.join(sorted(top_levels)) + '\n')
     with (info / 'entry_points.txt').open('w') as stream:
@@ -349,10 +425,10 @@ def merge(wheels, output_dir, module_wheel=None, requirements=()):
             if module['name'] != 'torch-npu' or not module_tags_match(base['tags'], module['tags']):
                 raise ValueError('Incompatible module distribution or wheel tags: ' + str(candidates[0]))
             inputs.append(module)
-        prepare_module(inputs, base)
+        provider = prepare_module(inputs, base)
         if len(backends) > 1:
             merge_backends(backends, base['path'])
-        return repack(base, inputs, Path(output_dir).resolve(), requirements)
+        return repack(base, inputs, Path(output_dir).resolve(), requirements, provider['filename'])
 
 
 if __name__ == '__main__':
