@@ -9,7 +9,7 @@ mindspore.Tensor.delete\_
         该接口已废弃，2.9.0（不含）之后版本将删除。
 
     参数：
-        - **non_blocking** (bool, 可选) - 内存异步释放。如果是 ``True`` ，内存异步释放。如果是 ``False`` ，内存同步释放。默认值：``False``。
+        - **non_blocking** (bool, 可选) - 如果是 ``True`` ，内存异步释放。如果是 ``False`` ，内存同步释放。默认值：``False``。
 
 
     返回：

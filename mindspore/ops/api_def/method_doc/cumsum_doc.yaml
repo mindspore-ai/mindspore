@@ -17,7 +17,7 @@ cumsum:
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
             the self Tensor will be cast to `dtype` before the computation. This is useful for preventing overflows.
-            If not specified, stay the same as original Tensor. Default: ``None`` .
+            If not specified, it stays the same as original Tensor. Default: ``None`` .
 
     Returns:
         Tensor, the shape of the output Tensor is consistent with the self Tensor's.
@@ -57,14 +57,14 @@ cumsum:
         y_i = x_1 + x_2 + x_3 + ... + x_i
 
     Note:
-        On Ascend, the dtype of `self` only supports :int8, uint8, int32, float16 or float32 in case of static shape.
+        On Ascend, the dtype of `self` only supports int8, uint8, int32, float16 or float32 in case of static shape.
         For the case of dynamic shape, the dtype of `self` only supports int32, float16 or float32.
 
     Args:
         axis (int): Axis along which the cumulative sum is computed.
         dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
             the self Tensor will be cast to `dtype` before the computation. This is useful for preventing overflows.
-            If not specified, stay the same as original Tensor. Default: ``None`` .
+            If not specified, it stays the same as original Tensor. Default: ``None`` .
 
     Returns:
         Tensor, the shape of the output Tensor is consistent with the self Tensor's.

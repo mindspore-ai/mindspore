@@ -6,7 +6,7 @@ clone:
 
         Note:
             This function is differentiable, and gradients will flow back directly from the calculation
-            result of the function to the `self`.
+            result of the function to `self`.
 
         Returns:
             Tensor, with the same data, shape and type as `self`.

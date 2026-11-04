@@ -896,7 +896,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 at half-maximum. Default: ``1.0``.
 
         Returns:
-            Tensor. A Tensor with the same type and shape as input.
+            Tensor. A Tensor with the same type and shape as the current tensor.
 
         Supported Platforms:
             ``Ascend`` ``CPU``
@@ -2124,9 +2124,10 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             Please use :func:`mindspore.Tensor.fill_diagonal_` instead.
 
         Args:
-            fill_value (float): The value to fill with the diagonal of `self`.
+            fill_value (float): The value used to fill the main diagonal of `self`.
             wrap (bool, optional): Controls whether the diagonal elements continue onto the
-                remaining rows in case of a tall matrix (a matrix has more rows than columns). Default: ``False``.
+                remaining rows in case of a tall matrix (a matrix that has more rows than columns).
+                Default: ``False``.
 
         Returns:
             - **y** (Tensor) - Tensor, has the same shape and data type as `self`.
@@ -2698,7 +2699,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 Default: ``None`` .
 
         Returns:
-            Tensor, with same shape and same data type with input.
+            Tensor, with same shape and same data type as input.
 
         Supported Platforms:
             ``Ascend``
@@ -3651,8 +3652,9 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def index_add_(self, dim, index, source, *, alpha=1):
         r"""
-        Accumulate the elements of `alpha` times `source` into the `self` by adding to the index
-        in the order given in `index`. For example, if `dim == 0`, `index[i] == j`, and `alpha = -1`,
+        Accumulate the elements of alpha times source into self at the positions specified by `index`,
+        applying the updates in the order given in `index`.
+        For example, if `dim == 0`, `index[i] == j`, and `alpha = -1`,
         then the `i` th row of `source` is subtracted from the `j` th row of `self` .
         The `dim` th dimension of `source` must have the same size as the length of `index` ,
         and all other dimensions must match `self`, or an error will be raised.
@@ -3935,19 +3937,19 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             - If `accumulate` is `False` and `indices` contains duplicate elements.
 
         Args:
-            indices (tuple[Tensor], list[Tensor]): the indices of type int32 or int64, used to index into the `self`.
+            indices (tuple[Tensor], list[Tensor]): the indices of type int32 or int64, used to index into `self`.
                 The rank of tensors in indices should be 1-D, size of indices should <= `self.rank`
                 and the tensors in indices should be broadcastable.
             values (Tensor): 1-D Tensor with the same type as `self`. `values` should be broadcastable with size 1.
             accumulate (bool, optional): If `accumulate` is ``True``, the elements in `values` will be added to `self`,
-                otherwise the elements in `values` will replace the corresponding elements in the `self`.
+                otherwise the elements in `values` will replace the corresponding elements in `self`.
                 Default: ``False``.
 
         Returns:
             Tensor, with the same type and shape as the "self Tensor".
 
         Raises:
-            TypeError: If the dtype of the `self` is not equal to the dtype of `values`.
+            TypeError: If the dtype of `self` is not equal to the dtype of `values`.
             TypeError: If the dtype of `indices` is not tuple[Tensor], list[Tensor].
             TypeError: If the dtype of tensors in `indices` are not int32 or int64.
             TypeError: If the dtype of tensors in `indices` are inconsistent.
@@ -3957,7 +3959,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
                 rank(`self`) == size(`indices`).
             ValueError: If size(`values`) is not 1 or `self`.shape[-1] when rank(`self`) > size(`indices`).
             ValueError: If the rank of tensors in `indices` is not 1-D.
-            ValueError: If the tensors in `indices` are not be broadcastable.
+            ValueError: If the tensors in `indices` are not broadcastable.
             ValueError: If size(`indices`) > rank(`self`).
 
         Supported Platforms:
@@ -4012,7 +4014,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             ValueError: If size(`values`) is not 1 or max size of the tensors in `indices` when
                 rank(`self`) == size(`indices`).
             ValueError: If size(`values`) is not 1 or `self`.shape[-1] when rank(`self`) > size(`indices`).
-            ValueError: If the tensors in `indices` are not be broadcastable.
+            ValueError: If the tensors in `indices` are not broadcastable.
             ValueError: If size(`indices`) > rank(`self`).
 
         Supported Platforms:

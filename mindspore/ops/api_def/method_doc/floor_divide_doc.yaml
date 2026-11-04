@@ -2,7 +2,7 @@ floor_divide:
   description: |
     floor_divide(other) -> Tensor
 
-    Divides the self tensor by the other input tensor element-wise and round down to the closest integer.
+    Divides the self tensor by the other input tensor element-wise and rounds down to the closest integer.
 
     `self` and `other` comply with the implicit type conversion rules to make the data types consistent.
     Inputs must be two tensors or one tensor and one scalar.
@@ -14,7 +14,7 @@ floor_divide:
     .. math::
         out_{i} = \text{floor}( \frac{self_i}{other_i})
 
-    where the :math:`floor` indicates the Floor operator. For more details,
+    where :math:`floor` indicates the Floor operator. For more details,
     please refer to the :class:`mindspore.mint.floor` operator.
 
     Args:

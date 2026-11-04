@@ -2,7 +2,7 @@ dot:
   description: |
     dot(other) -> Tensor
 
-    Computes the dot product of two 1D tensor.
+    Computes the dot product of two 1D tensors.
 
     Args:
         other (Tensor): The input in the dot product, must be 1D.

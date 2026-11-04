@@ -4,7 +4,7 @@ mindspore.Tensor.index_add
 .. py:method:: mindspore.Tensor.index_add(indices, y, axis, use_lock=True, check_index_bound=True) -> Tensor
 
     将Tensor `y` 加到Parameter或Tensor `self` 的指定 `axis` 轴和指定 `indices` 位置。要求 `axis` 轴的取值范围
-    为[0, len(self.dim) - 1]， `indices` 中元素的取值范围为[0, self.shape[axis] - 1]。
+    为[-self.ndim, self.ndim - 1]， `indices` 中元素的取值范围为[0, self.shape[axis] - 1]。
 
     .. warning::
         2.9.0（不含）之后版本非兼容性变更：删除 `index_add(indices, y, axis, use_lock=True, check_index_bound=True)` 重载，仅支持 `index_add(dim, index, source, *, alpha=1)` （移除 `check_index_bound`）。

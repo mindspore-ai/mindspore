@@ -4400,7 +4400,7 @@ class TensorScatterDiv(_TensorScatterOp):
 
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
-    index, the result of the update will be to divided these values respectively. Except that
+    index, the result of the update will be the cumulative division of these values. Except that
     the updates are applied on output `Tensor` instead of input `Parameter`.
 
     Refer to :func:`mindspore.ops.tensor_scatter_div` for more details.

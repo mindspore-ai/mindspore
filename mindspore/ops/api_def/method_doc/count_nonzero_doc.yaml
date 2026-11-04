@@ -8,7 +8,8 @@ count_nonzero:
         Non-backward-compatible change after version 2.9.0: overload `count_nonzero(axis=(), keep_dims=False, dtype=None)` will be removed, and only `count_nonzero(dim=None)` will be supported.
 
     Args:
-        dim (Union[None, int, tuple(int), list(int)], optional): The dimension to reduce. Default value: ``None``, which indicates that the number of non-zero elements is calculated. If `dim` is ``None``, all elements in the tensor are summed up.
+        dim (Union[None, int, tuple(int), list(int)], optional): The dimension to reduce.
+            Default value: ``None``, which indicates that the number of all non-zero elements in the tensor is calculated.
 
     Returns:
         Tensor, number of nonzero element across dim specified by `dim`.
@@ -28,7 +29,7 @@ count_nonzero:
         >>> x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
         >>> nonzero_num = x.count_nonzero(dim=[0, 1])
         >>> print(nonzero_num)
-        [[3]]
+        3
         >>> # case 2: all values are default.
         >>> nonzero_num = x.count_nonzero()
         >>> print(nonzero_num)

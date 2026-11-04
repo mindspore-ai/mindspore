@@ -51,7 +51,7 @@ gather:
 
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
 
-    The following figure shows the calculation process of Gather commonly:
+    The following figure shows the typical calculation process of Gather:
 
     .. image:: ../../images/Gather.png
 
@@ -59,7 +59,7 @@ gather:
 
     .. note::
         - The value of input_indices must be in the range of :math:`[0, self.shape[axis])`.
-          On CPU and GPU, an error is raised if an out of bound indice is found. On Ascend, the results may be
+          On CPU and GPU, an error is raised if an out-of-bounds index is found. On Ascend, the results may be
           undefined.
         - The data type of self cannot be
           `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ on Ascend
@@ -76,7 +76,7 @@ gather:
 
     Returns:
         Tensor, the shape of tensor is
-        :math:`self.shape[:axis] + self\_indices.shape[batch\_dims:] + self.shape[axis + 1:]`.
+        :math:`self.shape[:axis] + input\_indices.shape[batch\_dims:] + self.shape[axis + 1:]`.
 
     Raises:
         TypeError:  If `axis` is not an int or Tensor.
