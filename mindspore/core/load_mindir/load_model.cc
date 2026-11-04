@@ -1349,14 +1349,23 @@ constexpr char kMindIRWeightRootKey[] = "mindir_weight_root";
 // root the caller's directory is used unchanged. A model loaded from a bare buffer has no directory
 // of its own, so the recorded root stays relative and resolves against the current directory.
 std::string ResolveWeightRoot(const mind_ir::ModelProto &model_proto, const std::string &mindir_dir) {
-  auto it = model_proto.user_info().find(kMindIRWeightRootKey);
-  if (it == model_proto.user_info().end() || it->second.empty()) {
-    return mindir_dir;
+  // Iterate instead of user_info().find(): protobuf's Map hashes keys with absl::Hash, whose seed is a
+  // per-DSO static. protobuf/absl are statically linked into both the converter and the runtime, and the
+  // runtime's references can bind to the converter's copy, so inserts and finds may use different seeds
+  // and find() intermittently misses an existing key. Iteration walks the entry list, independent of hashing.
+  for (const auto &kv : model_proto.user_info()) {
+    if (kv.first != kMindIRWeightRootKey) {
+      continue;
+    }
+    if (kv.second.empty()) {
+      return mindir_dir;
+    }
+    if (mindir_dir.empty()) {
+      return kv.second;
+    }
+    return mindir_dir + "/" + kv.second;
   }
-  if (mindir_dir.empty()) {
-    return it->second;
-  }
-  return mindir_dir + "/" + it->second;
+  return mindir_dir;
 }
 
 // Resolve and validate the external data file path declared in a TensorProto.
