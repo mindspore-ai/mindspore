@@ -20,13 +20,15 @@ limitations under the License.
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_PARSE_EXAMPLE_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_PARSE_EXAMPLE_OP_H_
 
-#include <unsupported/Eigen/CXX11/ThreadPool>
-
+// Define hardware interference size before Eigen selects its thread-pool alignment.
 #include <memory>
+#include <new>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include "unsupported/Eigen/CXX11/ThreadPool"
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_schema.h"

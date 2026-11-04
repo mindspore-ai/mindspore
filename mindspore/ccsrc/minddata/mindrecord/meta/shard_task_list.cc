@@ -302,7 +302,7 @@ ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks,
         if (num_samples != 0 && count == num_samples) {
           break;
         }
-        res.InsertTask(std::move(category_tasks[i].GetTaskByID(task_no)));
+        res.InsertTask(category_tasks[i].GetTaskByID(task_no));
         count++;
       }
     }

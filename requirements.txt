@@ -18,3 +18,6 @@ astunparse >= 1.6.3
 safetensors >= 0.4.4
 pyyaml >= 6.0               # for the automatic generation and compilation of operator code.
 dill >=0.3.7
+
+# Wheel packaging; torch_npu source-build dependencies are installed separately.
+wheel >= 0.45.1

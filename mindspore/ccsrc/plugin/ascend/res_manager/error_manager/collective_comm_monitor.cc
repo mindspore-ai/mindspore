@@ -246,7 +246,7 @@ HcclWatchDogHandler::~HcclWatchDogHandler() {
   if (HcclWatchDogManager::CheckStatusSaveEnable()) {
     RecordHcclStatus(true);
   }
-  terminate_.store(true, std::memory_order_acq_rel);
+  terminate_.store(true, std::memory_order_release);
   if (thread_.joinable()) {
     thread_.join();
   }
@@ -281,11 +281,11 @@ void HcclWatchDogHandler::SetException(std::string *error_info, bool *disable) {
                 << ", rank id: " << rank_id_;
   auto ret = hccl::HcclAdapter::GetInstance().HcclWatchdogThread(hcom_, error_info, disable);
   if (!ret) {
-    exception_.store(true, std::memory_order_acq_rel);
+    exception_.store(true, std::memory_order_release);
   }
 }
 
-void HcclWatchDogHandler::Terminate() { terminate_.store(true, std::memory_order_acq_rel); }
+void HcclWatchDogHandler::Terminate() { terminate_.store(true, std::memory_order_release); }
 
 void HcclWatchDogHandler::DoProcess() {
   std::string error_info;
@@ -330,7 +330,7 @@ void HcclWatchDogHandler::WatchDogProcess() {
                   << DistributedMeta::GetInstance()->worker_ip();
     (void)killpg(getpid(), SIGTERM);
   }
-  exit_.store(true, std::memory_order_acq_rel);
+  exit_.store(true, std::memory_order_release);
   MS_LOG(INFO) << "Hcom monitor thread for group:" << group_name_ << " execute end.";
 }
 

@@ -679,35 +679,37 @@ def dataset_create_dict_iterator(data, num_epochs, init_mem=0):
 
     data_init_memory_difference = data_memory - init_mem  # >1000M
 
-    orginal_prefetch_size = ds.config.get_prefetch_size()
+    original_prefetch_size = ds.config.get_prefetch_size()
     ds.config.set_prefetch_size(1)
-    dataset = ds.GeneratorDataset(source=data, column_names=["data", "label"], shuffle=False)
-    dataset_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+    try:
+        dataset = ds.GeneratorDataset(source=data, column_names=["data", "label"], shuffle=False)
+        dataset_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
 
-    dataset_data_memory_difference = dataset_memory - data_memory  # <2M
+        dataset_data_memory_difference = dataset_memory - data_memory  # <2M
 
-    ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=num_epochs)
+        ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=num_epochs)
 
-    iter_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    iter_dataset_memory_difference = iter_memory - dataset_memory  # <2M
+        iter_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        iter_dataset_memory_difference = iter_memory - dataset_memory  # <2M
 
-    epochs = 1
-    for _ in range(epochs):
-        for item in ds_iter:
-            break
+        epochs = 1
+        for _ in range(epochs):
+            for item in ds_iter:
+                break
 
-    process_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    process_iter_memory_difference = process_memory - iter_memory  # < 2MB
+        process_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        process_iter_memory_difference = process_memory - iter_memory  # < 2MB
 
-    del ds_iter  # pylint: disable=undefined-loop-variable
-    del item  # pylint: disable=undefined-loop-variable
-    del dataset  # pylint: disable=undefined-loop-variable
-    del data  # pylint: disable=undefined-loop-variable
+        del ds_iter  # pylint: disable=undefined-loop-variable
+        del item  # pylint: disable=undefined-loop-variable
+        del dataset  # pylint: disable=undefined-loop-variable
+        del data  # pylint: disable=undefined-loop-variable
 
-    ds.config.set_prefetch_size(orginal_prefetch_size)
-    data_memory_tuple = (data_init_memory_difference, dataset_data_memory_difference,
-                         iter_dataset_memory_difference, process_iter_memory_difference)
-    return data_memory_tuple
+        data_memory_tuple = (data_init_memory_difference, dataset_data_memory_difference,
+                             iter_dataset_memory_difference, process_iter_memory_difference)
+        return data_memory_tuple
+    finally:
+        ds.config.set_prefetch_size(original_prefetch_size)
 
 
 def test_generator_0():
@@ -3336,67 +3338,70 @@ def test_release_generator_dataset_iter(num_epochs):
     Description: Test memory collection of GeneratorDataset
     Expectation: After destructing all the instance created, the memory should be released
     """
+    # Exclude first-use runtime allocations from the RSS baseline.
+    dataset_create_dict_iterator(
+        [[np.ones(16, dtype=np.int64) for _ in range(5)] for _ in range(2)], num_epochs=-1)
     original_prefetch_size = ds.config.get_prefetch_size()
     ds.config.set_prefetch_size(1)
+    try:
+        init_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
 
-    init_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        class MyIterable:
+            def __init__(self):
+                self.a = [np.ones((2048 * 2048 * 3), dtype=np.int64),  # 96M
+                          np.ones((2048 * 2048 * 3 * 2), dtype=np.int64),  # 192M
+                          np.ones((2048 * 2048 * 3 * 3), dtype=np.int64),  # 288M
+                          np.ones((2048 * 2048 * 3 * 4), dtype=np.int64),  # 384M
+                          np.ones((2048 * 2048 * 3 * 5), dtype=np.int64)]  # 480M
+                self.b = [np.ones((1024 * 1024 * 5), dtype=np.int64),  # 40M
+                          np.ones((1024 * 1024 * 5 * 2), dtype=np.int64),  # 80M
+                          np.ones((1024 * 1024 * 5 * 3), dtype=np.int64),  # 120M
+                          np.ones((1024 * 1024 * 5 * 4), dtype=np.int64),  # 160M
+                          np.ones((1024 * 1024 * 5 * 5), dtype=np.int64)]  # 200M
+                self.len = len(self.a)
 
-    class MyIterable:
-        def __init__(self):
-            self.a = [np.ones((2048 * 2048 * 3), dtype=np.int64),  # 96M
-                      np.ones((2048 * 2048 * 3 * 2), dtype=np.int64),  # 192M
-                      np.ones((2048 * 2048 * 3 * 3), dtype=np.int64),  # 288M
-                      np.ones((2048 * 2048 * 3 * 4), dtype=np.int64),  # 384M
-                      np.ones((2048 * 2048 * 3 * 5), dtype=np.int64)]  # 480M
-            self.b = [np.ones((1024 * 1024 * 5), dtype=np.int64),  # 40M
-                      np.ones((1024 * 1024 * 5 * 2), dtype=np.int64),  # 80M
-                      np.ones((1024 * 1024 * 5 * 3), dtype=np.int64),  # 120M
-                      np.ones((1024 * 1024 * 5 * 4), dtype=np.int64),  # 160M
-                      np.ones((1024 * 1024 * 5 * 5), dtype=np.int64)]  # 200M
-            self.len = len(self.a)
+            def __getitem__(self, index):
+                return self.a[4 - index], self.b[4 - index]
 
-        def __getitem__(self, index):
-            return self.a[4 - index], self.b[4 - index]
+            def __len__(self):
+                return self.len
 
-        def __len__(self):
-            return self.len
+        # initialize user defined dataset
+        data = MyIterable()
+        data_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        assert (data_memory - init_memory) > 1990
 
-    # initialize user defined dataset
-    data = MyIterable()
-    data_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    assert (data_memory - init_memory) > 1990
+        # initialize GeneratorDataset
+        dataset = ds.GeneratorDataset(source=data, column_names=["data", "label"], shuffle=False)
+        dataset_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        assert (dataset_memory - data_memory) < 3
 
-    # initialize GeneratorDataset
-    dataset = ds.GeneratorDataset(source=data, column_names=["data", "label"], shuffle=False)
-    dataset_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    assert (dataset_memory - data_memory) < 3
+        # initialize Iterator
+        ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=num_epochs)
+        iterator_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        assert (iterator_memory - dataset_memory) < 3
 
-    # initialize Iterator
-    ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=num_epochs)
-    iterator_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    assert (iterator_memory - dataset_memory) < 3
+        # process and fetch data
+        epochs = 1 if num_epochs == -1 else num_epochs
+        item = None
+        for _ in range(epochs):
+            for item in ds_iter:
+                break
 
-    # process and fetch data
-    epochs = 1 if num_epochs == -1 else num_epochs
-    item = None
-    for _ in range(epochs):
-        for item in ds_iter:
-            break
+        process_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        assert (process_memory - iterator_memory) < 3
 
-    process_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    assert (process_memory - iterator_memory) < 3
+        # destruct all the instance
+        del item
+        del ds_iter
+        del dataset
+        del data
 
-    # destruct all the instance
-    del item
-    del ds_iter
-    del dataset
-    del data
-
-    # all the memory should be released
-    end_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
-    assert (end_memory - init_memory) < 3
-
-    ds.config.set_prefetch_size(original_prefetch_size)
+        # all the memory should be released
+        end_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
+        assert (end_memory - init_memory) < 3
+    finally:
+        ds.config.set_prefetch_size(original_prefetch_size)
 
 
 @pytest.mark.parametrize('num_samples', (None, 4))
@@ -4054,6 +4059,9 @@ def test_func_generator_with_memory_usage_check():
     Description: Testing GeneratorDataset with memory leak
     Expectation: Success
     """
+    # Exclude first-use runtime allocations from the RSS baseline.
+    dataset_create_dict_iterator(
+        [[np.ones(16, dtype=np.int64) for _ in range(5)] for _ in range(2)], num_epochs=-1)
     init_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
     x_shape_list = [2048, 4096]
     y_shape_list = [1024, 2048]

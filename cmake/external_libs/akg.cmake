@@ -8,6 +8,10 @@ if(USE_CUDA)
     set(akg_cmake_option -DUSE_CUDA=ON ${akg_cmake_option})
 endif()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+    # AKG uses a separate CMake build and does not inherit the parent directory's warning options.
+    set(akg_CXXFLAGS "$ENV{CXXFLAGS} -Wno-error=overloaded-virtual")
+endif()
 
 mindspore_add_pkg(akg
         LIBS akg

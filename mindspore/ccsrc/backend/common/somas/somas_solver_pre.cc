@@ -31,25 +31,27 @@ namespace somas {
 constexpr auto kSolBytesThreshold = 100 * 1024 * 1024;
 constexpr auto kSolNumThresholdMultiThread = 8;
 Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const {
-  auto tensors = *pTensors;
-  if (tensors[index1] == nullptr) {
+  const auto &tensors = *pTensors;
+  const auto tensor1 = tensors.find(index1);
+  const auto tensor2 = tensors.find(index2);
+  if (tensor1 == tensors.end() || tensor1->second == nullptr) {
     MS_LOG(EXCEPTION) << "NULL tensor received in continuous constraint (tensor index " << index1
                       << "), there may be kGraphInput or kGraphOutput in the input tensors or output tensors of the "
                          "fused communication op.";
   }
-  if (tensors[index2] == nullptr) {
+  if (tensor2 == tensors.end() || tensor2->second == nullptr) {
     MS_LOG(EXCEPTION) << "NULL tensor received in continuous constraint (tensor index " << index2
                       << "), there may be kGraphInput or kGraphOutput in the input tensors or output tensors of the "
                          "fused communication op.";
   }
 
-  if (tensors[index1]->right_) {
+  if (tensor1->second->right_) {
     MS_LOG(WARNING) << "Warning:tensor " << index1
-                    << " already has a right tensor (id: " << tensors[index1]->right_->index_;
+                    << " already has a right tensor (id: " << tensor1->second->right_->index_;
   }
-  if (tensors[index2]->left_) {
+  if (tensor2->second->left_) {
     MS_LOG(WARNING) << "Warning:tensor " << index2
-                    << " already has a left tensor (id: " << tensors[index2]->left_->index_;
+                    << " already has a left tensor (id: " << tensor2->second->left_->index_;
   }
   return SUCCESS;
 }

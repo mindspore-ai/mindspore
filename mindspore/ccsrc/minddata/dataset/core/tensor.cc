@@ -1066,6 +1066,27 @@ Status Tensor::GetFloatAt(T *o, const std::vector<dsize_t> &index) const {
   return Status::OK();
 }
 
+// GetItemAt is defined in the header, so callers in other translation units need these symbols even when
+// optimization inlines or eliminates tensor.cc's own calls to the scalar accessors.
+#define INSTANTIATE_TENSOR_SCALAR_ACCESSORS(T)                                          \
+  template Status Tensor::GetUnsignedIntAt<T>(T *, const std::vector<dsize_t> &) const; \
+  template Status Tensor::GetSignedIntAt<T>(T *, const std::vector<dsize_t> &) const;   \
+  template Status Tensor::GetFloatAt<T>(T *, const std::vector<dsize_t> &) const;
+
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(bool)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(int8_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(uint8_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(int16_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(uint16_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(int32_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(uint32_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(int64_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(uint64_t)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(float16)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(float)
+INSTANTIATE_TENSOR_SCALAR_ACCESSORS(double)
+#undef INSTANTIATE_TENSOR_SCALAR_ACCESSORS
+
 Status Tensor::GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const {
   CHECK_FAIL_RETURN_UNEXPECTED(type_.IsString(), "Type is not string or bytes.");
   RETURN_UNEXPECTED_IF_NULL(data_);

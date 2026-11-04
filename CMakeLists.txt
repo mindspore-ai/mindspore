@@ -72,6 +72,11 @@ endif()
 if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include -std=c++17 \
     -Werror -Wall -Wno-deprecated-declarations -fPIC")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+    # GCC 13 adds overloaded-virtual to -Wall. Typed comparison overloads intentionally hide Base::operator==;
+    # importing that non-const overload would make existing comparisons ambiguous. Keep the warning non-fatal.
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-error=overloaded-virtual>")
+endif()
 else()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif()

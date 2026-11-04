@@ -1,0 +1,27 @@
+# Build/runtime dependencies shared by the modules. Install the desired PyTorch separately.
+numpy>=1.26.4
+setuptools>=81.0.0
+wheel>=0.45.1
+cmake>=3.20
+PyYAML>=6.0.3
+typing-extensions>=4.10.0
+nanobind>=2.9
+pybind11>=2.13
+ninja
+auditwheel>=5.4.0
+packaging>=20.0
+protobuf>=7.34.1
+decorator==5.1.1
+ml-dtypes>=0.5
+attrs
+sympy
+cloudpickle
+tornado
+absl-py
+asttokens>=2.0.4
+astunparse>=1.6.3
+dill>=0.3.7
+pillow>=6.2.0
+psutil>=5.7.0
+safetensors>=0.4.0
+scipy>=1.5.4

@@ -382,7 +382,7 @@ std::pair<AnfNodePtr, int> CheckMakeTupleSplit(const AnfNodePtr &node, const Fun
   bool is_first_tensor_info = true;
   std::vector<TensorInfo> first_tensor_info;
   AnfNodePtr first_node;
-  int corresponding_input_pos;
+  int corresponding_input_pos = -1;
   for (auto &node_user : node_users) {
     auto user_node = node_user.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_node);
@@ -539,7 +539,7 @@ std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNo
 
 std::vector<int> RemovePlaceholderIdx(const std::vector<int> &get_item_index) {
   if (get_item_index.size() == 1) {
-    return get_item_index;
+    return {get_item_index.front()};
   }
   std::vector<int> new_get_item_index;
   std::copy_if(get_item_index.begin(), get_item_index.end(), std::back_inserter(new_get_item_index),
