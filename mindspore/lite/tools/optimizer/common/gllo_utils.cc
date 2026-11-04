@@ -996,6 +996,27 @@ ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const st
   return param_node;
 }
 
+ParameterPtr BuildStringValueParameterNode(const FuncGraphPtr &func_graph, const std::string &data,
+                                          const std::string &node_name, bool empty_shape) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto param_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
+  param_node->set_name(node_name);
+
+  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
+  auto tensor_info = lite::CreateTensorInfo(data.c_str(), data.size(), shape_vector, kObjectTypeString);
+  if (tensor_info == nullptr) {
+    MS_LOG(ERROR) << "Create tensor info failed";
+    return nullptr;
+  }
+  auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    return nullptr;
+  }
+  return param_node;
+}
+
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
                                           const std::string &node_name, bool empty_shape) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);

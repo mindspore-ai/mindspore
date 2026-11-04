@@ -127,6 +127,9 @@ ParameterPtr BuildInt64VecParameterNode(const FuncGraphPtr &func_graph, const st
 ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const std::vector<std::vector<int32_t>> &data,
                                         const std::string &node_name);
 
+ParameterPtr BuildStringValueParameterNode(const FuncGraphPtr &func_graph, const std::string &data,
+                                          const std::string &node_name, bool empty_shape = false);
+
 ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
                                           const std::string &node_name, bool empty_shape = false);
 
