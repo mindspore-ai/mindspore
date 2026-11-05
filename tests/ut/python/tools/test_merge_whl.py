@@ -4,6 +4,7 @@ import base64
 import csv
 import hashlib
 import io
+import json
 import os
 from pathlib import Path
 import platform
@@ -91,7 +92,7 @@ class MergeWheelTest(unittest.TestCase):
                 b'Provides-Extra: base\nRequires-Dist: base-dependency; extra == "base"\n')
         if torch_npu:
             payload[metadata + '/METADATA'] += (
-                f'Provides-Extra: torch-npu\nRequires-Dist: torch=={torch_npu_version}.*; '
+                f'Provides-Extra: torch-npu\nRequires-Dist: torch=={Version(torch_npu_version).base_version}.*; '
                 'extra == "torch-npu"\nRequires-Dist: pyyaml\n').encode()
             entries += '\n'.join(f'\n[{group}]\n' + '\n'.join(values)
                                  for group, values in entries_torch_npu.items())
@@ -187,6 +188,26 @@ class MergeWheelTest(unittest.TestCase):
         message = self.run_merge(self.wheel('no torch_npu', gpu='11.8'), succeeds=False)
         self.assertIn('At least one input wheel must contain torch_npu', message)
 
+    def test_invalid_legacy_version_identifies_source_wheel_and_path(self):
+        """Diagnose missing or unreadable legacy versions without publishing a partial wheel."""
+        base = self.wheel('base')
+        versions = [None, b'__version__ = calculate_version()\n', b'__version__ =\n',
+                    b"__version__ = 'invalid'\n", b"other = '1.0'\n"]
+        for index, contents in enumerate(versions):
+            with self.subTest(contents=contents):
+                module = self.wheel(f'legacy-{index}', torch_npu=True)
+                with zipfile.ZipFile(module) as archive:
+                    payload = {name: archive.read(name) for name in archive.namelist()}
+                if contents is None:
+                    del payload['torch_npu/version.py']
+                else:
+                    payload['torch_npu/version.py'] = contents
+                self.write_wheel(module, payload, 'mindspore')
+                message = self.run_merge(base, module, succeeds=False)
+                self.assertIn(str(module), message)
+                self.assertIn('mindspore/_bundled/torch_npu/torch_npu/version.py', message)
+                self.assertIn('Cannot read bundled torch_npu version', message)
+
     def test_native_module_has_no_custom_manifest_and_preserves_future_files(self):
         """Preserve the complete native payload and expose only the unified distribution."""
         native = self.wheel('native', torch_npu=True, native=True)
@@ -211,6 +232,167 @@ class MergeWheelTest(unittest.TestCase):
             self.assertIn('_mindspore_torch_npu_loader.py', archive.namelist())
             self.assertNotIn('mindspore_torch_npu.pth', archive.namelist())
             self.assertNotIn('_mindspore_torch_npu_path.py', archive.namelist())
+            self.assertNotIn('_mindspore_info.py', archive.namelist())
+
+    def test_installed_summary_and_msinfo_without_framework_imports(self):
+        """Report input wheel versions for release, prerelease and local builds."""
+        versions = [('4.2.0', '7.8.9'),
+                    ('4.3.0beta', '8.0.0rc1'),
+                    ('5.0.0+build.7', '8.1.0+gitabcdef0123456789')]
+        for index, (mindspore_version, torch_npu_version) in enumerate(versions):
+            with self.subTest(mindspore=mindspore_version, torch_npu=torch_npu_version):
+                self.output = self.work / f'output-{index}'
+                self.output.mkdir()
+                (self.output / 'keep.txt').write_text('existing output')
+                base = self.wheel(f'base-{index}', version=mindspore_version)
+                module = self.wheel(
+                    f'official-{index}', torch_npu=True, native=True, torch_npu_version=torch_npu_version,
+                    platform_tag=f'manylinux_2_28_{platform.machine()}')
+                self.check_installed_component_versions(base, module, index)
+
+    def check_installed_component_versions(self, base, module, case):
+        """Compare installed output to independent input metadata without loading frameworks."""
+        versions = []
+        for source in (base, module):
+            with zipfile.ZipFile(source) as archive:
+                info = next(name for name in archive.namelist() if name.endswith('.dist-info/METADATA'))
+                versions.append(BytesParser().parsebytes(archive.read(info))['Version'])
+        mindspore_version, torch_npu_version = versions
+        wheel = self.run_merge(base, module=module)
+        expected_summary = (f'MindSpore unified distribution; MindSpore Core={mindspore_version}; '
+                            f'Torch Adapter Core (torch_npu)={torch_npu_version}')
+        expected_info = ('MindSpore:\n'
+                         f'  Version: {mindspore_version}\n'
+                         '  Components:\n'
+                         '    MindSpore Core:\n'
+                         f'      Version: {mindspore_version}\n'
+                         '    Torch Adapter Core (torch_npu):\n'
+                         f'      Version: {torch_npu_version}\n')
+        with zipfile.ZipFile(wheel) as archive:
+            info = next(n.removesuffix('METADATA') for n in archive.namelist()
+                        if n.endswith('.dist-info/METADATA'))
+            metadata = BytesParser().parsebytes(archive.read(info + 'METADATA'))
+            self.assertEqual(metadata['Summary'], expected_summary)
+            components = json.loads(archive.read(info + 'components.json'))
+            self.assertEqual({item['name']: item['version'] for item in components['components']},
+                             {'mindspore': mindspore_version, 'torch-npu': torch_npu_version})
+        venv = self.work / f'venv-{case}'
+        subprocess.run([sys.executable, '-m', 'venv', '--without-pip', str(venv)],
+                       capture_output=True, text=True, timeout=30, check=True)
+        scripts = venv / ('Scripts' if os.name == 'nt' else 'bin')
+        python = scripts / ('python.exe' if os.name == 'nt' else 'python')
+        pip = [sys.executable, '-m', 'pip', '--isolated', '--python', str(python)]
+        result = subprocess.run([*pip, 'install', '--no-index', '--no-deps', '--no-compile', str(wheel)],
+                                cwd=self.work, capture_output=True, text=True, timeout=60, check=False)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        result = subprocess.run([*pip, 'show', 'mindspore'], cwd=self.work,
+                                capture_output=True, text=True, timeout=30, check=False)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Summary: ' + expected_summary + '\n', result.stdout)
+        # Fail if either CLI path tries to load a framework instead of metadata.
+        code = '''from importlib.metadata import distribution
+package = distribution('mindspore')
+for name in ('mindspore/__init__.py', 'mindspore/_bundled/torch_npu/torch_npu/__init__.py'):
+    package.locate_file(name).write_text("raise AssertionError('Framework must not initialize')\\n")
+package.locate_file('torch.py').write_text("raise AssertionError('PyTorch must not initialize')\\n")
+'''
+        subprocess.run([str(python), '-c', code], cwd=self.work,
+                       capture_output=True, text=True, timeout=30, check=True)
+        result = subprocess.run([str(scripts / ('msinfo.exe' if os.name == 'nt' else 'msinfo'))],
+                                cwd=self.work, capture_output=True, text=True, timeout=30, check=False)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, expected_info)
+        code = '''import sys
+from _mindspore_torch_npu_loader import msinfo
+assert msinfo() == 0
+assert not {'mindspore', 'torch', 'torch_npu'} & sys.modules.keys()
+'''
+        result = subprocess.run([str(python), '-c', code], cwd=self.work,
+                                capture_output=True, text=True, timeout=30, check=False)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, expected_info)
+
+    def test_repacking_old_msinfo_module_uses_shared_loader(self):
+        """Remove the former command module when repacking an existing unified wheel."""
+        wheel = self.run_merge(self.wheel('base'), module=self.wheel('native', torch_npu=True, native=True))
+        with zipfile.ZipFile(wheel) as archive:
+            payload = {name: archive.read(name) for name in archive.namelist()}
+        info = next(name.removesuffix('METADATA') for name in payload if name.endswith('.dist-info/METADATA'))
+        payload['_mindspore_info.py'] = b"raise AssertionError('Obsolete command module')\n"
+        payload[info + 'top_level.txt'] += b'_mindspore_info\n'
+        payload[info + 'entry_points.txt'] = payload[info + 'entry_points.txt'].replace(
+            b'_mindspore_torch_npu_loader:msinfo', b'_mindspore_info:main')
+        self.write_wheel(wheel, payload, 'mindspore')
+        wheel = self.run_merge(wheel)
+        with zipfile.ZipFile(wheel) as archive:
+            self.assertNotIn('_mindspore_info.py', archive.namelist())
+            self.assertNotIn('_mindspore_info', archive.read(info + 'top_level.txt').decode().splitlines())
+            self.assertIn('msinfo = _mindspore_torch_npu_loader:msinfo',
+                          archive.read(info + 'entry_points.txt').decode())
+
+    def test_msinfo_reports_invalid_component_information_without_tracebacks(self):
+        """Reject corrupt JSON and invalid component records before printing partial output."""
+        wheel = self.run_merge(self.wheel('base'), module=self.wheel('native', torch_npu=True, native=True))
+        installed = self.work / 'site-packages'
+        with zipfile.ZipFile(wheel) as archive:
+            archive.extractall(installed)
+            info = next(name.removesuffix('METADATA') for name in archive.namelist()
+                        if name.endswith('.dist-info/METADATA'))
+        filename = installed / info / 'components.json'
+        valid = {'name': 'mindspore', 'display_name': 'MindSpore Core', 'version': '4.0.0'}
+        contents = ['{', '{}', '[]', json.dumps({'components': {}}), json.dumps({'components': []}),
+                    json.dumps({'components': [{}]}), json.dumps({'components': [None]}),
+                    json.dumps({'components': [dict(valid, version=4)]}),
+                    json.dumps({'components': [dict(valid, display_name=' ')]}),
+                    json.dumps({'components': [valid, {}]})]
+        env = dict(os.environ, PYTHONPATH=str(installed))
+        for value in contents:
+            with self.subTest(contents=value):
+                filename.write_text(value, encoding='utf-8')
+                result = subprocess.run(
+                    [sys.executable, '-S', '-c', 'from _mindspore_torch_npu_loader import msinfo; msinfo()'],
+                    cwd=self.work, env=env, capture_output=True, text=True, timeout=30, check=False)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(result.stdout, '')
+                self.assertIn('msinfo: Invalid components.json', result.stderr)
+                self.assertNotIn('Traceback', result.stderr)
+
+    def test_wheel_checker_identifies_core_by_name(self):
+        """Accept reordered components and diagnose missing, duplicate or mismatched core records."""
+        wheel = self.run_merge(self.wheel('base'), module=self.wheel('native', torch_npu=True, native=True))
+        with zipfile.ZipFile(wheel) as archive:
+            original = {name: archive.read(name) for name in archive.namelist()}
+        info = next(name.removesuffix('METADATA') for name in original if name.endswith('.dist-info/METADATA'))
+        cases = [('reordered', None), ('missing', 'Expected exactly one mindspore component'),
+                 ('duplicate', 'Expected exactly one mindspore component'),
+                 ('mismatched', 'MindSpore Core version mismatch')]
+        for case, error in cases:
+            with self.subTest(case=case):
+                payload = dict(original)
+                data = json.loads(payload[info + 'components.json'])
+                core = next(component for component in data['components'] if component['name'] == 'mindspore')
+                if case == 'reordered':
+                    data['components'].reverse()
+                elif case == 'missing':
+                    data['components'].remove(core)
+                elif case == 'duplicate':
+                    data['components'].append(dict(core))
+                else:
+                    core['version'] = '99.0.0'
+                payload[info + 'components.json'] = json.dumps(data).encode()
+                metadata = BytesParser().parsebytes(payload[info + 'METADATA'])
+                metadata.replace_header('Summary', 'MindSpore unified distribution; ' + '; '.join(
+                    f"{component['display_name']}={component['version']}" for component in data['components']))
+                payload[info + 'METADATA'] = metadata.as_bytes(policy=metadata.policy.clone(max_line_length=0))
+                self.write_wheel(wheel, payload, 'mindspore')
+                result = subprocess.run([sys.executable, str(ROOT / 'scripts/packaging/check_unified.py'),
+                                         '--wheel', str(wheel)], cwd=self.work, capture_output=True,
+                                        text=True, timeout=30, check=False)
+                if error is None:
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                else:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(error, result.stderr)
 
     def test_torch_hook_prefers_external_torch_npu_in_either_backend_order(self):
         """Select the external provider independently of backend entry-point ordering."""
