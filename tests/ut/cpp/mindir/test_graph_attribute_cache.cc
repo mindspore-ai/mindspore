@@ -115,19 +115,61 @@ TEST(TestMindIRGraphAttributeCache, ReusesGraphsWithinLoad) {
   EXPECT_EQ(graph->get_attr("nested"), graph->get_attr("other"));
 }
 
-/// Feature: MindIR graph attribute failure propagation.
+/// Feature: Legacy hook dependencies and parser-local graph reuse.
+/// Description: Load repeated attributes with an unresolved operator or input reference.
+/// Expectation: They share one graph in this load, which is released with its owner.
+TEST(TestMindIRGraphAttributeCache, ReusesAndReleasesIncompleteHookGraphs) {
+  for (const bool missing_input : {false, true}) {
+    auto model = MakeGraphAttributeModel("incomplete_hook", 1);
+    auto nested = model.mutable_graph()->mutable_attribute(0)->mutable_g();
+    auto node = nested->add_node();
+    node->set_op_type(missing_input ? "MakeTuple" : "REF::missing_hook_operator");
+    node->add_input(missing_input ? "missing_hook_input" : nested->input(0).name());
+    node->add_output("hook_result");
+    nested->mutable_output(0)->set_name("hook_result");
+    const auto duplicate = model.graph().attribute(0);
+    model.mutable_graph()->add_attribute()->CopyFrom(duplicate);
+    model.mutable_graph()->mutable_attribute(1)->set_name("other");
+    std::weak_ptr<FuncGraph> weak;
+    {
+      auto graph = LoadGraphAttributeModel(model);
+      ASSERT_NE(graph, nullptr);
+      auto value = graph->get_attr("nested");
+      ASSERT_NE(value, nullptr);
+      auto attribute_graph = value->cast<FuncGraphPtr>();
+      ASSERT_NE(attribute_graph, nullptr);
+      EXPECT_EQ(value, graph->get_attr("other"));
+      weak = attribute_graph;
+    }
+    EXPECT_TRUE(weak.expired());
+  }
+}
+
+/// Feature: MindIR graph attribute compatibility and cache isolation.
 /// Description: Load a graph with no outputs, then retry in a new load with a valid graph of the same name.
-/// Expectation: The malformed model fails and the next load builds a complete graph.
-TEST(TestMindIRGraphAttributeCache, RejectsFailedGraphAndAllowsRetry) {
+/// Expectation: Legacy incomplete attributes remain loadable without contaminating the next load.
+TEST(TestMindIRGraphAttributeCache, IncompleteGraphDoesNotContaminateNextLoad) {
   auto model = MakeGraphAttributeModel("retry_graph", 7);
   model.mutable_graph()->mutable_attribute(0)->mutable_g()->clear_output();
-  EXPECT_EQ(LoadGraphAttributeModel(model), nullptr);
+  std::weak_ptr<FuncGraph> weak;
+  {
+    auto incomplete = LoadGraphAttributeModel(model);
+    ASSERT_NE(incomplete, nullptr);
+    auto value = incomplete->get_attr("nested");
+    ASSERT_NE(value, nullptr);
+    auto nested = value->cast<FuncGraphPtr>();
+    ASSERT_NE(nested, nullptr);
+    EXPECT_EQ(nested->get_return(), nullptr);
+    weak = nested;
+  }
+  EXPECT_TRUE(weak.expired());
   auto graph = LoadGraphAttributeModel(MakeGraphAttributeModel("retry_graph", 7));
   ASSERT_NE(graph, nullptr);
   auto value = graph->get_attr("nested");
   ASSERT_NE(value, nullptr);
   auto nested = value->cast<FuncGraphPtr>();
   ASSERT_NE(nested, nullptr);
+  EXPECT_NE(nested->get_return(), nullptr);
   ASSERT_NE(nested->get_attr("marker"), nullptr);
   EXPECT_EQ(GetValue<int64_t>(nested->get_attr("marker")), 7);
 }
@@ -154,13 +196,13 @@ TEST(TestMindIRGraphAttributeCache, RejectsCycles) {
 }
 
 /// Feature: MindIR bool loading APIs propagate graph construction errors.
-/// Description: Load valid and malformed graph attributes through all three buffer-based bool overloads.
+/// Description: Load valid models and models with no top-level outputs through the bool overloads.
 /// Expectation: Valid input succeeds; malformed input returns false with a null graph, including absent user info.
 TEST(TestMindIRGraphAttributeCache, BoolOverloadsPropagateFailure) {
   for (const bool valid : {true, false}) {
     auto model = MakeGraphAttributeModel("bool_result_graph", 1);
     if (!valid) {
-      model.mutable_graph()->mutable_attribute(0)->mutable_g()->clear_output();
+      model.mutable_graph()->clear_output();
     }
     const auto data = model.SerializeAsString();
     MindIRLoader loader(true, nullptr, 0, "AES-GCM", false);
@@ -178,7 +220,7 @@ TEST(TestMindIRGraphAttributeCache, BoolOverloadsPropagateFailure) {
   }
 }
 /// Feature: MindIR node graph attribute failure propagation.
-/// Description: Primitive, node and primal attributes contain a graph without outputs.
+/// Description: Primitive, node and primal attributes contain a self-referencing graph.
 /// Expectation: Each loading attempt fails with a null graph.
 TEST(TestMindIRGraphAttributeCache, NodeGraphAttributeFailuresPropagate) {
   for (int attribute_kind = 0; attribute_kind < 3; ++attribute_kind) {
@@ -193,7 +235,10 @@ TEST(TestMindIRGraphAttributeCache, NodeGraphAttributeFailuresPropagate) {
                                     : (attribute_kind == 1 ? node->add_node_attr() : node->add_primal_attr());
     attr->CopyFrom(definition);
     attr->mutable_g()->set_name("malformed_node_graph");
-    attr->mutable_g()->clear_output();
+    auto back = attr->mutable_g()->add_attribute();
+    back->set_name("back");
+    back->set_type(mind_ir::AttributeProto::GRAPH);
+    back->mutable_g()->set_name("malformed_node_graph");
     const auto data = model.SerializeAsString();
     MindIRLoader loader(true, nullptr, 0, "AES-GCM", false);
     FuncGraphPtr graph;

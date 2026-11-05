@@ -724,6 +724,7 @@ class MSANFModelParser {
 
   FuncGraphPtr top_graph_ = nullptr;
   bool is_lite_ = false;
+  bool cyclic_graph_attribute_ = false;
   bool abstract_valid_ = false;
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
   // Cache only within this parser; a null entry denotes a graph still being built.
@@ -834,6 +835,7 @@ FuncGraphPtr MSANFModelParser::GenerateFuncGraphValue(const mind_ir::GraphProto 
   auto it = attribute_graphs_.find(graph_proto.name());
   if (it != attribute_graphs_.end()) {
     if (it->second == nullptr) {
+      cyclic_graph_attribute_ = true;
       MS_LOG(ERROR) << "Cyclic graph attribute reference: " << graph_proto.name();
     }
     return it->second;
@@ -841,9 +843,14 @@ FuncGraphPtr MSANFModelParser::GenerateFuncGraphValue(const mind_ir::GraphProto 
   auto graph = std::make_shared<FuncGraph>();
   attribute_graphs_[graph_proto.name()] = nullptr;
   if (!BuildFuncGraph(graph, graph_proto)) {
-    attribute_graphs_.erase(graph_proto.name());
     MS_LOG(ERROR) << "Failed to build funcgraph for " << graph_proto.name();
-    return nullptr;
+    // Preserve legacy attribute-graph loading semantics. Scope the cache to
+    // this parser without making incomplete hook graphs a cache miss.
+    // A cycle must still fail: returning an active graph can retain owning cycles.
+    if (cyclic_graph_attribute_) {
+      attribute_graphs_.erase(graph_proto.name());
+      return nullptr;
+    }
   }
   attribute_graphs_[graph_proto.name()] = graph;
   return graph;
