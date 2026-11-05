@@ -64,22 +64,6 @@ from mindspore.dataset.text.transforms import AddToken, JiebaTokenizer, Lookup, 
     UnicodeScriptTokenizer, WhitespaceTokenizer
 from mindspore.dataset.core.datatypes import nptype_to_detype, mstype_to_detype, mstypelist_to_detypelist
 from mindspore.dataset.audio.utils import create_dct, linear_fbanks, melscale_fbanks
-from mindspore.dataset.audio.transforms import (
-    AllpassBiquad,
-    BandBiquad,
-    BandpassBiquad,
-    BandrejectBiquad,
-    BassBiquad,
-    Biquad,
-    DeemphBiquad,
-    EqualizerBiquad,
-    Filtfilt,
-    HighpassBiquad,
-    LFilter,
-    LowpassBiquad,
-    RiaaBiquad,
-    TrebleBiquad,
-)
 from mindspore.dataset.engine.cache_client import DatasetCache
 from mindspore.dataset.engine.iterators import Iterator
 from mindspore.dataset.engine.datasets_standard_format import CSVDataset, MindDataset, TFRecordDataset
@@ -170,22 +154,6 @@ def _get_dataset_forbidden_code():
                   CaseFold.parse, FilterWikipediaXML.parse, NormalizeUTF8.parse, RegexReplace.parse, \
                   RegexTokenizer.parse, UnicodeScriptTokenizer.parse, WhitespaceTokenizer.parse])
     codes.extend([create_dct, linear_fbanks, melscale_fbanks])
-    codes.extend([
-        AllpassBiquad.parse,
-        BandBiquad.parse,
-        BandpassBiquad.parse,
-        BandrejectBiquad.parse,
-        BassBiquad.parse,
-        Biquad.parse,
-        DeemphBiquad.parse,
-        EqualizerBiquad.parse,
-        Filtfilt.parse,
-        HighpassBiquad.parse,
-        LFilter.parse,
-        LowpassBiquad.parse,
-        RiaaBiquad.parse,
-        TrebleBiquad.parse,
-    ])
     codes.extend([DatasetCache.__init__, Iterator.__init__])
     codes.extend([CSVDataset.parse, MindDataset.parse, TFRecordDataset.parse])
     codes.extend([AGNewsDataset.parse, AmazonReviewDataset.parse, CLUEDataset.parse, CoNLL2000Dataset.parse, \

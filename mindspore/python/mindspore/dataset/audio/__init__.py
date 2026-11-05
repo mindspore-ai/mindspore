@@ -43,22 +43,6 @@ from __future__ import absolute_import
 
 from . import transforms
 from . import utils
-from .transforms import (
-    AllpassBiquad,
-    BandBiquad,
-    BandpassBiquad,
-    BandrejectBiquad,
-    BassBiquad,
-    Biquad,
-    DeemphBiquad,
-    EqualizerBiquad,
-    Filtfilt,
-    HighpassBiquad,
-    LFilter,
-    LowpassBiquad,
-    RiaaBiquad,
-    TrebleBiquad,
-)
 from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
     MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType, create_dct, linear_fbanks, \
     melscale_fbanks

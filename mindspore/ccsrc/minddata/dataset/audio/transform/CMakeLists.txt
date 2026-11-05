@@ -10,19 +10,5 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 else()
         add_library(audio-transform OBJECT
                 validators.cc
-                allpass_biquad_ir.cc
-                band_biquad_ir.cc
-                bandpass_biquad_ir.cc
-                bandreject_biquad_ir.cc
-                bass_biquad_ir.cc
-                biquad_ir.cc
-                deemph_biquad_ir.cc
-                equalizer_biquad_ir.cc
-                filtfilt_ir.cc
-                highpass_biquad_ir.cc
-                lfilter_ir.cc
-                lowpass_biquad_ir.cc
-                riaa_biquad_ir.cc
-                treble_biquad_ir.cc
                 )
 endif()
