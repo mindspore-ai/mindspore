@@ -1339,33 +1339,60 @@ bool MSANFModelParser::BuildMapParameterFromMapTensorProto(const ParameterPtr &n
   return true;
 }
 
-// A shared-weight directory conversion (lite) records in user_info the directory its
-// external_data.location entries are relative to, as a path relative to the mindir itself, because
-// the weights live next to the rank directories instead of next to each mindir. Keep the key in
-// sync with lite::kMindIRWeightRootKey (src/common/common.h).
-constexpr char kMindIRWeightRootKey[] = "mindir_weight_root";
-
-// Resolve the recorded weight root against the directory the caller supplied. Without a recorded
-// root the caller's directory is used unchanged. A model loaded from a bare buffer has no directory
-// of its own, so the recorded root stays relative and resolves against the current directory.
-std::string ResolveWeightRoot(const mind_ir::ModelProto &model_proto, const std::string &mindir_dir) {
-  // Iterate instead of user_info().find(): protobuf's Map hashes keys with absl::Hash, whose seed is a
-  // per-DSO static. protobuf/absl are statically linked into both the converter and the runtime, and the
-  // runtime's references can bind to the converter's copy, so inserts and finds may use different seeds
-  // and find() intermittently misses an existing key. Iteration walks the entry list, independent of hashing.
-  for (const auto &kv : model_proto.user_info()) {
-    if (kv.first != kMindIRWeightRootKey) {
-      continue;
+// Split the leading ".." components of a location from the path below them, e.g.
+// "../../variables/data_0" -> {"../..", "variables/data_0"}.
+std::pair<std::string, std::string> SplitRelativeRoot(const std::string &location) {
+  constexpr char kParentDirToken[] = "..";
+  constexpr size_t kParentDirTokenLen = sizeof(kParentDirToken) - 1;
+  constexpr size_t kPathSeparatorLen = 1;
+  std::string root;
+  size_t pos = 0;
+  while (pos + kParentDirTokenLen <= location.size() &&
+         location.compare(pos, kParentDirTokenLen, kParentDirToken) == 0 &&
+         (pos + kParentDirTokenLen == location.size() || IsPathSeparator(location[pos + kParentDirTokenLen]))) {
+    if (!root.empty()) {
+      root += "/";
     }
-    if (kv.second.empty()) {
-      return mindir_dir;
+    root += kParentDirToken;
+    pos += kParentDirTokenLen;
+    if (pos < location.size()) {
+      pos += kPathSeparatorLen;
     }
-    if (mindir_dir.empty()) {
-      return kv.second;
-    }
-    return mindir_dir + "/" + kv.second;
   }
-  return mindir_dir;
+  return {root, location.substr(pos)};
+}
+
+std::string FindExternalDataLocation(const mind_ir::GraphProto &graph) {
+  const auto &parameters = graph.parameter();
+  auto iter = std::find_if(parameters.begin(), parameters.end(), [](const auto &param_proto) {
+    return param_proto.has_external_data() && !param_proto.external_data().location().empty();
+  });
+  if (iter != parameters.end()) {
+    return iter->external_data().location();
+  }
+  return "";
+}
+
+// The external data location is relative to the mindir itself. A shared-weight directory
+// conversion points it from the mindir to the weight file, e.g. "../../variables/data_0", because
+// the weights live next to the rank directories instead of next to each mindir. The leading ".."
+// components of that path are the weight root the rest of the location is relative to.
+std::string ResolveWeightRoot(const mind_ir::ModelProto &model_proto, const std::string &mindir_dir) {
+  std::string location;
+  if (model_proto.has_graph()) {
+    location = FindExternalDataLocation(model_proto.graph());
+  }
+  for (int i = 0; location.empty() && i < model_proto.functions_size(); ++i) {
+    location = FindExternalDataLocation(model_proto.functions(i));
+  }
+  if (location.empty() || mindir_dir.empty()) {
+    return mindir_dir;
+  }
+  auto root = SplitRelativeRoot(location).first;
+  if (root.empty()) {
+    return mindir_dir;
+  }
+  return mindir_dir + "/" + root;
 }
 
 // Resolve and validate the external data file path declared in a TensorProto.
