@@ -115,74 +115,6 @@ TEST_F(MindDataTestExecute, TestAdjustGammaEager1Channel) {
   EXPECT_EQ(rc, Status::OK());
 }
 
-/// Feature: Execute Transform op
-/// Description: Test executing AmplitudeToDB with basic usage
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAmplitudeToDB) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDB.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 2, 2, 3}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> amplitude_to_db_op = std::make_shared<audio::AmplitudeToDB>();
-  // apply amplitude_to_db
-  mindspore::dataset::Execute trans({amplitude_to_db_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing AmplitudeToDB with wrong arguments
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongArgs.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> amplitude_to_db_op =
-    std::make_shared<audio::AmplitudeToDB>(ScaleType::kPower, 1.0, -1e-10, 80.0);
-  // apply amplitude_to_db
-  mindspore::dataset::Execute trans({amplitude_to_db_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing AmplitudeToDB with no arguments
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongInput) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongInput.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({20}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> amplitude_to_db_op = std::make_shared<audio::AmplitudeToDB>();
-  // apply amplitude_to_db
-  mindspore::dataset::Execute trans({amplitude_to_db_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-}
-
 /// Feature: Execute composed transform ops
 /// Description: Test executing composed multiple transform ops
 /// Expectation: Output is equal to the expected output and status is okay
@@ -203,57 +135,6 @@ TEST_F(MindDataTestExecute, TestComposeTransforms) {
   EXPECT_EQ(rc, Status::OK());
   EXPECT_EQ(30, image.Shape()[0]);
   EXPECT_EQ(30, image.Shape()[1]);
-}
-
-/// Feature: ComputeDeltas op
-/// Description: Test basic function of ComputeDeltas op
-/// Expectation: Get correct number of data
-TEST_F(MindDataTestExecute, TestComputeDeltas) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComputeDeltas.";
-  std::shared_ptr<Tensor> input_tensor;
-
-  int win_length = 5;
-
-  // create tensor
-  TensorShape s = TensorShape({2, 15, 7});
-  // init input vec
-  std::vector<float> input_vec(s.NumOfElements());
-  for (int ind = 0; ind < input_vec.size(); ind++) {
-    input_vec[ind] = std::rand() % (1000) / (1000.0f);
-  }
-  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  std::shared_ptr<TensorTransform> compute_deltas_op = std::make_shared<audio::ComputeDeltas>(win_length);
-
-  // apply compute_deltas
-  mindspore::dataset::Execute Transform({compute_deltas_op});
-  Status status = Transform(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: ComputeDeltas op
-/// Description: Test wrong input args of ComputeDeltas op
-/// Expectation: Get nullptr of iterator
-TEST_F(MindDataTestExecute, TestComputeDeltasWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComputeDeltasWrongArgs.";
-  std::shared_ptr<Tensor> input_tensor;
-  // win_length is less than minimum of 3
-  int win_length = 2;
-
-  // create tensor
-  TensorShape s = TensorShape({2, 15, 7});
-  // init input vec
-  std::vector<float> input_vec(s.NumOfElements());
-  for (int ind = 0; ind < input_vec.size(); ind++) {
-    input_vec[ind] = std::rand() % (1000) / (1000.0f);
-  }
-  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-
-  std::shared_ptr<TensorTransform> compute_deltas_op = std::make_shared<audio::ComputeDeltas>(win_length);
-  mindspore::dataset::Execute Transform({compute_deltas_op});
-  Status status = Transform(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
 }
 
 /// Feature: Execute Transform op
@@ -295,22 +176,6 @@ TEST_F(MindDataTestExecute, TestFilterWikipediaXMLEager) {
   ASSERT_TRUE(s.IsOk());
 }
 
-/// Feature: Execute Transform op
-/// Description: Test executing FrequencyMasking op basic usage
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestFrequencyMasking) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFrequencyMasking.";
-  std::shared_ptr<Tensor> input;
-  TensorShape s = TensorShape({6, 2});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> frequency_masking_op = std::make_shared<audio::FrequencyMasking>(true, 2);
-  mindspore::dataset::Execute transform({frequency_masking_op});
-  Status status = transform(input_tensor, &input_tensor);
-  EXPECT_TRUE(status.IsOk());
-}
-
 /// Feature: RandomLighting op
 /// Description: Test RandomLighting Op when alpha=0.1
 /// Expectation: The data is processed successfully
@@ -326,76 +191,6 @@ TEST_F(MindDataTestExecute, TestRandomLighting) {
   auto transform = Execute({decode, random_lighting_op});
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing TimeMasking op basic usage
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestTimeMasking) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeMasking.";
-  std::shared_ptr<Tensor> input;
-  TensorShape s = TensorShape({2, 6});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> time_masking_op = std::make_shared<audio::TimeMasking>(true, 2);
-  mindspore::dataset::Execute transform({time_masking_op});
-  Status status = transform(input_tensor, &input_tensor);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing TimeStretch op basic usage in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestTimeStretchEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeStretchEager.";
-  std::shared_ptr<Tensor> input_tensor;
-  // op param
-  int freq = 4;
-  int hop_length = 20;
-  float rate = 1.3;
-  int frame_num = 10;
-  // create tensor
-  TensorShape s = TensorShape({2, freq, frame_num, 2});
-  // init input vec
-  std::vector<float> input_vec(2 * freq * frame_num * 2);
-  for (int ind = 0; ind < input_vec.size(); ind++) {
-    input_vec[ind] = std::rand() % (1000) / (1000.0f);
-  }
-  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  std::shared_ptr<TensorTransform> time_stretch_op = std::make_shared<audio::TimeStretch>(hop_length, freq, rate);
-
-  // apply timestretch
-  mindspore::dataset::Execute Transform({time_stretch_op});
-  Status status = Transform(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing TimeStretch op with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestTimeStretchParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck.";
-  // Create an input
-  std::shared_ptr<Tensor> input_tensor;
-  std::shared_ptr<Tensor> output_tensor;
-  TensorShape s = TensorShape({1, 4, 3, 2});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f,
-                        1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
-    s, &input_tensor));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-
-  std::shared_ptr<TensorTransform> time_stretch1 = std::make_shared<audio::TimeStretch>(4, 512, -2);
-  mindspore::dataset::Execute Transform1({time_stretch1});
-  Status status = Transform1(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-
-  std::shared_ptr<TensorTransform> time_stretch2 = std::make_shared<audio::TimeStretch>(4, -512, 2);
-  mindspore::dataset::Execute Transform2({time_stretch2});
-  status = Transform2(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
 }
 
 /// Feature: Execute Transform op
@@ -791,47 +586,6 @@ TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
 }
 
 /// Feature: Execute Transform op
-/// Description: Test executing Angle op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAngleEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAngleEager.";
-  std::vector<double> origin = {1.143, 1.3123, 2.632, 2.554, -1.213, 1.3, 0.456, 3.563};
-  TensorShape input_shape({4, 2});
-  std::shared_ptr<Tensor> de_tensor;
-  Tensor::CreateFromVector(origin, input_shape, &de_tensor);
-
-  std::shared_ptr<TensorTransform> angle = std::make_shared<audio::Angle>();
-  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
-  mindspore::dataset::Execute Transform({angle});
-  Status s = Transform(input, &input);
-
-  ASSERT_TRUE(s.IsOk());
-}
-
-/// Feature: MelScale op
-/// Description: Test basic usage of MelScale op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestMelScale) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelScale.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 2, 2, 3}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mel_scale_op = std::make_shared<audio::MelScale>(2, 10, -50, 100, 2);
-  // apply melscale
-  mindspore::dataset::Execute trans({mel_scale_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: Execute Transform op
 /// Description: Test executing Decode op then RGB2BGR op with eager mode
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRGB2BGREager) {
@@ -962,24 +716,6 @@ TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckSampleRate) {
   mindspore::dataset::Execute transform({lowpass_biquad_op});
   Status rc = transform({input}, &output);
   ASSERT_FALSE(rc.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing ComplexNorm op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestComplexNormEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestComplexNormEager.";
-  // testing
-  std::shared_ptr<Tensor> input_tensor;
-  Tensor::CreateFromVector(std::vector<float>({1.0, 1.0, 2.0, 3.0, 4.0, 4.0}), TensorShape({3, 2}), &input_tensor);
-
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  std::shared_ptr<TensorTransform> complex_norm_01 = std::make_shared<audio::ComplexNorm>(4.0);
-
-  // Filtered waveform by complexnorm
-  mindspore::dataset::Execute Transform01({complex_norm_01});
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
 }
 
 /// Feature: Execute Transform op
@@ -1133,29 +869,6 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckSampleRate) {
   ASSERT_FALSE(rc.IsOk());
 }
 
-/// Feature: InverseMelScale op
-/// Description: Test InverseMelScale op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestInverseMelScale) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestInverseMelScale.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 2, 3, 2}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> inverse_mel_op = std::make_shared<audio::InverseMelScale>(20, 3, 16000, 0, 8000, 10);
-  // apply inverse mel scale
-  mindspore::dataset::Execute trans({inverse_mel_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
 /// Feature: Execute Transform op
 /// Description: Test executing MuLawDecoding op with eager mode
 /// Expectation: The data is processed successfully
@@ -1211,24 +924,6 @@ TEST_F(MindDataTestExecute, TestOverdriveBasicWithEager) {
   mindspore::dataset::Execute Transform01({phaser_op_01});
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_TRUE(s01.IsOk());
-}
-
-/// Feature: MaskAlongAxisIID op
-/// Description: Test MaskAlongAxisIID op
-/// Expectation: The returned result is as expected
-TEST_F(MindDataTestExecute, TestMaskAlongAxisIID) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMaskAlongAxisIID.";
-  // testing
-  std::shared_ptr<Tensor> input;
-  TensorShape s = TensorShape({1, 1, 4, 4});
-  ASSERT_OK(Tensor::CreateFromVector(std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f,
-                                                         2.0f, 1.0f, 4.0f, 3.0f, 2.0f, 1.0f}),
-                                     s, &input));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mask_along_axisiid_op = std::make_shared<audio::MaskAlongAxisIID>(3, 9.0, 2);
-  mindspore::dataset::Execute transform({mask_along_axisiid_op});
-  Status status = transform(input_tensor, &input_tensor);
-  EXPECT_TRUE(status.IsOk());
 }
 
 /// Feature: Overdrive op
@@ -1631,28 +1326,6 @@ TEST_F(MindDataTestExecute, TestFadeWithBool) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: GriffinLim op
-/// Description: Test basic usage of GriffinLim op
-/// Expectation: The dataset is processed successfully
-TEST_F(MindDataTestExecute, TestGriffinLimDefaultValue) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestGriffinLimDefaultValue.";
-  // Random waveform
-  std::mt19937 gen;
-  std::normal_distribution<float> distribution(1.0, 0.5);
-  std::vector<float> vec;
-  for (int i = 0; i < 1206; ++i) {
-    vec.push_back(distribution(gen));
-  }
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(vec, TensorShape({1, 201, 6}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> griffin_lim_op = std::make_shared<audio::GriffinLim>();
-  // apply griffinlim
-  mindspore::dataset::Execute trans({griffin_lim_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
 /// Feature: Vad op
 /// Description: Test basic usage of Vad op
 /// Expectation: The dataset is processed successfully
@@ -1705,23 +1378,6 @@ TEST_F(MindDataTestExecute, TestVolGainTypePower) {
   mindspore::dataset::Execute transform({vol_op});
   Status status = transform(input_tensor, &input_tensor);
   EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Magphase op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestMagphaseEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMagphaseEager.";
-  float power = 1.0;
-  std::vector<mindspore::MSTensor> output_tensor;
-  std::shared_ptr<Tensor> test;
-  std::vector<float> test_vector = {3, 4, -3, 4, 3, -4, -3, -4, 5, 12, -5, 12, 5, -12, -5, -12};
-  Tensor::CreateFromVector(test_vector, TensorShape({2, 4, 2}), &test);
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
-  auto magphase = std::make_shared<audio::Magphase>(power);
-  auto transform = Execute(std::vector<std::shared_ptr<TensorTransform>>{magphase});
-  Status rc = transform({input_tensor}, &output_tensor);
-  ASSERT_TRUE(rc.IsOk());
 }
 
 /// Feature: Execute Transform op
@@ -1790,77 +1446,6 @@ TEST_F(MindDataTestExecute, TestRandomAdjustSharpnessEager) {
   auto transform = Execute({decode, random_adjust_sharpness_op});
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing DetectPitchFrequency op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDetectPitchFrequencyWithEager.";
-  // Original waveform
-  std::vector<double> labels = {
-    3.716064453125000000e-03, 2.347656250000000000e-03, 9.246826171875000000e-03, 4.089477539062500000e-02,
-    3.138305664062500000e-02, 1.156616210937500000e-02, 0.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 0.840209960937500000e-02, 1.718139648437500000e-02, 2.599121093750000000e-02,
-    5.647949218750000000e-02, 1.510620117187500000e-02, 2.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 3.284790039062500000e-02, 9.052856445312500000e-02, 2.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> detect_pitch_frequency_01 =
-    std::make_shared<audio::DetectPitchFrequency>(30, 0.1, 3, 5, 25);
-  mindspore::dataset::Execute Transform01({detect_pitch_frequency_01});
-  // Detect pitch frequency
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing DetectPitchFrequency with wrong arguments
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithWrongArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDetectPitchFrequencyWithWrongArg.";
-  std::vector<float> labels = {
-    0.716064e-03, 5.347656e-03, 6.246826e-03, 2.089477e-02, 7.138305e-02,
-    4.156616e-02, 1.394653e-02, 3.550292e-02, 0.614379e-02, 3.840209e-02,
-  };
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 5}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  // Check frame_time
-  MS_LOG(INFO) << "frame_time is zero.";
-  std::shared_ptr<TensorTransform> detect_pitch_frequency_01 =
-    std::make_shared<audio::DetectPitchFrequency>(40, 0, 3, 3, 20);
-  mindspore::dataset::Execute Transform01({detect_pitch_frequency_01});
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_FALSE(s01.IsOk());
-  // Check win_length
-  MS_LOG(INFO) << "win_length is zero.";
-  std::shared_ptr<TensorTransform> detect_pitch_frequency_02 =
-    std::make_shared<audio::DetectPitchFrequency>(40, 0.1, 0, 3, 20);
-  mindspore::dataset::Execute Transform02({detect_pitch_frequency_02});
-  Status s02 = Transform02(input_02, &input_02);
-  EXPECT_FALSE(s02.IsOk());
-  // Check freq_low
-  MS_LOG(INFO) << "freq_low is zero.";
-  std::shared_ptr<TensorTransform> detect_pitch_frequency_03 =
-    std::make_shared<audio::DetectPitchFrequency>(40, 0.1, 3, 0, 20);
-  mindspore::dataset::Execute Transform03({detect_pitch_frequency_03});
-  Status s03 = Transform03(input_02, &input_02);
-  EXPECT_FALSE(s03.IsOk());
-  // Check freq_high
-  MS_LOG(INFO) << "freq_high is zero.";
-  std::shared_ptr<TensorTransform> detect_pitch_frequency_04 =
-    std::make_shared<audio::DetectPitchFrequency>(40, 0.1, 3, 3, 0);
-  mindspore::dataset::Execute Transform04({detect_pitch_frequency_04});
-  Status s04 = Transform04(input_02, &input_02);
-  EXPECT_FALSE(s04.IsOk());
-  // Check sample_rate
-  MS_LOG(INFO) << "sample_rate is zero.";
-  std::shared_ptr<TensorTransform> detect_pitch_frequency_05 = std::make_shared<audio::DetectPitchFrequency>(0);
-  mindspore::dataset::Execute Transform05({detect_pitch_frequency_05});
-  Status s05 = Transform05(input_02, &input_02);
-  EXPECT_FALSE(s05.IsOk());
 }
 
 /// Feature: Dither op
@@ -2462,116 +2047,6 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForCharNGram) {
   EXPECT_FALSE(status02.IsOk());
 }
 
-/// Feature: DBToAmplitude op
-/// Description: Test DBToAmplitude op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestDBToAmplitudeWithEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDBToAmplitudeWithEager.";
-  // Original waveform
-  std::vector<float> labels = {
-    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
-    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
-    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
-    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
-    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> DBToAmplitude_01 = std::make_shared<audio::DBToAmplitude>(2, 2);
-  mindspore::dataset::Execute Transform01({DBToAmplitude_01});
-  // Filtered waveform by DBToAmplitude
-  Status s01 = Transform01(input_02, &input_02);
-  EXPECT_TRUE(s01.IsOk());
-}
-
-/// Feature: PhaseVocoder op
-/// Description: Test PhaseVocoder op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestPhaseVocoderEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPhaseVocoderEager.";
-  // testing
-  std::shared_ptr<Tensor> input_tensor, input_phase_advance_tensor;
-  Tensor::CreateFromVector(
-    std::vector<float>({0.1468,  -1.1094, 0.0525,  -0.3742, -0.7729, -0.7138, 0.3253,  0.0419,  0.8433,  -0.5313,
-                        -0.0988, -0.0927, -0.7071, -0.7740, -1.1087, -1.1925, -1.2749, -0.0862, 0.0693,  0.2937,
-                        0.1676,  0.2356,  2.7333,  2.5171,  0.8055,  0.7380,  -0.4437, -0.7257, -0.7154, 0.1801,
-                        -1.9323, 1.8184,  0.8196,  0.1371,  -0.0677, -2.2315, 0.0662,  -0.0071, -0.8639, 0.6215,
-                        -0.5144, 0.8373,  -0.1072, 0.6184,  0.1985,  -0.7692, -0.5879, -0.0029, 0.0676,  -0.5520}),
-    TensorShape({1, 5, 5, 2}), &input_tensor);
-  auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  float rate = 2;
-  std::vector<float> phase_advance{0.0000, 1.5708, 3.1416, 4.7124, 6.2832};
-  Tensor::CreateFromVector(phase_advance, TensorShape({5, 1}), &input_phase_advance_tensor);
-  auto phase_advance_ms =
-    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_phase_advance_tensor));
-  std::shared_ptr<TensorTransform> pv = std::make_shared<audio::PhaseVocoder>(rate, phase_advance_ms);
-  mindspore::dataset::Execute transform({pv});
-  Status status = transform(input_tensor_ms, &input_tensor_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: SlidingWindowCmn op
-/// Description: Test basic function of SlidingWindowCmn op
-/// Expectation: Get correct number of data
-TEST_F(MindDataTestExecute, TestSlidingWindowCmn) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestSlidingWindowCmn.";
-
-  std::shared_ptr<Tensor> input_tensor;
-  int32_t cmn_window = 500;
-  int32_t min_cmn_window = 50;
-  bool center = false;
-  bool norm_vars = false;
-
-  // create tensor shape
-  TensorShape s = TensorShape({2, 2, 500});
-  // init input vector
-  std::vector<float> input_vec(s.NumOfElements());
-  for (int idx = 0; idx < input_vec.size(); ++idx) {
-    input_vec[idx] = std::rand() % (1000) / (1000.0f);
-  }
-  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  std::shared_ptr<TensorTransform> sliding_window_cmn_op =
-    std::make_shared<audio::SlidingWindowCmn>(cmn_window, min_cmn_window, center, norm_vars);
-
-  // apply sliding_window_cmn
-  mindspore::dataset::Execute Transform({sliding_window_cmn_op});
-  Status status = Transform(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: SlidingWindowCmn op
-/// Description: Test wrong input args of SlidingWindowCmn op
-/// Expectation: Get nullptr of iterator
-TEST_F(MindDataTestExecute, TestSlidingWindowCmnWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestSlidingWindowCmnWrongArgs.";
-
-  std::shared_ptr<Tensor> input_tensor;
-  // create tensor shape
-  TensorShape s = TensorShape({2, 2, 500});
-  // init input vector
-  std::vector<float> input_vec(s.NumOfElements());
-  for (int idx = 0; idx < input_vec.size(); ++idx) {
-    input_vec[idx] = std::rand() % (1000) / (1000.0f);
-  }
-  ASSERT_OK(Tensor::CreateFromVector(input_vec, s, &input_tensor));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-
-  // SlidingWindowCmn: cmn_window must be greater than or equal to 0.
-  std::shared_ptr<TensorTransform> sliding_window_cmn_op_1 =
-    std::make_shared<audio::SlidingWindowCmn>(-1, 100, false, false);
-  mindspore::dataset::Execute Transform_1({sliding_window_cmn_op_1});
-  Status status_1 = Transform_1(input_ms, &input_ms);
-  EXPECT_FALSE(status_1.IsOk());
-
-  // SlidingWindowCmn: min_cmn_window must be greater than or equal to 0.
-  std::shared_ptr<TensorTransform> sliding_window_cmn_op_2 =
-    std::make_shared<audio::SlidingWindowCmn>(500, -1, false, false);
-  mindspore::dataset::Execute Transform_2({sliding_window_cmn_op_2});
-  Status status_2 = Transform_2(input_ms, &input_ms);
-  EXPECT_FALSE(status_2.IsOk());
-}
-
 /// Feature: AutoAugment op
 /// Description: Test AutoAugment op eager
 /// Expectation: Load one image data and process auto augmentation with given policy on it
@@ -2587,56 +2062,6 @@ TEST_F(MindDataTestExecute, TestAutoAugmentEager) {
   auto transform = Execute({decode, auto_augment_op});
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Spectrogram op
-/// Description: Test Spectrogram op in eager mode.
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestSpectrogramEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-SpectrogramEager.";
-  std::shared_ptr<Tensor> test_input_tensor;
-  std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
-  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
-  std::shared_ptr<TensorTransform> spectrogram =
-    std::make_shared<audio::Spectrogram>(8, 8, 4, 0, WindowType::kHann, 2., false, true, BorderType::kReflect, true);
-  auto transform = Execute({spectrogram});
-  Status rc = transform({input_tensor}, &input_tensor);
-  ASSERT_TRUE(rc.IsOk());
-}
-
-/// Feature: SpectralCentroid op
-/// Description: Test SpectralCentroid op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestSpectralCentroidEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-SpectralCentroidEager.";
-  std::shared_ptr<Tensor> test_input_tensor;
-  std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
-  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
-  std::shared_ptr<TensorTransform> spectral_centroid =
-    std::make_shared<audio::SpectralCentroid>(44100, 8, 8, 4, 1, WindowType::kHann);
-  auto transform = Execute({spectral_centroid});
-  Status rc = transform({input_tensor}, &input_tensor);
-  ASSERT_TRUE(rc.IsOk());
-}
-
-/// Feature: SpectralCentroid op
-/// Description: Test wrong input args of SpectralCentroid in eager mode
-/// Expectation: Throw exception correctly
-TEST_F(MindDataTestExecute, TestSpectralCentroidWithWrongArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestSpectralCentroidWithWrongArg.";
-  std::shared_ptr<Tensor> test_input_tensor;
-  std::vector<double> waveform = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1};
-  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, (long)waveform.size()}), &test_input_tensor));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test_input_tensor));
-  // Check sample_rate
-  MS_LOG(INFO) << "sample_rate is zero.";
-  std::shared_ptr<TensorTransform> spectral_centroid =
-    std::make_shared<audio::SpectralCentroid>(0, 8, 8, 4, 1, WindowType::kHann);
-  auto transform = Execute({spectral_centroid});
-  Status rc = transform({input_tensor}, &input_tensor);
-  EXPECT_FALSE(rc.IsOk());
 }
 
 /// Feature: Execute Construct Demo1
@@ -2733,88 +2158,6 @@ TEST_F(MindDataTestExecute, TestConstructorDemo4) {
 
   delete decode;
   delete resize;
-}
-
-/// Feature: MaskAlongAxis op
-/// Description: Test MaskAlongAxis op
-/// Expectation: The returned result is as expected
-TEST_F(MindDataTestExecute, TestMaskAlongAxis) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMaskAlongAxis.";
-  std::shared_ptr<Tensor> input;
-  TensorShape s = TensorShape({1, 4, 3});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input));
-  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mask_along_axis_op = std::make_shared<audio::MaskAlongAxis>(0, 2, 9.0, 2);
-  mindspore::dataset::Execute transform({mask_along_axis_op});
-  Status status = transform(input_tensor, &input_tensor);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: Resample.
-/// Description: test Resample in eager mode.
-/// Expectation: the data is processed successfully.
-TEST_F(MindDataTestExecute, TestResampleEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestResampleEager.";
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<double>({9.1553e-05, 6.1035e-05, 6.1035e-05, -2.1362e-04, -1.8311e-04, -1.8311e-04}),
-    TensorShape({1, 6}), &input));
-  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  int orig_freq = 6;
-  int new_freq = 2;
-  ResampleMethod resample_method = ResampleMethod::kSincInterpolation;
-  std::shared_ptr<TensorTransform> resample_01 =
-    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
-  mindspore::dataset::Execute Transform_01({resample_01});
-  Status res_01 = Transform_01(input_01, &input_01);
-  EXPECT_TRUE(res_01.IsOk());
-
-  ASSERT_OK(Tensor::CreateFromVector(std::vector<double>({9.1553e-05, 6.1035e-05, 6.1035e-05, -2.1362e-04, -1.8311e-04,
-                                                          -1.8311e-04, 3.6597e-03, 5.5943e-05, 2.3598e-4, 3.5948e-4}),
-                                     TensorShape({2, 5}), &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  resample_method = ResampleMethod::kKaiserWindow;
-  std::shared_ptr<TensorTransform> resample_02 =
-    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
-  mindspore::dataset::Execute Transform_02({resample_02});
-  Status res_02 = Transform_02(input_02, &input_02);
-  EXPECT_TRUE(res_02.IsOk());
-}
-
-/// Feature: Resample
-/// Description: test wrong input args of Resample
-/// Expectation: get false status
-TEST_F(MindDataTestExecute, TestResampleWithInvalidArg) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestResampleInvalidArgs.";
-  std::shared_ptr<Tensor> input;
-  TensorShape s = TensorShape({1, 6});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<double>({1.4695e-05, 6.1035e-05, 1.4266e-05, -2.1362e-04, -1.8311e-04, -2.3511e-04}), s, &input));
-  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  int orig_freq = 0;
-  int new_freq = 2;
-  ResampleMethod resample_method = ResampleMethod::kSincInterpolation;
-  std::shared_ptr<TensorTransform> resample_01 =
-    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
-  mindspore::dataset::Execute Transform_01({resample_01});
-  Status res_01 = Transform_01(input_01, &input_01);
-  // Expect failure, orig_freq can not be zero.
-  EXPECT_FALSE(res_01.IsOk());
-
-  s = TensorShape({1, 7});
-  ASSERT_OK(Tensor::CreateFromVector(
-    std::vector<double>({1.2207e-04, 0.8090e-05, 6.1035e-05, 0.5878e-05, -2.1362e-04, -1.8311e-04, -1.8311e-04}), s,
-    &input));
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  orig_freq = 1;
-  new_freq = -1;
-  std::shared_ptr<TensorTransform> resample_02 =
-    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
-  mindspore::dataset::Execute Transform_02({resample_02});
-  Status res_02 = Transform_02(input_02, &input_02);
-  // Expect failure, new_freq can not be negative.
-  EXPECT_FALSE(res_02.IsOk());
 }
 
 /// Feature: Execute Transform op
@@ -3000,44 +2343,6 @@ TEST_F(MindDataTestExecute, TestAddToken) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: LFCC op
-/// Description: Test basic usage of LFCC op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestLFCCEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFCC.";
-  // Original waveform
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
-                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> lfcc_op =
-    std::make_shared<audio::LFCC>(16000, 128, 4, 0.0, 10000.0, 2, NormMode::kOrtho, true);
-  // apply LFCC
-  mindspore::dataset::Execute trans({lfcc_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: LFCC op
-/// Description: Wrong dct_type of LFCC op
-/// Expectation: Get false status
-TEST_F(MindDataTestExecute, TestLFCCWrongArgsDctType) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFCCWrongArgsDctType.";
-  // Original waveform
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
-                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> lfcc_op =
-    std::make_shared<audio::LFCC>(16000, 128, 4, 0.0, 10000.0, -2, NormMode::kOrtho, true);
-  // apply LFCC
-  mindspore::dataset::Execute trans({lfcc_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_FALSE(status.IsOk());
-}
-
 /// Feature: Truncate
 /// Description: Test basic usage of Truncate op
 /// Expectation: The data is processed successfully
@@ -3051,238 +2356,6 @@ TEST_F(MindDataTestExecute, TestTruncateOpStr) {
   mindspore::dataset::Execute trans({truncate_op});
   Status status = trans(input_ms, &input_ms);
   EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: MFCC op
-/// Description: Test basic usage of MFCC op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestMFCCEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMFCC.";
-  // Original waveform
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
-                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mfcc_op = std::make_shared<audio::MFCC>(16000, 4, 2, NormMode::kOrtho, true, 10);
-  // apply MFCC
-  mindspore::dataset::Execute trans({mfcc_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: MelSpectrogram op
-/// Description: Test basic usage of MelSpectrogram op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestMelSpectrogram) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelSpectrogram.";
-  // Original waveform
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
-                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  // apply MelSpectrogram
-  mindspore::dataset::Execute trans({mel_spectrogram_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: MelSpectrogram op
-/// Description: First test wrong args for MelSpectrogram
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestMelSpectrogramWrongArgs1) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelSpectrogramWrongArgs1.";
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
-                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, -16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans({mel_spectrogram_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, -16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans1({mel_spectrogram_op});
-  status = trans1(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, -8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans2({mel_spectrogram_op});
-  status = trans2(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, -8, 0.0, 10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans3({mel_spectrogram_op});
-  status = trans3(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 10000.0, 1.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans4({mel_spectrogram_op});
-  status = trans4(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, -10000.0, 0, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans5({mel_spectrogram_op});
-  status = trans5(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, -1, 8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans6({mel_spectrogram_op});
-  status = trans6(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-}
-
-/// Feature: MelSpectrogram op
-/// Description: Second test wrong args for MelSpectrogram
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestMelSpectrogramWrongArgs2) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelSpectrogramWrongArgs2.";
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2,
-                               2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, 0, -8, WindowType::kHann, 2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans({mel_spectrogram_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-  mel_spectrogram_op =
-    std::make_shared<audio::MelSpectrogram>(16000, 16, 16, 8, 0.0, 10000.0, 0, 8, WindowType::kHann, -2.0, false, true,
-                                            BorderType::kReflect, true, NormType::kNone, MelType::kHtk);
-  mindspore::dataset::Execute trans2({mel_spectrogram_op});
-  status = trans2(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-}
-
-/// Feature: InverseSpectrogram op
-/// Description: Test basic usage of InverseSpectrogram op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestInverseSpectrogram) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestInverseSpectrogram.";
-  // Original spectrogram
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3, 3,
-                               2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 9, 1, 2}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> inverse_spectrogram_op = std::make_shared<audio::InverseSpectrogram>(
-    1, 16, 16, 8, 0, WindowType::kHann, false, true, BorderType::kReflect, true);
-  // apply InverseSpectrogram
-  mindspore::dataset::Execute trans({inverse_spectrogram_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: InverseSpectrogram op
-/// Description: Test wrong args for InverseSpectrogram
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestInverseSpectrogramWrongArgs) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestInverseSpectrogramWrongArgs.";
-  std::vector<float> labels = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3, 3,
-                               2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 9, 1, 2}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> inverse_spectrogram_op = std::make_shared<audio::InverseSpectrogram>(
-    1, -16, 16, 8, 0, WindowType::kHann, false, true, BorderType::kReflect, true);
-  mindspore::dataset::Execute trans({inverse_spectrogram_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  inverse_spectrogram_op = std::make_shared<audio::InverseSpectrogram>(1, 16, -16, 8, 0, WindowType::kHann, false, true,
-                                                                       BorderType::kReflect, true);
-  mindspore::dataset::Execute trans1({inverse_spectrogram_op});
-  status = trans1(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  inverse_spectrogram_op = std::make_shared<audio::InverseSpectrogram>(1, 16, 16, -8, 0, WindowType::kHann, false, true,
-                                                                       BorderType::kReflect, true);
-  mindspore::dataset::Execute trans2({inverse_spectrogram_op});
-  status = trans2(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  inverse_spectrogram_op = std::make_shared<audio::InverseSpectrogram>(1, 16, 16, 8, -1, WindowType::kHann, false, true,
-                                                                       BorderType::kReflect, true);
-  mindspore::dataset::Execute trans3({inverse_spectrogram_op});
-  status = trans3(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-}
-
-/// Feature: PitchShift op
-/// Description: Test basic usage of PitchShift op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustPitchShift) {
-  MS_LOG(INFO) << "Doing MindDataExecute-TestAdjustPitchShift.";
-  // Original waveform
-  std::vector<float> labels = {1, 1, 2, 3, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3,
-                               2, 1, 2, 3, 0, 1, 0, 2, 4, 5, 3, 1, 2, 3, 4};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> PitchShift_op =
-    std::make_shared<audio::PitchShift>(16000, 4, 12, 16, 16, 4, WindowType::kHann);
-  // apply PitchShift
-  mindspore::dataset::Execute trans({PitchShift_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsOk());
-}
-
-/// Feature: PitchShift op
-/// Description: First test wrong args of PitchShift
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestPitchShiftWrongArgs1) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPitchShiftWrongArgs1.";
-  std::vector<float> labels = {1, 1, 2, 3, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3,
-                               2, 1, 2, 3, 0, 1, 0, 2, 4, 5, 3, 1, 2, 3, 4};
-  std::shared_ptr<Tensor> input;
-  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 1, 30}), &input));
-  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
-  std::shared_ptr<TensorTransform> PitchShift_op =
-    std::make_shared<audio::PitchShift>(16000, 4, 12, -16, 16, 4, WindowType::kHann);
-  mindspore::dataset::Execute trans({PitchShift_op});
-  Status status = trans(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  PitchShift_op = std::make_shared<audio::PitchShift>(16000, 4, 0, 16, 16, 4, WindowType::kHann);
-  mindspore::dataset::Execute trans1({PitchShift_op});
-  status = trans1(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  PitchShift_op = std::make_shared<audio::PitchShift>();
-  mindspore::dataset::Execute trans2({PitchShift_op});
-  status = trans2(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  PitchShift_op = std::make_shared<audio::PitchShift>();
-  mindspore::dataset::Execute trans4({PitchShift_op});
-  status = trans4(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  PitchShift_op = std::make_shared<audio::PitchShift>(16000, 4, 12, 16, -16, 4, WindowType::kHann);
-  mindspore::dataset::Execute trans5({PitchShift_op});
-  status = trans5(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
-
-  PitchShift_op = std::make_shared<audio::PitchShift>(16000, 4, 12, 16, 16, -4, WindowType::kHann);
-  mindspore::dataset::Execute trans6({PitchShift_op});
-  status = trans6(input_ms, &input_ms);
-  EXPECT_TRUE(status.IsError());
 }
 
 #ifdef ENABLE_FFMPEG

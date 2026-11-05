@@ -64,13 +64,10 @@ from mindspore.dataset.text.transforms import AddToken, JiebaTokenizer, Lookup, 
     UnicodeScriptTokenizer, WhitespaceTokenizer
 from mindspore.dataset.core.datatypes import nptype_to_detype, mstype_to_detype, mstypelist_to_detypelist
 from mindspore.dataset.audio.utils import create_dct, linear_fbanks, melscale_fbanks
-from mindspore.dataset.audio.transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, BandpassBiquad, \
-    BandrejectBiquad, BassBiquad, Biquad, ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, DCShift, DeemphBiquad, \
-    DetectPitchFrequency, Dither, EqualizerBiquad, Fade, Filtfilt, Flanger, FrequencyMasking, Gain, GriffinLim, \
-    HighpassBiquad, InverseMelScale, InverseSpectrogram, LFCC, LFilter, LowpassBiquad, Magphase, MaskAlongAxis, \
-    MaskAlongAxisIID, MelScale, MelSpectrogram, MFCC, MuLawDecoding, MuLawEncoding, Overdrive, Phaser, PhaseVocoder, \
-    PitchShift, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, TimeStretch, \
-    TrebleBiquad, Vad, Vol
+from mindspore.dataset.audio.transforms import AllpassBiquad, BandBiquad, BandpassBiquad, BandrejectBiquad, \
+    BassBiquad, Biquad, Contrast, DCShift, DeemphBiquad, Dither, EqualizerBiquad, Fade, Filtfilt, Flanger, \
+    Gain, HighpassBiquad, LFilter, LowpassBiquad, MuLawDecoding, MuLawEncoding, Overdrive, Phaser, \
+    RiaaBiquad, TrebleBiquad, Vad, Vol
 from mindspore.dataset.engine.datasets_audio import CMUArcticDataset, GTZANDataset, LibriTTSDataset, LJSpeechDataset, \
     SpeechCommandsDataset, TedliumDataset, YesNoDataset
 from mindspore.dataset.engine.cache_client import DatasetCache
@@ -163,17 +160,12 @@ def _get_dataset_forbidden_code():
                   CaseFold.parse, FilterWikipediaXML.parse, NormalizeUTF8.parse, RegexReplace.parse, \
                   RegexTokenizer.parse, UnicodeScriptTokenizer.parse, WhitespaceTokenizer.parse])
     codes.extend([create_dct, linear_fbanks, melscale_fbanks])
-    codes.extend([AllpassBiquad.parse, AmplitudeToDB.parse, Angle.parse, BandBiquad.parse, BandpassBiquad.parse, \
-                  BandrejectBiquad.parse, BassBiquad.parse, Biquad.parse, ComplexNorm.parse, ComputeDeltas.parse, \
-                  Contrast.parse, DBToAmplitude.parse, DCShift.parse, DeemphBiquad.parse, DetectPitchFrequency.parse, \
-                  Dither.parse, EqualizerBiquad.parse, Fade.parse, Filtfilt.parse, Flanger.parse, \
-                  FrequencyMasking.parse, Gain.parse, GriffinLim.parse, HighpassBiquad.parse, InverseMelScale.parse, \
-                  InverseSpectrogram.parse, LFCC.parse, LFilter.parse, LowpassBiquad.parse, Magphase.parse, \
-                  MaskAlongAxis.parse, MaskAlongAxisIID.parse, MelScale.parse, MelSpectrogram.parse, MFCC.parse, \
-                  MuLawDecoding.parse, MuLawEncoding.parse, Overdrive.parse, Phaser.parse, PhaseVocoder.parse, \
-                  PhaseVocoder.__init__, PitchShift.parse, Resample.parse, RiaaBiquad.parse, SlidingWindowCmn.parse, \
-                  SpectralCentroid.parse, Spectrogram.parse, TimeMasking.parse, TimeStretch.parse, \
-                  TrebleBiquad.parse, Vad.parse, Vol.parse])
+    codes.extend([AllpassBiquad.parse, BandBiquad.parse, BandpassBiquad.parse, BandrejectBiquad.parse,
+                  BassBiquad.parse, Biquad.parse, Contrast.parse, DCShift.parse, DeemphBiquad.parse,
+                  Dither.parse, EqualizerBiquad.parse, Fade.parse, Filtfilt.parse, Flanger.parse,
+                  Gain.parse, HighpassBiquad.parse, LFilter.parse, LowpassBiquad.parse, MuLawDecoding.parse,
+                  MuLawEncoding.parse, Overdrive.parse, Phaser.parse, RiaaBiquad.parse, TrebleBiquad.parse,
+                  Vad.parse, Vol.parse])
     codes.extend([CMUArcticDataset.parse, GTZANDataset.parse, LibriTTSDataset.parse, LJSpeechDataset.parse, \
                   SpeechCommandsDataset.parse, TedliumDataset.parse, YesNoDataset.parse])
     codes.extend([DatasetCache.__init__, Iterator.__init__])

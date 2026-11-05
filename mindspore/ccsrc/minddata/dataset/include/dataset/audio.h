@@ -34,20 +34,6 @@ class TensorOperation;
 
 // Transform operations for performing computer audio.
 namespace audio {
-/// \brief Compute the angle of complex tensor input.
-class DATASET_API Angle final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  Angle();
-
-  /// \brief Destructor.
-  ~Angle() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
 
 /// \brief Design two-pole allpass filter. Similar to SoX implementation.
 class DATASET_API AllpassBiquad final : public TensorTransform {
@@ -59,32 +45,6 @@ class DATASET_API AllpassBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~AllpassBiquad() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief AmplitudeToDB TensorTransform.
-/// \notes Turn a tensor from the power/amplitude scale to the decibel scale.
-class DATASET_API AmplitudeToDB final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] stype Scale of input tensor, must be one of [ScaleType::kPower, ScaleType::kMagnitude].
-  ///     Default: ScaleType::kPower.
-  /// \param[in] ref_value Calculate db_multiplier. Default: 1.0.
-  /// \param[in] amin Minimum threshold for input tensor and ref_value. It must be greater than zero. Default: 1e-10.
-  /// \param[in] top_db Decibels cut-off value. It must be greater than or equal to zero. Default: 80.0.
-  explicit AmplitudeToDB(ScaleType stype = ScaleType::kPower, float ref_value = 1.0, float amin = 1e-10,
-                         float top_db = 80.0);
-
-  /// \brief Destructor.
-  ~AmplitudeToDB() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -213,53 +173,6 @@ class DATASET_API Biquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief ComplexNorm TensorTransform.
-/// \notes Compute the norm of complex tensor input.
-class DATASET_API ComplexNorm final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] power Power of the norm, which must be non-negative. Default: 1.0.
-  explicit ComplexNorm(float power = 1.0);
-
-  /// \brief Destructor.
-  ~ComplexNorm() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief ComputeDeltas Transform.
-/// \note Compute delta coefficients of a spectrogram.
-class DATASET_API ComputeDeltas final : public TensorTransform {
- public:
-  /// \brief Construct a new Compute Deltas object.
-  /// \f[
-  /// d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
-  /// \f]
-  /// \param[in] win_length The window length used for computing delta, must be no less than 3. Default: 5.
-  /// \param[in] pad_mode Padding mode. Can be one of BorderType::kConstant, BorderType::kEdge,
-  ///     BorderType::kReflect or BorderType::kSymmetric. Default: BorderType::kEdge.
-  explicit ComputeDeltas(int32_t win_length = 5, BorderType pad_mode = BorderType::kEdge);
-
-  /// \brief Destructor.
-  ~ComputeDeltas() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Apply contrast effect.
 class DATASET_API Contrast final : public TensorTransform {
  public:
@@ -269,27 +182,6 @@ class DATASET_API Contrast final : public TensorTransform {
 
   /// \brief Destructor.
   ~Contrast() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Turn a waveform from the decibel scale to the power/amplitude scale.
-class DATASET_API DBToAmplitude final : public TensorTransform {
- public:
-  /// \brief Constructor
-  /// \param[in] ref Reference which the output will be scaled by.
-  /// \param[in] power If power equals 1, will compute DB to power. If 0.5, will compute DB to amplitude.
-  explicit DBToAmplitude(float ref, float power);
-
-  /// \brief Destructor.
-  ~DBToAmplitude() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -341,33 +233,6 @@ class DATASET_API DeemphBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~DeemphBiquad() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Detect pitch frequency.
-class DATASET_API DetectPitchFrequency final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
-  /// \param[in] frame_time Duration of a frame, the value must be greater than zero. Default: 0.02.
-  /// \param[in] win_length The window length for median smoothing (in number of frames), the value must
-  ///     be greater than zero. Default: 30.
-  /// \param[in] freq_low Lowest frequency that can be detected (Hz), the value must be greater than zero. Default: 85.
-  /// \param[in] freq_high Highest frequency that can be detected (Hz), the value must be greater than
-  ///     zero. Default: 3400.
-  explicit DetectPitchFrequency(int32_t sample_rate, float frame_time = 0.01, int32_t win_length = 30,
-                                int32_t freq_low = 85, int32_t freq_high = 3400);
-
-  /// \brief Destructor.
-  ~DetectPitchFrequency() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -509,33 +374,6 @@ class DATASET_API Flanger final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief FrequencyMasking TensorTransform.
-/// \notes Apply masking to a spectrogram in the frequency domain.
-class DATASET_API FrequencyMasking final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] iid_masks Whether to apply different masks to each example.
-  /// \param[in] frequency_mask_param Maximum possible length of the mask, range: [0, freq_length]. Default: 0.
-  ///     Indices uniformly sampled from [0, frequency_mask_param].
-  ///     Mask width when iid_masks=true.
-  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, freq_length-frequency_mask_param]. Default: 0.
-  /// \param[in] mask_value Mask value.
-  explicit FrequencyMasking(bool iid_masks = false, int32_t frequency_mask_param = 0, int32_t mask_start = 0,
-                            float mask_value = 0.0);
-
-  /// \brief Destructor.
-  ~FrequencyMasking() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Apply amplification or attenuation to the whole waveform.
 class DATASET_API Gain final : public TensorTransform {
  public:
@@ -545,41 +383,6 @@ class DATASET_API Gain final : public TensorTransform {
 
   /// \brief Destructor.
   ~Gain() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Waveform calculation from linear scalar amplitude spectrogram using GriffinLim transform.
-class DATASET_API GriffinLim final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \notes Calculated by formula:
-  ///     x(n)=\frac{\sum_{m=-\infty}^{\infty} w(m S-n) y_{w}(m S, n)}{\sum_{m=-\infty}^{\infty} w^{2}(m S-n)}
-  ///     where w represents the window function, y represents the reconstructed signal of each frame and x represents
-  ///     the whole signal.
-  /// \param[in] n_fft Size of FFT. Default: 400.
-  /// \param[in] n_iter Number of iteration for phase recovery. Default: 32.
-  /// \param[in] win_length Window size for GriffinLim. Default: 0, will be set to n_fft.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to win_length / 2.
-  /// \param[in] window_type Window type for GriffinLim. Default: WindowType::kHann.
-  /// \param[in] power Exponent for the magnitude spectrogram. Default: 2.0.
-  /// \param[in] momentum The momentum for fast Griffin-Lim. Default: 0.99.
-  /// \param[in] length Length of the expected output waveform. Default: 0.0, will be set to the value of last
-  ///     dimension of the stft matrix.
-  /// \param[in] rand_init Flag for random phase initialization or all-zero phase initialization. Default: true.
-  explicit GriffinLim(int32_t n_fft = 400, int32_t n_iter = 32, int32_t win_length = 0, int32_t hop_length = 0,
-                      WindowType window_type = WindowType::kHann, float power = 2.0, float momentum = 0.99,
-                      int32_t length = 0, bool rand_init = true);
-
-  /// \brief Destructor.
-  ~GriffinLim() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -602,122 +405,6 @@ class DATASET_API HighpassBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~HighpassBiquad() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief InverseMelScale TensorTransform
-/// \notes Solve for a normal STFT from a mel frequency STFT, using a conversion matrix.
-class DATASET_API InverseMelScale final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] n_stft Number of bins in STFT, must be positive.
-  /// \param[in] n_mels Number of mel filter, must be positive. Default: 128.
-  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero. Default: 16000.
-  /// \param[in] f_min Minimum frequency, must be non-negative. Default: 0.0.
-  /// \param[in] f_max Maximum frequency, must be non-negative. Default: 0.0, will be set to sample_rate / 2.
-  /// \param[in] max_iter Maximum number of optimization iterations, must be positive. Default: 100000.
-  /// \param[in] tolerance_loss Value of loss to stop optimization at, must be non-negative. Default: 1e-5.
-  /// \param[in] tolerance_change Difference in losses to stop optimization at, must be non-negative. Default: 1e-8.
-  /// \param[in] sgdargs Parameters of SGD optimizer, including lr, momentum.
-  ///     Default: {{"sgd_lr", 0.1}, {"sgd_momentum", 0.0}}.
-  /// \param[in] norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
-  ///     divide the triangle mel weight by the width of the mel band. Default: NormType::kNone.
-  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney. Default: MelType::kHtk.
-  explicit InverseMelScale(int32_t n_stft, int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0.0,
-                           float f_max = 0.0, int32_t max_iter = 100000, float tolerance_loss = 1e-5,
-                           float tolerance_change = 1e-8,
-                           const std::map<std::string, float> &sgdargs = {{"sgd_lr", 0.1}, {"sgd_momentum", 0.0}},
-                           NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
-
-  /// \brief Destructor.
-  ~InverseMelScale() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Create an inverse spectrogram to recover an audio signal from a spectrogram.
-class DATASET_API InverseSpectrogram final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] length The output length of the waveform. Default: 0, means to output the whole waveform.
-  /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
-  /// \param[in] win_length Window size. Default: 0, will be set to `n_fft` .
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to `win_length // 2` .
-  /// \param[in] pad Two sided padding of signal. Default: 0.
-  /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
-  ///     Default: WindowType::kHann.
-  /// \param[in] normalized Whether the spectrogram was normalized by magnitude after stft. Default:false.
-  /// \param[in] center Whether the signal in spectrogram was padded on both sides. Default: true.
-  /// \param[in] pad_mode Controls the padding method used when center is True. Default: BorderType::kReflect.
-  /// \param[in] onesided Controls whether spectrogram was used to return half of results to avoid
-  ///     redundancy. Default: true.
-  explicit InverseSpectrogram(int32_t length = 0, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
-                              int32_t pad = 0, WindowType window = WindowType::kHann, bool normalized = false,
-                              bool center = true, BorderType pad_mode = BorderType::kReflect, bool onesided = true);
-
-  /// \brief Destructor.
-  ~InverseSpectrogram() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Create LFCC for a raw audio signal.
-class DATASET_API LFCC final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] sample_rate Sample rate of audio signal. Default: 16000.
-  /// \param[in] n_filter Number of linear filters to apply. Default: 128.
-  /// \param[in] n_lfcc Number of lfc coefficients to retain. Default: 40.
-  /// \param[in] f_min Minimum frequency. Default: 0.0.
-  /// \param[in] f_max Maximum frequency. Default: 0.0, will be set to sample_rate // 2.
-  /// \param[in] dct_type Type of DCT (discrete cosine transform) to use. Default: 2.
-  /// \param[in] norm Norm to use. Default: NormMode::kOrtho.
-  /// \param[in] log_lf Whether to use log-lf spectrograms instead of db-scaled. Default: false.
-  /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
-  /// \param[in] win_length Window size. Default: 0, will be set to n_fft.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to win_length // 2.
-  /// \param[in] pad Two sided padding of signal. Default: 0.
-  /// \param[in] window A function to create a window tensor that is applied/multiplied to
-  ///     each frame/window. Default: WindowType::kHann.
-  /// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2
-  ///     for power, etc. Default: 2.0.
-  /// \param[in] normalized Whether to normalize by magnitude after stft. Default: false
-  /// \param[in] center Whether to pad waveform on both sides so that the tt-th frame is centered at
-  ///     time t t*hop_length. Default: true.
-  /// \param[in] pad_mode Controls the padding method used when center is True. Default:
-  ///     BorderType::kReflect.
-  /// \param[in] onesided Controls whether to return half of results to avoid
-  ///     redundancy. Default: true.
-  explicit LFCC(int32_t sample_rate = 16000, int32_t n_filter = 128, int32_t n_lfcc = 40, float f_min = 0.0,
-                float f_max = 0.0, int32_t dct_type = 2, NormMode norm = NormMode::kOrtho, bool log_lf = false,
-                int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
-                WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
-                BorderType pad_mode = BorderType::kReflect, bool onesided = true);
-
-  /// \brief Destructor.
-  ~LFCC() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -787,103 +474,6 @@ class DATASET_API LowpassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
-class DATASET_API Magphase final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] power Power of the norm, which must be non-negative. Default: 1.0.
-  explicit Magphase(float power);
-
-  /// \brief Destructor.
-  ~Magphase() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief MaskAlongAxis TensorTransform.
-/// \note Tensor operation to mask the input tensor along axis.
-class MaskAlongAxis final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] mask_start Starting position of the mask, which must be non negative.
-  /// \param[in] mask_width The width of the mask, which must be positive.
-  /// \param[in] mask_value Value to assign to the masked columns.
-  /// \param[in] axis Axis to apply masking on (1 for frequency and 2 for time).
-  MaskAlongAxis(int32_t mask_start, int32_t mask_width, float mask_value, int32_t axis);
-
-  /// \brief Destructor.
-  ~MaskAlongAxis() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief MaskAlongAxisIID TensorTransform.
-/// \note Apply a mask along axis.
-class MaskAlongAxisIID final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] mask_param Number of columns to be masked, will be uniformly sampled from [0, mask_param],
-  ///     must be non negative.
-  /// \param[in] mask_value Value to assign to the masked columns.
-  /// \param[in] axis Axis to apply masking on (1 for frequency and 2 for time).
-  MaskAlongAxisIID(int32_t mask_param, float mask_value, int32_t axis);
-
-  /// \brief Destructor.
-  ~MaskAlongAxisIID() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief MelScale TensorTransform.
-/// \notes Convert normal STFT to STFT at the Mel scale.
-class DATASET_API MelScale final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] n_mels Number of mel filter, which must be positive. Default: 128.
-  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero. Default: 16000.
-  /// \param[in] f_min Minimum frequency, which must be non negative. Default: 0.0.
-  /// \param[in] f_max Maximum frequency, which must be positive. Default: 0.0, will be set to sample_rate / 2.
-  /// \param[in] n_stft Number of bins in STFT, which must be positive. Default: 201.
-  /// \param[in] norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
-  ///     divide the triangle mel weight by the width of the mel band. Default: NormType::kNone.
-  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney. Default: MelType::kHtk.
-  explicit MelScale(int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0.0, float f_max = 0.0,
-                    int32_t n_stft = 201, NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
-
-  /// \brief Destructor.
-  ~MelScale() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Create a frequency transformation matrix with shape (n_freqs, n_mels).
 /// \param[in] output Tensor of the frequency transformation matrix.
 /// \param[in] n_freqs Number of frequencies to highlight/apply.
@@ -897,93 +487,6 @@ class DATASET_API MelScale final : public TensorTransform {
 Status DATASET_API MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
                                   int32_t sample_rate, NormType norm = NormType::kNone,
                                   MelType mel_type = MelType::kHtk);
-
-/// \brief Create MelSpectrogram for a raw audio signal.
-class DATASET_API MelSpectrogram final : public TensorTransform {
- public:
-  /// \param[in] sample_rate Sample rate of audio signal. Default: 16000.
-  /// \param[in] n_fft Size of FFT, creates `n_fft // 2 + 1` bins. Default: 400.
-  /// \param[in] win_length Window size. Default: 0, will be set to `n_fft` .
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to `win_length // 2` .
-  /// \param[in] f_min Minimum frequency. Default: 0.0.
-  /// \param[in] f_max Maximum frequency. Default: 0.0.
-  /// \param[in] pad Two sided padding of signal. Default: 0.
-  /// \param[in] n_mels Number of mel filterbanks. Default: 128.
-  /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
-  ///     Default: WindowType::kHann.
-  /// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
-  ///     Default: 2.0.
-  /// \param[in] normalized Whether to normalize by magnitude after stft Default: false.
-  /// \param[in] center Whether to pad waveform on both sides. Default: true.
-  /// \param[in] pad_mode Controls the padding method used when center is True. Default: BorderType::kReflect.
-  /// \param[in] onesided Controls whether to return half of results to avoid redundancy. Default: true.
-  /// \param[in] norm If 'slaney', divide the triangular mel weights by the width of the mel band (area normalization).
-  ///     Default: NormType::kNone.
-  /// \param[in] mel_scale Scale to use: htk or slaney. Default: MelType::kHtk.
-  explicit MelSpectrogram(int32_t sample_rate = 16000, int32_t n_fft = 400, int32_t win_length = 0,
-                          int32_t hop_length = 0, float f_min = 0.0, float f_max = 0.0, int32_t pad = 0,
-                          int32_t n_mels = 128, WindowType window = WindowType::kHann, float power = 2.0,
-                          bool normalized = false, bool center = true, BorderType pad_mode = BorderType::kReflect,
-                          bool onesided = true, NormType norm = NormType::kNone, MelType mel_scale = MelType::kHtk);
-
-  /// \brief Destructor.
-  ~MelSpectrogram() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Create MFCC for a raw audio signal.
-class DATASET_API MFCC final : public TensorTransform {
- public:
-  /// \param[in] sample_rate Sample rate of audio signal. Default: 16000.
-  /// \param[in] n_mfcc Number of mfc coefficients to retain. Default: 40.
-  /// \param[in] dct_type Type of DCT (discrete cosine transform) to use. Default: 2.
-  /// \param[in] norm If 'slaney', divide the triangular mel weights by the width of the mel band (area normalization).
-  ///     Default: NormMode::kOrtho.
-  /// \param[in] log_mels Whether to use log-mel spectrograms instead of db-scaled. Default: false.
-  /// \param[in] n_fft Size of FFT, creates n_fft // 2 + 1 bins. Default: 400.
-  /// \param[in] win_length Window size. Default: 0.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0.
-  /// \param[in] f_min Minimum frequency. Default: 0.0.
-  /// \param[in] f_max Maximum frequency. Default: 0.0.
-  /// \param[in] pad Two sided padding of signal. Default: 0.
-  /// \param[in] n_mels Number of mel filterbanks. Default: 128.
-  /// \param[in] window A function to create a window tensor that is applied/multiplied to each frame/window.
-  ///     Default: WindowType::kHann.
-  /// \param[in] power Exponent for the magnitude spectrogram, (must be > 0) e.g., 1 for energy, 2 for power, etc.
-  ///     Default: 2.0.
-  /// \param[in] normalized Whether to normalize by magnitude after stft. Default: false.
-  /// \param[in] center Whether to pad waveform on both sides. Default: true.
-  /// \param[in] pad_mode Controls the padding method used when center is True. Default: BorderType::kReflect.
-  /// \param[in] onesided Controls whether to return half of results to avoid redundancy. Default: true.
-  /// \param[in] norm_mel Norm to use. Default: NormType::kNone.
-  /// \param[in] mel_scale Scale to use: htk or slaney. Default: MelType::kHtk.
-  explicit MFCC(int32_t sample_rate = 16000, int32_t n_mfcc = 40, int32_t dct_type = 2,
-                NormMode norm = NormMode::kOrtho, bool log_mels = false, int32_t n_fft = 400, int32_t win_length = 0,
-                int32_t hop_length = 0, float f_min = 0.0, float f_max = 0.0, int32_t pad = 0, int32_t n_mels = 128,
-                WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false, bool center = true,
-                BorderType pad_mode = BorderType::kReflect, bool onesided = true, NormType norm_mel = NormType::kNone,
-                MelType mel_scale = MelType::kHtk);
-
-  /// \brief Destructor.
-  ~MFCC() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
 
 /// \brief MuLawDecoding TensorTransform.
 /// \note Decode mu-law encoded signal.
@@ -1078,82 +581,7 @@ class DATASET_API Phaser final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief PhaseVocoder TensorTransform
-/// \notes Given a STFT tensor, speed up in time without modifying pitch by factor of rate.
-class DATASET_API PhaseVocoder final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] rate Speed-up factor.
-  /// \param[in] phase_advance Expected phase advance in each bin in shape of (freq, 1).
-  PhaseVocoder(float rate, const MSTensor &phase_advance);
-
-  /// \brief Destructor.
-  ~PhaseVocoder() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 // \brief Shift the pitch of a waveform by 'n_steps' steps.
-class DATASET_API PitchShift final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of "waveform". Default: 0.
-  /// \param[in] n_steps The (fractional) steps to shift "waveform". Default: 0.
-  /// \param[in] bins_per_octave The number of steps per octave. Default: 12.
-  /// \param[in] n_fft Size of FFT, creates "n_fft // 2 + 1" bins. Default: 512.
-  /// \param[in] win_length Window size. Default: 0, will be set to `n_fft` .
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will be set to `win_length // 4` .
-  /// \param[in] window Window tensor that is applied/multiplied to each frame/window. Default: WindowType::kHann.
-  explicit PitchShift(int32_t sample_rate = 0, int32_t n_steps = 0, int32_t bins_per_octave = 12, int32_t n_fft = 512,
-                      int32_t win_length = 0, int32_t hop_length = 0, WindowType window = WindowType::kHann);
-
-  /// \brief Destructor.
-  ~PitchShift() override = default;
-
- protected:
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Resample TensorTransform.
-/// \notes Resample a signal from one frequency to another. A sampling method can be given.
-class DATASET_API Resample : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] orig_freq The original frequency of the signal, which must be positive. Default: 16000.0.
-  /// \param[in] new_freq The desired frequency, which must be positive. Default: 16000.0.
-  /// \param[in] resample_method The resampling method, which can be ResampleMethod::kSincInterpolation
-  ///     and ResampleMethod::kKaiserWindow. Default: ResampleMethod::kSincInterpolation.
-  /// \param[in] lowpass_filter_width Controls the sharpness of the filter, more means sharper but less efficient,
-  ///     which must be positive. Default: 6.
-  /// \param[in] rolloff The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
-  ///     reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1]. Default: 0.99.
-  /// \param[in] beta The shape parameter used for kaiser window. Default: 14.769656459379492.
-  explicit Resample(float orig_freq = 16000.0, float new_freq = 16000.0,
-                    ResampleMethod resample_method = ResampleMethod::kSincInterpolation,
-                    int32_t lowpass_filter_width = 6, float rolloff = 0.99, float beta = 14.769656459379492);
-
-  /// \brief Destructor.
-  ~Resample() override = default;
-
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
 
 /// \brief Apply RIAA vinyl playback equalization.
 class DATASET_API RiaaBiquad final : public TensorTransform {
@@ -1165,162 +593,6 @@ class DATASET_API RiaaBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~RiaaBiquad() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Apply sliding-window cepstral mean (and optionally variance) normalization per utterance.
-class DATASET_API SlidingWindowCmn final : public TensorTransform {
- public:
-  /// \brief Constructor of SlidingWindowCmnOp.
-  /// \param[in] cmn_window The window in frames for running average CMN computation. Default: 600.
-  /// \param[in] min_cmn_window The minimum CMN window. Only applicable if center is false, ignored if center
-  ///      is true. Default: 100.
-  /// \param[in] center If true, use a window centered on the current frame. If false, window is to the left.
-  ///     Default: false.
-  /// \param[in] norm_vars If true, normalize variance to one. Default: false.
-  explicit SlidingWindowCmn(int32_t cmn_window = 600, int32_t min_cmn_window = 100, bool center = false,
-                            bool norm_vars = false);
-
-  /// \brief Destructor.
-  ~SlidingWindowCmn() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Create a spectral centroid from an audio signal.
-class DATASET_API SpectralCentroid : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
-  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins. Default: 400.
-  /// \param[in] win_length Window size. Default: 0, will use n_fft.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will use win_length / 2.
-  /// \param[in] pad Two sided padding of signal. Default: 0.
-  /// \param[in] window Window function that is applied/multiplied to each frame/window,
-  ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
-  ///     WindowType::kHann or WindowType::kKaiser. Default: WindowType::kHann.
-  explicit SpectralCentroid(int32_t sample_rate, int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0,
-                            int32_t pad = 0, WindowType window = WindowType::kHann);
-
-  ~SpectralCentroid() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  int32_t sample_rate_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  int32_t pad_;
-  WindowType window_;
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Create a spectrogram from an audio signal.
-class DATASET_API Spectrogram : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] n_fft Size of FFT, creates n_fft / 2 + 1 bins. Default: 400.
-  /// \param[in] win_length Window size. Default: 0, will use n_fft.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: 0, will use win_length / 2.
-  /// \param[in] pad Two sided padding of signal. Default: 0.
-  /// \param[in] window Window function that is applied/multiplied to each frame/window,
-  ///     which can be WindowType::kBartlett, WindowType::kBlackman, WindowType::kHamming,
-  ///     WindowType::kHann or WindowType::kKaiser. Default: WindowType::kHann.
-  /// \param[in] power Exponent for the magnitude spectrogram, which must be greater than or equal to 0. Default: 2.0.
-  /// \param[in] normalized Whether to normalize by magnitude after stft. Default: false.
-  /// \param[in] center Whether to pad waveform on both sides. Default: true.
-  /// \param[in] pad_mode Controls the padding method used when center is true,
-  ///     which can be BorderType::kReflect, BorderType::kConstant, BorderType::kEdge,
-  ///     BorderType::kSymmetric. Default: BorderType::kReflect.
-  /// \param[in] onesided Controls whether to return half of results to avoid redundancy. Default: true.
-  explicit Spectrogram(int32_t n_fft = 400, int32_t win_length = 0, int32_t hop_length = 0, int32_t pad = 0,
-                       WindowType window = WindowType::kHann, float power = 2.0, bool normalized = false,
-                       bool center = true, BorderType pad_mode = BorderType::kReflect, bool onesided = true);
-
-  /// \brief Destructor.
-  ~Spectrogram() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  int32_t pad_;
-  WindowType window_;
-  float power_;
-  bool normalized_;
-  bool center_;
-  BorderType pad_mode_;
-  bool onesided_;
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief TimeMasking TensorTransform.
-/// \notes Apply masking to a spectrogram in the time domain.
-class DATASET_API TimeMasking final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] iid_masks Whether to apply different masks to each example.
-  /// \param[in] time_mask_param Maximum possible length of the mask, range: [0, time_length]. Default: 0.
-  ///     Indices uniformly sampled from [0, time_mask_param].
-  ///     Mask width when iid_masks=true.
-  /// \param[in] mask_start Mask start when iid_masks=true, range: [0, time_length-time_mask_param]. Default: 0.
-  /// \param[in] mask_value Mask value.
-  explicit TimeMasking(bool iid_masks = false, int32_t time_mask_param = 0, int32_t mask_start = 0,
-                       float mask_value = 0.0);
-
-  /// \brief Destructor.
-  ~TimeMasking() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief TimeStretch TensorTransform
-/// \notes Stretch STFT in time at a given rate, without changing the pitch.
-class DATASET_API TimeStretch final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: None, will use ((n_freq - 1) * 2) // 2.
-  /// \param[in] n_freq Number of filter banks form STFT. Default: 201.
-  /// \param[in] fixed_rate Rate to speed up or slow down the input in time.
-  ///     Default: std::numeric_limits<float>::quiet_NaN(), will keep the original rate.
-  explicit TimeStretch(float hop_length = std::numeric_limits<float>::quiet_NaN(), int n_freq = 201,
-                       float fixed_rate = std::numeric_limits<float>::quiet_NaN());
-
-  /// \brief Destructor.
-  ~TimeStretch() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
