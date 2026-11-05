@@ -312,26 +312,14 @@ API样例中常用的导入模块如下：
     mindspore.dataset.audio.BandrejectBiquad
     mindspore.dataset.audio.BassBiquad
     mindspore.dataset.audio.Biquad
-    mindspore.dataset.audio.Contrast
-    mindspore.dataset.audio.DCShift
     mindspore.dataset.audio.DeemphBiquad
-    mindspore.dataset.audio.Dither
     mindspore.dataset.audio.EqualizerBiquad
-    mindspore.dataset.audio.Fade
     mindspore.dataset.audio.Filtfilt
-    mindspore.dataset.audio.Flanger
-    mindspore.dataset.audio.Gain
     mindspore.dataset.audio.HighpassBiquad
     mindspore.dataset.audio.LFilter
     mindspore.dataset.audio.LowpassBiquad
-    mindspore.dataset.audio.MuLawDecoding
-    mindspore.dataset.audio.MuLawEncoding
-    mindspore.dataset.audio.Overdrive
-    mindspore.dataset.audio.Phaser
     mindspore.dataset.audio.RiaaBiquad
     mindspore.dataset.audio.TrebleBiquad
-    mindspore.dataset.audio.Vad
-    mindspore.dataset.audio.Vol
 
 工具
 ^^^^^^

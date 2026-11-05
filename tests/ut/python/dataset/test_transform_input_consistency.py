@@ -44,10 +44,6 @@ def test_audio_transform_input_consistency():
     waveform1_copy = copy.deepcopy(waveform1)
     waveform2 = np.random.random([16, 2])
     waveform2_copy = copy.deepcopy(waveform2)
-    waveform6 = np.random.random([4, 16])
-    waveform6_copy = copy.deepcopy(waveform6)
-    waveform9 = np.random.random([1000])
-    waveform9_copy = copy.deepcopy(waveform9)
 
     def check_result_all(output, input_waveform, waveform_copy):
         assert (input_waveform == waveform_copy).all()
@@ -56,10 +52,6 @@ def test_audio_transform_input_consistency():
     def check_result_any(output, input_waveform, waveform_copy):
         assert (input_waveform == waveform_copy).all()
         assert (input_waveform != output).any()
-
-    def check_result_shape(output, input_waveform, waveform_copy):
-        assert (input_waveform == waveform_copy).all()
-        assert input_waveform.shape != output.shape
 
     output = audio.AllpassBiquad(44100, 200.0)(waveform1)
     check_result_all(output, waveform1, waveform1_copy)
@@ -81,37 +73,25 @@ def test_audio_transform_input_consistency():
     check_result_all(output, waveform1, waveform1_copy)
 
 
-    output = audio.Contrast()(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
 
 
-    output = audio.DCShift(0.5, 0.02)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
 
     output = audio.DeemphBiquad(44100)(waveform1)
     check_result_all(output, waveform1, waveform1_copy)
 
 
-    output = audio.Dither()(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
 
     output = audio.EqualizerBiquad(44100, 1500, 5.5, 0.7)(waveform1)
     check_result_all(output, waveform1, waveform1_copy)
 
-    output = audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=audio.FadeShape.LINEAR)(waveform1)
-    check_result_any(output, waveform1, waveform1_copy)
 
     a_coeffs = [0.1, 0.2, 0.3]
     b_coeffs = [0.3, 0.2, 0.1]
     output = audio.Filtfilt(a_coeffs, b_coeffs)(waveform1)
     check_result_all(output, waveform1, waveform1_copy)
 
-    output = audio.Flanger(44100)(waveform6)
-    check_result_any(output, waveform6, waveform6_copy)
 
 
-    output = audio.Gain(1.2)(waveform1)
-    check_result_any(output, waveform1, waveform1_copy)
 
 
     output = audio.HighpassBiquad(44100, 1500, 0.7)(waveform1)
@@ -130,17 +110,6 @@ def test_audio_transform_input_consistency():
     assert isinstance(waveform2.shape, tuple)
 
 
-    output = audio.MuLawDecoding()(waveform6)
-    check_result_all(output, waveform6, waveform6_copy)
-
-    output = audio.MuLawEncoding()(waveform6)
-    check_result_all(output, waveform6, waveform6_copy)
-
-    output = audio.Overdrive()(waveform1)
-    check_result_any(output, waveform1, waveform1_copy)
-
-    output = audio.Phaser(44100)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
 
 
     output = audio.RiaaBiquad(44100)(waveform1)
@@ -150,11 +119,6 @@ def test_audio_transform_input_consistency():
     output = audio.TrebleBiquad(44100, 200.0)(waveform1)
     check_result_any(output, waveform1, waveform1_copy)
 
-    output = audio.Vad(sample_rate=600)(waveform9)
-    check_result_shape(output, waveform9, waveform9_copy)
-
-    output = audio.Vol(gain=10, gain_type=audio.GainType.DB)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
 
     ds.config.set_seed(seed)
 

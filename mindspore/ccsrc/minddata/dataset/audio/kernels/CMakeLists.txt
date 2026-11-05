@@ -16,26 +16,14 @@ else()
                 bandreject_biquad_op.cc
                 bass_biquad_op.cc
                 biquad_op.cc
-                contrast_op.cc
-                dc_shift_op.cc
                 deemph_biquad_op.cc
-                dither_op.cc
                 equalizer_biquad_op.cc
-                fade_op.cc
                 filtfilt_op.cc
-                flanger_op.cc
-                gain_op.cc
                 highpass_biquad_op.cc
                 lfilter_op.cc
                 lowpass_biquad_op.cc
-                mu_law_decoding_op.cc
-                mu_law_encoding_op.cc
-                overdrive_op.cc
-                phaser_op.cc
                 riaa_biquad_op.cc
                 treble_biquad_op.cc
-                vad_op.cc
-                vol_op.cc
         )
 endif()
 
