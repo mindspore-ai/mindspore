@@ -214,64 +214,6 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCityscapes) {
 }
 
 /// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on CMUArctic
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCMUArctic) {
-  MS_LOG(INFO) << "Doing CMUArcticDataTestPipeline-TestGetNextPullBasedMappableCMUArctic.";
-
-  std::string folder_path = datasets_root_path_ + "/testCMUArcticData";
-  // Create a CMUArctic Dataset.
-  std::shared_ptr<Dataset> ds = CMUArctic(folder_path);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row.
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  std::string_view transcript_idx, utterance_id_idx;
-  uint32_t rate = 0;
-  uint64_t i = 0;
-
-  while (row.size() != 0) {
-    // order: waveform, sample_rate, transcript, utterance_id
-    auto waveform = row[0];
-    auto sample_rate = row[1];
-    auto transcript = row[2];
-    auto utterance_id = row[3];
-
-    MS_LOG(INFO) << "Tensor waveform shape: " << waveform.Shape();
-
-    std::shared_ptr<Tensor> trate;
-    ASSERT_OK(Tensor::CreateFromMSTensor(sample_rate, &trate));
-    ASSERT_OK(trate->GetItemAt<uint32_t>(&rate, {}));
-    MS_LOG(INFO) << "Audio sample rate: " << rate;
-
-    std::shared_ptr<Tensor> de_transcript;
-    ASSERT_OK(Tensor::CreateFromMSTensor(transcript, &de_transcript));
-    ASSERT_OK(de_transcript->GetItemAt(&transcript_idx, {}));
-    std::string s_transcript(transcript_idx);
-    MS_LOG(INFO) << "Tensor transcript value: " << transcript_idx;
-
-    std::shared_ptr<Tensor> de_utterance_id;
-    ASSERT_OK(Tensor::CreateFromMSTensor(utterance_id, &de_utterance_id));
-    ASSERT_OK(de_utterance_id->GetItemAt(&utterance_id_idx, {}));
-    std::string s_utterance_id(utterance_id_idx);
-    MS_LOG(INFO) << "Tensor utterance_id value: " << utterance_id_idx;
-    i++;
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 3);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
 /// Description: Test PullBasedIterator on Coco
 /// Expectation: Output is the same as the normal iterator
 TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableCoco) {
@@ -433,59 +375,6 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableFlickr) {
 }
 
 /// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on GTZAN
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableGTZAN) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableGTZAN.";
-
-  std::string file_path = datasets_root_path_ + "/testGTZANData";
-  // Create a GTZAN Dataset
-  std::shared_ptr<Dataset> ds = GTZAN(file_path);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row.
-  // order: waveform, sample_rate, label
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  std::string_view label_idx;
-  uint32_t rate = 0;
-  uint64_t i = 0;
-
-  while (row.size() != 0) {
-    i++;
-    auto waveform = row[0];
-    auto sample_rate = row[1];
-    auto label = row[2];
-    MS_LOG(INFO) << "Tensor waveform shape: " << waveform.Shape();
-
-    std::shared_ptr<Tensor> trate;
-    ASSERT_OK(Tensor::CreateFromMSTensor(sample_rate, &trate));
-    ASSERT_OK(trate->GetItemAt<uint32_t>(&rate, {}));
-    EXPECT_EQ(rate, 22050);
-    MS_LOG(INFO) << "Tensor label rate: " << rate;
-
-    std::shared_ptr<Tensor> de_label;
-    ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
-    ASSERT_OK(de_label->GetItemAt(&label_idx, {}));
-    std::string s_label(label_idx);
-    std::string expected("blues");
-    EXPECT_STREQ(s_label.c_str(), expected.c_str());
-    MS_LOG(INFO) << "Tensor label value: " << label_idx;
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 3);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
 /// Description: Test PullBasedIterator on ImageFolder
 /// Expectation: Output is the same as the normal iterator
 TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableImageFolder) {
@@ -494,7 +383,8 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableImageFolder) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, ShuffleMode::kFalse, 10));
+  std::shared_ptr<Dataset> ds =
+    ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, ShuffleMode::kFalse, 10));
   EXPECT_NE(ds, nullptr);
 
   // num_per_shard is equal to 44/4 = 11 which is more than num_samples = 10, so the output is 10
@@ -640,83 +530,6 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableLFW) {
   }
 
   EXPECT_EQ(i, 4);
-
-  // Manually terminate the pipeline.
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on LibriTTS
-/// Expectation: Output is the same as the normal iterator
-// Note: test files in /testLibriTTSData incompleted
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableLibriTTS) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableLibriTTS.";
-
-  std::string folder_path = datasets_root_path_ + "/testLibriTTSData";
-  std::shared_ptr<Dataset> ds = LibriTTS(folder_path);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row.
-  // order: waveform, sample_rate, original_text, normalized_text, speaker_id, chapter_id, utterance_id
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_EQ(row.size(), 7);
-  uint64_t i = 0;
-
-  while (row.size() != 0) {
-    auto waveform = row[0];
-    auto sample_rate = row[1];
-    auto original_text = row[2];
-    auto normalized_text = row[3];
-    auto speaker_id = row[4];
-    auto chapter_id = row[5];
-    auto utterance_id = row[6];
-    i++;
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-  EXPECT_EQ(i, 3);
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on LJSpeech
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableLJSpeech) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableLJSpeech.";
-  std::string folder_path = datasets_root_path_ + "/testLJSpeechData/";
-  std::shared_ptr<Dataset> ds = LJSpeech(folder_path, std::make_shared<RandomSampler>(false, 3));
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset.
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row.
-  // order: waveform, sample_rate, transcription, normalized_transcript
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_EQ(row.size(), 4);
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto waveform = row[0];
-    MS_LOG(INFO) << "Tensor waveform shape: " << waveform.Shape();
-    auto sample_rate = row[1];
-    MS_LOG(INFO) << "Tensor sample_rate shape: " << sample_rate.Shape();
-    auto transcription = row[2];
-    MS_LOG(INFO) << "Tensor transcription shape: " << transcription.Shape();
-    auto normalized_transcript = row[3];
-    MS_LOG(INFO) << "Tensor normalized_transcript shape: " << normalized_transcript.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-  EXPECT_EQ(i, 3);
 
   // Manually terminate the pipeline.
   iter->Stop();
@@ -1034,48 +847,6 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableSemeion) {
 }
 
 /// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on SpeechCommands
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableSpeechCommands) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableSpeechCommands.";
-  std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
-  std::shared_ptr<Dataset> ds = SpeechCommands(folder_path, "all", std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  // order: waveform, sample_rate, label, speaker_id, utterance_number
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_EQ(row.size(), 5);
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto waveform = row[0];
-    MS_LOG(INFO) << "Tensor waveform shape: " << waveform.Shape();
-    auto sample_rate = row[1];
-    MS_LOG(INFO) << "Tensor sample_rate shape: " << sample_rate.Shape();
-    auto label = row[2];
-    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
-    auto speaker_id = row[3];
-    MS_LOG(INFO) << "Tensor speaker_id shape: " << speaker_id.Shape();
-    auto utterance_number = row[4];
-    MS_LOG(INFO) << "Tensor utterance_number shape: " << utterance_number.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline.
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
 /// Description: Test PullBasedIterator on STL10Dataset with train+unlabeled
 /// Expectation: Output is the same as the normal iterator
 TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableSTL10) {
@@ -1108,61 +879,6 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableSTL10) {
   }
 
   EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on Tedlium
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableTedlium) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableTedlium.";
-  // Create a Tedlium Dataset.
-  std::string folder_path12 = datasets_root_path_ + "/testTedliumData/TEDLIUM_release1";
-  std::shared_ptr<Dataset> ds =
-    Tedlium(folder_path12, "release1", "all", ".sph", std::make_shared<RandomSampler>(false, 4), nullptr);
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 1;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  std::vector<std::string> columns = {"waveform", "sample_rate", "transcript", "talk_id", "speaker_id", "identifier"};
-  std::shared_ptr<ProjectDataset> project_ds = ds->Project(columns);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  // order: waveform, sample_rate, transcript, talk_id, speaker_id, identifier
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_EQ(row.size(), 6);
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto waveform = row[0];
-    MS_LOG(INFO) << "Tensor waveform shape: " << waveform.Shape();
-    auto sample_rate = row[1];
-    MS_LOG(INFO) << "Tensor sample_rate shape: " << sample_rate.Shape();
-    auto transcript = row[2];
-    MS_LOG(INFO) << "Tensor transcript shape: " << transcript.Shape();
-    auto talk_id = row[3];
-    MS_LOG(INFO) << "Tensor talk_id shape: " << talk_id.Shape();
-    auto speaker_id = row[4];
-    MS_LOG(INFO) << "Tensor speaker_id shape: " << speaker_id.Shape();
-    auto identifier = row[5];
-    MS_LOG(INFO) << "Tensor identifier shape: " << identifier.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 4);
 
   // Manually terminate the pipeline
   iter->Stop();
@@ -1273,44 +989,5 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableWIDERFace) {
   }
 
   EXPECT_EQ(i, 4);
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on YesNo
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableYesNo) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableYesNo.";
-  // Create a YesNoDataset
-  std::string folder_path = datasets_root_path_ + "/testYesNoData/";
-  std::shared_ptr<Dataset> ds = YesNo(folder_path, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  // order: waveform, sample_rate, label
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-  EXPECT_EQ(row.size(), 3);
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto waveform = row[0];
-    MS_LOG(INFO) << "Tensor waveform shape: " << waveform.Shape();
-    auto sample_rate = row[1];
-    MS_LOG(INFO) << "Tensor sample_rate shape: " << sample_rate.Shape();
-    auto label = row[2];
-    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
   iter->Stop();
 }

@@ -1,6 +1,15 @@
 mindspore.dataset
 ==================
 
+.. note::
+
+    内置 ``mindspore.dataset.audio`` 模块及 CMUArctic、GTZAN、LibriTTS、LJSpeech、
+    SpeechCommands、Tedlium、YesNo 七个数据集读取类已移除。
+    音频输入可通过 :class:`mindspore.dataset.GeneratorDataset` 配合自定义读取器加载，
+    并通过 :meth:`mindspore.dataset.Dataset.map` 执行自定义 Python 变换。
+    这不是直接等价替换，迁移时需验证采样率、声道布局、数据类型、数据划分与采样规则及数值结果。
+    MindRecord、DataLoader 和通用数据管线继续保留。
+
 MindSpore的核心数据加载模块是Dataset，是一种基于Pipeline设计的 `数据引擎 <https://www.mindspore.cn/docs/zh-CN/master/features/data_engine.html>`_ 。
 
 该模块提供了以下几种数据加载方式，帮助用户加载数据集到MindSpore中。
@@ -8,7 +17,7 @@ MindSpore的核心数据加载模块是Dataset，是一种基于Pipeline设计�
 - 自定义数据集加载：允许用户通过Python定义 `可随机访问(Map-style)数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/dataset.html#可随机访问数据集>`_
   和 `可迭代(Iterable-style)数据集 <https://www.mindspore.cn/tutorials/zh-CN/master/beginner/dataset.html#可迭代数据集>`_ 自定义数据读取、处理逻辑。
 - 标准格式数据集加载：支持加载业界标准数据格式的数据集文件，包括 `MindRecord <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/record.html>`_ 、`TFRecord <https://tensorflow.google.cn/tutorials/load_data/tfrecord.md?hl=zh-cn>`_ 等。
-- 开源数据集加载：支持部分 `开源数据集 <#开源数据集加载>`_ 的解析读取，如MNIST、CIFAR-10、CLUE、LJSpeech等。
+- 开源数据集加载：支持部分 `开源数据集 <#开源数据集加载>`_ 的解析读取，如MNIST、CIFAR-10、CLUE等。
 
 此外，该模块也提供了对数据进行采样、增强变换、批处理等功能，以及随机种子、并行数等基础配置，与数据集加载API配合使用。
 
@@ -33,8 +42,7 @@ MindSpore的核心数据加载模块是Dataset，是一种基于Pipeline设计�
 
 - 加载数据集（Dataset）：用户可以方便地使用 Dataset类 ( `标准格式数据集 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.loading.html#标准格式数据集加载>`_ 、
   `vision数据集 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.loading.html#视觉数据集>`_ 、
-  `nlp数据集 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.loading.html#文本数据集>`_ 、
-  `audio数据集 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.loading.html#音频数据集>`_ ) 来加载已支持的数据集，
+  `nlp数据集 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.loading.html#文本数据集>`_ ) 来加载已支持的数据集，
   或者使用 `自定义数据集加载 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.loading.html#自定义数据集加载-1>`_ ，通过Python逻辑自定义数据集行为；
 
 - 数据集操作（filter/ skip）：用户通过数据集对象方法 `.shuffle <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset/dataset_method/operation/mindspore.dataset.Dataset.shuffle.html#mindspore.dataset.Dataset.shuffle>`_ /
@@ -44,8 +52,7 @@ MindSpore的核心数据加载模块是Dataset，是一种基于Pipeline设计�
   `.take <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset/dataset_method/operation/mindspore.dataset.Dataset.take.html#mindspore.dataset.Dataset.take>`_ / … 来实现数据集的进一步混洗、过滤、跳过、最多获取条数等操作；
 
 - 数据集样本变换操作（map）：用户可以将数据变换操作 （`vision数据变换 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#视觉>`_ ，
-  `nlp数据变换 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#文本>`_ ，
-  `audio数据变换 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#音频>`_ ）
+  `nlp数据变换 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.transforms.html#文本>`_ ）
   添加到 `.map <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset/dataset_method/operation/mindspore.dataset.Dataset.map.html>`_ 操作中执行，
   数据预处理过程中可以定义多个map操作，用于执行不同变换操作，数据变换操作也可以支持传入用户自定义Python函数 ；
 
@@ -158,22 +165,6 @@ MindSpore的核心数据加载模块是Dataset，是一种基于Pipeline设计�
     mindspore.dataset.WikiTextDataset
     mindspore.dataset.YahooAnswersDataset
     mindspore.dataset.YelpReviewDataset
-
-音频数据集
-^^^^^^^^^^^
-
-.. mscnautosummary::
-    :toctree: dataset
-    :nosignatures:
-    :template: classtemplate_inherited.rst
-
-    mindspore.dataset.CMUArcticDataset
-    mindspore.dataset.GTZANDataset
-    mindspore.dataset.LibriTTSDataset
-    mindspore.dataset.LJSpeechDataset
-    mindspore.dataset.SpeechCommandsDataset
-    mindspore.dataset.TedliumDataset
-    mindspore.dataset.YesNoDataset
 
 其他数据集
 ----------

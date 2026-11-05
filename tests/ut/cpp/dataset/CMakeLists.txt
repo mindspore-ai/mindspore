@@ -21,7 +21,6 @@ SET(DE_UT_SRCS
         c_api_dataset_cifar_test.cc
         c_api_dataset_cityscapes_test.cc
         c_api_dataset_clue_test.cc
-        c_api_dataset_cmu_arctic_test.cc
         c_api_dataset_coco_test.cc
         c_api_dataset_conll2000_test.cc
         c_api_dataset_config_test.cc
@@ -33,7 +32,6 @@ SET(DE_UT_SRCS
         c_api_dataset_fake_image_test.cc
         c_api_dataset_fashion_mnist_test.cc
         c_api_dataset_flickr_test.cc
-        c_api_dataset_gtzan_test.cc
         c_api_dataset_imdb_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_iwslt_test.cc
@@ -41,7 +39,6 @@ SET(DE_UT_SRCS
         c_api_dataset_kmnist_test.cc
         c_api_dataset_lfw_test.cc
         c_api_dataset_libri_tts.cc
-        c_api_dataset_lj_speech_test.cc
         c_api_dataset_lsun_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
@@ -57,10 +54,8 @@ SET(DE_UT_SRCS
         c_api_dataset_sbu_test.cc
         c_api_dataset_semeion_test.cc
         c_api_dataset_sogou_news_test.cc
-        c_api_dataset_speech_commands_test.cc
         c_api_dataset_squad_test.cc
         c_api_dataset_stl10_test.cc
-        c_api_dataset_tedlium_test.cc
         c_api_dataset_textfile_test.cc
         c_api_dataset_tfrecord_test.cc
         c_api_dataset_udpos_test.cc
@@ -69,7 +64,6 @@ SET(DE_UT_SRCS
         c_api_dataset_wider_face_test.cc
         c_api_dataset_yahoo_answers_test.cc
         c_api_dataset_yelp_review_test.cc
-        c_api_dataset_yes_no_test.cc
         c_api_dataset_wiki_text_test.cc
         c_api_datasets_test.cc
         c_api_epoch_ctrl_test.cc

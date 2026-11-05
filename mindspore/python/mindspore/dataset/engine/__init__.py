@@ -28,7 +28,6 @@ from .cache_client import DatasetCache
 from .datasets import *
 from .datasets_vision import *
 from .datasets_text import *
-from .datasets_audio import *
 from .datasets_standard_format import *
 from .datasets_user_defined import *
 from .iterators import *
@@ -91,13 +90,6 @@ __all__ = ["Caltech101Dataset",        # Vision
            "WikiTextDataset",          # Text
            "YahooAnswersDataset",      # Text
            "YelpReviewDataset",        # Text
-           "CMUArcticDataset",         # Audio
-           "GTZANDataset",             # Audio
-           "LibriTTSDataset",          # Audio
-           "LJSpeechDataset",          # Audio
-           "SpeechCommandsDataset",    # Audio
-           "TedliumDataset",           # Audio
-           "YesNoDataset",             # Audio
            "CSVDataset",               # Standard Format
            "MindDataset",              # Standard Format
            "OBSMindDataset",           # Standard Format

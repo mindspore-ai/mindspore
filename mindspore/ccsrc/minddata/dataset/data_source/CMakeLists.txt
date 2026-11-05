@@ -12,7 +12,6 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     cifar_op.cc
     cityscapes_op.cc
     clue_op.cc
-    cmu_arctic_op.cc
     coco_op.cc
     conll2000_op.cc
     csv_op.cc
@@ -24,7 +23,6 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     fashion_mnist_op.cc
     flickr_op.cc
     food101_op.cc
-    gtzan_op.cc
     image_folder_op.cc
     imdb_op.cc
     iwslt_op.cc
@@ -32,8 +30,6 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     kitti_op.cc
     kmnist_op.cc
     lfw_op.cc
-    libri_tts_op.cc
-    lj_speech_op.cc
     lsun_op.cc
     mappable_leaf_op.cc
     mnist_op.cc
@@ -49,12 +45,10 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     sbu_op.cc
     semeion_op.cc
     sogou_news_op.cc
-    speech_commands_op.cc
     squad_op.cc
     sst2_op.cc
     stl10_op.cc
     sun397_op.cc
-    tedlium_op.cc
     text_file_op.cc
     udpos_op.cc
     usps_op.cc
@@ -62,7 +56,6 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     wiki_text_op.cc
     yahoo_answers_op.cc
     yelp_review_op.cc
-    yes_no_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

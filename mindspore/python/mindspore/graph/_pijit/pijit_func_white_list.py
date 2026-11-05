@@ -80,8 +80,6 @@ from mindspore.dataset.audio.transforms import (
     RiaaBiquad,
     TrebleBiquad,
 )
-from mindspore.dataset.engine.datasets_audio import CMUArcticDataset, GTZANDataset, LibriTTSDataset, LJSpeechDataset, \
-    SpeechCommandsDataset, TedliumDataset, YesNoDataset
 from mindspore.dataset.engine.cache_client import DatasetCache
 from mindspore.dataset.engine.iterators import Iterator
 from mindspore.dataset.engine.datasets_standard_format import CSVDataset, MindDataset, TFRecordDataset
@@ -188,8 +186,6 @@ def _get_dataset_forbidden_code():
         RiaaBiquad.parse,
         TrebleBiquad.parse,
     ])
-    codes.extend([CMUArcticDataset.parse, GTZANDataset.parse, LibriTTSDataset.parse, LJSpeechDataset.parse, \
-                  SpeechCommandsDataset.parse, TedliumDataset.parse, YesNoDataset.parse])
     codes.extend([DatasetCache.__init__, Iterator.__init__])
     codes.extend([CSVDataset.parse, MindDataset.parse, TFRecordDataset.parse])
     codes.extend([AGNewsDataset.parse, AmazonReviewDataset.parse, CLUEDataset.parse, CoNLL2000Dataset.parse, \

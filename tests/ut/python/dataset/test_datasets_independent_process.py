@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for dataset execution in independent processes."""
 import copy
 import os
 import time
@@ -22,7 +23,6 @@ import numpy as np
 from mindspore.mindrecord import FileWriter
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.audio as audio
 import mindspore.dataset.vision as vision
 import mindspore.dataset.transforms as transforms
 
@@ -30,7 +30,6 @@ import mindspore.dataset.transforms as transforms
 apple_jpg = "../data/dataset/testFormats/apple.jpg"
 MNIST_DIR = "../data/dataset/testMnistData"
 WIKI_DIR = '../data/dataset/testWikiText'
-GTZAN_DIR = "../data/dataset/testGTZANData"
 TEXT_FILE = "../data/dataset/testTextFileDataset/1.txt"
 
 
@@ -457,10 +456,9 @@ def test_generator_with_generator_object_iterated_multi_times():
 
     # Generator
     def my_generator(start, end):
-        for i in range(start, end):
-            yield i
+        yield from range(start, end)
 
-    expected = [x for x in my_generator(3, 6)]
+    expected = list(my_generator(3, 6))
 
     dataset = ds.GeneratorDataset(source=my_generator(3, 6), column_names=["data"])
 
@@ -630,8 +628,7 @@ def test_dataset_generator_with_filter_error():
     ds.config.set_prefetch_size(2)
 
     def gen(num):
-        for i in range(num):
-            yield i
+        yield from range(num)
 
     dataset = ds.GeneratorDataset(lambda: gen(40), ["num"], num_parallel_workers=8)
     dataset = dataset.repeat(2)
@@ -725,37 +722,43 @@ def skip_test_dataset_generator_error():
     os.environ["MS_INDEPENDENT_DATASET"] = "False"
 
 
-def test_dataset_GTZANDataset_with_zip_op():
+def test_dataset_numpy_slices_with_zip_op():
     """
     Feature: Dataset With Independent Process
     Description: Test dataset in independent process with zip op
     Expectation: The dataset is processed as expected
     """
-    os.environ["MS_INDEPENDENT_DATASET"] = "True"
+    original_independent = os.environ.get("MS_INDEPENDENT_DATASET")
     prefetch_size = ds.config.get_prefetch_size()
-    ds.config.set_prefetch_size(2)
+    try:
+        os.environ["MS_INDEPENDENT_DATASET"] = "True"
+        ds.config.set_prefetch_size(2)
+        data = (np.arange(12).reshape(3, 4), np.arange(3), np.arange(3))
+        input_columns = ["data", "index", "label"]
+        dataset = ds.NumpySlicesDataset(data, column_names=input_columns, num_parallel_workers=2, shuffle=True)
+        transforms_op = [transforms.TypeCast(mstype.float32)]
 
-    dataset = ds.GTZANDataset(dataset_dir=GTZAN_DIR, num_parallel_workers=8, shuffle=True)
-    transforms_op = [audio.AllpassBiquad(44100, 200.0)]
+        dataset_1 = ds.NumpySlicesDataset(data, column_names=input_columns, num_parallel_workers=2, shuffle=False)
+        output_columns = ['a', 'b', 'c']
+        dataset_1 = dataset_1.rename(input_columns, output_columns)
 
-    dataset_1 = ds.GTZANDataset(dataset_dir=GTZAN_DIR, num_parallel_workers=8, shuffle=False)
-    input_columns = ["waveform", "sample_rate", "label"]
-    output_columns = ['a', 'b', 'c']
-    dataset_1 = dataset_1.rename(input_columns, output_columns)
-
-    dataset_zip = dataset.zip(dataset_1)
-    # operators should be one by one, but got too many branches
-    dataset = dataset_zip.map(input_columns=["waveform"], operations=transforms_op,
-                              num_parallel_workers=8,
-                              python_multiprocessing=True)
-    count = 0
-    for i in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
-        assert len(i) == 6
-        count += 1
-    assert count == 3
-
-    ds.config.set_prefetch_size(prefetch_size)
-    os.environ["MS_INDEPENDENT_DATASET"] = "False"
+        dataset_zip = dataset.zip(dataset_1)
+        # operators should be one by one, but got too many branches
+        dataset = dataset_zip.map(input_columns=["data"], operations=transforms_op,
+                                  num_parallel_workers=2, python_multiprocessing=True)
+        count = 0
+        for i in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
+            assert len(i) == 6
+            assert i["data"].dtype == np.float32
+            np.testing.assert_array_equal(i["data"], data[0][i["index"]])
+            count += 1
+        assert count == 3
+    finally:
+        ds.config.set_prefetch_size(prefetch_size)
+        if original_independent is None:
+            os.environ.pop("MS_INDEPENDENT_DATASET", None)
+        else:
+            os.environ["MS_INDEPENDENT_DATASET"] = original_independent
 
 
 def test_dataset_TextFile_with_concat_op():
@@ -802,5 +805,5 @@ if __name__ == "__main__":
     test_dataset_generator_with_filter_error()
     test_dataset_wikitextdataset_with_op_input_error()
     test_dataset_generator_error()
-    test_dataset_GTZANDataset_with_zip_op()
+    test_dataset_numpy_slices_with_zip_op()
     test_dataset_TextFile_with_concat_op()

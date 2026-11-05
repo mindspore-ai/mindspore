@@ -3,6 +3,16 @@ mindspore.dataset
 
 .. automodule:: mindspore.dataset
 
+.. note::
+
+    The built-in ``mindspore.dataset.audio`` module and the CMUArctic, GTZAN, LibriTTS,
+    LJSpeech, SpeechCommands, Tedlium and YesNo dataset readers have been removed.
+    For audio input, use :class:`mindspore.dataset.GeneratorDataset` with a custom reader
+    and apply custom Python transforms with :meth:`mindspore.dataset.Dataset.map`.
+    This is not a drop-in replacement: verify sample rates, channel layouts, dtypes,
+    split/sampling rules and numerical results for your workload.
+    MindRecord, DataLoader and the general dataset pipeline remain available.
+
 User Defined
 --------------
 
@@ -100,22 +110,6 @@ Text
     mindspore.dataset.WikiTextDataset
     mindspore.dataset.YahooAnswersDataset
     mindspore.dataset.YelpReviewDataset
-
-Audio
-^^^^^^
-
-.. autosummary::
-    :toctree: dataset
-    :nosignatures:
-    :template: classtemplate_dataset.rst
-
-    mindspore.dataset.CMUArcticDataset
-    mindspore.dataset.GTZANDataset
-    mindspore.dataset.LibriTTSDataset
-    mindspore.dataset.LJSpeechDataset
-    mindspore.dataset.SpeechCommandsDataset
-    mindspore.dataset.TedliumDataset
-    mindspore.dataset.YesNoDataset
 
 Others
 -------

@@ -16,10 +16,9 @@
 1. This file is an abstraction of the dataset loading class. It contains
 some basic dataset operations(skip, filter, map, batch, ...).
 2. Specific dataset loading classes can be found in datasets_vision.py, datasets_text.py,
-datasets_audio.py, datasets_standard_format.py and datasets_user_defined.py files.
+datasets_standard_format.py and datasets_user_defined.py files.
     datasets_vision.py: contains vision dataset loading classes.
     datasets_text.py: contains text dataset loading classes.
-    datasets_audio.py: contains audio dataset loading classes.
     datasets_standard_format.py: contains standard format loading classes which
                                  any other kinds of datasets can be converted to.
     datasets_user_defined.py: contains basic classes that help users to define
@@ -257,12 +256,12 @@ class Dataset:
     a node in the data flow graph.
                                      Dataset
            -----------------------------------------------------------
-           |                  |                   |                  |
-    VisionBaseDataset    TextBaseDataset    AudioBaseDataset         |
-           -                  -                   -                  |
-           |                  |                   |                  |
-           ----------------------------------------                  |
-                      UnionBaseDataset                               |
+           |                  |                                      |
+    VisionBaseDataset    TextBaseDataset                              |
+           -                  -                                      |
+           |                  |                                      |
+           --------------------                                      |
+                UnionBaseDataset                                     |
                                                                      |
                                                                SourceDataset
                                                                      -
@@ -288,8 +287,6 @@ class Dataset:
                                  USPSDataset(SourceDataset, VisionBaseDataset)
     Impl Dataset - text:         TextFileDataset(SourceDataset, TextBaseDataset)
                                  YahooAnswersDataset(SourceDataset, TextBaseDataset)
-    Impl Dataset - audio:        LJSpeechDataset(MappableDataset, AudioBaseDataset)
-                                 TedliumDataset(MappableDataset, AudioBaseDataset)
     Impl Dataset - standard:     MindDataset(MappableDataset, UnionBaseDataset)
                                  TFRecordDataset(SourceDataset, UnionBaseDataset)
     Impl Dataset - user defined: GeneratorDataset(MappableDataset, UnionBaseDataset)
@@ -2570,19 +2567,7 @@ class TextBaseDataset(Dataset):
         return vocab
 
 
-class AudioBaseDataset(Dataset):
-    """
-    Abstract class to represent a audio source dataset which produces content to the data pipeline.
-    """
-
-    def __init__(self, children=None, num_parallel_workers=None, cache=None):
-        super().__init__(children=children, num_parallel_workers=num_parallel_workers, cache=cache)
-
-    def parse(self, children=None):
-        raise NotImplementedError("Dataset has to implement parse method.")
-
-
-class UnionBaseDataset(VisionBaseDataset, TextBaseDataset, AudioBaseDataset):
+class UnionBaseDataset(VisionBaseDataset, TextBaseDataset):
     """
     Abstract class to represent a union source dataset which produces content to the data pipeline.
     """
