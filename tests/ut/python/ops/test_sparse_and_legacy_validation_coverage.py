@@ -11,6 +11,7 @@ from mindspore import _checkparam
 from mindspore.ops.function._add_attr_func import AddAttr
 from mindspore.ops._utils.arg_dtype_cast import scalar_to_tensor
 from mindspore.ops.operations import Abs
+from mindspore.ops.function import math_func
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -22,18 +23,32 @@ def cpu_context():
 
 
 def test_empty_coo_shape_special_case_accepts_empty_storage():
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check empty COO shape special case accepts empty storage.
+    Expectation: Empty index/value storage with a valid dense shape is accepted and returns None.
+    """
     assert _checkparam.check_coo_tensor_shape((0,), (0,), (2, 2)) is None
 
 
 @pytest.mark.parametrize('value', [np.int64(3), np.float32(2), complex(1, 2)])
 def test_native_scalar_conversion_rejects_unsupported_scalar_types(value):
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check native scalar conversion rejects unsupported scalar types.
+    Expectation: NumPy scalar types and complex numbers raise TypeError during scalar-to-Tensor conversion.
+    """
     with pytest.raises(TypeError):
         scalar_to_tensor(value)
 
 
 def test_default_linalg_norm_order_forwards_complete_native_vector_protocol(monkeypatch):
-    """Protocol only: the valid default-order branch uses an unavailable CPU vector-norm kernel."""
-    from mindspore.ops.function import math_func
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Protocol only: the valid default-order branch uses an unavailable CPU vector-norm kernel.
+    Expectation: Default order dispatches exactly once with the original float32 vector and arguments (2.0, (0,),
+        False, None).
+    """
     data, output, calls = ms.Tensor([3., 4.]), object(), []
     def native(*args):
         assert len(args) == 5 and args[0] is data
@@ -49,6 +64,11 @@ def test_default_linalg_norm_order_forwards_complete_native_vector_protocol(monk
 
 @pytest.mark.parametrize('kind', ['primitive', 'non_callable'])
 def test_attribute_decorator_rejects_unsupported_function_kind(kind):
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check attribute decorator rejects unsupported function kind.
+    Expectation: Primitive instances and non-callable values raise TypeError for unsupported decorator inputs.
+    """
     value = Abs() if kind == 'primitive' else 123
     with pytest.raises(TypeError, match='callable type except Primitive'):
         AddAttr()(value)
@@ -64,6 +84,11 @@ def desc(shape, dtype='float32', storage='NCHW'):
 
 
 def test_fold_gradient_reduce_rejects_integer_input_before_placeholder_creation():
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check fold gradient reduce rejects integer input before placeholder creation.
+    Expectation: Integer input metadata raises the dtype RuntimeError before graph placeholders are created.
+    """
     invalid = desc((2, 2, 2, 2), 'int32')
     with pytest.raises(RuntimeError, match='Dtype of input'):
         legacy('batchnorm_fold2_grad_reduce').batchnorm_fold2_grad_reduce(invalid, invalid, {}, {})
@@ -71,9 +96,14 @@ def test_fold_gradient_reduce_rejects_integer_input_before_placeholder_creation(
 
 @pytest.mark.parametrize('reduce', [False, True])
 def test_correction_gradient_rejects_noncanonical_storage_format(reduce):
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check correction gradient rejects noncanonical storage format.
+    Expectation: Both correction gradient paths reject lowercase nchw metadata with the format diagnostic.
+    """
     data, statistic = desc((2, 2, 2, 2), storage='nchw'), desc((2,))
     module = legacy('correction_mul_grad')
-    with pytest.raises(RuntimeError, match='data_format\(NCHW\) must same as ori_format'):
+    with pytest.raises(RuntimeError, match=r'data_format\(NCHW\) must same as ori_format'):
         if reduce:
             module.correction_mul_grad_reduce(data, statistic, 1)
         else:
@@ -81,8 +111,14 @@ def test_correction_gradient_rejects_noncanonical_storage_format(reduce):
 
 
 def test_fold_reduction_preserves_singleton_channel_alignment_in_real_llvm_graph():
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check fold reduction preserves singleton channel alignment in real llvm graph.
+    Expectation: LLVM execution retains (1, 2, 1) float32 outputs and returns channel sums [6, 15] and [8, 62].
+    """
     module = legacy('batchnorm_fold2_grad_reduce')
-    from te import tvm
+    # The optional SDK is probed by legacy() before importing its graph API.
+    from te import tvm  # pylint: disable=import-outside-toplevel
     if not tvm.runtime.enabled('llvm'):
         pytest.skip('CANN TE SDK has no LLVM host backend')
     shape = (1, 2, 1, 3)
@@ -103,6 +139,12 @@ def test_fold_reduction_preserves_singleton_channel_alignment_in_real_llvm_graph
 @pytest.mark.xfail(strict=True, raises=ModuleNotFoundError,
                    reason='CANN 9.1 moved the ND scheduler; legacy impl.bn_training_reduce import is absent')
 def test_legacy_nd_reduction_entry_resolves_the_real_sdk_scheduler(monkeypatch):
+    """
+    Feature: Sparse frontend and legacy reduction validation
+    Description: Check legacy nd reduction entry resolves the real sdk scheduler.
+    Expectation: The entry should reach one intercepted cce build; strict xfail identifies the missing legacy ND
+        scheduler import.
+    """
     module = legacy('batchnorm_fold2_grad_reduce')
     calls = []
     def binary_emission(schedule, tensors, target, name):

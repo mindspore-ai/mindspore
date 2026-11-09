@@ -31,7 +31,13 @@ from mindspore import _checkparam as validator
     ((1, 2, 3), {'third_one': True, 'three_input': True}, (1, 2, 3)),
 ])
 def test_3d_parameters_expand_and_validate(value, options, expected):
-    """Three-dimensional parameters must preserve the requested padding format."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Three-dimensional parameters must preserve the requested padding format.
+    Expectation: Three-dimensional parameters must preserve the requested padding format.
+    """
+    # Internal helpers are the unit coverage targets here.
+    # pylint: disable=protected-access
     assert validator._check_3d_int_or_tuple('kernel', value, 'Conv3D', **options) == expected
 
 
@@ -47,7 +53,13 @@ def test_3d_parameters_expand_and_validate(value, options, expected):
     ((-1, 2, 3), {'greater_zero': False}, ValueError),
 ])
 def test_3d_parameters_reject_invalid_values(value, options, error):
-    """Invalid length, depth, bool and non-positive dimensions must fail."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Invalid length, depth, bool and non-positive dimensions must fail.
+    Expectation: Invalid length, depth, bool and non-positive dimensions must fail.
+    """
+    # Internal helpers are the unit coverage targets here.
+    # pylint: disable=protected-access
     with pytest.raises(error, match='kernel'):
         validator._check_3d_int_or_tuple('kernel', value, 'Conv3D', **options)
 
@@ -56,7 +68,11 @@ def test_3d_parameters_reject_invalid_values(value, options, error):
                                         (validator.check_non_positive_float, -1.5),
                                         (validator.check_non_positive_float, 0.0)])
 def test_negative_float_validators_accept_boundaries(check, value):
-    """The non-positive validator includes zero, the negative validator does not."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: The non-positive validator includes zero, the negative validator does not.
+    Expectation: The non-positive validator includes zero, the negative validator does not.
+    """
     assert check(value, 'value', 'TestOp') == value
 
 
@@ -69,14 +85,22 @@ def test_negative_float_validators_accept_boundaries(check, value):
     (validator.check_negative_float, float('-inf'), ValueError),
 ])
 def test_negative_float_validators_reject_invalid_numbers(check, value, error):
-    """Non-finite values and wrong numeric types cannot pass numeric validation."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Non-finite values and wrong numeric types cannot pass numeric validation.
+    Expectation: Non-finite values and wrong numeric types cannot pass numeric validation.
+    """
     with pytest.raises(error, match='value'):
         check(value, 'value', 'TestOp')
 
 
 @pytest.mark.parametrize('value', [True, '1.5', 2])
 def test_check_is_number_requires_exact_numeric_category(value):
-    """Float validation must not accept bool, strings or integer arguments."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Float validation must not accept bool, strings or integer arguments.
+    Expectation: Float validation must not accept bool, strings or integer arguments.
+    """
     with pytest.raises(TypeError, match='value'):
         validator.check_is_number(value, float, 'value', 'TestOp')
 
@@ -89,7 +113,11 @@ def test_check_is_number_requires_exact_numeric_category(value):
     ((), (), ()),
 ])
 def test_squeeze_shape_preserves_unselected_singletons(shape, axes, expected):
-    """Only selected singleton axes are removed, including negative axes."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Only selected singleton axes are removed, including negative axes.
+    Expectation: Only selected singleton axes are removed, including negative axes.
+    """
     assert validator.prepare_shape_for_squeeze(shape, axes) == expected
 
 
@@ -97,27 +125,43 @@ def test_squeeze_shape_preserves_unselected_singletons(shape, axes, expected):
                                              ([0, 3], ValueError, 'range'), (1, ValueError, 'must be 1'),
                                              ('0', TypeError, 'axes')])
 def test_squeeze_shape_rejects_invalid_axes(axes, error, reason):
-    """Out-of-range and non-singleton axes must fail before shape construction."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Out-of-range and non-singleton axes must fail before shape construction.
+    Expectation: Out-of-range and non-singleton axes must fail before shape construction.
+    """
     with pytest.raises(error, match=reason):
         validator.prepare_shape_for_squeeze((1, 2, 1), axes)
 
 
 @pytest.mark.parametrize('axes,expected', [(None, (0, 1, 2)), (-1, (2,)), ([-1, 0], (2, 0))])
 def test_axis_validation_canonicalizes_negative_axes(axes, expected):
-    """Axis normalization must preserve the supplied order."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Axis normalization must preserve the supplied order.
+    Expectation: Axis normalization must preserve the supplied order.
+    """
     assert validator.check_axis_valid(axes, 3) == expected
 
 
 @pytest.mark.parametrize('axes,error', [((0, -3), ValueError), ((3,), ValueError), (('x',), TypeError)])
 def test_canonical_axes_reject_duplicates_and_invalid_members(axes, error):
-    """Aliases of the same axis count as duplicates after canonicalization."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Aliases of the same axis count as duplicates after canonicalization.
+    Expectation: Aliases of the same axis count as duplicates after canonicalization.
+    """
     with pytest.raises(error):
         validator.check_and_canonicalize_axes(axes, 3)
 
 
 @pytest.mark.parametrize('axes', ['0', [1, 'x']])
 def test_axis_type_validation_rejects_non_integers(axes):
-    """Reduction axis validation must reject strings within containers too."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Reduction axis validation must reject strings within containers too.
+    Expectation: Reduction axis validation must reject strings within containers too.
+    """
     with pytest.raises(TypeError, match='axis'):
         validator.check_axis_type(axes)
 
@@ -125,32 +169,52 @@ def test_axis_type_validation_rejects_non_integers(axes):
 @pytest.mark.parametrize('shape,expected', [((3,), (3,)), (([2, 3],), (2, 3)), (((2, 3),), (2, 3)),
                                          ((2, 3), (2, 3))])
 def test_reshape_shape_normalizes_calling_conventions(shape, expected):
-    """Single list, single tuple and variadic dimensions produce the same shape."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Single list, single tuple and variadic dimensions produce the same shape.
+    Expectation: Single list, single tuple and variadic dimensions produce the same shape.
+    """
     assert validator.check_reshape_shp(shape) == expected
 
 
 def test_reshape_shape_rejects_a_string():
-    """A single non-shape argument must not be interpreted as dimensions."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: A single non-shape argument must not be interpreted as dimensions.
+    Expectation: A single non-shape argument must not be interpreted as dimensions.
+    """
     with pytest.raises(TypeError, match='shape'):
         validator.check_reshape_shp(('2,3',))
 
 
 @pytest.mark.parametrize('order,error', [(None, TypeError), ('A', ValueError)])
 def test_flatten_order_rejects_invalid_values(order, error):
-    """Flatten supports only explicit C/F ordering strings."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Flatten supports only explicit C/F ordering strings.
+    Expectation: Flatten supports only explicit C/F ordering strings.
+    """
     with pytest.raises(error, match='order'):
         validator.check_flatten_order(order)
 
 
 @pytest.mark.parametrize('axes,expected', [(-1, 2), ([-1, 0], (2, 0)), ((0, 1), (0, 1))])
 def test_swapaxes_validation_normalizes_axes(axes, expected):
-    """Swapaxes accepts integer and sequence forms with negative axes."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Swapaxes accepts integer and sequence forms with negative axes.
+    Expectation: Swapaxes accepts integer and sequence forms with negative axes.
+    """
     assert validator.check_swapaxes_axis(axes, 3) == expected
 
 
 @pytest.mark.parametrize('axes,error', [('bad', TypeError), ([0, 'bad'], TypeError), ([0, 3], ValueError)])
 def test_swapaxes_validation_rejects_invalid_axes(axes, error):
-    """Invalid members and out-of-range axes cannot pass swapaxes validation."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Invalid members and out-of-range axes cannot pass swapaxes validation.
+    Expectation: Invalid members and out-of-range axes cannot pass swapaxes validation.
+    """
     with pytest.raises(error):
         validator.check_swapaxes_axis(axes, 3)
 
@@ -158,13 +222,21 @@ def test_swapaxes_validation_rejects_invalid_axes(axes, error):
 @pytest.mark.parametrize('path,error', [(1, TypeError), ('folder/', ValueError), ('folder\\', ValueError),
                                       ('bad name.ckpt', ValueError)])
 def test_file_name_validation_rejects_directories_and_illegal_characters(path, error):
-    """Checkpoint filenames must identify files and contain legal characters."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Checkpoint filenames must identify files and contain legal characters.
+    Expectation: Checkpoint filenames must identify files and contain legal characters.
+    """
     with pytest.raises(error):
         validator.check_file_name_by_regular(path, prim_name='Save')
 
 
 def test_name_and_padding_validation():
-    """Invalid names and inconsistent padding must be rejected."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Invalid names and inconsistent padding must be rejected.
+    Expectation: Invalid names and inconsistent padding must be rejected.
+    """
     with pytest.raises(ValueError, match='illegal'):
         validator.check_str_and_none_by_regular('bad/name', prim_name='TestOp')
     assert validator.check_pad_value_by_mode('pad', 2, 'Conv') == 2
@@ -186,7 +258,11 @@ def test_name_and_padding_validation():
     ((3,), (2,), (2, 2), (2, 3, 3), ValueError, "shape"),
 ])
 def test_csr_shape_validation_rejects_inconsistent_metadata(indptr, indices, values, shape, error, reason):
-    """Sparse row pointers, ranks and trailing dense dimensions must agree."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Sparse row pointers, ranks and trailing dense dimensions must agree.
+    Expectation: Sparse row pointers, ranks and trailing dense dimensions must agree.
+    """
     with pytest.raises(error, match=reason):
         validator.check_csr_tensor_shape(indptr, indices, values, shape)
 
@@ -195,7 +271,11 @@ def test_csr_shape_validation_rejects_inconsistent_metadata(indptr, indices, val
                                                        ((0,), (0,), (0,), (0, 0)),
                                                        ((3,), (2,), (2, 3), (2, 3, 3))])
 def test_csr_shape_validation_accepts_empty_and_dense_values(indptr, indices, values, shape):
-    """Empty CSR tensors and valid dense value dimensions must remain supported."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Empty CSR tensors and valid dense value dimensions must remain supported.
+    Expectation: Empty CSR tensors and valid dense value dimensions must remain supported.
+    """
     assert validator.check_csr_tensor_shape(indptr, indices, values, shape) is None
 
 
@@ -210,36 +290,56 @@ def test_csr_shape_validation_accepts_empty_and_dense_values(indptr, indices, va
     ((2, 3), (2,), (2, 3), ValueError, 'must be 2'),
 ])
 def test_coo_shape_validation_rejects_inconsistent_metadata(indices, values, shape, error, reason):
-    """COO coordinates must have one row per value and two columns."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: COO coordinates must have one row per value and two columns.
+    Expectation: COO coordinates must have one row per value and two columns.
+    """
     with pytest.raises(error, match=reason):
         validator.check_coo_tensor_shape(indices, values, shape)
 
 
 @pytest.mark.parametrize('dtype', [ms.int16, ms.int32, ms.int64])
 def test_sparse_index_dtype_accepts_supported_integers(dtype):
-    """All three supported signed index widths must remain accepted."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: All three supported signed index widths must remain accepted.
+    Expectation: All three supported signed index widths must remain accepted.
+    """
     assert validator.check_csr_tensor_dtype(dtype, dtype) is None
     assert validator.check_coo_tensor_dtype(dtype) is None
 
 
 @pytest.mark.parametrize('indptr,indices', [(ms.float32, ms.int32), (ms.int32, ms.float32)])
 def test_csr_index_dtype_rejects_floats(indptr, indices):
-    """Both row pointers and column indices need integer storage."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Both row pointers and column indices need integer storage.
+    Expectation: Both row pointers and column indices need integer storage.
+    """
     with pytest.raises(TypeError):
         validator.check_csr_tensor_dtype(indptr, indices)
 
 
 def test_coo_index_dtype_rejects_float():
-    """COO coordinates cannot use floating storage."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: COO coordinates cannot use floating storage.
+    Expectation: COO coordinates cannot use floating storage.
+    """
     with pytest.raises(TypeError, match='indices'):
         validator.check_coo_tensor_dtype(ms.float32)
 
 
 @pytest.mark.parametrize('bad_argument', ['indices', 'values', 'shape', 'indptr'])
 def test_sparse_inputs_require_tensor_indices_values_and_tuple_shape(bad_argument):
-    """Each sparse input is independently checked for the required type."""
-    args = dict(indptr=ms.Tensor([0, 1], ms.int32), indices=ms.Tensor([0], ms.int32),
-                values=ms.Tensor([1.0], ms.float32), shape=(1, 1))
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Each sparse input is independently checked for the required type.
+    Expectation: Each sparse input is independently checked for the required type.
+    """
+    args = {'indptr': ms.Tensor([0, 1], ms.int32), 'indices': ms.Tensor([0], ms.int32),
+                'values': ms.Tensor([1.0], ms.float32), 'shape': (1, 1)}
     args[bad_argument] = [1]
     with pytest.raises(TypeError, match=bad_argument):
         validator.check_csr_tensor_input(**args)
@@ -247,31 +347,51 @@ def test_sparse_inputs_require_tensor_indices_values_and_tuple_shape(bad_argumen
 
 @pytest.mark.parametrize('sequence', [(1,), (1, True), [1, 2.0], '12'])
 def test_expand_sequence_rejects_wrong_length_and_non_int_members(sequence):
-    """Sequence expansion must reject bools, floats and incorrect dimensions."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Sequence expansion must reject bools, floats and incorrect dimensions.
+    Expectation: Sequence expansion must reject bools, floats and incorrect dimensions.
+    """
     with pytest.raises(TypeError):
         validator.twice_sequence(sequence)
 
 
 @pytest.mark.parametrize('data', [[1, (2, 3)], {'x': [1, 2], 'y': 3}, None])
 def test_input_data_validation_recurses_through_containers(data):
-    """Nested input data may combine accepted values and optional None."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Nested input data may combine accepted values and optional None.
+    Expectation: Nested input data may combine accepted values and optional None.
+    """
     assert validator.check_input_data(data, data_class=(int, None)) is None
 
 
 def test_input_data_validation_rejects_invalid_nested_value():
-    """A nested invalid value must not be hidden by an outer dict/list."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: A nested invalid value must not be hidden by an outer dict/list.
+    Expectation: A nested invalid value must not be hidden by an outer dict/list.
+    """
     with pytest.raises(TypeError, match='input data'):
         validator.check_input_data({'x': [1, 'bad']}, data_class=int)
 
 
 def test_input_data_validation_rejects_empty_array():
-    """An array with a supported type must still contain data."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: An array with a supported type must still contain data.
+    Expectation: An array with a supported type must still contain data.
+    """
     with pytest.raises(ValueError, match='empty'):
         validator.check_input_data(np.array([]), data_class=np.ndarray)
 
 
 def test_model_input_and_output_validation():
-    """Missing required values and invalid dataset types must be rejected."""
+    """
+    Feature: Parameter, shape and sparse-input validation
+    Description: Missing required values and invalid dataset types must be rejected.
+    Expectation: Missing required values and invalid dataset types must be rejected.
+    """
     assert validator.check_valid_input('x', 0, 'TestOp') == 0
     with pytest.raises(ValueError, match='None'):
         validator.check_valid_input('x', None, 'TestOp')

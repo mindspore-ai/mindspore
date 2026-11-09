@@ -38,8 +38,8 @@ def csr(index_dtype=ms.int32, value_dtype=ms.float32, second=False):
                         ms.Tensor([1, 2, 3], value_dtype), (2, 2))
 
 
-@pytest.fixture
-def akg_cpu_backend():
+@pytest.fixture(name='akg_cpu_backend')
+def fixture_akg_cpu_backend():
     """Probe the required compiled AKG capability; unrelated runtime errors still fail."""
     try:
         sparse.csr_mv(csr(), ms.Tensor([[2.], [4.]], ms.float32)).asnumpy()
@@ -49,8 +49,8 @@ def akg_cpu_backend():
         raise
 
 
-@pytest.fixture
-def sparse_gpu_backend():
+@pytest.fixture(name='sparse_gpu_backend')
+def fixture_sparse_gpu_backend():
     """SparseMatrixSparseMatMul is GPU-only, independent of available Ascend devices."""
     if not ms.hal.is_available('GPU'):
         pytest.skip('SparseMatrixSparseMatMul requires an available GPU backend')
@@ -71,7 +71,12 @@ def dense_values(value):
 
 @pytest.mark.parametrize('index_dtype', [ms.int32, ms.int64])
 def test_csr_dense_and_coo_conversions_preserve_coordinates(index_dtype):
-    """Both supported sparse index widths must retain values and coordinate ordering."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Both supported sparse index widths must retain values and coordinate ordering.
+    Expectation: int32 and int64 storage convert to the same dense matrix and ordered COO coordinates, values and
+        shape.
+    """
     value = csr(index_dtype)
     np.testing.assert_array_equal(sparse.csr_to_dense(value).asnumpy(), [[1, 2], [0, 3]])
     coo = sparse.csr_to_coo(value)
@@ -82,7 +87,11 @@ def test_csr_dense_and_coo_conversions_preserve_coordinates(index_dtype):
 
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 def test_dense_to_sparse_preserves_only_nonzero_entries(kind):
-    """Sparse conversion must retain only stored nonzero values and the dense shape."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Sparse conversion must retain only stored nonzero values and the dense shape.
+    Expectation: CSR/COO outputs retain shape (2, 2), three nonzero values and their exact storage coordinates.
+    """
     result = getattr(sparse, f'dense_to_sparse_{kind}')(ms.Tensor([[1., 2.], [0., 3.]], ms.float32))
     assert result.shape == (2, 2)
     np.testing.assert_array_equal(result.values.asnumpy(), [1, 2, 3])
@@ -95,21 +104,33 @@ def test_dense_to_sparse_preserves_only_nonzero_entries(kind):
 
 @pytest.mark.parametrize('name', ['csr_to_dense', 'csr_to_coo', 'dense_to_sparse_csr', 'dense_to_sparse_coo'])
 def test_sparse_storage_conversions_reject_wrong_container(name):
-    """Conversion APIs must identify invalid storage objects before kernel dispatch."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Conversion APIs must identify invalid storage objects before kernel dispatch.
+    Expectation: Every conversion rejects a Python list with a TypeError identifying its storage requirement.
+    """
     with pytest.raises(TypeError, match='must be'):
         getattr(sparse, name)([1, 2])
 
 
 @pytest.mark.parametrize('name', ['dense_to_sparse_csr', 'dense_to_sparse_coo'])
 def test_dense_to_sparse_rejects_rank_above_two(name):
-    """The two-dimensional sparse format cannot silently flatten higher ranks."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: The two-dimensional sparse format cannot silently flatten higher ranks.
+    Expectation: Rank-three dense inputs raise ValueError identifying the two-dimensional requirement.
+    """
     with pytest.raises(ValueError, match='2-D'):
         getattr(sparse, name)(ms.Tensor(np.ones((1, 2, 2), np.float32)))
 
 
 @pytest.mark.parametrize('name', ['csr_to_dense', 'csr_to_coo'])
 def test_csr_conversions_reject_dense_value_dimensions(name):
-    """A CSR tensor with trailing dense dimensions is not a plain sparse matrix."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: A CSR tensor with trailing dense dimensions is not a plain sparse matrix.
+    Expectation: CSR storage with trailing dense dimensions raises ValueError rather than converting as a matrix.
+    """
     value = ms.CSRTensor(ms.Tensor([0, 1, 2], ms.int32), ms.Tensor([0, 1], ms.int32),
                          ms.Tensor([[1., 2.], [3., 4.]], ms.float32), (2, 2, 2))
     with pytest.raises(ValueError, match='2-D'):
@@ -119,7 +140,11 @@ def test_csr_conversions_reject_dense_value_dimensions(name):
 @pytest.mark.parametrize('operation,expected', [('csr_mul', [2, 4, 6]), ('csr_div', [0.5, 1, 1.5])])
 @pytest.mark.parametrize('as_tensor', [False, True])
 def test_csr_scalar_arithmetic_preserves_stored_value_order(operation, expected, as_tensor):
-    """Scalar arithmetic returns each stored value without changing sparse coordinates."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Scalar arithmetic returns each stored value without changing sparse coordinates.
+    Expectation: Scalar or singleton-Tensor multiplication/division returns values [2, 4, 6] or [0.5, 1, 1.5].
+    """
     operand = ms.Tensor([[2.]], ms.float32) if as_tensor else 2
     result = getattr(sparse, operation)(csr(), operand)
     np.testing.assert_array_equal(result.asnumpy(), expected)
@@ -128,14 +153,23 @@ def test_csr_scalar_arithmetic_preserves_stored_value_order(operation, expected,
 @pytest.mark.parametrize('operation,expected', [('csr_mul', [[2, 8], [0, 12]]),
                                                ('csr_div', [[0.5, 0.5], [0, 0.75]])])
 def test_csr_dense_arithmetic_uses_values_at_sparse_positions(operation, expected, akg_cpu_backend):
-    """Dense broadcasting must use the correct column for every stored element."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Dense broadcasting must use the correct column for every stored element.
+    Expectation: Dense column broadcasting produces the independently reconstructed expected sparse matrix.
+    """
     result = getattr(sparse, operation)(csr(), ms.Tensor([[2., 4.]], ms.float32))
     np.testing.assert_array_equal(dense_values(result), expected)
 
 
 @pytest.mark.parametrize('trans_a,trans_b', [(False, False), (True, False), (False, True)])
 def test_sparse_matrix_product_transpose_flags(trans_a, trans_b, sparse_gpu_backend):
-    """Sparse matrix multiplication must apply the requested transpose to each operand."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Sparse matrix multiplication must apply the requested transpose to each operand.
+    Expectation: Sparse multiplication equals NumPy matrix multiplication for each supported transpose-flag
+        combination.
+    """
     left, right = np.array([[1, 2], [0, 3]], np.float32), np.array([[0, 4], [5, 6]], np.float32)
     result = sparse.csr_mm(csr(), csr(second=True), trans_a=trans_a, trans_b=trans_b)
     expected = (left.T if trans_a else left) @ (right.T if trans_b else right)
@@ -143,21 +177,33 @@ def test_sparse_matrix_product_transpose_flags(trans_a, trans_b, sparse_gpu_back
 
 
 def test_sparse_matrix_vector_product(akg_cpu_backend):
-    """Every row uses the matching dense vector coordinates."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Every row uses the matching dense vector coordinates.
+    Expectation: The two sparse rows produce column-vector results [[10], [12]].
+    """
     result = sparse.csr_mv(csr(), ms.Tensor([[2.], [4.]], ms.float32))
     np.testing.assert_array_equal(result.asnumpy(), [[10], [12]])
 
 
 def test_sparse_scaled_addition():
-    """The two coefficients must apply to the correct sparse operand."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: The two coefficients must apply to the correct sparse operand.
+    Expectation: Applying coefficients 2 and -1 to their respective operands yields [[2, 0], [-5, 0]].
+    """
     result = sparse.csr_add(csr(), csr(second=True), ms.Tensor(2., ms.float32), ms.Tensor(-1., ms.float32))
     np.testing.assert_array_equal(dense_values(result), [[2, 0], [-5, 0]])
 
 
 @pytest.mark.parametrize('case', ['a', 'b', 'alpha', 'beta'])
 def test_sparse_addition_requires_sparse_operands_and_tensor_coefficients(case):
-    """Each sparse-add input's storage contract must be checked independently."""
-    args = dict(a=csr(), b=csr(), alpha=ms.Tensor(1., ms.float32), beta=ms.Tensor(1., ms.float32))
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Each sparse-add input's storage contract must be checked independently.
+    Expectation: Replacing any sparse operand or Tensor coefficient with an integer raises TypeError.
+    """
+    args = {'a': csr(), 'b': csr(), 'alpha': ms.Tensor(1., ms.float32), 'beta': ms.Tensor(1., ms.float32)}
     args[case] = 1
     with pytest.raises(TypeError, match='must be'):
         sparse.csr_add(**args)
@@ -165,7 +211,11 @@ def test_sparse_addition_requires_sparse_operands_and_tensor_coefficients(case):
 
 @pytest.mark.parametrize('invalid_left', [False, True])
 def test_sparse_matmul_rejects_dense_operands(invalid_left):
-    """The sparse-only product must not accept a dense operand by accident."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: The sparse-only product must not accept a dense operand by accident.
+    Expectation: A dense operand on either side raises TypeError requiring a CSRTensor.
+    """
     args = [csr(), csr()]
     args[0 if invalid_left else 1] = ms.Tensor([[1., 0.], [0., 1.]])
     with pytest.raises(TypeError, match='must be type of CSRTensor'):
@@ -173,7 +223,11 @@ def test_sparse_matmul_rejects_dense_operands(invalid_left):
 
 
 def test_sparse_softmax_normalizes_each_stored_row():
-    """Only stored logits participate in each sparse row's softmax denominator."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Only stored logits participate in each sparse row's softmax denominator.
+    Expectation: Only stored logits enter the row normalization and the original CSR row pointers remain unchanged.
+    """
     result = sparse.csr_softmax(csr(), ms.float32)
     probabilities = np.exp([1., 2.]) / np.exp([1., 2.]).sum()
     np.testing.assert_allclose(result.values.asnumpy(), [probabilities[0], probabilities[1], 1.], rtol=1e-6)
@@ -181,6 +235,10 @@ def test_sparse_softmax_normalizes_each_stored_row():
 
 
 def test_sparse_softmax_rejects_dense_logits():
-    """Dense logits cannot be interpreted as a CSR storage object."""
+    """
+    Feature: Sparse storage conversions and matrix arithmetic
+    Description: Dense logits cannot be interpreted as a CSR storage object.
+    Expectation: Dense logits raise TypeError requiring CSR storage.
+    """
     with pytest.raises(TypeError, match='CSRTensor'):
         sparse.csr_softmax(ms.Tensor([1., 2.]), ms.float32)

@@ -10,7 +10,7 @@ import random
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.dataset as dataset
+from mindspore import dataset
 from mindspore import log as ms_log
 from mindspore.common.generator import default_generator
 from mindspore._c_expression import FormatEnum, ReductionEnum
@@ -43,8 +43,10 @@ def eager_preprocess(prim, *arguments):
     return False, None
 
 
-@pytest.fixture(autouse=True)
-def isolated_cpu(monkeypatch):
+@pytest.fixture(name='isolated_cpu', autouse=True)
+def fixture_isolated_cpu(monkeypatch):
+    # Snapshot private RNG and logging state to fully isolate native test execution.
+    # pylint: disable=protected-access
     context = {key: ms.get_context(key) for key in ('mode', 'device_target', 'pynative_synchronize')}
     python_state, numpy_state = random.getstate(), np.random.get_state()
     dataset_seed, generator_state, global_seed = dataset.config.get_seed(), ms.get_rng_state(), ms.get_seed()
@@ -104,6 +106,12 @@ def numpy_bn_gradient(x, dy, gamma, mean, variance, axis, training, epsilon):
     pytest.param(FormatEnum.NHWC, marks=pytest.mark.xfail(strict=True, raises=RuntimeError,
         reason='CPU oneDNN BatchNormGrad NHWC fails its channel-buffer memcpy'))])
 def test_unmapped_batchnorm_gradient_native_cpu(training, layout):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check unmapped batchnorm gradient native CPU.
+    Expectation: All three gradients retain None axes and match NumPy; strict NHWC failure remains limited to the
+        known native memcpy defect.
+    """
     x, dy, gamma, mean, variance, axis, _ = batchnorm_data(training, layout)
     args = [tensor(dy), tensor(x), tensor(gamma), tensor(mean), tensor(variance), tensor([0.]),
             training, .25, int(layout)]
@@ -133,6 +141,12 @@ def finite_gradient(function, values, step=1e-4):
 @pytest.mark.parametrize('training', [False, True])
 @pytest.mark.parametrize('layout', [FormatEnum.NCHW, FormatEnum.NHWC])
 def test_unmapped_batchnorm_second_gradient_independent_finite_difference(training, layout):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check unmapped batchnorm second gradient independent finite difference.
+    Expectation: Three unmapped second derivatives match independent finite differences in both training modes and
+        layouts.
+    """
     x, dy, gamma, mean, variance, axis, reduce_axes = batchnorm_data(training, layout)
     u = np.arange(x.size, dtype=np.float64).reshape(x.shape)/7-.4
     v, w = np.array([.3, -.5, .7]), np.array([-.2, .8, .4])
@@ -154,6 +168,8 @@ def test_unmapped_batchnorm_second_gradient_independent_finite_difference(traini
 
 
 def bilinear_deformation(x, offsets):
+    # The independent oracle explicitly enumerates batch, pixels and four interpolation neighbors.
+    # pylint: disable=too-many-nested-blocks
     """Independent 1x1 sampling with x/y offsets, mask, and zero outside the image."""
     batch, channels, height, width = x.shape
     oh, ow = offsets.shape[-2:]
@@ -181,12 +197,19 @@ def deformable_inputs():
 
 
 def deformation_primitive(gradient=False):
-    kwargs = dict(strides=(1, 1, 1, 1), pads=(0, 0, 0, 0), dilations=(1, 1, 1, 1),
-                  data_format='NCHW', deformable_groups=1, modulated=True)
-    return G.DeformableOffsetsGrad(kernel_size=(1, 1), **kwargs) if gradient else NN.DeformableOffsets(ksize=(1, 1), **kwargs)
+    kwargs = {'strides': (1, 1, 1, 1), 'pads': (0, 0, 0, 0), 'dilations': (1, 1, 1, 1),
+              'data_format': 'NCHW', 'deformable_groups': 1, 'modulated': True}
+    return G.DeformableOffsetsGrad(kernel_size=(
+        1, 1), **kwargs) if gradient else NN.DeformableOffsets(ksize=(1, 1), **kwargs)
 
 
 def test_unmapped_deformable_offsets_real_bilinear_cpu(monkeypatch):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check unmapped deformable offsets real bilinear CPU.
+    Expectation: One unchanged native call preserves operand identity/attributes and matches independent masked
+        bilinear sampling.
+    """
     x, offsets = deformable_inputs()
     prim = deformation_primitive()
     operands = [tensor(x), tensor(offsets)]
@@ -203,10 +226,18 @@ def test_unmapped_deformable_offsets_real_bilinear_cpu(monkeypatch):
 
 
 def test_unmapped_deformable_offsets_gradient_finite_difference_cpu(monkeypatch):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check unmapped deformable offsets gradient finite difference CPU.
+    Expectation: Input and offset derivatives retain None axes and match finite differences with nonuniform
+        sensitivity.
+    """
     x, offsets = deformable_inputs()
     sensitivity = np.arange(18, dtype=np.float64).reshape(1, 2, 3, 3)/7-1.1
-    objective_x = lambda current: np.sum(bilinear_deformation(current, offsets)*sensitivity)
-    objective_offsets = lambda current: np.sum(bilinear_deformation(x, current)*sensitivity)
+    def objective_x(current):
+        return np.sum(bilinear_deformation(current, offsets)*sensitivity)
+    def objective_offsets(current):
+        return np.sum(bilinear_deformation(x, current)*sensitivity)
     expected = (finite_gradient(objective_x, x), finite_gradient(objective_offsets, offsets))
     prim = deformation_primitive(gradient=True)
     operands = [tensor(sensitivity), tensor(x), tensor(offsets)]
@@ -233,6 +264,12 @@ def test_unmapped_deformable_offsets_gradient_finite_difference_cpu(monkeypatch)
         reason='Unmapped SmoothL1LossGrad sends scalar dout as prediction')),
 ])
 def test_unmapped_smooth_l1_gradient_nonuniform_sensitivity(reduction):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check unmapped smooth l1 gradient nonuniform sensitivity.
+    Expectation: The piecewise gradient should respect sensitivity and reduction; strict xfails retain the known
+        unmapped argument-order defects.
+    """
     prediction, target = np.array([-2., .2, 3.]), np.array([0., 0., 1.])
     sensitivity = np.array([2., 3., 4.]) if reduction == ReductionEnum.NONE else np.array(2.)
     delta = prediction-target
@@ -247,6 +284,11 @@ def test_unmapped_smooth_l1_gradient_nonuniform_sensitivity(reduction):
 
 @pytest.mark.parametrize('reduction', [ReductionEnum.NONE, ReductionEnum.SUM, ReductionEnum.MEAN])
 def test_smooth_l1_direct_native_cpu_confirms_oracle_and_argument_order(reduction):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check smooth l1 direct native CPU confirms oracle and argument order.
+    Expectation: Direct native SmoothL1 gradients match the same piecewise oracle for none, sum and mean reductions.
+    """
     prediction, target = np.array([-2., .2, 3.]), np.array([0., 0., 1.])
     sensitivity = np.array([2., 3., 4.]) if reduction == ReductionEnum.NONE else np.array(2.)
     expected = np.where(np.abs(prediction-target) < 1, prediction-target, np.sign(prediction-target))*sensitivity
@@ -258,17 +300,29 @@ def test_smooth_l1_direct_native_cpu_confirms_oracle_and_argument_order(reductio
 
 @pytest.mark.parametrize('gradient', [False, True])
 def test_original_lrn_primitive_rejects_rank_three_samples(gradient):
-    """The residual rank<=4 mapped path requires samples outside LRN's 4D native contract."""
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: The residual rank<=4 mapped path requires samples outside LRN's 4D native contract.
+    Expectation: Forward and gradient primitives reject rank-three samples with the native rank-four diagnostic.
+    """
     x = tensor(np.arange(12).reshape(3, 2, 2))
     prim = G.LRNGrad() if gradient else NN.LRN()
     with pytest.raises(ValueError, match='rank.*equal to 4.*got 3'):
-        prim(x, x, x) if gradient else prim(x)
+        if gradient:
+            prim(x, x, x)
+        else:
+            prim(x)
 
 
 @pytest.mark.xfail(strict=True, raises=KeyError,
                    reason='Real graph _VmapGeneralRule construction loses __input_0__ binding')
 def test_batchnorm_nhwc_real_graph_general_rule(monkeypatch):
-    """Attempt actual graph lowering of the native metagraph, without a replacement object."""
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Attempt actual graph lowering of the native metagraph, without a replacement object.
+    Expectation: Graph gradients should match per-sample NumPy values; strict xfail verifies the lost __input_0__
+        binding.
+    """
     monkeypatch.setattr(D, 'vmap_general_preprocess', GRAPH_PREPROCESS)
     first = batchnorm_data(False, FormatEnum.NHWC)
     x, dy, gamma, mean, variance, axis, _ = first
@@ -286,7 +340,8 @@ def test_batchnorm_nhwc_real_graph_general_rule(monkeypatch):
                         (reserve, 0), (False, None), (.25, None), (nhwc, None))
     ms.set_context(mode=ms.GRAPH_MODE)
     try:
-        result = GeneralNHWC()(tensor(dy), tensor(x), tensor(gamma), tensor(mean), tensor(variance), tensor(np.zeros((2, 1))))
+        result = GeneralNHWC()(tensor(dy), tensor(x), tensor(gamma), tensor(mean),
+                               tensor(variance), tensor(np.zeros((2, 1))))
     except KeyError as exc:
         assert exc.args == ('__input_0__',)
         raise
@@ -298,7 +353,12 @@ def test_batchnorm_nhwc_real_graph_general_rule(monkeypatch):
 
 
 def test_batchnorm_nhwc_general_executor_complete_protocol(monkeypatch):
-    """Protocol only: construct the real metagraph; replace its unavailable eager execution boundary."""
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Protocol only: construct the real metagraph; replace its unavailable eager execution boundary.
+    Expectation: The real metagraph is constructed once with preserved attributes; its executor receives six
+        original packed tensors once.
+    """
     x, dy, gamma, mean, variance, _, _ = batchnorm_data(False, FormatEnum.NHWC)
     arrays = [np.stack((dy, dy*1.3)), np.stack((x, x+.7)), np.stack((gamma, gamma*.8)),
               np.stack((mean, mean-.2)), np.stack((variance, variance+.4)), np.zeros((2, 1))]
@@ -306,7 +366,8 @@ def test_batchnorm_nhwc_general_executor_complete_protocol(monkeypatch):
     packed = tuple((operand, 0) for operand in operands)
     prim = G.BatchNormGrad(is_training=False, epsilon=.25, data_format='NHWC')
     attrs = prim.attrs.copy()
-    native_factory = D._VmapGeneralRule
+    # Inspect the actual native metagraph constructor used by this fallback.
+    native_factory = D._VmapGeneralRule  # pylint: disable=protected-access
     constructions, executions = [], []
     outputs = tuple((object(), 0) for _ in range(3))
     def constructor(actual_prim, axis_size):
@@ -352,6 +413,12 @@ def ascend_context(isolated_cpu):
     True,
 ])
 def test_unmapped_batchnorm_gradient_native_ascend(training):
+    """
+    Feature: Native normalization and deformation vmap edges
+    Description: Check unmapped batchnorm gradient native ascend.
+    Expectation: Allocated Ascend execution retains None axes and matches NumPy; inference keeps its strict known
+        channel-statistics failure.
+    """
     x, dy, gamma, mean, variance, axis, _ = batchnorm_data(training, FormatEnum.NHWC)
     args = [tensor(dy), tensor(x), tensor(gamma), tensor(mean), tensor(variance), tensor([0.]),
             training, .25, int(FormatEnum.NHWC)]

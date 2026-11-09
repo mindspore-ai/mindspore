@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Attention projection, mask validation and convolution padding contracts."""
+# Unit coverage intentionally exercises internal Python inference and wrapper helpers.
+# pylint: disable=protected-access
 import numpy as np
 import pytest
 
@@ -20,8 +22,8 @@ import mindspore as ms
 from mindspore.ops.function import nn_func as nn
 
 
-@pytest.fixture(scope='module', autouse=True)
-def cpu_context():
+@pytest.fixture(scope='module', autouse=True, name='cpu_context')
+def fixture_cpu_context():
     """Use real CPU kernels and restore context after the module."""
     previous = {key: ms.get_context(key) for key in ('mode', 'device_target')}
     ms.set_context(mode=ms.PYNATIVE_MODE, device_target='CPU')
@@ -41,12 +43,24 @@ def attention_inputs(projection='qkv', unbatched=False):
     if unbatched:
         q, k, v = q[:, 0], k[:, 0], v[:, 0]
     weights = [np.eye(4, dtype=np.float32) * scale for scale in (1, 0.5, 2)]
-    params = dict(query=ms.Tensor(q.copy()), key=ms.Tensor(k.copy()), value=ms.Tensor(v.copy()),
-                  embed_dim_to_check=4, num_heads=2, in_proj_weight=ms.Tensor(np.concatenate(weights)),
-                  in_proj_bias=None, bias_k=None, bias_v=None, add_zero_attn=False, dropout_p=0.0,
-                  out_proj_weight=ms.Tensor(np.diag([1., -2., 0.5, 1.5]).astype(np.float32)),
-                  out_proj_bias=ms.Tensor([0.1, -0.2, 0.3, -0.4], ms.float32), training=False,
-                  k_is_v=projection in ('self', 'kv'), q_is_k=projection == 'self')
+    params = {
+        'query': ms.Tensor(q.copy()),
+        'key': ms.Tensor(k.copy()),
+        'value': ms.Tensor(v.copy()),
+        'embed_dim_to_check': 4,
+        'num_heads': 2,
+        'in_proj_weight': ms.Tensor(np.concatenate(weights)),
+        'in_proj_bias': None,
+        'bias_k': None,
+        'bias_v': None,
+        'add_zero_attn': False,
+        'dropout_p': 0.0,
+        'out_proj_weight': ms.Tensor(np.diag([1.0, -2.0, 0.5, 1.5]).astype(np.float32)),
+        'out_proj_bias': ms.Tensor([0.1, -0.2, 0.3, -0.4], ms.float32),
+        'training': False,
+        'k_is_v': projection in ('self', 'kv'),
+        'q_is_k': projection == 'self',
+    }
     if projection == 'separate':
         params.update(use_separate_proj_weight=True, q_proj_weight=ms.Tensor(weights[0]),
                       k_proj_weight=ms.Tensor(weights[1]), v_proj_weight=ms.Tensor(weights[2]))
@@ -57,7 +71,13 @@ def attention_inputs(projection='qkv', unbatched=False):
 @pytest.mark.parametrize('unbatched', [False, True])
 @pytest.mark.parametrize('mask_kind', ['none', 'bool', 'float', 'padding', 'combined'])
 def test_multihead_attention_matches_independent_scaled_dot_product(projection, unbatched, mask_kind):
-    """All projection routes and mask combinations must retain head/sample alignment."""
+    """
+    Feature: Multihead attention matches independent scaled dot product.
+    Description: All projection routes and mask combinations must retain head/sample alignment.
+    Expectation: All projection routes and mask combinations must retain head/sample alignment.
+    """
+    # NumPy dynamically supplies these ndarray/array-function signatures.
+    # pylint: disable=unexpected-keyword-arg
     params, (query, key, value) = attention_inputs(projection, unbatched)
     batch = 1 if unbatched else 2
     params['average_attn_weights'] = mask_kind != 'float'
@@ -103,7 +123,11 @@ def test_multihead_attention_matches_independent_scaled_dot_product(projection, 
     ('bias_pair', 'bias_k and bias_v'), ('static_k_batch', 'static_k'), ('static_v_width', 'static_v'),
 ])
 def test_multihead_attention_rejects_inconsistent_configuration(case, reason):
-    """Each invalid configuration must fail at its corresponding attention contract."""
+    """
+    Feature: Multihead attention rejects inconsistent configuration.
+    Description: Each invalid configuration must fail at its corresponding attention contract.
+    Expectation: Each invalid configuration must fail at its corresponding attention contract.
+    """
     params, _ = attention_inputs('separate' if case.startswith('missing_') and case != 'missing_packed' else 'qkv')
     if case == 'embed':
         params['embed_dim_to_check'] = 5
@@ -137,13 +161,21 @@ def test_multihead_attention_rejects_inconsistent_configuration(case, reason):
 
 @pytest.mark.parametrize('ranks,expected', [((3, 3, 3), True), ((2, 2, 2), False)])
 def test_attention_rank_validation_accepts_consistent_inputs(ranks, expected):
-    """Batched and unbatched attention must select distinct layouts."""
+    """
+    Feature: Attention rank validation accepts consistent inputs.
+    Description: Batched and unbatched attention must select distinct layouts.
+    Expectation: Batched and unbatched attention must select distinct layouts.
+    """
     assert nn._check_qkv_shape(*ranks) is expected
 
 
 @pytest.mark.parametrize('ranks', [(3, 2, 3), (2, 2, 3), (1, 1, 1)])
 def test_attention_rank_validation_rejects_inconsistent_inputs(ranks):
-    """Query rank determines the required key/value ranks."""
+    """
+    Feature: Attention rank validation rejects inconsistent inputs.
+    Description: Query rank determines the required key/value ranks.
+    Expectation: Query rank determines the required key/value ranks.
+    """
     with pytest.raises(ValueError):
         nn._check_qkv_shape(*ranks)
 
@@ -152,33 +184,53 @@ def test_attention_rank_validation_rejects_inconsistent_inputs(ranks):
                                                 ([1, 2], 2, (1, 1, 2, 2)),
                                                 ((1, 2, 3), 3, (1, 1, 2, 2, 3, 3))])
 def test_convolution_padding_duplicates_each_spatial_dimension(padding, dim, expected):
-    """Convolution padding retains the spatial-axis ordering."""
+    """
+    Feature: Convolution padding duplicates each spatial dimension.
+    Description: Convolution padding retains the spatial-axis ordering.
+    Expectation: Convolution padding retains the spatial-axis ordering.
+    """
     assert nn._manipulate_padding(padding, dim) == expected
 
 
 @pytest.mark.parametrize('padding,dim,error', [('bad', 2, TypeError), ((1,), 2, ValueError)])
 def test_convolution_padding_rejects_wrong_container_and_length(padding, dim, error):
-    """Invalid padding must not be silently extended to missing spatial axes."""
+    """
+    Feature: Convolution padding rejects wrong container and length.
+    Description: Invalid padding must not be silently extended to missing spatial axes.
+    Expectation: Invalid padding must not be silently extended to missing spatial axes.
+    """
     with pytest.raises(error):
         nn._manipulate_padding(padding, dim)
 
 
 @pytest.mark.parametrize('value,expected', [(2, (1, 2)), ((3,), (1, 3)), ([4], (1, 4))])
 def test_conv1d_parameter_normalization(value, expected):
-    """A 1D convolution parameter is promoted to the expected 2D shape."""
+    """
+    Feature: Conv1d parameter normalization.
+    Description: A 1D convolution parameter is promoted to the expected 2D shape.
+    Expectation: A 1D convolution parameter is promoted to the expected 2D shape.
+    """
     assert nn._dim_manipulation(value, 'stride') == expected
 
 
 @pytest.mark.parametrize('value', [0, (0,), (1, 2), 'bad'])
 def test_conv1d_parameter_normalization_rejects_invalid_values(value):
-    """Zero, malformed sequences and strings are rejected independently."""
+    """
+    Feature: Conv1d parameter normalization rejects invalid values.
+    Description: Zero, malformed sequences and strings are rejected independently.
+    Expectation: Zero, malformed sequences and strings are rejected independently.
+    """
     with pytest.raises(ValueError, match='stride'):
         nn._dim_manipulation(value, 'stride')
 
 
 @pytest.mark.parametrize('value,error', [(2, ValueError), ((1, 2), ValueError), ((1,), ValueError), ('1', TypeError)])
 def test_same_padding_rejects_strided_convolution(value, error):
-    """Same padding requires a unit stride along every spatial dimension."""
+    """
+    Feature: Same padding rejects strided convolution.
+    Description: Same padding requires a unit stride along every spatial dimension.
+    Expectation: Same padding requires a unit stride along every spatial dimension.
+    """
     with pytest.raises(error):
         nn._check_stride_when_same_mode(value)
 
@@ -187,13 +239,21 @@ def test_same_padding_rejects_strided_convolution(value, error):
                                                   ((2, 3, 4), (6, 7), (1, 2, 6, 7)),
                                                   ((1, 2, 3, 4), (1, 2, 6, 7), (1, 2, 6, 7))])
 def test_max_unpool_output_shape_normalization(shape, padding, expected):
-    """Unpool output sizes preserve batch/channel dimensions."""
+    """
+    Feature: Max unpool output shape normalization.
+    Description: Unpool output sizes preserve batch/channel dimensions.
+    Expectation: Unpool output sizes preserve batch/channel dimensions.
+    """
     assert nn._normalize_max_unpool2d_output_size(shape, padding) == expected
 
 
 @pytest.mark.parametrize('value', [[6, 7], (6,)])
 def test_max_unpool_output_shape_rejects_invalid_size(value):
-    """Unsupported output-size container and rank must be rejected."""
+    """
+    Feature: Max unpool output shape rejects invalid size.
+    Description: Unsupported output-size container and rank must be rejected.
+    Expectation: Unsupported output-size container and rank must be rejected.
+    """
     with pytest.raises(ValueError):
         nn._normalize_max_unpool2d_output_size((1, 2, 3, 4), value)
 
@@ -202,7 +262,11 @@ def test_max_unpool_output_shape_rejects_invalid_size(value):
                                                     ((1, 1), (2, 4), (True, (0, 1), (1, 2))),
                                                     ((2, 1), (2, 3), (False, (1, 1), (1, 1)))])
 def test_same_padding_computation_handles_even_kernels(dilation, kernel, expected):
-    """Even kernels must place the extra padding element on the correct side."""
+    """
+    Feature: Same padding computation handles even kernels.
+    Description: Even kernels must place the extra padding element on the correct side.
+    Expectation: Even kernels must place the extra padding element on the correct side.
+    """
     weight = ms.Tensor(np.ones((1, 1) + kernel, np.float32))
     assert nn._get_pad_info(dilation, weight) == expected
 
@@ -210,20 +274,32 @@ def test_same_padding_computation_handles_even_kernels(dilation, kernel, expecte
 @pytest.mark.parametrize('left,right,expected', [((0, 1), (1, 2), ((0, 1, 0, 1), (0, 1))),
                                                ((2, 1), (1, 1), ((0, 0, -1, 0), (1, 1)))])
 def test_asymmetric_padding_separates_crop_and_symmetric_components(left, right, expected):
-    """Negative asymmetric deltas must preserve the smaller symmetric padding."""
+    """
+    Feature: Asymmetric padding separates crop and symmetric components.
+    Description: Negative asymmetric deltas must preserve the smaller symmetric padding.
+    Expectation: Negative asymmetric deltas must preserve the smaller symmetric padding.
+    """
     assert nn._get_pad_nd_info(left, right) == expected
 
 
 @pytest.mark.parametrize('alpha', [0.2, 1, 2])
 def test_leaky_relu_handles_slopes_above_and_below_one(alpha):
-    """A slope above one must still apply only to the negative half-line."""
+    """
+    Feature: Leaky relu handles slopes above and below one.
+    Description: A slope above one must still apply only to the negative half-line.
+    Expectation: A slope above one must still apply only to the negative half-line.
+    """
     data = np.array([-2., -0.5, 0., 1.5], np.float32)
     result = nn.leaky_relu(ms.Tensor(data), alpha)
     np.testing.assert_allclose(result.asnumpy(), np.where(data < 0, alpha * data, data), rtol=1e-6)
 
 
 def test_threshold_and_hardtanh_boundaries():
-    """Threshold equality and asymmetric clipping bounds must retain their exact semantics."""
+    """
+    Feature: Threshold and hardtanh boundaries.
+    Description: Threshold equality and asymmetric clipping bounds must retain their exact semantics.
+    Expectation: Threshold equality and asymmetric clipping bounds must retain their exact semantics.
+    """
     data = np.array([-2., -0.5, 0.5, 2.], np.float32)
     np.testing.assert_array_equal(nn.threshold(ms.Tensor(data), 0.5, -3).asnumpy(), [-3, -3, -3, 2])
     np.testing.assert_array_equal(nn.hardtanh(ms.Tensor(data), -0.5, 1.5).asnumpy(), [-0.5, -0.5, 0.5, 1.5])
@@ -233,7 +309,11 @@ def test_threshold_and_hardtanh_boundaries():
 @pytest.mark.parametrize('margin', [0, 0.5])
 @pytest.mark.parametrize('integer_inputs', [False, True])
 def test_cosine_embedding_loss_matches_geometric_definition(reduction, margin, integer_inputs):
-    """Positive and negative pair labels select different cosine-loss branches."""
+    """
+    Feature: Cosine embedding loss matches geometric definition.
+    Description: Positive and negative pair labels select different cosine-loss branches.
+    Expectation: Positive and negative pair labels select different cosine-loss branches.
+    """
     dtype = np.int32 if integer_inputs else np.float32
     left = np.array([[1, 0], [1, 0], [0, 1]], dtype)
     right = np.array([[0, 1], [1, 0], [1, 0]], dtype)
@@ -249,14 +329,22 @@ def test_cosine_embedding_loss_matches_geometric_definition(reduction, margin, i
 
 @pytest.mark.parametrize('margin,error', [(-1.5, ValueError), (1.5, ValueError), ('bad', TypeError)])
 def test_cosine_embedding_loss_rejects_invalid_margin(margin, error):
-    """Cosine margins must be numeric and remain within the cosine range."""
+    """
+    Feature: Cosine embedding loss rejects invalid margin.
+    Description: Cosine margins must be numeric and remain within the cosine range.
+    Expectation: Cosine margins must be numeric and remain within the cosine range.
+    """
     with pytest.raises(error, match='margin'):
         nn.cosine_embedding_loss(ms.Tensor([[1., 0.]]), ms.Tensor([[1., 0.]]), ms.Tensor([1]), margin)
 
 
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_hinge_embedding_loss_uses_label_sign(reduction):
-    """Only negative pairs are clipped against the margin."""
+    """
+    Feature: Hinge embedding loss uses label sign.
+    Description: Only negative pairs are clipped against the margin.
+    Expectation: Only negative pairs are clipped against the margin.
+    """
     result = nn.hinge_embedding_loss(ms.Tensor([-2., 0.25, 2.]), ms.Tensor([1, -1, -1], ms.float32),
                                      margin=1.0, reduction=reduction)
     expected = np.array([-2., 0.75, 0.], np.float32)
@@ -270,7 +358,11 @@ def test_hinge_embedding_loss_uses_label_sign(reduction):
 @pytest.mark.parametrize('full', [False, True])
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_gaussian_nll_loss_broadcasts_row_variance(full, reduction):
-    """One variance per row must broadcast across predictions, with the optional Gaussian constant."""
+    """
+    Feature: Gaussian nll loss broadcasts row variance.
+    Description: One variance per row must broadcast across predictions, with the optional Gaussian constant.
+    Expectation: One variance per row must broadcast across predictions, with the optional Gaussian constant.
+    """
     data = np.array([[1., 2.], [3., 4.]], np.float32)
     target = np.array([[0., 1.], [2., 2.]], np.float32)
     variance = np.array([1., 2.], np.float32)
@@ -290,8 +382,12 @@ def test_gaussian_nll_loss_broadcasts_row_variance(full, reduction):
                                                 ('var', [1], TypeError), ('full', 1, TypeError),
                                                 ('eps', 0.0, ValueError), ('reduction', 'bad', ValueError)])
 def test_gaussian_nll_loss_rejects_invalid_argument_contracts(argument, value, error):
-    """All public Gaussian-loss arguments are independently validated."""
-    params = dict(x=ms.Tensor([1.]), target=ms.Tensor([0.]), var=ms.Tensor([1.]))
+    """
+    Feature: Gaussian nll loss rejects invalid argument contracts.
+    Description: All public Gaussian-loss arguments are independently validated.
+    Expectation: All public Gaussian-loss arguments are independently validated.
+    """
+    params = {'x': ms.Tensor([1.]), 'target': ms.Tensor([0.]), 'var': ms.Tensor([1.])}
     params[argument] = value
     with pytest.raises(error, match=argument):
         nn.gaussian_nll_loss(**params)
@@ -300,7 +396,11 @@ def test_gaussian_nll_loss_rejects_invalid_argument_contracts(argument, value, e
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('weighted', [False, True])
 def test_multilabel_soft_margin_loss_matches_binary_cross_entropy(reduction, weighted):
-    """Class weights apply before per-sample class averaging."""
+    """
+    Feature: Multilabel soft margin loss matches binary cross entropy.
+    Description: Class weights apply before per-sample class averaging.
+    Expectation: Class weights apply before per-sample class averaging.
+    """
     data = np.array([[-1., 0., 1.], [2., -2., 0.5]], np.float32)
     target = np.array([[0., 1., 1.], [1., 0., 1.]], np.float32)
     weights = np.array([1., 2., 0.5], np.float32)
@@ -320,7 +420,11 @@ def test_multilabel_soft_margin_loss_matches_binary_cross_entropy(reduction, wei
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('dtype', [np.float32, np.int32])
 def test_mse_loss_casts_integer_inputs_and_applies_reduction(reduction, dtype):
-    """Integer squared errors must produce a floating loss with the requested reduction."""
+    """
+    Feature: Mse loss casts integer inputs and applies reduction.
+    Description: Integer squared errors must produce a floating loss with the requested reduction.
+    Expectation: Integer squared errors must produce a floating loss with the requested reduction.
+    """
     left, right = np.array([1, 3, -2], dtype), np.array([0, 1, 1], dtype)
     result = nn.mse_loss(ms.Tensor(left), ms.Tensor(right), reduction)
     expected = np.array([1, 4, 9], np.float32)
@@ -336,7 +440,11 @@ def test_mse_loss_casts_integer_inputs_and_applies_reduction(reduction, dtype):
 @pytest.mark.parametrize('groups', [1, 2])
 @pytest.mark.parametrize('padding,stride', [(0, 1), (1, 2)])
 def test_convolution_wrappers_match_direct_cross_correlation(dimension, groups, padding, stride):
-    """Dimension promotion, grouping and bias placement must preserve correlation values."""
+    """
+    Feature: Convolution wrappers match direct cross correlation.
+    Description: Dimension promotion, grouping and bias placement must preserve correlation values.
+    Expectation: Dimension promotion, grouping and bias placement must preserve correlation values.
+    """
     shape = (1, 2) + (4,) * dimension
     data = np.arange(np.prod(shape), dtype=np.float32).reshape(shape) / 10
     weight_shape = (2, 2 // groups) + (2,) * dimension
@@ -360,7 +468,11 @@ def test_convolution_wrappers_match_direct_cross_correlation(dimension, groups, 
 
 @pytest.mark.parametrize('name,factor', [('pixel_shuffle', 2), ('pixel_unshuffle', 2)])
 def test_pixel_rearrangement_preserves_element_positions(name, factor):
-    """Channel-to-space and space-to-channel moves must keep pixel coordinates distinct."""
+    """
+    Feature: Pixel rearrangement preserves element positions.
+    Description: Channel-to-space and space-to-channel moves must keep pixel coordinates distinct.
+    Expectation: Channel-to-space and space-to-channel moves must keep pixel coordinates distinct.
+    """
     if name == 'pixel_shuffle':
         data = np.arange(16, dtype=np.float32).reshape(1, 4, 2, 2)
         expected = np.array([[[[0, 4, 1, 5], [8, 12, 9, 13], [2, 6, 3, 7], [10, 14, 11, 15]]]], np.float32)
@@ -372,6 +484,10 @@ def test_pixel_rearrangement_preserves_element_positions(name, factor):
 
 
 def test_hinge_embedding_loss_requires_floating_target_dtype():
-    """The target's numeric representation must satisfy the documented dtype contract."""
+    """
+    Feature: Hinge embedding loss requires floating target dtype.
+    Description: The target's numeric representation must satisfy the documented dtype contract.
+    Expectation: The target's numeric representation must satisfy the documented dtype contract.
+    """
     with pytest.raises(TypeError, match='second input must be float'):
         nn.hinge_embedding_loss(ms.Tensor([1.]), ms.Tensor([1], ms.int32))

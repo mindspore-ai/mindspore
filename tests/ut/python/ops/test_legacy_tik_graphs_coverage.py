@@ -21,7 +21,11 @@ import importlib
 import pytest
 
 pytest.importorskip('te', reason='Real Tik IR tests require the optional CANN TE SDK')
+# Check optional SDK availability before importing its modules.
+# pylint: disable-next=wrong-import-position
 from te import tik, tvm
+# Check optional SDK availability before importing its modules.
+# pylint: disable-next=wrong-import-position
 from tbe.common import platform
 
 
@@ -46,8 +50,10 @@ def restore_sdk_profile():
     source_info = profile_globals['TikSourceInfo']
     was_initialized = source_info.is_inited
     source_globals = source_info.__init__.__globals__
-    debug_states = [(source_globals[name], vars(source_globals[name]).copy())
-                    for name in ('TIK_CONTROL', 'TIK_ERROR_MSG', 'ERROR_MSG_LEVEL')]
+    debug_states = [
+        (source_globals[name], vars(source_globals[name]).copy())
+        for name in ('TIK_CONTROL', 'TIK_ERROR_MSG', 'ERROR_MSG_LEVEL')
+    ]
     # Give each graph fresh SDK source-location metadata. In particular, an
     # unsupported Dprofile can throw before clearing its source frame.
     for state, _ in debug_states:
@@ -75,8 +81,8 @@ def restore_sdk_profile():
         source_info.is_inited = was_initialized
 
 
-@pytest.fixture
-def build_requests(monkeypatch, tmp_path):
+@pytest.fixture(name='build_requests')
+def build_requests_fixture(monkeypatch, tmp_path):
     """Intercept exactly final binary emission and inspect the already built IR."""
     requests = []
 
@@ -96,8 +102,17 @@ def build_requests(monkeypatch, tmp_path):
         tvm.tir.stmt_functor.post_order_visit(statement, visit)
         assert calls, 'The captured program must contain actual accelerator instructions'
         (tmp_path / (kernel_name + '.tir')).write_text(str(statement))
-        requests.append({'builder': builder, 'name': kernel_name, 'inputs': inputs, 'outputs': outputs,
-                         'calls': calls, 'blocks': blocks, 'allocations': allocations})
+        requests.append(
+            {
+                'builder': builder,
+                'name': kernel_name,
+                'inputs': inputs,
+                'outputs': outputs,
+                'calls': calls,
+                'blocks': blocks,
+                'allocations': allocations,
+            }
+        )
 
     monkeypatch.setattr(tik.Tik, 'BuildCCE', capture)
     return requests
@@ -122,23 +137,38 @@ def assert_abi(request, inputs, outputs):
 
 @pytest.mark.parametrize('batch,heads', [(1, 4), (2, 8)])
 def test_dds_attention_builds_real_masked_softmax_ir(build_requests, batch, heads):
-    """1024 tokens, 128 dimensions/head, local 64 and global 256 use their documented layouts."""
+    """Feature: Legacy Tik IR construction and ordered kernel ABI.
+    Description: DDS attention builds real masked softmax IR.
+    Expectation: 1024 tokens, 128 dimensions/head, local 64 and global 256 use their documented layouts.
+    """
     q_shape = (heads * 8, batch * 64, 16, 16)
     local = (batch, heads, 16, 4, 4, 16, 16)
     global_ = (batch, heads, 16, 16, 4, 16, 16)
     result = legacy('matmul_dds_impl').matmul_dds(
-        descriptor(q_shape), descriptor(q_shape), descriptor((64, batch * 4, 16, 16), 'float32'),
-        descriptor((batch * 16, 64, 16, 16), 'float32'), descriptor(local), descriptor(global_),
-        batch, heads, kernel_name='coverage_dds')
-    request, = build_requests
+        descriptor(q_shape),
+        descriptor(q_shape),
+        descriptor((64, batch * 4, 16, 16), 'float32'),
+        descriptor((batch * 16, 64, 16, 16), 'float32'),
+        descriptor(local),
+        descriptor(global_),
+        batch,
+        heads,
+        kernel_name='coverage_dds',
+    )
+    (request,) = build_requests
     assert result is request['builder']
     assert request['name'] == 'coverage_dds'
     assert request['blocks'] == [batch * heads]
-    assert_abi(request,
-               [('mat_q', q_shape, 'float16'), ('mat_k', q_shape, 'float16'),
-                ('mat_lm', (64, batch * 4, 16, 16), 'float32'),
-                ('mat_gm', (batch * 16, 64, 16, 16), 'float32')],
-               [('mat_lc', local, 'float16'), ('mat_gc', global_, 'float16')])
+    assert_abi(
+        request,
+        [
+            ('mat_q', q_shape, 'float16'),
+            ('mat_k', q_shape, 'float16'),
+            ('mat_lm', (64, batch * 4, 16, 16), 'float32'),
+            ('mat_gm', (batch * 16, 64, 16, 16), 'float32'),
+        ],
+        [('mat_lc', local, 'float16'), ('mat_gc', global_, 'float16')],
+    )
     names = {call.args[0].value for call in request['calls']}
     assert {'vcmax', 'vexp', 'vrec', 'vmul', 'vconv_f322f16'} <= names
     assert request['allocations']['mat_l1_ones'] == ('float16', (5120,))
@@ -146,32 +176,51 @@ def test_dds_attention_builds_real_masked_softmax_ir(build_requests, batch, head
 
 @pytest.mark.parametrize('batch,heads', [(1, 4), (2, 8)])
 def test_dds_gradient_builds_real_softmax_and_transposed_key_gradient_ir(build_requests, batch, heads):
-    """dq keeps q's zN layout; dk has the reversed leading axes required by the ABI."""
+    """Feature: Legacy Tik IR construction and ordered kernel ABI.
+    Description: DDS gradient builds real softmax and transposed key gradient IR.
+    Expectation: dq keeps q's zN layout; dk has the reversed leading axes required by the ABI.
+    """
     q_shape = (heads * 8, batch * 64, 16, 16)
     local = (batch, heads, 16, 4, 4, 16, 16)
     global_ = (batch, heads, 16, 16, 4, 16, 16)
     result = legacy('matmul_dds_grad_impl').matmul_dds_grad(
-        descriptor(q_shape), descriptor(q_shape), descriptor(local), descriptor(global_),
-        descriptor(local), descriptor(global_), descriptor(q_shape),
-        descriptor((batch * 64, heads * 8, 16, 16)), kernel_name='coverage_dds_gradient')
-    request, = build_requests
+        descriptor(q_shape),
+        descriptor(q_shape),
+        descriptor(local),
+        descriptor(global_),
+        descriptor(local),
+        descriptor(global_),
+        descriptor(q_shape),
+        descriptor((batch * 64, heads * 8, 16, 16)),
+        kernel_name='coverage_dds_gradient',
+    )
+    (request,) = build_requests
     assert result is request['builder']
     assert request['name'] == 'coverage_dds_gradient'
     assert request['blocks'] == [batch * heads]
-    assert_abi(request,
-               [('mat_q', q_shape, 'float16'), ('mat_k', q_shape, 'float16'),
-                ('mat_lc', local, 'float16'), ('mat_gc', global_, 'float16'),
-                ('mat_lc_grad', local, 'float16'), ('mat_gc_grad', global_, 'float16')],
-               [('mat_dq', q_shape, 'float16'), ('mat_dk', (batch * 64, heads * 8, 16, 16), 'float16')])
+    assert_abi(
+        request,
+        [
+            ('mat_q', q_shape, 'float16'),
+            ('mat_k', q_shape, 'float16'),
+            ('mat_lc', local, 'float16'),
+            ('mat_gc', global_, 'float16'),
+            ('mat_lc_grad', local, 'float16'),
+            ('mat_gc_grad', global_, 'float16'),
+        ],
+        [('mat_dq', q_shape, 'float16'), ('mat_dk', (batch * 64, heads * 8, 16, 16), 'float16')],
+    )
     names = {call.args[0].value for call in request['calls']}
     assert {'vmul', 'vsub', 'vadd', 'vtranspose'} <= names
 
 
-@pytest.mark.parametrize('batch,heads,sequence,embedding', [(1, 4, 1024, 64), (2, 8, 1024, 128),
-                                                         (1, 4, 2048, 64)])
+@pytest.mark.parametrize('batch,heads,sequence,embedding', [(1, 4, 1024, 64), (2, 8, 1024, 128), (1, 4, 2048, 64)])
 @pytest.mark.parametrize('backward', [False, True])
 def test_dsd_builds_real_local_and_global_matrix_paths(build_requests, batch, heads, sequence, embedding, backward):
-    """Exercise both backward tiling choices and inspect the ordered forward/gradient ABI."""
+    """Feature: Legacy Tik IR construction and ordered kernel ABI.
+    Description: DSD builds real local and global matrix paths.
+    Expectation: Exercise both backward tiling choices and inspect the ordered forward/gradient ABI.
+    """
     block_count, global_size = sequence // 64, sequence // 4
     w1 = (batch, heads, block_count, 4, 4, 16, 16)
     w2 = (batch, heads, block_count, global_size // 16, 4, 16, 16)
@@ -179,11 +228,12 @@ def test_dsd_builds_real_local_and_global_matrix_paths(build_requests, batch, he
     y = (batch, heads, embedding // 16, sequence // 16, 16, 16)
     arguments = [descriptor(w1), descriptor(w2), descriptor(v)]
     if backward:
-        result = legacy('dsd_back_impl').dsdbpropimpl(*arguments, descriptor(y), descriptor(y),
-                                                    kernel_name='coverage_dsd_gradient')
+        result = legacy('dsd_back_impl').dsdbpropimpl(
+            *arguments, descriptor(y), descriptor(y), kernel_name='coverage_dsd_gradient'
+        )
     else:
         result = legacy('dsd_impl').dsd_matmul(*arguments, descriptor(y), kernel_name='coverage_dsd')
-    request, = build_requests
+    (request,) = build_requests
     assert result is request['builder']
     assert request['name'] == ('coverage_dsd_gradient' if backward else 'coverage_dsd')
     assert request['blocks'] == [batch * heads]
@@ -211,15 +261,19 @@ def test_dsd_builds_real_local_and_global_matrix_paths(build_requests, batch, he
         assert request['allocations']['v_global_l1'] == ('float16', (global_size * embedding,))
 
 
-@pytest.mark.xfail(strict=True, raises=RuntimeError,
-                   reason='CANN 9.1 lacks the legacy Ascend310 platform configuration requested by v100/mini')
+@pytest.mark.xfail(
+    strict=True,
+    raises=RuntimeError,
+    reason='CANN 9.1 lacks the legacy Ascend310 platform configuration requested by v100/mini',
+)
 def test_legacy_mini_sdk_profile_compatibility():
-    """Record the SDK limitation without substituting product-discovery metadata.
-
-    The old DSD mini branches cannot be selected by this SDK's product report:
-    cce_conf uses '1910' whereas topi.util.VERSION_MINI is 'mini'. Independently
-    requesting the exact real Dprofile used by those branches also fails. This
-    compatibility xfail does not count as successful kernel line/IR coverage.
+    """Feature: Legacy Tik IR construction and ordered kernel ABI.
+    Description: Record the SDK limitation without substituting product-discovery metadata.  The old DSD mini
+        branches cannot be selected by this SDK's product report: cce_conf uses '1910' whereas
+        topi.util.VERSION_MINI is 'mini'. Independently requesting the exact real Dprofile used by those
+        branches also fails. This compatibility xfail does not count as successful kernel line/IR coverage.
+    Expectation: The unsupported real mini profile retains the documented strict expected failure and reports
+        the platform-information error.
     """
     try:
         tik.Dprofile('v100', 'mini')

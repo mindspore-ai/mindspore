@@ -7,10 +7,13 @@
 Native AOT compilation is tested only at the subprocess protocol boundary.
 Shape/type inference is executed directly and does not claim device arithmetic.
 """
+# Unit coverage intentionally exercises internal Python inference and wrapper helpers.
+# pylint: disable=protected-access
 import copy
 import importlib.util
 import json
 import os
+import sys
 from pathlib import Path
 import types
 
@@ -39,24 +42,26 @@ F32, F16, I32, I64 = [dt.TensorType(t) for t in (dt.float32, dt.float16, dt.int3
 
 
 def abstract(shape, dtype=F32, value=None):
-    return dict(shape=shape, dtype=dtype, value=value)
+    return {'shape': shape, 'dtype': dtype, 'value': value}
 
 
-@pytest.fixture(autouse=True, scope='module')
-def cpu_context():
+@pytest.fixture(autouse=True, scope='module', name='cpu_context')
+def fixture_cpu_context():
     old = {k: context.get_context(k) for k in ('mode', 'device_target')}
     context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
     yield
     context.set_context(**old)
 
 
-@pytest.fixture
-def custom_state(monkeypatch, tmp_path):
+@pytest.fixture(name='custom_state')
+def fixture_custom_state(monkeypatch, tmp_path):
     """Restore the mutable Custom registries and isolate all generated paths."""
     for name in ('compiled_bin', 'registered_func', 'attr_dict', 'tbe_path_checked',
                  'tbe_path_failed', 'op_path_in_cache', 'custom_aot_warning'):
         monkeypatch.setattr(custom.Custom, name, copy.deepcopy(getattr(custom.Custom, name)))
     monkeypatch.setenv('MS_COMPILER_CACHE_PATH', str(tmp_path / 'meta'))
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.ops.operations import _pyfunc_registry
     monkeypatch.setattr(_pyfunc_registry.CustomPyFuncRegistry, '_instance',
                         _pyfunc_registry.CustomPyFuncRegistry(), raising=False)
@@ -66,7 +71,11 @@ def custom_state(monkeypatch, tmp_path):
 @pytest.mark.parametrize('n', range(1, 11))
 @pytest.mark.parametrize('out,dout,tail', [(11, 13, (11, 13)), ((11, 12), (13, 14), (11, 12, 13, 14))])
 def test_custom_gradient_argument_protocol(n, out, dout, tail):
-    """Real bprop wrappers preserve input ordering and multi-output sensitivities."""
+    """
+    Feature: Custom gradient argument protocol.
+    Description: Real bprop wrappers preserve input ordering and multi-output sensitivities.
+    Expectation: Real bprop wrappers preserve input ordering and multi-output sensitivities.
+    """
     seen = []
     def gradient(*args):
         seen.append(args)
@@ -78,6 +87,12 @@ def test_custom_gradient_argument_protocol(n, out, dout, tail):
 
 
 def test_custom_gradient_registry_absent_and_mixed_outputs():
+    """
+    Feature: Custom gradient registry absent and mixed outputs.
+    Description: Check custom gradient registry absent and mixed outputs.
+    Expectation: Missing gradient lookups return None and mixed scalar/tuple outputs flatten in their original
+        order.
+    """
     assert grad.Registry().get(0) is None
     assert grad.autodiff_bprop(11) is None
     assert grad.get_outs((1, 2), 3) == (1, 2, 3)
@@ -85,6 +100,12 @@ def test_custom_gradient_registry_absent_and_mixed_outputs():
 
 
 def test_registry_dispatch_and_missing_key():
+    """
+    Feature: Registry dispatch and missing key.
+    Description: Check registry dispatch and missing key.
+    Expectation: String and primitive registrations resolve to the expected callables, replacement keeps the
+        correct registry size, and missing keys honor defaults or raise.
+    """
     registry = Registry()
     def named(x):
         return x + 1
@@ -106,6 +127,12 @@ def test_registry_dispatch_and_missing_key():
 
 
 def test_embedding_cache_contracts():
+    """
+    Feature: Embedding cache contracts.
+    Description: Check embedding cache contracts.
+    Expectation: Cache primitives preserve explicit dynamic shapes and tensor dtypes and reject invalid table
+        dimensions, indices, and operand types.
+    """
     op = embed.SubAndFilter()
     assert op.check_shape([4], [], []) == ((-1,), (-1,))
     assert op.check_dtype(I32, I32, I32) == I32
@@ -120,7 +147,7 @@ def test_embedding_cache_contracts():
         swap.check_dtype(F32, F32, F16)
     mapping = embed.MapCacheIdx()
     args = [abstract([8, 4], I32), abstract([2, 3], I32)] + [abstract([], I32)] * 3
-    assert mapping.__check__(*args) == dict(shape=([2, 3], -1, -1, -1), dtype=(I32,) * 4, value=None)
+    assert mapping.__check__(*args) == {'shape': ([2, 3], -1, -1, -1), 'dtype': (I32,) * 4, 'value': None}
     with pytest.raises(ValueError, match='dimension'):
         mapping.__check__(abstract([8], I32), *args[1:])
     with pytest.raises(TypeError):
@@ -132,8 +159,15 @@ def test_embedding_cache_contracts():
         assign.check_dtype(dt.string, F32)
 
 
-@pytest.mark.parametrize('bidirectional,hidden_shape,out', [(False, [2, 3, 4], (5, 3, 4)), (True, [4, 3, 4], (5, 3, 8))])
+@pytest.mark.parametrize('bidirectional,hidden_shape,out',
+                         [(False, [2, 3, 4], (5, 3, 4)), (True, [4, 3, 4], (5, 3, 8))])
 def test_gru_shape_dtype(bidirectional, hidden_shape, out):
+    """
+    Feature: Gru shape dtype.
+    Description: Check gru shape dtype.
+    Expectation: GRU inference retains the expected time, batch, direction, hidden-state shapes, and float32
+        outputs while rejecting incompatible metadata.
+    """
     op = rl.GRUV2(6, 4, 2, True, bidirectional, 0.25)
     assert op.infer_shape([5, 3, 6], hidden_shape, [100], [3]) == (out, hidden_shape, (1, 1), (1, 1))
     assert op.infer_dtype(F32, F32, F32, I32) == (F32,) * 4
@@ -149,6 +183,12 @@ def test_gru_shape_dtype(bidirectional, hidden_shape, out):
 
 @pytest.mark.parametrize('name', ['GRUV2', 'LSTMV2', 'CudnnGRU'])
 def test_recurrent_constructor_validation(name):
+    """
+    Feature: Recurrent constructor validation.
+    Description: Check recurrent constructor validation.
+    Expectation: Valid recurrent sizes and direction flags are retained, and invalid constructor arguments are
+        rejected.
+    """
     cls = getattr(rl, name)
     op = cls(6, 4, 2, True, True, 0.5)
     assert op.input_size == 6 and op.hidden_size == 4 and op.bidirectional is True
@@ -158,6 +198,12 @@ def test_recurrent_constructor_validation(name):
 
 
 def test_optimizer_inference_contracts():
+    """
+    Feature: Optimizer inference contracts.
+    Description: Check optimizer inference contracts.
+    Expectation: Optimizer inference preserves expected parameter/state shapes, reference dtypes, and attributes
+        and rejects incompatible operands.
+    """
     momentum = inner.FusedWeightScaleApplyMomentum()
     assert momentum.infer_shape([], [], [2, 3], [2, 3], [], [2, 3], []) == [2, 3]
     assert momentum.infer_dtype(F32, F32, F16, F16, F32, F16, F32) == F16
@@ -188,6 +234,12 @@ def test_optimizer_inference_contracts():
 
 
 def test_sequence_python_values():
+    """
+    Feature: Sequence python values.
+    Description: Check sequence python values.
+    Expectation: Python sequence primitives preserve literal counts, indices, ranges, comparisons, and tensor
+        values and reject unsupported sequence inputs.
+    """
     assert seq.shape_mul()((2, 3, 4)) == 24
     assert seq.shape_mul()(()) == 1
     with pytest.raises(ValueError):
@@ -206,8 +258,11 @@ def test_sequence_python_values():
     for value in [None, [1, None], (1, 2)]:
         with pytest.raises(RuntimeError):
             seq.ListToTensor()(value, dt.int32)
-    for cls, inputs in [(seq.ListAppendAndInsertGrad, ['input_data', 'index']), (seq.ShapeMulGrad, ['input_data', 'dout']),
-                        (seq.SequenceSliceGrad, ['dy', 'x', 'start', 'stop', 'step']), (seq.SequenceAddN, ['inputs'])]:
+    for cls, inputs in [
+    (seq.ListAppendAndInsertGrad, [
+        'input_data', 'index']), (seq.ShapeMulGrad, [
+            'input_data', 'dout']), (seq.SequenceSliceGrad, [
+                'dy', 'x', 'start', 'stop', 'step']), (seq.SequenceAddN, ['inputs'])]:
         assert cls().input_names == inputs
     assert seq.SequenceUnstack(-1, 3).axis == -1
     with pytest.raises(TypeError):
@@ -217,6 +272,12 @@ def test_sequence_python_values():
 @pytest.mark.parametrize('axis,keep,expected', [((), False, []), ([], True, [1, 1, 1]), (-1, False, [2, 3]),
                                               ((0, -1), True, [1, 3, 1]), ([1, 1], False, [2, 4])])
 def test_reduce_shape(axis, keep, expected):
+    """
+    Feature: Reduce shape.
+    Description: Check reduce shape.
+    Expectation: Reduction inference returns the independently specified shape for the selected axes and
+        keep-dimensions flag.
+    """
     assert math._infer_shape_reduce([2, 3, 4], axis, keep, 'ReduceMax') == expected
 
 
@@ -224,6 +285,12 @@ def test_reduce_shape(axis, keep, expected):
     ('ReduceProd', [4, 16]), ('ReduceMean', [2.5, 5]), ('ReduceAll', [True, True]), ('ReduceAny', [True, True])])
 def test_reduce_constant_folding(name, expected):
     # Generated public aliases bypass this legacy base; a named subclass uses its real Python contract.
+    """
+    Feature: Reduce constant folding.
+    Description: Check reduce constant folding.
+    Expectation: Constant reductions preserve the expected values and shapes; unresolved values or axes return
+        None.
+    """
     op = type(name, (math._Reduce,), {})(keep_dims=False)
     value = Tensor([[1., 4.], [2., 8.]], dt.float32)
     np.testing.assert_array_equal(op.infer_value(value, 1).asnumpy(), expected)
@@ -234,6 +301,12 @@ def test_reduce_constant_folding(name, expected):
 
 
 def test_math_binary_dtype_and_constants():
+    """
+    Feature: Math binary dtype and constants.
+    Description: Check math binary dtype and constants.
+    Expectation: Binary math inference preserves complex promotion, broadcast shapes, comparison dtypes, and
+        explicit folded constants while rejecting invalid metadata.
+    """
     complex64 = dt.TensorType(dt.complex64)
     assert math._MathBinaryOp.do_infer_dtype(complex64, F32) == complex64
     assert math._MathBinaryOp.do_infer_dtype(F32, complex64) == complex64
@@ -293,6 +366,11 @@ def test_math_binary_dtype_and_constants():
     (image.CropAndResizeGradImage, {'T':dt.float64, 'method':'nearest'}, {'max_Byte':2000000000}),
 ])
 def test_constructor_attribute_contracts(cls, kwargs, attrs):
+    """
+    Feature: Constructor attribute contracts.
+    Description: Check constructor attribute contracts.
+    Expectation: Each constructor retains the independently specified public attribute value.
+    """
     op = cls(**kwargs)
     for key, expected in attrs.items():
         assert getattr(op, key) == expected
@@ -311,12 +389,23 @@ def test_constructor_attribute_contracts(cls, kwargs, attrs):
     (image.CropAndResizeGradImage, {'T':dt.float32, 'method':'bilinear_v2'}),
 ])
 def test_invalid_constructor_contracts(cls, kwargs):
+    """
+    Feature: Invalid constructor contracts.
+    Description: Check invalid constructor contracts.
+    Expectation: Invalid constructor contracts raise (TypeError, ValueError).
+    """
     with pytest.raises((TypeError, ValueError)):
         cls(**kwargs)
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason='SparseMatrixSparseMatMul validates adjoint_b twice and omits adjoint_a')
+@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception,
+                   reason='SparseMatrixSparseMatMul validates adjoint_b twice and omits adjoint_a')
 def test_sparse_adjoint_a_requires_boolean():
+    """
+    Feature: Sparse adjoint a requires boolean.
+    Description: Check sparse adjoint a requires boolean.
+    Expectation: Invalid sparse adjoint a requires boolean raise TypeError. Diagnostics identify adjoint_a.
+    """
     with pytest.raises(TypeError, match='adjoint_a'):
         sparse.SparseMatrixSparseMatMul(adjoint_a=1)
 
@@ -324,16 +413,32 @@ def test_sparse_adjoint_a_requires_boolean():
 @pytest.mark.parametrize('parts', [[], ['BAD'], ['VALUE_ROWIDS'], ['FIRST_DIM_SIZE'],
                                   ['FIRST_DIM_SIZE', 'ROW_SPLITS'], ['ROW_SPLITS', 'VALUE_ROWIDS'], [1]])
 def test_ragged_partition_validation(parts):
+    """
+    Feature: Ragged partition validation.
+    Description: Check ragged partition validation.
+    Expectation: Invalid ragged partition arguments raise (ValueError, TypeError).
+    """
     with pytest.raises((ValueError, TypeError)):
         sparse.RaggedTensorToTensor(parts)
 
 
 @pytest.mark.parametrize('parts,n', [(['ROW_SPLITS'], 1), (['FIRST_DIM_SIZE', 'VALUE_ROWIDS', 'VALUE_ROWIDS'], 3)])
 def test_ragged_partition_count(parts, n):
+    """
+    Feature: Ragged partition count.
+    Description: Check ragged partition count.
+    Expectation: Each ragged partition layout records the expected number of row-partition tensors.
+    """
     assert sparse.RaggedTensorToTensor(parts).num_row_partition_tensors == n
 
 
 def test_array_constant_folding_and_fill():
+    """
+    Feature: Array constant folding and fill.
+    Description: Check array constant folding and fill.
+    Expectation: Fill, dtype, diagonal, permutation, and sequence folds retain the explicit values and dtypes;
+        unresolved or invalid metadata takes the specified fallback.
+    """
     fill = array.Fill()
     for dims, value in [((2, 3), 7), (Tensor([2, 3], dt.int32), Tensor(7, dt.int32))]:
         np.testing.assert_array_equal(fill(dt.int32, dims, value).asnumpy(), [[7, 7, 7], [7, 7, 7]])
@@ -366,6 +471,12 @@ def test_array_constant_folding_and_fill():
 
 
 def test_scatter_validation_and_dynamic_shapes():
+    """
+    Feature: Scatter validation and dynamic shapes.
+    Description: Check scatter validation and dynamic shapes.
+    Expectation: Scatter inference preserves the input shape for valid dynamic indices and rejects incompatible
+        updates, ranks, and index dtypes.
+    """
     op = array._ScatterOp()
     assert op.infer_shape([4, 3], [2], [2, 3]) == [4, 3]
     assert op.infer_shape([4, 3], [-1], [8]) == [4, 3]
@@ -398,6 +509,12 @@ def test_scatter_validation_and_dynamic_shapes():
 
 
 def test_batch_space_stack_helpers():
+    """
+    Feature: Batch space stack helpers.
+    Description: Check batch space stack helpers.
+    Expectation: Batch/space transforms, stacking unknown dimensions, and window dtype encodings match
+        independently specified metadata.
+    """
     op = array.BatchToSpace(2, [[0, 1], [1, 0]])
     assert op.infer_shape([8, 3, 2, 4]) == [2, 3, 3, 7]
     assert op.infer_dtype(F32) == F32
@@ -423,16 +540,33 @@ def test_batch_space_stack_helpers():
     ((1, 1, 2, 3), {'allow_four':True, 'ret_four':True}, (1, 1, 2, 3)),
     (0, {'strict_positive':False}, (0, 0))])
 def test_nn_dimension_normalization(value, opts, expected):
+    """
+    Feature: Nn dimension normalization.
+    Description: Check nn dimension normalization.
+    Expectation: Positive integer and tuple parameters normalize to the explicitly specified convolution
+        dimensions.
+    """
     assert nn._check_positive_int_or_tuple('kernel_size', value, 'Conv2D', **opts) == expected
 
 
 @pytest.mark.parametrize('value', [(1,), (1, 2, 3), (1, 1, 2, 3), (0, 2), (True, 2)])
 def test_nn_dimension_rejection(value):
+    """
+    Feature: Nn dimension rejection.
+    Description: Check nn dimension rejection.
+    Expectation: Invalid nn dimension rejection raise ValueError.
+    """
     with pytest.raises(ValueError):
         nn._check_positive_int_or_tuple('kernel_size', value, 'Conv2D')
 
 
 def test_nn_shape_helpers():
+    """
+    Feature: Nn shape helpers.
+    Description: Check nn shape helpers.
+    Expectation: Shape validation, NHWC attribute ordering, and transpose-convolution lengths match the explicit
+        expected results.
+    """
     assert nn._check_shape('shape', (2, 3), 'Op') == (2, 3)
     with pytest.raises(ValueError):
         nn._check_shape('shape', (2, 0), 'Op')
@@ -445,19 +579,33 @@ def test_nn_shape_helpers():
     ('same', [2, 3, 6, 8], [2, 3, 3, 4]), ('valid', [2, 3, -1, 8], [2, 3, -1, 3]),
     ('same', [2, 3, 6, -1], [2, 3, 3, -1])])
 def test_pool_python_inference(mode, shape, expected):
+    """
+    Feature: Pool python inference.
+    Description: Check pool python inference.
+    Expectation: Pooling inference returns the independently specified dimensions and float32 dtype and rejects
+        unsupported ranks, shapes, and dtypes.
+    """
     op = nn._Pool(3, 2, mode)
     assert op.infer_shape(shape) == expected
     assert op.infer_dtype(F32) == F32
     with pytest.raises(TypeError):
         op.infer_dtype(dt.float32)
     with pytest.raises(ValueError):
-        op.infer_shape([2, 3, 1, 1]) if mode == 'valid' else op.infer_shape([2, 3, 0, 0])
+        if mode == 'valid':
+            op.infer_shape([2, 3, 1, 1])
+        else:
+            op.infer_shape([2, 3, 0, 0])
 
 
 @pytest.mark.parametrize('kwargs,expected', [({'stride':1, 'dilation':1}, (1, 1, 1, 1)),
     ({'stride':(2, 3), 'dilation':(1, 2)}, (1, 1, 2, 3)),
     ({'stride':(1, 1, 2, 3), 'dilation':(1, 1, 1, 2)}, (1, 1, 2, 3))])
 def test_dilation_constructor(kwargs, expected):
+    """
+    Feature: Dilation constructor.
+    Description: Check dilation constructor.
+    Expectation: The dilation constructor records the expected stride and normalized SAME padding.
+    """
     op = nn.Dilation2D(**kwargs)
     assert op.stride == expected and op.pad_mode == 'SAME'
 
@@ -467,11 +615,22 @@ def test_dilation_constructor(kwargs, expected):
     {'stride':0, 'dilation':1}, {'stride':256, 'dilation':1}, {'stride':(1, 256), 'dilation':1},
     {'stride':1, 'dilation':(True, 2)}])
 def test_dilation_validation(kwargs):
+    """
+    Feature: Dilation validation.
+    Description: Check dilation validation.
+    Expectation: Invalid dilation arguments raise ValueError.
+    """
     with pytest.raises(ValueError):
         nn.Dilation2D(**kwargs)
 
 
 def test_nn_loss_and_depthwise_inference():
+    """
+    Feature: Nn loss and depthwise inference.
+    Description: Check nn loss and depthwise inference.
+    Expectation: CTC and depthwise-convolution inference return the explicit shapes/dtypes, including
+        int8-to-int32 promotion, and reject incompatible metadata.
+    """
     loss = nn.RNNTLoss()
     assert loss.infer_shape([2, 5, 4, 8], [2, 3], [2], [2]) == ((2,), [2, 5, 4, 8])
     assert loss.infer_dtype(F32, I32, I32, I32) == (F32, F32)
@@ -493,15 +652,23 @@ def test_nn_loss_and_depthwise_inference():
     (nn.ComputeAccidentalHits, {'num_true':2}, {'num_true':2}),
     (nn.Conv3D, {'out_channel':4, 'kernel_size':3, 'pad_mode':'pad', 'pad':(1,)*6}, {'pad':(1,)*6}),
     (nn.Conv3DBackpropInput, {'out_channel':4, 'kernel_size':3, 'pad_mode':'pad', 'pad':(1,)*6}, {'pad':(1,)*6}),
-    (nn.Conv3DTranspose, {'in_channel':2, 'out_channel':4, 'kernel_size':3, 'pad_mode':'pad', 'pad':(1,)*6}, {'pad_list':(1,)*6}),
+    (nn.Conv3DTranspose, {'in_channel':2, 'out_channel':4, 'kernel_size':3,
+     'pad_mode':'pad', 'pad':(1,)*6}, {'pad_list':(1,)*6}),
     (nn.FractionalMaxPool3DWithFixedKsize, {'ksize':2, 'output_shape':3}, {'ksize':(2, 2, 2)}),
-    (nn.DeformableOffsets, {'strides':(1, 2, 2, 1), 'pads':(0,)*4, 'ksize':(3, 3), 'data_format':'NHWC'}, {'format':'NHWC'}),
+    (nn.DeformableOffsets, {'strides':(1, 2, 2, 1), 'pads':(0,)* \
+     4, 'ksize':(3, 3), 'data_format':'NHWC'}, {'format':'NHWC'}),
     (nn.NuclearNorm, {}, {'dim':[1000]}), (nn.WKV, {}, {'output_names':['output', 'out_sp', 'out_sq', 'out_sm']}),
     (nn.AllFinite, {}, {'output_names':['is_finite']}),
     (nn.MaxPoolWithArgmaxV2, {'kernel_size':2, 'argmax_type':dt.int32}, {'argmax_type':3}),
-    (nn.MaxPool3D, {'pad_mode':'PAD', 'pad_list':(1, 2, 3), 'ceil_mode':True}, {'pad_list':(1, 1, 2, 2, 3, 3), 'ceil_mode':1}),
+    (nn.MaxPool3D, {'pad_mode':'PAD', 'pad_list':(1, 2, 3), 'ceil_mode':True},
+     {'pad_list':(1, 1, 2, 2, 3, 3), 'ceil_mode':1}),
 ])
 def test_nn_constructor_protocols(cls, kwargs, attrs):
+    """
+    Feature: Nn constructor protocols.
+    Description: Check nn constructor protocols.
+    Expectation: Each neural-network constructor retains its independently specified attribute value.
+    """
     op = cls(**kwargs)
     for key, expected in attrs.items():
         assert getattr(op, key) == expected
@@ -522,11 +689,22 @@ def test_nn_constructor_protocols(cls, kwargs, attrs):
     (nn.DeformableOffsets, {'strides':(1,)*4, 'pads':(0,)*4, 'ksize':(3, 3), 'modulated':False}),
 ])
 def test_nn_constructor_errors(cls, kwargs):
+    """
+    Feature: Nn constructor errors.
+    Description: Check nn constructor errors.
+    Expectation: Invalid nn constructor errors raise (TypeError, ValueError).
+    """
     with pytest.raises((TypeError, ValueError)):
         cls(**kwargs)
 
 
 def test_deprecated_alias_attributes_and_identity():
+    """
+    Feature: Deprecated alias attributes and identity.
+    Description: Check deprecated alias attributes and identity.
+    Expectation: Deprecated aliases preserve constructor names, attributes, and identity behavior and reject
+        unsupported data formats.
+    """
     for cls, kwargs, key, value in [(dep.BNTrainingReduce, {}, 'data_format', 'NCHW'),
         (dep.BNTrainingUpdate, {}, 'epsilon', 1e-5), (dep.DynamicShape, {}, 'is_dynamic_shape', True),
         (dep.GatherV2, {}, 'batch_dims', 0), (dep.Pack, {'axis':1}, 'axis', 1),
@@ -542,6 +720,12 @@ def test_deprecated_alias_attributes_and_identity():
 
 
 def test_primitive_attribute_lifecycle_and_strategy():
+    """
+    Feature: Primitive attribute lifecycle and strategy.
+    Description: Check primitive attribute lifecycle and strategy.
+    Expectation: Primitive mutation methods retain chaining identity, set/remove the intended attributes,
+        preserve clone metadata, and reject invalid strategies.
+    """
     op = prim.Primitive('CoveragePrimitive')
     assert op.set_stage(2) is op and op.stage == 2
     assert op.add_prim_attr('extra', 7).del_prim_attr('extra') is op
@@ -581,6 +765,12 @@ def test_primitive_attribute_lifecycle_and_strategy():
 
 
 def test_primitive_constexpr_and_nested_variables():
+    """
+    Feature: Primitive constexpr and nested variables.
+    Description: Check primitive constexpr and nested variables.
+    Expectation: Constant-expression evaluation returns twelve, preserves deferred functions, and identifies
+        variables correctly in nested containers.
+    """
     def product(x, y):
         return x * y
     constexpr_class = prim.constexpr(get_instance=False)(product)
@@ -601,6 +791,12 @@ def test_primitive_constexpr_and_nested_variables():
 
 
 def test_primitive_cache_identity_and_graph_compile(monkeypatch):
+    """
+    Feature: Primitive cache identity and graph compile.
+    Description: Check primitive cache identity and graph compile.
+    Expectation: Repeated construction with identical arguments reuses the primitive, while different arguments
+        produce a distinct instance.
+    """
     monkeypatch.setattr(cache, '_PRIM_CACHE', {})
     assert cache._temp_func() == 0
     constructor = cache._get_cache_prim(nn.Pdist)
@@ -623,18 +819,27 @@ def infer_same_type(dtype):
 
 
 def test_custom_pyfunc_inference(custom_state):
+    """
+    Feature: Custom pyfunc inference.
+    Description: Check custom pyfunc inference.
+    Expectation: Custom PyFunc callbacks preserve output abstracts, concrete inferred values, callback identity,
+        scalar/fake outputs, and backward metadata.
+    """
     op = custom.Custom(numpy_increment, infer_same_shape, infer_same_type, func_type='pyfunc')
-    assert op.__infer__(abstract([2, 3])) == dict(shape=(2, 3), dtype=F32, value=None)
+    assert op.__infer__(abstract([2, 3])) == {'shape': (2, 3), 'dtype': F32, 'value': None}
     assert op.inputs_num == 1 and op.primitive_target == 'CPU'
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.ops.operations._pyfunc_registry import get_pyfunc
     np.testing.assert_array_equal(get_pyfunc(op.fn_id)(np.array([2, 3], np.float32)), [3, 4])
     assert op._auto_infer(abstract([2], value=Tensor([2., 3.], dt.float32)))[:2] == ((2,), F32)
-    np.testing.assert_array_equal(op._auto_infer(abstract([2], value=Tensor([2., 3.], dt.float32)))[2].asnumpy(), [3, 4])
+    np.testing.assert_array_equal(op._auto_infer(
+        abstract([2], value=Tensor([2., 3.], dt.float32)))[2].asnumpy(), [3, 4])
     assert op._auto_infer(abstract([2])) == ((2,), F32, None)
     assert op._auto_infer(abstract([2], dt.float32)) == ((2,), F32, None)
     fake = custom.Custom(numpy_increment, (), (), 'pyfunc')
     assert fake.fake_output is True
-    assert fake.__infer__(abstract([2])) == dict(shape=(1,), dtype=dt.int32, value=None)
+    assert fake.__infer__(abstract([2])) == {'shape': (1,), 'dtype': dt.int32, 'value': None}
     scalar = custom.Custom(numpy_increment, (), dt.float32, 'pyfunc')
     assert scalar.single_scalar_output is True
     for shape, dtype in [(3, dt.float32), ((2,), 'bad')]:
@@ -642,20 +847,31 @@ def test_custom_pyfunc_inference(custom_state):
         with pytest.raises(TypeError):
             invalid.__infer__(abstract([2]))
     ext = custom._CustomExt('symbol', None, None, bprop='gradient')
-    assert ext.__infer__(abstract([2])) == dict(shape=(1,), dtype=dt.float16, value=None)
+    assert ext.__infer__(abstract([2])) == {'shape': (1,), 'dtype': dt.float16, 'value': None}
     assert ext.get_bprop() == 'gradient'
     ext = custom._CustomExt('symbol', infer_same_shape, infer_same_type)
-    assert ext.__infer__(abstract([2])) == dict(shape=(2,), dtype=F32, value=None)
+    assert ext.__infer__(abstract([2])) == {'shape': (2,), 'dtype': F32, 'value': None}
 
 
 @pytest.mark.parametrize('func,kind,error', [(3, 'pyfunc', TypeError), (numpy_increment, 'invalid', ValueError),
     (numpy_increment, 'hybrid', TypeError), (3, 'tbe', TypeError), ('symbol', 'aicpu', ValueError)])
 def test_custom_function_validation(custom_state, func, kind, error):
+    """
+    Feature: Custom function validation.
+    Description: Check custom function validation.
+    Expectation: Invalid custom function arguments raise the parameterized exception type.
+    """
     with pytest.raises(error):
         custom.Custom(func, (2,), dt.float32, kind)
 
 
 def test_custom_metadata_protocol(custom_state, monkeypatch):
+    """
+    Feature: Custom metadata protocol.
+    Description: Check custom metadata protocol.
+    Expectation: Registration forwards the expected metadata and path, preserves names/targets, expands nested
+        attributes, and rejects malformed declarations.
+    """
     calls = []
     class NativeRegistry:
         def reg_op(self, info, imply_path):
@@ -695,6 +911,12 @@ def test_custom_metadata_protocol(custom_state, monkeypatch):
     ('.cu', 'Cuda compilation tools, release 11.8, V11.8.89', ['arch=compute_80,code=sm_80']),
     ('.cu', 'Cuda compilation tools, release 10.0, V10.0.130', [])])
 def test_aot_compile_command_protocol(custom_state, monkeypatch, tmp_path, suffix, cuda_version, expected_extra):
+    """
+    Feature: Aot compile command protocol.
+    Description: Check aot compile command protocol.
+    Expectation: AOT compilation selects the expected compiler and flags, forwards explicit output/source paths,
+        and reuses the generated shared library.
+    """
     source = tmp_path / ('kernel' + suffix)
     source.write_text('/* protocol only: compiler subprocess is the external boundary */')
     commands = []
@@ -723,13 +945,19 @@ def test_aot_compile_command_protocol(custom_state, monkeypatch, tmp_path, suffi
     assert '-D_GLIBCXX_USE_CXX11_ABI=0' in cmd
     assert any(flag.endswith('/include/api/') for flag in cmd)
     assert '-I' + str(tmp_path) in cmd
-    assert kwargs == dict(stdout=custom.subprocess.PIPE, stderr=custom.subprocess.STDOUT, shell=False)
+    assert kwargs == {'stdout': custom.subprocess.PIPE, 'stderr': custom.subprocess.STDOUT, 'shell': False}
     for flag in expected_extra:
         assert flag in cmd
     assert custom._compile_aot(str(source)) == path and len(commands) == 1
 
 
 def test_custom_paths_and_builder_protocol(custom_state, monkeypatch, tmp_path):
+    """
+    Feature: Custom paths and builder protocol.
+    Description: Check custom paths and builder protocol.
+    Expectation: Cache paths, containment checks, build flags, and function proxies match their explicit
+        contracts and invalid environment paths are rejected.
+    """
     meta = tmp_path / 'meta'
     assert custom._get_cache_path() == str(meta) + '/'
     assert meta.is_dir()
@@ -741,13 +969,16 @@ def test_custom_paths_and_builder_protocol(custom_state, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     assert custom._get_cache_path() == './custom_kernel_meta/'
     assert custom._is_path_under_custom_aot_generated_dir(str(tmp_path / 'akg_kernel_meta' / 'x')) is True
-    builder = custom.CustomOpBuilder('protocol', ['kernel.cc'], backend='CPU', cflags='-DTEST=1', ldflags='-lm', build_dir=str(tmp_path / 'build'))
+    builder = custom.CustomOpBuilder('protocol', ['kernel.cc'], backend='CPU',
+                                     cflags='-DTEST=1', ldflags='-lm', build_dir=str(tmp_path / 'build'))
+    # The exact empty-list result is part of this interface contract.
+    # pylint: disable-next=use-implicit-booleaness-not-comparison
     assert builder._get_op_def() == []
     assert '-DTEST=1' in builder.get_cflags() and '-O2' in builder.get_cflags()
     assert '-lm' in builder.get_ldflags() and '-shared' in builder.get_ldflags()
     debug_builder = custom.CustomOpBuilder('protocol_debug', [], backend='CPU', debug_mode=True)
     assert '-g' in debug_builder.get_cflags() and '-s' not in debug_builder.get_ldflags()
-    for kwargs in [dict(backend='CPU', enable_atb=True), dict(backend='CPU', enable_asdsip=True)]:
+    for kwargs in [{'backend': 'CPU', 'enable_atb': True}, {'backend': 'CPU', 'enable_asdsip': True}]:
         with pytest.raises(ValueError, match='Ascend'):
             custom.CustomOpBuilder('bad', [], **kwargs)
     monkeypatch.delenv('ASCEND_OPP_PATH', raising=False)
@@ -760,6 +991,8 @@ def test_custom_paths_and_builder_protocol(custom_state, monkeypatch, tmp_path):
     module = types.SimpleNamespace(op=lambda x: x + 1)
     proxy = custom._MultiSoProxy(None, module)
     assert proxy.op(2) == 3 and proxy.op is module.op
+    # Exercise the explicit lifecycle/proxy return contract.
+    # pylint: disable-next=unnecessary-dunder-call
     assert proxy.__getattr__('op')(4) == 5
     with pytest.raises(AttributeError, match='neither'):
         _ = proxy.absent
@@ -774,6 +1007,12 @@ def test_custom_paths_and_builder_protocol(custom_state, monkeypatch, tmp_path):
 
 
 def test_debug_inference_and_summary_validation(tmp_path):
+    """
+    Feature: Debug inference and summary validation.
+    Description: Check debug inference and summary validation.
+    Expectation: Debug primitives preserve expected shape, dtype, and channel metadata and report invalid mode,
+        summary, and assertion arguments.
+    """
     debug._check_summary_param(abstract([], dt.string, 'metric'), abstract([]), 'ScalarSummary')
     for name, value, error in [(abstract([], dt.string, ''), abstract([]), ValueError),
                                 (abstract([], dt.int32, 3), abstract([]), TypeError),
@@ -802,16 +1041,33 @@ def test_debug_inference_and_summary_validation(tmp_path):
         dump(str(tmp_path / 'invalid'), 1)
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='Xdivy Python constant folding computes 0/0 as NaN although Xdivy specifies zero when x is zero')
+@pytest.mark.xfail(strict=True, raises=AssertionError,
+                   reason=(
+                       'Xdivy Python constant folding computes 0/0 as NaN although Xdivy specifies '
+                       'zero when x is zero'
+                   ))
 def test_xdivy_zero_numerator_constant_contract():
+    """
+    Feature: Xdivy zero numerator constant contract.
+    Description: Check xdivy zero numerator constant contract.
+    Expectation: A zero numerator folds to zero even when the denominator is also zero.
+    """
     with np.errstate(invalid='ignore'):
         value = math.Xdivy().infer_value(Tensor([0.], dt.float32), Tensor([0.], dt.float32))
     np.testing.assert_array_equal(value.asnumpy(), [0.])
 
 
 def test_custom_aot_placeholders_and_targets(custom_state, tmp_path):
+    """
+    Feature: Custom aot placeholders and targets.
+    Description: Check custom aot placeholders and targets.
+    Expectation: AOT placeholders retain their specified abstract dtype/shape and resolve registered or default
+        device targets correctly.
+    """
     op = custom.Custom(str(tmp_path / 'lib.so') + ':entry', None, None, 'aot')
-    assert op.__infer__(abstract([2])) == dict(shape=(1,), dtype=dt.float16, value=None)
+    assert op.__infer__(abstract([2])) == {'shape': (1,), 'dtype': dt.float16, 'value': None}
+    # The exact empty-list result is part of this interface contract.
+    # pylint: disable-next=use-implicit-booleaness-not-comparison
     assert op._get_registered_targets() == []
     op._save_register_status('CPU')
     op._add_prim_target()
@@ -831,8 +1087,11 @@ def test_custom_aot_placeholders_and_targets(custom_state, tmp_path):
 
 @pytest.mark.parametrize('remove_race', [False, True])
 def test_custom_tbe_source_fallback(custom_state, tmp_path, monkeypatch, remove_race):
-    """Import failures trigger isolated source copies; no device compiler is called."""
-    import sys
+    """
+    Feature: Custom tbe source fallback.
+    Description: Import failures trigger isolated source copies; no device compiler is called.
+    Expectation: Import failures trigger isolated source copies; no device compiler is called.
+    """
     path = tmp_path / 'kernel_source.py'
     path.write_text('def tbe_entry(x):\n    return x + 1\n')
     spec = importlib.util.spec_from_file_location('interface_tbe_fixture', path)
@@ -863,6 +1122,14 @@ def test_custom_tbe_source_fallback(custom_state, tmp_path, monkeypatch, remove_
 
 
 def test_custom_hybrid_analysis_and_autodiff(custom_state):
+    """
+    Feature: Custom hybrid analysis and autodiff.
+    Description: Check custom hybrid analysis and autodiff.
+    Expectation: Hybrid custom operations retain alias metadata, inferred values and shapes, and available
+        backward callbacks without invoking device compilation.
+    """
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.ops.operations._ms_kernel import kernel
     @kernel
     def passthrough(x):
@@ -874,8 +1141,8 @@ def test_custom_hybrid_analysis_and_autodiff(custom_state):
     np.testing.assert_array_equal(inferred['value'].asnumpy(), [2., 3.])
     assert callable(op.bprop)
     pyfunc = custom.Custom(passthrough, (2,), dt.float32, 'pyfunc')
-    assert pyfunc.__infer__(abstract([2])) == dict(shape=(2,), dtype=dt.float32, value=None)
-    assert op.__infer__(abstract([2])) == dict(shape=(2,), dtype=F32, value=None)
+    assert pyfunc.__infer__(abstract([2])) == {'shape': (2,), 'dtype': dt.float32, 'value': None}
+    assert op.__infer__(abstract([2])) == {'shape': (2,), 'dtype': F32, 'value': None}
     # This AKG source contains neither ir_builder nor compute, so it is hybrid.
     akg = custom.Custom(passthrough, (2,), dt.float32, 'akg', bprop=True)
     assert akg.func_type == 'hybrid' and akg.inplace_assign_output == '0 0'
@@ -888,26 +1155,32 @@ def test_custom_hybrid_analysis_and_autodiff(custom_state):
 
 
 def test_custom_builder_generation_and_import_protocol(custom_state, monkeypatch, tmp_path):
-    import sys
+    """
+    Feature: Custom builder generation and import protocol.
+    Description: Check custom builder generation and import protocol.
+    Expectation: Generation receives the expected YAML/doc paths and process flags, generated modules import
+        correctly, and invalid generation results are rejected.
+    """
     calls = []
     def generate_command(cmd, **kwargs):
         calls.append((cmd, kwargs))
         assert cmd[0] == sys.executable and cmd[1].endswith('ops_generate/gen_custom_ops.py')
-        assert kwargs == dict(check=True, text=True, capture_output=True)
+        assert kwargs == {'check': True, 'text': True, 'capture_output': True}
         assert len(cmd) == 10
         assert cmd[2::2] == ['-i', '-o', '-m', '-d']
         args = dict(zip(cmd[2::2], cmd[3::2]))
         assert args['-m'] == 'yaml_protocol'
-        assert Path(args['-i'], 'input.yaml').read_text() == 'interface: test\n'
-        assert Path(args['-d'], 'doc.yml').read_text() == 'description: test\n'
-        Path(args['-o'], 'gen_custom_ops_def.cc').write_text('// external generator result')
+        assert Path(args['-i'], 'input.yaml').read_text(encoding='utf-8') == 'interface: test\n'
+        assert Path(args['-d'], 'doc.yml').read_text(encoding='utf-8') == 'description: test\n'
+        Path(args['-o'], 'gen_custom_ops_def.cc').write_text('// external generator result', encoding='utf-8')
         return types.SimpleNamespace(returncode=0)
     monkeypatch.setattr(custom.subprocess, 'run', generate_command)
     yaml = tmp_path / 'input.yaml'
     yaml.write_text('interface: test\n')
     doc = tmp_path / 'doc.yml'
     doc.write_text('description: test\n')
-    builder = custom.CustomOpBuilder('yaml_protocol', [], backend='CPU', op_def=str(yaml), op_doc=str(doc), build_dir=str(tmp_path / 'build'))
+    builder = custom.CustomOpBuilder('yaml_protocol', [], backend='CPU', op_def=str(yaml),
+                                     op_doc=str(doc), build_dir=str(tmp_path / 'build'))
     expected = str(tmp_path / 'build' / 'yaml_protocol_auto_generate' / 'gen_custom_ops_def.cc')
     assert builder._get_op_def() == [expected]
     assert builder._get_op_def() == [expected] and len(calls) == 2
@@ -940,7 +1213,12 @@ def test_custom_builder_generation_and_import_protocol(custom_state, monkeypatch
 
 
 def test_custom_builder_load_external_compiler_protocol(custom_state, monkeypatch, tmp_path):
-    import sys
+    """
+    Feature: Custom builder load external compiler protocol.
+    Description: Check custom builder load external compiler protocol.
+    Expectation: The external compiler receives the explicit source/include/compile/link arguments and its
+        imported module is cached by identity.
+    """
     monkeypatch.setattr(custom.CustomOpBuilder, '_loaded_ops', {})
     module_path = tmp_path / 'protocol_extension.py'
     module_path.write_text('def twice(x):\n    return 2*x\n')
@@ -952,15 +1230,19 @@ def test_custom_builder_load_external_compiler_protocol(custom_state, monkeypatc
             calls.append(kwargs)
             return str(module_path)
     monkeypatch.setattr(custom, 'ExtensionBuilder', Compiler)
-    builder = custom.CustomOpBuilder('protocol_extension', ['kernel.cc'], backend='CPU', build_dir=str(tmp_path / 'build'))
+    builder = custom.CustomOpBuilder(
+        'protocol_extension', ['kernel.cc'], backend='CPU', build_dir=str(tmp_path / 'build'))
     old = sys.modules.get('protocol_extension')
     try:
         module = builder.load()
         assert module.twice(3) == 6
         assert builder.load() is module and len(calls) == 1
-        assert calls[0] == dict(module_name='protocol_extension', sources=['kernel.cc'],
-                               extra_include_paths=builder.get_include_paths(), extra_cflags=builder.get_cflags(),
-                               extra_ldflags=builder.get_ldflags())
+        assert calls[0] == {
+    'module_name': 'protocol_extension',
+    'sources': ['kernel.cc'],
+    'extra_include_paths': builder.get_include_paths( ),
+    'extra_cflags': builder.get_cflags(),
+     'extra_ldflags': builder.get_ldflags()}
     finally:
         if old is None:
             sys.modules.pop('protocol_extension', None)
@@ -973,10 +1255,20 @@ def test_custom_builder_load_external_compiler_protocol(custom_state, monkeypatc
     (tuple[Tensor, ...],'tuple_tensor'), (tuple[int, ...],'tuple_int'), (tuple[float, ...],'tuple_float'),
     (tuple[bool, ...],'tuple_bool')])
 def test_custom_typed_abi_mapping(annotation, expected):
+    """
+    Feature: Custom typed abi mapping.
+    Description: Check custom typed abi mapping.
+    Expectation: Each supported annotation maps to the independently specified typed ABI representation.
+    """
     assert custom._map_type_to_spec(annotation) == expected
 
 
 def test_custom_typed_abi_unsupported():
+    """
+    Feature: Custom typed abi unsupported.
+    Description: Check custom typed abi unsupported.
+    Expectation: Invalid custom typed abi unsupported raise TypeError. Diagnostics identify not supported.
+    """
     for annotation in (str, dict, list[str], tuple[str, ...], type(None)):
         with pytest.raises(TypeError, match='not supported'):
             custom._map_type_to_spec(annotation)
@@ -988,11 +1280,20 @@ def cached_relu_graph(value):
 
 
 def test_primitive_cache_real_graph_execution():
+    """
+    Feature: Primitive cache real graph execution.
+    Description: Check primitive cache real graph execution.
+    Expectation: A graph using the cached ReLU primitive computes [0, 0, 3] from [-2, 0, 3].
+    """
     np.testing.assert_array_equal(cached_relu_graph(Tensor([-2., 0., 3.], dt.float32)).asnumpy(), [0., 0., 3.])
 
 
 def test_builder_ascend_flags_without_device(custom_state, monkeypatch, tmp_path):
-    """Backend string flag generation needs no Ascend runtime or device context."""
+    """
+    Feature: Builder ascend flags without device.
+    Description: Backend string flag generation needs no Ascend runtime or device context.
+    Expectation: Backend string flag generation needs no Ascend runtime or device context.
+    """
     monkeypatch.setenv('ASCEND_OPP_PATH', str(tmp_path / 'cann' / 'opp'))
     monkeypatch.setenv('ATB_HOME_PATH', str(tmp_path / 'atb'))
     builder = custom.CustomOpBuilder('flag_protocol', [], backend='Ascend', enable_atb=True, enable_asdsip=True)
@@ -1018,11 +1319,22 @@ def test_builder_ascend_flags_without_device(custom_state, monkeypatch, tmp_path
     (nn.FractionalMaxPool3DWithFixedKsize, {'ksize':(1, 2), 'output_shape':2}),
 ])
 def test_nn_remaining_pad_and_group_errors(cls, kwargs):
+    """
+    Feature: Nn remaining pad and group errors.
+    Description: Check nn remaining pad and group errors.
+    Expectation: Invalid nn remaining pad and group errors raise ValueError.
+    """
     with pytest.raises(ValueError):
         cls(**kwargs)
 
 
 def test_pool_argmax_and_remaining_dynamic_axes(monkeypatch):
+    """
+    Feature: Pool argmax and remaining dynamic axes.
+    Description: Check pool argmax and remaining dynamic axes.
+    Expectation: Pooling retains explicit normalized kernels and dynamic dimensions, recurrent directions remain
+        correct, and primitive dispatch preserves operand identity.
+    """
     max_arg = type('MaxPoolWithArgmax', (nn._Pool,), {})(3, 2, 'valid')
     assert max_arg.kernel_size == (1, 3, 3, 1) and max_arg.strides == (1, 2, 2, 1)
     assert max_arg.infer_shape([2, 3, 6, 8]) == [2, 3, 2, 3]
@@ -1061,7 +1373,17 @@ def test_pool_argmax_and_remaining_dynamic_axes(monkeypatch):
 
 
 def test_primitive_signatures_layouts_and_argument_registration():
+    """
+    Feature: Primitive signatures layouts and argument registration.
+    Description: Check primitive signatures layouts and argument registration.
+    Expectation: Primitive signatures and layouts retain the expected structured metadata, Python-only arguments
+        register correctly, and invalid representations are rejected.
+    """
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.ops import signature as sig
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.parallel.shard import Layout
     op = prim.Primitive('SignatureExample')
     signatures = op._fill_signature([('x', sig.sig_rw.RW_READ, sig.sig_kind.KIND_POSITIONAL_KEYWORD)])
@@ -1069,7 +1391,8 @@ def test_primitive_signatures_layouts_and_argument_registration():
     with pytest.raises(ValueError, match='Signature'):
         op._fill_signature([('x',)])
     layout = Layout((2, 2), ('data', 'model'))('data', 'model')
-    assert op._extract_layout_value((layout,), 'layout') == ({'device_matrix':(2, 2), 'tensor_map':(1, 0), 'interleaved_parallel':False, 'alias_name':('data', 'model')},)
+    assert op._extract_layout_value((layout,), 'layout') == (
+        {'device_matrix':(2, 2), 'tensor_map':(1, 0), 'interleaved_parallel':False, 'alias_name':('data', 'model')},)
     with pytest.raises(ValueError, match='in_strategy type'):
         op.shard(((2, 1),), (layout,))
     op.attrs['python_only'] = 17
@@ -1077,6 +1400,8 @@ def test_primitive_signatures_layouts_and_argument_registration():
     class CheckedPrimitive(prim.PrimitiveWithCheck):
         substitute_name = 'CheckedAlias'
         @prim.prim_arg_register
+        # prim_arg_register performs Primitive base initialization.
+        # pylint: disable-next=super-init-not-called
         def __init__(self, scale=3):
             self.init_prim_io_names(['x'], ['y'])
     checked = CheckedPrimitive(4)
@@ -1085,7 +1410,11 @@ def test_primitive_signatures_layouts_and_argument_registration():
 
 
 def test_debug_security_build_boundary(monkeypatch):
-    """Binary security-build setting is external to Python constructor validation."""
+    """
+    Feature: Debug security build boundary.
+    Description: Binary security-build setting is external to Python constructor validation.
+    Expectation: Binary security-build setting is external to Python constructor validation.
+    """
     monkeypatch.setattr(debug.security, 'enable_security', lambda: True)
     for cls in (debug.ScalarSummary, debug.ImageSummary, debug.TensorSummary, debug.HistogramSummary,
                 debug.TensorDump, debug.Print, debug.Assert):
@@ -1094,6 +1423,12 @@ def test_debug_security_build_boundary(monkeypatch):
 
 
 def test_debug_morph_class_dispatch_and_hook_warning():
+    """
+    Feature: Debug morph class dispatch and hook warning.
+    Description: Check debug morph class dispatch and hook warning.
+    Expectation: Class-level Morph dispatch preserves shape/dtype and HookBackward records the requested legacy
+        cell identifier.
+    """
     morph = debug.Morph(numpy_increment, infer_same_shape, infer_same_type)
     # prim_attr_register stores callback arguments under infer_shape/infer_dtype;
     # direct class dispatch exercises the real forwarding implementation as well.
@@ -1105,6 +1440,12 @@ def test_debug_morph_class_dispatch_and_hook_warning():
 
 
 def test_custom_environment_and_compiler_failure_boundaries(custom_state, monkeypatch, tmp_path):
+    """
+    Feature: Custom environment and compiler failure boundaries.
+    Description: Check custom environment and compiler failure boundaries.
+    Expectation: Rank-specific cache paths are retained and compiler, import, platform, and unsupported-source
+        failures propagate their specified diagnostics.
+    """
     assert custom._is_path_under_dir('relative.cc', str(tmp_path)) is False
     monkeypatch.setattr(custom.GlobalComm, 'INITED', True)
     def rank_query():
@@ -1130,7 +1471,8 @@ def test_custom_environment_and_compiler_failure_boundaries(custom_state, monkey
     with pytest.raises(RuntimeError, match='syntax error at line 1'):
         custom._compile_aot(str(tmp_path / 'invalid.cc'))
     with monkeypatch.context() as boundary:
-        boundary.setattr(custom.importlib.util, 'find_spec', lambda name: types.SimpleNamespace(origin='/missing/entry.py'))
+        boundary.setattr(custom.importlib.util, 'find_spec',
+                         lambda name: types.SimpleNamespace(origin='/missing/entry.py'))
         with pytest.raises(RuntimeError, match='__init__.py'):
             custom._compile_aot(str(tmp_path / 'another.cc'))
     with monkeypatch.context() as boundary:
@@ -1143,6 +1485,12 @@ def test_custom_environment_and_compiler_failure_boundaries(custom_state, monkey
 
 
 def test_custom_callable_registration_and_fake_output(custom_state, monkeypatch):
+    """
+    Feature: Custom callable registration and fake output.
+    Description: Check custom callable registration and fake output.
+    Expectation: Callable registration forwards the exact CPU metadata and source path once and retains target,
+        input, and attribute declarations.
+    """
     calls = []
     class NativeRegistry:
         def reg_op(self, info, path):
@@ -1173,8 +1521,14 @@ def test_custom_callable_registration_and_fake_output(custom_state, monkeypatch)
     op._generate_get_worspace_size_func_by_types(['aclTensor*'])
 
 
-@pytest.mark.xfail(strict=True, raises=AttributeError, reason='Custom._auto_infer scalar fallback reads .dtype although Python scalars have no dtype')
+@pytest.mark.xfail(strict=True, raises=AttributeError,
+                   reason='Custom._auto_infer scalar fallback reads .dtype although Python scalars have no dtype')
 def test_custom_auto_infer_python_scalar(custom_state):
+    """
+    Feature: Custom auto infer python scalar.
+    Description: Check custom auto infer python scalar.
+    Expectation: A scalar callback result infers shape (1,), int64 dtype, and concrete value two.
+    """
     def scalar_output(x):
         return len(x)
     op = custom.Custom(scalar_output, (), dt.int64, 'pyfunc')
@@ -1183,6 +1537,14 @@ def test_custom_auto_infer_python_scalar(custom_state):
 
 
 def test_custom_backward_infer_callback_protocol(custom_state):
+    """
+    Feature: Custom backward infer callback protocol.
+    Description: Check custom backward infer callback protocol.
+    Expectation: Backward inference preserves the two gradient abstracts and autodiff flag, while unsupported
+        large-input autodiff returns no backward callback.
+    """
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.ops.operations._ms_kernel import kernel
     @kernel
     def pair(x, y):
@@ -1192,7 +1554,7 @@ def test_custom_backward_infer_callback_protocol(custom_state):
                     if isinstance(cell.cell_contents, custom.Custom))
     result = backward.__infer__(abstract([2]), abstract([3]), abstract([2]), abstract([3]),
                                 abstract([2]), abstract([3]))
-    assert result == dict(shape=([2], [3]), dtype=(F32, F32), value=None)
+    assert result == {'shape': ([2], [3]), 'dtype': (F32, F32), 'value': None}
     assert backward.autodiff is True
     @kernel
     def eleven_inputs(a, b, c, d, e, f, g, h, i, j, k):
@@ -1201,6 +1563,12 @@ def test_custom_backward_infer_callback_protocol(custom_state):
 
 
 def test_custom_registration_failure_protocol(custom_state, monkeypatch, tmp_path):
+    """
+    Feature: Custom registration failure protocol.
+    Description: Check custom registration failure protocol.
+    Expectation: Native rejection forwards the expected payload, raises ValueError, and leaves the failed name
+        unregistered; JSON names remain deterministic.
+    """
     calls = []
     class RejectingRegistry:
         def reg_op(self, info, path):
@@ -1219,6 +1587,12 @@ def test_custom_registration_failure_protocol(custom_state, monkeypatch, tmp_pat
 
 
 def test_primitive_place_parallel_mode_rejection():
+    """
+    Feature: Primitive place parallel mode rejection.
+    Description: Check primitive place parallel mode rejection.
+    Expectation: Invalid primitive place parallel mode rejection raise RuntimeError. Diagnostics identify mixed
+        with other parallel.
+    """
     old = context.get_auto_parallel_context('parallel_mode')
     try:
         context.set_auto_parallel_context(parallel_mode='data_parallel')
@@ -1229,11 +1603,21 @@ def test_primitive_place_parallel_mode_rejection():
 
 
 def test_crop_resize_grad_rejects_non_numeric_type():
+    """
+    Feature: Crop resize grad rejects non numeric type.
+    Description: Check crop resize grad rejects non numeric type.
+    Expectation: Invalid crop resize grad non numeric type raise TypeError. Diagnostics identify T.
+    """
     with pytest.raises(TypeError, match='T'):
         image.CropAndResizeGradImage(dt.string)
 
 
 def test_custom_elimination_extension_protocol(custom_state):
+    """
+    Feature: Custom elimination extension protocol.
+    Description: Check custom elimination extension protocol.
+    Expectation: An elimination extension returns the original tensor by identity.
+    """
     class IdentityCustom(custom.Custom):
         def check_elim(self, value):
             return True, value
@@ -1243,18 +1627,36 @@ def test_custom_elimination_extension_protocol(custom_state):
 
 
 def test_custom_multiple_return_analysis_warning(custom_state):
+    """
+    Feature: Custom multiple return analysis warning.
+    Description: Check custom multiple return analysis warning.
+    Expectation: Multiple-return hybrid analysis retains hybrid metadata, the expected abstract output, and the
+        callback's literal numeric behavior.
+    """
     def choose(x):
         if x[0] > 0:
             return x
         return -x
     op = custom.Custom(choose, (2,), dt.float32, 'akg', bprop=True)
     assert op.func_type == 'hybrid'
-    assert op.__infer__(abstract([2])) == dict(shape=(2,), dtype=dt.float32, value=None)
+    assert op.__infer__(abstract([2])) == {'shape': (2,), 'dtype': dt.float32, 'value': None}
     np.testing.assert_array_equal(op.func(np.array([-1., 2.], np.float32)), [1., -2.])
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason='Primitive._check_shard_strategy guards uniformity with if not is_layout, so mixed tuple/Layout inputs escape validation')
+@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception,
+                   reason=(
+                       'Primitive._check_shard_strategy guards uniformity with if not is_layout, '
+                       'so mixed tuple/Layout inputs escape validation'
+                   ))
 def test_primitive_rejects_mixed_strategy_representation():
+    """
+    Feature: Primitive rejects mixed strategy representation.
+    Description: Check primitive rejects mixed strategy representation.
+    Expectation: Invalid primitive mixed strategy representation raise TypeError. Diagnostics identify all tuple
+        type or all Layout type.
+    """
+    # Import at the test boundary so fixture isolation is established first.
+    # pylint: disable-next=import-outside-toplevel
     from mindspore.parallel.shard import Layout
     layout = Layout((2,), ('data',))('data')
     with pytest.raises(TypeError, match='all tuple type or all Layout type'):

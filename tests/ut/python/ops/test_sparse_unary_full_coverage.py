@@ -63,7 +63,12 @@ def make_sparse(kind, values):
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 @pytest.mark.parametrize('operation,oracle,values', CASES, ids=[case[0] for case in CASES])
 def test_sparse_unary_values_and_structure(kind, operation, oracle, values):
-    """Every unary API must retain coordinates, shape and the correct value dtype."""
+    """
+    Feature: CSR and COO unary operations
+    Description: Every unary API must retain coordinates, shape and the correct value dtype.
+    Expectation: Every CSR/COO wrapper matches its NumPy value oracle while preserving exact container type,
+        coordinates and shape.
+    """
     value = make_sparse(kind, values)
     result = getattr(sparse, f'{kind}_{operation}')(value)
     expected = oracle(np.array(values, np.float32))
@@ -79,6 +84,10 @@ def test_sparse_unary_values_and_structure(kind, operation, oracle, values):
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 @pytest.mark.parametrize('operation', [case[0] for case in CASES])
 def test_sparse_unary_rejects_dense_input(kind, operation):
-    """Dense values must not be silently interpreted as sparse storage."""
+    """
+    Feature: CSR and COO unary operations
+    Description: Dense values must not be silently interpreted as sparse storage.
+    Expectation: Every unary wrapper rejects a dense Tensor with the CSR/COO storage diagnostic.
+    """
     with pytest.raises(TypeError, match='Expects (CSR|COO)Tensor'):
         getattr(sparse, f'{kind}_{operation}')(ms.Tensor([1, 2], ms.float32))

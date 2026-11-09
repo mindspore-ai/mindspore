@@ -6,6 +6,9 @@
 External communication endpoints return explicitly supplied peer responses. These
 are protocol tests, not end-to-end distributed communication correctness tests.
 """
+# Unit coverage intentionally exercises internal Python inference and wrapper helpers.
+# pylint: disable=protected-access
+import builtins
 import io
 import inspect
 import json
@@ -24,8 +27,8 @@ from mindspore.ops.function import comm_func as F
 from mindspore.ops._grad_experimental import grad_comm_ops as G
 
 
-@pytest.fixture(autouse=True, scope='module')
-def cpu_context():
+@pytest.fixture(autouse=True, scope='module', name='cpu_context')
+def fixture_cpu_context():
     old = {k: C.get_context(k) for k in ('mode', 'device_target', 'pynative_synchronize')}
     C.set_context(mode=C.PYNATIVE_MODE, device_target='CPU', pynative_synchronize=True)
     yield
@@ -60,8 +63,8 @@ class HandleBoundary:
         return self.dump
 
 
-@pytest.fixture
-def isolated_context():
+@pytest.fixture(name='isolated_context')
+def fixture_isolated_context():
     # Bypass singleton construction; never change the application's C++ context.
     ctx = object.__new__(C._Context)
     ctx._context_handle = HandleBoundary()
@@ -100,14 +103,25 @@ def isolated_context():
     ('set_jit_config', {'jit_level':'O1', 'infer_boost':'on'}, ValueError),
 ])
 def test_context_validation(isolated_context, method, value, error):
+    """
+    Feature: Context validation.
+    Description: Check context validation.
+    Expectation: Invalid context arguments raise the parameterized exception type.
+    """
     with pytest.raises(error):
         getattr(isolated_context, method)(value)
 
 
 def test_context_valid_storage_and_properties(isolated_context, monkeypatch):
+    """
+    Feature: Context valid storage and properties.
+    Description: Check context valid storage and properties.
+    Expectation: Context stores the explicit GPU/Ascend/topology options and property values and rejects invalid
+        configuration fields.
+    """
     ctx = isolated_context
-    cfg = dict(conv_fprop_algo='direct', conv_dgrad_algo='algo_0', conv_wgrad_algo='algo_1',
-               conv_allow_tf32=True, matmul_allow_tf32=False)
+    cfg = {'conv_fprop_algo': 'direct', 'conv_dgrad_algo': 'algo_0',
+        'conv_wgrad_algo': 'algo_1', 'conv_allow_tf32': True, 'matmul_allow_tf32': False}
     ctx.set_gpu_config(cfg)
     assert ctx.gpu_config == cfg
     for key, value in cfg.items():
@@ -144,6 +158,12 @@ def test_context_valid_storage_and_properties(isolated_context, monkeypatch):
 
 
 def test_context_files_and_switch_stack(monkeypatch, tmp_path):
+    """
+    Feature: Context files and switch stack.
+    Description: Check context files and switch stack.
+    Expectation: Valid directories and switch-stack push/pop preserve their expected paths and depths; invalid
+        paths and permissions are rejected.
+    """
     with pytest.raises(ValueError):
         C._make_directory(' ')
     assert C._make_directory(str(tmp_path)) == str(tmp_path)
@@ -166,6 +186,12 @@ def test_context_files_and_switch_stack(monkeypatch, tmp_path):
 
 
 def test_context_json_and_memory(isolated_context, monkeypatch, tmp_path):
+    """
+    Feature: Context json and memory.
+    Description: Check context json and memory.
+    Expectation: Memory settings and valid JSON/config paths retain expected values, while missing files,
+        invalid JSON, and unsupported options are rejected.
+    """
     ctx = isolated_context
     monkeypatch.setattr(C, 'get_jit_config', lambda: {'backend':'GE'})
     ctx.set_mempool_block_size('invalid-but-ignored-by-ge')
@@ -204,6 +230,12 @@ def test_context_json_and_memory(isolated_context, monkeypatch, tmp_path):
 
 
 def test_context_public_validation(monkeypatch, isolated_context):
+    """
+    Feature: Context public validation.
+    Description: Check context public validation.
+    Expectation: Public context cache flags and parameter-server forwarding retain the expected values and
+        removed/invalid options raise ValueError.
+    """
     monkeypatch.setattr(C, 'K_CONTEXT', isolated_context)
     for key in ('exception_dump', 'precompile_only', 'grad_for_scalar'):
         with pytest.raises(ValueError, match='removed'):
@@ -222,13 +254,21 @@ def test_context_public_validation(monkeypatch, isolated_context):
     assert C.get_ps_context('enable_ps') == ('ps', 'enable_ps')
 
 
-@pytest.fixture
-def comm_environment(monkeypatch):
+@pytest.fixture(name='comm_environment')
+def fixture_comm_environment(monkeypatch):
     monkeypatch.setattr(O, 'get_rank', lambda group: 1)
     monkeypatch.setattr(O, 'get_group_size', lambda group: 2)
 
 
 def test_comm_primitive_inference(comm_environment):
+    """
+    Feature: Comm primitive inference.
+    Description: Check comm primitive inference.
+    Expectation: Communication primitives infer the explicit static/dynamic shapes and dtypes, preserve endpoint
+        metadata, and reject invalid ranks or arguments.
+    """
+    # Table cases exercise heterogeneous decorated/native API signatures.
+    # pylint: disable=too-many-function-args,no-value-for-parameter
     for ctor in (O.AllGather, O._MiniStepAllGather):
         prim = ctor('test-group')
         extra = ([0],) if ctor is O._MiniStepAllGather else ()
@@ -263,7 +303,8 @@ def test_comm_primitive_inference(comm_environment):
     for ctor in (O._MirrorMiniStepOperator, O._VirtualAdd, O._VirtualAssignKvCache, O._VirtualOutput):
         prim = ctor()
         assert (prim.infer_shape([2,3]) if ctor is O._VirtualOutput else prim.infer_shape([2,3],[2,3])) == [2,3]
-        assert (prim.infer_dtype(ms.float32) if ctor is O._VirtualOutput else prim.infer_dtype(ms.float32,ms.float32)) == ms.float32
+        assert (prim.infer_dtype(ms.float32) if ctor is O._VirtualOutput else prim.infer_dtype(
+            ms.float32,ms.float32)) == ms.float32
     send = O.Send(0, 1, 'test-group')
     assert send.infer_shape([2,3]) == [2,3]
     assert send.infer_dtype(ms.float32) == ms.float32
@@ -278,6 +319,12 @@ def test_comm_primitive_inference(comm_environment):
 
 
 def test_comm_serialization_and_validation(monkeypatch):
+    """
+    Feature: Comm serialization and validation.
+    Description: Check comm serialization and validation.
+    Expectation: Objects round-trip through tensor encoding, padding is respected, restricted types and
+        serialization failures are rejected with the expected errors.
+    """
     obj = {'items':[1,2,'safe'], 'pair':(True,None)}
     encoded, size = F._object_to_tensor(obj)
     assert F._tensor_to_object(encoded, size) == obj
@@ -320,6 +367,12 @@ def test_comm_serialization_and_validation(monkeypatch):
 
 
 def test_comm_inplace_and_handles(monkeypatch):
+    """
+    Feature: Comm inplace and handles.
+    Description: Check comm inplace and handles.
+    Expectation: In-place policies, wait/synchronize ordering, and default handles match the explicit call
+        sequences and unsupported configurations are rejected.
+    """
     monkeypatch.setattr(F, '_COMM_ENABLE_PLACE', F._COMM_ENABLE_PLACE.copy())
     assert F.is_inplace_func('does-not-exist') is False
     F.set_comm_ops_inplace(False)
@@ -353,9 +406,19 @@ class Subject(SimpleNamespace):
 
 
 def subject(**kwargs):
-    base = dict(group='group', group_back='back', rank=1, rank_size=2, dev_num=2,
-                mean_flag=False, fusion=7, instance_name='forward', parameter='weight',
-                op=O.ReduceOp.SUM, do_mirror=True, with_mirror_operator=True)
+    base = {
+    'group': 'group',
+    'group_back': 'back',
+    'rank': 1,
+    'rank_size': 2,
+    'dev_num': 2,
+    'mean_flag': False,
+    'fusion': 7,
+    'instance_name': 'forward',
+    'parameter': 'weight',
+    'op': O.ReduceOp.SUM,
+    'do_mirror': True,
+     'with_mirror_operator': True}
     base.update(kwargs)
     return Subject(**base)
 
@@ -390,8 +453,8 @@ class UnaryEndpoint:
         return self
 
 
-@pytest.fixture
-def grad_boundary(monkeypatch):
+@pytest.fixture(name='grad_boundary')
+def fixture_grad_boundary(monkeypatch):
     endpoints = []
     response = [t([8.,12.])]
     def all_reduce(op=O.ReduceOp.SUM, group=O.GlobalComm.WORLD_COMM_GROUP):
@@ -435,6 +498,12 @@ def assert_gradient_endpoint(endpoints, kind, arguments, attrs, name, payloads):
 
 @pytest.mark.parametrize('op,expected', [('sum',[8,12]), ('prod',[4,4]), ('max',[0,12])])
 def test_all_reduce_gradient_protocol_and_local_math(grad_boundary, op, expected):
+    """
+    Feature: All reduce gradient protocol and local math.
+    Description: Check all reduce gradient protocol and local math.
+    Expectation: AllReduce backward forwards the expected reduction/group/name and produces the independent
+        sum/product gradient values.
+    """
     endpoints, _ = grad_boundary
     x, out, dout = t([2,3]), t([4,3]), t([6,7])
     result = G.get_bprop_all_reduce(subject(op=op))(x,out,dout)
@@ -447,11 +516,19 @@ def test_all_reduce_gradient_protocol_and_local_math(grad_boundary, op, expected
 
 
 def test_local_virtual_gradients(grad_boundary):
+    """
+    Feature: Local virtual gradients.
+    Description: Check local virtual gradients.
+    Expectation: Virtual gradients preserve sensitivities and container structure, return explicit zero
+        gradients where required, and avoid unnecessary communication.
+    """
     x, dout = t([2.,3.]), t([4.,6.])
     a,b = G.get_bprop_virtual_add(None)(x,t([1.,2.]),None,dout)
-    check(a,[5,8]); check(b,[0,0])
+    check(a,[5,8])
+    check(b,[0,0])
     a,b = G.get_bprop_virtual_accu_grad(None)(x,t([7.,8.]),None,dout)
-    check(a,[7,8]); check(b,0)
+    check(a,[7,8])
+    check(b,0)
     for dtype in (ms.bool_, ms.int16, ms.int32):
         d = t([1,0],dtype)
         assert G.get_bprop_virtual_div_operator(subject(divisor=2))(x,None,d)[0] is d
@@ -460,21 +537,33 @@ def test_local_virtual_gradients(grad_boundary):
     for values in ((dout,dout), [dout,dout]):
         result = div(x,None,values)[0]
         assert isinstance(result,type(values))
-        for value in result: check(value,[2,3])
+        for value in result:
+            check(value,[2,3])
     assert G.get_bprop_broad_cast(None)(x,None,dout) == (dout,)
     check(G.get_bprop_get_tensor_slice_operator(None)(x,None,None,None,dout)[0],[0,0])
     y = Parameter(t([1.,2.]),name='accum')
     a,b = G.get_bprop_virtual_assign_add(subject(group=None))(x,y,None,dout)
-    check(y,[5,8]); check(a,0); check(b,0)
+    check(y,[5,8])
+    check(a,0)
+    check(b,0)
     for seq, expected in [(0,[0,0]), (1,[5,8])]:
         y = Parameter(t([1.,2.]),name='kv')
         values = G.get_bprop_virtual_assign_kv_cache(None)(x,y,t(seq,ms.int32),None,dout)
-        check(values[0],[5,8]); check(y,expected)
+        check(values[0],[5,8])
+        check(y,expected)
+    # The exact empty-list result is part of this interface contract.
+    # pylint: disable-next=use-implicit-booleaness-not-comparison
     assert grad_boundary[0] == []
 
 
 @pytest.mark.parametrize('mean', [False,True])
 def test_all_gather_gradient_protocol(grad_boundary, mean):
+    """
+    Feature: All gather gradient protocol.
+    Description: Check all gather gradient protocol.
+    Expectation: Backward forwards the sensitivity and fusion metadata and applies the expected optional mean
+        scaling; zero-size configurations are rejected.
+    """
     endpoints,_ = grad_boundary
     dout=t([1.,2.,3.,4.])
     result=G.get_bprop_all_gather(subject(mean_flag=mean))(t([0,0]),None,dout)
@@ -487,8 +576,15 @@ def test_all_gather_gradient_protocol(grad_boundary, mean):
         G.get_bprop_all_gather(subject(rank_size=0))
 
 
-@pytest.mark.parametrize('mean,mirror,shard,add', [(a,b,c,d) for a in [False,True] for b,c,d in [(True,False,False),(True,True,False),(True,True,True),(False,False,False)]])
+@pytest.mark.parametrize('mean,mirror,shard,add', [(a,b,c,d) for a in [False,True]
+                         for b,c,d in [(True,False,False),(True,True,False),(True,True,True),(False,False,False)]])
 def test_mini_all_gather_gradient(grad_boundary,monkeypatch,mean,mirror,shard,add):
+    """
+    Feature: Mini all gather gradient.
+    Description: Check mini all gather gradient.
+    Expectation: Mini all-gather backward returns the explicit mirrored/sharded gradients and applies the
+        expected accumulator updates and zero gradients.
+    """
     endpoints,response=grad_boundary
     response[0]=t([8.,12.,16.,20.])
     monkeypatch.setattr(G,'_get_grad_accumulation_shard',lambda:shard)
@@ -499,48 +595,80 @@ def test_mini_all_gather_gradient(grad_boundary,monkeypatch,mean,mirror,shard,ad
     check(dz,np.zeros(z.shape))
     assert_gradient_endpoint(endpoints, 'AllReduce', ('sum', 'group'), {'fusion': 7}, 'grad_forward',
                              ([[3, 4, 5, 6]] if shard else [[4, 6, 8, 10]]) if mirror else [])
-    if mirror and not shard: check(z,[4,6,8,10])
-    if mirror and shard and add: check(z,[9,12] if mean else [17,22])
+    if mirror and not shard:
+        check(z,[4,6,8,10])
+    if mirror and shard and add:
+        check(z,[9,12] if mean else [17,22])
     if not mirror or (shard and not add):
         check(z, [1, 2] if shard else [1, 2, 3, 4])
 
 
 @pytest.mark.parametrize('mean,mirror',[(False,False),(True,False),(False,True),(True,True)])
 def test_mirror_mini_gradient(grad_boundary,mean,mirror):
+    """
+    Feature: Mirror mini gradient.
+    Description: Check mirror mini gradient.
+    Expectation: Mini mirror backward honors mean/mirror branches, forwards fusion and parameter metadata, and
+        updates accumulators to the literal expected values.
+    """
     endpoints,_=grad_boundary
-    z=Parameter(t([1,2]),name='mirror_accum'); dout=t([3,4])
+    z=Parameter(t([1,2]),name='mirror_accum')
+    dout=t([3,4])
     dx,dz=G.get_bprop_mirror_mini_step_operator(subject(mean_flag=mean,do_mirror=mirror))(t([0,0]),z,None,dout)
     check(dx,([4,6] if mean else [8,12]) if mirror else ([1.5,2] if mean else [3,4]))
     check(dz,[0,0])
-    if mirror: check(z,[4,6]); assert endpoints[0][2].attrs=={'fusion':7,'parameter':'weight'}
-    else: check(z, [1, 2])
+    if mirror:
+        check(z,[4,6])
+        assert endpoints[0][2].attrs=={'fusion':7,'parameter':'weight'}
+    else:
+        check(z, [1, 2])
     assert_gradient_endpoint(endpoints, 'AllReduce', ('sum', 'group'),
                              {'fusion': 7, 'parameter': 'weight'}, 'grad_mirrorforward',
                              [[4, 6]] if mirror else [])
 
 
-@pytest.mark.parametrize('mean,with_mirror,mirror',[(a,b,c) for a in [False,True] for b in [False,True] for c in [False,True]])
+@pytest.mark.parametrize('mean,with_mirror,mirror',[(a,b,c)
+                         for a in [False,True] for b in [False,True] for c in [False,True]])
 def test_micro_all_gather_gradient(grad_boundary,mean,with_mirror,mirror):
+    """
+    Feature: Micro all gather gradient.
+    Description: Check micro all gather gradient.
+    Expectation: Micro all-gather backward preserves segment/fusion metadata and returns the explicit
+        gradient/accumulator values for each mirror branch.
+    """
     endpoints,_=grad_boundary
-    z=t([3,5]); dout=t([1,2])
-    dx,dz=G.get_bprop_micro_step_all_gather(subject(mean_flag=mean,with_mirror_operator=with_mirror,do_mirror=mirror,segment=4))(t([0,0]),z,None,dout)
+    z=t([3,5])
+    dout=t([1,2])
+    dx,dz=G.get_bprop_micro_step_all_gather(
+        subject(mean_flag=mean,with_mirror_operator=with_mirror,do_mirror=mirror,segment=4))(t([0,0]),z,None,dout)
     check(dx,([4,6] if mean else [8,12]) if mirror else ([1,2] if with_mirror else [3,5]))
     check(dz,1)
-    if mirror: assert endpoints[0][2].attrs=={'fusion':7,'segment':4}
+    if mirror:
+        assert endpoints[0][2].attrs=={'fusion':7,'segment':4}
     if mirror:
         assert_gradient_endpoint(endpoints, 'ReduceScatter', ('sum', 'group'), {'fusion': 7, 'segment': 4},
                                  'grad_forward', [[1, 2]] if with_mirror else [[3, 5]])
     else:
+        # The exact empty-list result is part of this interface contract.
+        # pylint: disable-next=use-implicit-booleaness-not-comparison
         assert endpoints == []
 
 
 @pytest.mark.parametrize('mean,dev_num',[(False,1),(False,2),(True,2)])
 def test_mirror_dense_gradient(grad_boundary,mean,dev_num):
+    """
+    Feature: Mirror dense gradient.
+    Description: Check mirror dense gradient.
+    Expectation: Dense mirror gradients preserve values on one device and apply the explicit reduction and
+        optional mean on multiple devices.
+    """
     endpoints, _ = grad_boundary
     dout=t([3,4])
     dx,=G.get_bprop_mirror_operator(subject(mean_flag=mean,dev_num=dev_num))(t([0,0]),None,dout)
     check(dx,[3,4] if dev_num==1 else ([4,6] if mean else [8,12]))
     if dev_num == 1:
+        # The exact empty-list result is part of this interface contract.
+        # pylint: disable-next=use-implicit-booleaness-not-comparison
         assert endpoints == []
     else:
         assert_gradient_endpoint(endpoints, 'AllReduce', ('sum', 'group'),
@@ -549,16 +677,30 @@ def test_mirror_dense_gradient(grad_boundary,mean,dev_num):
 
 @pytest.mark.parametrize('text', ['(1)', '(bad,2)', '(1,2', '1,2)'])
 def test_log_invalid_vlog(text):
+    """
+    Feature: Log invalid vlog.
+    Description: Check log invalid vlog.
+    Expectation: Malformed verbose-log specifications return false and an empty parsed-level tuple.
+    """
     assert L.parse_vlog_level(text) == (False,())
 
 
 def test_log_validation_and_directories(monkeypatch,tmp_path):
+    """
+    Feature: Log validation and directories.
+    Description: Check log validation and directories.
+    Expectation: Valid log directories are created and returned; invalid log settings, paths, and permissions
+        report the expected errors.
+    """
     for bad in (None, 1, ' '):
-        with pytest.raises(TypeError): L._make_directory(bad)
+        with pytest.raises(TypeError):
+            L._make_directory(bad)
     assert L._make_directory(str(tmp_path)) == str(tmp_path)
-    with pytest.raises(ValueError): L._check_directory_by_regular(1)
+    with pytest.raises(ValueError):
+        L._check_directory_by_regular(1)
     for name in (None,'test'):
-        with pytest.raises(ValueError): L._check_directory_by_regular('illegal space',prim_name=name)
+        with pytest.raises(ValueError):
+            L._check_directory_by_regular('illegal space',prim_name=name)
     def denied(path,mode,exist_ok):
         raise PermissionError('injected')
     with monkeypatch.context() as patch:
@@ -570,7 +712,8 @@ def test_log_validation_and_directories(monkeypatch,tmp_path):
     for cfg in ({'stderr_level':'8'}, {'level':'8'}, {'console':'bad'}, {'console':'0'},
                 {'console':'0','filepath':str(tmp_path),'maxBytes':'bad'},
                 {'console':'0','filepath':str(tmp_path),'backupCount':'bad'}):
-        with pytest.raises(ValueError): L._verify_config(cfg)
+        with pytest.raises(ValueError):
+            L._verify_config(cfg)
     with monkeypatch.context() as patch:
         patch.setattr(L.os,'umask',lambda mask:0)
         L._verify_config({'console':'0','filepath':str(tmp_path/'created')})
@@ -578,6 +721,12 @@ def test_log_validation_and_directories(monkeypatch,tmp_path):
 
 
 def test_log_formatter_rollover_and_config(monkeypatch,tmp_path):
+    """
+    Feature: Log formatter rollover and config.
+    Description: Check log formatter rollover and config.
+    Expectation: Log rollover preserves the previous record, formatting normalizes source paths, configuration
+        retains explicit values, and handler cleanup empties the logger.
+    """
     path=tmp_path/'runtime.log'
     handler=L._MultiCompatibleRotatingFileHandler(str(path),maxBytes=30,backupCount=2)
     try:
@@ -593,7 +742,8 @@ def test_log_formatter_rollover_and_config(monkeypatch,tmp_path):
         logger=logging.Logger('runtime-comm-isolated',logging.INFO)
         handler.name='FileHandler'
         logger.addHandler(handler)
-        stderr=logging.StreamHandler(io.StringIO()); stderr.setLevel(logging.ERROR)
+        stderr=logging.StreamHandler(io.StringIO())
+        stderr.setLevel(logging.ERROR)
         logger.addHandler(stderr)
         monkeypatch.setattr(L,'GLOBAL_LOGGER',logger)
         cfg=L.get_log_config()
@@ -604,6 +754,8 @@ def test_log_formatter_rollover_and_config(monkeypatch,tmp_path):
         assert L._setup_logger({}) is logger
         logger.removeHandler(handler)
         L._clear_handler(logger)
+        # The exact empty-list result is part of this interface contract.
+        # pylint: disable-next=use-implicit-booleaness-not-comparison
         assert logger.handlers==[]
         logger.addHandler(stderr)
         assert L.get_log_config()=={'GLOG_v':'1','GLOG_logtostderr':'1'}
@@ -614,13 +766,27 @@ def test_log_formatter_rollover_and_config(monkeypatch,tmp_path):
 @pytest.mark.parametrize('env,expected', [({},'0'), ({'MS_NODE_ID':'3'},'3'),
     ({'OMPI_COMM_WORLD_RANK':'2'},'2'), ({'RANK_ID':'1'},'1')])
 def test_log_rank_env(monkeypatch,env,expected):
-    for key in ('RANK_ID','OMPI_COMM_WORLD_RANK','MS_NODE_ID'): monkeypatch.delenv(key,raising=False)
-    for key,value in env.items(): monkeypatch.setenv(key,value)
+    """
+    Feature: Log rank env.
+    Description: Check log rank env.
+    Expectation: Rank environment precedence resolves to the independently specified rank string.
+    """
+    for key in ('RANK_ID','OMPI_COMM_WORLD_RANK','MS_NODE_ID'):
+        monkeypatch.delenv(key,raising=False)
+    for key,value in env.items():
+        monkeypatch.setenv(key,value)
     assert L._get_rank_id()==expected
 
 
 def test_log_rank_conflict_and_stack(monkeypatch):
-    monkeypatch.setenv('RANK_ID','1'); monkeypatch.setenv('OMPI_COMM_WORLD_RANK','2')
+    """
+    Feature: Log rank conflict and stack.
+    Description: Check log rank conflict and stack.
+    Expectation: Conflicting rank values emit the expected warning, caller/stack metadata is retained, and
+        decorated functions preserve return values.
+    """
+    monkeypatch.setenv('RANK_ID','1')
+    monkeypatch.setenv('OMPI_COMM_WORLD_RANK','2')
     with pytest.warns(UserWarning,match='different values'):
         assert L._get_rank_id()=='1'
     assert 'test_log_rank_conflict_and_stack' in L._get_stack_info(inspect.currentframe())
@@ -630,10 +796,18 @@ def test_log_rank_conflict_and_stack(monkeypatch):
 
 
 def test_process_group_validation_and_boundary(monkeypatch):
+    """
+    Feature: Process group validation and boundary.
+    Description: Check process group validation and boundary.
+    Expectation: Initialization forwards backend, timeout, rank, size, and store as specified; invalid arguments
+        and launcher exit behavior are preserved.
+    """
     calls=[]
     store = object.__new__(F.TCPStore)  # Allocate inert Python wrapper without __init__/native resources.
-    def init(backend): calls.append(('init',backend))
-    def size(group=None): return 2
+    def init(backend):
+        calls.append(('init',backend))
+    def size(group=None):
+        return 2
     def init_store(backend,timeout,world_size,rank,store,group_name):
         calls.append(('store',backend,timeout,world_size,rank,store,group_name))
     monkeypatch.setattr(F,'init',init)
@@ -648,7 +822,8 @@ def test_process_group_validation_and_boundary(monkeypatch):
             ({'store':store,'world_size':2,'rank':-1},ValueError),
             ({'init_method':'malformed','world_size':2,'rank':0},RuntimeError),
             ({'world_size':3},ValueError)]:
-        with pytest.raises(error): F.init_process_group(**kwargs)
+        with pytest.raises(error):
+            F.init_process_group(**kwargs)
     F.init_process_group(store=store,world_size=2,rank=1,group_name='group')
     assert calls[-1][0:2]==('store','hccl') and calls[-1][3:]==(2,1,store,'group')
     assert calls[-1][2].total_seconds()==300
@@ -659,16 +834,27 @@ def test_process_group_validation_and_boundary(monkeypatch):
 
 
 def test_group_query_and_creation_failures(monkeypatch):
-    def failed(group): raise RuntimeError('injected uninitialized group')
+    """
+    Feature: Group query and creation failures.
+    Description: Check group query and creation failures.
+    Expectation: Uninitialized queries return sentinel ranks, default groups retain identity, explicit ranks
+        normalize in order, and invalid group arguments are rejected.
+    """
+    def failed(group):
+        raise RuntimeError('injected uninitialized group')
     monkeypatch.setattr(F,'_get_rank_helper',failed)
     monkeypatch.setattr(F,'_get_size_helper',failed)
     assert F.get_rank()==-1 and F.get_world_size()==-1
     for fn in (F.get_rank,F.get_world_size,F.get_backend,F.destroy_process_group):
-        with pytest.raises(TypeError): fn(1)
+        with pytest.raises(TypeError):
+            fn(1)
     assert F.new_group() == F.GlobalComm.WORLD_COMM_GROUP
-    with pytest.raises(TypeError): F.new_group((0,1))
-    with pytest.raises(TypeError): F.new_group([0,1],backend='bad')
-    with pytest.raises(TypeError): F.new_group([0,1],pg_options=1)
+    with pytest.raises(TypeError):
+        F.new_group((0,1))
+    with pytest.raises(TypeError):
+        F.new_group([0,1],backend='bad')
+    with pytest.raises(TypeError):
+        F.new_group([0,1],pg_options=1)
     requested=[]
     def create(group,ranks,options):
         requested.append((group,ranks,options))
@@ -680,6 +866,12 @@ def test_group_query_and_creation_failures(monkeypatch):
 
 
 def test_all_to_all_v_c_request(monkeypatch):
+    """
+    Feature: All to all v c request.
+    Description: Check all to all v c request.
+    Expectation: Invalid collective counts and request arguments raise their specified validation errors before
+        native communication.
+    """
     monkeypatch.setattr(F,'_COMM_ENABLE_PLACE',F._COMM_ENABLE_PLACE.copy())
     F.set_comm_ops_inplace(True,['all_to_all_v_c'])
     monkeypatch.setattr(F,'get_cache_group_size',lambda group:2)
@@ -690,15 +882,25 @@ def test_all_to_all_v_c_request(monkeypatch):
             ({'send_count_matrix':(1,1,1,1)},TypeError),
             ({'send_count_matrix':[1,1,1,'a']},TypeError),
             ({'send_count_matrix':[1]},TypeError)]:
-        args=dict(send_count_matrix=[1,1,1,1]);args.update(kwargs)
-        with pytest.raises(error): F.all_to_all_v_c(output,input_,**args)
+        args={'send_count_matrix': [1,1,1,1]}
+        args.update(kwargs)
+        with pytest.raises(error):
+            F.all_to_all_v_c(output,input_,**args)
     F.set_comm_ops_inplace(False,['all_to_all_v_c'])
-    with pytest.raises(ValueError): F.all_to_all_v_c(output,input_,[1,1,1,1])
+    with pytest.raises(ValueError):
+        F.all_to_all_v_c(output,input_,[1,1,1,1])
 
 
 def test_sparse_reduction_and_mirror_protocol(grad_boundary,monkeypatch):
+    """
+    Feature: Sparse reduction and mirror protocol.
+    Description: Check sparse reduction and mirror protocol.
+    Expectation: Sparse reductions forward indices and values separately and preserve the expected masked,
+        mirrored, and optionally mean-scaled gradients.
+    """
     endpoints,_=grad_boundary
-    indices=t([0,1],ms.int32);values=t([[3,4],[5,6]])
+    indices=t([0,1],ms.int32)
+    values=t([[3,4],[5,6]])
     sparse=RowTensorInner(indices,values,(2,2))
     original=UnaryEndpoint.__call__
     current=[None]
@@ -715,29 +917,48 @@ def test_sparse_reduction_and_mirror_protocol(grad_boundary,monkeypatch):
         check(dx.indices,[0,1])
         check(dx.values,values.asnumpy() if op=='sum' else [[0,4],[5,0]])
         assert len(current[0].calls)==2
-        check(current[0].calls[0],[0,1]);check(current[0].calls[1],[[3,4],[5,6]])
+        check(current[0].calls[0],[0,1])
+        check(current[0].calls[1],[[3,4],[5,6]])
     for mean in (False,True):
         fn=G.get_bprop_mirror_operator(subject(mean_flag=mean))
         current[0]=endpoints[-1][2]
         dx,=fn(t([[1,2],[3,4]]),None,sparse)
-        check(dx.indices,[0,1]);check(dx.values,values.asnumpy()/(2 if mean else 1))
+        check(dx.indices,[0,1])
+        check(dx.values,values.asnumpy()/(2 if mean else 1))
     for mean in (False,True):
         z=Parameter(t([[1,2],[3,4]]),name='sparse_mini')
         dx,dz=G.get_bprop_mirror_mini_step_operator(subject(mean_flag=mean))(t([[1,2],[3,4]]),z,None,sparse)
-        check(dx,np.zeros((2,2)));check(dz,np.zeros((2,2)))
+        check(dx,np.zeros((2,2)))
+        check(dz,np.zeros((2,2)))
 
 
 def test_send_receive_gradient_requests(grad_boundary,monkeypatch):
-    requests=[]; endpoints=[]
-    def receive(sr_tag,src_rank,shape,dtype,group=O.GlobalComm.WORLD_COMM_GROUP,group_back=O.GlobalComm.WORLD_COMM_GROUP):
-        endpoint=UnaryEndpoint(t([7,9],dtype));endpoints.append(endpoint)
+    """
+    Feature: Send receive gradient requests.
+    Description: Check send receive gradient requests.
+    Expectation: Backward send/receive requests preserve tags, ranks, groups, and ring metadata and return the
+        explicit received or zero gradients.
+    """
+    requests=[]
+    endpoints=[]
+    def receive(
+    sr_tag,
+    src_rank,
+    shape,
+    dtype,
+    group=O.GlobalComm.WORLD_COMM_GROUP,
+    group_back=O.GlobalComm.WORLD_COMM_GROUP):
+        endpoint=UnaryEndpoint(t([7,9],dtype))
+        endpoints.append(endpoint)
         requests.append(('Receive',sr_tag,src_rank,shape,dtype,group,group_back))
         return endpoint
     def send(sr_tag,dest_rank,group=O.GlobalComm.WORLD_COMM_GROUP,group_back=O.GlobalComm.WORLD_COMM_GROUP):
-        endpoint=UnaryEndpoint(t(0));endpoints.append(endpoint)
+        endpoint=UnaryEndpoint(t(0))
+        endpoints.append(endpoint)
         requests.append(('Send',sr_tag,dest_rank,group,group_back))
         return endpoint
-    monkeypatch.setattr(G,'Receive',receive);monkeypatch.setattr(G,'Send',send)
+    monkeypatch.setattr(G,'Receive',receive)
+    monkeypatch.setattr(G,'Send',send)
     s=subject(shape=[2],dtype=ms.float32,sr_tag=13,dst_global_rank=4,RING_ATTENTION_INDEX=2)
     dx,=G.get_bprop_send(s)(t([1,2]),None,t([3,4]))
     check(dx,[7,9])
@@ -745,9 +966,10 @@ def test_send_receive_gradient_requests(grad_boundary,monkeypatch):
     assert endpoints[-1].attrs=={'src_global_rank':4,'RING_ATTENTION_INDEX':2}
     check(endpoints[-1].calls[0],0)
     for optimizer,flash in [(False,None),(True,None),(False,'True')]:
-        monkeypatch.setattr(G,'_get_enable_parallel_optimizer',lambda:optimizer)
+        monkeypatch.setattr(G,'_get_enable_parallel_optimizer',lambda optimizer=optimizer:optimizer)
         s=subject(shape=[2],sr_tag=13,src_global_rank=4,RING_ATTENTION_INDEX=2,flash_tag=flash)
-        dout=t([3,4]);dx,=G.get_bprop_receive(s)(t([1,2]),None,dout)
+        dout=t([3,4])
+        dx,=G.get_bprop_receive(s)(t([1,2]),None,dout)
         check(dx,[0,0] if optimizer or flash=='True' else 0)
         assert endpoints[-1].calls==[dout]
         assert endpoints[-1].attrs=={'shape':[2],'dst_global_rank':4,'RING_ATTENTION_INDEX':2}
@@ -755,20 +977,32 @@ def test_send_receive_gradient_requests(grad_boundary,monkeypatch):
 
 
 def test_reduce_and_collective_gradient_requests(grad_boundary,monkeypatch):
-    requests=[];endpoints=[]
+    """
+    Feature: Reduce and collective gradient requests.
+    Description: Check reduce and collective gradient requests.
+    Expectation: Reduce, gather, and scatter backward select the expected collective requests and preserve
+        rank-dependent sensitivity values.
+    """
+    requests=[]
+    endpoints=[]
     def broadcast(root_rank,group=O.GlobalComm.WORLD_COMM_GROUP):
-        endpoint=UnaryEndpoint((t([10,20,30,40]),)); endpoints.append(endpoint)
-        requests.append(('Broadcast',root_rank,group));return endpoint
+        endpoint=UnaryEndpoint((t([10,20,30,40]),))
+        endpoints.append(endpoint)
+        requests.append(('Broadcast',root_rank,group))
+        return endpoint
     def gather(dest_rank,group=O.GlobalComm.WORLD_COMM_GROUP):
-        endpoint=UnaryEndpoint(t([10,20,30,40]));endpoints.append(endpoint)
-        requests.append(('CollectiveGather',dest_rank,group));return endpoint
-    monkeypatch.setattr(G,'Broadcast',broadcast);monkeypatch.setattr(G,'CollectiveGather',gather)
+        endpoint=UnaryEndpoint(t([10,20,30,40]))
+        endpoints.append(endpoint)
+        requests.append(('CollectiveGather',dest_rank,group))
+        return endpoint
+    monkeypatch.setattr(G,'Broadcast',broadcast)
+    monkeypatch.setattr(G,'CollectiveGather',gather)
     dout=t([1,2,3,4])
     check(G.get_bprop_reduce(subject(dest_rank=0))(t([0,0,0,0]),None,dout)[0],[10,20,30,40])
     assert requests[-1]==('Broadcast',0,'group') and endpoints[-1].calls==[(dout,)]
     check(G.get_bprop_collective_gather(subject(dest_rank=0))(t([0,0]),None,dout)[0],[30,40])
     for rank in (0,1):
-        monkeypatch.setattr(G,'get_rank',lambda group:rank)
+        monkeypatch.setattr(G,'get_rank',lambda group, rank=rank:rank)
         result=G.get_bprop_collective_scatter(subject(src_rank=0))(t([5,6,7,8]),None,dout)
         check(result[0],[10,20,30,40] if rank==0 else [0,0,0,0])
         assert requests[-1]==('CollectiveGather',0,'group')
@@ -776,11 +1010,24 @@ def test_reduce_and_collective_gradient_requests(grad_boundary,monkeypatch):
 
 
 def test_host_and_scatter_gradient_requests(grad_boundary,monkeypatch):
-    endpoints=[]; requests=[]
+    """
+    Feature: Host and scatter gradient requests.
+    Description: Check host and scatter gradient requests.
+    Expectation: Host/scatter backward forwards the specified collective and gradient instance name, computes
+        expected local values, and rejects invalid groups.
+    """
+    endpoints=[]
+    requests=[]
     def host_gather(group):
-        ep=UnaryEndpoint(t([9,10]));endpoints.append(ep);requests.append(('gather',group));return ep
+        ep=UnaryEndpoint(t([9,10]))
+        endpoints.append(ep)
+        requests.append(('gather',group))
+        return ep
     def host_scatter(op,group):
-        ep=UnaryEndpoint(t([9,10]));endpoints.append(ep);requests.append(('scatter',op,group));return ep
+        ep=UnaryEndpoint(t([9,10]))
+        endpoints.append(ep)
+        requests.append(('scatter',op,group))
+        return ep
     monkeypatch.setattr(G,'_HostAllGather',host_gather)
     monkeypatch.setattr(G,'_HostReduceScatter',host_scatter)
     dout=t([2,3])
@@ -789,10 +1036,13 @@ def test_host_and_scatter_gradient_requests(grad_boundary,monkeypatch):
         check(fn(subject(group=[0,1]))(t([0,0]),None,dout)[0],[9,10])
         assert requests[-1]==expected and endpoints[-1].calls==[dout]
         assert endpoints[-1].instance_name=='gradforward'
-    with pytest.raises(RuntimeError): G.get_bprop_host_reduce_scatter(subject(group=[0,1],op='max'))
-    with pytest.raises(RuntimeError): G.get_bprop_reduce_scatter(subject(op='max'))
+    with pytest.raises(RuntimeError):
+        G.get_bprop_host_reduce_scatter(subject(group=[0,1],op='max'))
+    with pytest.raises(RuntimeError):
+        G.get_bprop_reduce_scatter(subject(op='max'))
     check(G.get_bprop_reduce_scatter(subject())(t([0,0]),None,dout)[0],[8,12])
-    with pytest.raises(RuntimeError): G.get_bprop_reduce_scatter_v(subject(op='max'))
+    with pytest.raises(RuntimeError):
+        G.get_bprop_reduce_scatter_v(subject(op='max'))
 
 
 class SizesEndpoint(UnaryEndpoint):
@@ -808,39 +1058,77 @@ class MatrixEndpoint(UnaryEndpoint):
 
 
 def test_variable_size_gradient_requests(grad_boundary,monkeypatch):
-    requests=[]; endpoints=[]
+    """
+    Feature: Variable size gradient requests.
+    Description: Check variable size gradient requests.
+    Expectation: Variable-size backward swaps send/receive metadata as specified and returns the expected
+        sensitivity plus zero metadata gradients.
+    """
+    requests=[]
+    endpoints=[]
     def swap(group):
-        ep=SizesEndpoint(t([7,8]));endpoints.append(ep);requests.append(('swap',group));return ep
+        ep=SizesEndpoint(t([7,8]))
+        endpoints.append(ep)
+        requests.append(('swap',group))
+        return ep
     def allv(group,block_size):
-        ep=SizesEndpoint(t([7,8]));endpoints.append(ep);requests.append(('v',group,block_size));return ep
+        ep=SizesEndpoint(t([7,8]))
+        endpoints.append(ep)
+        requests.append(('v',group,block_size))
+        return ep
     def allvc(group,block_size,transpose=False):
-        ep=MatrixEndpoint(t([7,8]));endpoints.append(ep);requests.append(('vc',group,block_size,transpose));return ep
+        ep=MatrixEndpoint(t([7,8]))
+        endpoints.append(ep)
+        requests.append(('vc',group,block_size,transpose))
+        return ep
     def gatherv(group):
-        ep=MatrixEndpoint(t([7,8]));endpoints.append(ep);requests.append(('gatherv',group));return ep
-    monkeypatch.setattr(G,'_AllSwap',swap);monkeypatch.setattr(G,'AlltoAllV',allv)
-    monkeypatch.setattr(G,'AlltoAllVC',allvc);monkeypatch.setattr(G,'AllGatherV',gatherv)
-    x=t([0,0]);dout=t([1,2]);send=t([1,3],ms.int64);recv=t([2,2],ms.int64)
+        ep=MatrixEndpoint(t([7,8]))
+        endpoints.append(ep)
+        requests.append(('gatherv',group))
+        return ep
+    monkeypatch.setattr(G,'_AllSwap',swap)
+    monkeypatch.setattr(G,'AlltoAllV',allv)
+    monkeypatch.setattr(G,'AlltoAllVC',allvc)
+    monkeypatch.setattr(G,'AllGatherV',gatherv)
+    x=t([0,0])
+    dout=t([1,2])
+    send=t([1,3],ms.int64)
+    recv=t([2,2],ms.int64)
     for fn,expected in [(G.get_bprop_allswap,('swap','group')),
             (G.get_bprop_all_to_all_v,('v','group',2))]:
         dx,ds,dr=fn(subject(block_size=2))(x,send,recv,None,dout)
-        check(dx,[7,8]);check(ds,[0,0]);check(dr,[0,0])
+        check(dx,[7,8])
+        check(ds,[0,0])
+        check(dr,[0,0])
         assert requests[-1]==expected and endpoints[-1].calls==[(dout,recv,send)]
         assert endpoints[-1].instance_name=='gradforward'
     for fn,expected in [(G.get_bprop_all_to_all_v_c,('vc','group',2,True)),
             (G.get_bprop_reduce_scatter_v,('gatherv','group'))]:
         dx,dm=fn(subject(block_size=2))(x,send,None,dout)
-        check(dx,[7,8]);check(dm,[0,0])
+        check(dx,[7,8])
+        check(dm,[0,0])
         assert requests[-1]==expected and endpoints[-1].calls==[(dout,send)]
 
 
 def test_neighbor_gradient_requests(grad_boundary,monkeypatch):
-    requests=[]; endpoints=[]
+    """
+    Feature: Neighbor gradient requests.
+    Description: Check neighbor gradient requests.
+    Expectation: Neighbor backward swaps peer and shape metadata, forwards the original sensitivity once, and
+        returns the supplied peer values.
+    """
+    requests=[]
+    endpoints=[]
     def neighbor(send_rank_ids,recv_rank_ids,recv_shapes,send_shapes,recv_type,group=O.GlobalComm.WORLD_COMM_GROUP):
-        ep=UnaryEndpoint(t([5,7]));endpoints.append(ep)
-        requests.append((send_rank_ids,recv_rank_ids,recv_shapes,send_shapes,recv_type,group));return ep
+        ep=UnaryEndpoint(t([5,7]))
+        endpoints.append(ep)
+        requests.append((send_rank_ids,recv_rank_ids,recv_shapes,send_shapes,recv_type,group))
+        return ep
     def neighborv2(send_rank_ids,send_lens,recv_rank_ids,recv_lens,data_format,group=O.GlobalComm.WORLD_COMM_GROUP):
-        ep=UnaryEndpoint(t([5,7]));endpoints.append(ep)
-        requests.append((send_rank_ids,send_lens,recv_rank_ids,recv_lens,data_format,group));return ep
+        ep=UnaryEndpoint(t([5,7]))
+        endpoints.append(ep)
+        requests.append((send_rank_ids,send_lens,recv_rank_ids,recv_lens,data_format,group))
+        return ep
     monkeypatch.setattr(G,'NeighborExchange',neighbor)
     monkeypatch.setattr(G.G,'NeighborExchangeV2Grad',neighborv2)
     s=subject(send_rank_ids=[0],recv_rank_ids=[1],send_shapes=((2,),),recv_shapes=((3,),),
@@ -854,10 +1142,18 @@ def test_neighbor_gradient_requests(grad_boundary,monkeypatch):
 
 
 def test_virtual_assign_communication_cast(grad_boundary):
+    """
+    Feature: Virtual assign communication cast.
+    Description: Check virtual assign communication cast.
+    Expectation: Virtual assignment forwards a float32 ReduceScatter request with the expected fusion/name
+        metadata and updates the destination to [9, 14].
+    """
     endpoints,_=grad_boundary
     y=Parameter(t([1,2]),name='shard_accum')
     result=G.get_bprop_virtual_assign_add(subject())(t([0,0]),y,None,t([3,4],ms.float16))
-    check(y,[9,14]);check(result[0],0);check(result[1],0)
+    check(y,[9,14])
+    check(result[0],0)
+    check(result[1],0)
     endpoint=endpoints[0][2]
     assert endpoints[0][:2]==('ReduceScatter',('sum','group'))
     assert endpoint.attrs=={'fusion':7,'not_delay_fusion':True}
@@ -872,6 +1168,12 @@ def test_virtual_assign_communication_cast(grad_boundary):
 @pytest.mark.xfail(strict=True,raises=NameError,
                    reason='Product all_to_all_v_c refers to undefined size helper and communication endpoint')
 def test_all_to_all_v_c_valid_input_missing_helper_reproducer(monkeypatch):
+    """
+    Feature: All to all v c valid input missing helper reproducer.
+    Description: Check all to all v c valid input missing helper reproducer.
+    Expectation: A valid request forwards the original output and converted source, world group, counts, size,
+        rank, and synchronous flag exactly once.
+    """
     monkeypatch.setattr(F,'_COMM_ENABLE_PLACE',F._COMM_ENABLE_PLACE.copy())
     F.set_comm_ops_inplace(True,['all_to_all_v_c'])
     monkeypatch.setattr(F,'get_cache_group_size',lambda group:2)
@@ -895,6 +1197,12 @@ def test_all_to_all_v_c_valid_input_missing_helper_reproducer(monkeypatch):
 @pytest.mark.parametrize('kind',['all_gather','mirror','micro_gather','micro_mirror'])
 @pytest.mark.parametrize('dump_path',[False,True])
 def test_gradient_norm_monitoring(grad_boundary,monkeypatch,tmp_path,capsys,kind,dump_path):
+    """
+    Feature: Gradient norm monitoring.
+    Description: Check gradient norm monitoring.
+    Expectation: Local norm accumulation remains non-trainable, records the expected squared norms and dump
+        names, and preserves explicit gradient/parameter updates.
+    """
     endpoints,response=grad_boundary
     response[0]=t([[8,12],[16,20]])
     monkeypatch.setattr(G,'_squared_device_local_norm',None)
@@ -922,12 +1230,14 @@ def test_gradient_norm_monitoring(grad_boundary,monkeypatch,tmp_path,capsys,kind
         z=Parameter(source,name='monitor_accum')
         result=G.get_bprop_mirror_micro_step_operator(s)(t([[0,0],[0,0]]),z,None,t([[1,1],[1,1]]))
         check(z,[[4,6],[8,10]])
-        check(result[0],1);check(result[1],1)
+        check(result[0],1)
+        check(result[1],1)
         dx=z
     check(dx,[[4,6],[8,10]])
     check(G.get_squared_device_local_norm_param(),25)
     assert G.get_squared_device_local_norm_param().requires_grad is False
-    assert dumps[-1][0]=='sample:weight';check(dumps[-1][1],16)
+    assert dumps[-1][0]=='sample:weight'
+    check(dumps[-1][1],16)
     if dump_path:
         assert dumps[0][0]==str(tmp_path/'rank_1'/'local_norm__weight')
         check(dumps[0][1],5)
@@ -948,6 +1258,11 @@ def test_gradient_norm_monitoring(grad_boundary,monkeypatch,tmp_path,capsys,kind
 
 
 def test_squared_norm_disabled(grad_boundary,monkeypatch):
+    """
+    Feature: Squared norm disabled.
+    Description: Check squared norm disabled.
+    Expectation: Invalid squared norm disabled raise ValueError. Diagnostics identify False.
+    """
     monkeypatch.setattr(G,'_squared_device_local_norm',None)
     with pytest.raises(ValueError,match='False'):
         G.get_squared_device_local_norm_param()
@@ -955,15 +1270,25 @@ def test_squared_norm_disabled(grad_boundary,monkeypatch):
 
 @pytest.mark.parametrize('dev_num,mean,opt_shard',[(1,False,False),(2,False,False),(2,True,True)])
 def test_mirror_micro_assignment_and_optimizer(grad_boundary,monkeypatch,dev_num,mean,opt_shard):
+    """
+    Feature: Mirror micro assignment and optimizer.
+    Description: Check mirror micro assignment and optimizer.
+    Expectation: Micro mirror backward preserves fusion/segment/parameter metadata and applies the expected
+        optimizer or assignment accumulator values.
+    """
     endpoints,_=grad_boundary
     monkeypatch.setattr(G,'_get_enable_parallel_optimizer',lambda:opt_shard)
-    z=Parameter(t([3,5]),name='micro_accum');dout=t([1,2])
+    z=Parameter(t([3,5]),name='micro_accum')
+    dout=t([1,2])
     result=G.get_bprop_mirror_micro_step_operator(subject(dev_num=dev_num,mean_flag=mean,
                                                        segment=4,parameter_micro=True))(t([0,0]),z,None,dout)
     if opt_shard:
-        check(result[0],[4,6]);check(result[1],1);check(z,[3,5])
+        check(result[0],[4,6])
+        check(result[1],1)
+        check(z,[3,5])
     else:
-        check(result[0],1);check(result[1],1)
+        check(result[0],1)
+        check(result[1],1)
         check(z,[3,5] if dev_num==1 else [8,12])
     assert endpoints[0][2].attrs=={'segment':4,'fusion':7,'parameter':'weight'}
     assert_gradient_endpoint(endpoints, 'AllReduce', ('sum', 'group'),
@@ -981,6 +1306,11 @@ def test_mirror_micro_assignment_and_optimizer(grad_boundary,monkeypatch,dev_num
     ('send_object_list',([],0)), ('recv_object_list',([],)),
 ])
 def test_public_comm_noninplace_guards(monkeypatch,name,args):
+    """
+    Feature: Public comm noninplace guards.
+    Description: Check public comm noninplace guards.
+    Expectation: Invalid public comm noninplace guards raise ValueError. Diagnostics identify Non-inplace.
+    """
     monkeypatch.setattr(F,'_COMM_ENABLE_PLACE',F._COMM_ENABLE_PLACE.copy())
     F.set_comm_ops_inplace(False,[name])
     with pytest.raises(ValueError,match='Non-inplace'):
@@ -988,28 +1318,50 @@ def test_public_comm_noninplace_guards(monkeypatch,name,args):
 
 
 def test_comm_additional_argument_validation(monkeypatch):
+    """
+    Feature: Comm additional argument validation.
+    Description: Check comm additional argument validation.
+    Expectation: Invalid comm additional argument arguments raise TypeError.
+    """
     monkeypatch.setattr(F,'get_group_rank_from_world_rank',lambda world_rank_id,group:world_rank_id)
     monkeypatch.setattr(F,'_COMM_ENABLE_PLACE',F._COMM_ENABLE_PLACE.copy())
     F.set_comm_ops_inplace(True)
     tensor=t([1,2])
     for kwargs in ({'op':1}, {'op':'bad'}, {'group':1}):
-        with pytest.raises(TypeError): F.reduce_scatter_tensor_uneven(tensor,tensor,**kwargs)
+        with pytest.raises(TypeError):
+            F.reduce_scatter_tensor_uneven(tensor,tensor,**kwargs)
     for tensor_,dst in [(1,0),(tensor,'0')]:
-        with pytest.raises(TypeError): F.reduce(tensor_,dst)
-    with pytest.raises(TypeError): F.gather_into_tensor(tensor,1)
-    with pytest.raises(TypeError): F.gather_into_tensor(tensor,tensor,dst='0')
-    with pytest.raises(TypeError): F.batch_isend_irecv([])
-    with pytest.raises(TypeError): F.batch_isend_irecv([object()])
+        with pytest.raises(TypeError):
+            F.reduce(tensor_,dst)
+    with pytest.raises(TypeError):
+        F.gather_into_tensor(tensor,1)
+    with pytest.raises(TypeError):
+        F.gather_into_tensor(tensor,tensor,dst='0')
+    with pytest.raises(TypeError):
+        F.batch_isend_irecv([])
+    with pytest.raises(TypeError):
+        F.batch_isend_irecv([object()])
     first=F.P2POp('isend',tensor,1,group='a')
     second=F.P2POp('irecv',tensor,0,group='b')
-    with pytest.raises(TypeError): F.batch_isend_irecv([first,second])
-    second.group='a'; second.op='bad'
-    with pytest.raises(TypeError): F.batch_isend_irecv([second])
-    second.op='irecv';second.tensor=1
-    with pytest.raises(TypeError): F.batch_isend_irecv([second])
+    with pytest.raises(TypeError):
+        F.batch_isend_irecv([first,second])
+    second.group='a'
+    second.op='bad'
+    with pytest.raises(TypeError):
+        F.batch_isend_irecv([second])
+    second.op='irecv'
+    second.tensor=1
+    with pytest.raises(TypeError):
+        F.batch_isend_irecv([second])
 
 
 def test_batch_point_to_point_request(monkeypatch):
+    """
+    Feature: Batch point to point request.
+    Description: Check batch point to point request.
+    Expectation: Batched point-to-point dispatch forwards both tensors, world group, send/receive operation
+        types, and remote ranks and returns the default handle.
+    """
     monkeypatch.setattr(F,'_COMM_ENABLE_PLACE',F._COMM_ENABLE_PLACE.copy())
     F.set_comm_ops_inplace(True,['batch_isend_irecv'])
     calls=[]
@@ -1024,15 +1376,20 @@ def test_batch_point_to_point_request(monkeypatch):
 
 
 def test_context_default_import_failure_restores_singletons(monkeypatch):
-    import builtins
+    """
+    Feature: Context default import failure restores singletons.
+    Description: Check context default import failure restores singletons.
+    Expectation: Failure to import default configuration leaves one reusable context singleton with debug
+        runtime enabled.
+    """
     original=builtins.__import__
-    def import_boundary(name,globals=None,locals=None,fromlist=(),level=0):
+    def import_boundary(name,globals_=None,locals_=None,fromlist=(),level=0):
         if name=='mindspore' and fromlist==('default_config',):
             raise ImportError('injected default_config failure')
-        return original(name,globals,locals,fromlist,level)
+        return original(name,globals_,locals_,fromlist,level)
     monkeypatch.setattr(C,'K_CONTEXT',None)
     monkeypatch.setattr(C._Context,'_instance',None)
-    monkeypatch.setattr(C,'MSContext',SimpleNamespace(get_instance=lambda:HandleBoundary()))
+    monkeypatch.setattr(C,'MSContext',SimpleNamespace(get_instance=HandleBoundary))
     monkeypatch.setattr(builtins,'__import__',import_boundary)
     ctx=C._context()
     assert ctx is C._Context._instance and ctx.enable_debug_runtime is True
@@ -1040,10 +1397,17 @@ def test_context_default_import_failure_restores_singletons(monkeypatch):
 
 
 def test_context_deterministic_env_boundary(isolated_context,monkeypatch):
+    """
+    Feature: Context deterministic env boundary.
+    Description: Check context deterministic env boundary.
+    Expectation: Enabling determinism waits for communication initialization and stores ON plus the expected
+        normalized environment values.
+    """
     calls=[]
     class Collective:
-        def wait_all_comm_init(self): calls.append('wait')
-    monkeypatch.setattr(C,'CollectiveManager',SimpleNamespace(get_instance=lambda:Collective()))
+        def wait_all_comm_init(self):
+            calls.append('wait')
+    monkeypatch.setattr(C,'CollectiveManager',SimpleNamespace(get_instance=Collective))
     monkeypatch.setenv('HCCL_DETERMINISTIC','invalid')
     monkeypatch.setenv('TE_PARALLEL_COMPILER','invalid')
     isolated_context.set_deterministic('ON')
@@ -1054,6 +1418,12 @@ def test_context_deterministic_env_boundary(isolated_context,monkeypatch):
 
 
 def test_context_public_attribute_and_enum_storage(isolated_context,monkeypatch):
+    """
+    Feature: Context public attribute and enum storage.
+    Description: Check context public attribute and enum storage.
+    Expectation: Public setters preserve the reserve-name flag, normalize boolean/integer graph-save options,
+        and retain an empty GPU configuration.
+    """
     monkeypatch.setattr(C,'K_CONTEXT',isolated_context)
     C.set_context(reserve_class_name_in_scope=False,save_graphs=False)
     assert isolated_context.reserve_class_name_in_scope is False
@@ -1066,10 +1436,18 @@ def test_context_public_attribute_and_enum_storage(isolated_context,monkeypatch)
 
 
 def test_remaining_local_helpers(monkeypatch,isolated_context,comm_environment):
-    with pytest.raises(TypeError): isolated_context._set_op_debug_option(1)
+    """
+    Feature: Remaining local helpers.
+    Description: Check remaining local helpers.
+    Expectation: Restricted builtins, backend lookup, and caller metadata retain their expected values, while
+        unsupported communication and shape requests are rejected.
+    """
+    with pytest.raises(TypeError):
+        isolated_context._set_op_debug_option(1)
     for ctor,args in [(O.NeighborExchange,([0],[1],((2,),),((2,),),ms.float32)),
             (O.NeighborExchangeV2,([0],[1,1,1,1],[1],[1,1,1,1],'NCHW'))]:
-        with pytest.raises(NotImplementedError): ctor(*args)(t([1,2]))
+        with pytest.raises(NotImplementedError):
+            ctor(*args)(t([1,2]))
     assert F.RestrictedUnpickler(io.BytesIO()).find_class('builtins','range') is range
     monkeypatch.setattr(F,'_get_backend',lambda:'boundary-backend')
     assert F.get_backend('custom-group')=='boundary-backend'
@@ -1077,40 +1455,63 @@ def test_remaining_local_helpers(monkeypatch,isolated_context,comm_environment):
     with pytest.raises(ValueError,match='output shape'):
         F._get_all_to_all_single_numel_list(t(np.ones((4,2))),t(np.ones((3,2))),None,None,'g')
     for value in (t([1,2],ms.int32),t([1,2,3])):
-        with pytest.raises(TypeError): F._check_tensor_list([value,value],t([1,2]),2)
-    def first(): return second()
-    def second(): return third()
-    def third(): return L._find_caller()
+        with pytest.raises(TypeError):
+            F._check_tensor_list([value,value],t([1,2]),2)
+    def first():
+        return second()
+    def second():
+        return third()
+    def third():
+        return L._find_caller()
     filename,line,name,stack=first()
     assert filename and line>0 and stack is None and name
 
 
 def test_all_to_all_noninplace_reshape_protocol(monkeypatch):
+    """
+    Feature: All to all noninplace reshape protocol.
+    Description: Check all to all noninplace reshape protocol.
+    Expectation: Non-in-place all-to-all forwards packed values and sizes and reshapes peer results into the
+        literal expected outputs with no asynchronous handle.
+    """
     monkeypatch.setattr(F,'_COMM_ENABLE_PLACE',F._COMM_ENABLE_PLACE.copy())
     F.set_comm_ops_inplace(False,['all_to_all'])
     monkeypatch.setattr(F,'get_cache_group_size',lambda group:2)
     calls=[]
-    def endpoint(input,group,send_numel_list,recv_numel_list,rank_size,split_sizes_empty,async_op=True):
-        calls.append((input,group,send_numel_list,recv_numel_list,rank_size,split_sizes_empty,async_op))
+    def endpoint(input_,group,send_numel_list,recv_numel_list,rank_size,split_sizes_empty,async_op=True):
+        calls.append((input_,group,send_numel_list,recv_numel_list,rank_size,split_sizes_empty,async_op))
         return t([10,20,30])
     monkeypatch.setattr(F,'inner_comm_all_to_all_v_op',endpoint)
     result,handle=F.all_to_all([(1,2),(1,)],[t([1,2]),t([3])])
     assert handle is None
     assert len(result)==2
-    check(result[0],[[10,20]]);check(result[1],[30])
+    check(result[0],[[10,20]])
+    check(result[1],[30])
     check(calls[0][0],[1,2,3])
     assert calls[0][1:]==(F.GlobalComm.WORLD_COMM_GROUP,[2,1],[2,1],2,False,False)
 
 
 def test_mirror_micro_sparse_gradient(grad_boundary):
+    """
+    Feature: Mirror micro sparse gradient.
+    Description: Check mirror micro sparse gradient.
+    Expectation: Sparse micro mirror returns the specified scalar gradient sentinels and preserves the original
+        destination parameter values.
+    """
     sparse=RowTensorInner(t([0],ms.int32),t([[1,2]]),(2,2))
     z=Parameter(t([[3,4],[5,6]]),name='micro_sparse')
     result=G.get_bprop_mirror_micro_step_operator(subject())(t([[0,0],[0,0]]),z,None,sparse)
-    check(result[0],1);check(result[1],1);check(z,[[3,4],[5,6]])
+    check(result[0],1)
+    check(result[1],1)
+    check(z,[[3,4],[5,6]])
 
 
 def test_store_scheduler_and_url_protocol_with_native_boundary(monkeypatch):
-    """TCPStoreClient is replaced before any wrapper initialization; no socket is opened."""
+    """
+    Feature: Store scheduler and url protocol with native boundary.
+    Description: TCPStoreClient is replaced before any wrapper initialization; no socket is opened.
+    Expectation: TCPStoreClient is replaced before any wrapper initialization; no socket is opened.
+    """
     calls=[]
     def native_client(host_name,port,is_master,timeout_ms,world_size,wait_for_workers):
         calls.append((host_name,port,is_master,timeout_ms,world_size,wait_for_workers))
@@ -1119,6 +1520,8 @@ def test_store_scheduler_and_url_protocol_with_native_boundary(monkeypatch):
     monkeypatch.setenv('MS_ROLE','MS_SCHED')
     inert=object.__new__(F.TCPStore)
     F.TCPStore.__init__(inert,'never-used',0)
+    # Preserve the exact empty-list and uninitialized-wrapper contracts.
+    # pylint: disable-next=use-implicit-booleaness-not-comparison
     assert calls==[] and not hasattr(inert,'instance')
     monkeypatch.delenv('MS_ROLE')
     requests=[]
@@ -1136,12 +1539,23 @@ def test_store_scheduler_and_url_protocol_with_native_boundary(monkeypatch):
 @pytest.mark.xfail(strict=True,raises=AssertionError,
                    reason='Product _clear_handler removes while iterating and leaves every second handler')
 def test_clear_all_log_handlers_reproducer():
+    """
+    Feature: Clear all log handlers reproducer.
+    Description: Check clear all log handlers reproducer.
+    Expectation: Handler clearing removes both registered handlers and leaves the logger with an empty handler
+        list.
+    """
     logger=logging.Logger('runtime-comm-clear-reproducer')
     first,second=logging.NullHandler(),logging.NullHandler()
-    logger.addHandler(first);logger.addHandler(second)
+    logger.addHandler(first)
+    logger.addHandler(second)
     try:
         L._clear_handler(logger)
+        # The exact empty-list result is part of this interface contract.
+        # pylint: disable-next=use-implicit-booleaness-not-comparison
         assert logger.handlers==[]
     finally:
-        for handler in list(logger.handlers): logger.removeHandler(handler)
-        first.close();second.close()
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+        first.close()
+        second.close()

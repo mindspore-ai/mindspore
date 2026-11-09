@@ -9,7 +9,7 @@ import random
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.dataset as dataset
+from mindspore import dataset
 from mindspore import ops, log as ms_log
 from mindspore.common.generator import default_generator
 from mindspore.ops.primitive import Primitive
@@ -30,6 +30,8 @@ def check(actual, expected):
 
 @pytest.fixture(autouse=True)
 def isolated_cpu(monkeypatch):
+    # Snapshot private RNG and logging state to fully isolate native test execution.
+    # pylint: disable=protected-access
     context = {key: ms.get_context(key) for key in ('mode', 'device_target', 'pynative_synchronize')}
     python_state, numpy_state = random.getstate(), np.random.get_state()
     dataset_seed, generator_state, global_seed = dataset.config.get_seed(), ms.get_rng_state(), ms.get_seed()
@@ -133,6 +135,12 @@ def crop_inputs():
 
 
 def test_real_public_vmap_bilinear_gradient_both_mapped():
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check real public vmap bilinear gradient both mapped.
+    Expectation: Compiled public vmap matches independent half-pixel bilinear gradient accumulation for both mapped
+        operands.
+    """
     gradient, image = bilinear_inputs()
     class Network(ms.nn.Cell):
         def __init__(self):
@@ -148,6 +156,11 @@ def test_real_public_vmap_bilinear_gradient_both_mapped():
 
 
 def test_real_public_vmap_crop_all_tensor_operands_mapped():
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check real public vmap crop all tensor operands mapped.
+    Expectation: Each compiled sample matches independent bilinear cropping, including out-of-image extrapolation.
+    """
     images, boxes, indices = crop_inputs()
     class Network(ms.nn.Cell):
         def __init__(self):
@@ -164,8 +177,15 @@ def test_real_public_vmap_crop_all_tensor_operands_mapped():
 
 
 @pytest.mark.xfail(strict=True, raises=TypeError,
-                   reason='Registered Linear1DGrad getter requires an extra coordinate_transformation_mode_bdim argument')
+                   reason=('Registered Linear1DGrad getter requires an extra '
+                           'coordinate_transformation_mode_bdim argument'))
 def test_real_public_vmap_linear_gradient_registration():
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check real public vmap linear gradient registration.
+    Expectation: Linear gradients should match align-corners accumulation; strict xfail verifies the missing getter
+        argument diagnostic.
+    """
     gradient, image = linear_inputs()
     class Network(ms.nn.Cell):
         def __init__(self):
@@ -203,8 +223,8 @@ def cpp_flat_preprocess(first, *arguments):
     return True, (first(*(argument[0] for argument in arguments)), None)
 
 
-@pytest.fixture
-def cpp_ordered_eager_frontend(monkeypatch):
+@pytest.fixture(name='cpp_ordered_eager_frontend')
+def fixture_cpp_ordered_eager_frontend(monkeypatch):
     # Only substitute the graph-only frontend decision; every tensor operation
     # and CPU executor below is real. Graph proof tests above use actual C++.
     monkeypatch.setattr(I, 'vmap_general_preprocess', cpp_flat_preprocess)
@@ -241,6 +261,8 @@ def observe_native(monkeypatch, primitive, expected_arrays, expected_scalars, ex
     calls = []
 
     def execute(actual_primitive, *arguments):
+        # Exact primitive/scalar types are part of the native ABI under observation.
+        # pylint: disable=unidiomatic-typecheck
         assert actual_primitive is primitive and type(actual_primitive) is primitive_type
         assert actual_primitive.attrs == expected_attrs
         assert actual_primitive.init_attrs == expected_init_attrs
@@ -250,7 +272,7 @@ def observe_native(monkeypatch, primitive, expected_arrays, expected_scalars, ex
         scalar_arguments = arguments[len(expected_arrays):]
         assert scalar_arguments == expected_scalars
         for actual, expected in zip(scalar_arguments, expected_scalars):
-            assert type(actual) is type(expected)
+            assert type(actual) is type(expected)  # pylint: disable=unidiomatic-typecheck
         calls.append(arguments)
         if generated_binding:
             return Primitive.__call__(actual_primitive, *arguments)
@@ -261,6 +283,12 @@ def observe_native(monkeypatch, primitive, expected_arrays, expected_scalars, ex
 
 
 def test_cpp_flat_adapter_ignores_first_and_stops_at_first_mapped_argument():
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check cpp flat adapter ignores first and stops at first mapped argument.
+    Expectation: Mapped detection stops before later invalid metadata; unmapped dispatch requires a callable and
+        preserves None output axis.
+    """
     first_bdim = (tensor([7.]), 0)
     # C++ must return immediately, without examining the first argument or
     # validating arguments following the first mapped bdim.
@@ -278,9 +306,15 @@ def test_cpp_flat_adapter_ignores_first_and_stops_at_first_mapped_argument():
 @pytest.mark.parametrize('gradient_axis,image_axis', [(0, 0), (1, 2), (None, 1)])
 def test_original_bilinear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
                                                 align, half_pixel, gradient_axis, image_axis):
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check original bilinear gradient CPU native abi.
+    Expectation: Native tensor layouts, exact primitive/scalar types and constructor attributes match the ABI;
+        values match bilinear accumulation.
+    """
     gradient, image = bilinear_inputs()
     primitive = G.ResizeBilinearGrad(align_corners=align, half_pixel_centers=half_pixel)
-    assert type(primitive) is G.ResizeBilinearGrad
+    assert type(primitive) is G.ResizeBilinearGrad  # pylint: disable=unidiomatic-typecheck
     actual_gradient = canonical(gradient, gradient_axis)
     calls = observe_native(monkeypatch, primitive,
                            (actual_gradient.reshape(4, 1, 3, 4), image.reshape(4, 1, 2, 3)),
@@ -297,10 +331,18 @@ def test_original_bilinear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eage
 @pytest.mark.parametrize('gradient_axis,image_axis', [(0, 0), (1, 2), (None, 1)])
 def test_original_linear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
                                               mode, gradient_axis, image_axis):
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check original linear gradient CPU native abi.
+    Expectation: Native mode enums and flattened operands match the ABI; linear gradient values match the selected
+        coordinate transform.
+    """
     gradient, image = linear_inputs()
     primitive = G.ResizeLinear1DGrad(coordinate_transformation_mode=mode)
-    assert type(primitive) is G.ResizeLinear1DGrad
+    assert type(primitive) is G.ResizeLinear1DGrad  # pylint: disable=unidiomatic-typecheck
     native_mode = primitive.coordinate_transformation_mode
+    # bool and integer subclasses must not satisfy the native mode ABI.
+    # pylint: disable=unidiomatic-typecheck
     assert type(native_mode) is int and native_mode == {'align_corners': 1, 'half_pixel': 2}[mode]
     actual_gradient = canonical(gradient, gradient_axis)
     calls = observe_native(monkeypatch, primitive,
@@ -317,6 +359,12 @@ def test_original_linear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eager_
 @pytest.mark.parametrize('image_axis,boxes_axis,indices_axis', [(0, 0, 0), (1, 1, 1), (None, 0, 0), (0, None, 0)])
 def test_original_crop_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
                                       method, size, image_axis, boxes_axis, indices_axis):
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check original crop CPU native abi.
+    Expectation: The native crop receives flattened boxes and adjusted image indices once; values match bilinear or
+        nearest cropping.
+    """
     images, boxes, indices = crop_inputs()
     actual_images = canonical(images, image_axis)
     actual_boxes = canonical(boxes, boxes_axis)
@@ -338,6 +386,11 @@ def test_original_crop_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
 
 
 def test_original_crop_rejects_mapped_crop_size(cpp_ordered_eager_frontend):
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check original crop rejects mapped crop size.
+    Expectation: A crop_size with mapped metadata raises ValueError before crop execution.
+    """
     images, boxes, indices = crop_inputs()
     rule = I.get_crop_and_resize_vmap_rule(IMG.CropAndResize(), 2)
     with pytest.raises(ValueError, match='axis of `crop_size`.*must be None'):
@@ -347,6 +400,12 @@ def test_original_crop_rejects_mapped_crop_size(cpp_ordered_eager_frontend):
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason='Missing prim makes actual C++ all-unmapped branch call the grad bdim tuple')
 def test_real_public_bilinear_first_only_mapped():
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check real public bilinear first only mapped.
+    Expectation: Bilinear gradients should match the oracle; strict xfail verifies the non-callable preprocessing
+        defect and source location.
+    """
     gradient, image = bilinear_inputs()
     class Network(ms.nn.Cell):
         def __init__(self):
@@ -369,6 +428,12 @@ def test_real_public_bilinear_first_only_mapped():
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason='Missing prim makes actual C++ all-unmapped branch call the images bdim tuple')
 def test_real_public_crop_first_only_mapped():
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check real public crop first only mapped.
+    Expectation: Shared boxes should crop each image independently; strict xfail verifies the non-callable
+        preprocessing defect.
+    """
     images, boxes, indices = crop_inputs()
     class Network(ms.nn.Cell):
         def __init__(self):
@@ -377,7 +442,8 @@ def test_real_public_crop_first_only_mapped():
         def apply_crop(self, x, regions, batch_indices, size):
             return self.crop(x, regions, batch_indices, size)
         def construct(self, x, regions, batch_indices):
-            return ops.vmap(self.apply_crop, in_axes=(0, None, None, None), out_axes=0)(x, regions, batch_indices, (2, 3))
+            return ops.vmap(self.apply_crop, in_axes=(0, None, None, None),
+                            out_axes=0)(x, regions, batch_indices, (2, 3))
     ms.set_context(mode=ms.GRAPH_MODE)
     try:
         result = Network()(tensor(images), tensor(boxes[0]), tensor(indices[0], np.int32))
@@ -391,8 +457,15 @@ def test_real_public_crop_first_only_mapped():
 
 @pytest.mark.parametrize('operation', ['bilinear', 'linear', 'crop'])
 @pytest.mark.xfail(strict=True, raises=ValueError,
-                   reason='Image closure omits prim; real C++ all-unmapped branch attempts to call its first bdim tuple')
+                   reason=('Image closure omits prim; real C++ all-unmapped branch attempts '
+                           'to call its first bdim tuple'))
 def test_real_jit_original_all_unmapped(operation):
+    """
+    Feature: Mapped image vmap rules and native ABI
+    Description: Check real jit original all unmapped.
+    Expectation: Original image closures should retain None axes and oracle values; strict xfail verifies their
+        exact non-callable source path.
+    """
     if operation == 'bilinear':
         gradient, image = bilinear_inputs()
         rule = I.get_resize_bilinear_grad_vmap_rule(G.ResizeBilinearGrad(False, True), 2)

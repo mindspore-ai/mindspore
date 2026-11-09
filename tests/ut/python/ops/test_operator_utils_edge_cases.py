@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Boundary cases for operator shape inference and distributed TCP addresses."""
+# Unit coverage intentionally exercises internal Python inference and wrapper helpers.
+# pylint: disable=protected-access
 import pytest
 
 from mindspore.common import dtype as mstype
@@ -31,12 +33,20 @@ from mindspore.ops._utils import utils
     ([], [2, 3], [2, 3]),
 ])
 def test_broadcast_shape_dynamic_and_empty_dimensions(left, right, expected):
-    """Unknown dimensions must not discard known broadcast sizes."""
+    """
+    Feature: Broadcast shape dynamic and empty dimensions.
+    Description: Unknown dimensions must not discard known broadcast sizes.
+    Expectation: Unknown dimensions must not discard known broadcast sizes.
+    """
     assert utils.get_broadcast_shape(left, right, 'Add') == expected
 
 
 def test_broadcast_shape_rejects_incompatible_dimensions():
-    """Shape inference must report incompatible operand shapes."""
+    """
+    Feature: Broadcast shape rejects incompatible dimensions.
+    Description: Shape inference must report incompatible operand shapes.
+    Expectation: Shape inference must report incompatible operand shapes.
+    """
     with pytest.raises(ValueError, match='broadcast'):
         utils.get_broadcast_shape([2, 3], [2, 4], 'Add', 'left', 'right')
 
@@ -49,7 +59,11 @@ def test_broadcast_shape_rejects_incompatible_dimensions():
     ([(-1, 3), (2, 4)], 1, ([0, 3], 7, 1)),
 ])
 def test_concat_offsets_accumulate_and_preserve_unknowns(shapes, axis, expected):
-    """Offsets must accumulate only along the normalized concatenation axis."""
+    """
+    Feature: Concat offsets accumulate and preserve unknowns.
+    Description: Offsets must accumulate only along the normalized concatenation axis.
+    Expectation: Offsets must accumulate only along the normalized concatenation axis.
+    """
     types = [mstype.TensorType(mstype.float32)] * len(shapes)
     assert utils.get_concat_offset(shapes, types, axis, 'Concat') == expected
 
@@ -63,14 +77,22 @@ def test_concat_offsets_accumulate_and_preserve_unknowns(shapes, axis, expected)
     ([(2, 3)], [mstype.float32], 0, TypeError),
 ])
 def test_concat_offsets_reject_invalid_inputs(shapes, types, axis, error):
-    """Invalid rank, dtype, axis and non-concat dimensions must be rejected."""
+    """
+    Feature: Concat offsets reject invalid inputs.
+    Description: Invalid rank, dtype, axis and non-concat dimensions must be rejected.
+    Expectation: Invalid rank, dtype, axis and non-concat dimensions must be rejected.
+    """
     with pytest.raises(error):
         utils.get_concat_offset(shapes, types, axis, 'Concat')
 
 
 @pytest.mark.parametrize('shape,expected', [((), (1,)), ((2, 3, 4), (24,)), ((2, 0, 4), (0,))])
 def test_get_1d_shape_preserves_element_count(shape, expected):
-    """Flattened shapes retain the number of elements, including empty tensors."""
+    """
+    Feature: Get 1d shape preserves element count.
+    Description: Flattened shapes retain the number of elements, including empty tensors.
+    Expectation: Flattened shapes retain the number of elements, including empty tensors.
+    """
     assert utils.get_1d_shape(shape) == expected
 
 
@@ -80,7 +102,11 @@ def test_get_1d_shape_preserves_element_count(shape, expected):
     ((2, 3, 4, 5), (2, 6), 2, 1, (0, 2, 1, 3)),
 ])
 def test_generate_shape_index_with_batch_dimensions(out_shape, index_shape, axis, batch_dims, expected):
-    """Gather permutations keep batch dimensions ahead of index dimensions."""
+    """
+    Feature: Generate shape index with batch dimensions.
+    Description: Gather permutations keep batch dimensions ahead of index dimensions.
+    Expectation: Gather permutations keep batch dimensions ahead of index dimensions.
+    """
     assert utils.generate_shape_index(out_shape, index_shape, axis, batch_dims) == expected
 
 
@@ -90,7 +116,11 @@ def test_generate_shape_index_with_batch_dimensions(out_shape, index_shape, axis
     ('tcp://0.0.0.0:8080', ('0.0.0.0', 8080)),
 ])
 def test_parse_tcp_url_accepts_port_boundaries(url, expected):
-    """Both valid port endpoints must be accepted without truncation."""
+    """
+    Feature: Parse tcp url accepts port boundaries.
+    Description: Both valid port endpoints must be accepted without truncation.
+    Expectation: Both valid port endpoints must be accepted without truncation.
+    """
     assert utils._parse_tcp_url_for_ipv4(url) == expected
 
 
@@ -108,7 +138,11 @@ def test_parse_tcp_url_accepts_port_boundaries(url, expected):
     ('tcp://127.0.0.1:65536', 'port out of range'),
 ])
 def test_parse_tcp_url_rejects_malformed_addresses(url, reason):
-    """Malformed addresses fail with the parser's reason and original cause."""
+    """
+    Feature: Parse tcp url rejects malformed addresses.
+    Description: Malformed addresses fail with the parser's reason and original cause.
+    Expectation: Malformed addresses fail with the parser's reason and original cause.
+    """
     with pytest.raises(ValueError, match=reason) as exc:
         utils._parse_tcp_url_for_ipv4(url)
     assert isinstance(exc.value.__cause__, ValueError)
@@ -116,6 +150,10 @@ def test_parse_tcp_url_rejects_malformed_addresses(url, reason):
 
 @pytest.mark.parametrize('url', [None, 123, b'tcp://127.0.0.1:80'])
 def test_parse_tcp_url_requires_a_string(url):
-    """Non-string values must fail before address parsing."""
+    """
+    Feature: Parse tcp url requires a string.
+    Description: Non-string values must fail before address parsing.
+    Expectation: Non-string values must fail before address parsing.
+    """
     with pytest.raises(TypeError, match='string'):
         utils._parse_tcp_url_for_ipv4(url)

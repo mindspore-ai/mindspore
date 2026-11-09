@@ -18,12 +18,14 @@
 Numeric checks use NumPy or analytic derivatives. Backend boundary spies, where
 present, test Python argument forwarding only and do not claim native coverage.
 """
+# Unit coverage intentionally exercises internal Python inference and wrapper helpers.
+# pylint: disable=protected-access
 import importlib
 import random
-import mindspore.dataset as dataset
 import numpy as np
 import pytest
 import mindspore as ms
+from mindspore import dataset
 from mindspore import Tensor, Parameter, ops
 from mindspore.ops.function import array_func as a
 from mindspore.ops.function import random_func as r
@@ -44,8 +46,8 @@ def eq(actual, expected, **kwargs):
     np.testing.assert_allclose(actual.asnumpy(), expected, rtol=2e-5, atol=2e-5, **kwargs)
 
 
-@pytest.fixture(autouse=True)
-def preserve_context():
+@pytest.fixture(autouse=True, name='preserve_context')
+def fixture_preserve_context():
     python_state = random.getstate()
     numpy_state = np.random.get_state()
     dataset_seed = dataset.config.get_seed()
@@ -130,6 +132,11 @@ def preserve_context():
     (lambda: a.min_ext(t([1]), dim=None, keepdim=True), ValueError),
 ])
 def test_array_validation(call, exception):
+    """
+    Feature: Array validation.
+    Description: Check array validation.
+    Expectation: Invalid array arguments raise the parameterized exception type.
+    """
     with pytest.raises(exception):
         call()
 
@@ -140,11 +147,22 @@ def test_array_validation(call, exception):
     ('x', (True, True, True), TypeError),
 ])
 def test_axis_type_validation(axis, flags, exception):
+    """
+    Feature: Axis type validation.
+    Description: Check axis type validation.
+    Expectation: Invalid axis type arguments raise the parameterized exception type.
+    """
     with pytest.raises(exception):
         a._check_axis_type(axis, *flags, 'coverage')
 
 
 def test_axis_helpers_and_creation():
+    """
+    Feature: Axis helpers and creation.
+    Description: Check axis helpers and creation.
+    Expectation: Axis normalization and array creation return the explicit shapes, dtypes, and literal tensor
+        values.
+    """
     assert a._check_axis_type((0, 1), False, True, False, 'coverage') is True
     assert a._check_axis_type([0, 1], False, False, True, 'coverage') is True
     assert a._check_axis_valid(None, 3) == (0, 1, 2)
@@ -164,6 +182,12 @@ def test_axis_helpers_and_creation():
 
 @pytest.mark.parametrize('n,chunks', [(0, 2), (2, 4), (8, 3), (6, 4), (6, 3)])
 def test_chunk_numerical(n, chunks):
+    """
+    Feature: Chunk numerical.
+    Description: Check chunk numerical.
+    Expectation: Chunking preserves values and matches the independently specified section sizes, including
+        empty inputs and excess chunk counts.
+    """
     x = np.arange(n, dtype=np.float32)
     result = a.chunk(t(x), chunks)
     if n == 0:
@@ -179,10 +203,22 @@ def test_chunk_numerical(n, chunks):
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='Fills has no CPU kernel in MS 2.12')
 @pytest.mark.parametrize('value', [2, 2., t(2)])
 def test_fills_numeric(value):
+    """
+    Feature: Fills numeric.
+    Description: Check fills numeric.
+    Expectation: Fills preserves the input shape and fills every element with the converted value two;
+        unavailable CPU execution retains its strict expected failure.
+    """
     eq(a.fills(t([[1, 3], [4, 5]]), value), np.full((2, 2), 2))
 
 
 def test_array_numeric_wrappers():
+    """
+    Feature: Array numeric wrappers.
+    Description: Check array numeric wrappers.
+    Expectation: Array wrappers preserve independently specified flattening, stacking, diagonal, scatter-free
+        reduction, unique, and split values.
+    """
     for order in ('C', 'F'):
         eq(a.flatten(t(4), order=order), [4])
         eq(a.flatten(t([1, 2]), start_dim=0, order=order), [1, 2])
@@ -195,14 +231,16 @@ def test_array_numeric_wrappers():
     eq(a.matrix_set_diag(t([[1, 2], [3, 4]]), t([5, 6])), [[5, 2], [3, 6]])
     eq(a.population_count(t([0, 3, 7], ms.int16)), [0, 2, 3])
     vals, indices = a.top_k(t([2, 5, 1]), 2)
-    eq(vals, [5, 2]); eq(indices, [1, 0])
+    eq(vals, [5, 2])
+    eq(indices, [1, 0])
     eq(a.sequence_mask(t([1, 3], ms.int32)), [[1, 0, 0], [1, 1, 1]])
     eq(a.sequence_mask(t([1, 3], ms.int32), 4), [[1, 0, 0, 0], [1, 1, 1, 0]])
     eq(a.unsorted_segment_min(t([3, 2, 6]), t([0, 0, 1], ms.int32), 2), [2, 6])
     eq(a.unsorted_segment_max(t([3, 2, 6]), t([0, 0, 1], ms.int32), 2), [3, 6])
     eq(a.unsorted_segment_prod(t([3, 2, 6]), t([0, 0, 1], ms.int32), 2), [6, 6])
     out, idx = a.unique_with_pad(t([1, 1, 2], ms.int32), 9)
-    eq(out, [1, 2, 9]); eq(idx, [0, 0, 1])
+    eq(out, [1, 2, 9])
+    eq(idx, [0, 0, 1])
     for n, sections in [(0, 2), (2, 4), (2, 1)]:
         for got, expected in zip(a.tensor_split(t(np.arange(n)), sections), np.array_split(np.arange(n), sections)):
             eq(got, expected)
@@ -211,15 +249,29 @@ def test_array_numeric_wrappers():
         eq(ops.concat(result), np.arange(n))
 
 
-@pytest.mark.parametrize('name,expected', [('mul', [6, 3]), ('max', [3, 3]), ('min', [2, 3]), ('div', [2/3, 3]), ('update', [3, 3])])
+@pytest.mark.parametrize('name,expected', [('mul', [6, 3]), ('max', [3, 3]),
+                         ('min', [2, 3]), ('div', [2/3, 3]), ('update', [3, 3])])
 def test_scatter_parameter_wrappers(name, expected):
+    """
+    Feature: Scatter parameter wrappers.
+    Description: Check scatter parameter wrappers.
+    Expectation: Scatter updates return the expected arithmetic values and apply the same mutation to the
+        original Parameter.
+    """
     x = Parameter(t([2, 3]))
     eq(getattr(a, 'scatter_' + name)(x, t([0], ms.int32), t([3])), expected)
     eq(x, expected)
 
 
-@pytest.mark.parametrize('name,expected', [('add', [5, 3]), ('sub', [-1, 3]), ('mul', [6, 3]), ('div', [2/3, 3]), ('max', [3, 3]), ('min', [2, 3])])
+@pytest.mark.parametrize('name,expected', [('add', [5, 3]), ('sub', [-1, 3]),
+                         ('mul', [6, 3]), ('div', [2/3, 3]), ('max', [3, 3]), ('min', [2, 3])])
 def test_scatter_nd_parameter_wrappers(name, expected):
+    """
+    Feature: Scatter nd parameter wrappers.
+    Description: Check scatter nd parameter wrappers.
+    Expectation: ND scatter updates produce the explicit expected values in both the returned result and
+        original Parameter.
+    """
     x = Parameter(t([2, 3]))
     eq(getattr(a, 'scatter_nd_' + name)(x, t([[0]], ms.int32), t([3])), expected)
     eq(x, expected)
@@ -227,6 +279,12 @@ def test_scatter_nd_parameter_wrappers(name, expected):
 
 @pytest.mark.parametrize('name,expected', [('mul', [6, 3]), ('max', [3, 3]), ('min', [2, 3])])
 def test_tensor_scatter_numeric(name, expected):
+    """
+    Feature: Tensor scatter numeric.
+    Description: Check tensor scatter numeric.
+    Expectation: Tensor scatter returns the independently specified updated values while preserving the original
+        tensor.
+    """
     x = t([2, 3])
     eq(getattr(a, 'tensor_scatter_' + name)(x, t([[0]], ms.int32), t([3])), expected)
     eq(x, [2, 3])
@@ -236,11 +294,22 @@ def test_tensor_scatter_numeric(name, expected):
     ({'window_length': 3, 'periodic': 1}, TypeError), ({'window_length': 3, 'alpha': 1}, TypeError),
     ({'window_length': 3, 'beta': 1}, TypeError), ({'window_length': 3, 'dtype': ms.int32}, TypeError)])
 def test_hamming_validation(kwargs, error):
+    """
+    Feature: Hamming validation.
+    Description: Check hamming validation.
+    Expectation: Invalid hamming arguments raise the parameterized exception type.
+    """
     with pytest.raises(error):
         a.hamming_window(**kwargs)
 
 
 def test_windows_numeric():
+    """
+    Feature: Windows numeric.
+    Description: Check windows numeric.
+    Expectation: Symmetric and periodic Hamming, Blackman, and Bartlett windows match the independent NumPy
+        references.
+    """
     for n in (0, 1, 5):
         eq(a.hamming_window(n, periodic=False), np.hamming(n))
     eq(a.hamming_window(5), np.hamming(6)[:-1])
@@ -256,10 +325,22 @@ def test_windows_numeric():
     (lambda: c.clip_by_global_norm((t([1]),), use_norm=1), ValueError),
 ])
 def test_clip_validation(call, error):
-    with pytest.raises(error):call()
+    """
+    Feature: Clip validation.
+    Description: Check clip validation.
+    Expectation: Invalid clip arguments raise the parameterized exception type.
+    """
+    with pytest.raises(error):
+        call()
 
 
 def test_clip_numeric():
+    """
+    Feature: Clip numeric.
+    Description: Check clip numeric.
+    Expectation: Clipping and norm clipping match the explicit independently calculated bounds and scale
+        factors.
+    """
     x = t([-2, 1, 4])
     eq(c.clip_by_value(x, -1, 2), [-1, 1, 2])
     eq(c.clip_by_value(x, None, 2), [-2, 1, 2])
@@ -267,23 +348,38 @@ def test_clip_numeric():
     for values in ([x, x], (x, x)):
         result = c.clip_by_value(values, -1., t(2))
         assert isinstance(result, tuple)
-        for item in result:eq(item, [-1, 1, 2])
+        for item in result:
+            eq(item, [-1, 1, 2])
     eq(c.clip_by_norm(t([3, 4]), 10), [3, 4])
     eq(c.clip_by_norm(t([3, 4]), 2), [1.2, 1.6])
     result = c.clip_by_norm((t([3]), t([4])), 2, norm_type=float('inf'))
-    eq(result[0], [1.5]); eq(result[1], [2.])
+    eq(result[0], [1.5])
+    eq(result[1], [2.])
     result = c.clip_by_global_norm((t([3]), t([4])), 2)
-    eq(result[0], [1.2]); eq(result[1], [1.6])
+    eq(result[0], [1.2])
+    eq(result[1], [1.6])
 
 
 @pytest.mark.parametrize('call,error', [(lambda:l.pinv([1]), TypeError), (lambda:l.pinv(t(1)), TypeError),
     (lambda:l.pinv(t([1])), ValueError), (lambda:l.qr(t([[1]]), 'invalid'), TypeError),
     (lambda:l._nd_transpose(t([1])), TypeError)])
 def test_linalg_validation(call, error):
-    with pytest.raises(error):call()
+    """
+    Feature: Linalg validation.
+    Description: Check linalg validation.
+    Expectation: Invalid linalg arguments raise the parameterized exception type.
+    """
+    with pytest.raises(error):
+        call()
 
 
 def test_linalg_numeric():
+    """
+    Feature: Linalg numeric.
+    Description: Check linalg numeric.
+    Expectation: Linear-algebra wrappers agree with independent matrix formulas and NumPy results for each
+        supported case.
+    """
     x = np.array([[3., 1.], [1., 2.]], np.float32)
     eq(l.cond(t(x)), np.linalg.cond(x))
     values, vectors = l.eig(t(x))
@@ -300,10 +396,22 @@ def test_linalg_numeric():
 @pytest.mark.parametrize('args,error', [((1, t(1)), TypeError), (('dump', 1), TypeError),
     (('dump', t(1), 1), TypeError), (('dump', t(1), 'all'), ValueError), (('dump', t(1), 'bad'), ValueError)])
 def test_tensordump_validation(args, error):
-    with pytest.raises(error):d.tensordump(*args)
+    """
+    Feature: Tensordump validation.
+    Description: Check tensordump validation.
+    Expectation: Invalid tensordump arguments raise the parameterized exception type.
+    """
+    with pytest.raises(error):
+        d.tensordump(*args)
 
 
 def test_other_functions_numeric():
+    """
+    Feature: Other functions numeric.
+    Description: Check other functions numeric.
+    Expectation: Dependency preserves the input tensor values and partial application forwards the bound operand
+        to addition.
+    """
     x = t([1, 2])
     eq(o.depend(x, t(3)), [1, 2])
     add = o.partial(ops.add, t(2))
@@ -329,10 +437,22 @@ def test_other_functions_numeric():
     (lambda:r.multinomial_with_replacement(t([1, 2]), seed=1, offset='x', numsamples=1), TypeError),
 ])
 def test_random_validation(call, error):
-    with pytest.raises(error):call()
+    """
+    Feature: Random validation.
+    Description: Check random validation.
+    Expectation: Invalid random arguments raise the parameterized exception type.
+    """
+    with pytest.raises(error):
+        call()
 
 
 def test_random_shapes_and_support():
+    """
+    Feature: Random shapes and support.
+    Description: Check random shapes and support.
+    Expectation: Random wrappers return the expected shapes/dtypes and values remain within their documented
+        distribution support.
+    """
     assert r._generate_shapes(()) == (1,)
     assert r._check_shape((1, 2)) is True
     assert r._check_param('normal', 'mean', np.array(1.)) is True
@@ -387,7 +507,13 @@ def test_random_shapes_and_support():
     (lambda:g._trans_jet_inputs(t(1, ms.float16), t(1, ms.float16)), TypeError),
 ])
 def test_grad_validation(call, error):
-    with pytest.raises(error):call()
+    """
+    Feature: Grad validation.
+    Description: Check grad validation.
+    Expectation: Invalid grad arguments raise the parameterized exception type.
+    """
+    with pytest.raises(error):
+        call()
 
 
 def square(x):
@@ -411,71 +537,122 @@ def auxiliary_three(x, y):
 
 
 def test_grad_transforms_and_derivative():
+    """
+    Feature: Grad transforms and derivative.
+    Description: Check grad transforms and derivative.
+    Expectation: Gradient transforms preserve primal values and return the independently calculated analytic
+        derivatives.
+    """
     assert g._convert_grad_position_type((False, True)) == (0, 1)
     primal, series = g._trans_jet_inputs(t([2], ms.int32), t([[1]], ms.int32))
     assert primal.dtype == series.dtype == ms.float32
-    eq(primal, [2]); eq(series, [[1]])
+    eq(primal, [2])
+    eq(series, [[1]])
     eq(g._trans_derivative_inputs(t([3], ms.int64)), [3])
     primal, series = g._check_jet_inputs(t([2]), t([1]))
-    eq(primal, [2]); eq(series, [[1]])
+    eq(primal, [2])
+    eq(series, [[1]])
     primal, derivative = g.derivative(square, t([2, 3], ms.int32), order=1)
-    eq(primal, [4, 9]); eq(derivative, [4, 6])
+    eq(primal, [4, 9])
+    eq(derivative, [4, 6])
 
 
 @pytest.mark.parametrize('kind', ['single', 'single_aux', 'multi', 'multi_aux', 'tuple_output'])
 def test_jvp_analytic(kind):
+    """
+    Feature: Jvp analytic.
+    Description: Check jvp analytic.
+    Expectation: Single/multiple input and output JVPs match analytic directional derivatives and retain the
+        expected auxiliary values.
+    """
     x, y, v, w = t([2, 3]), t([4, 5]), t([1, 2]), t([3, 4])
     if kind == 'single':
         out, tangent = g.jvp(square, x, v)
-        eq(out, [4, 9]); eq(tangent, [4, 12])
+        eq(out, [4, 9])
+        eq(tangent, [4, 12])
     elif kind == 'single_aux':
         out, tangent, aux = g.jvp(auxiliary, x, v, has_aux=True)
-        eq(out, [4, 9]); eq(tangent, [4, 12]); eq(aux, [9, 10])
+        eq(out, [4, 9])
+        eq(tangent, [4, 12])
+        eq(aux, [9, 10])
     elif kind == 'multi':
         out, tangent = g.jvp(polynomial, [x, y], [v, w])
-        eq(out, [16, 24]); eq(tangent, [13, 24])
+        eq(out, [16, 24])
+        eq(tangent, [13, 24])
     elif kind == 'multi_aux':
         out, tangent, aux = g.jvp(auxiliary_three, (x, y), (v, w), has_aux=True)
-        eq(out, [16, 24]); eq(tangent, [13, 24]); eq(aux[0], [9, 10]); eq(aux[1], [2, 3])
+        eq(out, [16, 24])
+        eq(tangent, [13, 24])
+        eq(aux[0], [9, 10])
+        eq(aux[1], [2, 3])
     else:
         out, tangent = g.jvp(multiple_outputs, (x, y), (v, w))
-        eq(out[0], [8, 14]); eq(out[1], [8, 15])
-        eq(tangent[0], [7, 16]); eq(tangent[1], [10, 22])
+        eq(out[0], [8, 14])
+        eq(out[1], [8, 15])
+        eq(tangent[0], [7, 16])
+        eq(tangent[1], [10, 22])
 
 
 def test_linearize_vjp_analytic():
+    """
+    Feature: Linearize vjp analytic.
+    Description: Check linearize vjp analytic.
+    Expectation: Linearization and VJP closures return the expected primal values, auxiliary outputs, and
+        analytic tangent/cotangent products.
+    """
     x, y, v = t([2, 3]), t([4, 5]), t([1, 2])
     out, linear = g.linearize(square, x)
-    eq(out, [4, 9]); eq(linear(v), [4, 12])
+    eq(out, [4, 9])
+    eq(linear(v), [4, 12])
     out, linear = g.linearize(polynomial, (x, y))
-    eq(out, [16, 24]); eq(linear((v, v)), [7, 18])
+    eq(out, [16, 24])
+    eq(linear((v, v)), [7, 18])
     out, backward, aux = g.vjp(auxiliary, x, has_aux=True)
-    eq(out, [4, 9]); eq(aux, [9, 10]); eq(backward(v)[0], [4, 12])
+    eq(out, [4, 9])
+    eq(aux, [9, 10])
+    eq(backward(v)[0], [4, 12])
 
 
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 @pytest.mark.parametrize('case', ['single', 'two_inputs', 'two_outputs', 'aux', 'selected'])
 def test_jacobians_analytic(fn, case):
+    """
+    Feature: Jacobians analytic.
+    Description: Check jacobians analytic.
+    Expectation: Forward and reverse Jacobians match the independent diagonal/identity matrices for selected
+        inputs, outputs, and auxiliary modes.
+    """
     x, y = t([2, 3]), t([4, 5])
     diagonal = np.diag([4., 6.])
     if case == 'single':
         eq(fn(square)(x), diagonal)
     elif case == 'two_inputs':
         result = fn(polynomial, grad_position=(0, 1))(x, y)
-        eq(result[0], diagonal); eq(result[1], 3 * np.eye(2))
+        eq(result[0], diagonal)
+        eq(result[1], 3 * np.eye(2))
     elif case == 'two_outputs':
         result = fn(multiple_outputs, grad_position=(0, 1))(x, y)
-        eq(result[0][0], diagonal); eq(result[0][1], np.eye(2))
-        eq(result[1][0], np.diag([4., 5.])); eq(result[1][1], np.diag([2., 3.]))
+        eq(result[0][0], diagonal)
+        eq(result[0][1], np.eye(2))
+        eq(result[1][0], np.diag([4., 5.]))
+        eq(result[1][1], np.diag([2., 3.]))
     elif case == 'aux':
         result, aux = fn(auxiliary_three, grad_position=(0, 1), has_aux=True)(x, y)
-        eq(result[0], diagonal); eq(result[1], 3 * np.eye(2))
-        eq(aux[0], [9, 10]); eq(aux[1], [2, 3])
+        eq(result[0], diagonal)
+        eq(result[1], 3 * np.eye(2))
+        eq(aux[0], [9, 10])
+        eq(aux[1], [2, 3])
     else:
         eq(fn(polynomial, grad_position=1)(x, y), 3 * np.eye(2))
 
 
 def test_custom_vjp_protocol_and_gradient():
+    """
+    Feature: Custom vjp protocol and gradient.
+    Description: Check custom vjp protocol and gradient.
+    Expectation: Custom forward calls preserve square values, registered backward callbacks return analytic
+        gradients, and direct bprop preserves sensitivities.
+    """
     @g.custom_vjp
     def fwd(x):
         return x * x
@@ -496,23 +673,45 @@ def test_custom_vjp_protocol_and_gradient():
 
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='ScalarToArray lacks __infer__ in MS 2.12 eager mode')
 def test_scalar_to_array_expected_numeric():
+    """
+    Feature: Scalar to array expected numeric.
+    Description: Check scalar to array expected numeric.
+    Expectation: Scalar conversion retains the numeric value 3.0; the unavailable eager inference path retains
+        its strict expected failure.
+    """
     eq(a.scalar_to_array(3.), 3.)
 
 
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='MoveTo has no CPU kernel in MS 2.12')
 def test_move_to_expected_numeric():
+    """
+    Feature: Move to expected numeric.
+    Description: Check move to expected numeric.
+    Expectation: Moving to CPU preserves [1, 2]; the unavailable CPU native kernel retains its strict expected
+        failure.
+    """
     eq(o.move_to(t([1, 2]), 'CPU', True), [1, 2])
 
 
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='Gamma has no CPU kernel in MS 2.12')
 def test_gamma_expected_numeric():
+    """
+    Feature: Gamma expected numeric.
+    Description: Check gamma expected numeric.
+    Expectation: Gamma samples have shape (2, 3) and are nonnegative, with unsupported CPU execution retaining
+        its strict expected failure.
+    """
     out = r.gamma((2, 3), t(2), t(1), seed=71)
     assert out.shape == (2, 3) and np.all(out.asnumpy() >= 0)
 
 
 @pytest.mark.parametrize('value', [2, 2., t(2, ms.int32)])
 def test_fills_native_boundary_protocol(monkeypatch, value):
-    """CPU Fills unavailable: verify conversion and full native call only."""
+    """
+    Feature: Fills native boundary protocol.
+    Description: CPU Fills unavailable: verify conversion and full native call only.
+    Expectation: CPU Fills unavailable: verify conversion and full native call only.
+    """
     x = t([1, 2])
     sentinel = object()
     calls = []
@@ -531,7 +730,11 @@ def test_fills_native_boundary_protocol(monkeypatch, value):
 
 
 def test_move_to_native_boundary_protocol(monkeypatch):
-    """CPU MoveTo unavailable: check full forwarding and return identity."""
+    """
+    Feature: Move to native boundary protocol.
+    Description: CPU MoveTo unavailable: check full forwarding and return identity.
+    Expectation: CPU MoveTo unavailable: check full forwarding and return identity.
+    """
     x = t([1, 2])
     sentinel, calls = object(), []
     def native(*args):
@@ -544,7 +747,11 @@ def test_move_to_native_boundary_protocol(monkeypatch):
 
 
 def test_gamma_native_boundary_protocol(monkeypatch):
-    """CPU Gamma unavailable: check constructor seeds and parameter identity."""
+    """
+    Feature: Gamma native boundary protocol.
+    Description: CPU Gamma unavailable: check constructor seeds and parameter identity.
+    Expectation: CPU Gamma unavailable: check constructor seeds and parameter identity.
+    """
     ms.set_seed(37)
     alpha, beta = t(2), t(1)
     sentinel, calls = object(), []
@@ -570,15 +777,26 @@ def test_gamma_native_boundary_protocol(monkeypatch):
     assert shape == (2, 3) and passed_alpha is alpha and passed_beta is beta
 
 
-@pytest.mark.xfail(strict=True, raises=TypeError, reason='repeat_interleave zero repeats constructs Tensor with reversed arguments in MS 2.12')
+@pytest.mark.xfail(strict=True, raises=TypeError,
+                   reason='repeat_interleave zero repeats constructs Tensor with reversed arguments in MS 2.12')
 def test_repeat_interleave_zero_expected_numeric():
+    """
+    Feature: Repeat interleave zero expected numeric.
+    Description: Check repeat interleave zero expected numeric.
+    Expectation: Zero repeats return an empty float32 tensor with shape (0,), subject to the preserved runtime
+        expected-failure marker.
+    """
     out = a.repeat_interleave(t([1, 2]), 0)
     assert out.shape == (0,) and out.dtype == ms.float32
 
 
 @pytest.mark.parametrize('fn', [a.unique_ext, a.unique_consecutive])
 def test_mutable_unique_flags_rejected(fn, monkeypatch):
-    """Graph metadata protocol: isconstant rejects a nonconstant graph flag."""
+    """
+    Feature: Mutable unique flags rejected.
+    Description: Graph metadata protocol: isconstant rejects a nonconstant graph flag.
+    Expectation: Graph metadata protocol: isconstant rejects a nonconstant graph flag.
+    """
     flag = ms.mutable(True)
     seen = []
     def graph_isconstant(value):
@@ -591,8 +809,8 @@ def test_mutable_unique_flags_rejected(fn, monkeypatch):
     assert len(seen) == 1
 
 
-@pytest.fixture
-def python_grad_wrappers(monkeypatch):
+@pytest.fixture(name='python_grad_wrappers')
+def fixture_python_grad_wrappers(monkeypatch):
     """Run graph wrapper Python bodies directly; all tensor/autograd ops stay real."""
     def direct_jit(fn=None, **kwargs):
         if fn is None:
@@ -603,20 +821,44 @@ def python_grad_wrappers(monkeypatch):
 
 @pytest.mark.parametrize('kind', ['single', 'single_aux', 'multi', 'multi_aux'])
 def test_jvp_python_wrapper_numeric(python_grad_wrappers, kind):
+    """
+    Feature: Jvp python wrapper numeric.
+    Description: Check jvp python wrapper numeric.
+    Expectation: The direct Python JVP wrapper returns the same analytic tangents and auxiliary outputs as the
+        reference JVP cases.
+    """
     test_jvp_analytic(kind)
 
 
 def test_linearize_python_wrapper_numeric(python_grad_wrappers):
+    """
+    Feature: Linearize python wrapper numeric.
+    Description: Check linearize python wrapper numeric.
+    Expectation: Direct Python linearization and VJP wrappers preserve the analytic primal values and
+        tangent/cotangent products.
+    """
     test_linearize_vjp_analytic()
 
 
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 @pytest.mark.parametrize('case', ['single', 'two_inputs', 'two_outputs', 'aux', 'selected'])
 def test_jacobian_python_wrapper_numeric(python_grad_wrappers, fn, case):
+    """
+    Feature: Jacobian python wrapper numeric.
+    Description: Check jacobian python wrapper numeric.
+    Expectation: Direct Python forward/reverse Jacobian wrappers return the analytic matrices for all
+        parameterized input/output cases.
+    """
     test_jacobians_analytic(fn, case)
 
 
 def test_grad_python_wrapper_rejection(python_grad_wrappers):
+    """
+    Feature: Grad python wrapper rejection.
+    Description: Check grad python wrapper rejection.
+    Expectation: Invalid grad python wrapper rejection raise ValueError. Diagnostics identify more than one
+        outputs.
+    """
     with pytest.raises(ValueError, match='more than one outputs'):
         g.jvp(square, t([2]), t([1]), has_aux=True)
     for fn in (g.jacfwd, g.jacrev):
@@ -625,19 +867,35 @@ def test_grad_python_wrapper_rejection(python_grad_wrappers):
 
 
 def test_derivative_tuple_analytic():
+    """
+    Feature: Derivative tuple analytic.
+    Description: Check derivative tuple analytic.
+    Expectation: Tuple-input differentiation returns primal values [16, 24] and first derivatives [7, 9].
+    """
     primal, derivative = g.derivative(polynomial, (t([2, 3]), t([4, 5])), order=1)
-    eq(primal, [16, 24]); eq(derivative, [7, 9])
+    eq(primal, [16, 24])
+    eq(derivative, [7, 9])
 
 
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='Poisson has no CPU kernel in MS 2.12')
 def test_poisson_expected_numeric():
+    """
+    Feature: Poisson expected numeric.
+    Description: Check poisson expected numeric.
+    Expectation: Poisson samples have shape (2, 3) and nonnegative integer values, with unavailable CPU
+        execution retaining its strict expected failure.
+    """
     out = r.poisson((2, 3), t(2), seed=71)
     assert out.shape == (2, 3) and np.all(out.asnumpy() >= 0)
     assert np.all(out.asnumpy() == np.floor(out.asnumpy()))
 
 
 def test_poisson_native_boundary_protocol(monkeypatch):
-    """CPU Poisson unavailable; verify complete constructor/call/return protocol."""
+    """
+    Feature: Poisson native boundary protocol.
+    Description: CPU Poisson unavailable; verify complete constructor/call/return protocol.
+    Expectation: CPU Poisson unavailable; verify complete constructor/call/return protocol.
+    """
     ms.set_seed(37)
     mean, sentinel, calls = t(2), object(), []
     class NativePoisson:
@@ -666,10 +924,22 @@ def test_poisson_native_boundary_protocol(monkeypatch):
     (lambda:g.vjp(square, [t(1)]), TypeError),
 ])
 def test_remaining_validation(call, error):
-    with pytest.raises(error):call()
+    """
+    Feature: Remaining validation.
+    Description: Check remaining validation.
+    Expectation: Invalid remaining arguments raise the parameterized exception type.
+    """
+    with pytest.raises(error):
+        call()
 
 
 def test_remaining_array_numeric():
+    """
+    Feature: Remaining array numeric.
+    Description: Check remaining array numeric.
+    Expectation: Affine grids, image reconstruction, and pseudoinverses match independently specified coordinate
+        and matrix values.
+    """
     theta = t([[[1, 0, 0], [0, 1, 0]]])
     eq(a.affine_grid(theta, (1, 1, 2, 2)), [[[[-.5, -.5], [.5, -.5]], [[-.5, .5], [.5, .5]]]])
     eq(a.col2im(t([[[[1, 2, 3, 4]]]]), t([2, 2], ms.int32), (1, 1), (1, 1), (0, 0), (1, 1)),
@@ -678,7 +948,11 @@ def test_remaining_array_numeric():
 
 
 def test_unknown_shape_metadata_protocol(monkeypatch):
-    """Graph primitive boundary: verify sentinel shapes for dynamic metadata."""
+    """
+    Feature: Unknown shape metadata protocol.
+    Description: Graph primitive boundary: verify sentinel shapes for dynamic metadata.
+    Expectation: Graph primitive boundary: verify sentinel shapes for dynamic metadata.
+    """
     shape = (2, 3)
     calls = []
     def unknown_rank(value):
@@ -699,7 +973,11 @@ def test_unknown_shape_metadata_protocol(monkeypatch):
 
 @pytest.mark.parametrize('repeats', [2, t([1, 2], ms.int64)])
 def test_repeat_interleave_ext_native_boundary(monkeypatch, repeats):
-    """Documented Ascend-only operation; CPU checks branch and full protocol."""
+    """
+    Feature: Repeat interleave ext native boundary.
+    Description: Documented Ascend-only operation; CPU checks branch and full protocol.
+    Expectation: Documented Ascend-only operation; CPU checks branch and full protocol.
+    """
     x, sentinel, calls = t([1, 2]), object(), []
     def native(*args):
         calls.append(args)
@@ -712,7 +990,11 @@ def test_repeat_interleave_ext_native_boundary(monkeypatch, repeats):
 
 
 def test_chunk_ext_native_boundary(monkeypatch):
-    """Ascend Chunk boundary, without claiming its native numerical execution."""
+    """
+    Feature: Chunk ext native boundary.
+    Description: Ascend Chunk boundary, without claiming its native numerical execution.
+    Expectation: Ascend Chunk boundary, without claiming its native numerical execution.
+    """
     x, sentinel, calls = t([1, 2]), object(), []
     def native(*args):
         calls.append(args)
@@ -725,7 +1007,11 @@ def test_chunk_ext_native_boundary(monkeypatch):
 @pytest.mark.parametrize('fn,attr', [(r.uniform_ext, 'uniform_ext_'), (r.uniform_, 'inplace_uniform_op')])
 @pytest.mark.parametrize('custom', [False, True])
 def test_uniform_ext_native_protocol(monkeypatch, fn, attr, custom):
-    """Ascend-only native boundary; generator steps and all native inputs are real."""
+    """
+    Feature: Uniform ext native protocol.
+    Description: Ascend-only native boundary; generator steps and all native inputs are real.
+    Expectation: Ascend-only native boundary; generator steps and all native inputs are real.
+    """
     generator = ms.Generator() if custom else r.default_generator
     generator.manual_seed(19)
     x, sentinel, calls = t([1, 2]), object(), []
@@ -739,14 +1025,19 @@ def test_uniform_ext_native_protocol(monkeypatch, fn, attr, custom):
     actual_x, low, high, seed, offset = calls[0]
     assert actual_x is x and (low, high) == (2., 5.)
     assert seed.dtype == offset.dtype == ms.int64
-    eq(seed, 19); eq(offset, 0)
+    eq(seed, 19)
+    eq(offset, 0)
     assert generator.initial_seed() == 19
     eq(generator._offset, 12)
 
 
 @pytest.mark.parametrize('like', [False, True])
 def test_randint_ext_native_protocol(monkeypatch, like):
-    """Ascend-only kernel boundary: shorthand inserts low=0 and forwards RNG."""
+    """
+    Feature: Randint ext native protocol.
+    Description: Ascend-only kernel boundary: shorthand inserts low=0 and forwards RNG.
+    Expectation: Ascend-only kernel boundary: shorthand inserts low=0 and forwards RNG.
+    """
     r.default_generator.manual_seed(23)
     sentinel, calls = object(), []
     def native(*args, **kwargs):
@@ -764,7 +1055,8 @@ def test_randint_ext_native_protocol(monkeypatch, like):
         assert args[0] is x and args[1:3] == (0, 5)
     else:
         assert args[:3] == (0, 5, (2,))
-    eq(args[-2], 23); eq(args[-1], 0)
+    eq(args[-2], 23)
+    eq(args[-1], 0)
     assert kwargs == {'dtype': ms.int32, 'device': 'CPU'}
     eq(r.default_generator._offset, 12)
 
@@ -779,7 +1071,11 @@ def _closed(function, name):
 @pytest.mark.parametrize('aux', [False, True])
 @pytest.mark.parametrize('multi', [False, True])
 def test_jacobian_graph_helpers_direct_numeric(monkeypatch, python_grad_wrappers, fn, aux, multi):
-    """Capture helpers while delegating vmap, then test their real Tensor behavior."""
+    """
+    Feature: Jacobian graph helpers direct numeric.
+    Description: Capture helpers while delegating vmap, then test their real Tensor behavior.
+    Expectation: Capture helpers while delegating vmap, then test their real Tensor behavior.
+    """
     callbacks = []
     native_vmap = g._vmap
     def observe_vmap(callback):
@@ -802,50 +1098,82 @@ def test_jacobian_graph_helpers_direct_numeric(monkeypatch, python_grad_wrappers
         grad_helper = _closed(wrapped, 'grad_all' if multi else 'grad_single')
         grad_result = grad_helper(t([1, 2]), inputs)
         if multi:
-            eq(grad_result[0], [4, 12]); eq(grad_result[1], [3, 6])
+            eq(grad_result[0], [4, 12])
+            eq(grad_result[1], [3, 6])
         else:
             eq(grad_result, [4, 12])
     else:
         reverse = callback(inputs, t([1, 2]))
         if multi:
-            eq(reverse[0], [4, 12]); eq(reverse[1], [3, 6])
+            eq(reverse[0], [4, 12])
+            eq(reverse[1], [3, 6])
         else:
             eq(reverse, [4, 12])
     if aux:
         # aux_fn is closed over by the helper; its direct return is checked
         # independently of the compiled autodiff graph.
-        auxiliary_helper = _closed(_closed(wrapped, 'grad_single'), 'aux_fn') if fn is g.jacfwd else _closed(callback, 'aux_fn')
+        auxiliary_helper = _closed(_closed(wrapped, 'grad_single'),
+                                   'aux_fn') if fn is g.jacfwd else _closed(callback, 'aux_fn')
         eq(auxiliary_helper(*inputs), [16, 24] if multi else [4, 9])
 
 
 def test_vjp_graph_aux_helper_direct_numeric():
+    """
+    Feature: Vjp graph aux helper direct numeric.
+    Description: Check vjp graph aux helper direct numeric.
+    Expectation: Graph VJP helpers preserve square primal values, auxiliary values, and the analytic cotangent
+        product.
+    """
     ms.set_context(mode=ms.GRAPH_MODE)
     value, backward, aux = g.vjp(auxiliary, t([2, 3]), has_aux=True)
-    eq(value, [4, 9]); eq(aux, [9, 10])
+    eq(value, [4, 9])
+    eq(aux, [9, 10])
     eq(_closed(backward, 'aux_fn')(t([2, 3])), [4, 9])
     eq(backward(t([1, 2]))[0], [4, 12])
 
 
 def test_jacobian_postprocess_mismatch_validation():
     # Three reverse-mode output blocks cannot be distributed over two inputs.
+    """
+    Feature: Jacobian postprocess mismatch validation.
+    Description: Check jacobian postprocess mismatch validation.
+    Expectation: Invalid jacobian postprocess mismatch arguments raise ValueError. Diagnostics identify numbers
+        of inputs and outputs.
+    """
     with pytest.raises(ValueError, match='numbers of inputs and outputs'):
         g._jac_postprocess(t(np.arange(3).reshape(3, 1)),
                            (((), 0), ((1,), 1), ((1,), 2), ((1,), 3)), (0, 1), 'reverse')
 
 
 def test_linearize_list_vector_direct_wrapper(python_grad_wrappers):
+    """
+    Feature: Linearize list vector direct wrapper.
+    Description: Check linearize list vector direct wrapper.
+    Expectation: A list input/vector pair produces primal values [16, 24] and tangent values [13, 24].
+    """
     value, linear = g.linearize(polynomial, [t([2, 3]), t([4, 5])])
-    eq(value, [16, 24]); eq(linear([t([1, 2]), t([3, 4])]), [13, 24])
+    eq(value, [16, 24])
+    eq(linear([t([1, 2]), t([3, 4])]), [13, 24])
 
 
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='BatchToSpaceNDV2 has no CPU kernel in MS 2.12')
 def test_batch_to_space_tensor_arguments_expected_numeric():
+    """
+    Feature: Batch to space tensor arguments expected numeric.
+    Description: Check batch to space tensor arguments expected numeric.
+    Expectation: Tensor-valued block/crop arguments produce the expected 2-by-2 spatial layout, with the
+        unavailable CPU variant retaining its strict expected failure.
+    """
     eq(a.batch_to_space_nd(t([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), t([2, 2], ms.int32),
                            t([[0, 0], [0, 0]], ms.int32)), [[[[1, 2], [3, 4]]]])
 
 
 def test_batch_to_space_tensor_native_protocol(monkeypatch):
-    """Tensor-argument native variant unavailable on CPU: full call identity."""
+    """
+    Feature: Batch to space tensor native protocol.
+    Description: Tensor-argument native variant unavailable on CPU: full call identity.
+    Expectation: Tensor-argument native variant unavailable on CPU: full call identity.
+    """
     x, blocks, crops = t([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), t([2, 2], ms.int32), t([[0, 0], [0, 0]], ms.int32)
     sentinel, calls = object(), []
     def native(*args):
@@ -859,11 +1187,22 @@ def test_batch_to_space_tensor_native_protocol(monkeypatch):
 
 
 def test_empty_slice_scatter_numeric():
+    """
+    Feature: Empty slice scatter numeric.
+    Description: Check empty slice scatter numeric.
+    Expectation: Scattering an empty slice leaves the original values [1, 2] intact.
+    """
     eq(a.slice_scatter(t([1, 2]), t([]), start=0, end=0), [1, 2])
 
 
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 def test_jacobian_aux_graph_helper_rejection_direct(python_grad_wrappers, fn):
+    """
+    Feature: Jacobian aux graph helper rejection direct.
+    Description: Check jacobian aux graph helper rejection direct.
+    Expectation: Invalid jacobian aux graph helper rejection direct raise ValueError. Diagnostics identify more
+        than one outputs.
+    """
     wrapped = fn(square, has_aux=True)
     helper = _closed(_closed(wrapped, 'grad_single'), 'aux_fn') if fn is g.jacfwd else _closed(wrapped, 'aux_fn')
     with pytest.raises(ValueError, match='more than one outputs'):
@@ -871,6 +1210,11 @@ def test_jacobian_aux_graph_helper_rejection_direct(python_grad_wrappers, fn):
 
 
 def test_seeded_random_stream_reproducibility_and_support():
+    """
+    Feature: Seeded random stream reproducibility and support.
+    Description: Check seeded random stream reproducibility and support.
+    Expectation: Resetting the seed reproduces the same int32 samples, with shape (4, 5) and values in [2, 8).
+    """
     ms.set_seed(43)
     first = r.randint(2, 8, (4, 5), dtype=ms.int32, seed=17)
     ms.set_seed(43)
@@ -893,15 +1237,28 @@ def conditional_auxiliary(x):
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='Direct eager tuple-output graph helper loses tangent; compiled API is tested separately')
 def test_jvp_singleton_tuple_python_numeric(python_grad_wrappers):
+    """
+    Feature: Jvp singleton tuple python numeric.
+    Description: Check jvp singleton tuple python numeric.
+    Expectation: Python JVP preserves singleton tuple structure and returns square values [4, 9] and tangents
+        [4, 12].
+    """
     output, tangent = g.jvp(singleton_output, t([2, 3]), t([1, 2]))
     assert isinstance(output, tuple) and len(output) == 1
     assert isinstance(tangent, tuple) and len(tangent) == 1
-    eq(output[0], [4, 9]); eq(tangent[0], [4, 12])
+    eq(output[0], [4, 9])
+    eq(tangent[0], [4, 12])
 
 
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='Direct eager tuple-output graph helper loses tangent; compiled API is tested separately')
 def test_jacfwd_singleton_tuple_graph_helper_numeric(monkeypatch, python_grad_wrappers):
+    """
+    Feature: Jacfwd singleton tuple graph helper numeric.
+    Description: Check jacfwd singleton tuple graph helper numeric.
+    Expectation: The graph helper preserves a singleton tuple tangent and computes the analytic diagonal
+        Jacobian and tangent values.
+    """
     callbacks = []
     native_vmap = g._vmap
     def observe(callback):
@@ -915,9 +1272,17 @@ def test_jacfwd_singleton_tuple_graph_helper_numeric(monkeypatch, python_grad_wr
 
 
 def test_vjp_aux_shape_dependent_rejection_graph_helper():
+    """
+    Feature: Vjp aux shape dependent rejection graph helper.
+    Description: Check vjp aux shape dependent rejection graph helper.
+    Expectation: Valid graph auxiliary outputs preserve the analytic VJP, while shape-dependent invalid
+        auxiliary structure raises ValueError.
+    """
     ms.set_context(mode=ms.GRAPH_MODE)
     value, backward, aux = g.vjp(conditional_auxiliary, t([2, 3]), has_aux=True)
-    eq(value, [4, 9]); eq(aux, [9, 10]); eq(backward(t([1, 2]))[0], [4, 12])
+    eq(value, [4, 9])
+    eq(aux, [9, 10])
+    eq(backward(t([1, 2]))[0], [4, 12])
     helper = _closed(backward, 'aux_fn')
     eq(helper(t([2, 3])), [4, 9])
     with pytest.raises(ValueError, match='more than one outputs'):
@@ -925,15 +1290,28 @@ def test_vjp_aux_shape_dependent_rejection_graph_helper():
 
 
 def test_check_tensor_container_validation():
+    """
+    Feature: Check tensor container validation.
+    Description: Check check tensor container validation.
+    Expectation: Invalid check tensor container arguments raise TypeError. Diagnostics identify inputs type must
+        be Tensor.
+    """
     with pytest.raises(TypeError, match='inputs type must be Tensor'):
         g._check_tensor([t([1])])
 
 
 def test_jvp_singleton_tuple_compiled_numeric():
+    """
+    Feature: Jvp singleton tuple compiled numeric.
+    Description: Check jvp singleton tuple compiled numeric.
+    Expectation: Compiled JVP preserves singleton tuple structure with square values [4, 9] and tangents [4,
+        12].
+    """
     output, tangent = g.jvp(singleton_output, t([2, 3]), t([1, 2]))
     assert isinstance(output, tuple) and len(output) == 1
     assert isinstance(tangent, tuple) and len(tangent) == 1
-    eq(output[0], [4, 9]); eq(tangent[0], [4, 12])
+    eq(output[0], [4, 9])
+    eq(tangent[0], [4, 12])
 
 
 @pytest.mark.parametrize('fn', [
@@ -943,4 +1321,10 @@ def test_jvp_singleton_tuple_compiled_numeric():
         reason='jacrev singleton-tuple output fails AbstractTensor/AbstractTuple type join in MS 2.12')),
 ])
 def test_jacobian_singleton_tuple_compiled_numeric(fn):
+    """
+    Feature: Jacobian singleton tuple compiled numeric.
+    Description: Check jacobian singleton tuple compiled numeric.
+    Expectation: Compiled Jacobians match diag(4, 6); the recorded reverse-mode singleton-tuple limitation
+        retains its strict expected failure.
+    """
     eq(fn(singleton_output)(t([2, 3])), np.diag([4., 6.]))
