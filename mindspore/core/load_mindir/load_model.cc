@@ -1416,7 +1416,7 @@ std::string ResolveExternalDataPath(const std::string &mindir_path, const std::s
     return "";
   }
   const std::string &resolved_dir = resolved_dir_opt.value();
-  std::string raw_file = resolved_dir + "/" + location;
+  std::string raw_file = resolved_dir + "/" + SplitRelativeRoot(location).second;
   auto resolved_file_opt = FileUtils::GetRealPath(raw_file.c_str());
   if (!resolved_file_opt.has_value()) {
     MS_LOG(ERROR) << "Failed to resolve external data path, file may not exist: " << raw_file;
