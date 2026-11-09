@@ -12,13 +12,71 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Tests for the scheduler selection logic of msrun."""
+"""Tests for scheduler selection and process cleanup in msrun."""
+import logging
+import signal
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
 
 from mindspore.parallel.cluster.process_entity import _api
+
+
+@pytest.mark.parametrize("sig", [signal.SIGINT, signal.SIGTERM])
+@pytest.mark.parametrize("cleanup_fails", [False, True])
+def test_signal_cleanup_exits_with_nonzero_status(sig, cleanup_fails, caplog):
+    """
+    Feature: Report interrupted msrun jobs as failures.
+    Description: Invoke the registered signal handler with successful or failing cleanup.
+    Expectation: Cleanup is requested, failures log a traceback, and the exit code is 128 plus the signal.
+    """
+    manager = _api._ProcessManager.__new__(_api._ProcessManager)
+    manager.cgn_processes = []
+    manager.msn_process = None
+    cleanup_error = RuntimeError("Cleanup failed")
+    with patch.object(_api.signal, "signal") as register, \
+            patch.object(manager, "kill_tail_log_processes"), \
+            patch.object(manager, "kill_all_processes") as cleanup, \
+            patch.object(_api.logger, "error", side_effect=logging.getLogger(__name__).error):
+        manager.join_processes()
+        handlers = dict(call.args for call in register.call_args_list)
+        assert set(handlers) == {signal.SIGINT, signal.SIGTERM}
+        if cleanup_fails:
+            cleanup.side_effect = cleanup_error
+        with pytest.raises(SystemExit) as error:
+            handlers[sig](sig, None)
+        assert error.value.code == 128 + sig
+        cleanup.assert_called_once_with()
+    errors = [record for record in caplog.records if record.levelno >= logging.ERROR]
+    assert len(errors) == int(cleanup_fails)
+    if cleanup_fails:
+        assert errors[0].getMessage() == f"Failed to terminate all processes for {signal.Signals(sig).name}."
+        assert errors[0].exc_info[1] is cleanup_error
+        assert "Traceback (most recent call last):" in caplog.text
+        assert "RuntimeError: Cleanup failed" in caplog.text
+
+
+@pytest.mark.parametrize("scheduler_state", ["absent", "running", "exited"])
+def test_kill_all_processes_handles_optional_scheduler(scheduler_state):
+    """
+    Feature: Clean up msrun on both master and worker nodes.
+    Description: Kill local processes with an absent, running, or exited scheduler.
+    Expectation: Workers and log tails are cleaned up; only a running scheduler is killed.
+    """
+    manager = _api._ProcessManager.__new__(_api._ProcessManager)
+    manager.msn_process = None if scheduler_state == "absent" else Mock()
+    if manager.msn_process is not None:
+        manager.msn_process.poll.return_value = None if scheduler_state == "running" else 0
+    with patch.object(manager, "kill_worker_processes") as kill_workers, \
+            patch.object(manager, "kill_tail_log_processes") as kill_tails:
+        manager.kill_all_processes()
+        kill_workers.assert_called_once_with()
+        kill_tails.assert_called_once_with()
+    if scheduler_state == "running":
+        manager.msn_process.kill.assert_called_once_with()
+    elif scheduler_state == "exited":
+        manager.msn_process.kill.assert_not_called()
 
 
 def _create_args(node_rank, worker_num=8, local_worker_num=4, sim_level=-1):

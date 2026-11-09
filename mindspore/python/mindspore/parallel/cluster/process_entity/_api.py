@@ -357,13 +357,19 @@ class _ProcessManager:
         """
 
         def signal_handler(sig, frame):
-            logger.warning("msrun process received SIGINT (Ctrl+C), terminating all workers.")
-            self.kill_all_processes()
-            sys.exit(0)
+            signal_name = signal.Signals(sig).name
+            logger.warning(f"msrun process received {signal_name}, terminating all processes.")
+            try:
+                self.kill_all_processes()
+            except Exception:  # pylint: disable=broad-except
+                logger.error(f"Failed to terminate all processes for {signal_name}.", exc_info=True)
+            finally:
+                sys.exit(128 + sig)
 
         has_exception = False
         success_cgn_processes = set()
-        signal.signal(signal.SIGINT, signal_handler)
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(sig, signal_handler)
         while True:
             # Traversal all workers and kill immediately if any exception happens.
             for p in self.cgn_processes:
@@ -426,7 +432,7 @@ class _ProcessManager:
         """
         self.kill_worker_processes()
         self.kill_tail_log_processes()
-        if self.msn_process.poll() is None:
+        if self.msn_process is not None and self.msn_process.poll() is None:
             self.msn_process.kill()
 
     def stop_processes(self):
