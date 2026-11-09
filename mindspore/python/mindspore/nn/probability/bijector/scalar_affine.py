@@ -97,7 +97,7 @@ class ScalarAffine(Bijector):
         """
         Return the scale parameter of the bijector.
 
-        Output:
+        Returns:
             Tensor, the scale parameter of the bijector.
         """
         return self._scale
@@ -107,7 +107,7 @@ class ScalarAffine(Bijector):
         """
         Return the shift parameter of the bijector.
 
-        Output:
+        Returns:
             Tensor, the shift parameter of the bijector.
         """
         return self._shift

@@ -28,7 +28,7 @@ from ._utils.custom_ops import log_generic
 class Beta(Distribution):
     r"""
     Beta distribution.
-    A Beta distributio is a continuous distribution with the range :math:`[0, 1]` and the probability density function:
+    A Beta distribution is a continuous distribution with the range :math:`[0, 1]` and the probability density function:
 
     .. math::
         f(x, \alpha, \beta) = x^\alpha (1-x)^{\beta - 1} / B(\alpha, \beta)
@@ -37,8 +37,8 @@ class Beta(Distribution):
 
     Args:
         concentration1 (int, float, list, numpy.ndarray, Tensor): The concentration1,
-          also know as :math:`alpha` of the Beta distribution. Default: ``None`` .
-        concentration0 (int, float, list, numpy.ndarray, Tensor): The concentration0, also know as
+          also known as :math:`alpha` of the Beta distribution. Default: ``None`` .
+        concentration0 (int, float, list, numpy.ndarray, Tensor): The concentration0, also known as
           :math:`beta` of the Beta distribution. Default: ``None`` .
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
         dtype (mindspore.dtype): The type of the event samples. Default: ``mstype.float32`` .
@@ -50,7 +50,7 @@ class Beta(Distribution):
         - `dtype` must be a float type because Beta distributions are continuous.
 
     Raises:
-        ValueError: When concentration1 <= 0 or concentration0 >=1.
+        ValueError: When concentration1 <= 0 or concentration0 <= 0.
         TypeError: When the input `dtype` is not a float or a subclass of float.
 
     Supported Platforms:
@@ -206,10 +206,10 @@ class Beta(Distribution):
     @property
     def concentration1(self):
         """
-        Return the concentration1, also know as the alpha of the Beta distribution,
+        Return the concentration1, also known as the alpha of the Beta distribution,
         after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the concentration1 parameter of the distribution.
         """
         return self._concentration1
@@ -217,11 +217,11 @@ class Beta(Distribution):
     @property
     def concentration0(self):
         """
-        Return the concentration0, also know as the beta of the Beta distribution,
+        Return the concentration0, also known as the beta of the Beta distribution,
         after casting to dtype.
 
-        Output:
-            Tensor, the concentration2 parameter of the distribution.
+        Returns:
+            Tensor, the concentration0 parameter of the distribution.
         """
         return self._concentration0
 
@@ -309,7 +309,7 @@ class Beta(Distribution):
         Args:
             value (Tensor): The value to be evaluated.
             concentration1 (Tensor): The concentration1 of the distribution. Default: self._concentration1.
-            concentration0 (Tensor): The concentration0 the distribution. Default: self._concentration0.
+            concentration0 (Tensor): The concentration0 of the distribution. Default: self._concentration0.
 
         .. math::
             L(x) = (\alpha - 1) * \log(x) + (\beta - 1) * \log(1 - x) - \log(\Beta(\alpha, \beta))

@@ -27,7 +27,7 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Logistic(Distribution):
     r"""
     Logistic distribution.
-    A Logistic distributio is a continuous distribution with the range :math:`(-\inf, \inf)`
+    A Logistic distribution is a continuous distribution with the range :math:`(-\inf, \inf)`
     and the probability density function:
 
     .. math::
@@ -199,7 +199,7 @@ class Logistic(Distribution):
         """
         Return the location of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the loc parameter of the distribution.
         """
         return self._loc
@@ -209,7 +209,7 @@ class Logistic(Distribution):
         """
         Return the scale of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the scale parameter of the distribution.
         """
         return self._scale

@@ -29,7 +29,7 @@ class TransformedDistribution(Distribution):
     Transformed Distribution.
     This class contains a bijector and a distribution and transforms the original distribution
     to a new distribution through the operation defined by the bijector.
-    If :math:`X` is an random variable following the underying distribution,
+    If :math:`X` is an random variable following the underlying distribution,
     and :math:`g(x)` is a function represented by the bijector,
     then :math:`Y = g(X)` is a random variable following the transformed distribution.
 
@@ -135,7 +135,7 @@ class TransformedDistribution(Distribution):
         """
         Return the bijector of the transformed distribution.
 
-        Output:
+        Returns:
             Bijector, the bijector of the transformed distribution.
         """
         return self._bijector
@@ -145,7 +145,7 @@ class TransformedDistribution(Distribution):
         """
         Return the underlying distribution of the transformed distribution.
 
-        Output:
+        Returns:
             Bijector, the underlying distribution of the transformed distribution.
         """
         return self._distribution
@@ -155,7 +155,7 @@ class TransformedDistribution(Distribution):
         """
         Return the dtype of the transformed distribution.
 
-        Output:
+        Returns:
             Mindspore.dtype, the dtype of the transformed distribution.
         """
         return self._dtype
@@ -165,7 +165,7 @@ class TransformedDistribution(Distribution):
         """
         Return whether the transformation is linear.
 
-        Output:
+        Returns:
             Bool, true if the transformation is linear, and false otherwise.
         """
         return self._is_linear_transformation

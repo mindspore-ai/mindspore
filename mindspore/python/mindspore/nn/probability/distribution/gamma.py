@@ -28,7 +28,7 @@ from ._utils.custom_ops import log_generic
 class Gamma(Distribution):
     r"""
     Gamma distribution.
-    A Gamma distributio is a continuous distribution with the range :math:`(0, \inf)`
+    A Gamma distribution is a continuous distribution with the range :math:`(0, \inf)`
     and the probability density function:
 
     .. math::
@@ -39,8 +39,8 @@ class Gamma(Distribution):
 
     Args:
         concentration (int, float, list, numpy.ndarray, Tensor): The concentration,
-          also know as :math:`\alpha` of the Gamma distribution. Default: ``None`` .
-        rate (int, float, list, numpy.ndarray, Tensor): The rate, also know as
+          also known as :math:`\alpha` of the Gamma distribution. Default: ``None`` .
+        rate (int, float, list, numpy.ndarray, Tensor): The rate, also known as
           :math:`\beta` of the Gamma distribution. Default: ``None`` .
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: ``None`` .
         dtype (mindspore.dtype): The type of the event samples. Default: ``mstype.float32`` .
@@ -205,10 +205,10 @@ class Gamma(Distribution):
     @property
     def concentration(self):
         """
-        Return the concentration, also know as the alpha of the Gamma distribution,
+        Return the concentration, also known as the alpha of the Gamma distribution,
         after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the concentration parameter of the distribution.
         """
         return self._concentration
@@ -216,10 +216,10 @@ class Gamma(Distribution):
     @property
     def rate(self):
         """
-        Return the rate, also know as the beta of the Gamma distribution,
+        Return the rate, also known as the beta of the Gamma distribution,
         after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the rate parameter of the distribution.
         """
         return self._rate

@@ -9,7 +9,7 @@ mindspore.nn.probability.distribution.HalfNormal
     .. math::
         f(x, \mu, \sigma) = 1 / \sigma\sqrt{2\pi} \exp(-(x - \mu)^2 / 2\sigma^2).
 
-    其中 :math:`\mu, \sigma` 为分别为半正态分布的期望与标准差。
+    其中 :math:`\mu, \sigma` 分别表示半正态分布的期望与标准差。
 
     参数：
         - **mean** (Union[int, float, list, numpy.ndarray, Tensor], 可选) - 半正态分布的期望，公式中的 :math:`\mu`。

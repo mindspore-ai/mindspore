@@ -130,7 +130,7 @@ class Softplus(Bijector):
         """
         Return the sharpness parameter of the bijector.
 
-        Output:
+        Returns:
             Tensor, the sharpness parameter of the bijector.
         """
         return self._sharpness

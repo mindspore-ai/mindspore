@@ -22,7 +22,7 @@ mindspore.nn.probability.distribution.Exponential
         - `dtype` 必须是float，因为指数分布是连续的。
 
     异常：
-        - **ValueError** - `rate` 中元素小于0。
+        - **ValueError** - `rate` 中元素小于或等于0。
         - **TypeError** - `dtype` 不是float或float的子类。
 
     .. py:method:: rate
@@ -35,7 +35,7 @@ mindspore.nn.probability.distribution.Exponential
 
     .. py:method:: cdf(value, rate=None)
 
-        基于给定值计算累积分布函数（Cumulatuve Distribution Function, CDF）。
+        基于给定值计算累积分布函数（Cumulative Distribution Function, CDF）。
 
         参数：
             - **value** (Tensor) - 待计算的值。

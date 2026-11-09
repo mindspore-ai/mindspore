@@ -26,7 +26,7 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Exponential(Distribution):
     r"""
     Exponential Distribution.
-    An Exponential distributio is a continuous distribution with the range :math:`[0, \inf)`
+    An Exponential distribution is a continuous distribution with the range :math:`[0, \inf)`
     and the probability density function:
 
     .. math::
@@ -180,7 +180,7 @@ class Exponential(Distribution):
         """
         Return `rate` of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the rate parameter of the distribution.
         """
         return self._rate

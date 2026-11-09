@@ -9,7 +9,7 @@ mindspore.nn.probability.distribution.Logistic
     .. math::
         f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).
 
-    其中 :math:`a, b` 为分别为Logistic分布的位置参数和比例参数。
+    其中 :math:`a, b` 分别表示Logistic分布的位置参数和比例参数。
 
     参数：
         - **loc** (float, list, numpy.ndarray, Tensor) - Logistic分布的位置，公式中的 :math:`a`。默认值： ``None`` 。
@@ -44,7 +44,7 @@ mindspore.nn.probability.distribution.Logistic
 
     .. py:method:: cdf(value, loc, scale)
 
-        计算给定值的累积分布函数（Cumulatuve Distribution Function, CDF）。
+        计算给定值的累积分布函数（Cumulative Distribution Function, CDF）。
 
         参数：
             - **value** (Tensor) - 要计算的值。

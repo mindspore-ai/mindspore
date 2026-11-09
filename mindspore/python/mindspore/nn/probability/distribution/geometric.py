@@ -183,7 +183,7 @@ class Geometric(Distribution):
         """
         Return the probability of success of the Bernoulli trial, after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the probs parameter of the distribution.
         """
         return self._probs

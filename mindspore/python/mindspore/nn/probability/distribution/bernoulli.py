@@ -171,7 +171,7 @@ class Bernoulli(Distribution):
         Return the probability of that the outcome is 1
         after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the probs of the distribution.
         """
         return self._probs
