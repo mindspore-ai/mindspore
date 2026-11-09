@@ -30,11 +30,9 @@ from mindspore.ops.auto_generate import inplace_clamp_tensor, inplace_clamp_scal
 
 __all__ = [
     'clip_by_value',
-    'clip_by_norm',
     'clamp',
     'clamp_',
     'clip',
-    'clip_by_global_norm',
 ]
 
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
@@ -47,76 +45,6 @@ max_op = P.Maximum()
 min_op = P.Minimum()
 partial_op = P.Partial()
 scalar2tensor_op = P.ScalarToTensor()
-
-
-def _old_norm(norm_type, x):
-    """Add norm function"""
-    out = F.pow((F.reduce_sum(F.pow(x, norm_type))), 1. / norm_type).astype(x.dtype)
-    return out
-
-
-def _cal_total_norm(x, norm_type):
-    if norm_type == float('inf'):
-        def func(data):
-            return data.abs().max()
-        total_norm = max(hyper_map(func, x))
-    else:
-        total_norm = _old_norm(norm_type, F.stack(hyper_map(partial_op(_old_norm, norm_type), x)))
-    return total_norm
-
-
-def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
-    r"""
-    The input Tensor is clipped based on norm. The computation is done by concatenating the norms of
-    all the input elements into a vector and then computing the norm of that vector.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Note:
-        The interface is suitable for gradient clipping scenarios, and only supports input of type float.
-
-    Args:
-        x (Union[Tensor, list[Tensor], tuple[Tensor]]): Input that wishes to be clipped.
-        max_norm (Union[float, int]): The upper limit of the norm for this group of network parameters.
-        norm_type (Union[float, int], optional): Norm type. Default: ``2.0``.
-        error_if_nonfinite (bool, optional): If it is ``True``,
-            an exception is thrown if the total norm from the input
-            is nan, inf or -inf. If it is ``False``, no exception will be thrown. Default: ``False`` .
-
-    Returns:
-        Tensors, a list or tuple of Tensors, representing clipped Tensors.
-
-    Raises:
-          RuntimeError: If the total norm from the `x` is nan, inf or -inf.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor([[0.8748, 0.1425, 0.0076], [0.7721, 0.4084, 0.0552], [4.6376, 0.2914, 2.1120]])
-        >>> out = ops.clip_by_norm(x, max_norm=1)
-        >>> print(out)
-        [[0.16650201 0.02712224 0.00144652]
-         [0.14695495 0.07773139 0.0105063 ]
-         [0.8826814  0.0554626  0.40198016]]
-    """
-    is_tensor = False
-    if isinstance(x, Tensor):
-        x = [x]
-        is_tensor = True
-    total_norm = _cal_total_norm(x, norm_type)
-    if error_if_nonfinite and F.logical_or(total_norm.isnan(), total_norm.isinf()):
-        raise RuntimeError(f"For clip_by_norm, the total norm of order {norm_type} from input is non-finite.")
-    clip_coef = max_norm / (total_norm + 1e-6)
-    if clip_coef < 1:
-        ret = hyper_map(partial_op(F.mul, clip_coef), x)
-    else:
-        ret = x
-    if is_tensor:
-        return ret[0]
-    return ret
 
 
 def clip_by_value(x, clip_value_min=None, clip_value_max=None):
@@ -408,41 +336,12 @@ def _check_value(clip_norm):
     Validator.check_number("clip_norm", clip_norm, 0.0, Validator.GT, "clip_by_global_norm")
 
 
-def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
-    r"""
-    Clips tensor values by the ratio of the sum of their norms.
+def _clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
+    """Internal clipping entry retained for optimizers and graph compilation.
 
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Note:
-        - On the SEMI_AUTO_PARALLEL mode or AUTO_PARALLEL mode, if the input `x` is the gradient,
-          the gradient norm values on all devices will be automatically aggregated by allreduce inserted after
-          the local square sum of the gradients.
-
-    Args:
-        x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
-        clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default ``1.0`` .
-        use_norm (None): The global norm. Currently only None is supported. Default ``None`` .
-
-    Returns:
-        Tuple of tensors
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x1 = mindspore.tensor([[2., 3.], [1., 2.]], dtype=mindspore.float32)
-        >>> x2 = mindspore.tensor([[1., 4.], [3., 1.]], dtype=mindspore.float32)
-        >>> input_x = (x1, x2)
-        >>> out = mindspore.ops.clip_by_global_norm(input_x, 1.0)
-        >>> print(out)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.98142403e-01,  4.47213590e-01],
-         [ 1.49071202e-01,  2.98142403e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.49071202e-01,  5.96284807e-01],
-         [ 4.47213590e-01,  1.49071202e-01]]))
+    Keep the original Cell, float32 accumulation and grad_scale marker so that
+    parallel compilation can still insert global norm reductions. This is not
+    a public replacement API.
     """
 
     _check_value(clip_norm)

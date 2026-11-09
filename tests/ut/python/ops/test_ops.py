@@ -18,6 +18,8 @@ import pytest
 
 import numpy as np
 
+from mindspore.ops.function.clip_func import _clip_by_global_norm
+
 from mindspore import nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
@@ -540,7 +542,7 @@ class ClipByGlobalNorm(nn.Cell):
         self.use_norm = use_norm
 
     def construct(self):
-        norm = C.clip_by_global_norm(self.x, self.clip_norm, self.use_norm)
+        norm = _clip_by_global_norm(self.x, self.clip_norm, self.use_norm)
         return norm
 
 

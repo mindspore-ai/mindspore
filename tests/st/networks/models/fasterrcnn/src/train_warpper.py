@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""FasterRCNN training wrappers with internal gradient clipping."""
+from mindspore.ops.function.clip_func import _clip_by_global_norm
 import mindspore as ms
 from mindspore import ops, nn
 
@@ -37,7 +39,7 @@ def train_one(network, optimizer, loss_scaler, grad_reducer):
 class TrainOneStepCell(nn.TrainOneStepWithLossScaleCell):
     def __init__(self, network, optimizer, loss_scaler, grad_reducer, clip_grads=False):
         scale_sense = ms.Tensor(256.0, ms.float32)
-        super(TrainOneStepCell, self).__init__(network, optimizer, scale_sense)
+        super().__init__(network, optimizer, scale_sense)
         self.loss_scaler = loss_scaler
         self.grad_reducer = grad_reducer
         self.clip_grads = clip_grads
@@ -53,7 +55,7 @@ class TrainOneStepCell(nn.TrainOneStepWithLossScaleCell):
         grads = self.grad(self.network, weights)(*inputs, sens_tuple)
         grads = self.loss_scaler.unscale(grads)
         if self.clip_grads:
-            grads = ops.clip_by_global_norm(grads)
+            grads = _clip_by_global_norm(grads)
         grads = self.grad_reducer(grads)
         # get the overflow buffer
         cond = self.get_overflow_status(status, grads)

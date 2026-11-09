@@ -17,6 +17,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from mindspore.ops.function.clip_func import _clip_by_global_norm
+
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -100,7 +102,7 @@ def clip_gradient(enable_clip_grad, gradients):
     """clip gradients"""
     if enable_clip_grad:
         if IS_ENABLE_GLOBAL_NORM:
-            gradients = C.clip_by_global_norm(gradients, GRADIENT_CLIP_VALUE, None)
+            gradients = _clip_by_global_norm(gradients, GRADIENT_CLIP_VALUE, None)
         else:
             gradients = hyper_map_op(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), gradients)
     return gradients

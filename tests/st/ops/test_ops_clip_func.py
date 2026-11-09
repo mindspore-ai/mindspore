@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression tests for retained value clipping functions."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
@@ -23,11 +24,6 @@ from mindspore import Tensor, ops
 class NetWorkClipByValue(nn.Cell):
     def construct(self, x, min_value, max_value):
         return ops.clip_by_value(x, min_value, max_value)
-
-
-class NetWorkClipByNorm(nn.Cell):
-    def construct(self, x):
-        return ops.clip_by_norm(x, max_norm=1)
 
 
 class NetWorkClamp(nn.Cell):
@@ -119,24 +115,3 @@ def test_ops_clip(mode):
     expect_output_case_2 = [-0.3, -0.3, -0.3, -0.3, -0.3]
     assert np.allclose(output_case_1.asnumpy(), expect_output_case_1)
     assert np.allclose(output_case_2.asnumpy(), expect_output_case_2)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', mem_peak=1024.02)
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clip_by_norm(mode):
-    """
-    Feature: ops.clip_by_norm
-    Description: Verify the result of clip_by_norm
-    Expectation: success
-    """
-    ms.set_context(mode=mode)
-    x = ms.Tensor([[0.8748, 0.1425, 0.0076],
-                   [0.7721, 0.4084, 0.0552],
-                   [4.6376, 0.2914, 2.1120]])
-    net = NetWorkClipByNorm()
-    out = net(x)
-    expect_out = np.array([[0.16650201, 0.02712224, 0.00144652],
-                           [0.14695495, 0.07773139, 0.0105063],
-                           [0.8826814, 0.0554626, 0.40198016]])
-    assert np.allclose(out.asnumpy(), expect_out)

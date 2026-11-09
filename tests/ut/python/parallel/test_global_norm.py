@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test global norm test """
+from mindspore.ops.function.clip_func import _clip_by_global_norm
 import re
 import os
 import shutil
@@ -28,7 +29,6 @@ from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.nn import MicroBatchInterleaved, PipelineCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.ops import operations as P
-from mindspore.ops import composite as C
 from mindspore import context
 
 
@@ -36,7 +36,7 @@ class OneParameterNet(nn.Cell):
     """Net definition"""
 
     def __init__(self, param_type, strategy1, strategy2):
-        super(OneParameterNet, self).__init__()
+        super().__init__()
         self.fc1 = P.MatMul().shard(strategy1)
         self.p1 = Parameter(Tensor(np.ones([48, 16]).astype(param_type)), name="weight1")
         self.sub = P.Sub().shard(strategy2)
@@ -52,7 +52,7 @@ class Net(nn.Cell):
     """Net definition"""
 
     def __init__(self, param_type, strategy1, strategy2):
-        super(Net, self).__init__()
+        super().__init__()
         self.fc1 = P.MatMul().shard(strategy1)
         self.fc2 = P.MatMul().shard(strategy2)
         self.p1 = Parameter(Tensor(np.ones([48, 64]).astype(param_type)), name="weight1")
@@ -72,7 +72,7 @@ class Net2(nn.Cell):
     """Net definition"""
 
     def __init__(self, param_type, strategy1, strategy2):
-        super(Net2, self).__init__()
+        super().__init__()
         self.net1 = Net(param_type, strategy1, strategy2)
         self.net2 = Net(param_type, strategy1, strategy2)
         self.net1.pipeline_stage = 0
@@ -100,11 +100,11 @@ def get_dataset():
 
 class CustomOptimizer(AdamWeightDecay):
     def __init__(self, params):
-        super(CustomOptimizer, self).__init__(params)
-        self.optimizer = super(CustomOptimizer, self).construct
+        super().__init__(params)
+        self.optimizer = super().construct
 
     def construct(self, gradients):
-        grads = C.clip_by_global_norm(gradients)
+        grads = _clip_by_global_norm(gradients)
         return self.optimizer(grads)
 
 
@@ -150,7 +150,7 @@ class TestGlobalNormInserted:
         ir_files = glob.glob(os.path.join(self.output_path, 'step_parallel_end*.ir'))
         assert len(ir_files) == 1
         appear_count = 0
-        with open(ir_files[0], 'r') as fp:
+        with open(ir_files[0], 'r', encoding='utf-8') as fp:
             for line in fp:
                 res = re.findall(pattern, line)
                 if len(res) >= 1:

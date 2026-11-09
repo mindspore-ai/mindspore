@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Bert for pretraining."""
+from mindspore.ops.function.clip_func import _clip_by_global_norm
 import numpy as np
 import mindspore.ops as ops
 import mindspore.nn as nn
@@ -71,7 +72,7 @@ class GetMaskedLMOutput(nn.Cell):
     """
 
     def __init__(self, config):
-        super(GetMaskedLMOutput, self).__init__()
+        super().__init__()
         self.width = config.hidden_size
         self.reshape = P.Reshape()
         self.gather = P.Gather()
@@ -129,7 +130,7 @@ class GetNextSentenceOutput(nn.Cell):
     """
 
     def __init__(self, config):
-        super(GetNextSentenceOutput, self).__init__()
+        super().__init__()
         self.log_softmax = P.LogSoftmax()
         weight_init = TruncatedNormal(config.initializer_range)
         self.dense = nn.Dense(config.hidden_size, 2,
@@ -158,7 +159,7 @@ class BertPreTraining(nn.Cell):
     """
 
     def __init__(self, config, is_training, use_one_hot_embeddings):
-        super(BertPreTraining, self).__init__()
+        super().__init__()
         self.bert = BertModel(config, is_training, use_one_hot_embeddings)
         self.cls1 = GetMaskedLMOutput(config)
         self.cls2 = GetNextSentenceOutput(config)
@@ -186,7 +187,7 @@ class BertPretrainingLoss(nn.Cell):
     """
 
     def __init__(self, config):
-        super(BertPretrainingLoss, self).__init__()
+        super().__init__()
         self.vocab_size = config.vocab_size
         self.onehot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
@@ -237,7 +238,7 @@ class BertNetworkWithLoss(nn.Cell):
     """
 
     def __init__(self, config, is_training, use_one_hot_embeddings=False):
-        super(BertNetworkWithLoss, self).__init__()
+        super().__init__()
         self.bert = BertPreTraining(config, is_training, use_one_hot_embeddings)
         self.loss = BertPretrainingLoss(config)
         self.cast = P.Cast()
@@ -273,7 +274,7 @@ class BertTrainOneStepCell(nn.TrainOneStepCell):
     """
 
     def __init__(self, network, optimizer, sens=1.0, enable_clip_grad=True):
-        super(BertTrainOneStepCell, self).__init__(network, optimizer, sens)
+        super().__init__(network, optimizer, sens)
         self.cast = P.Cast()
         self.hyper_map = C.HyperMap()
         self.enable_clip_grad = enable_clip_grad
@@ -344,7 +345,7 @@ class BertTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
     """
 
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super(BertTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, scale_update_cell)
+        super().__init__(network, optimizer, scale_update_cell)
         self.cast = P.Cast()
         self.degree = 1
         if self.reducer_flag:
@@ -420,7 +421,7 @@ class BertTrainOneStepWithLossScaleCellForAdam(nn.TrainOneStepWithLossScaleCell)
     """
 
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super(BertTrainOneStepWithLossScaleCellForAdam, self).__init__(network, optimizer, scale_update_cell)
+        super().__init__(network, optimizer, scale_update_cell)
         self.cast = P.Cast()
         self.degree = 1
         if self.reducer_flag:
@@ -534,7 +535,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
     """
 
     def __init__(self, network, optimizer, scale_update_cell=None, accumulation_steps=1, enable_global_norm=False):
-        super(BertTrainAccumulationAllReducePostWithLossScaleCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
         self.weights = optimizer.parameters
@@ -558,7 +559,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         if self.reducer_flag:
             self.degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
         self.overflow_reducer = F.identity
         if self.is_distributed:
             self.overflow_reducer = P.AllReduce()
@@ -641,7 +642,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
             scaling = scaling_sens * self.degree * self.accumulation_steps
             grads = self.hyper_map(F.partial(grad_scale, scaling), grads)
             if self.enable_global_norm:
-                grads = C.clip_by_global_norm(grads, 1.0, None)
+                grads = _clip_by_global_norm(grads, 1.0, None)
             else:
                 grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
             accu_overflow = F.depend(accu_overflow, grads)
@@ -679,7 +680,7 @@ class BertTrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
     """
 
     def __init__(self, network, optimizer, scale_update_cell=None, accumulation_steps=1, enable_global_norm=False):
-        super(BertTrainAccumulationAllReduceEachWithLossScaleCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
         self.weights = optimizer.parameters
@@ -703,7 +704,7 @@ class BertTrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
         if self.reducer_flag:
             self.degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
-        self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
+        self.is_distributed = self.parallel_mode != ParallelMode.STAND_ALONE
         self.overflow_reducer = F.identity
         if self.is_distributed:
             self.overflow_reducer = P.AllReduce()
@@ -793,7 +794,7 @@ class BertTrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
                 succ = False
             else:
                 if self.enable_global_norm:
-                    grads = C.clip_by_global_norm(grads, 1.0, None)
+                    grads = _clip_by_global_norm(grads, 1.0, None)
                 else:
                     grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
 
@@ -812,7 +813,7 @@ class BertNetworkMatchBucket(nn.Cell):
     '''
 
     def __init__(self, network, seq_length, bucket_list=None):
-        super(BertNetworkMatchBucket, self).__init__()
+        super().__init__()
         self.network = network
         if not bucket_list or not isinstance(bucket_list, list):
             bucket_list = [seq_length]
@@ -870,7 +871,7 @@ class BertPretrainEval(nn.Cell):
     '''
 
     def __init__(self, config, network=None):
-        super(BertPretrainEval, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         if network is None:
             self.network = BertPreTraining(config, False, False)
         else:

@@ -121,25 +121,6 @@ def test_affine_grid_grad():
     assert np.allclose(output[0].asnumpy(), expected, atol=0.001, rtol=0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
-def test_ops_clip_by_norm_with_grad():
-    """
-    Feature: ops.clip_by_norm with grad
-    Description: Verify the result of clip_by_norm with grad
-    Expectation: success
-    """
-    x = ms.Tensor([[0.8, 0.1, 0.0],
-                   [0.7, 0.4, 0.0],
-                   [4.6, 0.2, 2.1]])
-    net = OpsCell(ops.clip_by_norm)
-    grad_net = ops.GradOperation(get_all=True)(net)
-    out = grad_net(x, 1)
-    expect_out = np.array([[0.141767010, 0.186396033, 0.192771614],
-                           [0.148142591, 0.167269319, 0.192771614],
-                           [-0.100504845, 0.180020466, 0.0588845462]])
-    assert np.allclose(out[0].asnumpy(), expect_out)
-
-
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
 def test_rgbtohsv_with_grad():
     """
