@@ -9,7 +9,7 @@ mindspore.nn.probability.distribution.Uniform
     .. math::
         f(x, a, b) = 1 / (b - a)
 
-    其中 :math:`a, b` 为分别为均匀分布的下界和上界。
+    其中 :math:`a, b` 分别表示均匀分布的下界和上界。
 
     参数：
         - **low** (int, float, list, numpy.ndarray, Tensor) - 分布的下限，公式中的 :math:`a`。默认值： ``None`` 。
@@ -45,7 +45,7 @@ mindspore.nn.probability.distribution.Uniform
 
     .. py:method:: cdf(value, high, low)
 
-        计算给定值的累积分布函数（Cumulatuve Distribution Function, CDF）。
+        计算给定值的累积分布函数（Cumulative Distribution Function, CDF）。
 
         参数：
             - **value** (Tensor) - 要计算的值。

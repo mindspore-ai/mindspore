@@ -28,7 +28,7 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Gumbel(TransformedDistribution):
     r"""
     Gumbel distribution.
-    A Gumbel distributio is a continuous distribution with the range of all real numbers
+    A Gumbel distribution is a continuous distribution with the range of all real numbers
     and the probability density function:
 
     .. math::
@@ -113,7 +113,7 @@ class Gumbel(TransformedDistribution):
         """
         Return the location of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the loc parameter of the distribution.
         """
         return self._loc
@@ -123,7 +123,7 @@ class Gumbel(TransformedDistribution):
         """
         Return the scale of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the scale parameter of the distribution.
         """
         return self._scale

@@ -31,7 +31,7 @@ mindspore.nn.probability.distribution.Geometric
 
     .. py:method:: cdf(value, probs)
 
-        计算给定值的累积分布函数（Cumulatuve Distribution Function, CDF）。
+        计算给定值的累积分布函数（Cumulative Distribution Function, CDF）。
 
         参数：
             - **value** (Tensor) - 要计算的值。

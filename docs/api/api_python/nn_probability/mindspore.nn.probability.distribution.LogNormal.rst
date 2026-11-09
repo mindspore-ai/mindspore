@@ -9,7 +9,7 @@ mindspore.nn.probability.distribution.LogNormal
     .. math::
         f(x, \mu, \sigma) = 1 / x\sigma\sqrt{2\pi} \exp(-(\ln(x) - \mu)^2 / 2\sigma^2).
 
-    其中 :math:`\mu, \sigma` 为分别为基础正态分布的平均值和标准差。
+    其中 :math:`\mu, \sigma` 分别表示基础正态分布的平均值和标准差。
     服从对数正态分布的随机变量的对数服从正态分布。它被构造为正态分布的指数变换。
 
     参数：
@@ -45,7 +45,7 @@ mindspore.nn.probability.distribution.LogNormal
 
     .. py:method:: cdf(value, loc, scale)
 
-        计算给定值的累积分布函数（Cumulatuve Distribution Function, CDF）。
+        计算给定值的累积分布函数（Cumulative Distribution Function, CDF）。
 
         参数：
             - **value** (Tensor) - 要计算的值。

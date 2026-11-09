@@ -145,7 +145,7 @@ mindspore.nn.probability.distribution.Distribution
             可以通过 `args` 或 `kwargs` 传递其 `dist_spec_args` 来选择性地将Distribution传递给函数。
 
         返回：
-            Tensor，累积分布函数的对数。
+            Tensor，概率的对数。
 
     .. py:method:: log_survival(value, *args, **kwargs)
 

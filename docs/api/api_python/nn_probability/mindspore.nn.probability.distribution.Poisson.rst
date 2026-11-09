@@ -33,7 +33,7 @@ mindspore.nn.probability.distribution.Poisson
 
     .. py:method:: cdf(value, rate)
 
-        计算给定值的累积分布函数（Cumulatuve Distribution Function, CDF）。
+        计算给定值的累积分布函数（Cumulative Distribution Function, CDF）。
 
         参数：
             - **value** (Tensor) - 要计算的值。

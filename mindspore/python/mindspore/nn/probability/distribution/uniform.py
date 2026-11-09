@@ -27,7 +27,7 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Uniform(Distribution):
     r"""
     Uniform Distribution.
-    A Uniform distributio is a continuous distribution with the range :math:`[a, b]`
+    A Uniform distribution is a continuous distribution with the range :math:`[a, b]`
     and the probability density function:
 
     .. math::
@@ -195,7 +195,7 @@ class Uniform(Distribution):
         """
         Return the lower bound of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the lower bound of the distribution.
         """
         return self._low
@@ -205,7 +205,7 @@ class Uniform(Distribution):
         """
         Return the upper bound of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the upper bound of the distribution.
         """
         return self._high

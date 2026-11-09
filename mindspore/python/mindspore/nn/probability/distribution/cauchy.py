@@ -26,11 +26,11 @@ from ._utils.custom_ops import exp_generic, log_generic, log1p_generic
 class Cauchy(Distribution):
     r"""
     Cauchy distribution.
-    A Cauchy distributio is a continuous distribution with the range of all real numbers
+    A Cauchy distribution is a continuous distribution with the range of all real numbers
     and the probability density function:
 
     .. math::
-        f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2)
+        f(x, a, b) = 1 / \pi b(1 + ((x - a)/b)^2)
 
     Where :math:`a, b` are loc and scale parameter respectively.
 
@@ -198,7 +198,7 @@ class Cauchy(Distribution):
         """
         Return the location of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the loc parameter of the distribution.
         """
         return self._loc
@@ -208,7 +208,7 @@ class Cauchy(Distribution):
         """
         Return the scale of the distribution after casting to dtype.
 
-        Output:
+        Returns:
             Tensor, the scale parameter of the distribution.
         """
         return self._scale

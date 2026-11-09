@@ -379,7 +379,7 @@ class Distribution(Cell):
             should follow the initialization order of default parameters through `_add_parameter`.
             If some `dist_spec_args` is None, the corresponding default parameter is returned.
 
-        Return:
+        Returns:
             list[Tensor], the list of parameters.
         """
         return self._get_dist_args(*args, **kwargs)
@@ -391,7 +391,7 @@ class Distribution(Cell):
         """
         Return the type of the distribution.
 
-        Return:
+        Returns:
             string, the name of distribution.
         """
         return self._get_dist_type()
@@ -416,7 +416,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the value of log probability.
         """
         return self._call_log_prob(value, *args, **kwargs)
@@ -444,7 +444,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the value of probability.
         """
         return self._call_prob(value, *args, **kwargs)
@@ -471,7 +471,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the cdf of the distribution.
         """
         return self._call_cdf(value, *args, **kwargs)
@@ -516,7 +516,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the log cdf of the distribution.
         """
         return self._call_log_cdf(value, *args, **kwargs)
@@ -543,7 +543,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the survival function of the distribution.
         """
         return self._call_survival(value, *args, **kwargs)
@@ -579,7 +579,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its `dist_spec_args` through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the log survival function of the distribution.
         """
         return self._call_log_survival(value, *args, **kwargs)
@@ -609,7 +609,7 @@ class Distribution(Cell):
             `dist_spec_args` of distribution b must be passed to the function through `args` or `kwargs`.
             Passing in `dist_spec_args` of distribution a is optional.
 
-        Return:
+        Returns:
             Tensor, the kl loss function of the distribution.
         """
         return self._kl_loss(dist, *args, **kwargs)
@@ -629,7 +629,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the mean of the distribution.
         """
         return self._mean(*args, **kwargs)
@@ -649,7 +649,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the mode of the distribution.
         """
         return self._mode(*args, **kwargs)
@@ -666,7 +666,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the standard deviation of the distribution.
         """
         return self._call_sd(*args, **kwargs)
@@ -683,7 +683,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the variance of the distribution.
         """
         return self._call_var(*args, **kwargs)
@@ -721,7 +721,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the entropy of the distribution.
         """
         return self._entropy(*args, **kwargs)
@@ -739,7 +739,7 @@ class Distribution(Cell):
             `dist_spec_args` of distribution b must be passed to the function through `args` or `kwargs`.
             Passing in `dist_spec_args` of distribution a is optional.
 
-        Return:
+        Returns:
             Tensor, the cross_entropy of two distributions.
         """
         return self._call_cross_entropy(dist, *args, **kwargs)
@@ -768,7 +768,7 @@ class Distribution(Cell):
             A distribution can be optionally passed to the function by passing its *dist_spec_args* through
             `args` or `kwargs`.
 
-        Return:
+        Returns:
             Tensor, the sample generated from the distribution.
         """
         return self._sample(*args, **kwargs)
@@ -788,7 +788,7 @@ class Distribution(Cell):
             *args (list): A list of positional arguments that the function needs.
             **kwargs (dict): A dictionary of keyword arguments that the function needs.
 
-        Return:
+        Returns:
             Tensor, the value of corresponding computation method.
         """
 
