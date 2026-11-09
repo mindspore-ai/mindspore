@@ -21,11 +21,10 @@ from __future__ import absolute_import
 
 __all__ = ["Cell", "GraphCell", "PipelineGradReducer", "PipelineCell", "MicroBatchInterleaved"]
 
-from mindspore.nn import layer, loss, optim, wrap, grad, metrics, sparse, dynamic_lr
+from mindspore.nn import layer, loss, optim, wrap, grad, metrics, sparse
 from mindspore.parallel.nn.parallel_grad_reducer import PipelineGradReducer
 from mindspore.parallel.nn.parallel_cell_wrapper import PipelineCell, MicroBatchInterleaved
-from mindspore.nn.learning_rate_schedule import *
-from mindspore.nn.dynamic_lr import *
+from mindspore.nn.learning_rate_schedule import CosineDecayLR
 from mindspore.nn.cell import Cell, GraphCell
 from mindspore.nn.layer import *
 from mindspore.nn.loss import *
@@ -43,8 +42,7 @@ __all__.extend(metrics.__all__)
 __all__.extend(wrap.__all__)
 __all__.extend(grad.__all__)
 __all__.extend(sparse.__all__)
-__all__.extend(learning_rate_schedule.__all__)
-__all__.extend(dynamic_lr.__all__)
+__all__.append("CosineDecayLR")
 __all__.extend(utils.__all__)
 
 __all__.sort()

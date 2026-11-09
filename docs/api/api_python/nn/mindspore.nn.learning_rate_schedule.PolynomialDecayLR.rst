@@ -1,7 +1,7 @@
-mindspore.nn.PolynomialDecayLR
-====================================
+mindspore.nn.learning_rate_schedule.PolynomialDecayLR
+=====================================================
 
-.. py:class:: mindspore.nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False)
+.. py:class:: mindspore.nn.learning_rate_schedule.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power, update_decay_steps=False)
 
     基于多项式衰减函数计算学习率。
 

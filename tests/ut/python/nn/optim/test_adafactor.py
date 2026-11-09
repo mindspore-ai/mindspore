@@ -30,7 +30,7 @@ class Net(nn.Cell):
     """ Net definition """
 
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
         self.bias = Parameter(Tensor(np.ones([10]).astype((np.float32))), name="bias")
         self.matmul = P.MatMul()
@@ -43,7 +43,7 @@ class Net(nn.Cell):
 
 class NetWithoutWeight(nn.Cell):
     def __init__(self):
-        super(NetWithoutWeight, self).__init__()
+        super().__init__()
         self.matmul = P.MatMul()
 
     def construct(self, x):
@@ -55,7 +55,7 @@ class NetWithSparseGatherV2(nn.Cell):
     """ NetWithSparseGatherV2 definition """
 
     def __init__(self):
-        super(NetWithSparseGatherV2, self).__init__()
+        super().__init__()
         self.weight1 = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="weight1")
         self.weight2 = Parameter(Tensor(np.ones([2, 1, 2]).astype((np.float32))), name="weight2")
         self.axis = 0
@@ -181,7 +181,8 @@ def test_adafactor_group1():
     net_with_loss = WithLossCell(net, loss)
     all_params = net.trainable_params()
 
-    poly_decay_lr = nn.polynomial_decay_lr(0.01, 0.0001, total_step=10, step_per_epoch=1, decay_epoch=3, power=1.0)
+    # Preserve the ten-step, three-step-clamped learning-rate sequence.
+    poly_decay_lr = [(0.01 - 0.0001) * (1 - min(step, 3) / 3) + 0.0001 for step in range(10)]
 
     group_params = [{'params': [all_params[0]]}, {'params': [all_params[1]]}]
     optimizer = AdaFactor(group_params, learning_rate=poly_decay_lr, relative_step=False)
@@ -200,7 +201,7 @@ def test_adafactor_group2():
     net_with_loss = WithLossCell(net, loss)
     all_params = net.trainable_params()
 
-    schedule_lr = nn.PolynomialDecayLR(0.01, 0.0001, 3, power=1.0)
+    schedule_lr = nn.learning_rate_schedule.PolynomialDecayLR(0.01, 0.0001, 3, power=1.0)
     group_params = [{'params': [all_params[0]]},
                     {'params': [all_params[1]]}]
     optimizer = AdaFactor(group_params, learning_rate=schedule_lr, relative_step=False)
