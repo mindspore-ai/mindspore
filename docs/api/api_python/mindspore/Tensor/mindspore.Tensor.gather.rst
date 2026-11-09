@@ -53,7 +53,7 @@ mindspore.Tensor.gather
         - **batch_dims** (int，可选) - 指定batch维的数量。它必须要小于或等于 `input_indices` 的rank。默认值： ``0`` 。
 
     返回：
-        Tensor，shape为 :math:`self.shape[:axis] + self\_indices.shape[batch\_dims:] + self.shape[axis + 1:]` 。
+        Tensor，shape为 :math:`self.shape[:axis] + input\_indices.shape[batch\_dims:] + self.shape[axis + 1:]` 。
 
     异常：
         - **TypeError** - `axis` 不是int或Tensor。

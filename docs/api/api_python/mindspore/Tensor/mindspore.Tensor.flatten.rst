@@ -13,7 +13,7 @@ mindspore.Tensor.flatten
         - **end_dim** (int, 可选) - 要展平的最后一个维度。默认值： ``-1`` 。
 
     返回：
-        Tensor。如果没有维度被展平，返回原始的输入 `self`，否则返回展平后的Tensor。如果 `self` 是零维Tensor，将会返回一个一维Tensor。
+        Tensor。如果没有维度被展平，返回原始 `self`，否则返回展平后的Tensor。如果 `self` 是零维Tensor，将会返回一个一维Tensor。
 
     异常：
         - **TypeError** - `start_dim` 或 `end_dim` 不是int类型。
@@ -33,7 +33,7 @@ mindspore.Tensor.flatten
         - **end_dim** (int, 可选) - 要展平的最后一个维度。默认值： ``-1`` 。
 
     返回：
-        Tensor。如果没有维度被展平，返回原始的输入 `self`，否则返回展平后的Tensor。如果 `self` 是零维Tensor，将会返回一个一维Tensor。
+        Tensor。如果没有维度被展平，返回原始 `self`，否则返回展平后的Tensor。如果 `self` 是零维Tensor，将会返回一个一维Tensor。
 
     异常：
         - **TypeError** - `order` 不是string类型。

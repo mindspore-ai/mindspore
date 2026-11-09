@@ -28,7 +28,7 @@ mindspore.Tensor.diag
         - 图模式和CPU、GPU后端不支持 `diagonal` 参数取非零值。
 
     参数：
-        - **diagonal** (int, 可选) - 输入Tensor，默认值为 ``0``。
+        - **diagonal** (int, 可选) - 要考虑的对角线。默认值： ``0`` 。
 
     返回：
         Tensor，具有与输入Tensor相同的数据类型，其shape由 `diagonal` 决定：

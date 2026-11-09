@@ -12,12 +12,12 @@ flatten:
         end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
 
     Returns:
-        Tensor. If no dimensions are flattened, returns the original `self`, otherwise return the flattened Tensor.
+        Tensor. If no dimensions are flattened, returns the original `self`, otherwise returns the flattened Tensor.
         If `self` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
 
     Raises:
         TypeError: If `start_dim` or `end_dim` is not int.
-        ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
+        ValueError: If `start_dim` is greater than `end_dim` after canonicalization.
         ValueError: If `start_dim` or `end_dim` is not in range of [-self.dim, self.dim-1].
 
     Supported Platforms:
@@ -47,14 +47,14 @@ flatten:
         end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
 
     Returns:
-        Tensor. If no dimensions are flattened, returns the original `self`, otherwise return the flattened Tensor.
+        Tensor. If no dimensions are flattened, returns the original `self`, otherwise returns the flattened Tensor.
         If `self` is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
 
     Raises:
         TypeError: If `order` is not string type.
         ValueError: If `order` is string type, but not ``'C'`` or ``'F'``.
         TypeError: If `start_dim` or `end_dim` is not int.
-        ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
+        ValueError: If `start_dim` is greater than `end_dim` after canonicalization.
         ValueError: If `start_dim` or `end_dim` is not in range of [-self.dim, self.dim-1].
 
     Supported Platforms:

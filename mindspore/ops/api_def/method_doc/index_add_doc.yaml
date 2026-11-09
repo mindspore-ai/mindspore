@@ -2,7 +2,7 @@ index_add:
     description: |
         index_add(indices, y, axis, use_lock=True, check_index_bound=True) -> Tensor
 
-        Adds tensor `y` to specified axis and indices of tensor `self`. The axis should be in [-len(self.dim),  len(self.dim) - 1], and indices should be in [0, the size of `self` - 1] at the axis dimension.
+        Adds tensor `y` to specified axis and indices of tensor `self`. The axis should be in [-self.ndim, self.ndim - 1], and indices should be in [0, the size of `self` - 1] at the axis dimension.
 
         .. warning::
             Non-backward-compatible change after version 2.9.0: overload `index_add(indices, y, axis, use_lock=True, check_index_bound=True)` will be removed, and only `index_add(dim, index, source, *, alpha=1)` will be supported. `check_index_bound` will be removed.

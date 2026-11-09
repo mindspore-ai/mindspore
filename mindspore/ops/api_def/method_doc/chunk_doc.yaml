@@ -19,7 +19,7 @@ chunk:
         A tuple of sub-tensors.
 
     Raises:
-        TypeError: The sum of `chunks` is not int.
+        TypeError: The argument `chunks` is not int.
         TypeError: If argument `dim` is not int.
         ValueError: If argument `dim` is out of range of :math:`[-self.ndim, self.ndim)` .
         ValueError: If argument `chunks` is not positive number.
@@ -44,7 +44,7 @@ chunk:
     Cut the self Tensor into `chunks` sub-tensors along the specified axis.
 
     Note:
-        This function may return less than the specified number of chunks!
+        This function may return fewer than the specified number of chunks.
 
     Args:
         chunks (int): Number of sub-tensors to cut.
@@ -54,7 +54,7 @@ chunk:
         A tuple of sub-tensors.
 
     Raises:
-        TypeError: The sum of `chunks` is not int.
+        TypeError: The argument `chunks` is not int.
         TypeError: If argument `axis` is not int.
         ValueError: If argument `axis` is out of range of :math:`[-self.ndim, self.ndim)` .
         ValueError: If argument `chunks` is not positive number.

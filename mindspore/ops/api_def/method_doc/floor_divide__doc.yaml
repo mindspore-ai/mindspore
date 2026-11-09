@@ -2,7 +2,7 @@ floor_divide_:
   description: |
     floor_divide_(other) -> Tensor
 
-    Divides the self tensor by the other tensor element-wise and round down to the closest integer.
+    Divides the self tensor by the other tensor element-wise and rounds down to the closest integer.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
