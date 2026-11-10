@@ -22,6 +22,10 @@ import numpy as np
 from mindspore.common import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops.operations.array_ops import Cast
+# The parallel graph builder resolves these private primitives by their original names.
+from mindspore.ops.operations._scatter_ops import ScatterDiv, ScatterMax, ScatterMin, ScatterMul
+from mindspore.ops.operations._scatter_nd_ops import (ScatterNdAdd, ScatterNdDiv, ScatterNdMax, ScatterNdMin,
+                                                      ScatterNdMul, ScatterNdSub)
 from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops import signature as sig
 from mindspore.ops.operations.math_ops import _infer_shape_reduce

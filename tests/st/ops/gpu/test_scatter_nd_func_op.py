@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""GPU tests for N-dimensional scatter functions."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _scatter_nd_ops
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
@@ -24,8 +26,8 @@ from mindspore import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.graph.api import _pynative_executor
 import mindspore.ops as ops
-from mindspore.ops.operations.array_ops import ScatterNdMul
-from mindspore.ops.operations.array_ops import ScatterNdMax
+
+
 from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -34,12 +36,12 @@ div = P.RealDiv()
 
 func_map = {
     "update": ops.ScatterNdUpdate,
-    "add": ops.ScatterNdAdd,
-    "sub": ops.ScatterNdSub,
-    "mul": ScatterNdMul,
-    "div": ops.ScatterNdDiv,
-    "max": ScatterNdMax,
-    "min": ops.ScatterNdMin,
+    "add": _scatter_nd_ops.ScatterNdAdd,
+    "sub": _scatter_nd_ops.ScatterNdSub,
+    "mul": _scatter_nd_ops.ScatterNdMul,
+    "div": _scatter_nd_ops.ScatterNdDiv,
+    "max": _scatter_nd_ops.ScatterNdMax,
+    "min": _scatter_nd_ops.ScatterNdMin,
 }
 
 np_func_map = {
@@ -55,7 +57,7 @@ np_func_map = {
 
 class TestScatterNdFuncNet(nn.Cell):
     def __init__(self, func, inputx, indices, updates):
-        super(TestScatterNdFuncNet, self).__init__()
+        super().__init__()
 
         self.scatter_func = func_map[func](use_locking=True)
         self.inputx = Parameter(inputx, name="inputx")
@@ -69,7 +71,7 @@ class TestScatterNdFuncNet(nn.Cell):
 
 class DynamicShapeScatterNet(nn.Cell):
     def __init__(self, func, input_x, axis=0):
-        super(DynamicShapeScatterNet, self).__init__()
+        super().__init__()
         self.unique = P.Unique()
         self.gather = P.Gather()
         self.scatter_nd_func = func_map.get(func)()
@@ -84,7 +86,7 @@ class DynamicShapeScatterNet(nn.Cell):
 
 class VmapScatterNet(nn.Cell):
     def __init__(self, func_name):
-        super(VmapScatterNet, self).__init__()
+        super().__init__()
         self.scatter_func = func_map.get(func_name)()
 
     def construct(self, input_x, indices, updates):
@@ -94,7 +96,7 @@ class VmapScatterNet(nn.Cell):
 
 class VMapNet(nn.Cell):
     def __init__(self, net, input_x, in_axes, out_axes):
-        super(VMapNet, self).__init__()
+        super().__init__()
         self.input_x = Parameter(input_x, name="input_x")
         self.net = net
         self.in_axes = in_axes
@@ -268,7 +270,7 @@ def test_scatter_nd_dy_shape(func_name):
     scatter_indices = Tensor(np.array([[0], [2]]).astype(np.int32))
     updates = Tensor(np.array([[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
                                [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]).astype(np.float32))
-    indices = Tensor(np.array([i for i in range(0, 4)]).astype(np.int32))
+    indices = Tensor(np.arange(4, dtype=np.int32))
     net = DynamicShapeScatterNet(func_name, input_x)
     real_input_x, ms_result = net(scatter_indices, updates, indices)
     np_result = scatter_nd_func_np(func_name, real_input_x, scatter_indices, updates)

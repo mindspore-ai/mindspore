@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from enum import Enum
 
+from mindspore.ops.operations import _scatter_nd_ops, _scatter_ops
 import mindspore
 import mindspore.numpy as mnp
 from mindspore import ops
@@ -647,16 +648,16 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.ScatterAdd)
-@vmap_rules_getters.register(P.ScatterMul)
-@vmap_rules_getters.register(P.ScatterMin)
-@vmap_rules_getters.register(P.ScatterMax)
-@vmap_rules_getters.register(P.ScatterDiv)
-@vmap_rules_getters.register(P.ScatterNdAdd)
-@vmap_rules_getters.register(P.ScatterNdSub)
-@vmap_rules_getters.register(P.ScatterNdMin)
-@vmap_rules_getters.register(P.ScatterNdMax)
-@vmap_rules_getters.register(P.array_ops.ScatterNdMul)
-@vmap_rules_getters.register(P.ScatterNdDiv)
+@vmap_rules_getters.register(_scatter_ops.ScatterMul)
+@vmap_rules_getters.register(_scatter_ops.ScatterMin)
+@vmap_rules_getters.register(_scatter_ops.ScatterMax)
+@vmap_rules_getters.register(_scatter_ops.ScatterDiv)
+@vmap_rules_getters.register(_scatter_nd_ops.ScatterNdAdd)
+@vmap_rules_getters.register(_scatter_nd_ops.ScatterNdSub)
+@vmap_rules_getters.register(_scatter_nd_ops.ScatterNdMin)
+@vmap_rules_getters.register(_scatter_nd_ops.ScatterNdMax)
+@vmap_rules_getters.register(_scatter_nd_ops.ScatterNdMul)
+@vmap_rules_getters.register(_scatter_nd_ops.ScatterNdDiv)
 @vmap_rules_getters.register(P.ScatterNdUpdate)
 @vmap_rules_getters.register(P.ScatterUpdate)
 def get_scatter_op_vmap_rule(prim, axis_size):
@@ -667,17 +668,17 @@ def get_scatter_op_vmap_rule(prim, axis_size):
     scatter_func_list: used to record all Scatter class operators.
     """
     scatter_func_map = {
-        "ScatterAdd": P.ScatterNdAdd,
-        "ScatterMul": P.array_ops.ScatterNdMul,
-        "ScatterMin": P.ScatterNdMin,
-        "ScatterMax": P.ScatterNdMax,
-        "ScatterDiv": P.ScatterNdDiv,
-        "ScatterNdAdd": P.ScatterNdAdd,
-        "ScatterNdSub": P.ScatterNdSub,
-        "ScatterNdMin": P.ScatterNdMin,
-        "ScatterNdMax": P.ScatterNdMax,
-        "ScatterNdMul": P.array_ops.ScatterNdMul,
-        "ScatterNdDiv": P.ScatterNdDiv,
+        "ScatterAdd": _scatter_nd_ops.ScatterNdAdd,
+        "ScatterMul": _scatter_nd_ops.ScatterNdMul,
+        "ScatterMin": _scatter_nd_ops.ScatterNdMin,
+        "ScatterMax": _scatter_nd_ops.ScatterNdMax,
+        "ScatterDiv": _scatter_nd_ops.ScatterNdDiv,
+        "ScatterNdAdd": _scatter_nd_ops.ScatterNdAdd,
+        "ScatterNdSub": _scatter_nd_ops.ScatterNdSub,
+        "ScatterNdMin": _scatter_nd_ops.ScatterNdMin,
+        "ScatterNdMax": _scatter_nd_ops.ScatterNdMax,
+        "ScatterNdMul": _scatter_nd_ops.ScatterNdMul,
+        "ScatterNdDiv": _scatter_nd_ops.ScatterNdDiv,
         "ScatterNdUpdate": P.ScatterNdUpdate,
         "ScatterUpdate": P.ScatterNdUpdate
     }

@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""GPU tests for scatter functions."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
+from mindspore.ops.operations import _scatter_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
@@ -31,14 +33,14 @@ func_map = {
     "update": P.ScatterUpdate,
     "add": P.ScatterAdd,
     "sub": P.ScatterSub,
-    "max": P.ScatterMax,
-    "min": P.ScatterMin,
+    "max": _scatter_ops.ScatterMax,
+    "min": _scatter_ops.ScatterMin,
 }
 
 
 class TestScatterFuncNet(nn.Cell):
     def __init__(self, func, lock, inputx, indices, updates):
-        super(TestScatterFuncNet, self).__init__()
+        super().__init__()
 
         self.scatter_func = func_map.get(func)(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
@@ -64,7 +66,7 @@ def scatter_func_use_locking_false_net(func, inputx, indices, updates):
 
 class TestScatterFuncDynamicNet(nn.Cell):
     def __init__(self, func, inputx, indices, updates):
-        super(TestScatterFuncDynamicNet, self).__init__()
+        super().__init__()
         self.scatter_func = func_map.get(func)()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.inputx = Parameter(inputx, name="inputx")
@@ -86,7 +88,7 @@ def scatter_func_d_net(func, inputx, indices, updates):
 
 class TestScatterFuncDynamicNet2(nn.Cell):
     def __init__(self, func, inputx):
-        super(TestScatterFuncDynamicNet2, self).__init__()
+        super().__init__()
         self.scatter_func = func_map.get(func)()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.inputx = Parameter(inputx, name="inputx")
@@ -108,7 +110,7 @@ def scatter_func_d2_net(func, inputx, indices_1, updates_1, indices_2, updates_2
 
 class ScatterFuncVmapNet(nn.Cell):
     def __init__(self, func):
-        super(ScatterFuncVmapNet, self).__init__()
+        super().__init__()
         self.scatter_func = func_map.get(func)()
 
     def construct(self, inputx, indices, updates):
@@ -117,7 +119,7 @@ class ScatterFuncVmapNet(nn.Cell):
 
 class VmapNet(nn.Cell):
     def __init__(self, net, inputx, in_axes, out_axes):
-        super(VmapNet, self).__init__()
+        super().__init__()
         self.net = net
         self.in_axes = in_axes
         self.out_axes = out_axes

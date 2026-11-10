@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.context as context
-import mindspore.nn as nn
+"""CPU tests for stateful scatter arithmetic."""
 import numpy as np
 
+import mindspore.context as context
+import mindspore.nn as nn
 import mindspore
 from mindspore import Tensor, Parameter
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _scatter_ops
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -27,7 +29,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class TestScatterAddNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterAddNet, self).__init__()
+        super().__init__()
         self.scatter_add = P.ScatterAdd(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
@@ -278,7 +280,7 @@ def test_scatter_add_function():
 
 class TestScatterSubNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterSubNet, self).__init__()
+        super().__init__()
         self.scatter_sub = P.ScatterSub(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
@@ -376,8 +378,8 @@ def test_scatter_sub_small_float32_use_locking_false():
 
 class TestScatterMulNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterMulNet, self).__init__()
-        self.scatter_mul = P.ScatterMul(use_locking=lock)
+        super().__init__()
+        self.scatter_mul = _scatter_ops.ScatterMul(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
         self.updates = Parameter(updates, name="updates")
@@ -451,8 +453,8 @@ def test_scatter_mul_small_float32_use_locking_false():
 
 class TestScatterDivNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterDivNet, self).__init__()
-        self.scatter_div = P.ScatterDiv(use_locking=lock)
+        super().__init__()
+        self.scatter_div = _scatter_ops.ScatterDiv(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
         self.updates = Parameter(updates, name="updates")
@@ -534,7 +536,7 @@ def test_scatter_div_output_int16():
     input_x = Parameter(Tensor(np.array([[6, 6, 6], [2, 2, 2]]), mindspore.int16), name="x")
     indices = Tensor(np.array([0, 1]), mindspore.int32)
     updates = Tensor(np.array([[2, 2, 2], [2, 2, 2]]), mindspore.int16)
-    output = P.ScatterDiv()(input_x, indices, updates)
+    output = _scatter_ops.ScatterDiv()(input_x, indices, updates)
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
 
 
@@ -548,14 +550,14 @@ def test_scatter_div_output_float64():
     input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float64), name="x")
     indices = Tensor(np.array([0, 1]), mindspore.int32)
     updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float64)
-    output = P.ScatterDiv()(input_x, indices, updates)
+    output = _scatter_ops.ScatterDiv()(input_x, indices, updates)
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
 
 
 class TestScatterMaxNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterMaxNet, self).__init__()
-        self.scatter_max = P.ScatterMax(use_locking=lock)
+        super().__init__()
+        self.scatter_max = _scatter_ops.ScatterMax(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
         self.updates = Parameter(updates, name="updates")
@@ -629,8 +631,8 @@ def test_scatter_max_small_float32_use_locking_false():
 
 class TestScatterMinNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterMinNet, self).__init__()
-        self.scatter_min = P.ScatterMin(use_locking=lock)
+        super().__init__()
+        self.scatter_min = _scatter_ops.ScatterMin(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
         self.updates = Parameter(updates, name="updates")
@@ -704,7 +706,7 @@ def test_scatter_min_small_float32_use_locking_false():
 
 class TestScatterUpdateNet(nn.Cell):
     def __init__(self, lock, inputx, indices, updates):
-        super(TestScatterUpdateNet, self).__init__()
+        super().__init__()
         self.scatter_update = P.ScatterUpdate(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
@@ -797,7 +799,7 @@ def test_scatter_update_small_float32_use_locking_false():
 
 class TestScatterAddNetDynamic(nn.Cell):
     def __init__(self, lock):
-        super(TestScatterAddNetDynamic, self).__init__()
+        super().__init__()
         self.scatter_add = P.ScatterAdd(use_locking=lock)
 
     def construct(self, inputx, indices, updates):
@@ -826,7 +828,7 @@ def test_scatter_add_dynamic_shape():
 
 class TestScatterSubNetDynamic(nn.Cell):
     def __init__(self, lock):
-        super(TestScatterSubNetDynamic, self).__init__()
+        super().__init__()
         self.scatter_sub = P.ScatterSub(use_locking=lock)
 
     def construct(self, inputx, indices, updates):
@@ -856,7 +858,7 @@ def test_scatter_sub_dynamic_shape():
 
 class TestScatterUpdateNetDynamic(nn.Cell):
     def __init__(self, lock):
-        super(TestScatterUpdateNetDynamic, self).__init__()
+        super().__init__()
         self.scatter_update = P.ScatterUpdate(use_locking=lock)
 
     def construct(self, inputx, indices, updates):

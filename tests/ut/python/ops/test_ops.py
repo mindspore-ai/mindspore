@@ -19,7 +19,7 @@ import pytest
 import numpy as np
 
 from mindspore.ops.function.clip_func import _clip_by_global_norm
-
+from mindspore.ops.operations import _scatter_nd_ops, _scatter_ops
 from mindspore import nn
 import mindspore.ops.composite as C
 from mindspore import Tensor
@@ -103,7 +103,7 @@ from mindspore.ops.operations.array_ops import MaskedScatter
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
-from mindspore.ops.operations.array_ops import ScatterNdMax
+
 from mindspore.ops.operations.math_ops import AddV2
 from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.auto_generate import Diagonal
@@ -640,7 +640,7 @@ class ScatterMax(nn.Cell):
 
     def __init__(self, dtype=np.float32, use_locking=False):
         super().__init__()
-        self.scatter_max = P.ScatterMax(use_locking)
+        self.scatter_max = _scatter_ops.ScatterMax(use_locking)
         self.ref = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -653,7 +653,7 @@ class ScatterMin(nn.Cell):
 
     def __init__(self, dtype=np.float32, use_locking=False):
         super().__init__()
-        self.scatter_min = P.ScatterMin(use_locking)
+        self.scatter_min = _scatter_ops.ScatterMin(use_locking)
         self.ref = Parameter(Tensor(np.array([[-1.0, 2.0, 3.0], [-4.0, 1.0, 6.0]], dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -692,7 +692,7 @@ class ScatterNdSub(nn.Cell):
 
     def __init__(self, ref_shape, dtype=np.float32):
         super().__init__()
-        self.scatter_nd_sub = P.ScatterNdSub()
+        self.scatter_nd_sub = _scatter_nd_ops.ScatterNdSub()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -705,7 +705,7 @@ class ScatterNdAdd(nn.Cell):
 
     def __init__(self, ref_shape, dtype=np.float32):
         super().__init__()
-        self.scatter_nd_add = P.ScatterNdAdd()
+        self.scatter_nd_add = _scatter_nd_ops.ScatterNdAdd()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -727,11 +727,11 @@ class ScatterAddWithAxisNet(nn.Cell):
 
 
 class ScatterNdMaxNet(nn.Cell):
-    """ScatterNdMax net definition"""
+    """_scatter_nd_ops.ScatterNdMax net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
         super().__init__()
-        self.scatter_nd_max = ScatterNdMax()
+        self.scatter_nd_max = _scatter_nd_ops.ScatterNdMax()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -744,7 +744,7 @@ class ScatterNdMin(nn.Cell):
 
     def __init__(self, ref_shape, dtype=np.float32):
         super().__init__()
-        self.scatter_nd_min = P.ScatterNdMin()
+        self.scatter_nd_min = _scatter_nd_ops.ScatterNdMin()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -770,7 +770,7 @@ class ScatterMul(nn.Cell):
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
         super().__init__()
-        self.scatter_mul = P.ScatterMul(use_locking)
+        self.scatter_mul = _scatter_ops.ScatterMul(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -783,7 +783,7 @@ class ScatterDiv(nn.Cell):
 
     def __init__(self, ref_shape, dtype=np.float32, use_locking=False):
         super().__init__()
-        self.scatter_div = P.ScatterDiv(use_locking)
+        self.scatter_div = _scatter_ops.ScatterDiv(use_locking)
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype) * 10), name="ref")
 
     def construct(self, indices, updates):
@@ -4521,7 +4521,7 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
         'skip': ['backward']}),
-    ('ScatterNdMax', {
+    ('_scatter_nd_ops.ScatterNdMax', {
         'block': ScatterNdMaxNet((8,)),
         'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),

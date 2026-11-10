@@ -18,6 +18,7 @@ from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
+from mindspore.ops.operations import _scatter_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
@@ -28,8 +29,8 @@ from mindspore import Tensor, Parameter, ParameterTuple
 # all cases tested against dchip
 
 func_map = {
-    "max": ops.ScatterMax,
-    "min": ops.ScatterMin,
+    "max": _scatter_ops.ScatterMax,
+    "min": _scatter_ops.ScatterMin,
     "update": ops.ScatterUpdate,
 }
 

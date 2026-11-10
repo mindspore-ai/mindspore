@@ -22,6 +22,7 @@ import time
 import tempfile
 import scipy
 import numpy as np
+from mindspore.ops.operations import _scatter_nd_ops, _scatter_ops
 import mindspore as ms
 import mindspore.ops.operations as P
 from mindspore import nn, context, Tensor, ParameterTuple
@@ -146,7 +147,7 @@ class ScatterMulNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
         self.input_x = Parameter(input_x, name="para")
-        self.scatter_mul = P.ScatterMul()
+        self.scatter_mul = _scatter_ops.ScatterMul()
 
     def construct(self, indices, updates):
         self.scatter_mul(self.input_x, indices, updates)
@@ -173,7 +174,7 @@ class ScatterDivNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
         self.input_x = Parameter(input_x, name="para")
-        self.scatter_div = P.ScatterDiv()
+        self.scatter_div = _scatter_ops.ScatterDiv()
 
     def construct(self, indices, updates):
         self.scatter_div(self.input_x, indices, updates)
@@ -200,7 +201,7 @@ class ScatterMaxNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
         self.input_x = Parameter(input_x, name="para")
-        self.scatter_max = P.ScatterMax()
+        self.scatter_max = _scatter_ops.ScatterMax()
 
     def construct(self, indices, updates):
         self.scatter_max(self.input_x, indices, updates)
@@ -227,7 +228,7 @@ class ScatterMinNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
         self.input_x = Parameter(input_x, name="para")
-        self.scatter_min = P.ScatterMin()
+        self.scatter_min = _scatter_ops.ScatterMin()
 
     def construct(self, indices, updates):
         self.scatter_min(self.input_x, indices, updates)
@@ -283,7 +284,7 @@ class ScatterNdAddNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
         self.input_x = Parameter(input_x, name="para")
-        self.scatter_nd_add = P.ScatterNdAdd()
+        self.scatter_nd_add = _scatter_nd_ops.ScatterNdAdd()
 
     def construct(self, indices, updates):
         self.scatter_nd_add(self.input_x, indices, updates)
@@ -310,7 +311,7 @@ class ScatterNdSubNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
         self.input_x = Parameter(input_x, name="para")
-        self.scatter_nd_sub = P.ScatterNdSub()
+        self.scatter_nd_sub = _scatter_nd_ops.ScatterNdSub()
 
     def construct(self, indices, updates):
         self.scatter_nd_sub(self.input_x, indices, updates)

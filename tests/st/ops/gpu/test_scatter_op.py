@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""GPU tests for scatter operators."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
+from mindspore.ops.operations import _scatter_ops
 import mindspore
 import mindspore.context as context
 import mindspore.ops.operations as P
@@ -30,7 +32,7 @@ from mindspore.graph.api import _pynative_executor
 class ScatterDiv(Cell):
     def __init__(self, input_shape, input_dtype, use_locking):
         super().__init__()
-        self.op = P.ScatterDiv(use_locking)
+        self.op = _scatter_ops.ScatterDiv(use_locking)
         self.inputdata = Parameter(initializer(1, input_shape, input_dtype), name="input")
 
     def construct(self, indices, update):
@@ -41,7 +43,7 @@ class ScatterDiv(Cell):
 class ScatterMul(Cell):
     def __init__(self, input_shape, input_dtype, use_locking):
         super().__init__()
-        self.op = P.ScatterMul(use_locking)
+        self.op = _scatter_ops.ScatterMul(use_locking)
         self.inputdata = Parameter(initializer(1, input_shape, input_dtype), name="input")
 
     def construct(self, indices, update):
@@ -98,7 +100,7 @@ def test_scatter_func_indices_out_of_range():
     updates = Tensor(np.arange(12).reshape((2, 2, 3)).astype(np.float32))
     # div
     with pytest.raises(RuntimeError):
-        _ = P.ScatterDiv()(input_x, indices, updates)
+        _ = _scatter_ops.ScatterDiv()(input_x, indices, updates)
         _pynative_executor.sync()
 
 
@@ -131,6 +133,6 @@ def test_scatter_div_0d():
     input_x = Parameter(Tensor(input_x_np, mindspore.float32), name="x")
     indices = Tensor(indices_np, mindspore.int32)
     updates = Tensor(updates_np, mindspore.float32)
-    output = P.ScatterDiv()(input_x, indices, updates)
+    output = _scatter_ops.ScatterDiv()(input_x, indices, updates)
     expect = input_x_np / updates_np
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
