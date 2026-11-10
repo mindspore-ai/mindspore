@@ -12,29 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-Optimizer.
-
-Provide common optimizers for training, such as SGD, Adam.
-The optimizer is used to calculate and update the gradients.
-"""
+"""Shared optimizer base retained for mint optimizers."""
 from __future__ import absolute_import
 
 from mindspore.experimental.optim.optimizer import Optimizer
-from mindspore.experimental.optim.adamw import AdamW
-from mindspore.experimental.optim.sgd import SGD
-from mindspore.experimental.optim.adam import Adam
-from mindspore.experimental.optim.adadelta import Adadelta
-from mindspore.experimental.optim.adagrad import Adagrad
-from mindspore.experimental.optim.asgd import ASGD
-from mindspore.experimental.optim.adamax import Adamax
-from mindspore.experimental.optim.rmsprop import RMSprop
-from mindspore.experimental.optim.rprop import Rprop
-from mindspore.experimental.optim.radam import RAdam
-from mindspore.experimental.optim.nadam import NAdam
 
-from mindspore.experimental.optim import lr_scheduler
-
-
-__all__ = ['Optimizer', 'AdamW', 'SGD', 'Adam', 'Adadelta', 'Adagrad',
-           'ASGD', 'Adamax', 'RMSprop', 'Rprop', 'RAdam', 'NAdam']
+__all__ = ['Optimizer']

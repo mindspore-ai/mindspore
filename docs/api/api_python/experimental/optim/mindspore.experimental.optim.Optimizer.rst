@@ -6,7 +6,7 @@ mindspore.experimental.optim.Optimizer
     用于参数更新的优化器基类。
 
     .. warning::
-        这是一个实验性的优化器模块，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
+        这是一个实验性的优化器基类，继续为 mint 优化器提供共享能力。experimental 下的具体优化器和 lr_scheduler 模块已移除。
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。

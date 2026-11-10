@@ -110,8 +110,6 @@ class FusedAdamW(Optimizer):
 
     .. warning::
         - This is an experimental optimizer API that is subject to change or deletion.
-          This module must be used with lr scheduler module in `LRScheduler Class
-          <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
         - The `amsgrad` option must be consistent across all parameter groups. Mixing `amsgrad=True`
           and `amsgrad=False` between groups is not supported.
 
