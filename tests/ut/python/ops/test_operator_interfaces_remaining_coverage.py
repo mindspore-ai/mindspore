@@ -1369,6 +1369,8 @@ def test_pool_argmax_and_remaining_dynamic_axes(monkeypatch):
         return reduction_result
     with monkeypatch.context() as boundary:
         boundary.setattr(prim._pynative_executor, 'run_op_async', native_reduce)
+        # _Reduce supplies __call__ for this dynamically created subclass.
+        # pylint: disable-next=not-callable
         assert reducer(value, 1) is reduction_result
 
 

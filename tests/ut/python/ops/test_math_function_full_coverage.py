@@ -91,7 +91,7 @@ def test_kronecker_product_rejects_non_tensor_operands(left, right):
 @pytest.mark.parametrize('rank', [1, 2, 3])
 def test_atleast_nd_preserves_values_and_inserts_axes(rank):
     """
-    Feature: Atleast nd preserves values and inserts axes.
+    Feature: Conversion to at least N dimensions.
     Description: Scalar, vector and matrix inputs follow NumPy's axis insertion rules.
     Expectation: Scalar, vector and matrix inputs follow NumPy's axis insertion rules.
     """
