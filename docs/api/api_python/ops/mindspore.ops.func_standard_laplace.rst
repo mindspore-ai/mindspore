@@ -10,8 +10,10 @@ mindspore.ops.standard_laplace
 
     .. warning::
         - Ascend后端不支持随机数重现功能， `seed` 参数不起作用。
-        - 从2.9.0（不含）之后版本开始，该接口将发生非兼容性变更：该采样接口将改为分布对象形式，
-          请改用 :class:`mindspore.nn.probability.distribution.Laplace` 。
+        - 本版本已移除 ``mindspore.nn.probability.distribution.Laplace`` 所属的概率模块。
+          此前关于将本接口改为分布对象形式、并迁移至 ``Laplace`` 的指引不再适用。
+          本接口当前仍保留函数形式及现有参数，可继续用于标准Laplace分布采样；
+          这不代表其提供原 ``Laplace`` 分布类的全部功能。
 
     参数：
         - **shape** (Union[tuple, Tensor]) - 指定生成随机数的shape。

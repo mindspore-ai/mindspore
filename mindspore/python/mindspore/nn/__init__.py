@@ -21,7 +21,7 @@ from __future__ import absolute_import
 
 __all__ = ["Cell", "GraphCell", "PipelineGradReducer", "PipelineCell", "MicroBatchInterleaved"]
 
-from mindspore.nn import layer, loss, optim, wrap, grad, metrics, probability, sparse, dynamic_lr
+from mindspore.nn import layer, loss, optim, wrap, grad, metrics, sparse, dynamic_lr
 from mindspore.parallel.nn.parallel_grad_reducer import PipelineGradReducer
 from mindspore.parallel.nn.parallel_cell_wrapper import PipelineCell, MicroBatchInterleaved
 from mindspore.nn.learning_rate_schedule import *

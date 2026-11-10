@@ -138,7 +138,6 @@
 /mindspore/python/mindspore/nn/loss/ @hz893
 /mindspore/python/mindspore/nn/optim/ @hz893
 /mindspore/python/mindspore/nn/optim/tft_wrapper.py @fary86
-/mindspore/python/mindspore/nn/probability/ @yi-zhang95
 /mindspore/python/mindspore/nn/sparse/ @yi-zhang95
 /mindspore/python/mindspore/numpy/ @yi-zhang95
 /mindspore/python/mindspore/onnx/ @hz893
@@ -282,7 +281,6 @@
 /tests/ut/python/nn/layer/ @hz893
 /tests/ut/python/nn/loss/ @hz893
 /tests/ut/python/nn/optim/ @hz893
-/tests/ut/python/nn/probability/ @yi-zhang95
 /tests/ut/python/nn/sparse/ @yi-zhang95
 /tests/ut/python/numpy/ @yi-zhang95
 /tests/ut/python/onnx/ @hz893

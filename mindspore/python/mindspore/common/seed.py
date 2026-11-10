@@ -32,7 +32,7 @@ def _reset_op_seed():
     """
     Reset op seeds in the kernel's dictionary.
     """
-    for (kernel_name, op_seed) in _KERNEL_SEED:
+    for (kernel_name, op_seed) in list(_KERNEL_SEED):
         _KERNEL_SEED[(kernel_name, op_seed)] = op_seed
 
 
@@ -41,11 +41,23 @@ def set_seed(seed):
     Set global seed.
 
     Note:
-        - The global seed is used by numpy.random, mindspore.common.Initializer and
-          mindspore.nn.probability.distribution.
+        - The global seed is used by numpy.random, mindspore.common.Initializer and random operators that combine
+          global and operator-level seeds, such as :func:`mindspore.ops.uniform` and
+          :func:`mindspore.ops.standard_laplace`.
 
         - If global seed is not set, these packages will use their own default seed independently, numpy.random and
-          mindspore.common.Initializer will choose a random seed, mindspore.nn.probability.distribution will use zero.
+          mindspore.common.Initializer will choose a random seed.
+
+        - For operators that combine global and operator-level seeds, an unset global seed contributes ``0``;
+          an operator seed of ``None`` is also treated as ``0``. If both are zero, the seed pair ``(0, 0)`` lets
+          the kernel choose a random seed. It does not request a reproducible sequence seeded with zero.
+          If only a positive operator seed is specified, the global component remains zero and the operator's
+          seed counter advances on successive calls. Repeating the same call sequence in a fresh process can
+          reproduce the results on a backend that supports reproducibility, under the same execution conditions.
+
+        - Explicitly calling ``set_seed(0)`` differs from leaving the global seed unset: for these operators,
+          zero is mapped to an internal fixed default graph seed, while :func:`mindspore.get_seed` still returns
+          ``0``. Operators using a ``Generator`` follow their own generator state; refer to their documentation.
 
         - Seed set by numpy.random.seed() is only used by numpy.random, while seed set by this API will also be used by
           numpy.random, so it is recommended to set all seeds using this API.
@@ -66,6 +78,8 @@ def set_seed(seed):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, set_seed, Parameter, ops
         >>> from mindspore.common.initializer import initializer
+        >>> # Each numbered case below describes an independent scenario. Cases 1, 3 and 6 assume
+        >>> # a fresh process in which set_seed() has not been called; do not run all cases sequentially.
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,
         >>> # when using ops.uniform operator, minval and maxval are initialized as:
@@ -96,17 +110,17 @@ def set_seed(seed):
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W1
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W2
         >>>
-        >>> # 3. If neither global seed nor op seed is set, mindspore.ops.function.random_func and
-        >>> # mindspore.nn.probability.distribution will choose a random seed:
+        >>> # 3. With neither global seed nor op seed set, ops.uniform passes (0, 0) to the kernel,
+        >>> # which chooses a random seed rather than using zero as a reproducible seed:
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
         >>> # Rerun the program will get different results:
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C3
         >>> c2 = ops.uniform((1, 4), minval, maxval) # C4
         >>>
-        >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.function.random_func and
-        >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
-        >>> # default op seed. Each call will change the default op seed, thus each call gets different
+        >>> # 4. If global seed is set, but op seed is not set, mindspore.ops.function.random_func
+        >>> # will calculate a seed according to global seed and default op seed.
+        >>> # Each call will change the default op seed, thus each call gets different
         >>> # results.
         >>> set_seed(1234)
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
@@ -116,9 +130,9 @@ def set_seed(seed):
         >>> c1 = ops.uniform((1, 4), minval, maxval) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval) # C2
         >>>
-        >>> # 5. If both global seed and op seed are set, mindspore.ops.function.random_func and
-        >>> # mindspore.nn.probability.distribution will calculate a seed according to global seed and
-        >>> # op seed counter. Each call will change the op seed counter, thus each call gets different
+        >>> # 5. If both global seed and op seed are set, mindspore.ops.function.random_func
+        >>> # will calculate a seed according to global seed and op seed counter.
+        >>> # Each call will change the op seed counter, thus each call gets different
         >>> # results.
         >>> set_seed(1234)
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
@@ -128,17 +142,17 @@ def set_seed(seed):
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
         >>>
-        >>> # 6. If op seed is set but global seed is not set, 0 will be used as global seed. Then
-        >>> # mindspore.ops.function.random_func and mindspore.nn.probability.distribution act as in
-        >>> # condition 5.
+        >>> # 6. In a fresh process, with a positive op seed but no global seed, the global component
+        >>> # is 0 and the op seed counter advances. This differs from explicitly calling set_seed(0).
+        >>> # On a reproducible backend, the same call sequence in another fresh process is repeatable.
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
-        >>> # Rerun the program will get different results:
-        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
-        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C2
+        >>> # Further calls in this process advance the sequence:
+        >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C3
+        >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # C4
         >>>
         >>> # 7. Recall set_seed() in the program will reset numpy seed and op seed counter of
-        >>> # mindspore.ops.function.random_func and mindspore.nn.probability.distribution.
+        >>> # mindspore.ops.function.random_func.
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> c1 = ops.uniform((1, 4), minval, maxval, seed=2) # C1
@@ -195,7 +209,6 @@ def _update_seeds(op_seed, kernel_name):
         op_seed (int): The op seed to be updated.
         kernel_name (str): The random op kernel.
     """
-    global _KERNEL_SEED
     if op_seed is not None:
         _KERNEL_SEED[(kernel_name, op_seed)] = _KERNEL_SEED.get((kernel_name, op_seed)) + \
                                                (keyConstant[0] ^ keyConstant[2])
@@ -217,10 +230,11 @@ def _get_op_seed(op_seed, kernel_name):
 
 def _get_graph_seed(op_seed, kernel_name):
     """
-    Get the graph-level seed.
-    Graph-level seed is used as a global variable, that can be used in different ops in case op-level seed is not set.
-    If op-level seed is 0, use graph-level seed; if graph-level seed is also 0, the system would generate a
-    random seed.
+    Get the global and operator-level seed pair for a random operator.
+    An unset global seed (None) becomes 0, whereas an explicitly set global seed of 0 becomes DEFAULT_GRAPH_SEED.
+    These are mutually exclusive branches. An unset operator seed (None) becomes 0.
+    If both normalized components are 0, return (0, 0) to let the kernel choose a random seed.
+    Otherwise, truncate the global component and the current operator seed counter, then advance the counter.
 
     Note:
         For each seed, either op-seed or graph-seed, a random sequence will be generated relating to this seed.
@@ -236,7 +250,7 @@ def _get_graph_seed(op_seed, kernel_name):
           print(C.uniform((1, 4), minval, maxval, seed=1))  # generates 'A2'
 
     Returns:
-        Integer. The current graph-level seed.
+        Tuple[int, int]. The global seed component and the operator seed component.
 
     Examples:
         >>> print(_get_graph_seed(0, 'normal'))

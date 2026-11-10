@@ -213,9 +213,6 @@ def test_standard_dtype_roundtrip(np_dtype, ms_dtype) -> None:
         'mindspore.train.metrics.auc',
         'mindspore.train.summary._summary_adapter',
         'mindspore.nn.layer.math',
-        'mindspore.nn.probability.distribution.exponential',
-        'mindspore.nn.probability.distribution.logistic',
-        'mindspore.nn.probability.distribution.geometric',
         'mindspore.numpy.dtypes',
     ],
 )
