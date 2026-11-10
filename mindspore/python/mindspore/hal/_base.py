@@ -23,6 +23,7 @@ _device_context_mgr = DeviceContextManager.get_instance()
 class _HalBase():
     """
     Hal base class. Different backends inherit from this class and wrap around hardware interfaces.
+    Device capability and architecture queries remain backend hooks, not public HAL APIs.
     """
     def __init__(self, backend=None):
         valid_backends = ["CPU", "GPU", "Ascend"]

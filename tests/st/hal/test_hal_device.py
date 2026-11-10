@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Device queries retained in HAL and the device_context availability interfaces."""
 import pytest
 from tests.mark_utils import arg_mark
 
@@ -20,12 +21,11 @@ import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.hal import is_initialized, is_available, device_count,\
-                      get_device_capability, get_device_properties, get_device_name, get_arch_list
+from mindspore.hal import is_initialized, device_count, get_device_properties, get_device_name
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.ops = P.Abs()
 
     def construct(self, x):
@@ -41,8 +41,8 @@ def test_hal_device_gpu():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     assert not is_initialized("GPU")
-    assert is_available("GPU")
-    assert is_available("CPU")
+    assert ms.device_context.gpu.is_available()
+    assert ms.device_context.cpu.is_available()
     assert not ms.device_context.ascend.is_available()
     net = Net()
     net(Tensor(2.0))
@@ -60,10 +60,7 @@ def test_hal_device_gpu():
     print("Device properties is", prop)
     print("Device properties attributes", prop.name, prop.major, prop.minor, prop.is_multi_gpu_board,
           prop.is_integrated, prop.multi_processor_count, prop.total_memory, prop.warp_size)
-    print("Device capability is", get_device_capability(dev_cnt - 1))
     print("Device name is", get_device_name(dev_cnt - 1))
-    print("Architecture list is", get_arch_list())
-    assert not get_arch_list("CPU")
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards')
@@ -88,7 +85,6 @@ def test_hal_device_ascend():
         get_device_name(-1)
     except ValueError as e:
         assert str(e).find('negative') != -1
-    assert get_arch_list() is None
     print("Device count is", dev_cnt)
     print("Device properties is", get_device_properties(dev_cnt - 1))
     print("Device name is", get_device_name(dev_cnt - 1))
@@ -107,7 +103,6 @@ def test_hal_device_cpu():
     net = Net()
     net(Tensor(2.0))
     assert is_initialized("CPU")
-    assert get_arch_list() is None
 
 
 @pytest.mark.skip("PyNative cases need to be extracted to a single file.")

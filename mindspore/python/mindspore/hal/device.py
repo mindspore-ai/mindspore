@@ -80,7 +80,8 @@ def _check_inputs_validation(fn):
                                  f"{valid_targets}, but got {device_target}.")
             if device_target not in hal_instances:
                 raise ValueError(f"{device_target} backend is not available for this MindSpore package."
-                                 "You can call hal.is_available to check the reason.")
+                                 f" Use mindspore.device_context.{device_target.lower()}.is_available() "
+                                 "to check availability.")
 
         return fn(*bound_args.args, **bound_args.kwargs)
     return deco
@@ -158,40 +159,6 @@ def is_initialized(device_target):
     return _device_context.initialized()
 
 
-def is_available(device_target):
-    """
-    Return whether specified device is available, this api will be deprecated and removed in future versions, please
-    use the api :func:`mindspore.device_context.cpu.is_available` , :func:`mindspore.device_context.gpu.is_available`,
-    :func:`mindspore.device_context.ascend.is_available` instead.
-
-    Args:
-        device_target (str): The target device specified, should be one of ``"CPU"`` , ``"GPU"`` and
-            ``"Ascend"`` . Default ``None`` , represents the current device set by context.
-
-    Returns:
-        bool
-
-    Examples:
-        >>> import mindspore
-        >>> device_target = mindspore.context.get_context("device_target")
-        >>> print(mindspore.hal.is_available(device_target))
-        True
-    """
-    if device_target not in valid_targets:
-        raise ValueError(f"For 'hal.is_available', the argument 'device_target' must be one of "
-                         f"{valid_targets}, but got {device_target}.")
-
-    # MindSpore will try to load plugins in "import mindspore", and availability status will be stored.
-    if not _context_handle.is_pkg_support_device(device_target):
-        logger.warning(f"Backend {device_target} is not available.")
-        load_plugin_error = _context_handle.load_plugin_error()
-        if load_plugin_error != "":
-            logger.warning(f"Here's error when loading plugin for MindSpore package."
-                           f"Error message: {load_plugin_error}")
-        return False
-    return True
-
-
 @_check_inputs_validation
 def device_count(device_target=None):
     """
@@ -218,36 +185,6 @@ def device_count(device_target=None):
     if hal_instance is None:
         raise RuntimeError(f"device_target {device_target} not exist.")
     return hal_instance.device_count()
-
-
-@_check_device_id
-@_check_inputs_validation
-def get_device_capability(device_id, device_target=None):
-    """
-    Get specified device's capability, this api will be deprecated and removed in future versions.
-
-    Args:
-        device_id (int): The device id of which the capability will be returned.
-        device_target (str, optional):  The target device specified, should be one of ``"CPU"`` , ``"GPU"`` and
-            ``"Ascend"`` . Default ``None`` , represents the current device set by context.
-
-    Returns:
-        tuple(param1, param2) for GPU.
-
-        - param1 - int, cuda major revision number.
-        - param2 - int, cuda minor revision number.
-
-        None for Ascend and CPU.
-
-    Examples:
-        >>> import mindspore
-        >>> device_target = mindspore.context.get_context("device_target")
-        >>> print(mindspore.hal.get_device_capability(0, device_target))
-    """
-    hal_instance = hal_instances.get(device_target)
-    if hal_instance is None:
-        raise RuntimeError(f"device_target {device_target} not exist.")
-    return hal_instance.get_device_capability(device_id)
 
 
 @_check_device_id
@@ -331,28 +268,3 @@ def get_device_name(device_id, device_target=None):
     if hal_instance is None:
         raise RuntimeError(f"device_target {device_target} not exist.")
     return hal_instance.get_device_name(device_id)
-
-
-@_check_inputs_validation
-def get_arch_list(device_target=None):
-    """
-    Get the architecture list this MindSpore was compiled for, this api will be deprecated and removed in future
-    versions.
-
-    Args:
-        device_target (str, optional): The target device specified, should be one of ``"CPU"`` , ``"GPU"`` and
-            ``"Ascend"`` . Default ``None`` , represents the current device set by context.
-
-    Returns:
-        str for GPU.
-        None for Ascend and CPU.
-
-    Examples:
-        >>> import mindspore
-        >>> device_target = mindspore.context.get_context("device_target")
-        >>> print(mindspore.hal.get_arch_list(device_target))
-    """
-    hal_instance = hal_instances.get(device_target)
-    if hal_instance is None:
-        raise RuntimeError(f"device_target {device_target} not exist.")
-    return hal_instance.get_arch_list()
