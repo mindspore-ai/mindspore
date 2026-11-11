@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""FastGelu operator tests on CPU."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -33,7 +34,7 @@ class FastGeluNet(nn.Cell):
 
     def __init__(self):
         """Init."""
-        super(FastGeluNet, self).__init__()
+        super().__init__()
         self.fast_gelu = P.FastGeLU()
 
     def construct(self, x):
@@ -74,7 +75,7 @@ def test_fast_gelu_cpu(shape, dtype):
     assert np_all_close_with_loss(y_np_cpu, y_fun.asnumpy())
 
     x_ms_cpu = Tensor(x_np)
-    fast_gelu_nn = nn.FastGelu()
+    fast_gelu_nn = nn.layer.activation.FastGelu()
     y_nn = fast_gelu_nn(x_ms_cpu)
     assert np_all_close_with_loss(y_np_cpu, y_nn.asnumpy())
 

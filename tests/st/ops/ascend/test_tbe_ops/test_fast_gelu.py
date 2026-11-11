@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""FastGelu forward tests on Ascend."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
 from mindspore import context
 from mindspore.common.tensor import Tensor
-from mindspore.nn import FastGelu
+from mindspore.nn.layer.activation import FastGelu
 from mindspore.train import Model
 from mindspore.graph.api import _pynative_executor
 import mindspore

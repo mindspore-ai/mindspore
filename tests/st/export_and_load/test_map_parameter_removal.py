@@ -44,7 +44,7 @@ def restore_context_mode():
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize('optimizer_type', [nn.Adam, nn.FTRL, nn.LazyAdam])
+@pytest.mark.parametrize('optimizer_type', [nn.Adam, nn.optim.FTRL, nn.optim.LazyAdam])
 def test_normal_parameter_optimizer_checkpoint(mode, optimizer_type, tmp_path):
     """
     Feature: Ordinary optimizer updates and checkpoint roundtrip.
@@ -58,7 +58,7 @@ def test_normal_parameter_optimizer_checkpoint(mode, optimizer_type, tmp_path):
     gradient = np.array([0.2, -0.4], np.float32)
     optimizer((ms.Tensor(gradient),))
     saved = net.weight.asnumpy().copy()
-    if optimizer_type is nn.FTRL:
+    if optimizer_type is nn.optim.FTRL:
         root_accumulator = np.sqrt(0.1 + gradient ** 2)
         linear = gradient - (root_accumulator - np.sqrt(0.1)) / 0.1 * initial
         expected_weight = -linear * 0.1 / root_accumulator

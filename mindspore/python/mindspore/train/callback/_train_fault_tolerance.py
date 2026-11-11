@@ -633,7 +633,7 @@ class TrainFaultTolerance(Callback):
         >>> dataset = create_dataset(32)
         >>>
         >>> optimizer = nn.SGD(net.trainable_params(), 1e-2)
-        >>> optimizer_wrapper = nn.OptTFTWrapper(optimizer)
+        >>> optimizer_wrapper = nn.optim.OptTFTWrapper(optimizer)
         >>> loss_fn = nn.CrossEntropyLoss()
         >>>
         >>> net_with_loss = nn.Pipeline(nn.WithLossCell(net, loss_fn), 4)

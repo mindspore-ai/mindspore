@@ -1,7 +1,7 @@
-mindspore.nn.AdaSumByGradWrapCell
-=================================
+mindspore.nn.optim.AdaSumByGradWrapCell
+=======================================
 
-.. py:class:: mindspore.nn.AdaSumByGradWrapCell(optimizer)
+.. py:class:: mindspore.nn.optim.AdaSumByGradWrapCell(optimizer)
 
     Adaptive Summation（AdaSum）算法的实现，根据梯度计算。应用于semi_auto_parallel或auto_parallel模式。
 

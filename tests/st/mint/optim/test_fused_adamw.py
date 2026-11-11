@@ -206,7 +206,7 @@ class AdamWFactory(AdamWFactoryBase):
                 {'params': no_bias_params, 'lr': 0.66, "amsgrad": self.amsgrad}]
             optimizer = FusedAdamW(params=group_params, lr=self.lr)
 
-        criterion = nn.MAELoss(reduction="mean")
+        criterion = nn.L1Loss(reduction="mean")
 
         def forward_fn(data, label):
             logits = model(data)

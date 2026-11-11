@@ -169,7 +169,7 @@ class Optimizer(Cell):
         ...         return success
         >>>
         >>> net = nn.Dense(2, 3)
-        >>> loss_fn = nn.MAELoss()
+        >>> loss_fn = nn.L1Loss()
         >>> opt = MyMomentum(net.trainable_params(), 0.01)
         >>>
         >>> device_target = opt.target

@@ -1,7 +1,7 @@
-mindspore.nn.AdamWeightDecay
-===============================
+mindspore.nn.optim.AdamWeightDecay
+==================================
 
-.. py:class:: mindspore.nn.AdamWeightDecay(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0)
+.. py:class:: mindspore.nn.optim.AdamWeightDecay(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0)
 
     权重衰减Adam算法的实现。
 

@@ -20,17 +20,17 @@ It shows how well the model works on a dataset and the optimization target which
 """
 from __future__ import absolute_import
 
-from mindspore.nn.loss.loss import LossBase, L1Loss, CTCLoss, MSELoss, SmoothL1Loss, SoftMarginLoss, FocalLoss, \
+from mindspore.nn.loss.loss import LossBase, L1Loss, CTCLoss, MSELoss, SmoothL1Loss, SoftMarginLoss, \
     SoftmaxCrossEntropyWithLogits, BCELoss, MultiMarginLoss, CosineEmbeddingLoss, \
     SampledSoftmaxLoss, TripletMarginWithDistanceLoss,\
-    PoissonNLLLoss, MultiLabelSoftMarginLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss, \
-    RMSELoss, MAELoss, HuberLoss, CrossEntropyLoss, NLLLoss, KLDivLoss, MarginRankingLoss, GaussianNLLLoss, \
+    PoissonNLLLoss, MultiLabelSoftMarginLoss, BCEWithLogitsLoss, \
+    HuberLoss, CrossEntropyLoss, NLLLoss, KLDivLoss, MarginRankingLoss, GaussianNLLLoss, \
     HingeEmbeddingLoss, MultilabelMarginLoss, TripletMarginLoss, L1LossExt
 
 
-__all__ = ['LossBase', 'L1Loss', 'CTCLoss', 'MSELoss', 'SmoothL1Loss', 'SoftMarginLoss', 'FocalLoss',
+__all__ = ['LossBase', 'L1Loss', 'CTCLoss', 'MSELoss', 'SmoothL1Loss', 'SoftMarginLoss',
            'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss', 'MultiMarginLoss',
            'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'TripletMarginWithDistanceLoss', 'PoissonNLLLoss',
-           'MultiLabelSoftMarginLoss', 'DiceLoss', 'MultiClassDiceLoss', 'MultilabelMarginLoss',
-           'RMSELoss', 'MAELoss', 'HuberLoss', 'CrossEntropyLoss', 'NLLLoss', 'KLDivLoss', 'MarginRankingLoss',
+           'MultiLabelSoftMarginLoss', 'MultilabelMarginLoss',
+           'HuberLoss', 'CrossEntropyLoss', 'NLLLoss', 'KLDivLoss', 'MarginRankingLoss',
            'GaussianNLLLoss', 'HingeEmbeddingLoss', 'TripletMarginLoss', 'L1LossExt']

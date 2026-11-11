@@ -52,7 +52,6 @@ __all__ = ['Softmin',
            'HSwish',
            'ELU',
            'LogSigmoid',
-           'LRN',
            'SoftShrink',
            'HShrink',
            'CELU',
@@ -1100,7 +1099,7 @@ class FastGelu(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> fast_gelu = nn.FastGelu()
+        >>> fast_gelu = nn.layer.activation.FastGelu()
         >>> output = fast_gelu(x)
         >>> print(output)
         [[-1.5418735e-01  3.9921875e+00 -9.7473649e-06]
@@ -1529,44 +1528,6 @@ class LogSigmoid(Cell):
         return ret
 
 
-class LRN(Cell):
-    r"""
-    Local Response Normalization.
-
-    .. warning::
-        - This interface is deprecated and will be removed after version 2.9.0.
-        - LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
-          normalization methods, e.g. :class:`mindspore.nn.BatchNorm1d` ,
-          :class:`mindspore.nn.BatchNorm2d` , :class:`mindspore.nn.BatchNorm3d`.
-
-    Refer to :func:`mindspore.ops.lrn` for more details.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> input_x = Tensor(np.array([[[[0.1], [0.2]],
-        ...                       [[0.3], [0.4]]]]), mindspore.float32)
-        >>> output = nn.LRN()(input_x)
-        >>> print(output)
-        [[[[0.09534626]
-           [0.1825742 ]]
-          [[0.2860388 ]
-           [0.3651484 ]]]]
-    """
-
-    def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
-        """Initialize LRN."""
-        super().__init__()
-        self.lrn_op = NN_OPS.LRN(depth_radius, bias, alpha, beta, norm_region)
-
-    def construct(self, input_x):
-        return self.lrn_op(input_x)
-
-
 class SoftShrink(Cell):
     r"""
     Apply the SoftShrink function element-wise.
@@ -1642,7 +1603,8 @@ class HShrink(Cell):
         :align: center
 
     Args:
-        lambd (number, optional): The threshold :math:`\lambda` used in the Hard Shrink activation function formula. Default: ``0.5`` .
+        lambd (number, optional): The threshold :math:`\lambda` used in the Hard Shrink activation function formula.
+            Default: ``0.5`` .
 
     Inputs:
         - **input** (Tensor) - The input tensor to be processed by Hard Shrink. Supported dtypes:

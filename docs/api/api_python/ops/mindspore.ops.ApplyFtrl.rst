@@ -7,7 +7,7 @@
 
     根据FTRL算法更新相关参数或者Tensor。
 
-    更多详细信息请参见 :class:`mindspore.nn.FTRL` 。
+    更多详细信息请参见 :class:`mindspore.nn.optim.FTRL` 。
 
     .. note::
         - 当前在Ascend平台上仅支持正数，其余场景计算结果未定义。

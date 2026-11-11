@@ -1,9 +1,9 @@
-mindspore.nn.FTRL
-=================
+mindspore.nn.optim.FTRL
+=======================
 
-.. py:class:: mindspore.nn.FTRL(params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0, use_locking=False, loss_scale=1.0, weight_decay=0.0)
+.. py:class:: mindspore.nn.optim.FTRL(params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0, use_locking=False, loss_scale=1.0, weight_decay=0.0)
 
-    `mindspore.nn.FTRL` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    `mindspore.nn.optim.FTRL` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
     FTRL算法实现。
 

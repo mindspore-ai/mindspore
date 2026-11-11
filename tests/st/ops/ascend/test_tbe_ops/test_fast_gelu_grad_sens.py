@@ -12,24 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""FastGelu gradient tests with explicit sensitivity on Ascend."""
 from tests.mark_utils import arg_mark
 import numpy as np
 
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
-from mindspore.nn import Cell, FastGelu
+from mindspore.nn import Cell
+from mindspore.nn.layer.activation import FastGelu
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 import mindspore
-import pytest
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Grad(Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
@@ -65,7 +66,7 @@ def fast_gelu_backward_cmp(input_shape, mstype=None):
 
 class MEGeluLargeIn(Cell):
     def __init__(self):
-        super(MEGeluLargeIn, self).__init__()
+        super().__init__()
         self.matmul = P.MatMul()
         self.fast_gelu = P.GeLU()
 
@@ -76,7 +77,7 @@ class MEGeluLargeIn(Cell):
 
 class GradLargeIn(Cell):
     def __init__(self, network):
-        super(GradLargeIn, self).__init__()
+        super().__init__()
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 

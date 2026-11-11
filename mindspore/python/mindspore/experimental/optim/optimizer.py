@@ -10,6 +10,7 @@ from mindspore import ops
 
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
@@ -63,7 +64,7 @@ class Optimizer(Cell):
         >>> optimizer = MySGD(net.trainable_params(), 0.01)
         >>> optimizer.add_param_group({"params": Parameter([0.01, 0.02])})
         >>>
-        >>> criterion = nn.MAELoss(reduction="mean")
+        >>> criterion = nn.L1Loss(reduction="mean")
         >>>
         >>> def forward_fn(data, label):
         ...    logits = net(data)

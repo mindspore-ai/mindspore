@@ -1,7 +1,7 @@
-mindspore.nn.FastGelu
-======================
+mindspore.nn.layer.activation.FastGelu
+======================================
 
-.. py:class:: mindspore.nn.FastGelu
+.. py:class:: mindspore.nn.layer.activation.FastGelu
 
     快速高斯误差线性单元激活函数（Fast Gaussian Error Linear Units activation function）。
 

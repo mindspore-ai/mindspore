@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Auto-parallel tests for AdaSum optimizer wrappers."""
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.graph.api import _cell_graph_executor
-from mindspore.nn import Cell, TrainOneStepCell, Momentum, AdaSumByDeltaWeightWrapCell, AdaSumByGradWrapCell
+from mindspore.nn import Cell, TrainOneStepCell, Momentum
+from mindspore.nn.optim import AdaSumByDeltaWeightWrapCell, AdaSumByGradWrapCell
 from mindspore.ops import operations as P
 
 

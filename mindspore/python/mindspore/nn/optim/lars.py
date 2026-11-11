@@ -53,7 +53,7 @@ def _check_param_value(optimizer, epsilon, coefficient, use_clip, prim_name):
 
 class LARS(Optimizer):
     r"""
-    `mindspore.nn.LARS` is deprecated from version 2.9.0 and will be removed in a future version.
+    `mindspore.nn.optim.LARS` is deprecated from version 2.9.0 and will be removed in a future version.
 
     Implements the LARS algorithm.
 
@@ -113,7 +113,7 @@ class LARS(Optimizer):
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)
-        >>> opt_lars = nn.LARS(opt, epsilon=1e-08, coefficient=0.02)
+        >>> opt_lars = nn.optim.LARS(opt, epsilon=1e-08, coefficient=0.02)
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=opt_lars, metrics=None)
     """
 

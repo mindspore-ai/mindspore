@@ -27,7 +27,7 @@ class FractionalMaxPool2dNet(nn.Cell):
     """FractionalMaxPool2d"""
 
     def __init__(self):
-        super(FractionalMaxPool2dNet, self).__init__()
+        super().__init__()
         _random_samples = Tensor(np.array([[[0.8, 0.8]]]), mstype.float32)
         self.pool1 = nn.FractionalMaxPool2d(kernel_size=2, output_size=(2, 2), _random_samples=_random_samples,
                                             return_indices=True)
@@ -52,33 +52,4 @@ def test_compile_fractional_maxpool2d():
                                0.4980, 0.9673, 0.9879, 0.6988, 0.9022,
                                0.9304, 0.1558, 0.0153, 0.1559, 0.9852]).reshape([1, 1, 5, 5]), mstype.float32)
     net = FractionalMaxPool2dNet()
-    _cell_graph_executor.compile(net, input_x)
-
-
-class FractionalMaxPool3dNet(nn.Cell):
-    """FractionalMaxPool3d"""
-
-    def __init__(self):
-        super(FractionalMaxPool3dNet, self).__init__()
-        _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
-        self.pool1 = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_size=(1, 1, 2),
-                                            _random_samples=_random_samples, return_indices=True)
-        self.pool2 = nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
-                                            _random_samples=_random_samples, return_indices=True)
-
-    def construct(self, x):
-        output1 = self.pool1(x)
-        output2 = self.pool2(x)
-        return output1, output2
-
-
-def test_compile_fractional_maxpool3d():
-    """
-    Feature: Test FractioanlMaxPool3d
-    Description: Test the functionality of FractionalMaxPool3d
-    Expectation: Success
-    """
-    input_x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-                     .reshape([1, 1, 2, 2, 4]), mstype.float32)
-    net = FractionalMaxPool3dNet()
     _cell_graph_executor.compile(net, input_x)

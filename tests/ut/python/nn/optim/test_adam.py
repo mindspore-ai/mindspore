@@ -179,7 +179,7 @@ def test_adamweightdecay_group():
     schedule_lr = nn.learning_rate_schedule.PolynomialDecayLR(0.01, 0.0001, 3, power=1.0)
     group_params = [{'params': [all_params[0]], 'lr': 0.02, 'weight_decay': 0.9},
                     {'params': [all_params[1]]}]
-    optimizer = nn.AdamWeightDecay(group_params, learning_rate=schedule_lr)
+    optimizer = nn.optim.AdamWeightDecay(group_params, learning_rate=schedule_lr)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     _cell_graph_executor.compile(train_network, inputs, label)
 

@@ -5266,7 +5266,7 @@ class LARSUpdate(PrimitiveWithInfer):
 
     Conducts LARS (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
 
-    For more details, please refer to :class:`mindspore.nn.LARS`.
+    For more details, please refer to :class:`mindspore.nn.optim.LARS`.
 
     Args:
         epsilon (float, optional): Term added to the denominator to improve numerical stability.
@@ -5337,7 +5337,7 @@ class ApplyFtrl(Primitive):
 
     Updates relevant entries according to the FTRL scheme.
 
-    For more details, please refer to :class:`mindspore.nn.FTRL`.
+    For more details, please refer to :class:`mindspore.nn.optim.FTRL`.
 
     Note:
         - Currently, only positive numbers are supported on the Ascend platform,
@@ -5440,7 +5440,7 @@ class SparseApplyFtrl(Primitive):
     in a future version.
 
     Updates relevant entries according to the FTRL-proximal scheme
-    For more details, please refer to :class:`mindspore.nn.FTRL`.
+    For more details, please refer to :class:`mindspore.nn.optim.FTRL`.
 
     All inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to

@@ -734,7 +734,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         >>> net = amp.build_train_network(network, net_opt, net_loss, amp_level)
     """
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer,
-                                                        nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
+                                                        nn.optim.AdaSumByGradWrapCell,
+                                                        nn.optim.AdaSumByDeltaWeightWrapCell))
 
     _check_level(level, boost_level)
 

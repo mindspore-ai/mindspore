@@ -17,7 +17,6 @@
 from __future__ import absolute_import
 
 import math
-import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore import context, log as logger
@@ -36,7 +35,7 @@ from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
 from mindspore.common.generator import default_generator
 
-__all__ = ['Dropout', 'Flatten', 'Dense', 'Linear', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
+__all__ = ['Dropout', 'Flatten', 'Dense', 'Linear', 'ClipByNorm', 'Norm', 'OneHot', 'Unfold', 'Tril', 'Triu',
            'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
            'Dropout2d', 'Dropout3d', 'Upsample', 'Roll', 'Identity', 'Unflatten', 'DropoutExt', 'Dropout2dExt']
 
@@ -1065,175 +1064,6 @@ class OneHot(Cell):
     def construct(self, indices):
         return self.onehot(indices, self.depth, ops.cast(self.on_value, self.dtype),
                            ops.cast(self.off_value, self.dtype))
-
-
-class Pad(Cell):
-    r"""
-    Pads the input tensor according to the paddings and mode.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        paddings (tuple): The shape of parameter `paddings` is :math:`(N, 2)` . N is the rank of input data. All
-            elements of paddings are int type. For `D` th dimension of the `x`, paddings[D, 0] indicates how many
-            sizes to be extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how
-            many sizes to be extended behind of the `D` th dimension of the input tensor. The padded size of each
-            dimension D of the output is: :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`,
-            e.g.:
-
-            .. code-block::
-
-                mode = "CONSTANT".
-                paddings = [[1,1], [2,2]].
-                x = [[1,2,3], [4,5,6], [7,8,9]].
-                # The above can be seen: 1st dimension of `x` is 3, 2nd dimension of `x` is 3.
-                # Substitute into the formula to get:
-                # 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 5.
-                # 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
-                # So the shape of output is (5, 7).
-
-        mode (str): Specifies padding mode. The optional values are ``"CONSTANT"`` , ``"REFLECT"`` , ``"SYMMETRIC"`` .
-            Default: ``"CONSTANT"`` .
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-
-    Outputs:
-        Tensor, the tensor after padding.
-
-        - If `mode` is "CONSTANT", it fills the edge with 0, regardless of the values of the `x`.
-          If the `x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
-          output is [[0,0,0,0,0,0,0], [0,0,1,2,3,0,0], [0,0,4,5,6,0,0], [0,0,7,8,9,0,0], [0,0,0,0,0,0,0]].
-        - If `mode` is "REFLECT", it uses a way of symmetrical copying through the axis of symmetry to fill in.
-          If the `x` is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
-          output is [[6,5,4,5,6,5,4], [3,2,1,2,3,2,1], [6,5,4,5,6,5,4], [9,8,7,8,9,8,7], [6,5,4,5,6,5,4]].
-        - If `mode` is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
-          according to the symmetry axis, except that it includes the symmetry axis. If the `x`
-          is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the
-          output is [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
-
-    Raises:
-        TypeError: If `paddings` is not a tuple.
-        ValueError: If length of `paddings` is more than 4 or its shape is not :math:`(N, 2)` .
-        ValueError: If `mode` is not one of ``"CONSTANT"``, ``"REFLECT"``, ``"SYMMETRIC"``.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn, ops
-        >>> import numpy as np
-        >>> # If `mode` is "CONSTANT"
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="CONSTANT")
-        ...     def construct(self, x):
-        ...         return self.pad(x)
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.float32)
-        >>> pad = Net()
-        >>> output = pad(x)
-        >>> print(output)
-        [[0. 0. 0. 0. 0. 0. 0.]
-         [0. 0. 1. 2. 3. 0. 0.]
-         [0. 0. 4. 5. 6. 0. 0.]
-         [0. 0. 0. 0. 0. 0. 0.]]
-        >>> # Another way to call
-        >>> pad = ops.Pad(paddings=((1, 1), (2, 2)))
-        >>> # From the above code, we can see the following:
-        >>> # "paddings=((1, 1), (2, 2))",
-        >>> # paddings[0][0] = 1, indicates a row of values is filled top of the input data in the first dimension.
-        >>> # Shown as follows:
-        >>> # [[0. 0. 0.]
-        >>> #  [1. 2. 3.]
-        >>> #  [4. 5. 6.]]
-        >>> # paddings[0][1] = 1 indicates a row of values is filled below input data in the first dimension.
-        >>> # Shown as follows:
-        >>> # [[0. 0. 0.]
-        >>> #  [1. 2. 3.]
-        >>> #  [4. 5. 6.]
-        >>> #  [0. 0. 0.]]
-        >>> # paddings[1][0] = 2, indicates 2 rows of values are filled in front of input data in the second dimension.
-        >>> # Shown as follows:
-        >>> # [[0. 0. 0. 0. 0.]
-        >>> #  [0. 0. 1. 2. 3.]
-        >>> #  [0. 0. 4. 5. 6.]
-        >>> #  [0. 0. 0. 0. 0.]]
-        >>> # paddings[1][1] = 2, indicates 2 rows of values are filled in front of input data in the second dimension.
-        >>> # Shown as follows:
-        >>> # [[0. 0. 0. 0. 0. 0. 0.]
-        >>> #  [0. 0. 1. 2. 3. 0. 0.]
-        >>> #  [0. 0. 4. 5. 6. 0. 0.]
-        >>> #  [0. 0. 0. 0. 0. 0. 0.]]
-        >>> output = pad(x)
-        >>> print(output)
-        [[0. 0. 0. 0. 0. 0. 0.]
-         [0. 0. 1. 2. 3. 0. 0.]
-         [0. 0. 4. 5. 6. 0. 0.]
-         [0. 0. 0. 0. 0. 0. 0.]]
-        >>> # if mode is "REFLECT"
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="REFLECT")
-        ...     def construct(self, x):
-        ...         return self.pad(x)
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.float32)
-        >>> pad = Net()
-        >>> output = pad(x)
-        >>> print(output)
-        [[6. 5. 4. 5. 6. 5. 4.]
-         [3. 2. 1. 2. 3. 2. 1.]
-         [6. 5. 4. 5. 6. 5. 4.]
-         [3. 2. 1. 2. 3. 2. 1.]]
-        >>> # if mode is "SYMMETRIC"
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="SYMMETRIC")
-        ...     def construct(self, x):
-        ...         return self.pad(x)
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.float32)
-        >>> pad = Net()
-        >>> output = pad(x)
-        >>> print(output)
-        [[2. 1. 1. 2. 3. 3. 2.]
-         [2. 1. 1. 2. 3. 3. 2.]
-         [5. 4. 4. 5. 6. 6. 5.]
-         [5. 4. 4. 5. 6. 6. 5.]]
-    """
-
-    def __init__(self, paddings, mode="CONSTANT"):
-        """Initialize Pad."""
-        super().__init__()
-        self.mode = mode
-        self.paddings = paddings
-        Validator.check_string(
-            self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], 'mode', self.cls_name)
-        if not isinstance(paddings, tuple):
-            raise TypeError(f"For '{self.cls_name}', the type of 'paddings' must be tuple, "
-                            f"but got {type(paddings).__name__}.")
-        for item in paddings:
-            if len(item) != 2:
-                raise ValueError(f"For '{self.cls_name}', the dimension of 'paddings' must be (n, 2), "
-                                 f"but got {paddings}.")
-        if len(paddings) > 4:
-            raise ValueError(f"For '{self.cls_name}', only 'paddings' up to 4 dims is supported, but got "
-                             f"{len(paddings)}.")
-        if mode == "CONSTANT":
-            self.pad = ops.Pad(self.paddings)
-        else:
-            self.paddings = Tensor(np.array(self.paddings), dtype=mstype.int64)
-            self.pad = ops.MirrorPad(mode=mode)
-
-    def construct(self, x):
-        if self.mode == "CONSTANT":
-            x = self.pad(x)
-        else:
-            x = self.pad(x, self.paddings)
-        return x
 
 
 class Unfold(Cell):

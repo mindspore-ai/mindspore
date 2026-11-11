@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Sampled softmax loss tests on GPU."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -51,7 +52,7 @@ def test_sampled_softmax_loss_assigned_sampler():
         sampled=[4, 0, 2, 3])
 
     def case_not_remove_accidental_hits():
-        loss = nn.SampledSoftmaxLoss(
+        loss = nn.loss.SampledSoftmaxLoss(
             num_sampled=4,
             num_classes=num_classes,
             num_true=1,
@@ -77,7 +78,7 @@ def test_sampled_softmax_loss_assigned_sampler():
         sampled=[4, 5, 6, 3])
 
     def case_remove_accidental_hits():
-        loss = nn.SampledSoftmaxLoss(
+        loss = nn.loss.SampledSoftmaxLoss(
             num_sampled=4,
             num_classes=num_classes,
             num_true=1,
@@ -109,7 +110,7 @@ def test_sampled_softmax_loss_none_sampler():
         sampled=[4, 0, 2, 3])
 
     def case_no_sampler():
-        loss = nn.SampledSoftmaxLoss(
+        loss = nn.loss.SampledSoftmaxLoss(
             num_sampled=4,
             num_classes=num_classes,
             num_true=1,
@@ -136,29 +137,29 @@ def test_sampledsoftmaxloss_reduction_invalid():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     # Check 'reduction'
     with pytest.raises(ValueError):
-        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="")
+        nn.loss.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="")
         _pynative_executor.sync()
 
     with pytest.raises(ValueError):
-        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="invalid")
+        nn.loss.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="invalid")
         _pynative_executor.sync()
 
     # Check 'num_true'
     with pytest.raises(ValueError):
-        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=0)
+        nn.loss.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=0)
         _pynative_executor.sync()
 
     # Check 'sampled_values'
     with pytest.raises(ValueError):
         sampled_values_more_para = (Tensor(np.array([1])), Tensor(np.array([1])),
                                     Tensor(np.array([1])), Tensor(np.array([1])))
-        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7,
+        nn.loss.SampledSoftmaxLoss(num_sampled=4, num_classes=7,
                               sampled_values=sampled_values_more_para)
         _pynative_executor.sync()
 
     with pytest.raises(TypeError):
         sampled_values_wrong_type = Tensor(np.array([1]))
-        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7,
+        nn.loss.SampledSoftmaxLoss(num_sampled=4, num_classes=7,
                               sampled_values=sampled_values_wrong_type)
         _pynative_executor.sync()
 
