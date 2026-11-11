@@ -650,7 +650,6 @@ Image Functions
     mindspore.ops.affine_grid
     mindspore.ops.bounding_box_decode
     mindspore.ops.bounding_box_encode
-    mindspore.ops.col2im
     mindspore.ops.check_valid
     mindspore.ops.crop_and_resize
     mindspore.ops.grid_sample

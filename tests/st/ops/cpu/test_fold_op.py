@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression coverage for retained fold functions, Tensor methods and gradients."""
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 import numpy as np
@@ -19,6 +20,7 @@ import pytest
 from mindspore.graph.api import _pynative_executor
 
 from mindspore import Tensor
+from mindspore import nn, ops
 from mindspore.ops import functional as F
 from tests.mark_utils import arg_mark
 
@@ -81,6 +83,45 @@ def test_fold_tensor_functional_api_modes():
     test_fold_tensor_api()
 
 
+class FoldRetainedNet(nn.Cell):
+    """Exercise the retained Tensor method through the graph parser as well."""
+    def __init__(self, tensor_api):
+        super().__init__()
+        self.tensor_api = tensor_api
+
+    def construct(self, x, output_size):
+        if self.tensor_api:
+            return x.fold(output_size, kernel_size=(2, 2))
+        return ops.fold(x, output_size, kernel_size=(2, 2))
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('tensor_api', [False, True])
+def test_fold_retained_overlap_and_gradient(mode, tensor_api):
+    """
+    Feature: Retained fold APIs sharing the Col2Im implementation.
+    Description: Check channel/kernel flattening, overlapping accumulation and its input gradient.
+    Expectation: Functional/Tensor fold agree with the reference in both modes.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    blocks = np.arange(32, dtype=np.float32).reshape(1, 2, 4, 4)
+    data = blocks.reshape(1, 8, 4)
+    expected = np.zeros((1, 2, 3, 3), dtype=np.float32)
+    for row in range(2):
+        for col in range(2):
+            expected[0, :, row:row + 2, col:col + 2] += blocks[0, :, :, row * 2 + col].reshape(2, 2, 2)
+    x, output_size = Tensor(data), Tensor([3, 3], mstype.int32)
+    net = FoldRetainedNet(tensor_api)
+    np.testing.assert_allclose(net(x, output_size).asnumpy(), expected)
+    primitive = ops.Col2Im(kernel_size=(2, 2))
+    np.testing.assert_allclose(primitive(x.reshape(1, 2, 4, 4), output_size).asnumpy(), expected)
+    np.testing.assert_allclose(ops.grad(net, 0)(x, output_size).asnumpy(), np.ones_like(data))
+
+
 if __name__ == '__main__':
     test_fold_tensor_functional_api_modes()
     test_fold_functional_api_with_invalid_output_size()
+    for execution_mode in (context.GRAPH_MODE, context.PYNATIVE_MODE):
+        for use_tensor_api in (False, True):
+            test_fold_retained_overlap_and_gradient(execution_mode, use_tensor_api)

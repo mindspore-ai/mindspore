@@ -1594,16 +1594,6 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("reverse_sequence")(self, seq_lengths, seq_dim, batch_dim)
 
-    def col2im(self, output_size, kernel_size, dilation, padding_value, stride):
-        """
-        For details, please refer to :func:`mindspore.ops.col2im`.
-
-        .. warning::
-            This interface is deprecated and will be removed after version 2.9.0.
-
-        """
-        return tensor_operator_registry.get('col2im')(self, output_size, kernel_size, dilation, padding_value, stride)
-
     def reshape_as(self, other):
         """
         Change the shape of the Tensor to the shape of `other` without changing the data.

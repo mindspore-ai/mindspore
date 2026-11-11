@@ -23,6 +23,22 @@ mindspore.ops.fold
         - 输入是三维Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` 。
         - 输出是四维Tensor，其shape为 :math:`(N, C, output\_size[0], output\_size[1], ...)` 。
 
+    .. note::
+        原 ``ops.col2im`` 和 ``Tensor.col2im`` 入口已移除，可按以下方式迁移到本接口。
+        原输入shape为 ``(N, C, K, L)``，其中 ``K`` 为窗口高度与宽度的乘积；
+        迁移时须合并中间两维为 ``(N, C * K, L)``，并将关键字 ``padding_value`` 改为 ``padding``。
+        保留原 ``output_size`` Tensor 和窗口、膨胀、填充、步长参数，不能仅替换函数名称或依赖新的默认值。
+        假设原输入为 ``x``，可写为：
+
+        .. code-block:: python
+
+            n, channels, kernel_area, blocks = x.shape
+            columns = x.reshape(n, channels * kernel_area, blocks)
+            output = ops.fold(columns, output_size, kernel_size,
+                              dilation=dilation, padding=padding_value, stride=stride)
+
+        底层 ``ops.Col2Im`` 原语继续保留；``Tensor.col2im`` 的旧调用也可迁移到上述函数形式。
+
     参数：
         - **input** (Tensor) - 三维Tensor，支持的数据类型：float16、float32、float64、complex64和complex128。
         - **output_size** (Tensor) - 包含两个int元素的一维Tensor。
