@@ -2710,14 +2710,7 @@ class Cell(Cell_):
 
     def set_boost(self, boost_type):
         """
-        In order to improve the network performance, configure the network auto enable to
-        accelerate the algorithm in the algorithm library.
-
-        If `boost_type` is not in the algorithm library, please view the algorithm in the algorithm library through
-        `algorithm library <https://atomgit.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_.
-
-        Note:
-            Some acceleration algorithms may affect the accuracy of the network, please choose carefully.
+        Set the legacy ``less_bn`` flag recursively on this cell and its children.
 
         Args:
             boost_type (str): accelerate algorithm.
@@ -2726,7 +2719,7 @@ class Cell(Cell_):
             Cell, the cell itself.
 
         Raises:
-            ValueError: If boost_type is not in the algorithm library.
+            ValueError: If boost_type is not 'less_bn'.
         """
         if boost_type not in ("less_bn",):
             raise ValueError("For 'set_boost', the argument 'boost_type' must be 'less_bn', "

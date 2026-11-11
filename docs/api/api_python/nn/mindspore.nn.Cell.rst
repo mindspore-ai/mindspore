@@ -700,12 +700,7 @@ mindspore.nn.Cell
 
     .. py:method:: set_boost(boost_type)
 
-        为了提升网络性能，可以配置boost内的算法让框架自动使能该算法来加速网络训练。
-
-        请确保 `boost_type` 所选择的算法在
-        `algorithm library <https://atomgit.com/mindspore/mindspore/tree/master/mindspore/python/mindspore/boost>`_ 算法库中。
-
-        .. note:: 部分加速算法可能影响网络精度，请谨慎选择。
+        为当前 Cell 及其子 Cell 递归设置旧版 ``less_bn`` 标志。
 
         参数：
             - **boost_type** (str) - 加速算法。
@@ -714,7 +709,7 @@ mindspore.nn.Cell
             Cell类型，Cell本身。
 
         异常：
-            - **ValueError** - 如果 `boost_type` 不在boost算法库内。
+            - **ValueError** - 如果参数不是 ``less_bn``。
 
     .. py:method:: set_broadcast_flag(mode=True)
 

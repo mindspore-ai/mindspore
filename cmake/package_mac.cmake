@@ -180,7 +180,6 @@ install(
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mindrecord
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/numpy
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/train
-    ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/boost
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/common
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/ops_generate
