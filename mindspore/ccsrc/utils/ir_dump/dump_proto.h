@@ -121,8 +121,11 @@ using IrExporterPtr = std::shared_ptr<IrExporter>;
 
 class IrExportBuilder {
  public:
-  explicit IrExportBuilder(const bool &incremental = false)
-      : model_(std::make_shared<mind_ir::ModelProto>()), incremental_(incremental) {}
+  explicit IrExportBuilder(const bool &incremental = false) : model_(std::make_shared<mind_ir::ModelProto>()) {
+    if (incremental) {
+      MS_EXCEPTION(NotSupportError) << "Incremental export is no longer supported because MapParameter was removed.";
+    }
+  }
   ~IrExportBuilder() = default;
   std::string GetProtoString() const;
   void BuildModelInfo();
@@ -143,9 +146,6 @@ class IrExportBuilder {
   bool BuildCNodeAttr(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueInfoProto *const value_proto);
   bool SetParamToTensorProto(const ParameterPtr &param, mind_ir::TensorProto *const tensor_proto);
-  bool ConvertMapParameterToMapTensorProto(const ParameterPtr &map_parameter,
-                                           mind_ir::MapTensorProto *const map_tensor_proto);
-  bool ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto);
   bool SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
@@ -201,7 +201,6 @@ class IrExportBuilder {
   size_t unique_id_{0};
   bool top_graph{true};
   std::map<FuncGraphPtr, mind_ir::GraphProto *> graph_protos_;
-  bool incremental_{false};
   bool is_kernel_graph_{false};
 };
 }  // namespace mindspore

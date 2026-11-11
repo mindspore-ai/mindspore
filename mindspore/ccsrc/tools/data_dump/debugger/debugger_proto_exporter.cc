@@ -48,7 +48,7 @@ void CheckIfValidType(const TypePtr &type, debugger::TypeProto *const type_proto
   if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAny>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
         type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<SymbolicKeyType>() ||
-        type->isa<MapTensorType>() || type->isa<UMonadType>() || type->isa<IOMonadType>())) {
+        type->isa<UMonadType>() || type->isa<IOMonadType>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }
   if (type->isa<Number>()) {

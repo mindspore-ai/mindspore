@@ -29,6 +29,8 @@ mindspore.save_checkpoint
         - **format** (str) - 输出文件的格式，可以是 "ckpt" 或 "safetensors"。默认值： ``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
 
+          - **incremental** (bool，可选) - 仅支持 ``False``（默认值）。MapParameter 增量保存功能已移除，传入 ``True`` 将抛出 ValueError。
+
     异常：
         - **TypeError** - 如果参数 `save_obj` 类型不为 :class:`mindspore.nn.Cell` 、list或者dict。
         - **TypeError** - 如果参数 `integrated_save` 不是bool类型。

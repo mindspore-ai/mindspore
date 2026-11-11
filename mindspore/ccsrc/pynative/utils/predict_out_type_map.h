@@ -183,7 +183,6 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"LuUnpackGrad", kTupleTensor2},
                                                        {"MakeTuple", kTypeNone},
                                                        {"MapCacheIdx", kTupleTensor4},
-                                                       {"MapTensorGetData", kTupleTensor2},
                                                        {"MatmulDDS", kTupleTensor2},
                                                        {"MatmulDDSGrad", kTupleTensor2},
                                                        {"MaxPool3DWithArgmax", kTupleTensor2},

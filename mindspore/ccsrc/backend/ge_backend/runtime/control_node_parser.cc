@@ -407,15 +407,6 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
     builder->SetOutputsDeviceType(types);
   }
 
-  const auto &abstract = AnfAlgo::GetNodeAbstractByIndex(front_node_with_index.first, front_node_with_index.second);
-  bool is_map_parameter = abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>();
-  if (is_map_parameter) {
-    backend::ge_backend::DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(front_node_with_index.first,
-                                                                                front_node_with_index.second);
-    UpdateRefCount(AnfAlgo::GetOutputKernelTensor(front_node_with_index.first, front_node_with_index.second), true);
-    return;
-  }
-
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -1618,11 +1609,6 @@ KernelWithIndex ControlNodeParser::FetchBackendParameterWithContextByFrontParame
     const auto &node = node_with_index.first;
     MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::GetOutputTensorMemSize(node, node_with_index.second) != 0) {
-      return node_with_index;
-    }
-    const auto &abstract =
-      AnfAlgo::GetNodeAbstractByIndex(front_parameter_with_index.first, front_parameter_with_index.second);
-    if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
       return node_with_index;
     }
     MS_LOG(DEBUG) << "Backend node:" << node->DebugString()

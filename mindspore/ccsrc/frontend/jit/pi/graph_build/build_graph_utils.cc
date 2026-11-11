@@ -200,8 +200,7 @@ bool IsValidOutputAbstractScalar(const AbstractBasePtr &abs) {
 }
 
 bool IsValidOutputAbstractTensor(const AbstractBasePtr &abs) {
-  return abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractRowTensor>() ||
-         abs->isa<abstract::AbstractMapTensor>();
+  return abs->isa<abstract::AbstractTensor>() || abs->isa<abstract::AbstractRowTensor>();
 }
 
 bool IsPrimitiveCallable(const PrimitivePtr &prim, const AbstractBasePtr &abs) {

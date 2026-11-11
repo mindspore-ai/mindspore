@@ -46,21 +46,6 @@ GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndptr, std::make_shared<Primitive>(kCSR
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndices, std::make_shared<Primitive>(kCSRTensorGetIndicesOpName));
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetDenseShape, std::make_shared<Primitive>(kCSRTensorGetDenseShapeOpName));
 
-// MapTensor
-GVAR_DEF(PrimitivePtr, kPrimMakeMapParameter, std::make_shared<Primitive>(kMakeMapParameterOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGet, std::make_shared<Primitive>(kMapTensorGetOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorPut, std::make_shared<Primitive>(kMapTensorPutOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorErase, std::make_shared<Primitive>(kMapTensorEraseOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorPutWithStatus, std::make_shared<Primitive>(kMapTensorPutWithStatusOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetDefaultValue, std::make_shared<Primitive>(kMapTensorGetDefaultValueOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetPermitFilterValue,
-         std::make_shared<Primitive>(kMapTensorGetPermitFilterValueOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetEvictFilterValue,
-         std::make_shared<Primitive>(kMapTensorGetEvictFilterValueOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetKeys, std::make_shared<Primitive>(kMapTensorGetKeysOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetValues, std::make_shared<Primitive>(kMapTensorGetValuesOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetData, std::make_shared<Primitive>(kMapTensorGetDataOpName));
-GVAR_DEF(PrimitivePtr, kPrimMapTensorGetGrad, std::make_shared<Primitive>(kMapTensorGetGradOpName));
 }  // namespace prim
 }  // namespace mindspore
 

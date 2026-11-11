@@ -715,7 +715,6 @@ TensorDataPtr MakeTensorData(TypeId data_type, Args &&...args) {
     case kObjectTypeString:
       return std::make_shared<ImplClass<uint8_t>>(std::forward<Args>(args)...);
     case kObjectTypeTensorType:
-    case kObjectTypeMapTensorType:
       return std::make_shared<ImplClass<int>>(std::forward<Args>(args)...);
     default:
       break;

@@ -67,7 +67,6 @@ std::string GetTensorDataString(TypeId data_type, const ShapeVector &shape, void
     case kObjectTypeString:
       return TensorStringifier<uint8_t>(static_cast<uint8_t *>(data), size, ndim).ToString(data_type, shape, use_comma);
     case kObjectTypeTensorType:
-    case kObjectTypeMapTensorType:
       return TensorStringifier<int>(static_cast<int *>(data), size, ndim).ToString(data_type, shape, use_comma);
     default:
       break;

@@ -816,7 +816,7 @@ inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
 
 ShapeVector GetOutputShape(const abstract::AbstractBasePtr &abstract, size_t output_idx, bool is_real_squence_output) {
   MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractTensor>() || abstract->isa<abstract::AbstractMapTensor>()) {
+  if (abstract->isa<abstract::AbstractTensor>()) {
     if (output_idx != 0) {
       MS_LOG(INTERNAL_EXCEPTION) << "The abstract " << abstract->ToString()
                                  << "is single output but got index:" << output_idx;
@@ -1244,19 +1244,11 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const
     MS_LOG(INTERNAL_EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                                << "." << trace::DumpSourceLines(node);
   }
-  auto abstract_ptr = node_ptr->abstract();
-
   auto tuple_node = kNodeTupleOutSet.find(node_name);
   if (shapes.empty() && tuple_node == kNodeTupleOutSet.end()) {
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1 && tuple_node == kNodeTupleOutSet.end()) {
     // single output handle
-    if (abstract_ptr != nullptr && abstract_ptr->isa<abstract::AbstractMapTensor>()) {
-      // For AbstractMapTensor.
-      abstract_ptr->set_shape(std::make_shared<abstract::Shape>(shapes[0]));
-      return;
-    }
-
     abstract::AbstractTensorPtr abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
     node->set_abstract(abstract);
   } else {

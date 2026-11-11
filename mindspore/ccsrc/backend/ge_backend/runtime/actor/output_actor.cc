@@ -21,7 +21,6 @@
 #include <string>
 #include "utils/convert_utils.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "ir/map_tensor.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
@@ -33,9 +32,6 @@ void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
                              const std::vector<KernelWithIndex> &output_nodes) {
   for (size_t i = 0; i < output_tensors.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_tensors[i]);
-    if (output_tensors[i]->isa<tensor::MapTensor>()) {
-      continue;
-    }
     auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes[i].first, output_nodes[i].second);
     (void)output_tensors[i]->set_shape(shape);
   }

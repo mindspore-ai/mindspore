@@ -103,8 +103,8 @@ def _chg_ckpt_file_name_if_same_exist(directory, prefix, exception=False):
 
 
 def _check_format_and_other_params(format, enc_key, enc_mode, crc_check=False, exception_save=False,
-                                   map_param_inc=False, global_step_num=None):
-    param_not_default = (enc_key is not None or enc_mode != "AES-GCM" or crc_check or exception_save or map_param_inc
+                                   global_step_num=None):
+    param_not_default = (enc_key is not None or enc_mode != "AES-GCM" or crc_check or exception_save
                          or global_step_num is not None)
     if format == "safetensors" and param_not_default:
         raise ValueError("For 'save_checkpoint', when format is 'safetensors', other param must be default.")
@@ -124,6 +124,7 @@ class CheckpointConfig:
           If both `keep_checkpoint_max` and `keep_checkpoint_per_n_minutes` are set,
           `keep_checkpoint_per_n_minutes` will be invalid.
         - The `enc_mode` and `crc_check` parameters are mutually exclusive and cannot be configured simultaneously.
+        - MapParameter and its incremental checkpoint saving have been removed. Only ``incremental=False`` is supported.
 
     Args:
         save_checkpoint_steps (int, optional): Steps to save checkpoint. Default: ``1`` .
@@ -160,10 +161,12 @@ class CheckpointConfig:
             Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
             redundant-free saving is not enabled.
         format (str, optional): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
-        kwargs (dict): Configuration options dictionary.
+        kwargs (dict): Configuration options dictionary. The legacy `incremental` option only supports ``False``
+            (the default); ``True`` raises ``ValueError`` because MapParameter has been removed.
 
     Raises:
         ValueError: If input parameter is not the correct type.
+        ValueError: If ``incremental=True`` is requested.
 
     Examples:
         >>> from mindspore import nn
@@ -258,11 +261,12 @@ class CheckpointConfig:
         self._enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
         self._crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
         self._format = Validator.check_isinstance('format', format, str)
-        self._map_param_inc = kwargs.get('incremental', False)
+        if kwargs.get('incremental', False):
+            raise ValueError("MapParameter has been removed; incremental checkpoint saving is no longer supported.")
         self.enable_redundance = kwargs.get('enable_redundance', False)
         self.remove_redundancy = Validator.check_isinstance('remove_redundancy', remove_redundancy, bool)
 
-        _check_format_and_other_params(format, enc_key, enc_mode, crc_check, exception_save, self._map_param_inc)
+        _check_format_and_other_params(format, enc_key, enc_mode, crc_check, exception_save)
 
     @property
     def save_checkpoint_steps(self):
@@ -376,16 +380,6 @@ class CheckpointConfig:
             dict, the information saved to checkpoint file.
         """
         return self._append_dict
-
-    @property
-    def map_param_inc(self):
-        """
-        Get the value of whether to save map Parameter incrementally.
-
-        Returns:
-            bool, whether to save map Parameter incrementally.
-        """
-        return self._map_param_inc
 
     def get_checkpoint_policy(self):
         """
@@ -538,7 +532,6 @@ class ModelCheckpoint(Callback):
         self._append_step_num = self._append_dict.get("step_num") if "step_num" in self._append_dict else 0
         self._graph_saved = False
         self._need_flush_from_cache = True
-        self._map_param_inc = self._config.map_param_inc
         self._d2h_async = os.environ.get("MS_ENABLE_CKPT_D2H_ASYNC") == "1"
         self._run_mode = context.get_context("mode")
 
@@ -671,7 +664,7 @@ class ModelCheckpoint(Callback):
             if os.getenv("AITURBO") == "1":
                 save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
                                 self._append_dict, self._config.enc_key, self._config.enc_mode,
-                                crc_check=self._config.crc_check, incremental=self._map_param_inc,
+                                crc_check=self._config.crc_check,
                                 global_step_num=cb_params.cur_step_num)
             elif self._config.remove_redundancy:
                 if get_group_size() == 1:
@@ -700,13 +693,13 @@ class ModelCheckpoint(Callback):
                 save_checkpoint(network, cur_file, False, self._config.async_save,
                                 self._append_dict, self._config.enc_key, self._config.enc_mode,
                                 crc_check=self._config.crc_check, format=self._config.format,
-                                incremental=self._map_param_inc, choice_func=choice_func,
+                                choice_func=choice_func,
                                 remove_redundancy=self._config.remove_redundancy)
             else:
                 save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
                                 self._append_dict, self._config.enc_key, self._config.enc_mode,
                                 crc_check=self._config.crc_check, format=self._config.format,
-                                incremental=self._map_param_inc, remove_redundancy=self._config.remove_redundancy)
+                                remove_redundancy=self._config.remove_redundancy)
 
             self._latest_ckpt_file_name = cur_file
 

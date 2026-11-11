@@ -39,8 +39,6 @@ class DeviceAddressUtils {
                                                                        const KernelGraphPtr &graph);
   static void CreateValueNodeDeviceAddress(const KernelGraphPtr &graph);
 
-  static void CreateDeviceAddressByMapTensorNode(const AnfNodePtr &node, size_t index);
-
   static KernelTensorPtr CloneEmptyKernelTensor(const KernelTensorPtr &old_kernel_tensor);
 
   static bool IsContiguousTensor(const tensor::TensorPtr &tensor);

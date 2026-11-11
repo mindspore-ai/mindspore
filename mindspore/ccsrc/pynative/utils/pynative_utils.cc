@@ -22,7 +22,6 @@
 #include <vector>
 #include <set>
 
-#include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "primitive/sparse_ops.h"
 #include "primitive/sequence_ops.h"
@@ -1118,8 +1117,6 @@ void PyBoost::MarkPyBoostInputs(const OpGradInfoPtr &op_grad_info) {
           }
         }
       }
-    } else if (v->isa<tensor::MapTensor>()) {
-      op_grad_info->input_value_grad_type[index] = AutoGradUtil::SetTensorGradInfo(v->cast<tensor::MapTensorPtr>());
     } else if (v->isa<tensor::CSRTensor>()) {
       const auto &csr_tensor = v->cast<tensor::CSRTensorPtr>();
       auto fn = [&op_grad_info, index](const auto &csr_tensor_input) {
@@ -1217,24 +1214,6 @@ ValuePtr DataConvert::ConvertValueDictToValueTuple(const ValuePtr &v) {
   return std::make_shared<ValueTuple>(v_list);
 }
 
-void DataConvert::ConvertMapTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::MapTensorPtr &map_tensor,
-                                   size_t index) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(map_tensor);
-  constexpr int input_num = 1;
-  const auto input_names = op_run_info->op_grad_info->op_prim->GetAttr(kAttrInputNames);
-  if (input_names == nullptr) {
-    MS_LOG(DEBUG) << "input_names are nullptr";
-    return;
-  }
-  (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(map_tensor);
-  const auto it = op_run_info->base_op_run_info.input_types.end();
-  (void)op_run_info->base_op_run_info.input_types.insert(it, input_num, InputType::kParameter);
-  if (op_run_info->requires_grad) {
-    op_run_info->op_grad_info->input_value_grad_type[index] = AutoGradUtil::SetTensorGradInfo(map_tensor);
-  }
-}
-
 void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                                const tensor::CSRTensorPtr &csr_tensor, size_t index) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -1321,9 +1300,6 @@ void DataConvert::MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const Valu
       (void)vec.emplace_back(kv.second);
     }
     ConvertTupleValueToTensor(op_run_info, std::make_shared<ValueTuple>(vec), index);
-    return;
-  } else if (v->isa<tensor::MapTensor>()) {
-    ConvertMapTensor(op_run_info, v->cast<tensor::MapTensorPtr>(), index);
     return;
   } else if (v->isa<tensor::CSRTensor>()) {
     ConvertCSRTensorToTensorList(op_run_info, v->cast<tensor::CSRTensorPtr>(), index);

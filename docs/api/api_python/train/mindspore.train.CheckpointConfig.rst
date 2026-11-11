@@ -26,6 +26,8 @@ mindspore.train.CheckpointConfig
         - **format** (str，可选) - 输出文件的格式，可以是 ``"ckpt"`` 或 ``"safetensors"``。默认值： ``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
 
+          - **incremental** (bool，可选) - 仅支持 ``False``（默认值）。MapParameter 增量保存功能已移除，传入 ``True`` 将抛出 ValueError。
+
     异常：
         - **ValueError** - 输入参数的类型不正确。
 
@@ -99,14 +101,6 @@ mindspore.train.CheckpointConfig
 
         返回：
             int: 每隔多少分钟保存一个checkpoint文件。
-
-    .. py:method:: map_param_inc
-        :property:
-
-        获取是否增量保存MapParameter。
-
-        返回：
-            bool: 是否增量保存MapParameter。
 
     .. py:method:: save_checkpoint_seconds
         :property:

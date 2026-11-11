@@ -17,7 +17,6 @@
 from __future__ import absolute_import
 import os
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.ops.operations import _map_tensor_ops
 from mindspore.ops.composite.multitype_ops import _compile_utils as compile_utils
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
@@ -388,21 +387,6 @@ def _tensor_getitem_by_tuple(data, tuple_index):
     if os.environ.get("MS_DEV_TENSOR_INDEX_BOOST") == "1":
         return compile_utils._tensor_getitem(data, tuple_index)
     return compile_utils.tensor_index_by_tuple(data, tuple_index)
-
-
-@getitem.register("MapTensor", "Tensor")
-def _map_tensor_getitem(map_tensor, key_tensor):
-    """
-    Getting value tensor from map tensor by key tensor.
-
-    Inputs:
-        map_tensor (MapTensor): A map tensor.
-        key_tensor (Tensor): The key tensor.
-
-    Outputs:
-        Tensor, value tensor according the key tensor.
-    """
-    return _map_tensor_ops.MapTensorGet(True)(map_tensor, key_tensor)
 
 
 # pylint: disable=protected-access

@@ -34,7 +34,6 @@ from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import Sspaddmm
 from mindspore.ops.operations._inner_ops import IsSubClass
 import mindspore as ms
-from mindspore.ops.operations import _map_tensor_ops
 from mindspore.common import dtype as mstype
 from mindspore import Tensor
 from mindspore.ops.primitive import constexpr
@@ -385,15 +384,4 @@ def get_bprop_sparse_reorder(self):
         axis = 0
         return zeros_like(indices), gather_op(dout[1], inverted_permutation, axis), zeros_like(shape)
 
-    return bprop
-
-
-@bprop_getters.register(_map_tensor_ops.MapTensorGet)
-def get_bprop_map_tensor_get(self):
-    """Grad definition for `MapTensorGet` operation."""
-    grad_op = G.MapTensorGetGrad()
-
-    def bprop(map_tensor, key_tensor, out, dout):
-        grad_map_tensor = grad_op(map_tensor, key_tensor, dout)
-        return grad_map_tensor, zeros_like(key_tensor)
     return bprop

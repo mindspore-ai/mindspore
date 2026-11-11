@@ -29,7 +29,6 @@
 #include "backend/ge_backend/pass/ge_backend_optimization.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "ir/manager.h"
-#include "ir/map_tensor.h"
 #include "ir/tensor_new.h"
 #include "ir/graph_utils.h"
 #include "backend/ge_backend/utils/device_address_utils.h"
@@ -88,11 +87,6 @@ namespace mindspore {
 namespace backend {
 namespace ge_backend {
 namespace {
-constexpr size_t kNormalTensorNum = 1;
-constexpr size_t kMapTensorNum = 3;
-constexpr size_t kMapTensorKeyIndex = 0;
-constexpr size_t kMapTensorValueIndex = 1;
-constexpr size_t kMapTensorStatusIndex = 2;
 constexpr size_t kGraphInfoSavePrefixLen = 5;
 using KernelWithIndex = session::KernelWithIndex;
 using mindspore::abstract::AbstractFunction;
@@ -438,38 +432,15 @@ void SyncTensorData(const tensor::TensorPtr &host_tensor, kernel::KernelTensor *
   // memory has been allocate early in AllocGEInputOutputMemory
   MS_EXCEPTION_IF_NULL(device_tensor->GetPtr());
   // sync host tensor to device
-  auto get_tensor_by_index = [&host_tensor](size_t index) {
-    if (!host_tensor->isa<tensor::MapTensor>()) {
-      return host_tensor;
-    }
-    const auto &map_tensor = host_tensor->cast<tensor::MapTensorPtr>();
-    MS_EXCEPTION_IF_NULL(map_tensor);
-    switch (index) {
-      case kMapTensorKeyIndex:
-        return map_tensor->key_tensor();
-      case kMapTensorValueIndex:
-        return map_tensor->value_tensor();
-      case kMapTensorStatusIndex:
-        return map_tensor->status_tensor();
-      default:
-        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for map tensor:" << host_tensor->ToString();
-    }
-  };
-
-  auto get_tensor_num = (host_tensor->isa<tensor::MapTensor>() ? kMapTensorNum : kNormalTensorNum);
-  for (size_t i = 0; i < get_tensor_num; ++i) {
-    const auto &real_host_tensor = get_tensor_by_index(i);
-    MS_EXCEPTION_IF_NULL(real_host_tensor);
-    // Copy data from host tensor to device.
-    auto host_tensor_size = LongToSize(real_host_tensor->DataNBytes());
-    auto host_tensor_type = real_host_tensor->data_type();
-    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams() ||
-        !SyncCopy(kernel_tensor, real_host_tensor.get(), kDefaultStreamIndex)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
-                             ", host tensor size: " + std::to_string(host_tensor_size) +
-                             ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
-                             ", device tensor size: " + std::to_string(device_tensor->GetSize());
-    }
+  // Copy data from host tensor to device.
+  auto host_tensor_size = LongToSize(host_tensor->DataNBytes());
+  auto host_tensor_type = host_tensor->data_type();
+  if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams() ||
+      !SyncCopy(kernel_tensor, host_tensor.get(), kDefaultStreamIndex)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
+                           ", host tensor size: " + std::to_string(host_tensor_size) +
+                           ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
+                           ", device tensor size: " + std::to_string(device_tensor->GetSize());
   }
 }
 }  // namespace

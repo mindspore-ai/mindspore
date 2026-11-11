@@ -61,13 +61,11 @@ from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.common.file_system import FileSystem, _register_basic_file_system, _register_mindio_file_system
 from mindspore.communication.management import get_rank, get_group_size
-from mindspore.experimental import MapParameter
 from mindspore.ops import Cast
 from mindspore.parallel._cell_wrapper import get_allgather_cell, _single_parameter_broadcast
 from mindspore.parallel._tensor import _reshape_param_data
 from mindspore.parallel._utils import _is_in_auto_parallel_mode
-from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor, \
-    _store_warm_up_ptr_by_tensor_list
+from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor
 from mindspore.parallel.checkpoint_transform import sync_pipeline_shared_parameters
 from mindspore.parallel.checkpoint_transform import restore_group_info_list as new_restore_group_info_list
 from mindspore.parallel.checkpoint_transform import load_distributed_checkpoint as new_load_distributed_checkpoint
@@ -88,7 +86,6 @@ _tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UI
                       "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
                       "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_, "str": "U"}
 
-np_type_convert = {"int32": np.int32, "float32": np.float32, "float16": np.float16, "float64": np.float64}
 
 mindir_to_tensor_type = {1: mstype.float32, 2: mstype.uint8, 3: mstype.int8, 4: mstype.uint16,
                          5: mstype.int16, 6: mstype.int32, 7: mstype.int64, 10: mstype.float16,
@@ -372,7 +369,7 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
 
 
 @_mstx_range_decorator("_exec_save", domain="model_preparation")
-def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False, crc_check=False,
+def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", crc_check=False,
                format="ckpt", remove_redundancy=None):
     """Execute the process of saving checkpoint into file."""
     try:
@@ -397,9 +394,6 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
 
                     crc_num = 0
                     for name, value in data_list.items():
-                        if value[0] == "mapparameter":
-                            _write_mapparameter(name, value, f, map_param_inc)
-                            continue
                         if value[0] == "offload_parameter":
                             new_value = value[1:]
                             new_value[2] = value[3]
@@ -539,25 +533,6 @@ def _write_parameter_bytes_data(name, value, f, enc_key, plain_data, crc_num=0, 
     return crc_num, ckpt_total_io_time
 
 
-def _write_mapparameter(name, value, f, map_param_inc=False):
-    """Write map parameter into protobuf file."""
-    while True:
-        logger.info("Checkpoint save map_parameter.")
-        data_map_slice = value[1].export_slice_data(map_param_inc)
-        checkpoint_list = Checkpoint()
-        param_value = checkpoint_list.value.add()
-        param_value.tag = name
-        map_tensor = param_value.maptensor
-        for numpy_data in data_map_slice[:3]:
-            tensor_pro = map_tensor.tensor.add()
-            tensor_pro.dims.extend(numpy_data.shape)
-            tensor_pro.tensor_type = str(numpy_data.dtype)
-            tensor_pro.tensor_content = numpy_data.reshape(-1).tobytes()
-        f.write(checkpoint_list.SerializeToString())
-        if data_map_slice[3]:
-            break
-
-
 def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name, format):
     """Check save_obj and ckpt_file_name for save_checkpoint."""
     if format not in ["safetensors", "ckpt"]:
@@ -594,14 +569,13 @@ def _check_load_checkpoint_unsupported_param(format, dec_key, dec_mode):
                              f"be set to default value '{default_value}', but got '{current_value}'.")
 
 
-def _check_save_checkpoint_unsupported_param(format, enc_key, enc_mode, map_param_inc=False, global_step_num=None):
+def _check_save_checkpoint_unsupported_param(format, enc_key, enc_mode, global_step_num=None):
     """check save checkpoint unsupported param"""
     if format != "safetensors":
         return
     default_params = {
         "enc_key": None,
         "enc_mode": "AES-GCM",
-        "map_param_inc": False,
         "global_step_num": None
     }
     for param_name, default_value in default_params.items():
@@ -623,12 +597,12 @@ def _check_async_save(async_save):
     return async_save
 
 
-def _async_process_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False,
-                        crc_check=False, format="ckpt", cond=None, remove_redundancy=None):
+def _async_process_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", crc_check=False,
+                        format="ckpt", cond=None, remove_redundancy=None):
     """Check whether the process is pulled up successfully, execute the process of saving checkpoint into file."""
     with cond:
         cond.notify()
-    _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check, format, remove_redundancy)
+    _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, crc_check, format, remove_redundancy)
 
 
 @_mstx_range_decorator("save_checkpoint", domain="model_preparation")
@@ -640,6 +614,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     Note:
         The `enc_mode` and `crc_check` parameters are mutually exclusive and cannot be configured simultaneously.
+        MapParameter and its incremental checkpoint saving have been removed. Only ``incremental=False`` is supported.
 
     Args:
         save_obj (Union[Cell, list, dict]): The object to be saved. The data type can be :class:`mindspore.nn.Cell`,
@@ -677,7 +652,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             integrity check. Do not use it to authenticate checkpoint files from untrusted sources.
             Default: ``False`` .
         format (str): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
-        kwargs (dict): Configuration options dictionary.
+        kwargs (dict): Configuration options dictionary. The legacy `incremental` option only supports ``False``
+            (the default); ``True`` raises ``ValueError`` because MapParameter has been removed.
 
     Raises:
         TypeError: If the parameter `save_obj` is not :class:`mindspore.nn.Cell` , list or dict type.
@@ -685,6 +661,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         TypeError: If the parameter `ckpt_file_name` is not string type.
         TypeError: If the parameter `async_save` is not bool or string type.
         ValueError: If the parameter `async_save` is string type but not in ["process", "thread"].
+        ValueError: If ``incremental=True`` is requested.
 
     Examples:
         >>> import mindspore as ms
@@ -721,12 +698,13 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
     enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
     crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
-    map_param_inc = kwargs.get('incremental', False)
+    if kwargs.get('incremental', False):
+        raise ValueError("MapParameter has been removed; incremental checkpoint saving is no longer supported.")
     logger.info("Execute the process of saving checkpoint files.")
     global_step_num = kwargs.get('global_step_num', None)
     remove_redundancy = kwargs.get('remove_redundancy', None)
     remove_redundancy = Validator.check_isinstance("remove_redundancy", remove_redundancy, (type(None), bool))
-    _check_save_checkpoint_unsupported_param(format, enc_key, enc_mode, map_param_inc, global_step_num)
+    _check_save_checkpoint_unsupported_param(format, enc_key, enc_mode, global_step_num)
 
     if append_dict and "__exception_save__" in append_dict:
         s1 = mindspore.hal.Stream()
@@ -758,10 +736,6 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             key = param["name"]
             data_list[key] = []
             data_list_np[key] = []
-            if isinstance(param["data"], MapParameter):
-                data_list[param["name"]].append("mapparameter")
-                data_list[param["name"]].append(param["data"])
-                continue
             if isinstance(param["data"], list):
                 if param["data"][0] == "offload_parameter":
                     data_list[key].append("offload_parameter")
@@ -807,7 +781,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             if sys.platform.startswith("win"):
                 logger.warining("The Win platform currently does not support asynchronous process saving of ckpt, "
                                 "so serial saving of ckpt is used now.")
-                _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check, format)
+                _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, crc_check, format)
             else:
                 _wait_async_process_save_ckpt()
                 ctx = mp.get_context("fork")
@@ -815,7 +789,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 process_flag = True
                 while process_flag:
                     process = ctx.Process(target=_async_process_save,
-                                          args=(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check,
+                                          args=(ckpt_file_name, data_list, enc_key, enc_mode, crc_check,
                                                 format, cond, remove_redundancy), daemon=True, name="asyn_save_ckpt")
                     process.start()
                     with cond:
@@ -829,12 +803,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             data_copy = copy.deepcopy(data_list)
             _wait_async_thread_save_ckpt()
             thr = Thread(target=_exec_save,
-                         args=(ckpt_file_name, data_copy, enc_key, enc_mode, map_param_inc, crc_check, format,
+                         args=(ckpt_file_name, data_copy, enc_key, enc_mode, crc_check, format,
                                remove_redundancy),
                          name="asyn_save_ckpt")
             thr.start()
     else:
-        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check, format, remove_redundancy)
+        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, crc_check, format, remove_redundancy)
 
     mstx.range_end(range_id)
     logger.info("Saving checkpoint process is finished.")
@@ -953,11 +927,6 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
     param_snapshot = _get_snapshot_params() if enable_ckpt_d2h_sync else {}
     for (key, value) in param_dict.items():
         each_param = {"name": key}
-        if isinstance(value, MapParameter):
-            each_param["data"] = value
-            param_list.append(each_param)
-            continue
-
         if value.data.offload_file_path() != "":
             # list save offload data: [Param, shape, type, param.key]
             param_data = ["offload_parameter"]
@@ -1042,6 +1011,11 @@ def load(file_name, **kwargs):
 
     The returned object can be executed by a `GraphCell`, see class :class:`mindspore.nn.GraphCell` for more details.
 
+    Note:
+        MapParameter has been removed. MindIR files containing legacy MapParameter data or MapTensor abstract
+        information are rejected with ``RuntimeError``. Process these models with a MindSpore version that supports
+        MapParameter before migrating. An ordinary Parameter is not an equivalent replacement for its dynamic table.
+
     Args:
         file_name (str): MindIR file name.
 
@@ -1062,6 +1036,7 @@ def load(file_name, **kwargs):
         NotImplementedError: Dynamic model structure obfuscation is no longer supported.
         ValueError: MindIR file does not exist or `file_name` is not a string.
         RuntimeError: Failed to parse MindIR file.
+        RuntimeError: The MindIR file contains legacy MapParameter data or MapTensor abstract information.
 
     Examples:
         >>> import numpy as np
@@ -1254,21 +1229,17 @@ def _load_ckpt_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, f
 
     use_choice_func = specify_prefix is None and filter_prefix is None and choice_func is not None
     param_data_list = []
-    map_data_list = [[], [], []]
-    map_shape_list = [0, 0, 0]
     try:
         for element_id, element in enumerate(checkpoint_list.value):
             if not _whether_load_param(specify_prefix, filter_prefix, element.tag):
                 continue
             if use_choice_func and not choice_func(element.tag):
                 continue
+            if element.HasField('maptensor'):
+                raise ValueError("MapParameter has been removed; checkpoints containing MapTensor "
+                                 f"parameters cannot be loaded: {element.tag}.")
             if not element.HasField('tensor'):
-                _load_map_parameter(checkpoint_list, element, element_id, map_data_list, map_shape_list,
-                                    parameter_dict)
-                if element.tag in parameter_dict:
-                    map_data_list = [[], [], []]
-                    map_shape_list = [0, 0, 0]
-                continue
+                raise ValueError(f"Unsupported checkpoint value for parameter {element.tag}.")
             data = element.tensor.tensor_content
             data_type = element.tensor.tensor_type
             ms_type = tensor_to_ms_type[data_type]
@@ -1321,6 +1292,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
           `choice_func` is recommended instead. `specify_prefix` and `filter_prefix` do not affect each other.
           And using either of those two args will override `choice_func` at the same time.
         - If none of the parameters are loaded from checkpoint file, it will throw ValueError.
+        - MapParameter has been removed. Loading selected parameters containing legacy MapTensor data raises
+          ``ValueError``. Explicitly excluding those entries with `choice_func` still allows loading ordinary weights.
+          To recover the legacy table data, use a MindSpore version that supports MapParameter. An ordinary Parameter
+          is not an equivalent replacement for its dynamic table.
         - When loading a checkpoint that has removed redundancy, the network should be compiled.
         - When `net` is not None, it will verify whether the `remove_redundancy` parameter matches the
           deduplication flag in the loaded safetensors file. If they are different, load the file according to
@@ -1370,6 +1345,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     Raises:
         ValueError: Checkpoint file's format is incorrect.
         ValueError: Parameter's dict is None after load checkpoint file.
+        ValueError: The parameters selected for loading contain legacy MapTensor data.
         TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
 
     Examples:
@@ -1540,36 +1516,6 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
     param_dict_future = executor.submit(load_checkpoint, ckpt_file_name, net, strict_load, filter_prefix,
                                         dec_key, dec_mode, specify_prefix, choice_func, format=format)
     return ParamDictFuture(executor, param_dict_future)
-
-
-def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
-                        map_shape_list, parameter_dict):
-    """load map parameter."""
-    logger.info("Checkpoint load map_parameter.")
-    if (element_id != len(checkpoint_list.value) - 1) and \
-            element.tag == checkpoint_list.value[element_id + 1].tag:
-        for index, tensor in enumerate(element.maptensor.tensor):
-            data = tensor.tensor_content
-            data_type = tensor.tensor_type
-            np_type = np_type_convert.get(data_type)
-            element_data = np.frombuffer(data, np_type)
-            map_data_list[index].append(element_data)
-            map_shape_list[index] += tensor.dims[0]
-    else:
-        map_array = []
-        for index, tensor in enumerate(element.maptensor.tensor):
-            data = tensor.tensor_content
-            data_type = tensor.tensor_type
-            np_type = np_type_convert.get(data_type)
-            element_data = np.frombuffer(data, np_type)
-            map_data_list[index].append(element_data)
-            new_data = b"".join(map_data_list[index])
-            param_data = np.frombuffer(new_data, np_type)
-            dims = tensor.dims
-            dims[0] += map_shape_list[index]
-            param_data = param_data.reshape(list(dims))
-            map_array.append(param_data)
-        parameter_dict[element.tag] = map_array
 
 
 class _CheckpointProtobufSizeError(ValueError):
@@ -1824,9 +1770,6 @@ def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundanc
         if param.param_info.is_pipeline_shared_param:
             continue
         if param.name in parameter_dict:
-            if isinstance(param, MapParameter):
-                param.import_data(parameter_dict[param.name])
-                continue
             # Add has attr protection when load server checkpoint file on worker.
             if not hasattr(parameter_dict[param.name], "data"):
                 continue
@@ -1894,13 +1837,7 @@ def _warm_up_host_cache(parameter_dict, net):
                     net_value = net_dict.get(net_param_name, None)
                 pos += len(".__param_key__")
                 param_key = int(param_name[pos:])
-                value_is_map_parameter = isinstance(value, list) and len(value) == 3
-                if value_is_map_parameter and (net_value is None or isinstance(net_value, Parameter)):
-                    key_tensor = Tensor.from_numpy(value[0])
-                    value_tensor = Tensor.from_numpy(value[1])
-                    status_tensor = Tensor.from_numpy(value[2])
-                    _store_warm_up_ptr_by_tensor_list(param_key, key_tensor, value_tensor, status_tensor)
-                elif not isinstance(value, list) and isinstance(net_value, Parameter):
+                if not isinstance(value, list) and isinstance(net_value, Parameter):
                     _store_warm_up_ptr_by_tensor(param_key, value)
                 else:
                     logger.warning("Unknown matches parameter type %s and net_value %s", type(value), type(net_value))
@@ -2094,7 +2031,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
             - dataset (Dataset): Specifies the preprocessing method of the dataset, which is used to import the
               preprocessing of the dataset into MindIR.
-            - incremental (bool): export MindIR incrementally.
+            - incremental (bool): Only ``False`` is supported. Incremental MapParameter export has been removed.
 
             - custom_func (function): Functions for custom defined export policies. This function will be used to
               customize the model during network export. It currently only supports for files with mindir format. The
@@ -2127,6 +2064,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         - `Saving and Loading the Model - Saving and Loading MindIR
           <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
     """
+    if kwargs.get('incremental', False):
+        raise ValueError("MapParameter has been removed; incremental MindIR export is no longer supported.")
     if 'obf_func' in kwargs.keys():
         raise NotImplementedError("Dynamic model structure obfuscation is no longer supported.")
     old_ms_jit_value = context.get_context("jit_syntax_level")
@@ -2362,7 +2301,7 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
     logger.warning("Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.")
     # save parameter
     if model.graph.map_parameter:
-        raise ValueError("MapParameter not support save in split MindIR file now.")
+        raise ValueError("MapParameter has been removed; exporting MapTensor parameters is not supported.")
     file_prefix = file_name.split("/")[-1]
     if file_prefix.endswith(".mindir"):
         file_prefix = file_prefix[:-7]
@@ -2444,12 +2383,12 @@ def _msfunc_info(net, jit_executor, *inputs):
     return mindir_stream, net_dict
 
 
-def _cell_info(net, incremental, *inputs):
+def _cell_info(net, *inputs):
     """Get mindir stream and net dict of cell"""
     phase_name = "export.mindir"
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
     # pylint: disable=protected-access
-    mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir', incremental=incremental)
+    mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
     net_dict = net.parameters_dict()
     return mindir_stream, net_dict
 
@@ -2460,13 +2399,14 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
     if not isinstance(net, nn.Cell):
         executor = _JitExecutor(net, time.time() * 1e9)
 
-    incremental = kwargs.get('incremental', False)
+    if kwargs.get('incremental', False):
+        raise ValueError("MapParameter has been removed; incremental MindIR export is no longer supported.")
 
     model = mindir_model()
     if not isinstance(net, nn.Cell):
         mindir_stream, net_dict = _msfunc_info(net, executor, *inputs)
     else:
-        mindir_stream, net_dict = _cell_info(net, incremental, *inputs)
+        mindir_stream, net_dict = _cell_info(net, *inputs)
     model.ParseFromString(mindir_stream)
 
     if kwargs.get('dataset'):
@@ -2496,18 +2436,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         else:
             raise ValueError("The parameter '{}' is not belongs to any cell,"
                              "the data of parameter cannot be exported.".format(param_proto.name))
-    incremental = kwargs.get('incremental', False)
-    for map_param_proto in model.graph.map_parameter:
-        map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
-        if map_param_name in net_dict.keys():
-            map_parameter = net_dict[map_param_name]
-            key_bytes, value_bytes, status_bytes = map_parameter.export_bytes(incremental)
-            map_param_proto.key_tensor.raw_data = key_bytes
-            map_param_proto.value_tensor.raw_data = value_bytes
-            map_param_proto.status_tensor.raw_data = status_bytes
-        else:
-            raise ValueError("The map_parameter '{}' is not belongs to any cell,"
-                             "the data of parameter cannot be exported.".format(map_param_proto.name))
+    if model.graph.map_parameter:
+        raise ValueError("MapParameter has been removed; exporting MapTensor parameters is not supported.")
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
     current_path = os.path.realpath(file_name)
