@@ -324,7 +324,7 @@ def _test_llm_mint_ops(ops):
 
 
 # ===========================================================================
-#  Single entry point — all v2 dispatch verification cases
+#  V2 dispatch verification groups
 # ===========================================================================
 
 def _test_dispatch_ops_against_mint():
@@ -391,17 +391,28 @@ def _test_existing_aclnn_ops_against_mint_v2():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=20.0)
-def test_all_ascend_custom_v2_ops():
+def test_ascend_custom_v2_dispatch_and_llm():
     """
     Feature: CustomOpBuilder with stateless custom_v2 API (MS_DISPATCH_ACLNN).
-    Description: Verify all Ascend custom_v2 cases added by this commit in one pytest test.
-    Expectation: All outputs match mint or numerical baselines, and legacy jit_test_files samples still work.
+    Description: Verify Ascend custom_v2 dispatch and LLM operators.
+    Expectation: All outputs match mint or numerical baselines.
     """
     ms.set_device("Ascend")
     ms.set_context(mode=ms.PYNATIVE_MODE)
     np.random.seed(0)
     _test_dispatch_ops_against_mint()
     _test_llm_ops_against_mint()
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', mem_peak=20.0)
+def test_ascend_custom_v2_existing_and_legacy():
+    """
+    Feature: CustomOpBuilder with stateless custom_v2 API (MS_DISPATCH_ACLNN).
+    Description: Verify migrated ACLNN operators and legacy jit_test_files compatibility.
+    Expectation: All outputs match numerical baselines, and legacy samples still work.
+    """
+    ms.set_device("Ascend")
+    ms.set_context(mode=ms.PYNATIVE_MODE)
     np.random.seed(1)
     _test_existing_aclnn_ops_against_mint_v2()
     _test_legacy_jit_v2_outputs()
